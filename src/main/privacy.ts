@@ -1,5 +1,6 @@
-import { session, type Session } from 'electron'
-import { isTracker } from './blocklist'
+import { session, webContents, type Session } from 'electron'
+import { isAuthPage, isTracker } from './blocklist'
+import { chromeUserAgent } from '@shared/userAgent'
 
 const attached = new WeakSet<Session>()
 
@@ -18,6 +19,15 @@ export function attachPrivacy(
   ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (details, callback) => {
     if (!isEnabled()) return callback({})
     if (details.resourceType === 'mainFrame') return callback({})
+    // Pages d'auth : aucune interférence, même sur les requêtes tierces.
+    if (details.webContentsId && details.webContentsId > 0) {
+      try {
+        const pageUrl = webContents.fromId(details.webContentsId)?.getURL() ?? ''
+        if (pageUrl && isAuthPage(pageUrl)) return callback({})
+      } catch {
+        /* doute sur la page : on applique le filtrage normal */
+      }
+    }
     if (!isTracker(details.url)) return callback({})
     if (details.webContentsId && details.webContentsId > 0) onBlocked(details.webContentsId)
     callback({ cancel: true })
@@ -35,14 +45,7 @@ export function attachPrivacy(
 }
 
 export function userAgentForPlatform(): string {
-  const chrome = process.versions.chrome ?? '140.0.0.0'
-  if (process.platform === 'win32') {
-    return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chrome} Safari/537.36`
-  }
-  if (process.platform === 'linux') {
-    return `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chrome} Safari/537.36`
-  }
-  return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chrome} Safari/537.36`
+  return chromeUserAgent(process.versions.chrome ?? '140.0.0.0', process.platform)
 }
 
 export function prepareSession(partition: string): Session {

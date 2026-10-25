@@ -9,6 +9,7 @@ import type {
   Space,
   TabState
 } from '@shared/types'
+import { shouldOpenAsPopup } from '@shared/navigation'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
 
@@ -148,9 +149,31 @@ export class TabManager {
     this.byWebContents.set(wc.id, tabId)
     const patch = (patchValue: Partial<TabState>): void => this.host.patchTab(tabId, patchValue)
 
-    wc.setWindowOpenHandler(({ url }) => {
+    wc.setWindowOpenHandler((details) => {
+      if (!/^https?:/i.test(details.url)) return { action: 'deny' }
       const tab = this.host.tab(tabId)
-      if (tab && /^https?:/i.test(url)) this.host.createTab(tab.spaceId, url)
+      if (!tab) return { action: 'deny' }
+      // Popups (window.open, OAuth « Se connecter avec Google »…) : vraie
+      // fenêtre avec opener intact, héritant la session de l'espace.
+      if (shouldOpenAsPopup(details.disposition)) {
+        const parent = this.getWindow()
+        return {
+          action: 'allow',
+          overrideBrowserWindowOptions: {
+            parent: parent ?? undefined,
+            modal: false,
+            show: true,
+            width: 540,
+            height: 680,
+            minWidth: 360,
+            minHeight: 480,
+            autoHideMenuBar: true,
+            title: 'Vela',
+            backgroundColor: this.backgroundForPages()
+          }
+        }
+      }
+      this.host.createTab(tab.spaceId, details.url)
       return { action: 'deny' }
     })
 

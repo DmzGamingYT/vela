@@ -65,6 +65,36 @@ export const TRACKER_HOSTS: readonly string[] = [
 
 const ALLOW: readonly string[] = []
 
+/**
+ * Pages d'authentification : le bloqueur s'y désactive entièrement.
+ * Les contrôles anti-bot des fournisseurs (Google, Microsoft, Apple, Yahoo)
+ * échouent si la moindre requête de la page de connexion est amputée
+ * (« navigateur non sécurisé » au moment de valider l'identifiant).
+ */
+export const AUTH_PAGE_HOSTS: readonly string[] = [
+  'accounts.google.com',
+  'accounts.youtube.com',
+  'myaccount.google.com',
+  'login.microsoftonline.com',
+  'login.microsoft.com',
+  'login.live.com',
+  'account.microsoft.com',
+  'appleid.apple.com',
+  'idmsa.apple.com',
+  'login.yahoo.com'
+]
+
+export function isAuthPage(url: string): boolean {
+  let host: string
+  try {
+    host = new URL(url).hostname.toLowerCase()
+  } catch {
+    return false
+  }
+  if (!host) return false
+  return AUTH_PAGE_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`))
+}
+
 export function isTracker(url: string): boolean {
   let host: string
   try {
