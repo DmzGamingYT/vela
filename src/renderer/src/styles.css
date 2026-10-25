@@ -3617,7 +3617,8 @@ kbd {
   --dur-1: 120ms;
   --dur-2: 200ms;
   --dur-3: 320ms;
-  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent-b);
+  /* L’anneau de focus suit l’espace actif, comme le reste de l’accent. */
+  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--space-accent);
 }
 
 ::selection {
@@ -4370,20 +4371,65 @@ kbd {
   -webkit-backdrop-filter: blur(44px) saturate(190%);
 }
 
+/* Barre de commande : trois zones fixes — saisie, liste qui défile,
+   filtres et pied. La liste ne passe plus sous les filtres. */
 .command {
   border-radius: 22px;
   width: min(680px, 100%);
+  max-height: min(720px, 86vh);
+  display: flex;
+  flex-direction: column;
 }
 
 .command-input-row {
+  flex: 0 0 auto;
   padding: 16px 18px;
   border-bottom: 1px solid var(--edge);
   gap: 11px;
+  transition: background 0.16s ease;
+}
+
+.command-input-row:focus-within {
+  background: color-mix(in srgb, var(--space-accent) 5%, transparent);
 }
 
 .command-input-row input {
   font-size: 15px;
   letter-spacing: -0.015em;
+  caret-color: var(--space-accent);
+}
+
+/* Le champ garde le focus en permanence : pas d’anneau dans le champ,
+   c’est la ligne entière qui s’allume. */
+.command-input-row input:focus-visible,
+.command-input-row input:focus {
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.command-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 18%, transparent) transparent;
+}
+
+.command-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.command-list::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.command-list::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--ink) 26%, transparent);
 }
 
 .command-input-row input::placeholder {
@@ -4416,10 +4462,11 @@ kbd {
 }
 
 .command-item[data-active="true"] {
-  background: var(--fill-2);
-  border-color: var(--edge);
+  background: color-mix(in srgb, var(--space-accent) 12%, var(--fill-2));
+  border-color: color-mix(in srgb, var(--space-accent) 28%, var(--edge));
   color: var(--ink);
-  box-shadow: var(--inner-light-soft);
+  /* Un curseur net à gauche : la ligne active se lit même en thème clair. */
+  box-shadow: var(--inner-light-soft), inset 2px 0 0 var(--space-accent);
 }
 
 .command-icon {
@@ -4438,10 +4485,11 @@ kbd {
 }
 
 .command-foot {
+  flex: 0 0 auto;
   border-top: 1px solid var(--edge);
   padding: 10px 16px;
   color: var(--faint);
-  font-size: 9.5px;
+  font-size: 10px;
 }
 
 .command-brand {
@@ -5621,9 +5669,11 @@ kbd {
 .status-kbd { gap: 5px; padding-left: 9px; border-left: 1px solid var(--line-soft); opacity: 0.65; transition: opacity 0.14s ease; }
 .status-kbd:hover { opacity: 1; }
 .status-kbd kbd { font-size: 10px; }
-.command-filters { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); }
-.command-filter { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; opacity: 0.75; }
-.command-filter[data-active="true"] { opacity: 1; background: var(--wash); font-weight: 600; }
+.command-filters { flex: 0 0 auto; display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 55%, transparent); overflow-x: auto; scrollbar-width: none; }
+.command-filters::-webkit-scrollbar { display: none; }
+.command-filter { flex: 0 0 auto; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; color: var(--muted); transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease; }
+.command-filter:hover { color: var(--ink); border-color: var(--line-2); }
+.command-filter[data-active="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 600; }
 .tasks-card .section-count { background: var(--wash); }
 .tasks-add { display: flex; gap: 8px; margin-bottom: 10px; }
 .tasks-add input { flex: 1; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font: inherit; }
