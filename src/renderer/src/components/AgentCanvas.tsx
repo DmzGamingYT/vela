@@ -233,9 +233,13 @@ export default function AgentCanvas() {
                   <div>
                     <p className="eyebrow">
                       <span className="eyebrow-dot" />
-                      {agent.status === 'running'
-                        ? 'Rédaction en cours'
-                        : agent.status === 'done'
+                      {running ? (
+                        <span className="thinking-dots" aria-label="Rédaction en cours">
+                          Rédaction en cours<span>.</span>
+                          <span>.</span>
+                          <span>.</span>
+                        </span>
+                      ) : agent.status === 'done'
                           ? 'Rapport prêt'
                           : agent.status === 'cancelled'
                             ? 'Recherche arrêtée'

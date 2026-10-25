@@ -78,6 +78,24 @@ export interface KeyTestResult {
   message: string
 }
 
+export type UpdateState =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'not-available'
+  | 'error'
+
+export interface UpdateInfo {
+  state: UpdateState
+  version: string | null
+  currentVersion: string
+  progress: number
+  message: string | null
+  releaseUrl: string
+}
+
 /** API exposée à la fenêtre par le preload. Aucun accès Node dans le renderer. */
 export interface VelaApi {
   platform: string
@@ -143,6 +161,14 @@ export interface VelaApi {
     list(): Promise<import('./types').DownloadItem[]>
     open(id: string): Promise<void>
     clear(): Promise<void>
+  }
+  updates: {
+    status(): Promise<UpdateInfo>
+    check(): Promise<UpdateInfo>
+    download(): Promise<UpdateInfo>
+    install(): Promise<void>
+    releases(): Promise<void>
+    onEvent(callback: (info: UpdateInfo) => void): () => void
   }
   processes(): Promise<{ live: number; processes: import('./types').ProcessInfo[] }>
   onState(callback: (view: AppView) => void): () => void

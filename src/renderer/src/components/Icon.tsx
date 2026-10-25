@@ -35,6 +35,11 @@ export type IconName =
   | 'clock'
   | 'circle'
   | 'key'
+  | 'download'
+  | 'history'
+  | 'star'
+  | 'inbox'
+  | 'send'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -164,6 +169,31 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="7.5" cy="15.5" r="3.8" />
       <path d="m10.4 12.8 7.4-7.4M15 5.5l3 3M12.8 7.7l2.2 2.2" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v11M7.5 10.5 12 15l4.5-4.5" />
+      <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    </>
+  ),
+  history: (
+    <>
+      <path d="M3.5 12a8.5 8.5 0 1 1 2.5 6" />
+      <path d="M3.5 12H7M3.5 12V8.5M12 8v4l2.8 1.8" />
+    </>
+  ),
+  star: <path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8L3.5 9.7l5.9-.9Z" />,
+  inbox: (
+    <>
+      <path d="M3 13.5 5.5 5h13L21 13.5V19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19Z" />
+      <path d="M3 13.5h5.5l1 2h5l1-2H21" />
+    </>
+  ),
+  send: (
+    <>
+      <path d="M21 3 10.5 13.5" />
+      <path d="M21 3 14 21l-3.5-7.5L3 10Z" />
     </>
   )
 }

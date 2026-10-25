@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { UpdateInfo } from '@shared/api'
 import type { AgentEvent, AgentMode, AppView, Note, ProviderId, ShortcutEvent, TabGroup } from '@shared/types'
 import { HOME_URL } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
@@ -97,6 +98,12 @@ interface BrowserState {
   updateSettings(patch: SettingsPatch): Promise<void>
   setKey(provider: ProviderId, key: string | null): Promise<boolean>
   testKey(provider: ProviderId): Promise<{ ok: boolean; message: string }>
+  update: UpdateInfo | null
+  refreshUpdate(): Promise<void>
+  checkUpdate(): Promise<void>
+  downloadUpdate(): Promise<void>
+  installUpdate(): Promise<void>
+  openReleases(): Promise<void>
   openAgent(prompt?: string): void
   startAgent(prompt: string, tabIds: string[]): Promise<void>
   cancelAgent(): void
@@ -129,6 +136,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   approved: false,
   toasts: [],
   splitRatioLive: null,
+  update: null,
 
   async init() {
     if (get().initialized) return
@@ -154,6 +162,22 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     )
     window.vela.onShortcut((event) => get().handleShortcut(event))
     window.vela.agent.onEvent((event) => get().handleAgentEvent(event))
+    try {
+      const status = await window.vela.updates.status()
+      set({ update: status })
+    } catch {
+      /* mises à jour indisponibles en dev */
+    }
+    window.vela.updates.onEvent((info) => {
+      set({ update: info })
+      if (info.state === 'available') {
+        get().toast(`Vela ${info.version ?? ''} disponible — voir Réglages → À propos.`.trim())
+      } else if (info.state === 'downloaded') {
+        get().toast('Mise à jour téléchargée — redémarrez pour l’appliquer.')
+      } else if (info.state === 'error' && info.message) {
+        get().toast(info.message, 'error')
+      }
+    })
   },
 
   async call(task, fallback) {
@@ -385,6 +409,45 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       'Test impossible pour le moment.'
     )
     return result ?? { ok: false, message: 'Test impossible pour le moment.' }
+  },
+
+  async refreshUpdate() {
+    const info = await get().call(() => window.vela.updates.status(), 'État de mise à jour indisponible.')
+    if (info) set({ update: info })
+  },
+
+  async checkUpdate() {
+    set((state) => ({
+      update: state.update
+        ? { ...state.update, state: 'checking', message: null }
+        : {
+            state: 'checking',
+            version: null,
+            currentVersion: '',
+            progress: 0,
+            message: null,
+            releaseUrl: 'https://github.com/DmzGamingYT/vela/releases'
+          }
+    }))
+    const info = await get().call(() => window.vela.updates.check(), 'Vérification impossible.')
+    if (info) {
+      set({ update: info })
+      if (info.state === 'not-available') get().toast('Vela est à jour.')
+      else if (info.state === 'error' && info.message) get().toast(info.message, 'error')
+    }
+  },
+
+  async downloadUpdate() {
+    const info = await get().call(() => window.vela.updates.download(), 'Téléchargement impossible.')
+    if (info) set({ update: info })
+  },
+
+  async installUpdate() {
+    await get().call(() => window.vela.updates.install(), 'Redémarrage impossible.')
+  },
+
+  async openReleases() {
+    await get().call(() => window.vela.updates.releases(), 'Ouverture impossible.')
   },
 
   openAgent(prompt = '') {

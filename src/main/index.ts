@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, globalShortcut, nativeTheme, shell } from 'electron'
 import { Browser } from './browser'
 import { installMenu } from './menu'
+import { initUpdater } from './updater'
 
 app.setName('Vela')
 if (process.env.VELA_USER_DATA) app.setPath('userData', process.env.VELA_USER_DATA)
@@ -81,6 +82,9 @@ function main(): void {
 
   app.whenReady().then(() => {
     browser = new Browser(app.getPath('userData'))
+    initUpdater((channel, payload) => {
+      if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)
+    })
     createWindow()
     const accelerator = process.platform === 'darwin' ? 'Alt+Command+Space' : 'Ctrl+Alt+Space'
     try {

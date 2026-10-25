@@ -42,6 +42,24 @@ npm run dist:linux  # AppImage + .deb
 
 Les builds ne sont pas signés en v0.1 : macOS demandera un clic droit → Ouvrir, Windows affichera SmartScreen.
 
+## Mises à jour automatiques
+
+Vela vérifie les releases GitHub (`DmzGamingYT/vela`) via `electron-updater` :
+
+- Contrôle silencieux ~20 s après le démarrage (builds installés uniquement, jamais en `npm run dev`).
+- `Réglages → À propos` affiche la version, `Vérifier`, `Télécharger`, `Redémarrer et installer`, et un lien `Releases`.
+- Le téléchargement est manuel (pas de surprise), l’installation s’applique au redémarrage.
+- macOS : `.dmg`/`.zip` (arm64 + x64) — auto-update OK. Windows : NSIS — auto-update OK. Linux : AppImage — auto-update OK ; `.deb` — ouvre la release (réinstallez le paquet).
+
+Publier une version :
+
+```bash
+git tag v0.1.1 && git push origin v0.1.1
+```
+
+Le workflow `.github/workflows/release.yml` construit les 3 plateformes et joint les artefacts
+(`latest-mac.yml`, `latest.yml`, `latest-linux.yml` inclus) à la release — c’est ce que lit l’updater.
+
 ## Ce qu’il sait faire
 
 | | |

@@ -37,6 +37,7 @@ import {
 import { isHomeUrl, titleFromUrl } from '@shared/url'
 import { AgentRunner } from './agent'
 import { NotesStore } from './notes'
+import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
 import { Store } from './store'
 import { TabManager, type TabHost } from './tabs'
 
@@ -904,6 +905,16 @@ export class Browser {
       return ok
     })
     handle('settings:test-key', (payload) => this.testKey(payload))
+
+    handle('update:status', () => updateStatus())
+    handle('update:check', () => checkForUpdates(true))
+    handle('update:download', () => downloadUpdate())
+    handle('update:install', () => {
+      installUpdate()
+    })
+    handle('update:releases', () => {
+      openReleases()
+    })
 
     ipcMain.on('views:layout', (event, payload: LayoutRequest) => {
       if (!this.win || event.sender !== this.win.webContents) return

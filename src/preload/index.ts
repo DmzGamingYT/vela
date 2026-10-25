@@ -62,6 +62,15 @@ const api: VelaApi = {
     open: (id: string) => ipcRenderer.invoke('downloads:open', id),
     clear: () => ipcRenderer.invoke('downloads:clear')
   },
+  updates: {
+    status: () => ipcRenderer.invoke('update:status'),
+    check: () => ipcRenderer.invoke('update:check'),
+    download: () => ipcRenderer.invoke('update:download'),
+    install: () => ipcRenderer.invoke('update:install'),
+    releases: () => ipcRenderer.invoke('update:releases'),
+    onEvent: (callback: (info: import('@shared/api').UpdateInfo) => void) =>
+      subscribe('update:event', callback)
+  },
   processes: () => ipcRenderer.invoke('app:metrics'),
   tasks: {
     create: (input: { title: string; dueAt?: number | null }) => ipcRenderer.invoke('tasks:create', input),

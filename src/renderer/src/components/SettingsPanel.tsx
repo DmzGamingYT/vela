@@ -102,6 +102,11 @@ export default function SettingsPanel() {
   const saveAgentNote = useBrowser((state) => state.saveAgentNote)
   const hasReport = useBrowser((state) => Boolean(state.agent.markdown))
   const toast = useBrowser((state) => state.toast)
+  const update = useBrowser((state) => state.update)
+  const checkUpdate = useBrowser((state) => state.checkUpdate)
+  const downloadUpdate = useBrowser((state) => state.downloadUpdate)
+  const installUpdate = useBrowser((state) => state.installUpdate)
+  const openReleases = useBrowser((state) => state.openReleases)
 
   const [page, setPage] = useState<Page>('appearance')
   const [editing, setEditing] = useState<ProviderId | null>(null)
@@ -622,17 +627,68 @@ export default function SettingsPanel() {
           </section>
         )
 
-      case 'about':
+      case 'about': {
+        const updateLabel =
+          update?.state === 'checking'
+            ? 'Vérification…'
+            : update?.state === 'available'
+              ? `Vela ${update.version ?? ''} disponible` : update?.state === 'downloading'
+              ? `Téléchargement ${update.progress}%`
+              : update?.state === 'downloaded'
+                ? 'Prête à installer'
+                : update?.state === 'not-available'
+                  ? 'Vela est à jour'
+                  : update?.state === 'error'
+                    ? (update.message ?? 'Vérification impossible')
+                    : 'Mises à jour via GitHub Releases'
         return (
           <section className="setting-block">
             <div className="about-hero">
               <span className="about-mark">Vela</span>
               <div>
-                <strong>Vela 0.1</strong>
+                <strong>Vela {update?.currentVersion || '0.1'}</strong>
                 <p className="setting-hint">
                   Navigateur de travail — Electron, React et Chromium. Aucune télémétrie, aucun compte,
                   aucune synchronisation.
                 </p>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div>
+                <strong>Mise à jour</strong>
+                <p className="setting-hint">{updateLabel}</p>
+                {update?.state === 'downloading' && (
+                  <div className="update-progress" role="progressbar" aria-valuenow={update.progress} aria-valuemin={0} aria-valuemax={100}>
+                    <span style={{ width: `${Math.min(100, Math.max(0, update.progress))}%` }} />
+                  </div>
+                )}
+              </div>
+              <div className="setting-actions">
+                {update?.state === 'downloaded' ? (
+                  <button type="button" className="action primary" onClick={() => void installUpdate()}>
+                    <Icon name="download" size={15} />
+                    Redémarrer et installer
+                  </button>
+                ) : update?.state === 'available' ? (
+                  <button type="button" className="action primary" onClick={() => void downloadUpdate()}>
+                    <Icon name="download" size={15} />
+                    Télécharger
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="action"
+                    onClick={() => void checkUpdate()}
+                    disabled={update?.state === 'checking' || update?.state === 'downloading'}
+                  >
+                    <Icon name="reload" size={15} />
+                    Vérifier
+                  </button>
+                )}
+                <button type="button" className="action ghost" onClick={() => void openReleases()}>
+                  <Icon name="external" size={14} />
+                  Releases
+                </button>
               </div>
             </div>
             <div className="about-grid">
@@ -651,6 +707,7 @@ export default function SettingsPanel() {
             </div>
           </section>
         )
+      }
 
       default:
         return null

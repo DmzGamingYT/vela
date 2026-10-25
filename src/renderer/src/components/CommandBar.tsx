@@ -311,7 +311,7 @@ export default function CommandBar() {
 
   return (
     <div className="overlay command-overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="command" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-label="Barre de commande">
+      <div className="command command-pop" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-label="Barre de commande">
         <div className="command-input-row">
           <Icon name="search" size={18} />
           <input
