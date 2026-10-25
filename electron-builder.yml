@@ -1,0 +1,33 @@
+appId: app.vela.browser
+productName: Vela
+directories:
+  buildResources: build
+  output: release
+files:
+  - out/**
+  - package.json
+asar: true
+mac:
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  darkModeSupport: true
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+linux:
+  icon: build/icon-512.png
+  target: [AppImage, deb]
+  category: Network
+  syncDesktopName: true
+  maintainer: Vela contributors <contact@example.com>
+  description: Navigateur de travail — espaces, vue scindée, brief du jour, notes et agent local.

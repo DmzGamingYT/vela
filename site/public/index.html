@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela — le web, votre atelier</title>
+    <meta
+      name="description"
+      content="Vela est un navigateur de travail : espaces isolés, onglets et dossiers, vue scindée, brief du jour, notes Markdown et un agent qui lit vos pages. Sans compte ni télémétrie."
+    />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="color-scheme" content="dark light" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Vela" />
+    <meta property="og:title" content="Vela — le web, votre atelier" />
+    <meta
+      property="og:description"
+      content="Un navigateur de travail pour vous et vos agents : espaces, brief du jour, notes et modèles au choix. Tout reste sur votre machine."
+    />
+    <meta
+      property="og:image"
+      content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/favicon.svg"
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Vela — le web, votre atelier" />
+    <meta
+      name="twitter:description"
+      content="Espaces isolés, vue scindée, brief du jour, notes Markdown et agent local. Sans compte ni télémétrie."
+    />
+    <meta
+      name="twitter:image"
+      content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/favicon.svg"
+    />
+    <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/" />
+    <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      document.documentElement.classList.add('js')
+      ;(() => {
+        let theme = 'dark'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: light)').matches) theme = 'light'
+        } catch (error) {
+          /* stockage indisponible : on reste sur le thème sombre */
+        }
+        document.documentElement.dataset.theme = theme
+      })()
+      addEventListener('load', () => {
+        if (!document.documentElement.hasAttribute('data-reveal-ready')) {
+          document.documentElement.classList.remove('js')
+        }
+      })
+    </script>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/script.js" defer></script>
+  </head>
+  <body id="top">
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-sparkles" viewBox="0 0 24 24">
+        <path d="m12 3 1.9 4.8L19 9.7l-5.1 1.9L12 16.4l-1.9-4.8L5 9.7l5.1-1.9Z" />
+        <path d="M19 15v4M17 17h4M5 3v3M3.5 4.5h3" />
+      </symbol>
+      <symbol id="i-split" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M12 4v16" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+      </symbol>
+      <symbol id="i-command" viewBox="0 0 24 24">
+        <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3Z" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+      </symbol>
+      <symbol id="i-notes" viewBox="0 0 24 24">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 3v5h5M9 13h6M9 17h4" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m20 6-11 11-5-5" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3Z" />
+      </symbol>
+      <symbol id="i-key" viewBox="0 0 24 24">
+        <circle cx="7.5" cy="15.5" r="3.8" />
+        <path d="m10.4 12.8 7.4-7.4M15 5.5l3 3M12.8 7.7l2.2 2.2" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m16.5 16.5 4.5 4.5" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="12" rx="2" />
+        <path d="M8 20h8M12 16v4" />
+      </symbol>
+    </svg>
+
+    <div class="sky" aria-hidden="true">
+      <span class="sky-orb sky-orb-a"></span>
+      <span class="sky-orb sky-orb-b"></span>
+      <span class="sky-orb sky-orb-c"></span>
+      <span class="sky-grid"></span>
+      <span class="sky-noise"></span>
+    </div>
+
+    <header class="site-nav" id="site-nav">
+      <a class="brand" href="#top" aria-label="Vela, retour en haut">
+        <span class="brand-mark">V</span>
+        <span class="brand-name">Vela</span>
+        <span class="brand-version">0.1</span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="site-links"
+        aria-label="Ouvrir le menu"
+      >
+        <span></span><span></span>
+      </button>
+
+      <nav class="nav-links" id="site-links" aria-label="Sections du site">
+        <a href="#navigateur">Navigateur</a>
+        <a href="#agent">Agent</a>
+        <a href="#confidentialite">Confidentialité</a>
+        <a href="#modeles">Modèles</a>
+      </nav>
+
+      <div class="nav-actions">
+        <span class="nav-note">macOS d’abord</span>
+        <button class="theme-toggle" type="button" aria-label="Passer au thème clair">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+        </button>
+        <a class="btn btn-primary btn-sm" href="#interface">
+          Explorer
+          <svg class="icon"><use href="#i-arrow" /></svg>
+        </a>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow" data-reveal>
+            <span class="pulse"></span>
+            Vela 0.1 · en préparation
+          </p>
+          <h1 id="hero-title" data-reveal>
+            Le web,<br />
+            <span class="gradient-text">votre atelier.</span>
+          </h1>
+          <p class="lede" data-reveal>
+            Un navigateur de travail, pensé pour vous et vos agents. Vos espaces, vos onglets, vos notes
+            et votre agent dans la même fenêtre — sans compte, sans télémétrie, sans quitter la page.
+          </p>
+          <div class="hero-actions" data-reveal>
+            <a class="btn btn-primary" href="#interface">
+              Découvrir l’interface
+              <svg class="icon"><use href="#i-arrow" /></svg>
+            </a>
+            <a class="btn btn-glass" href="#agent">
+              Voir l’agent
+              <svg class="icon"><use href="#i-sparkles" /></svg>
+            </a>
+          </div>
+          <ul class="hero-meta" data-reveal>
+            <li><svg class="icon"><use href="#i-check" /></svg> 0 télémétrie</li>
+            <li><svg class="icon"><use href="#i-check" /></svg> 0 compte</li>
+            <li><svg class="icon"><use href="#i-check" /></svg> 10 fournisseurs de modèles</li>
+          </ul>
+        </div>
+
+        <div class="hero-stage" data-reveal>
+          <div class="stage-halo" aria-hidden="true"></div>
+
+          <div class="browser-shell glass-card" aria-hidden="true">
+            <div class="window-bar">
+              <span class="win-dots"><i></i><i></i><i></i></span>
+              <span class="win-title">Vela — Personnel</span>
+              <span class="win-chip">⌘K</span>
+            </div>
+
+            <div class="browser-grid">
+              <div class="v-rail">
+                <span class="v-space is-on" style="--space: #5b7dff">P</span>
+                <span class="v-space" style="--space: #3fa98a">T</span>
+                <span class="v-space v-add"><svg class="icon"><use href="#i-plus" /></svg></span>
+                <span class="v-rail-gap"></span>
+                <span class="v-rail-tool"><svg class="icon"><use href="#i-notes" /></svg></span>
+                <span class="v-rail-tool"><svg class="icon"><use href="#i-sparkles" /></svg></span>
+                <span class="v-rail-tool"><svg class="icon"><use href="#i-command" /></svg></span>
+              </div>
+
+              <aside class="v-side">
+                <div class="v-side-top">
+                  <span class="v-brand">Vela<span>.</span></span>
+                  <span class="v-side-tool">▣</span>
+                </div>
+                <div class="v-space-line"><i></i>Personnel <span>⋯</span></div>
+                <div class="v-brief">
+                  <span class="v-kicker">Brief du jour</span>
+                  <span class="v-date">dimanche 25 octobre</span>
+                  <svg class="icon"><use href="#i-arrow" /></svg>
+                </div>
+                <div class="v-search">
+                  <svg class="icon"><use href="#i-search" /></svg>
+                  <span>Rechercher ou agir</span>
+                  <kbd>⌘K</kbd>
+                </div>
+                <div class="v-label">Onglets <em>5</em></div>
+
+                <div class="v-folder"><span class="chev">⌄</span><i></i>Veille <em>2</em></div>
+                <div class="v-tab is-active">
+                  <span class="v-fav v-fav-n">N</span>
+                  <span class="v-tab-copy"><strong>Shot list</strong><small>notion.so</small></span>
+                  <span class="v-tab-x">×</span>
+                </div>
+                <div class="v-tab">
+                  <span class="v-fav v-fav-l">L</span>
+                  <span class="v-tab-copy"><strong>Active issues</strong><small>linear.app</small></span>
+                </div>
+
+                <div class="v-folder"><span class="chev">⌄</span><i></i>Projet <em>2</em></div>
+                <div class="v-tab">
+                  <span class="v-fav v-fav-g">G</span>
+                  <span class="v-tab-copy"><strong>zephium-browser</strong><small>github.com</small></span>
+                </div>
+                <div class="v-tab">
+                  <span class="v-fav v-fav-b">B</span>
+                  <span class="v-tab-copy"><strong>Le brief de la semaine</strong><small>lemonde.fr</small></span>
+                </div>
+
+                <div class="v-side-foot">
+                  <span>Notes</span><kbd>⌘E</kbd>
+                  <span>Agent</span><kbd>⌘J</kbd>
+                </div>
+              </aside>
+
+              <div class="v-view">
+                <div class="v-toolbar">
+                  <span class="v-nav">‹</span>
+                  <span class="v-nav">›</span>
+                  <span class="v-nav">↻</span>
+                  <span class="v-address">
+                    <svg class="icon"><use href="#i-lock" /></svg>
+                    vela://home
+                    <span class="v-shield"><svg class="icon"><use href="#i-shield" /></svg> 4</span>
+                  </span>
+                  <span class="v-tool">▤</span>
+                  <span class="v-tool">✦</span>
+                  <span class="v-tool">▥</span>
+                </div>
+
+                <div class="v-page">
+                  <p class="v-eyebrow"><i></i>Dimanche 25 octobre</p>
+                  <h2>Bonjour.</h2>
+                  <p class="v-lede">
+                    Le web, votre atelier. Vos onglets, vos notes et un agent dans le même espace —
+                    sans le bruit.
+                  </p>
+                  <div class="v-actions">
+                    <span class="v-pill v-pill-primary">
+                      <svg class="icon"><use href="#i-sparkles" /></svg>
+                      Demander à l’agent
+                      <kbd>⌘J</kbd>
+                    </span>
+                    <span class="v-pill"><svg class="icon"><use href="#i-split" /></svg> Vue scindée</span>
+                  </div>
+
+                  <div class="v-brief-grid">
+                    <div class="v-card is-blue">
+                      <span class="v-num">01</span>
+                      <span class="v-card-label">Démarrer</span>
+                      <strong>Prenez vos marques</strong>
+                      <small>⌘K ouvre la palette — onglets, actions, agent.</small>
+                    </div>
+                    <div class="v-card is-violet">
+                      <span class="v-num">02</span>
+                      <span class="v-card-label">Organiser</span>
+                      <strong>Un espace par contexte</strong>
+                      <small>Travail, veille, personnel : cookies et sessions isolés.</small>
+                    </div>
+                    <div class="v-card is-green">
+                      <span class="v-num">03</span>
+                      <span class="v-card-label">Déléguer</span>
+                      <strong>Un rapport, pas dix onglets</strong>
+                      <small>L’agent lit vos pages et laisse une synthèse.</small>
+                    </div>
+                  </div>
+
+                  <div class="v-lower">
+                    <div class="v-recent">
+                      <div class="v-lower-head"><span>Récemment</span><span>Tout voir</span></div>
+                      <div class="v-row">
+                        <span class="v-fav v-fav-g">G</span>
+                        <span><strong>github.com</strong><small>zephium-browser / Zephium</small></span>
+                        <em>il y a 4 min</em>
+                      </div>
+                      <div class="v-row">
+                        <span class="v-fav v-fav-l">L</span>
+                        <span><strong>linear.app</strong><small>Active issues · Vela</small></span>
+                        <em>il y a 12 min</em>
+                      </div>
+                    </div>
+                    <div class="v-shortcuts">
+                      <div class="v-lower-head"><span>Raccourcis</span></div>
+                      <div class="v-short-row">Nouvel onglet <kbd>⌘T</kbd></div>
+                      <div class="v-short-row">Notes à côté <kbd>⌘E</kbd></div>
+                      <div class="v-short-row">Brief du jour <kbd>⇧⌘B</kbd></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="float-card float-agent glass-card">
+            <div class="float-head">
+              <span class="float-mark"><svg class="icon"><use href="#i-sparkles" /></svg></span>
+              <span class="float-title"><strong>Agent</strong><small>3 sources · en direct</small></span>
+              <span class="live-dot"></span>
+            </div>
+            <ol class="float-steps">
+              <li class="is-done"><span>1</span>Lectures croisées</li>
+              <li class="is-done"><span>2</span>Comparaison</li>
+              <li class="is-live"><span>3</span>Rédaction du rapport</li>
+            </ol>
+            <p class="float-quote">« Trois offres, un tableau, une recommandation. »</p>
+          </div>
+
+          <div class="float-card float-note glass-card">
+            <span class="float-kicker">Notes · Markdown</span>
+            <strong>Réunion produit</strong>
+            <p>Garder la vue scindée. Tester le brief avec 20 onglets.</p>
+            <span class="float-save"><svg class="icon"><use href="#i-check" /></svg> enregistré · .md</span>
+          </div>
+        </div>
+
+        <a class="scroll-cue" href="#interface" aria-label="Faire défiler vers l’interface">
+          <span></span>
+        </a>
+      </section>
+
+      <section class="section interface" id="interface" aria-labelledby="interface-title">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow"><span class="pulse"></span>L’interface</p>
+          <h2 id="interface-title">D’abord, un très bon navigateur.</h2>
+          <p class="section-lede">
+            Des onglets verticaux qui se lisent, des dossiers qui se replient, deux pages côte à côte
+            et une palette qui atteint tout. Le reste suit.
+          </p>
+        </header>
+
+        <div class="demo" data-reveal>
+          <div class="demo-tabs" role="tablist" aria-label="Aperçus de l’interface">
+            <button
+              class="demo-tab is-active"
+              type="button"
+              role="tab"
+              id="tab-tabs"
+              aria-selected="true"
+              aria-controls="scene-tabs"
+              data-mode="tabs"
+            >
+              Onglets &amp; dossiers
+            </button>
+            <button
+              class="demo-tab"
+              type="button"
+              role="tab"
+              id="tab-split"
+              aria-selected="false"
+              aria-controls="scene-split"
+              data-mode="split"
+              tabindex="-1"
+            >
+              Vue scindée
+            </button>
+            <button
+              class="demo-tab"
+              type="button"
+              role="tab"
+              id="tab-palette"
+              aria-selected="false"
+              aria-controls="scene-palette"
+              data-mode="palette"
+              tabindex="-1"
+            >
+              Palette ⌘K
+            </button>
+          </div>
+
+          <div class="demo-body">
+            <div class="demo-frame">
+              <div class="demo-bar">
+                <span class="win-dots"><i></i><i></i><i></i></span>
+                <span class="win-title">Vela — Personnel</span>
+                <span class="win-chip">0.1</span>
+              </div>
+
+              <div class="demo-layout">
+                <aside class="demo-side" aria-hidden="true">
+                  <div class="d-brand">Vela<span>.</span></div>
+                  <div class="d-space"><i></i>Personnel</div>
+                  <div class="d-label">Onglets <em>4</em></div>
+                  <div class="d-folder"><span>⌄</span><i></i>Recherche <em>2</em></div>
+                  <div class="d-tab is-active"><span class="v-fav v-fav-n">N</span>Notes de lancement</div>
+                  <div class="d-tab"><span class="v-fav v-fav-g">G</span>Dépôt Vela</div>
+                  <div class="d-folder"><span>⌄</span><i></i>Veille <em>2</em></div>
+                  <div class="d-tab"><span class="v-fav v-fav-b">B</span>Le brief du jour</div>
+                  <div class="d-tab"><span class="v-fav v-fav-l">L</span>Active issues</div>
+                  <div class="d-drop">Déposer ici pour sortir du dossier</div>
+                </aside>
+
+                <div class="demo-view">
+                  <div class="demo-view-bar">
+                    <span>‹</span><span>›</span><span>↻</span>
+                    <span class="d-address"><svg class="icon"><use href="#i-lock" /></svg> notion.so/notes-de-lancement</span>
+                  </div>
+
+                  <div class="scene-scroll">
+                    <div class="scene" id="scene-tabs" role="tabpanel" aria-labelledby="tab-tabs">
+                      <div class="doc">
+                        <span class="doc-tag">Projet · Vela 0.1</span>
+                        <h3>Notes de lancement</h3>
+                        <p>
+                          Un espace de travail qui ressemble à une page, pas à un tableau de bord. Les
+                          onglets vivent à gauche, les dossiers se replient, la page respire.
+                        </p>
+                        <div class="doc-list">
+                          <div><span class="bullet"></span>Glisser un onglet dans un dossier, sans perdre son ordre.</div>
+                          <div><span class="bullet"></span>Rouvrir le dernier onglet fermé avec son contexte.</div>
+                          <div><span class="bullet"></span>Épingler trois pages, garder la barre latérale calme.</div>
+                        </div>
+                        <div class="drag-ghost"><span class="v-fav v-fav-n">N</span>Notes de lancement</div>
+                      </div>
+                    </div>
+
+                    <div class="scene" id="scene-split" role="tabpanel" aria-labelledby="tab-split" hidden>
+                      <div class="split-panes">
+                        <div class="split-pane">
+                          <div class="split-bar"><span class="d-address small"><svg class="icon"><use href="#i-lock" /></svg> github.com</span><span>×</span></div>
+                          <div class="repo">
+                            <span class="repo-owner">vela-browser /</span>
+                            <h3>Vela</h3>
+                            <p>Un navigateur de travail pour macOS, Windows et Linux.</p>
+                            <div class="repo-stats"><span>★ 1,2 k</span><span>⑂ 84</span><span>MIT</span></div>
+                            <div class="code-lines"><i></i><i></i><i></i><i></i><i></i></div>
+                          </div>
+                        </div>
+                        <div class="split-divider"><span></span></div>
+                        <div class="split-pane">
+                          <div class="split-bar"><span class="d-address small"><svg class="icon"><use href="#i-lock" /></svg> lemonde.fr</span><span>×</span></div>
+                          <div class="news">
+                            <span class="doc-tag">Aujourd’hui</span>
+                            <h3>La ville respire autrement</h3>
+                            <p>Un reportage au long cours, lu à côté du dépôt qui le prépare.</p>
+                            <div class="news-lines"><i></i><i></i><i></i><i></i></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="scene scene-palette" id="scene-palette" role="tabpanel" aria-labelledby="tab-palette" hidden>
+                      <div class="palette-bg" aria-hidden="true">
+                        <span class="doc-tag">Vela</span>
+                        <h3>Bonjour.</h3>
+                        <p>La palette s’ouvre au-dessus de la page, sans la quitter.</p>
+                      </div>
+                      <div class="palette">
+                        <div class="palette-input">
+                          <svg class="icon"><use href="#i-search" /></svg>
+                          <span>agent</span>
+                          <span class="palette-space">Personnel</span>
+                        </div>
+                        <div class="palette-list">
+                          <div class="palette-group">Actions</div>
+                          <div class="palette-item is-active">
+                            <span class="palette-icon"><svg class="icon"><use href="#i-sparkles" /></svg></span>
+                            Demander à l’agent : résumer les onglets
+                            <kbd>⌘J</kbd>
+                          </div>
+                          <div class="palette-item">
+                            <span class="palette-icon"><svg class="icon"><use href="#i-notes" /></svg></span>
+                            Ouvrir les notes
+                            <kbd>⌘E</kbd>
+                          </div>
+                          <div class="palette-item">
+                            <span class="palette-icon"><svg class="icon"><use href="#i-split" /></svg></span>
+                            Vue scindée avec « Active issues »
+                            <kbd>⇧⌘D</kbd>
+                          </div>
+                          <div class="palette-group">Onglets</div>
+                          <div class="palette-item">
+                            <span class="palette-icon"><span class="v-fav v-fav-l">L</span></span>
+                            Active issues · linear.app
+                          </div>
+                        </div>
+                        <div class="palette-foot"><span>↑↓ naviguer</span><span>↵ ouvrir</span><span>esc fermer</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-grid" id="navigateur">
+          <article class="feature-card glass-card" data-reveal>
+            <span class="feature-icon"><svg class="icon"><use href="#i-globe" /></svg></span>
+            <h3>Des espaces étanches</h3>
+            <p>Une partition Chromium par contexte : deux comptes au même site, aucune fuite de session.</p>
+            <div class="mini-spaces" aria-hidden="true">
+              <span style="--c: #5b7dff">P</span><span style="--c: #3fa98a">T</span><span style="--c: #a88cff">V</span>
+            </div>
+          </article>
+
+          <article class="feature-card glass-card" data-reveal>
+            <span class="feature-icon"><svg class="icon"><use href="#i-folder" /></svg></span>
+            <h3>Dossiers qui respirent</h3>
+            <p>Glissez un onglet dans un dossier, repliez-le d’un clic, retrouvez son ordre au redémarrage.</p>
+            <div class="mini-folders" aria-hidden="true">
+              <span><i></i>Recherche <em>2</em></span>
+              <span><i></i>Veille <em>3</em></span>
+            </div>
+          </article>
+
+          <article class="feature-card glass-card" data-reveal>
+            <span class="feature-icon"><svg class="icon"><use href="#i-split" /></svg></span>
+            <h3>Deux pages, un regard</h3>
+            <p>La vue scindée garde la source et la note ensemble. La largeur est mémorisée.</p>
+            <div class="mini-split" aria-hidden="true"><span></span><i></i><span></span></div>
+          </article>
+
+          <article class="feature-card glass-card" data-reveal>
+            <span class="feature-icon"><svg class="icon"><use href="#i-command" /></svg></span>
+            <h3>Tout, au clavier</h3>
+            <p>⌘K pour les onglets, l’historique, les notes et l’agent. ⌘⇧Space bientôt, depuis n’importe où.</p>
+            <div class="mini-command" aria-hidden="true">
+              <svg class="icon"><use href="#i-search" /></svg>
+              <span>où est passée cette page ?</span>
+              <kbd>⌘K</kbd>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section agent-section" id="agent" aria-labelledby="agent-title">
+        <div class="split-layout">
+          <div class="split-copy" data-reveal>
+            <p class="eyebrow"><span class="pulse"></span>L’agent</p>
+            <h2 id="agent-title">Le travail,<br /><span class="gradient-text">à côté de la page.</span></h2>
+            <p class="section-lede">
+              Décrivez un résultat. L’agent lit les pages que vous choisissez, montre chaque étape et
+              laisse un rapport — pas un fil de discussion perdu dans un onglet de plus.
+            </p>
+            <ul class="bullet-list">
+              <li><span><svg class="icon"><use href="#i-check" /></svg></span>Sources choisies, pas tout votre historique.</li>
+              <li><span><svg class="icon"><use href="#i-check" /></svg></span>Démo locale sans réseau, ou votre propre modèle.</li>
+              <li><span><svg class="icon"><use href="#i-check" /></svg></span>Rapport Markdown, enregistré en un clic dans vos notes.</li>
+            </ul>
+            <div class="provider-pills" aria-label="Fournisseurs disponibles">
+              <span>OpenAI</span><span>Anthropic</span><span>Google</span><span>xAI</span>
+              <span>Mistral</span><span>DeepSeek</span><span>Groq</span><span>OpenRouter</span>
+              <span class="is-local">Local</span>
+            </div>
+            <a class="text-link" href="#modeles">Vos clés, vos modèles <svg class="icon"><use href="#i-arrow" /></svg></a>
+          </div>
+
+          <div class="split-visual" data-reveal>
+            <div class="agent-window glass-card">
+              <div class="window-bar">
+                <span class="win-dots"><i></i><i></i><i></i></span>
+                <span class="win-title">Vela — Agent</span>
+                <span class="win-chip">Démo locale</span>
+              </div>
+
+              <div class="agent-layout">
+                <div class="agent-prompt-panel">
+                  <span class="panel-label">Votre demande</span>
+                  <p class="agent-prompt-text">Compare les trois offres et garde la meilleure.</p>
+                  <span class="panel-label">Sources <em>3</em></span>
+                  <div class="agent-source"><span class="v-fav v-fav-s">S</span><span><strong>Stays in SoMa</strong><small>staybook.com</small></span><i class="on"></i></div>
+                  <div class="agent-source"><span class="v-fav v-fav-f">F</span><span><strong>London ⇄ SF</strong><small>flightfinder.com</small></span><i class="on"></i></div>
+                  <div class="agent-source"><span class="v-fav v-fav-n">N</span><span><strong>Plan de la semaine</strong><small>notion.so</small></span><i class="on"></i></div>
+                  <span class="agent-run-mini"><svg class="icon"><use href="#i-sparkles" /></svg> Lancer l’agent</span>
+                  <p class="agent-disclaimer">Aucune page ne quitte l’appareil en mode démo.</p>
+                </div>
+
+                <div class="agent-canvas">
+                  <div class="agent-canvas-head">
+                    <span class="report-mode"><i></i>Démo locale</span>
+                    <span class="report-meta">3 étapes · 42 s</span>
+                  </div>
+                  <h3>Trois offres, une recommandation</h3>
+
+                  <div class="agent-step-row">
+                    <span class="step is-done"><svg class="icon"><use href="#i-check" /></svg></span>
+                    <span>Lire les trois pages</span>
+                    <em>3 sources</em>
+                  </div>
+                  <div class="agent-step-row">
+                    <span class="step is-done"><svg class="icon"><use href="#i-check" /></svg></span>
+                    <span>Comparer les prix et les options</span>
+                    <em>tableau</em>
+                  </div>
+                  <div class="agent-step-row">
+                    <span class="step is-live"></span>
+                    <span>Rédiger la synthèse</span>
+                    <em>en cours</em>
+                  </div>
+
+                  <div class="report-table" role="table" aria-label="Aperçu de comparaison">
+                    <div class="report-tr report-th"><span>Offre</span><span>Prix</span><span>Choix</span></div>
+                    <div class="report-tr"><span>Loft SoMa</span><span>3 120 $</span><span class="pick">Recommandé</span></div>
+                    <div class="report-tr"><span>Mission Bay</span><span>2 860 $</span><span>—</span></div>
+                    <div class="report-tr"><span>Hayes Valley</span><span>2 540 $</span><span>—</span></div>
+                  </div>
+
+                  <div class="report-chart" aria-hidden="true">
+                    <span style="--h: 84%"></span><span style="--h: 64%"></span><span style="--h: 48%"></span><span style="--h: 72%"></span><span style="--h: 58%"></span>
+                  </div>
+
+                  <p class="report-text">
+                    Le loft de SoMa est le seul à offrir un vrai bureau et un Wi‑Fi rapide sous 3 200 $.
+                    Les deux autres restent des solutions de repli.
+                  </p>
+
+                  <div class="report-foot">
+                    <span class="report-chip"><svg class="icon"><use href="#i-notes" /></svg> Enregistrer en note</span>
+                    <span class="report-chip"><svg class="icon"><use href="#i-check" /></svg> 4 sources citées</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>      </section>
+
+      <section class="privacy-section" id="confidentialite" aria-labelledby="privacy-title">
+        <div class="privacy-band">
+          <div class="privacy-copy" data-reveal>
+            <p class="eyebrow"><span class="pulse"></span>Confidentialité</p>
+            <h2 id="privacy-title">Vos pages<br /><span class="gradient-text">restent vos pages.</span></h2>
+            <p class="section-lede">
+              Pas de compte, pas de synchronisation, pas de serveur Vela. Le blocage se fait dans
+              Chromium, avant que la requête ne parte. Les clés restent dans le trousseau du système.
+            </p>
+            <ul class="bullet-list">
+              <li><span><svg class="icon"><use href="#i-shield" /></svg></span>Liste de blocage embarquée, compteur visible dans la barre d’adresse.</li>
+              <li><span><svg class="icon"><use href="#i-lock" /></svg></span>Caméra, micro, position et notifications refusés aux pages.</li>
+              <li><span><svg class="icon"><use href="#i-key" /></svg></span>Clés API chiffrées par Keychain, DPAPI ou libsecret.</li>
+            </ul>
+          </div>
+
+          <div class="shield-visual" data-reveal aria-hidden="true">
+            <span class="shield-ring shield-ring-a"></span>
+            <span class="shield-ring shield-ring-b"></span>
+            <span class="shield-ring shield-ring-c"></span>
+            <span class="shield-core"><svg class="icon"><use href="#i-shield" /></svg></span>
+            <span class="shield-chip chip-a"><i class="dot green"></i>0 requête vers Vela</span>
+            <span class="shield-chip chip-b"><i class="dot blue"></i>1 284 bloqueurs</span>
+            <span class="shield-chip chip-c"><i class="dot violet"></i>0 télémétrie</span>
+          </div>
+        </div>
+
+        <div class="privacy-stats">
+          <div data-reveal><strong>0</strong><span>compte requis</span><p>Vela fonctionne entièrement hors ligne. Un compte n’existe pas.</p></div>
+          <div data-reveal><strong>100&nbsp;%</strong><span>local par défaut</span><p>Onglets, brief, notes et historique restent sur cet appareil.</p></div>
+          <div data-reveal><strong>1</strong><span>liste, zéro serveur</span><p>Le blocage de publicités et de traqueurs est natif, sans service tiers.</p></div>
+        </div>
+      </section>
+
+      <section class="section models-section" id="modeles" aria-labelledby="models-title">
+        <div class="split-layout reverse">
+          <div class="split-visual" data-reveal>
+            <div class="settings-mock glass-card">
+              <div class="window-bar">
+                <span class="win-dots"><i></i><i></i><i></i></span>
+                <span class="win-title">Vela — Réglages</span>
+                <span class="win-chip">Modèles</span>
+              </div>
+              <div class="settings-layout-mock">
+                <div class="settings-nav-mock" aria-hidden="true">
+                  <div class="s-brand">Vela<span>.</span><em>0.1</em></div>
+                  <span class="s-label">Navigateur</span>
+                  <span class="s-item">Apparence</span>
+                  <span class="s-item">Navigation</span>
+                  <span class="s-item">Confidentialité</span>
+                  <span class="s-label">Agent</span>
+                  <span class="s-item is-active"><svg class="icon"><use href="#i-sparkles" /></svg>Modèles</span>
+                  <span class="s-item">Comportement</span>
+                  <span class="s-item">Notes</span>
+                  <span class="s-label">Application</span>
+                  <span class="s-item">Raccourcis</span>
+                  <span class="s-item">À propos</span>
+                  <span class="s-foot"><i></i>Tout reste local</span>
+                </div>
+
+                <div class="settings-content-mock">
+                  <div class="settings-head-mock">
+                    <h3>Modèles</h3>
+                    <p>Les modèles que l’agent utilise et les clés associées.</p>
+                  </div>
+                  <div class="settings-group-label">Agent</div>
+                  <div class="s-provider is-demo">
+                    <span class="s-mark is-glass"><svg class="icon"><use href="#i-sparkles" /></svg></span>
+                    <span class="s-provider-copy"><strong>Démo locale <em>Sans clé</em></strong><small>Rapports simulés, aucune page envoyée.</small></span>
+                    <span class="s-provider-action">Activer</span>
+                  </div>
+                  <div class="s-provider is-active">
+                    <span class="s-mark" style="--m: #74aa9c">OA</span>
+                    <span class="s-provider-copy"><strong>OpenAI <em class="accent">Actif</em></strong><small class="ok"><i></i>Clé acceptée.</small></span>
+                    <span class="s-provider-action">Tester</span>
+                    <span class="s-provider-action">Modifier</span>
+                  </div>
+                  <div class="s-provider">
+                    <span class="s-mark" style="--m: #d97757">A</span>
+                    <span class="s-provider-copy"><strong>Anthropic</strong><small>Modèles Claude, longs contextes.</small></span>
+                    <span class="s-provider-action">Obtenir</span>
+                    <span class="s-provider-action">Ajouter une clé</span>
+                  </div>
+                  <div class="s-provider">
+                    <span class="s-mark" style="--m: #8ab4f8">G</span>
+                    <span class="s-provider-copy"><strong>Google</strong><small>Gemini, via Google AI Studio.</small></span>
+                    <span class="s-provider-action">Ajouter une clé</span>
+                  </div>
+                  <div class="s-provider">
+                    <span class="s-mark" style="--m: #88d0b3">⌂</span>
+                    <span class="s-provider-copy"><strong>Local</strong><small>Ollama, LM Studio ou tout endpoint OpenAI.</small></span>
+                    <span class="s-provider-action">Ajouter une clé</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="split-copy" data-reveal>
+            <p class="eyebrow"><span class="pulse"></span>Modèles</p>
+            <h2 id="models-title">Vos clés.<br /><span class="gradient-text">Votre modèle.</span></h2>
+            <p class="section-lede">
+              Dix fournisseurs, une seule page. Collez une clé, testez-la, choisissez le modèle.
+              Vela utilise celle que vous activez, et rien d’autre.
+            </p>
+            <ul class="bullet-list">
+              <li><span><svg class="icon"><use href="#i-key" /></svg></span>Clés chiffrées dans le trousseau système, jamais dans l’interface.</li>
+              <li><span><svg class="icon"><use href="#i-check" /></svg></span>Test de clé réel en un clic, avec l’erreur exacte s’il y en a une.</li>
+              <li><span><svg class="icon"><use href="#i-globe" /></svg></span>Anthropic et Google ont leur protocole natif ; les autres passent par OpenAI/SSE.</li>
+            </ul>
+            <div class="model-tags">
+              <span>OpenAI</span><span>Anthropic</span><span>Google</span><span>xAI</span><span>Mistral</span>
+              <span>DeepSeek</span><span>Groq</span><span>Cerebras</span><span>OpenRouter</span><span>Local</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section day-section" aria-labelledby="day-title">
+        <div class="split-layout">
+          <div class="split-copy" data-reveal>
+            <p class="eyebrow"><span class="pulse"></span>La journée</p>
+            <h2 id="day-title">Votre journée,<br /><span class="gradient-text">dans la barre latérale.</span></h2>
+            <p class="section-lede">
+              Le brief du jour lit uniquement votre historique local et vos onglets ouverts. Il propose
+              trois gestes : reprendre, finir, ou se concentrer. Pas de flux, pas de recommandation venue d’ailleurs.
+            </p>
+            <ul class="bullet-list">
+              <li><span><svg class="icon"><use href="#i-notes" /></svg></span>Des notes Markdown, dans de vrais fichiers que vous possédez.</li>
+              <li><span><svg class="icon"><use href="#i-globe" /></svg></span>Un historique et un brief qui restent sur la machine.</li>
+              <li><span><svg class="icon"><use href="#i-lock" /></svg></span>La page reste ouverte pendant que la note s’écrit à côté.</li>
+            </ul>
+          </div>
+
+          <div class="day-visual" data-reveal>
+            <div class="day-window glass-card">
+              <div class="window-bar">
+                <span class="win-dots"><i></i><i></i><i></i></span>
+                <span class="win-title">Vela — Notes à côté</span>
+                <span class="win-chip">⌘E</span>
+              </div>
+              <div class="day-layout">
+                <div class="day-main">
+                  <span class="day-date"><i></i>Dimanche 25 octobre</span>
+                  <h3>Bonjour.</h3>
+                  <p class="day-lede">Trois gestes pour la journée, lus dans vos onglets. Rien d’autre.</p>
+                  <div class="day-cards">
+                    <div class="day-card"><span>01</span><em>Reprendre</em><strong>Shot list · Notion</strong><small>Laissée en cours il y a 2 h.</small></div>
+                    <div class="day-card"><span>02</span><em>À finir</em><strong>Trois onglets, un rapport</strong><small>L’agent peut comparer les offres.</small></div>
+                    <div class="day-card"><span>03</span><em>Focus</em><strong>Vingt minutes sans bruit</strong><small>Le bloqueur tient la porte.</small></div>
+                  </div>
+                  <div class="day-foot"><span>3 pages</span><span>12 sites</span><span><i></i>4 requêtes arrêtées</span></div>
+                </div>
+
+                <aside class="note-mock">
+                  <div class="note-mock-head"><span>Notes</span><span>⌘E</span></div>
+                  <div class="note-mock-title">Réunion produit</div>
+                  <div class="note-mock-body">
+                    <h4>Décisions</h4>
+                    <p>Garder la vue scindée. Tester le brief avec vingt onglets.</p>
+                    <ul><li>Relire la note de lancement</li><li>Envoyer le rapport à l’équipe</li></ul>
+                    <div class="note-code">## brief.md <span>écrit sur le disque</span></div>
+                  </div>
+                  <div class="note-mock-foot"><span class="ok"><i></i>Enregistré</span><span>.md</span></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section themes-section" aria-labelledby="themes-title">
+        <header class="section-head centered" data-reveal>
+          <p class="eyebrow"><span class="pulse"></span>Apparence</p>
+          <h2 id="themes-title">Clair, sombre,<br /><span class="gradient-text">ou comme vous voulez.</span></h2>
+          <p class="section-lede">Le verre liquide change de lumière avec le système. Les mêmes repères, deux atmosphères.</p>
+        </header>
+
+        <div class="theme-pair" data-reveal>
+          <div class="theme-frame is-light">
+            <div class="theme-mini" data-theme="light" aria-hidden="true">
+              <div class="theme-bit">
+                <span class="theme-bar"></span>
+                <div class="theme-content">
+                  <span class="theme-brand">Vela<span>.</span></span>
+                  <div class="theme-search">⌘K <em>Rechercher</em></div>
+                  <div class="theme-brief"><span>Brief du jour</span><strong>dimanche 25 octobre</strong></div>
+                  <div class="theme-cards"><i></i><i></i><i></i></div>
+                </div>
+              </div>
+            </div>
+            <span class="theme-label"><svg class="icon"><use href="#i-sun" /></svg>Clair</span>
+          </div>
+
+          <div class="theme-frame is-dark">
+            <div class="theme-mini" data-theme="dark" aria-hidden="true">
+              <div class="theme-bit">
+                <span class="theme-bar"></span>
+                <div class="theme-content">
+                  <span class="theme-brand">Vela<span>.</span></span>
+                  <div class="theme-search">⌘K <em>Rechercher</em></div>
+                  <div class="theme-brief"><span>Brief du jour</span><strong>dimanche 25 octobre</strong></div>
+                  <div class="theme-cards"><i></i><i></i><i></i></div>
+                </div>
+              </div>
+            </div>
+            <span class="theme-label"><svg class="icon"><use href="#i-moon" /></svg>Sombre</span>
+          </div>
+
+          <span class="theme-system"><svg class="icon"><use href="#i-monitor" /></svg>Système</span>
+        </div>
+      </section>
+
+      <section class="release-section" id="release" aria-labelledby="release-title">
+        <div class="release-card glass-card" data-reveal>
+          <div class="release-copy">
+            <p class="eyebrow"><span class="pulse"></span>Version 0.1</p>
+            <h2 id="release-title">Prêt quand<br /><span class="gradient-text">vous l’êtes.</span></h2>
+            <p class="section-lede">
+              Vela est en développement actif. macOS passe en premier, Windows et Linux suivent.
+              En attendant les installateurs signés, voici exactement ce qui fonctionne déjà.
+            </p>
+            <div class="release-actions">
+              <a class="btn btn-primary" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.1.0">
+                Télécharger v0.1.0
+                <svg class="icon"><use href="#i-arrow" /></svg>
+              </a>
+              <button class="btn btn-glass" type="button" data-open-release>
+                Lire la note de version
+              </button>
+              <span class="release-footnote">Builds non signés · macOS 14+</span>
+            </div>
+          </div>
+
+          <div class="release-platforms" aria-label="Disponibilité par plateforme">
+            <div class="platform-row">
+              <span class="platform-icon"><svg class="icon"><use href="#i-monitor" /></svg></span>
+              <span class="platform-copy"><strong>macOS</strong><small>Apple Silicon · macOS 14+</small></span>
+              <span class="platform-status is-soon">Disponible</span>
+            </div>
+            <div class="platform-row">
+              <span class="platform-icon">⊞</span>
+              <span class="platform-copy"><strong>Windows</strong><small>x64 · Windows 10/11</small></span>
+              <span class="platform-status is-soon">Disponible</span>
+            </div>
+            <div class="platform-row">
+              <span class="platform-icon">◈</span>
+              <span class="platform-copy"><strong>Linux</strong><small>AppImage · .deb</small></span>
+              <span class="platform-status is-soon">Disponible</span>
+            </div>
+            <p class="platform-note"><svg class="icon"><use href="#i-lock" /></svg>Aucun compte, aucun e-mail demandé.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="#top" aria-label="Vela, retour en haut">
+            <span class="brand-mark">V</span><span class="brand-name">Vela</span>
+          </a>
+          <p>Le web, votre atelier.<br />Un navigateur de travail pour vous et vos agents.</p>
+          <span class="footer-badge"><i></i>Aucune télémétrie</span>
+        </div>
+        <div class="footer-cols">
+          <div><span>Produit</span><a href="#navigateur">Onglets &amp; dossiers</a><a href="#agent">Agent</a><a href="#modeles">Modèles</a><a href="#confidentialite">Confidentialité</a></div>
+          <div><span>La suite</span><a href="#release">Version 0.1</a><a href="#interface">Interface</a><a href="#release">Plateformes</a><a href="#top">Retour en haut</a></div>
+          <div><span>Technique</span><span class="footer-muted">Electron</span><span class="footer-muted">React</span><span class="footer-muted">Chromium</span><span class="footer-muted">MIT</span></div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Vela</span>
+        <span>Aucun compte. Aucun serveur. Aucune télémétrie.</span>
+        <a href="#top">Haut de page <span aria-hidden="true">↑</span></a>
+      </div>
+    </footer>
+
+    <dialog class="release-dialog" id="release-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-card glass-card">
+        <header class="dialog-head">
+          <div>
+            <p class="eyebrow"><span class="pulse"></span>Vela 0.1</p>
+            <h2 id="dialog-title">Ce qui est déjà là.</h2>
+            <p class="dialog-lede">Une version de travail, testée sur macOS. Voici le périmètre exact.</p>
+          </div>
+          <button class="dialog-close" type="button" data-close-release aria-label="Fermer la note de version">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </header>
+        <div class="dialog-body">
+          <div class="dialog-grid">
+            <div>
+              <h3>Navigateur</h3>
+              <ul>
+                <li>Espaces isolés par partition Chromium</li>
+                <li>Onglets verticaux, dossiers repliables</li>
+                <li>Glisser-déposer et épinglage</li>
+                <li>Vue scindée redimensionnable</li>
+                <li>Palette ⌘K pour tout atteindre</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Agent &amp; modèles</h3>
+              <ul>
+                <li>Démo locale sans réseau</li>
+                <li>Dix fournisseurs, clés dans le trousseau</li>
+                <li>Test de clé et erreurs lisibles</li>
+                <li>Sources choisies, étapes visibles</li>
+                <li>Rapport Markdown enregistré en note</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Le reste</h3>
+              <ul>
+                <li>Brief du jour calculé localement</li>
+                <li>Notes Markdown dans de vrais fichiers</li>
+                <li>Bloqueur de publicités et traqueurs</li>
+                <li>Thèmes clair, sombre, système</li>
+                <li>Restauration de session et d’onglets</li>
+              </ul>
+            </div>
+          </div>
+          <p class="dialog-note">
+            Cette page est une présentation : aucun installateur n’est encore distribué. Les builds
+            macOS et Windows arrivent après la signature ; Windows et Linux restent en préparation.
+          </p>
+          <div class="dialog-actions">
+            <span>Vela 0.1 · projet indépendant</span>
+            <button class="btn btn-primary btn-sm" type="button" data-close-release>Fermer</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+  </body>
+</html>

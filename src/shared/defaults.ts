@@ -1,0 +1,73 @@
+import { HOME_URL, type PersistedState, type ProviderId, type ProviderSettings, type Settings, type Space, type TabGroup, type TabState } from './types'
+import { PROVIDERS, providerDefaults } from './providers'
+
+export const SPACE_COLORS = ['#5B7DFF', '#3FA98A', '#A88CFF', '#E6B95C', '#E07A9E', '#4FB6D8']
+
+export function defaultProviders(): Record<ProviderId, ProviderSettings> {
+  return Object.fromEntries(PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])) as Record<
+    ProviderId,
+    ProviderSettings
+  >
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  theme: 'system',
+  searchEngine: 'duckduckgo',
+  blockTrackers: true,
+  sidebarCollapsed: false,
+  onboarded: false,
+  agent: {
+    mode: 'demo',
+    provider: 'openai',
+    providers: defaultProviders()
+  }
+}
+
+export function newId(): string {
+  return globalThis.crypto.randomUUID()
+}
+
+export function createSpace(name = 'Personnel', color = SPACE_COLORS[0], now = Date.now()): Space {
+  const id = newId()
+  return { id, name, color, partition: `persist:vela-${id}`, createdAt: now }
+}
+
+export function createGroup(spaceId: string, name: string, color: string, now = Date.now()): TabGroup {
+  return { id: newId(), spaceId, name, color, collapsed: false, createdAt: now }
+}
+
+export function createTab(spaceId: string, now = Date.now(), patch: Partial<TabState> = {}): TabState {
+  return {
+    id: newId(),
+    spaceId,
+    url: HOME_URL,
+    title: 'Nouvel onglet',
+    pinned: false,
+    createdAt: now,
+    lastActiveAt: now,
+    ...patch
+  }
+}
+
+export function createDefaultState(now = Date.now()): PersistedState {
+  const space = createSpace('Personnel', SPACE_COLORS[0], now)
+  const tab = createTab(space.id, now)
+  return {
+    version: 1,
+    spaces: [space],
+    tabs: [tab],
+    groups: [],
+    activeSpaceId: space.id,
+    activeTabBySpace: { [space.id]: tab.id },
+    secondTabBySpace: { [space.id]: null },
+    split: false,
+    splitRatio: 0.5,
+    settings: {
+      ...DEFAULT_SETTINGS,
+      agent: { mode: 'demo', provider: 'openai', providers: defaultProviders() }
+    },
+    history: [],
+    closed: [],
+    tasks: []
+  }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vela">
+  <defs>
+    <linearGradient id="g" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#62c8ff" />
+      <stop offset=".52" stop-color="#5b7dff" />
+      <stop offset="1" stop-color="#a88cff" />
+    </linearGradient>
+    <linearGradient id="v" x1="22" y1="18" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#081220" />
+      <stop offset="1" stop-color="#15233b" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)" />
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="none" stroke="#ffffff" stroke-opacity=".28" />
+  <path d="M18 19h8.6l5.7 20.4L38 19h8l-9.6 30h-8.8L18 19Z" fill="url(#v)" />
+</svg>
