@@ -3063,6 +3063,21 @@ kbd {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* Le pied de la liste vit hors du padding de l’éditeur : il s’aligne donc
+   sur la recherche et les actions, et le libellé de gauche s’ellipse au
+   lieu de pousser « Ouvrir le dossier » hors du tiroir. */
+.note-foot-inset {
+  padding: 9px 14px 12px;
+}
+
+.note-foot-inset > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- Réglages -------------------------------------------------- */

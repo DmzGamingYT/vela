@@ -303,7 +303,7 @@ export default function NotesDrawer() {
             })}
           </div>
 
-          <footer className="note-foot">
+          <footer className="note-foot note-foot-inset">
             <span>
               {space ? `Espace ${space.name}` : 'Vela'} · fichiers .md
             </span>
