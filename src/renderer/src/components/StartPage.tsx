@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { hostOf } from '@shared/url'
 import { greeting, initials, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
@@ -15,10 +16,12 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const view = useBrowser((state) => state.view)
   const navigate = useBrowser((state) => state.navigate)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const [tasksOpen, setTasksOpen] = useState(false)
 
   if (!view) return null
 
   const recent = view.history.filter((entry) => /^https?:/i.test(entry.url)).slice(0, 5)
+  const openTasks = view.tasks.filter((task) => !task.done).length
 
   return (
     <div className="start">
@@ -40,7 +43,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </button>
         </header>
 
-        <div className="start-columns">
+        <div className="start-body">
           <section className="start-section recent">
             <div className="section-head">
               <h2>Récemment</h2>
@@ -90,9 +93,25 @@ export default function StartPage({ tabId }: { tabId: string }) {
             )}
           </section>
 
-          <aside className="start-aside">
-            <TasksCard />
-          </aside>
+          <section className="start-tasks" data-open={tasksOpen}>
+            <button
+              type="button"
+              className="tasks-toggle"
+              aria-expanded={tasksOpen}
+              aria-controls="start-tasks-panel"
+              onClick={() => setTasksOpen((open) => !open)}
+            >
+              <Icon name="chevron-right" size={13} />
+              <span>Tâches du jour</span>
+              <span className="tasks-count">{String(openTasks).padStart(2, '0')}</span>
+            </button>
+
+            {tasksOpen && (
+              <div id="start-tasks-panel">
+                <TasksCard />
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>
