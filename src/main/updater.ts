@@ -1,4 +1,4 @@
-import { app, shell } from 'electron'
+import { app, powerMonitor, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 
 export type UpdateState =
@@ -19,7 +19,14 @@ export interface UpdateInfo {
   releaseUrl: string
 }
 
-const RELEASE_URL = 'https://github.com/DmzGamingYT/vela/releases/tag/v0.1.0'
+const RELEASE_URL = 'https://github.com/DmzGamingYT/vela/releases/latest'
+
+/** Premier contrôle silencieux après le démarrage. */
+const FIRST_CHECK_DELAY = 12_000
+/** Contrôle périodique en arrière-plan. */
+const CHECK_INTERVAL = 3 * 60 * 60 * 1000
+/** Ne pas re-vérifier à chaque changement de fenêtre. */
+const MIN_GAP = 30 * 60 * 1000
 
 let snapshot: UpdateInfo = {
   state: 'idle',
@@ -32,6 +39,8 @@ let snapshot: UpdateInfo = {
 
 let emit: ((info: UpdateInfo) => void) | null = null
 let started = false
+let inFlight = false
+let lastCheck = 0
 
 function set(patch: Partial<UpdateInfo>): void {
   snapshot = { ...snapshot, ...patch, currentVersion: app.getVersion() }
@@ -54,6 +63,10 @@ export function updateStatus(): UpdateInfo {
   return { ...snapshot }
 }
 
+/**
+ * Vérifie les mises à jour. Quand une version est trouvée, electron-updater la
+ * télécharge tout seul (autoDownload) : aucun clic nécessaire.
+ */
 export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo> {
   if (!app.isPackaged) {
     set({
@@ -62,6 +75,13 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
     })
     return updateStatus()
   }
+  // Un contrôle déjà en cours suffit : on évite les requêtes concurrentes
+  // (focus, réveil, minuterie) sur le même update.
+  if (inFlight) return updateStatus()
+  if (!userInitiated && Date.now() - lastCheck < MIN_GAP) return updateStatus()
+
+  inFlight = true
+  lastCheck = Date.now()
   set({ state: 'checking', progress: 0, message: null })
   try {
     const result = await autoUpdater.checkForUpdates()
@@ -80,6 +100,8 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
     } else {
       set({ state: 'idle', message: null })
     }
+  } finally {
+    inFlight = false
   }
   return updateStatus()
 }
@@ -114,27 +136,36 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   started = true
   emit = (info) => send('update:event', info)
 
-  autoUpdater.autoDownload = false
+  // Tout est automatique : téléchargement dès qu'une version sort, installation
+  // à la fermeture de l'app. L'utilisateur n'a rien à faire.
+  autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
+  autoUpdater.autoRunAppAfterInstall = true
   autoUpdater.allowDowngrade = false
+  autoUpdater.allowPrerelease = false
 
   autoUpdater.on('update-available', (info) => {
     set({
       state: 'available',
       version: versionOf(info),
       progress: 0,
-      message: null,
+      message: 'Téléchargement en arrière-plan…',
       releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${versionOf(info) ?? app.getVersion()}`
     })
   })
   autoUpdater.on('update-downloaded', (info) => {
-    set({ state: 'downloaded', version: versionOf(info), progress: 100, message: null })
+    set({
+      state: 'downloaded',
+      version: versionOf(info),
+      progress: 100,
+      message: 'S’installe automatiquement à la fermeture.'
+    })
   })
   autoUpdater.on('download-progress', (progress) => {
     set({
       state: 'downloading',
       progress: Math.round(progress?.percent ?? 0),
-      message: null
+      message: 'Téléchargement en arrière-plan…'
     })
   })
   autoUpdater.on('update-not-available', () => {
@@ -142,19 +173,38 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
     if (snapshot.state === 'checking') set({ state: 'not-available', message: 'Vela est à jour.' })
   })
   autoUpdater.on('error', (error) => {
-    // Les erreurs réseau/404 au démarrage auto restent silencieuses.
-    if (snapshot.state === 'checking' || snapshot.state === 'downloading') {
+    // Les erreurs réseau/404 du contrôle automatique restent silencieuses.
+    if (snapshot.state === 'downloading') {
       set({
         state: 'error',
         message: error instanceof Error ? error.message.slice(0, 220) : 'Mise à jour impossible.'
       })
+    } else {
+      set({ state: 'idle', message: null })
     }
   })
 
-  // Contrôle silencieux ~20 s après le démarrage, seulement en build packagé.
-  if (app.isPackaged) {
-    setTimeout(() => {
+  if (!app.isPackaged) return
+
+  // Contrôle silencieux au démarrage, puis toutes les 3 h…
+  setTimeout(() => {
+    void checkForUpdates(false)
+  }, FIRST_CHECK_DELAY).unref?.()
+
+  const timer = setInterval(() => {
+    void checkForUpdates(false)
+  }, CHECK_INTERVAL)
+  timer.unref?.()
+
+  // …et quand la machine ou l'app reprennent la main (retour de veille, focus).
+  try {
+    powerMonitor.on('resume', () => {
       void checkForUpdates(false)
-    }, 20_000)
+    })
+  } catch {
+    /* powerMonitor indisponible */
   }
+  app.on('browser-window-focus', () => {
+    void checkForUpdates(false)
+  })
 }

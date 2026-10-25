@@ -171,9 +171,9 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     window.vela.updates.onEvent((info) => {
       set({ update: info })
       if (info.state === 'available') {
-        get().toast(`Vela ${info.version ?? ''} disponible — voir Réglages → À propos.`.trim())
+        get().toast(`Vela ${info.version ?? ''} : téléchargement en arrière-plan.`.trim())
       } else if (info.state === 'downloaded') {
-        get().toast('Mise à jour téléchargée — redémarrez pour l’appliquer.')
+        get().toast('Mise à jour prête — elle s’installera quand vous quitterez Vela.')
       } else if (info.state === 'error' && info.message) {
         get().toast(info.message, 'error')
       }

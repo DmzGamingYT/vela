@@ -47,21 +47,33 @@ Les builds ne sont pas signés en v0.1 : macOS demandera un clic droit → Ouvri
 
 ## Mises à jour automatiques
 
-Vela vérifie les releases GitHub (`DmzGamingYT/vela`) via `electron-updater` :
+Vela se met à jour toute seule en arrière-plan via `electron-updater` et les releases GitHub
+(`DmzGamingYT/vela`). Aucune action à faire :
 
-- Contrôle silencieux ~20 s après le démarrage (builds installés uniquement, jamais en `npm run dev`).
-- `Réglages → À propos` affiche la version, `Vérifier`, `Télécharger`, `Redémarrer et installer`, et un lien `Releases`.
-- Le téléchargement est manuel (pas de surprise), l’installation s’applique au redémarrage.
-- macOS : `.dmg`/`.zip` (arm64 + x64) — auto-update OK. Windows : NSIS — auto-update OK. Linux : AppImage — auto-update OK ; `.deb` — ouvre la release (réinstallez le paquet).
+- Contrôle silencieux ~12 s après le démarrage, puis toutes les 3 h, au retour de veille et quand
+  la fenêtre reprend le focus (jamais plus d’une vérification toutes les 30 min).
+- Si une version existe : téléchargement automatique en arrière-plan (bandeau de progression dans
+  `Réglages → À propos`).
+- Installation automatique à la fermeture de Vela ; `Redémarrer maintenant` reste disponible pour
+  l’appliquer tout de suite. `Vérifier` et `Releases` restent dans `Réglages → À propos` pour un
+  contrôle manuel.
+- macOS : `.dmg`/`.zip` (arm64 + x64). Windows : NSIS. Linux : AppImage ; `.deb` — réinstallez le paquet.
 
-Publier une version :
+> macOS exige une signature Developer ID pour que ShipIt remplace le bundle tout seul. Sans
+> certificat Apple, le téléchargement est automatique mais l’installation peut être refusée :
+> l’app affiche alors l’erreur et le lien `Releases` (installez le `.dmg`). Windows et Linux
+> installent sans intervention.
+
+Publier une version : **rien à faire à la main**. Le workflow `.github/workflows/release.yml`
+construit les 3 plateformes et publie la release dès qu’un commit sur `main` porte une version de
+`package.json` qui n’a pas encore de release (`workflow_dispatch` permet aussi de le lancer à la
+main). Il joint les artefacts (`latest-mac.yml`, `latest.yml`, `latest-linux.yml` inclus) — c’est ce
+que lit l’updater.
 
 ```bash
-git tag v0.1.1 && git push origin v0.1.1
+npm version patch   # 0.1.1 → 0.1.2 : bump + commit
+git push            # la release se construit et se publie en arrière-plan
 ```
-
-Le workflow `.github/workflows/release.yml` construit les 3 plateformes et joint les artefacts
-(`latest-mac.yml`, `latest.yml`, `latest-linux.yml` inclus) à la release — c’est ce que lit l’updater.
 
 ## Ce qu’il sait faire
 

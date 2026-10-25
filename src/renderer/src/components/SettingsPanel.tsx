@@ -104,7 +104,6 @@ export default function SettingsPanel() {
   const toast = useBrowser((state) => state.toast)
   const update = useBrowser((state) => state.update)
   const checkUpdate = useBrowser((state) => state.checkUpdate)
-  const downloadUpdate = useBrowser((state) => state.downloadUpdate)
   const installUpdate = useBrowser((state) => state.installUpdate)
   const openReleases = useBrowser((state) => state.openReleases)
 
@@ -632,15 +631,16 @@ export default function SettingsPanel() {
           update?.state === 'checking'
             ? 'Vérification…'
             : update?.state === 'available'
-              ? `Vela ${update.version ?? ''} disponible` : update?.state === 'downloading'
-              ? `Téléchargement ${update.progress}%`
-              : update?.state === 'downloaded'
-                ? 'Prête à installer'
-                : update?.state === 'not-available'
-                  ? 'Vela est à jour'
-                  : update?.state === 'error'
-                    ? (update.message ?? 'Vérification impossible')
-                    : 'Mises à jour via GitHub Releases'
+              ? `Vela ${update.version ?? ''} — téléchargement en arrière-plan`
+              : update?.state === 'downloading'
+                ? `Téléchargement en arrière-plan ${update.progress}%`
+                : update?.state === 'downloaded'
+                  ? 'Prête — s’installe automatiquement à la fermeture'
+                  : update?.state === 'not-available'
+                    ? 'Vela est à jour'
+                    : update?.state === 'error'
+                      ? (update.message ?? 'Vérification impossible')
+                      : 'Mises à jour automatiques en arrière-plan'
         return (
           <section className="setting-block">
             <div className="about-hero">
@@ -667,12 +667,7 @@ export default function SettingsPanel() {
                 {update?.state === 'downloaded' ? (
                   <button type="button" className="action primary" onClick={() => void installUpdate()}>
                     <Icon name="download" size={15} />
-                    Redémarrer et installer
-                  </button>
-                ) : update?.state === 'available' ? (
-                  <button type="button" className="action primary" onClick={() => void downloadUpdate()}>
-                    <Icon name="download" size={15} />
-                    Télécharger
+                    Redémarrer maintenant
                   </button>
                 ) : (
                   <button
