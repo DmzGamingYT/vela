@@ -52,8 +52,8 @@
   --surface-2: rgba(255, 255, 255, 0.56);
   --ink: #161619;
   --ink-soft: #3f434d;
-  --muted: rgba(22, 22, 25, 0.56);
-  --faint: rgba(22, 22, 25, 0.38);
+  --muted: rgba(22, 22, 25, 0.62);
+  --faint: rgba(22, 22, 25, 0.47);
   --line: rgba(22, 24, 32, 0.12);
   --line-soft: rgba(22, 24, 32, 0.07);
   --edge: rgba(255, 255, 255, 0.8);
@@ -3501,25 +3501,10 @@ kbd {
   }
 }
 
+/* Orbes volontairement fixes : ce sont de gros flous (blur 46px) et les
+   animer en continu force le GPU à les recalculer à chaque image. */
 .orb {
-  animation: orb-drift 9s ease-in-out infinite alternate;
-}
-
-.orb-sage {
-  animation-delay: -3s;
-}
-
-.orb-gold {
-  animation-delay: -6s;
-}
-
-@keyframes orb-drift {
-  from {
-    transform: translate3d(-6%, -4%, 0) scale(1);
-  }
-  to {
-    transform: translate3d(6%, 5%, 0) scale(1.08);
-  }
+  animation: none;
 }
 
 .agent-mark {
@@ -5348,6 +5333,12 @@ kbd {
 }
 
 /* --- Ajustements clair ---------------------------------------- */
+
+:root[data-theme="light"] .space-chip {
+  color: color-mix(in srgb, var(--space) 68%, #23262b);
+  border-color: color-mix(in srgb, var(--space) 42%, transparent);
+  background: color-mix(in srgb, var(--space) 16%, transparent);
+}
 
 :root[data-theme="light"] .model-item,
 :root[data-theme="light"] .theme-card {
