@@ -17,9 +17,9 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:mac": "npm run build && electron-builder --mac -c.directories.output=release/mac",
+    "dist:win": "npm run build && electron-builder --win -c.directories.output=release/win",
+    "dist:linux": "npm run build && electron-builder --linux -c.directories.output=release/linux"
   },
   "dependencies": {
     "electron-updater": "^6.8.11",

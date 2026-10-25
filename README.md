@@ -35,9 +35,12 @@ Build de production et vérifications :
 npm run typecheck   # TypeScript (main, preload, renderer)
 npm test            # tests unitaires (URL, brief, agent, fournisseurs)
 npm run build       # build dans out/
-npm run dist:mac    # .dmg + .zip (arm64 et x64)
-npm run dist:win    # installateur NSIS
-npm run dist:linux  # AppImage + .deb
+npm run dist:mac    # .dmg + .zip (arm64 et x64) → release/mac/
+npm run dist:win    # installateur NSIS → release/win/
+npm run dist:linux  # AppImage + .deb → release/linux/
+
+Chaque plateforme a son dossier dans `release/` : `mac/`, `win/`, `linux/`
+(avec `latest-*.yml` pour la mise à jour automatique).
 ```
 
 Les builds ne sont pas signés en v0.1 : macOS demandera un clic droit → Ouvrir, Windows affichera SmartScreen.
