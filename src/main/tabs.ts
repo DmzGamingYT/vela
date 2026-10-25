@@ -104,8 +104,13 @@ export class TabManager {
     return ses
   }
 
-  /** Crée la vue native si nécessaire. Les onglets d'accueil n'en ont pas. */
-  ensure(tabId: string): WebContentsView | null {
+  /**
+   * Crée la vue native si nécessaire. Les onglets d'accueil n'en ont pas.
+   * `autoLoad = false` laisse l'appelant lancer lui-même l'unique navigation
+   * (sinon `navigate` chargeait l'URL une première fois ici, puis une seconde
+   * fois juste après : deux requêtes pour une seule entrée).
+   */
+  ensure(tabId: string, autoLoad = true): WebContentsView | null {
     const tab = this.host.tab(tabId)
     if (!tab || isHomeUrl(tab.url)) return null
     const existing = this.views.get(tabId)
@@ -137,9 +142,11 @@ export class TabManager {
     win.contentView.addChildView(view)
     this.wire(tabId, view)
     this.evictExcess(new Set(this.visible))
-    void view.webContents.loadURL(tab.url).catch(() => {
-      /* did-fail-load remonte déjà l'erreur */
-    })
+    if (autoLoad) {
+      void view.webContents.loadURL(tab.url).catch(() => {
+        /* did-fail-load remonte déjà l'erreur */
+      })
+    }
     this.host.changed()
     return view
   }
@@ -254,7 +261,7 @@ export class TabManager {
     }
     this.runtimes.set(tabId, { loading: true, error: null })
     this.host.patchTab(tabId, { url: target.url, title: titleFromUrl(target.url), favicon: undefined })
-    const view = this.ensure(tabId)
+    const view = this.ensure(tabId, false)
     if (view) {
       void view.webContents.loadURL(target.url).catch(() => {})
       view.webContents.focus()

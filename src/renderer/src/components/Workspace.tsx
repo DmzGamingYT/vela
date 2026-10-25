@@ -84,6 +84,13 @@ export default function Workspace() {
 
   const ratio = liveRatio ?? view?.splitRatio ?? 0.5
   const errorKey = view?.tabs.map((tab) => (tab.error ? '1' : '0')).join('') ?? ''
+  // Les onglets d'accueil n'ont pas de page native : quand un onglet passe de
+  // l'accueil à une page (ou l'inverse), la scène change de contenu sans que
+  // l'identifiant de l'onglet bouge. Cette signature force un nouveau calcul
+  // de disposition, sinon la page reste chargée mais invisible.
+  const paneKey = view
+    ? view.tabs.map((tab) => `${tab.id}:${isHomeUrl(tab.url) ? 'h' : 'p'}`).join('|')
+    : ''
 
   const sendLayout = useCallback(() => {
     const state = useBrowser.getState()
@@ -137,7 +144,7 @@ export default function Workspace() {
     workMode,
     resizing,
     view?.settings.sidebarCollapsed,
-    view?.tabs.length
+    paneKey
   ])
 
   if (!view) return <main className="workspace" />
