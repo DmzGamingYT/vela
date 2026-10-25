@@ -75,6 +75,15 @@ npm version patch   # 0.1.1 → 0.1.2 : bump + commit
 git push            # la release se construit et se publie en arrière-plan
 ```
 
+## Browse et Work
+
+Deux modes, un seul commutateur en haut de la barre latérale (ou `⌘⇧A`).
+
+- **Browse** — la navigation ordinaire : onglets, dossiers, vue scindée, historique, tout le web.
+- **Work** — l’atelier : l’IA travaille dans la scène principale. On joint des onglets comme sources,
+on décrit le résultat attendu, l’agent lit et rédige en direct, puis on relit et on enregistre en note.
+Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Browse.
+
 ## Ce qu’il sait faire
 
 | | |
@@ -104,6 +113,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘⇧D` | Vue scindée |
 | `⌘E` | Notes |
 | `⌘J` | Agent |
+| `⌘⇧A` | Basculer Browse / Work |
 | `⌘⇧B` | Brief du jour |
 | `⌘S` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |

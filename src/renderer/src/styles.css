@@ -2044,6 +2044,44 @@ kbd {
   padding: 4vh 20px;
 }
 
+/* --- Mode Work : l’atelier occupe la scène --------------------
+   Browse navigue, Work fait travailler l’IA. L’atelier n’est plus
+   une surimpression : il prend la place des pages, sans cadre. */
+
+.workspace.work {
+  background: var(--paper);
+}
+
+.work-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.agent[data-embedded="true"] {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  animation: none;
+}
+
+.agent[data-embedded="true"] .agent-head {
+  padding: 16px 26px 14px;
+}
+
+.agent[data-embedded="true"] .agent-left {
+  padding: 22px 24px;
+}
+
+.agent[data-embedded="true"] .agent-right {
+  background: transparent;
+}
+
 .agent {
   width: min(1180px, 100%);
   height: min(820px, 92vh);

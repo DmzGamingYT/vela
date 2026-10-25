@@ -546,6 +546,9 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       case 'agent':
         state.setOverlay(state.overlay === 'agent' ? null : 'agent')
         break
+      case 'work':
+        state.setWorkMode(state.workMode === 'work' ? 'browse' : 'work')
+        break
       case 'brief':
         state.setOverlay(state.overlay === 'brief' ? null : 'brief')
         break

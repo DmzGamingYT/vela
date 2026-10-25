@@ -25,7 +25,7 @@ const CAPABILITIES = [
   }
 ]
 
-export default function AgentCanvas() {
+export default function AgentCanvas({ embedded = false }: { embedded?: boolean }) {
   const view = useBrowser((state) => state.view)
   const agent = useBrowser((state) => state.agent)
   const setOverlay = useBrowser((state) => state.setOverlay)
@@ -49,6 +49,11 @@ export default function AgentCanvas() {
 
   const reportRef = useRef<HTMLDivElement>(null)
   const promptRef = useRef<HTMLTextAreaElement>(null)
+
+  // Dans l’atelier (mode Work), la demande a le focus dès l’arrivée.
+  useEffect(() => {
+    if (embedded) promptRef.current?.focus()
+  }, [embedded])
 
   const running = agent.status === 'running'
   const sources = (view?.tabs ?? [])
@@ -90,26 +95,37 @@ export default function AgentCanvas() {
     }
   }
 
-  return (
-    <div className="overlay agent-overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="agent" role="dialog" aria-label="Agent Vela" onMouseDown={(event) => event.stopPropagation()}>
+  const canvas = (
+    <div
+      className="agent"
+      data-embedded={embedded}
+      role={embedded ? 'region' : 'dialog'}
+      aria-label={embedded ? 'Atelier Vela' : 'Agent Vela'}
+      onMouseDown={embedded ? undefined : (event) => event.stopPropagation()}
+    >
         <header className="agent-head">
           <div className="agent-identity">
             <span className="agent-mark">
               <Icon name="sparkles" size={18} />
             </span>
             <div>
-              <h1>Agent Vela</h1>
-              <p>Lit les onglets que vous joignez, puis écrit un rapport utilisable.</p>
+              <h1>{embedded ? 'Atelier' : 'Agent Vela'}</h1>
+              <p>
+                {embedded
+                  ? 'Le mode où l’IA travaille : joignez des onglets, demandez, relisez.'
+                  : 'Lit les onglets que vous joignez, puis écrit un rapport utilisable.'}
+              </p>
             </div>
           </div>
           <div className="agent-head-actions">
             <span className="mode-chip" data-mode={modeLabel}>
               {modeLabel === 'api' ? 'Modèle connecté' : 'Démo locale'}
             </span>
-            <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
-              <Icon name="close" size={18} />
-            </button>
+            {!embedded && (
+              <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
+                <Icon name="close" size={18} />
+              </button>
+            )}
           </div>
         </header>
 
@@ -326,8 +342,15 @@ export default function AgentCanvas() {
               </div>
             )}
           </section>
-        </div>
       </div>
+    </div>
+  )
+
+  if (embedded) return <div className="work-stage">{canvas}</div>
+
+  return (
+    <div className="overlay agent-overlay" onMouseDown={() => setOverlay(null)}>
+      {canvas}
     </div>
   )
 }

@@ -73,6 +73,7 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
         item('Vue scindée', 'split', send, 'Cmd+Shift+D'),
         item('Notes', 'notes', send, 'Cmd+E'),
         item('Agent', 'agent', send, 'Cmd+J'),
+        item('Atelier (Work)', 'work', send, 'Cmd+Shift+A'),
         item('Brief du jour', 'brief', send, 'Cmd+Shift+B'),
         { type: 'separator' },
         item('Masquer la barre latérale', 'sidebar', send, 'Cmd+S'),

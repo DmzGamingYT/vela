@@ -242,6 +242,7 @@ export type ShortcutAction =
   | 'split'
   | 'notes'
   | 'agent'
+  | 'work'
   | 'brief'
   | 'settings'
   | 'sidebar'

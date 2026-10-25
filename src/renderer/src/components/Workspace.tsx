@@ -4,6 +4,7 @@ import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { clamp } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import AgentCanvas from './AgentCanvas'
 import { Icon } from './Icon'
 import StatusBar from './StatusBar'
 import PaneHeader from './PaneHeader'
@@ -71,6 +72,7 @@ function Pane({
 export default function Workspace() {
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
+  const workMode = useBrowser((state) => state.workMode)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const liveRatio = useBrowser((state) => state.splitRatioLive)
   const setSplitRatio = useBrowser((state) => state.setSplitRatio)
@@ -86,7 +88,8 @@ export default function Workspace() {
   const sendLayout = useCallback(() => {
     const state = useBrowser.getState()
     if (!state.view) return
-    if (state.overlay || resizingRef.current) {
+    // En mode Work, l’atelier couvre la scène : aucune page native visible.
+    if (state.workMode === 'work' || state.overlay || resizingRef.current) {
       window.vela.views.layout({ panes: [], overlay: true })
       return
     }
@@ -131,6 +134,7 @@ export default function Workspace() {
     errorKey,
     notesOpen,
     overlay,
+    workMode,
     resizing,
     view?.settings.sidebarCollapsed,
     view?.tabs.length
@@ -143,6 +147,15 @@ export default function Workspace() {
   const split = Boolean(view.split && second)
 
   if (!active) return <main className="workspace" />
+
+  if (workMode === 'work') {
+    return (
+      <main className="workspace work" data-collapsed={view.settings.sidebarCollapsed}>
+        <AgentCanvas embedded />
+        <StatusBar />
+      </main>
+    )
+  }
 
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>): void => {
     event.preventDefault()

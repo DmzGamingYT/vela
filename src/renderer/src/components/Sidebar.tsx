@@ -241,17 +241,6 @@ export default function Sidebar() {
       </button>
 
       <div className="tabs-scroll">
-        {workMode === 'work' && (
-          <div className="work-panel">
-            <div className="tabs-head"><span>Work</span><span className="tabs-count">{view.tasks.filter((t) => !t.done).length} tâches</span></div>
-            <button type="button" className="action primary wide" onClick={() => openAgent()}><Icon name="sparkles" size={14} /> Ouvrir le canvas</button>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button type="button" className="action" onClick={() => setOverlay('downloads')}>Téléchargements {view.downloads.length}</button>
-              <button type="button" className="action" onClick={() => setOverlay('processes')}>Processus</button>
-            </div>
-            <p className="setting-hint">Mode Work : épinglés + tâches + agent. Les onglets lourds restent suspendus.</p>
-          </div>
-        )}
         {pinnedCount > 0 && (
           <>
             <div className="tabs-head">
@@ -263,7 +252,7 @@ export default function Sidebar() {
         )}
 
         <div className="tabs-head">
-          <span>Onglets</span>
+          <span>{workMode === 'work' ? 'Sources de l’atelier' : 'Onglets'}</span>
           <span className="tabs-count">{unpinned.length}</span>
           <span className="tabs-tools">
             <button

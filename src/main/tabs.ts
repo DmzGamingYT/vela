@@ -510,6 +510,8 @@ export class TabManager {
       action = 'split'
     } else if (key === 'b') {
       action = 'brief'
+    } else if (key === 'a') {
+      action = 'work'
     }
 
     if (!action) return
