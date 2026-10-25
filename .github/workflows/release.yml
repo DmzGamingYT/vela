@@ -1,0 +1,125 @@
+name: Release
+
+# Publication entièrement automatique : dès qu'un commit arrive sur `main` avec
+# une version de package.json qui n'a pas encore de release, les trois
+# installateurs sont construits et publiés sur GitHub. Rien à faire à la main.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      publish: ${{ steps.read.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "La release v$VERSION existe déjà — rien à publier."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "Nouvelle version v$VERSION — build et publication."
+          fi
+
+  build-mac:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          if-no-files-found: error
+          path: |
+            release/mac/*.dmg
+            release/mac/*.zip
+            release/mac/*.blockmap
+            release/mac/latest-mac.yml
+
+  build-win:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win
+          if-no-files-found: error
+          path: |
+            release/win/*.exe
+            release/win/*.blockmap
+            release/win/latest.yml
+
+  build-linux:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:linux -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          if-no-files-found: error
+          path: |
+            release/linux/*.AppImage
+            release/linux/*.deb
+            release/linux/*.blockmap
+            release/linux/latest-linux.yml
+
+  publish:
+    needs: [version, build-mac, build-win, build-linux]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Créer la release et joindre les installateurs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          ls -lh dist
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Vela $VERSION" \
+            --generate-notes
+          gh release upload "v$VERSION" dist/* --repo "$GITHUB_REPOSITORY" --clobber
