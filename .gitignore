@@ -1,6 +1,10 @@
 release/
 node_modules/
 out/
+rust/target/
+build/Vela.iconset/
+build/icon.iconset/
 .DS_Store
 *.log
 .freebuff/
+*.blockmap
