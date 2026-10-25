@@ -38,6 +38,8 @@ export default function CommandBar() {
   const toggleTask = useBrowser((state) => state.toggleTask)
   const reload = useBrowser((state) => state.reload)
   const updateSettings = useBrowser((state) => state.updateSettings)
+  const workMode = useBrowser((state) => state.workMode)
+  const setWorkMode = useBrowser((state) => state.setWorkMode)
 
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
@@ -163,6 +165,28 @@ export default function CommandBar() {
         hint: shortcut(','),
         icon: 'settings',
         run: run(() => setOverlay('settings'))
+      },
+      {
+        id: 'action-work',
+        group: 'Actions',
+        label: workMode === 'work' ? 'Revenir à Browse' : 'Passer en Work',
+        hint: shortcut('⇧A'),
+        icon: 'sparkles',
+        run: run(() => setWorkMode(workMode === 'work' ? 'browse' : 'work'))
+      },
+      {
+        id: 'action-processes',
+        group: 'Actions',
+        label: 'Gestionnaire de processus',
+        icon: 'panel',
+        run: run(() => setOverlay('processes'))
+      },
+      {
+        id: 'action-downloads',
+        group: 'Actions',
+        label: 'Téléchargements',
+        icon: 'download',
+        run: run(() => setOverlay('downloads'))
       }
     ]
     if (active) {
@@ -266,7 +290,9 @@ export default function CommandBar() {
     toggleNotes,
     toggleTask,
     reload,
-    updateSettings
+    updateSettings,
+    workMode,
+    setWorkMode
   ])
 
   useEffect(() => {
