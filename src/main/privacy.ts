@@ -1,6 +1,7 @@
 import { session, webContents, type Session } from 'electron'
 import { isAuthPage, isTracker } from './blocklist'
 import { chromeUserAgent } from '@shared/userAgent'
+import { ACCEPT_LANGUAGES } from './identity'
 
 const attached = new WeakSet<Session>()
 
@@ -50,6 +51,8 @@ export function userAgentForPlatform(): string {
 
 export function prepareSession(partition: string): Session {
   const ses = session.fromPartition(partition)
-  ses.setUserAgent(userAgentForPlatform(), 'fr-FR,fr;q=0.9,en;q=0.8')
+  // Second argument = liste de langues : Chromium construit lui-même les q-values.
+  // Passer un en-tête complet ici produisait « fr-FR,fr;q=0.9;q=0.9,… », invalide.
+  ses.setUserAgent(userAgentForPlatform(), ACCEPT_LANGUAGES)
   return ses
 }

@@ -92,6 +92,7 @@ Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Brow
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
 | **Espaces isolés** | Une partition Chromium par espace : deux comptes au même site, sans conflit. |
+| **Identité de navigation** | UA, client hints (`Sec-CH-UA`) et langues alignés sur un Chrome officiel, onglets comme popups : les sites ne prennent pas Vela pour un navigateur embarqué. |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
@@ -187,6 +188,8 @@ Aperçu local : `python3 -m http.server 4173 --directory site/public`.
 - Pas de zoom par onglet, pas de gestionnaire de téléchargements.
 - Le filtre est une liste embarquée : pas de mise à jour distante ni de filtrage cosmétique.
 - Aucune clé n’est fournie : le mode connecté demande la vôtre pour être essayé.
+- La connexion Google reste soumise au jugement de Google : si un profil a déjà été marqué, ouvrez
+  un nouvel espace (session Chromium vierge) pour repartir d’une identité propre.
 
 ## Licence
 

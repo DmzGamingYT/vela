@@ -3,6 +3,7 @@ import { app, BrowserWindow, globalShortcut, nativeTheme, shell } from 'electron
 import { Browser } from './browser'
 import { installMenu } from './menu'
 import { initUpdater } from './updater'
+import { applyBrowserIdentity } from './identity'
 
 app.setName('Vela')
 if (process.env.VELA_USER_DATA) app.setPath('userData', process.env.VELA_USER_DATA)
@@ -86,6 +87,14 @@ function main(): void {
       if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)
     })
     createWindow()
+    // Fenêtres ouvertes par une page (connexion OAuth, popup d'un site) : elles
+    // doivent annoncer la même identité que les onglets. Enregistré après la
+    // coque pour ne jamais toucher au renderer local.
+    app.on('web-contents-created', (_event, contents) => {
+      if (contents.getType() === 'window' && contents.id !== win?.webContents.id) {
+        applyBrowserIdentity(contents)
+      }
+    })
     const accelerator = process.platform === 'darwin' ? 'Alt+Command+Space' : 'Ctrl+Alt+Space'
     try {
       globalShortcut.register(accelerator, () => {

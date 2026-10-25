@@ -12,6 +12,7 @@ import type {
 import { shouldOpenAsPopup } from '@shared/navigation'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
+import { applyBrowserIdentity } from './identity'
 
 export interface TabHost {
   tab(id: string): TabState | undefined
@@ -154,6 +155,7 @@ export class TabManager {
   private wire(tabId: string, view: WebContentsView): void {
     const wc = view.webContents
     this.byWebContents.set(wc.id, tabId)
+    applyBrowserIdentity(wc)
     const patch = (patchValue: Partial<TabState>): void => this.host.patchTab(tabId, patchValue)
 
     wc.setWindowOpenHandler((details) => {
