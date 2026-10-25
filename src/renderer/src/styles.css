@@ -4013,7 +4013,8 @@ body {
 }
 
 .start-hero {
-  padding-bottom: 34px;
+  /* Héro allégé : plus de chapô ni de pastilles — juste le titre et le champ. */
+  padding-bottom: 14px;
 }
 
 .start-hero::before {
@@ -4074,6 +4075,10 @@ body {
   background: var(--fill);
   border: 1px solid var(--edge);
   box-shadow: var(--inner-light-soft);
+}
+
+.start-columns {
+  margin-top: 38px;
 }
 
 .section-head h2 {
