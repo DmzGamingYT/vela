@@ -122,6 +122,16 @@
         <rect x="3" y="4" width="18" height="12" rx="2" />
         <path d="M8 20h8M12 16v4" />
       </symbol>
+      <symbol id="i-windows" viewBox="0 0 24 24">
+        <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.4" />
+        <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.4" />
+        <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.4" />
+        <rect x="13" y="13" width="7.5" height="7.5" rx="1.4" />
+      </symbol>
+      <symbol id="i-package" viewBox="0 0 24 24">
+        <path d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2Z" />
+        <path d="m4.5 7.2 7.5 4.2 7.5-4.2M12 11.4V21" />
+      </symbol>
     </svg>
 
     <div class="sky" aria-hidden="true">
@@ -154,7 +164,7 @@
       </nav>
 
       <div class="nav-actions">
-        <span class="nav-note">macOS d’abord</span>
+        <span class="nav-note">macOS · Windows · Linux</span>
         <button class="theme-toggle" type="button" aria-label="Passer au thème clair">
           <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
           <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
@@ -347,12 +357,11 @@
               <span class="float-mark"><svg class="icon"><use href="#i-sparkles" /></svg></span>
               <span class="float-title"><strong>Agent</strong><small>3 sources · en direct</small></span>
               <span class="live-dot"></span>
-            </div>
-            <ol class="float-steps">
-              <li class="is-done"><span>1</span>Lectures croisées</li>
-              <li class="is-done"><span>2</span>Comparaison</li>
-              <li class="is-live"><span>3</span>Rédaction du rapport</li>
-            </ol>
+            </div>              <ol class="float-steps">
+                <li class="is-done"><span>1</span>Lectures croisées</li>
+                <li class="is-done"><span>2</span>Comparaison</li>
+                <li class="is-live"><span>3</span>Rédaction du rapport</li>
+              </ol>
             <p class="float-quote">« Trois offres, un tableau, une recommandation. »</p>
           </div>
 
@@ -884,12 +893,12 @@
             <p class="eyebrow"><span class="pulse"></span>Version 0.1</p>
             <h2 id="release-title">Prêt quand<br /><span class="gradient-text">vous l’êtes.</span></h2>
             <p class="section-lede">
-              Vela est en développement actif. macOS passe en premier, Windows et Linux suivent.
-              En attendant les installateurs signés, voici exactement ce qui fonctionne déjà.
+              Vela est en développement actif. Les trois installateurs — macOS, Windows et Linux —
+              sont publiés à chaque version. Voici exactement ce qui fonctionne déjà.
             </p>
             <div class="release-actions">
-              <a class="btn btn-primary" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.1.0">
-                Télécharger v0.1.0
+              <a class="btn btn-primary" href="https://github.com/DmzGamingYT/vela/releases/latest">
+                Télécharger la dernière version
                 <svg class="icon"><use href="#i-arrow" /></svg>
               </a>
               <button class="btn btn-glass" type="button" data-open-release>
@@ -902,18 +911,18 @@
           <div class="release-platforms" aria-label="Disponibilité par plateforme">
             <div class="platform-row">
               <span class="platform-icon"><svg class="icon"><use href="#i-monitor" /></svg></span>
-              <span class="platform-copy"><strong>macOS</strong><small>Apple Silicon · macOS 14+</small></span>
-              <span class="platform-status is-soon">Disponible</span>
+              <span class="platform-copy"><strong>macOS</strong><small>Apple Silicon et Intel · macOS 14+</small></span>
+              <span class="platform-status is-ready">Disponible</span>
             </div>
             <div class="platform-row">
-              <span class="platform-icon">⊞</span>
-              <span class="platform-copy"><strong>Windows</strong><small>x64 · Windows 10/11</small></span>
-              <span class="platform-status is-soon">Disponible</span>
+              <span class="platform-icon"><svg class="icon"><use href="#i-windows" /></svg></span>
+              <span class="platform-copy"><strong>Windows</strong><small>x64 · Windows 10 et 11</small></span>
+              <span class="platform-status is-ready">Disponible</span>
             </div>
             <div class="platform-row">
-              <span class="platform-icon">◈</span>
+              <span class="platform-icon"><svg class="icon"><use href="#i-package" /></svg></span>
               <span class="platform-copy"><strong>Linux</strong><small>AppImage · .deb</small></span>
-              <span class="platform-status is-soon">Disponible</span>
+              <span class="platform-status is-ready">Disponible</span>
             </div>
             <p class="platform-note"><svg class="icon"><use href="#i-lock" /></svg>Aucun compte, aucun e-mail demandé.</p>
           </div>
@@ -989,8 +998,9 @@
             </div>
           </div>
           <p class="dialog-note">
-            Cette page est une présentation : aucun installateur n’est encore distribué. Les builds
-            macOS et Windows arrivent après la signature ; Windows et Linux restent en préparation.
+            Les installateurs macOS, Windows et Linux sont publiés sur GitHub à chaque version. Les
+            builds ne sont pas encore signés : macOS demande un clic droit → Ouvrir, Windows affiche
+            un avertissement SmartScreen.
           </p>
           <div class="dialog-actions">
             <span>Vela 0.1 · projet indépendant</span>

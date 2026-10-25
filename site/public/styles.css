@@ -1315,7 +1315,7 @@ h3 {
 }
 
 .float-title small {
-  font-size: 8.5px;
+  font-size: 9.5px;
   color: var(--faint);
 }
 
@@ -1340,7 +1340,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--muted);
 }
 
@@ -1366,15 +1366,27 @@ h3 {
 }
 
 .float-steps .is-live span {
-  border-color: var(--accent-b);
+  position: relative;
+  border-color: transparent;
+  color: var(--accent-b);
+}
+
+/* L’anneau tourne, le chiffre reste droit : animer la pastille faisait pivoter
+   le « 3 » avec elle. */
+.float-steps .is-live span::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--accent-b);
   border-top-color: transparent;
+  border-radius: 50%;
   animation: spin 1.1s linear infinite;
 }
 
 .float-quote {
   padding-top: 10px;
   border-top: 1px solid var(--line);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.5;
   color: var(--faint);
 }
@@ -3574,7 +3586,7 @@ h3 {
 }
 
 .release-footnote {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--faint);
 }
 
@@ -3629,24 +3641,24 @@ h3 {
 }
 
 .platform-copy small {
-  font-size: 8.5px;
+  font-size: 9.5px;
   color: var(--faint);
 }
 
 .platform-status {
-  padding: 3px 7px;
+  padding: 3px 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 7.5px;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+  letter-spacing: 0.03em;
   color: var(--faint);
   white-space: nowrap;
 }
 
-.platform-status.is-soon {
+.platform-status.is-ready {
   color: var(--green);
-  border-color: rgba(136, 208, 179, 0.24);
-  background: rgba(136, 208, 179, 0.07);
+  border-color: rgba(136, 208, 179, 0.34);
+  background: rgba(136, 208, 179, 0.1);
 }
 
 .platform-note {
@@ -3655,7 +3667,7 @@ h3 {
   gap: 6px;
   padding: 13px 17px;
   border-top: 1px solid var(--line);
-  font-size: 8.5px;
+  font-size: 9.5px;
   color: var(--faint);
 }
 
