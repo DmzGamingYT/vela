@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, session, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, session, shell, type Session } from 'electron'
 import type {
   CreateGroupInput,
   CreateSpaceInput,
@@ -18,6 +18,7 @@ import {
 } from '@shared/defaults'
 import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
+import { engineHost } from '@shared/url'
 import {
   HOME_URL,
   type AppView,
@@ -114,9 +115,33 @@ export class Browser {
     )
   }
 
+  /** Pré-connecte le moteur de recherche (DNS + TLS + sockets) : 1re recherche instantanée. */
+  private preconnectSearch(): void {
+    try {
+      const state = this.store.get()
+      const space = state.spaces.find((item) => item.id === state.activeSpaceId) ?? state.spaces[0]
+      if (!space) return
+      const ses = session.fromPartition(space.partition)
+      const preconnect = (
+        ses as Session & { preconnect?: (options: { url: string; numSockets?: number }) => unknown }
+      ).preconnect
+      if (typeof preconnect !== 'function') return
+      const result = preconnect.call(ses, {
+        url: `https://${engineHost(state.settings.searchEngine)}`,
+        numSockets: 3
+      })
+      if (result && typeof (result as Promise<unknown>).catch === 'function') {
+        void (result as Promise<unknown>).catch(() => {})
+      }
+    } catch {
+      /* la pré-connexion ne doit jamais casser le démarrage */
+    }
+  }
+
   attach(win: BrowserWindow): void {
     this.win = win
     nativeTheme.themeSource = this.store.get().settings.theme
+    this.preconnectSearch()
     win.webContents.on('before-input-event', (event, input) => this.tabs.handleInput(event, input))
     win.on('closed', () => {
       if (this.win === win) this.win = null
@@ -613,6 +638,7 @@ export class Browser {
 
   private updateSettings(patch: unknown): void {
     const input = (patch ?? {}) as SettingsPatch
+    const beforeEngine = this.store.get().settings.searchEngine
     this.store.update((state) => {
       const settings: Settings = state.settings
       if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system') settings.theme = input.theme
@@ -651,6 +677,7 @@ export class Browser {
       }
     })
     nativeTheme.themeSource = this.store.get().settings.theme
+    if (this.store.get().settings.searchEngine !== beforeEngine) this.preconnectSearch()
     this.broadcast()
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { HOME_URL } from './types'
-import { hostOf, isHomeUrl, normalizeInput, prettyUrl, searchUrl } from './url'
+import { engineHost, hostOf, isHomeUrl, normalizeInput, prettyUrl, searchUrl } from './url'
 
 describe('normalizeInput', () => {
   it('renvoie l’accueil pour une saisie vide', () => {
@@ -58,5 +58,13 @@ describe('helpers', () => {
   it('affiche une adresse courte', () => {
     expect(prettyUrl('https://www.notion.so/page/')).toBe('notion.so/page')
     expect(prettyUrl(HOME_URL)).toBe('Nouvel onglet')
+  })
+})
+
+describe('engineHost', () => {
+  it('renvoie l’hôte pré-connectable de chaque moteur', () => {
+    expect(engineHost('duckduckgo')).toBe('duckduckgo.com')
+    expect(engineHost('google')).toBe('www.google.com')
+    expect(engineHost('brave')).toBe('search.brave.com')
   })
 })

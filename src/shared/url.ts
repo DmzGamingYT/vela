@@ -52,6 +52,15 @@ export function searchUrl(query: string, engine: SearchEngineId): string {
   return (SEARCH_ENGINES[engine] ?? SEARCH_ENGINES.duckduckgo).build(query)
 }
 
+/** Hôte du moteur, pour pré-connecter (DNS + TLS) avant la première recherche. */
+export function engineHost(engine: SearchEngineId): string {
+  try {
+    return new URL(searchUrl('test', engine)).hostname || 'duckduckgo.com'
+  } catch {
+    return 'duckduckgo.com'
+  }
+}
+
 export interface Target {
   url: string
   kind: 'url' | 'search'
