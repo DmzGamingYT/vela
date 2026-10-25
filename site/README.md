@@ -1,8 +1,10 @@
 # Vela — site vitrine
 
-Site public de Vela, en HTML, CSS et JavaScript statiques. Il reprend la palette et le verre
-liquide de Zephium : nuit `#09090b`, texte `#f4f4f6`, halos bleu `#62c8ff`, indigo `#5b7dff`
-et violet `#a88cff`.
+Site public de Vela, en HTML, CSS et JavaScript statiques. Il suit l’identité de l’application :
+neutres chauds façon Dia — charbon doux `#151518` la nuit, papier crème `#f6f5f2` le jour — et une
+seule lumière d’accent (bleu `#62c8ff`, indigo `#5b7dff`, violet `#a88cff`). Les trois orbes floues
+animées ont été remplacées par un unique dégradé radial statique, comme la lueur de la page
+d’accueil de l’app : aucun `blur()` animé, donc aucun coût GPU au défilement.
 
 Le thème clair suit le système par défaut ; le bouton soleil/lune de la barre de navigation force
 un thème et le retient dans `localStorage` (`vela-theme`). Les maquettes de l’application suivent elles aussi le thème choisi, pour rester lisibles en mode clair.

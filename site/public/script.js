@@ -11,7 +11,7 @@
 
   const applyTheme = (theme, persist) => {
     document.documentElement.dataset.theme = theme
-    if (themeColor) themeColor.setAttribute('content', theme === 'light' ? '#eef2f8' : '#09090b')
+    if (themeColor) themeColor.setAttribute('content', theme === 'light' ? '#f6f5f2' : '#151518')
     themeToggle?.setAttribute(
       'aria-label',
       theme === 'light' ? 'Passer au thème sombre' : 'Passer au thème clair'
