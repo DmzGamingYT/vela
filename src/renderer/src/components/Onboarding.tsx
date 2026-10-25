@@ -1,16 +1,32 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { SEARCH_ENGINES } from '@shared/url'
 import type { SearchEngineId } from '@shared/types'
 import { useBrowser } from '../store/browser'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 
-const STEPS = [
-  { title: 'Emportez votre web avec vous.', lede: 'Le moteur que vous connaissez, sans compte ni télémétrie.' },
-  { title: 'Gardez ce que vous utilisez chaque jour.', lede: 'Un espace par contexte. Les onglets attendent en barre latérale et ne chargent qu’à l’ouverture.' },
-  { title: 'Toujours à une touche.', lede: 'Le lanceur trouve un onglet, une note, une tâche ou une page d’historique sans changer de fenêtre.' },
-  { title: 'Déléguez le fastidieux.', lede: 'L’agent lit les onglets que vous choisissez et prépare un rapport à relire avant usage.' },
-  { title: 'Prêt quand vous l’êtes.', lede: 'Bloqueur local, tâches du jour et notes Markdown que vous possédez.' }
+interface Step {
+  kicker: string
+  title: string
+  lede: string
+  icon: IconName
+}
+
+const STEPS: Step[] = [
+  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Le moteur que vous connaissez. Rien d’autre ne sort d’ici.', icon: 'search' },
+  { kicker: 'Essentiels', title: 'Vos habitués, en un clic.', lede: 'Épinglés dans l’espace, chargés seulement à l’ouverture.', icon: 'folder' },
+  { kicker: 'Raccourcis', title: 'Tout à une touche.', lede: 'Onglets, notes, agent : sans quitter la page.', icon: 'command' },
+  { kicker: 'Agent', title: 'Déléguez le fastidieux.', lede: 'Il lit les onglets que vous choisissez, vous relisez.', icon: 'sparkles' },
+  { kicker: 'Prêt', title: 'Vous êtes chez vous.', lede: 'Bloqueur local, notes et tâches à vous.', icon: 'shield' }
 ]
+
+const ENGINE_LOOK: Record<SearchEngineId, { initial: string; tint: string }> = {
+  duckduckgo: { initial: 'D', tint: '#de5833' },
+  google: { initial: 'G', tint: '#4285f4' },
+  brave: { initial: 'B', tint: '#fb542b' }
+}
+
+const ESSENTIALS = ['GitHub', 'Gmail', 'Notion', 'Figma', 'Slack', 'YouTube', 'Spotify', 'ChatGPT']
 
 function extractUrls(html: string): string[] {
   const urls: string[] = []
@@ -34,6 +50,7 @@ export default function Onboarding() {
 
   if (!view) return null
   const settings = view.settings
+  const current = STEPS[step]
 
   const finish = () => {
     void completeOnboarding()
@@ -41,113 +58,195 @@ export default function Onboarding() {
 
   return (
     <div className="overlay onboarding-overlay" role="dialog" aria-label="Bienvenue dans Vela">
-      <div className="sheet onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="onboarding-top">
-          <span className="wordmark">Vela<span className="wordmark-dot">.</span></span>
-          <button type="button" className="text-btn" onClick={finish}>Passer</button>
-        </div>
-
-        <h1>{STEPS[step].title}</h1>
-        <p className="onboarding-lede">{STEPS[step].lede}</p>
-
-        <div className="onboarding-body">
-          {step === 0 && (
-            <div className="onboarding-cards">
-              <div className="setting-row">
-                <div>
-                  <label>Chercher avec</label>
-                  <p className="setting-hint">Comme Zephium : Google, DuckDuckGo, Brave ou Bing via DuckDuckGo.</p>
-                </div>
-                <select
-                  className="select"
-                  value={settings.searchEngine}
-                  onChange={(e) => void updateSettings({ searchEngine: e.target.value as SearchEngineId })}
-                >
-                  {Object.entries(SEARCH_ENGINES).map(([id, engine]) => (
-                    <option key={id} value={id}>{engine.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="setting-row">
-                <div>
-                  <label>Bloquer pubs et traqueurs</label>
-                  <p className="setting-hint">{view.blockedTotal} requêtes bloquées cette session.</p>
-                </div>
-                <button
-                  type="button" className="switch" role="switch"
-                  aria-checked={settings.blockTrackers} data-on={settings.blockTrackers}
-                  onClick={() => void updateSettings({ blockTrackers: !settings.blockTrackers })}
-                ><span /></button>
-              </div>
-            </div>
-          )}
-          {step === 0 && (
-            <div style={{ marginTop: 10 }}>
-              <label className="ghost-btn" style={{ cursor: 'pointer' }}>
-                Importer un export HTML
-                <input
-                  type="file" accept=".html,.htm" style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    void file.text().then((text) => void importBookmarks(extractUrls(text)))
-                  }}
-                />
-              </label>
-            </div>
-          )}
-          {step === 1 && (
-            <div className="onboarding-apps">
-              {['GitHub', 'Gmail', 'Notion', 'Figma', 'Slack', 'YouTube', 'Spotify', 'ChatGPT'].map((app) => (
-                <span key={app} className="onboarding-app"><span className="onboarding-app-icon">{app[0]}</span>{app}</span>
-              ))}
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button type="button" className="action primary" onClick={() => void pinEssentials()}>Épingler mes essentiels</button>
-              </div>
-              <p className="setting-hint">GitHub, Gmail et Notion en tête d’espace, chargés seulement à l’ouverture.</p>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="onboarding-shortcuts">
-              <p><kbd>⌘K</kbd> lanceur — onglets, notes, tâches, historique</p>
-              <p><kbd>⌘J</kbd> agent · <kbd>⌘E</kbd> notes · <kbd>⌘⇧B</kbd> brief</p>
-              <button type="button" className="action" onClick={() => { setStep(4); setOverlay('command') }}>
-                <Icon name="search" size={14} /> Essayer le lanceur
-              </button>
-            </div>
-          )}
-          {step === 3 && (
-            <div className="agent-modes">
-              <button type="button" className="agent-mode" data-active={settings.agent.mode === 'demo'} onClick={() => void updateSettings({ agent: { mode: 'demo' } })}>
-                <span className="agent-mode-top"><Icon name="sparkles" size={15} /> Démo locale</span>
-                <span className="agent-mode-detail">Simulé depuis vos onglets. Rien ne quitte la machine.</span>
-              </button>
-              <button type="button" className="agent-mode" data-active={settings.agent.mode === 'api'} onClick={() => { void updateSettings({ agent: { mode: 'api' } }); setOverlay('settings') }}>
-                <span className="agent-mode-top"><Icon name="globe" size={15} /> Votre clé</span>
-                <span className="agent-mode-detail">OpenAI, Anthropic, Google… ou serveur local Ollama. Réglages → Modèles.</span>
-              </button>
-            </div>
-          )}
-          {step === 4 && (
-            <div className="onboarding-ready">
-              <span className="onboarding-pill"><Icon name="shield" size={13} /> Pubs bloquées</span>
-              <span className="onboarding-pill"><Icon name="notes" size={13} /> Notes locales</span>
-              <span className="onboarding-pill"><Icon name="check" size={13} /> Tâches du jour</span>
-              <p className="setting-hint">La barre sous la page d’accueil suit bloqués, focus et échéances — comme la barre ZEPHIUM.</p>
-            </div>
-          )}
-        </div>
-
-        <div className="onboarding-foot">
-          <button type="button" className="text-btn" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>Retour</button>
-          <span className="onboarding-dots" aria-hidden="true">
-            {STEPS.map((_, i) => <i key={i} data-active={i === step} />)}
+      <div className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
+        <aside className="onboarding-stage" aria-hidden="true">
+          <span className="onboarding-glow" />
+          <span className="onboarding-orb">
+            <Icon name={current.icon} size={54} />
           </span>
-          {step < STEPS.length - 1 ? (
-            <button type="button" className="action primary" onClick={() => setStep((s) => s + 1)}>Continuer <Icon name="arrow-right" size={14} /></button>
-          ) : (
-            <button type="button" className="action primary" onClick={finish}>Commencer <Icon name="arrow-right" size={14} /></button>
-          )}
+          <span className="onboarding-stage-count">
+            <strong>{String(step + 1).padStart(2, '0')}</strong>
+            <span>/ {String(STEPS.length).padStart(2, '0')}</span>
+          </span>
+          <span className="onboarding-stage-kicker">{current.kicker}</span>
+        </aside>
+
+        <div className="onboarding-main">
+          <header className="onboarding-top">
+            <span className="wordmark">Vela<span className="wordmark-dot">.</span></span>
+            <button type="button" className="onboarding-skip" onClick={finish}>Passer</button>
+          </header>
+
+          <div className="onboarding-copy">
+            <h1>{current.title}</h1>
+            <p className="onboarding-lede">{current.lede}</p>
+          </div>
+
+          <div className="onboarding-body">
+            {step === 0 && (
+              <>
+                <div className="engine-grid" role="radiogroup" aria-label="Moteur de recherche">
+                  {(Object.keys(SEARCH_ENGINES) as SearchEngineId[]).map((id) => {
+                    const look = ENGINE_LOOK[id]
+                    const active = settings.searchEngine === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        aria-label={SEARCH_ENGINES[id].label}
+                        className="engine-tile"
+                        data-active={active}
+                        style={{ '--tint': look.tint } as CSSProperties}
+                        onClick={() => void updateSettings({ searchEngine: id })}
+                      >
+                        <span className="engine-mark" aria-hidden="true">{look.initial}</span>
+                        <span className="engine-label">{SEARCH_ENGINES[id].label}</span>
+                        {active && <span className="engine-check"><Icon name="check" size={13} /></span>}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="onboarding-row" data-on={settings.blockTrackers}>
+                  <span className="onboarding-row-icon"><Icon name="shield" size={22} /></span>
+                  <span className="onboarding-row-copy">
+                    <strong>Traqueurs bloqués</strong>
+                    <small>{view.blockedTotal} requête{view.blockedTotal === 1 ? '' : 's'} arrêtée{view.blockedTotal === 1 ? '' : 's'} — en local</small>
+                  </span>
+                  <button
+                    type="button"
+                    className="switch"
+                    role="switch"
+                    aria-checked={settings.blockTrackers}
+                    aria-label="Bloquer les traqueurs"
+                    data-on={settings.blockTrackers}
+                    onClick={() => void updateSettings({ blockTrackers: !settings.blockTrackers })}
+                  ><span /></button>
+                </div>
+
+                <label className="onboarding-row is-action">
+                  <span className="onboarding-row-icon"><Icon name="download" size={22} /></span>
+                  <span className="onboarding-row-copy">
+                    <strong>Importer mes favoris</strong>
+                    <small>Depuis un export HTML</small>
+                  </span>
+                  <Icon name="arrow-right" size={16} />
+                  <input
+                    type="file"
+                    accept=".html,.htm"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      void file.text().then((text) => void importBookmarks(extractUrls(text)))
+                    }}
+                  />
+                </label>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
+                <div className="essentials-grid">
+                  {ESSENTIALS.map((app, index) => (
+                    <span key={app} className="essentials-tile" style={{ '--tint': ['#24292f', '#ea4335', '#111111', '#a259ff', '#611f69', '#ff0033', '#1db954', '#10a37f'][index] } as CSSProperties}>
+                      <span className="essentials-mark" aria-hidden="true">{app[0]}</span>
+                      <span className="essentials-name">{app}</span>
+                    </span>
+                  ))}
+                </div>
+                <button type="button" className="action primary onboarding-cta" onClick={() => void pinEssentials()}>
+                  Épingler mes essentiels
+                </button>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <div className="shortcut-grid">
+                  {[
+                    ['⌘K', 'Lanceur'],
+                    ['⌘J', 'Agent'],
+                    ['⌘E', 'Notes']
+                  ].map(([keys, label]) => (
+                    <span key={keys} className="shortcut-tile">
+                      <kbd>{keys}</kbd>
+                      <span>{label}</span>
+                    </span>
+                  ))}
+                </div>
+                <button type="button" className="action primary onboarding-cta" onClick={() => { setStep(4); setOverlay('command') }}>
+                  <Icon name="search" size={15} />
+                  Essayer le lanceur
+                </button>
+              </>
+            )}
+
+            {step === 3 && (
+              <div className="agent-modes">
+                <button
+                  type="button"
+                  className="agent-mode"
+                  data-active={settings.agent.mode === 'demo'}
+                  onClick={() => void updateSettings({ agent: { mode: 'demo' } })}
+                >
+                  <span className="agent-mode-icon"><Icon name="sparkles" size={22} /></span>
+                  <span className="agent-mode-top">Démo locale</span>
+                  <span className="agent-mode-detail">Simulé depuis vos onglets.</span>
+                </button>
+                <button
+                  type="button"
+                  className="agent-mode"
+                  data-active={settings.agent.mode === 'api'}
+                  onClick={() => { void updateSettings({ agent: { mode: 'api' } }); setOverlay('settings') }}
+                >
+                  <span className="agent-mode-icon"><Icon name="key" size={22} /></span>
+                  <span className="agent-mode-top">Votre clé</span>
+                  <span className="agent-mode-detail">OpenAI, Anthropic, Ollama…</span>
+                </button>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="ready-grid">
+                <span className="ready-tile">
+                  <Icon name="shield" size={26} />
+                  <strong>{view.blockedTotal}</strong>
+                  <small>traqueurs arrêtés</small>
+                </span>
+                <span className="ready-tile">
+                  <Icon name="notes" size={26} />
+                  <strong>.md</strong>
+                  <small>notes à vous</small>
+                </span>
+                <span className="ready-tile">
+                  <Icon name="calendar" size={26} />
+                  <strong>Jour</strong>
+                  <small>tâches et brief</small>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <footer className="onboarding-foot">
+            <button type="button" className="onboarding-back" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+              Retour
+            </button>
+            <span className="onboarding-dots" aria-hidden="true">
+              {STEPS.map((_, i) => <i key={i} data-active={i === step} data-done={i < step} />)}
+            </span>
+            {step < STEPS.length - 1 ? (
+              <button type="button" className="action primary onboarding-next" onClick={() => setStep((s) => s + 1)}>
+                Continuer <Icon name="arrow-right" size={15} />
+              </button>
+            ) : (
+              <button type="button" className="action primary onboarding-next" onClick={finish}>
+                Commencer <Icon name="arrow-right" size={15} />
+              </button>
+            )}
+          </footer>
         </div>
       </div>
     </div>
