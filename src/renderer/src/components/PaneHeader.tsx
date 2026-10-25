@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TabView } from '@shared/types'
-import { isHomeUrl, prettyUrl } from '@shared/url'
+import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
@@ -25,6 +25,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [draft, setDraft] = useState('')
   const home = isHomeUrl(tab.url)
 
@@ -32,7 +33,11 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
     if (!focused) setDraft(home ? '' : tab.url)
   }, [tab.url, home, focused])
 
-  const display = focused ? draft : home ? '' : prettyUrl(tab.url)
+  // Façon Dia/Zephium : au repos on lit le nom de la page, au survol l'adresse,
+  // au focus l'URL complète éditable.
+  const pageName = (tab.title || '').trim() || prettyUrl(tab.url)
+  const resting = hovered ? prettyUrl(tab.url) : pageName
+  const display = focused ? draft : home ? '' : resting
 
   return (
     <div className="pane-head">
@@ -62,6 +67,9 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       <form
         className="address"
         data-focused={focused}
+        data-home={home}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         onSubmit={(event) => {
           event.preventDefault()
           const value = draft.trim()
@@ -74,6 +82,9 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
         <span className="address-icon">
           <Icon name={home ? 'search' : 'lock'} size={13} />
         </span>
+        {!home && !focused && !hovered && tab.url.startsWith('https:') && (
+          <span className="address-scheme">https</span>
+        )}
         <input
           ref={inputRef}
           className="address-input"
@@ -96,6 +107,11 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             }
           }}
         />
+        {!home && !focused && !hovered && (
+          <span className="address-host" title={tab.url}>
+            {hostOf(tab.url)}
+          </span>
+        )}
         {tab.blocked > 0 && (
           <span className="address-shield" title={`${tab.blocked} requêtes bloquées sur cette page`}>
             <Icon name="shield" size={12} />

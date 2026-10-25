@@ -47,12 +47,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
     <div className="start">
       <div className="start-inner">
         <header className="start-hero">
-          <div className="hero-orbs" aria-hidden="true">
-            <span className="orb orb-clay" />
-            <span className="orb orb-sage" />
-            <span className="orb orb-gold" />
-          </div>
-
           <p className="eyebrow">
             <span className="eyebrow-dot" />
             {view.brief.dateLabel}
@@ -65,6 +59,12 @@ export default function StartPage({ tabId }: { tabId: string }) {
             Le web, votre atelier. Vos onglets, vos notes et un agent dans le même espace — sans le bruit.
           </p>
 
+          <button type="button" className="hero-field" onClick={() => setOverlay('command')}>
+            <Icon name="search" size={15} />
+            <span>Rechercher, saisir une adresse ou demander à l’agent</span>
+            <kbd>{shortcut('K')}</kbd>
+          </button>
+
           <div className="hero-actions">
             <button type="button" className="action primary" onClick={() => openAgent()}>
               <Icon name="sparkles" size={15} />
@@ -75,11 +75,25 @@ export default function StartPage({ tabId }: { tabId: string }) {
               <Icon name="split" size={15} />
               Vue scindée
             </button>
-            <button type="button" className="action ghost" onClick={() => setOverlay('command')}>
-              <Icon name="search" size={15} />
-              Tout trouver
-              <kbd>{shortcut('K')}</kbd>
-            </button>
+          </div>
+
+          <div className="stat-strip">
+            <span className="stat-chip" data-tone="sage">
+              <Icon name="shield" size={12} />
+              <strong>{view.blockedTotal}</strong> pubs bloquées
+            </span>
+            <span className="stat-chip">
+              <Icon name="calendar" size={12} />
+              <strong>{view.tasks.filter((task) => !task.done).length}</strong> tâches du jour
+            </span>
+            <span className="stat-chip">
+              <Icon name="notes" size={12} />
+              <strong>{view.notes.length}</strong> notes
+            </span>
+            <span className="stat-chip">
+              <Icon name="globe" size={12} />
+              <strong>{view.tabs.filter((tab) => tab.spaceId === view.activeSpaceId).length}</strong> onglets
+            </span>
           </div>
         </header>
 

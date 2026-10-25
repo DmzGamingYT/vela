@@ -1,12 +1,13 @@
 /* Vela — chrome du navigateur (WKWebView / WebView2) */
 
 :root {
-  --bg: #09090b;
-  --bg-soft: #0c0d12;
-  --panel: rgba(18, 19, 25, 0.72);
-  --panel-solid: #111218;
-  --rail: rgba(11, 12, 16, 0.86);
-  --side: rgba(13, 14, 19, 0.7);
+  --space-accent: #5b7dff;
+  --bg: #151518;
+  --bg-soft: #101013;
+  --panel: rgba(24, 24, 28, 0.72);
+  --panel-solid: #1a1a1e;
+  --rail: rgba(17, 17, 20, 0.86);
+  --side: rgba(21, 21, 24, 0.7);
   --ink: #f4f4f6;
   --ink-soft: #cfd1d8;
   --muted: rgba(244, 244, 246, 0.6);
@@ -30,20 +31,20 @@
 }
 
 [data-theme='light'] {
-  --bg: #eef2f8;
-  --bg-soft: #e7ecf5;
-  --panel: rgba(255, 255, 255, 0.78);
+  --bg: #f6f5f2;
+  --bg-soft: #edece7;
+  --panel: rgba(255, 255, 255, 0.8);
   --panel-solid: #ffffff;
-  --rail: rgba(255, 255, 255, 0.78);
-  --side: rgba(255, 255, 255, 0.6);
-  --ink: #0d1524;
-  --ink-soft: #2b3546;
-  --muted: rgba(16, 24, 38, 0.66);
-  --faint: rgba(16, 24, 38, 0.58);
-  --line: rgba(16, 24, 38, 0.1);
-  --line-2: rgba(16, 24, 38, 0.2);
-  --fill: rgba(16, 24, 38, 0.05);
-  --fill-2: rgba(16, 24, 38, 0.09);
+  --rail: rgba(255, 255, 255, 0.8);
+  --side: rgba(255, 255, 255, 0.62);
+  --ink: #1c1b19;
+  --ink-soft: #43423e;
+  --muted: rgba(28, 27, 25, 0.64);
+  --faint: rgba(28, 27, 25, 0.56);
+  --line: rgba(28, 26, 22, 0.1);
+  --line-2: rgba(28, 26, 22, 0.2);
+  --fill: rgba(28, 26, 22, 0.05);
+  --fill-2: rgba(28, 26, 22, 0.09);
   --accent-a: #0f7fb8;
   --accent-b: #2f56d9;
   --accent-c: #7a4fd8;
@@ -622,9 +623,30 @@ kbd {
 }
 
 .start-inner {
+  position: relative;
   width: min(720px, calc(100% - 64px));
   margin: 0 auto;
   padding: 46px 0 60px;
+}
+
+/* Lueur d'espace (façon Zephium « ciel ») : un seul dégradé statique,
+   teinté par la couleur de l'espace actif. Zéro filtre, zéro repaint. */
+.start-inner::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  width: 680px;
+  height: 300px;
+  transform: translateX(-50%);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--space-accent) 24%, transparent) 0%,
+    color-mix(in srgb, var(--space-accent) 10%, transparent) 44%,
+    transparent 74%
+  );
 }
 
 .eyebrow {
@@ -643,8 +665,8 @@ kbd {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: linear-gradient(120deg, var(--accent-a), var(--accent-c));
-  box-shadow: 0 0 12px rgba(98, 200, 255, 0.7);
+  background: var(--space-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--space-accent) 70%, transparent);
 }
 
 .start h1 {

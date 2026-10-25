@@ -2,12 +2,14 @@
    Vela — variables, socle, rail, barre latérale
    --------------------------------------------------------------- */
 
-/* Palette reprise de Zephium : nuit profonde #09090b, texte #f4f4f6,
-   verre fumé et trois lumières froides (bleu, indigo, violet). */
+/* Neutres chauds façon Dia : charbon doux la nuit, papier crème le jour.
+   L'identité vient de la couleur de l'espace actif (--space-accent), posée par
+   App.tsx : pastille, indicateur d'onglet, lueur de la page d'accueil. */
 
 :root {
-  --paper: #09090b;
-  --paper-deep: #060608;
+  --space-accent: #5b7dff;
+  --paper: #151518;
+  --paper-deep: #101013;
   --surface: rgba(22, 22, 27, 0.74);
   --surface-2: rgba(255, 255, 255, 0.07);
   --ink: #f4f4f6;
@@ -46,16 +48,16 @@
 }
 
 :root[data-theme="light"] {
-  --paper: #eef2f8;
-  --paper-deep: #e3eaf5;
-  --surface: rgba(255, 255, 255, 0.7);
+  --paper: #f6f5f2;
+  --paper-deep: #edece7;
+  --surface: rgba(255, 255, 255, 0.72);
   --surface-2: rgba(255, 255, 255, 0.56);
-  --ink: #161619;
-  --ink-soft: #3f434d;
-  --muted: rgba(22, 22, 25, 0.62);
-  --faint: rgba(22, 22, 25, 0.47);
-  --line: rgba(22, 24, 32, 0.12);
-  --line-soft: rgba(22, 24, 32, 0.07);
+  --ink: #1c1b19;
+  --ink-soft: #43423e;
+  --muted: rgba(28, 27, 25, 0.62);
+  --faint: rgba(28, 27, 25, 0.47);
+  --line: rgba(28, 26, 22, 0.12);
+  --line-soft: rgba(28, 26, 22, 0.07);
   --edge: rgba(255, 255, 255, 0.8);
   --hairline-strong: rgba(22, 24, 32, 0.18);
   --fill: rgba(255, 255, 255, 0.5);
@@ -923,6 +925,38 @@ kbd {
   color: var(--muted);
 }
 
+/* Nom de site d'abord (Dia/Zephium) : le titre de page au repos,
+   l'URL au survol, l'URL éditable au focus. */
+
+.address-scheme {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--sage) 12%, transparent);
+  color: var(--sage);
+}
+
+.address-host {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.address-host::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--faint);
+}
+
 .address-input {
   flex: 1;
   min-width: 0;
@@ -931,6 +965,7 @@ kbd {
   background: transparent;
   font-size: 12.5px;
   color: var(--ink);
+  text-overflow: ellipsis;
 }
 
 .address-input::placeholder {
@@ -1122,54 +1157,33 @@ kbd {
 .start-hero {
   position: relative;
   padding: 4px 0 30px;
+  text-align: center;
 }
 
-.hero-orbs {
+/* Lueur d'espace (façon Zephium « ciel ») : un seul dégradé statique,
+   teinté par la couleur de l'espace actif. Zéro filtre, zéro repaint. */
+.start-hero::before {
+  content: "";
   position: absolute;
-  top: -70px;
-  right: -60px;
-  width: 380px;
-  height: 280px;
-  filter: blur(46px);
-  opacity: 0.5;
+  top: -140px;
+  left: 50%;
+  width: 760px;
+  height: 320px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--space-accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--space-accent) 9%, transparent) 42%,
+    transparent 72%
+  );
   pointer-events: none;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 50%;
-}
-
-.orb-clay {
-  width: 190px;
-  height: 160px;
-  right: 46px;
-  top: 0;
-  background: var(--clay);
-  opacity: 0.35;
-}
-
-.orb-sage {
-  width: 150px;
-  height: 140px;
-  right: 150px;
-  top: 80px;
-  background: var(--sage);
-  opacity: 0.3;
-}
-
-.orb-gold {
-  width: 120px;
-  height: 110px;
-  right: 10px;
-  top: 110px;
-  background: var(--gold);
-  opacity: 0.22;
+  z-index: -1;
 }
 
 .eyebrow {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin: 0 0 10px;
   font-size: 9.5px;
@@ -1183,7 +1197,7 @@ kbd {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--clay);
+  background: var(--space-accent);
   flex: 0 0 6px;
 }
 
@@ -1197,22 +1211,84 @@ kbd {
 }
 
 .hero-dot {
-  color: var(--clay);
+  color: var(--space-accent);
 }
 
 .hero-lede {
-  margin: 0;
-  max-width: 500px;
+  margin: 0 auto;
+  max-width: 460px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
 
-.hero-actions {
+/* Champ de commande du héro (façon Dia) : entrée unique
+   adresse / recherche / agent, qui ouvre la barre de commandes. */
+.hero-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, 100%);
+  height: 46px;
+  margin: 26px auto 0;
+  padding: 0 12px 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.hero-field span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-field:hover {
+  border-color: color-mix(in srgb, var(--space-accent) 45%, var(--line));
+  background: var(--surface-2);
+}
+
+.hero-field kbd {
+  flex: 0 0 auto;
+}
+
+.stat-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.stat-chip strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stat-chip svg {
+  color: var(--space-accent);
+}
+
+.stat-chip[data-tone="sage"] svg {
+  color: var(--sage);
 }
 
 .action {
@@ -1277,6 +1353,14 @@ kbd {
 .action[data-danger="true"] {
   color: var(--clay);
   border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .start-section {
@@ -3482,10 +3566,43 @@ kbd {
   }
 }
 
-/* Orbes volontairement fixes : ce sont de gros flous (blur 46px) et les
-   animer en continu force le GPU à les recalculer à chaque image. */
-.orb {
-  animation: none;
+/* Entrée du héro : fondu + montée de 6px, une seule fois, en cascade.
+   Opacité/transform uniquement (composited) — aucun flou, aucun repaint. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.start-hero .eyebrow,
+.start-hero .hero-title,
+.start-hero .hero-lede,
+.start-hero .hero-field,
+.start-hero .hero-actions,
+.start-hero .stat-strip {
+  animation: rise-in var(--dur-3) var(--ease-out) both;
+}
+
+.start-hero .hero-title {
+  animation-delay: 40ms;
+}
+
+.start-hero .hero-lede {
+  animation-delay: 80ms;
+}
+
+.start-hero .hero-field {
+  animation-delay: 120ms;
+}
+
+.start-hero .hero-actions,
+.start-hero .stat-strip {
+  animation-delay: 160ms;
 }
 
 .agent-mark {
@@ -3554,16 +3671,6 @@ kbd {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
 /* ===============================================================
    Verre liquide — la couche Zephium
    Fond nuit ou ciel clair, chrome translucide, halos froids.
@@ -3601,10 +3708,10 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Dégradés larges et mous déjà calculés : pas de filtre floutant (GPU). */
   background:
-    radial-gradient(420px 320px at 14% 92%, rgba(168, 140, 255, 0.14), transparent 70%),
-    radial-gradient(520px 380px at 88% 34%, rgba(98, 200, 255, 0.09), transparent 72%);
-  filter: blur(10px);
+    radial-gradient(760px 560px at 14% 92%, rgba(168, 140, 255, 0.12), transparent 70%),
+    radial-gradient(880px 640px at 88% 34%, rgba(98, 200, 255, 0.08), transparent 72%);
 }
 
 .rail,
@@ -3800,8 +3907,8 @@ body {
 
 .tab-row[data-active="true"]::before {
   width: 2.5px;
-  background: linear-gradient(180deg, var(--accent-a), var(--accent-b));
-  box-shadow: 0 0 10px rgba(98, 200, 255, 0.5);
+  background: var(--space, var(--space-accent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--space, var(--space-accent)) 45%, transparent);
 }
 
 .tab-icon {
@@ -3909,24 +4016,14 @@ body {
   padding-bottom: 34px;
 }
 
-.hero-orbs {
-  opacity: 0.52;
-  filter: blur(60px);
-}
-
-.orb-clay {
-  background: var(--accent-b);
-  opacity: 0.5;
-}
-
-.orb-sage {
-  background: var(--accent-a);
-  opacity: 0.4;
-}
-
-.orb-gold {
-  background: var(--accent-c);
-  opacity: 0.34;
+.start-hero::before {
+  /* La lueur d'espace suit la couleur du profil actif (couche verre). */
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--space-accent) 26%, transparent) 0%,
+    color-mix(in srgb, var(--space-accent) 10%, transparent) 44%,
+    transparent 74%
+  );
 }
 
 .hero-title {
@@ -3943,10 +4040,9 @@ body {
 }
 
 .hero-dot {
-  -webkit-text-fill-color: transparent;
-  background: linear-gradient(120deg, var(--accent-a), var(--accent-c));
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: var(--space-accent);
+  -webkit-text-fill-color: var(--space-accent);
+  background: none;
 }
 
 .hero-lede {
@@ -3957,8 +4053,27 @@ body {
 }
 
 .hero-actions {
-  margin-top: 24px;
+  margin-top: 18px;
   gap: 8px;
+}
+
+.hero-field {
+  background: var(--fill);
+  border: 1px solid var(--edge);
+  box-shadow: var(--inner-light-soft);
+  backdrop-filter: blur(16px) saturate(150%);
+}
+
+.hero-field:hover {
+  background: var(--fill-2);
+  border-color: rgba(141, 185, 242, 0.5);
+  box-shadow: 0 0 0 3px rgba(91, 125, 255, 0.14), var(--inner-light);
+}
+
+.stat-chip {
+  background: var(--fill);
+  border: 1px solid var(--edge);
+  box-shadow: var(--inner-light-soft);
 }
 
 .section-head h2 {

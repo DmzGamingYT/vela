@@ -27,6 +27,11 @@ export default function App() {
   const collapsed = useBrowser((state) => state.view?.settings.sidebarCollapsed ?? false)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const theme = useBrowser((state) => state.view?.settings.theme ?? 'system')
+  const spaceColor = useBrowser((state) => {
+    const view = state.view
+    if (!view) return null
+    return view.spaces.find((space) => space.id === view.activeSpaceId)?.color ?? null
+  })
 
   useEffect(() => {
     void useBrowser.getState().init()
@@ -40,6 +45,12 @@ export default function App() {
     media.addEventListener('change', listener)
     return () => media.removeEventListener('change', listener)
   }, [theme])
+
+  // Identité visuelle pilotée par l'espace actif (façon Dia) : la couleur
+  // du profil teinte pastille, indicateur d'onglet et lueur d'accueil.
+  useEffect(() => {
+    if (spaceColor) document.documentElement.style.setProperty('--space-accent', spaceColor)
+  }, [spaceColor])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {

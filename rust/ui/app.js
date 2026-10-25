@@ -13,7 +13,8 @@
     overlay: null,
     draftColor: '#5b7dff',
     systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
-    addressFocused: false
+    addressFocused: false,
+    addressHovered: false
   }
 
   /* --- Pont vers Rust ------------------------------------------ */
@@ -181,6 +182,8 @@
       $('#space-name').textContent = space.name
       const dot = $('#space-dot')
       dot.style.setProperty('--space', space.color)
+      // Identité visuelle pilotée par l'espace actif (façon Dia).
+      document.documentElement.style.setProperty('--space-accent', space.color)
     }
     document.querySelector('.shell').dataset.collapsed = String(!!app.state.settings.sidebar_collapsed)
   }
@@ -217,10 +220,14 @@
   function renderToolbar() {
     const tab = activeTab()
     const address = $('#address')
+    const hasPage = !!tab?.url
+    // Nom de site d'abord (Dia/Zephium) : le titre au repos, l'URL au focus.
+    const pageName = tab?.title || (hasPage ? hostOf(tab.url) : '')
     if (document.activeElement !== address) {
-      address.value = tab?.url || ''
+      address.value = app.addressFocused || app.addressHovered ? tab?.url || '' : pageName
     }
-    $('#site-hint').textContent = tab?.url ? hostOf(tab.url) : ''
+    $('#site-hint').textContent =
+      document.activeElement === address || app.addressHovered || !hasPage ? '' : hostOf(tab.url)
     const back = $('#back')
     const forward = $('#forward')
     back.disabled = !tab?.can_back
@@ -568,6 +575,16 @@
 
   $('#address').addEventListener('blur', () => {
     app.addressFocused = false
+    renderToolbar()
+  })
+
+  $('#omnibox').addEventListener('mouseenter', () => {
+    app.addressHovered = true
+    renderToolbar()
+  })
+
+  $('#omnibox').addEventListener('mouseleave', () => {
+    app.addressHovered = false
     renderToolbar()
   })
 
