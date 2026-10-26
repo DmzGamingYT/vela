@@ -3,17 +3,32 @@ import type { CSSProperties } from 'react'
 import { SPACE_COLORS } from '@shared/defaults'
 import { THEME_PRESETS, presetById, type ThemeId } from '@shared/theme'
 import {
+  MAX_SHORTCUTS,
   SPACE_AVATARS,
   SPACE_BACKGROUNDS,
   SPACE_PRESETS,
+  SPACE_SHORTCUT_SETS,
   avatarImage,
+  normalizeShortcutUrl,
+  sanitizeSpaceShortcuts,
+  shortcutsForSet,
+  suggestShortcutSet,
   type SpaceBackground,
-  type SpacePreset
+  type SpacePreset,
+  type SpaceShortcut
 } from '@shared/space'
+import { hostOf } from '@shared/url'
 import { useBrowser } from '../store/browser'
+import Favicon from './Favicon'
 import { Icon } from './Icon'
 import SpaceAvatar from './SpaceAvatar'
 import SpaceAvatarEditor from './SpaceAvatarEditor'
+
+/** Favicon du site épinglé, demandé au site lui-même. */
+function iconUrl(url: string): string | null {
+  const host = hostOf(url)
+  return host ? `https://${host}/favicon.ico` : null
+}
 
 export default function SpaceDialog() {
   const view = useBrowser((state) => state.view)
@@ -32,6 +47,14 @@ export default function SpaceDialog() {
   const [background, setBackground] = useState<SpaceBackground>(existing?.background ?? 'none')
   const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
+  const [shortcuts, setShortcuts] = useState<SpaceShortcut[]>(existing?.shortcuts ?? [])
+  const [siteInput, setSiteInput] = useState('')
+  const [siteError, setSiteError] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+  // Le glisser-déposer enchaîne ses événements dans la même tâche : une ref
+  // évite de dépendre d'un rendu entre le départ et le dépôt.
+  const dragIdRef = useRef<string | null>(null)
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -60,7 +83,67 @@ export default function SpaceDialog() {
     setAvatar(preset.avatar)
     setBackground(preset.background)
     setBlockTrackers(true)
+    setShortcuts(shortcutsForSet(preset.id))
+    setSiteError(null)
     setPhoto(null)
+  }
+
+  const suggestedSet = shortcuts.length === 0 ? suggestShortcutSet(name) : null
+  const suggestedLabel = suggestedSet
+    ? (SPACE_PRESETS.find((preset) => preset.id === suggestedSet)?.label ?? 'ce type d’espace')
+    : null
+
+  const addSite = (raw: string): void => {
+    const url = normalizeShortcutUrl(raw)
+    if (!url) {
+      setSiteError('Adresse invalide — écrivez par exemple notion.so.')
+      return
+    }
+    if (shortcuts.length >= MAX_SHORTCUTS) {
+      setSiteError(`${MAX_SHORTCUTS} sites au maximum.`)
+      return
+    }
+    if (shortcuts.some((shortcut) => shortcut.url === url)) {
+      setSiteError('Ce site est déjà épinglé.')
+      return
+    }
+    const [entry] = sanitizeSpaceShortcuts([{ url }])
+    if (!entry) {
+      setSiteError('Adresse refusée. Seuls les sites http et https sont acceptés.')
+      return
+    }
+    setShortcuts((current) => [...current, entry])
+    setSiteInput('')
+    setSiteError(null)
+  }
+
+  const moveShortcut = (id: string, delta: number): void => {
+    setShortcuts((current) => {
+      const from = current.findIndex((item) => item.id === id)
+      const to = from + delta
+      if (from < 0 || to < 0 || to >= current.length) return current
+      const next = [...current]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
+  }
+
+  const dropShortcut = (targetId: string): void => {
+    const moving = dragIdRef.current
+    if (!moving || moving === targetId) return
+    setShortcuts((current) => {
+      const from = current.findIndex((item) => item.id === moving)
+      const to = current.findIndex((item) => item.id === targetId)
+      if (from < 0 || to < 0) return current
+      const next = [...current]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
+    dragIdRef.current = null
+    setDragId(null)
+    setDropTarget(null)
   }
 
   const importPhoto = (file: File | undefined): void => {
@@ -80,7 +163,7 @@ export default function SpaceDialog() {
     reader.readAsDataURL(file)
   }
 
-  const payload = { name: preview, color, avatar, background, blockTrackers, theme }
+  const payload = { name: preview, color, avatar, background, blockTrackers, theme, shortcuts }
 
   return (
     <div className="overlay space-overlay" onMouseDown={() => setOverlay(null)}>
@@ -227,7 +310,10 @@ export default function SpaceDialog() {
                       </span>
                       <span className="preset-copy">
                         <strong>{preset.label}</strong>
-                        <small>{preset.background === 'none' ? 'Fond du thème' : `Ambiance ${preset.background}`}</small>
+                        <small>
+                          {SPACE_SHORTCUT_SETS[preset.id]?.length ?? 0} sites ·{' '}
+                          {SPACE_BACKGROUNDS.find((item) => item.id === preset.background)?.label ?? 'fond du thème'}
+                        </small>
                       </span>
                       {activePreset === preset.id && <Icon name="check" size={12} />}
                     </button>
@@ -363,6 +449,132 @@ export default function SpaceDialog() {
                   </button>
                 ))}
               </div>
+            </section>
+
+            <section className="space-block">
+              <div className="block-head">
+                <h2 className="space-block-title">Sites épinglés</h2>
+                <span className="block-count">
+                  {shortcuts.length}/{MAX_SHORTCUTS}
+                </span>
+              </div>
+
+              {suggestedSet && suggestedLabel ? (
+                <button
+                  type="button"
+                  className="pins-suggest"
+                  onClick={() => {
+                    setShortcuts(shortcutsForSet(suggestedSet))
+                    setSiteError(null)
+                  }}
+                >
+                  <Icon name="sparkles" size={12} />
+                  Ajouter les {SPACE_SHORTCUT_SETS[suggestedSet]?.length ?? 0} sites conseillés pour {suggestedLabel}
+                </button>
+              ) : null}
+
+              {shortcuts.length > 0 ? (
+                <ul className="pin-edit-list">
+                  {shortcuts.map((shortcut, index) => (
+                    <li
+                      key={shortcut.id}
+                      draggable
+                      data-drag={dragId === shortcut.id ? 'true' : undefined}
+                      data-over={dropTarget === shortcut.id ? 'true' : undefined}
+                      onDragStart={(event) => {
+                        dragIdRef.current = shortcut.id
+                        setDragId(shortcut.id)
+                        event.dataTransfer.effectAllowed = 'move'
+                        event.dataTransfer.setData('text/uri-list', shortcut.url)
+                      }}
+                      onDragEnd={() => {
+                        dragIdRef.current = null
+                        setDragId(null)
+                        setDropTarget(null)
+                      }}
+                      onDragOver={(event) => {
+                        event.preventDefault()
+                        if (dragIdRef.current && dragIdRef.current !== shortcut.id) {
+                          setDropTarget(shortcut.id)
+                        }
+                      }}
+                      onDragLeave={() =>
+                        setDropTarget((current) => (current === shortcut.id ? null : current))
+                      }
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        dropShortcut(shortcut.id)
+                      }}
+                    >
+                      <span className="pin-grip" aria-hidden="true" />
+                      <Favicon src={iconUrl(shortcut.url)} label={shortcut.title} size={16} />
+                      <span className="pin-edit-copy">
+                        <strong>{shortcut.title}</strong>
+                        <small>{hostOf(shortcut.url)}</small>
+                      </span>
+                      <span className="pin-edit-move">
+                        <button
+                          type="button"
+                          onClick={() => moveShortcut(shortcut.id, -1)}
+                          disabled={index === 0}
+                          aria-label={`Monter ${shortcut.title}`}
+                          title="Monter"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveShortcut(shortcut.id, 1)}
+                          disabled={index === shortcuts.length - 1}
+                          aria-label={`Descendre ${shortcut.title}`}
+                          title="Descendre"
+                        >
+                          ↓
+                        </button>
+                      </span>
+                      <button
+                        type="button"
+                        className="pin-edit-remove"
+                        aria-label={`Retirer ${shortcut.title}`}
+                        title={`Retirer ${shortcut.title}`}
+                        onClick={() =>
+                          setShortcuts((current) => current.filter((item) => item.id !== shortcut.id))
+                        }
+                      >
+                        <Icon name="close" size={11} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              <div className="pin-add">
+                <input
+                  className="pin-add-input"
+                  value={siteInput}
+                  placeholder="notion.so, github.com…"
+                  aria-label="Adresse d’un site à épingler"
+                  spellCheck={false}
+                  onChange={(event) => {
+                    setSiteInput(event.target.value)
+                    setSiteError(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return
+                    event.preventDefault()
+                    addSite(siteInput)
+                  }}
+                />
+                <button type="button" className="text-btn" onClick={() => addSite(siteInput)}>
+                  <Icon name="plus" size={12} />
+                  Épingler
+                </button>
+              </div>
+              {siteError ? <p className="space-error">{siteError}</p> : null}
+              <p className="setting-hint">
+                Propres à cet espace, visibles sur sa page d’accueil. Glissez une ligne pour changer l’ordre, ou
+                une adresse depuis la page pour l’ajouter.
+              </p>
             </section>
 
             <section className="space-block isolation-block">

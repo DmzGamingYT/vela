@@ -19,7 +19,7 @@ import type {
 import { HOME_URL } from '@shared/types'
 import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
-import { sanitizeSpaceAvatar, sanitizeSpaceBackground } from '@shared/space'
+import { sanitizeSpaceAvatar, sanitizeSpaceBackground, sanitizeSpaceShortcuts } from '@shared/space'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
@@ -119,6 +119,7 @@ export function normalizeState(raw: unknown): PersistedState {
     theme: isThemeId(space.theme) ? space.theme : null,
     avatar: sanitizeSpaceAvatar(space.avatar),
     background: sanitizeSpaceBackground(space.background),
+    shortcuts: sanitizeSpaceShortcuts(space.shortcuts),
     blockTrackers: space.blockTrackers !== false
   }))
   if (spaces.length === 0) return fallback

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_AVATAR_LENGTH,
+  MAX_SHORTCUTS,
   SPACE_AVATARS,
   SPACE_BACKGROUNDS,
   SPACE_PRESETS,
@@ -8,7 +9,10 @@ import {
   avatarImage,
   isSpaceBackground,
   sanitizeSpaceAvatar,
-  sanitizeSpaceBackground
+  sanitizeSpaceBackground,
+  sanitizeSpaceShortcuts,
+  shortcutsForSet,
+  suggestShortcutSet
 } from './space'
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
@@ -76,5 +80,57 @@ describe('modèles d’espace', () => {
   it('couvre les usages proposés', () => {
     const labels = SPACE_PRESETS.map((preset) => preset.label)
     expect(labels).toEqual(expect.arrayContaining(['Travail', 'Vie personnelle', 'Gaming', 'Études']))
+  })
+})
+
+describe('sites épinglés', () => {
+  it('normalise une adresse sans schéma et retire les doublons', () => {
+    const list = sanitizeSpaceShortcuts([
+      { url: 'notion.so' },
+      { url: 'https://notion.so/' },
+      { url: 'https://github.com/vela', title: '  Vela  ' }
+    ])
+    expect(list).toHaveLength(2)
+    expect(list[0].url).toBe('https://notion.so/')
+    expect(list[0].title).toBe('notion.so')
+    expect(list[1].title).toBe('Vela')
+    expect(new Set(list.map((item) => item.id)).size).toBe(2)
+  })
+
+  it('refuse les schémas dangereux et les entrées cassées', () => {
+    const list = sanitizeSpaceShortcuts([
+      { url: 'javascript:alert(1)' },
+      { url: 'file:///etc/passwd' },
+      { url: 'https://localhost' },
+      { url: 42 },
+      null,
+      { url: 'https://exemple.fr' }
+    ])
+    expect(list.map((item) => item.url)).toEqual(['https://exemple.fr/'])
+  })
+
+  it('borne la longueur de la barre', () => {
+    const many = Array.from({ length: MAX_SHORTCUTS + 5 }, (_, index) => ({ url: `site${index}.fr` }))
+    expect(sanitizeSpaceShortcuts(many)).toHaveLength(MAX_SHORTCUTS)
+    expect(sanitizeSpaceShortcuts('nope')).toEqual([])
+  })
+
+  it('chaque modèle livre une barre valide et propre à son usage', () => {
+    for (const preset of SPACE_PRESETS) {
+      const shortcuts = shortcutsForSet(preset.id)
+      expect(shortcuts.length).toBeGreaterThan(0)
+      // Sans doublon à l'intérieur d'une même barre.
+      expect(shortcuts).toEqual(sanitizeSpaceShortcuts(shortcuts))
+      expect(new Set(shortcuts.map((item) => item.url)).size).toBe(shortcuts.length)
+    }
+    expect(shortcutsForSet('inconnu')).toEqual([])
+  })
+
+  it('reconnaît le type d’espace d’après son nom, accents compris', () => {
+    expect(suggestShortcutSet('Travail')).toBe('work')
+    expect(suggestShortcutSet('Études 2026')).toBe('study')
+    expect(suggestShortcutSet('Gaming')).toBe('gaming')
+    expect(suggestShortcutSet('Développement')).toBe('dev')
+    expect(suggestShortcutSet('Jardinage')).toBeNull()
   })
 })

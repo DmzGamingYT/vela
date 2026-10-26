@@ -6,6 +6,7 @@ import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
+import SpaceShortcuts from './SpaceShortcuts'
 import TasksCard from './TasksCard'
 
 const STARTERS = [
@@ -245,6 +246,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <span className="home-engine">via {engine}</span>
           </div>
         </section>
+
+        <SpaceShortcuts spaceId={view.tabs.find((tab) => tab.id === tabId)?.spaceId ?? view.activeSpaceId} />
 
         <div className="home-grid">
           <section className="home-card home-recent" aria-label="Récemment">

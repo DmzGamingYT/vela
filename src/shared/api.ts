@@ -50,6 +50,7 @@ export interface CreateSpaceInput {
   color: string
   avatar?: string | null
   background?: import('./space').SpaceBackground
+  shortcuts?: import('./space').SpaceShortcut[]
   blockTrackers?: boolean
   theme?: string | null
 }
@@ -61,6 +62,7 @@ export interface UpdateSpaceInput {
   theme?: string | null
   avatar?: string | null
   background?: import('./space').SpaceBackground
+  shortcuts?: import('./space').SpaceShortcut[]
   blockTrackers?: boolean
 }
 

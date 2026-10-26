@@ -116,6 +116,7 @@ interface BrowserState {
   activateSpace(id: string): void
   createSpace(input: CreateSpaceInput): Promise<void>
   updateSpace(id: string, patch: Omit<UpdateSpaceInput, 'id'>): Promise<void>
+  saveSpaceShortcuts(id: string, shortcuts: import('@shared/space').SpaceShortcut[]): Promise<void>
   removeSpace(id: string): Promise<void>
   toggleNotes(open?: boolean): void
   toggleAgent(open?: boolean): void
@@ -407,6 +408,27 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   async updateSpace(id, patch) {
     await get().call(() => window.vela.spaces.update({ id, ...patch }), 'Impossible de modifier l’espace.')
     set({ overlay: null })
+  },
+
+  // Barre de sites épinglés : l'affichage bouge tout de suite, le disque suit.
+  // Le prochain `view` reçu du processus principal fait foi.
+  async saveSpaceShortcuts(id, shortcuts) {
+    set((state) =>
+      state.view
+        ? {
+            view: {
+              ...state.view,
+              spaces: state.view.spaces.map((space) =>
+                space.id === id ? { ...space, shortcuts } : space
+              )
+            }
+          }
+        : {}
+    )
+    await get().call(
+      () => window.vela.spaces.update({ id, shortcuts }),
+      'Impossible d’enregistrer les sites de cet espace.'
+    )
   },
 
   async removeSpace(id) {

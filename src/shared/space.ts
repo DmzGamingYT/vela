@@ -43,7 +43,8 @@ export const SPACE_AVATARS: SpaceAvatarMark[] = [
     id: 'flame',
     label: 'Flamme',
     path: 'M12 22c4 0 7-3 7-7 0-4-4-7-4-12-3 2-4 5-4 8-2-1-3-3-3-5-2 3-3 6-3 9 0 4 3 7 7 7Z'
-  }
+  },
+  { id: 'code', label: 'Code', path: 'm8 7-5 5 5 5M16 7l5 5-5 5' }
 ]
 
 export interface SpaceBackgroundPreset {
@@ -102,6 +103,14 @@ export const SPACE_PRESETS: SpacePreset[] = [
     color: '#E6B95C',
     avatar: 'icon:spark',
     background: 'ember'
+  },
+  {
+    id: 'dev',
+    label: 'Développement',
+    name: 'Développement',
+    color: '#4FB6D8',
+    avatar: 'icon:code',
+    background: 'aurora'
   }
 ]
 
@@ -153,4 +162,153 @@ export function avatarImage(value: string | null | undefined): string | null {
 export function avatarIcon(value: string | null | undefined): SpaceAvatarMark | null {
   if (!value || !value.startsWith('icon:')) return null
   return avatarMark(value.slice(5)) ?? null
+}
+
+/* ------------------------------------------------------------------ */
+/* Sites épinglés par espace                                          */
+/* ------------------------------------------------------------------ */
+
+export interface SpaceShortcut {
+  id: string
+  url: string
+  title: string
+}
+
+/** Une barre reste lisible et rapide à charger au-delà de deux douzaines. */
+export const MAX_SHORTCUTS = 24
+
+interface ShortcutSeed {
+  title: string
+  url: string
+}
+
+/**
+ * Jeux de sites proposés par type d'espace. Les clés sont les identifiants des
+ * modèles (`SPACE_PRESETS`) pour qu'un modèle remplisse aussi sa barre.
+ */
+export const SPACE_SHORTCUT_SETS: Record<string, ShortcutSeed[]> = {
+  work: [
+    { title: 'Notion', url: 'https://www.notion.so' },
+    { title: 'Gmail', url: 'https://mail.google.com' },
+    { title: 'Google Drive', url: 'https://drive.google.com' },
+    { title: 'Google Agenda', url: 'https://calendar.google.com' },
+    { title: 'Slack', url: 'https://app.slack.com' }
+  ],
+  personal: [
+    { title: 'Gmail', url: 'https://mail.google.com' },
+    { title: 'YouTube', url: 'https://www.youtube.com' },
+    { title: 'Wikipédia', url: 'https://fr.wikipedia.org' },
+    { title: 'Le Monde', url: 'https://www.lemonde.fr' }
+  ],
+  gaming: [
+    { title: 'Steam', url: 'https://store.steampowered.com' },
+    { title: 'GeForce NOW', url: 'https://play.geforcenow.com' },
+    { title: 'Discord', url: 'https://discord.com/app' },
+    { title: 'YouTube', url: 'https://www.youtube.com' },
+    { title: 'Twitch', url: 'https://www.twitch.tv' }
+  ],
+  study: [
+    { title: 'Wikipédia', url: 'https://fr.wikipedia.org' },
+    { title: 'Google Scholar', url: 'https://scholar.google.com' },
+    { title: 'Notion', url: 'https://www.notion.so' },
+    { title: 'OpenClassrooms', url: 'https://openclassrooms.com' },
+    { title: 'YouTube', url: 'https://www.youtube.com' }
+  ],
+  dev: [
+    { title: 'GitHub', url: 'https://github.com' },
+    { title: 'Stack Overflow', url: 'https://stackoverflow.com' },
+    { title: 'ChatGPT', url: 'https://chatgpt.com' },
+    { title: 'MDN', url: 'https://developer.mozilla.org' },
+    { title: 'Hacker News', url: 'https://news.ycombinator.com' }
+  ]
+}
+
+function hash(value: string): string {
+  let result = 5381
+  for (let index = 0; index < value.length; index += 1) {
+    result = ((result << 5) + result + value.charCodeAt(index)) >>> 0
+  }
+  return result.toString(36)
+}
+
+/** Adresse d'un raccourci : http(s) uniquement, schéma ajouté si absent. */
+export function normalizeShortcutUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  if (!value) return null
+  const candidate = /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`
+  try {
+    const parsed = new URL(candidate)
+    if (!/^https?:$/.test(parsed.protocol) || !parsed.hostname.includes('.')) return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+function titleFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return 'Site'
+  }
+}
+
+/**
+ * Valide et normalise une barre de sites épinglés : doublons retirés, adresses
+ * http(s) seulement, longueur bornée. Une entrée cassée ne casse pas la barre.
+ */
+export function sanitizeSpaceShortcuts(raw: unknown): SpaceShortcut[] {
+  if (!Array.isArray(raw)) return []
+  const shortcuts: SpaceShortcut[] = []
+  const seen = new Set<string>()
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const candidate = item as Partial<SpaceShortcut>
+    const url = normalizeShortcutUrl(candidate.url)
+    if (!url || seen.has(url)) continue
+    seen.add(url)
+    const title =
+      typeof candidate.title === 'string' && candidate.title.trim()
+        ? candidate.title.trim().slice(0, 80)
+        : titleFromUrl(url)
+    const id =
+      typeof candidate.id === 'string' && /^[a-z0-9-]{4,40}$/i.test(candidate.id)
+        ? candidate.id
+        : `sc-${hash(url)}`
+    shortcuts.push({ id, url, title })
+    if (shortcuts.length >= MAX_SHORTCUTS) break
+  }
+  return shortcuts
+}
+
+/** Sites épinglés d'un modèle, prêts pour le stockage. */
+export function shortcutsForSet(setId: string): SpaceShortcut[] {
+  return sanitizeSpaceShortcuts(SPACE_SHORTCUT_SETS[setId] ?? [])
+}
+
+const SUGGESTIONS: { set: string; words: RegExp }[] = [
+  {
+    set: 'dev',
+    words: /\b(dev|devops|developpement|developpeur|code|programmation|veille|tech|technique|informatique)\b/
+  },
+  { set: 'study', words: /\b(etude|etudes|ecole|universite|uni|fac|cours|lycee|these|memoire)\b/ },
+  { set: 'gaming', words: /\b(gaming|game|games|jeu|jeux|loisir|loisirs|stream)\b/ },
+  { set: 'work', words: /\b(travail|boulot|pro|professionnel|bureau|equipe|job)\b/ },
+  { set: 'personal', words: /\b(perso|personnel|famille|maison|vie)\b/ }
+]
+
+/**
+ * Devine le jeu de sites à proposer d'après le nom saisi. Accents et casse
+ * ignorés ; « veille » mène au développement, pas au travail.
+ */
+export function suggestShortcutSet(name: string): string | null {
+  const clean = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+  for (const entry of SUGGESTIONS) {
+    if (entry.words.test(clean)) return entry.set
+  }
+  return null
 }

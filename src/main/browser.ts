@@ -38,7 +38,7 @@ import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import { isThemeId, parseHex } from '@shared/theme'
-import { sanitizeSpaceAvatar, sanitizeSpaceBackground } from '@shared/space'
+import { sanitizeSpaceAvatar, sanitizeSpaceBackground, sanitizeSpaceShortcuts } from '@shared/space'
 import {
   HOME_URL,
   type AppView,
@@ -618,6 +618,7 @@ export class Browser {
     const space = createSpaceState(name, color, now)
     space.avatar = sanitizeSpaceAvatar(payload.avatar)
     space.background = sanitizeSpaceBackground(payload.background)
+    space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
     space.blockTrackers = payload.blockTrackers !== false
     if (isThemeId(payload.theme)) space.theme = payload.theme
     const tab = createTabState(space.id, now)
@@ -642,6 +643,7 @@ export class Browser {
     if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
     if ('avatar' in payload) space.avatar = sanitizeSpaceAvatar(payload.avatar)
     if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
+    if ('shortcuts' in payload) space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
     if (typeof payload.blockTrackers === 'boolean') space.blockTrackers = payload.blockTrackers
     this.store.schedule()
     this.broadcast()

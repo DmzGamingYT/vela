@@ -143,7 +143,8 @@ garde le relevé trente minutes sur l’appareil. Aucune clé, aucun compte, auc
 | **Onglets verticaux** | Titres lisibles, épinglage, réouverture du dernier onglet fermé. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
-| **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct et modèles Travail, Personnel, Gaming, Études. |
+| **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct, modèles Travail, Personnel, Gaming, Études, Développement et sites épinglés préremplis. |
+| **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, réorganisation au glisser-déposer, ajout d’une adresse glissée depuis la page, suppression d’un clic. Enregistrée avec l’espace, restaurée au redémarrage. |
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups : Google ne prend plus Vela pour un navigateur embarqué. |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
@@ -248,8 +249,17 @@ Le canvas permet de choisir les onglets sources, d’arrêter une recherche, de 
 ### Espaces
 
 La fenêtre d’espace montre à gauche un aperçu vivant du châssis (rail, barre latérale, onglets,
-accueil) et règle à droite le nom, l’avatar, la teinte, l’ambiance et l’isolation. Quatre modèles
-préremplissent l’ensemble en un clic ; un espace existant se rouvre par double-clic sur sa pastille.
+accueil) et règle à droite le nom, l’avatar, la teinte, l’ambiance, les sites épinglés et l’isolation.
+Cinq modèles préremplissent l’ensemble en un clic — nom, teinte, avatar, ambiance et barre de sites
+(Travail : Notion, Gmail, Drive, Agenda, Slack ; Gaming : Steam, GeForce NOW, Discord…). Un espace
+existant se rouvre par double-clic sur sa pastille.
+
+Les sites épinglés vivent dans l’espace, pas dans un profil global : la barre de l’accueil ne montre que
+ceux de l’espace affiché, et changer d’espace change la barre. Les adresses sont validées (http et
+https seulement, doublons retirés, 24 sites au maximum), le favicon est demandé directement au site
+épinglé, et rien n’est envoyé ailleurs. Sur l’accueil, une carte s’ouvre dans un nouvel onglet, se
+réordonne ou se retire sans passer par la fenêtre d’espace ; glisser une adresse sur la barre l’y
+ajoute. Le nom saisi (« Études 2026 ») propose les sites du type correspondant, sans rien imposer.
 
 L’avatar peut être l’initiale de l’espace, l’une des huit marques dessinées, ou une photo importée :
 elle est recadrée au carré, zoomée, déplacée, puis teintée aux couleurs de l’espace et enregistrée en

@@ -39,6 +39,8 @@ export interface Space {
   avatar?: string | null
   /** Ambiance de fond propre à l'espace, posée sur tout le châssis. */
   background?: import('./space').SpaceBackground
+  /** Barre de sites épinglés, propre à l'espace. */
+  shortcuts?: import('./space').SpaceShortcut[]
   /** Filtre de traqueurs pour cet espace (défaut : activé). */
   blockTrackers?: boolean
   /** Partition Chromium : cookies, sessions et cache réellement isolés. */
