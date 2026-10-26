@@ -3,13 +3,18 @@ import type { TunnelEvent } from '@shared/api'
 import { useBrowser } from './browser'
 import {
   DEFAULT_FILTERS,
+  addCard as buildCard,
+  removeCard,
+  toggleLink as buildLink,
   buildTunnelHtml,
   buildTunnelReport,
   exportFileName,
   filterMap,
   toJsonExport,
+  toOpmlExport,
   tunnelMapTitle,
   type MapNode,
+  type MapNodeKind,
   type NodeStatus,
   type SourceType,
   type TunnelFilters,
@@ -51,6 +56,7 @@ interface TunnelState {
   setQuery(query: string): void
   setFilters(patch: Partial<TunnelFilters>): void
   toggleType(type: SourceType): void
+  toggleTag(tag: string): void
   resetFilters(): void
   setLevel(level: TunnelLevel): void
   setViewMode(mode: 'map' | 'list'): void
@@ -61,9 +67,19 @@ interface TunnelState {
   setExportOpen(open: boolean): void
   setStatus(id: string, status: NodeStatus): Promise<void>
   renameNode(id: string, title: string): Promise<void>
+  /** Ajoute une carte sous le nœud choisi (ou le sujet). */
+  addCard(parentId?: string | null, input?: { title?: string; kind?: MapNodeKind }): Promise<void>
+  /** Supprime une carte et sa descendance. */
+  removeNode(id: string): Promise<void>
+  /** Relie ou délie deux cartes. */
+  toggleLink(aId: string, bId: string): Promise<void>
+  /** Place un nœud à la main sur la carte (coordonnées du plan). */
+  moveNode(id: string, x: number, y: number): Promise<void>
   addReportToNotes(ids?: string[]): Promise<void>
   exportMarkdown(): Promise<void>
   exportJson(): Promise<void>
+  exportOpml(): Promise<void>
+  exportSvg(svg: SVGSVGElement | null): Promise<void>
   exportPdf(): Promise<void>
   exportPng(svg: SVGSVGElement | null): Promise<void>
   visible(): { visible: Set<string>; hiddenSites: number }
@@ -73,6 +89,41 @@ interface TunnelState {
 const currentSpace = (): string => useBrowser.getState().view?.activeSpaceId ?? ''
 
 let unsubscribe: (() => void) | null = null
+
+/**
+ * SVG autonome : la carte n'a pas de feuille de style à elle, ses classes
+ * vivent dans l'app. On recopie les règles `.tunnel-*` et les variables pour
+ * que le fichier s'ouvre ailleurs avec le même rendu.
+ */
+function svgDocument(svg: SVGSVGElement): string {
+  const clone = svg.cloneNode(true) as SVGSVGElement
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  clone.setAttribute('width', String(Math.round(svg.clientWidth || 1200)))
+  clone.setAttribute('height', String(Math.round(svg.clientHeight || 800)))
+  const styles: string[] = []
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      for (const rule of Array.from(sheet.cssRules)) {
+        const text = rule.cssText
+        if (text.includes('.tunnel-') || text.includes(':root')) styles.push(text)
+      }
+    } catch {
+      /* feuille distante ou protégée */
+    }
+  }
+  const style = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+  style.textContent = styles.join('\n')
+  clone.insertBefore(style, clone.firstChild)
+  const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper') || '#faf8f5'
+  const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  background.setAttribute('x', '0')
+  background.setAttribute('y', '0')
+  background.setAttribute('width', '100%')
+  background.setAttribute('height', '100%')
+  background.setAttribute('fill', paper.trim())
+  clone.insertBefore(background, style.nextSibling)
+  return new XMLSerializer().serializeToString(clone)
+}
 
 function download(text: string, filename: string, mime: string): void {
   const blob = new Blob([text], { type: mime })
@@ -281,6 +332,17 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     })
   },
 
+  toggleTag(tag) {
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        tags: state.filters.tags.includes(tag)
+          ? state.filters.tags.filter((entry) => entry !== tag)
+          : [...state.filters.tags, tag]
+      }
+    }))
+  },
+
   resetFilters() {
     set({ filters: { ...DEFAULT_FILTERS } })
   },
@@ -351,6 +413,61 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     await window.vela.tunnel.save(next)
   },
 
+  async addCard(parentId, input) {
+    const active = get().active
+    if (!active) return
+    const subject = active.nodes.find((entry) => entry.kind === 'subject')
+    const parent = parentId ?? get().selectedId ?? subject?.id ?? null
+    const next = buildCard(active, parent, {
+      title: input?.title ?? 'Nouvelle carte',
+      kind: input?.kind
+    })
+    const created = next.nodes[next.nodes.length - 1] ?? null
+    set({ active: next, selectedId: created?.id ?? null, viewMode: 'map' })
+    await window.vela.tunnel.save(next)
+  },
+
+  async removeNode(id) {
+    const active = get().active
+    if (!active) return
+    const node = active.nodes.find((entry) => entry.id === id)
+    if (!node) return
+    if (node.kind === 'subject') {
+      notify('Le sujet ne peut pas être supprimé.', 'error')
+      return
+    }
+    const next = removeCard(active, id)
+    set({
+      active: next,
+      selectedId: get().selectedId === id ? null : get().selectedId,
+      checkedIds: get().checkedIds.filter((entry) => entry !== id)
+    })
+    await window.vela.tunnel.save(next)
+    notify('Carte supprimée.')
+  },
+
+  async toggleLink(aId, bId) {
+    const active = get().active
+    if (!active) return
+    const next = buildLink(active, aId, bId)
+    set({ active: next })
+    await window.vela.tunnel.save(next)
+  },
+
+  async moveNode(id, x, y) {
+    const active = get().active
+    if (!active) return
+    const next: TunnelMap = {
+      ...active,
+      updatedAt: Date.now(),
+      nodes: active.nodes.map((node) =>
+        node.id === id ? { ...node, x: Math.round(x), y: Math.round(y) } : node
+      )
+    }
+    set({ active: next })
+    await window.vela.tunnel.save(next)
+  },
+
   async addReportToNotes(ids) {
     const { active } = get()
     if (!active) return
@@ -384,6 +501,24 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     if (!active) return
     download(toJsonExport(active), exportFileName(active.query, 'json'), 'application/json')
     notify('Carte exportée en JSON.')
+  },
+
+  async exportOpml() {
+    const { active } = get()
+    if (!active) return
+    download(toOpmlExport(active), exportFileName(active.query, 'opml'), 'text/x-opml')
+    notify('Carte exportée en OPML.')
+  },
+
+  async exportSvg(svg) {
+    const { active } = get()
+    if (!active || !svg) return
+    try {
+      download(svgDocument(svg), exportFileName(active.query, 'svg'), 'image/svg+xml')
+      notify('Carte exportée en SVG.')
+    } catch {
+      notify('Export SVG impossible.', 'error')
+    }
   },
 
   async exportPdf() {

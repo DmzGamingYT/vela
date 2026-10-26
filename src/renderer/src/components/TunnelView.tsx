@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  FILTER_TAGS,
   NODE_LABELS,
   SOURCE_TYPES,
   filterMap,
@@ -63,7 +64,9 @@ export default function TunnelView() {
   const filters = useTunnel((s) => s.filters)
   const setFilters = useTunnel((s) => s.setFilters)
   const toggleType = useTunnel((s) => s.toggleType)
+  const toggleTag = useTunnel((s) => s.toggleTag)
   const resetFilters = useTunnel((s) => s.resetFilters)
+  const addCard = useTunnel((s) => s.addCard)
   const level = useTunnel((s) => s.level)
   const setLevel = useTunnel((s) => s.setLevel)
   const viewMode = useTunnel((s) => s.viewMode)
@@ -81,6 +84,8 @@ export default function TunnelView() {
   const exportJson = useTunnel((s) => s.exportJson)
   const exportPdf = useTunnel((s) => s.exportPdf)
   const exportPng = useTunnel((s) => s.exportPng)
+  const exportOpml = useTunnel((s) => s.exportOpml)
+  const exportSvg = useTunnel((s) => s.exportSvg)
 
   const svgRef = useRef<SVGSVGElement | null>(null)
   const [input, setInput] = useState(query)
@@ -165,7 +170,9 @@ export default function TunnelView() {
     filters.minRelevance !== 60 ||
     filters.sourceTypes.length > 0 ||
     filters.from !== null ||
-    filters.lang !== 'all'
+    filters.lang !== 'all' ||
+    filters.tags.length > 0 ||
+    filters.minExcerpt > 0
 
   const selectedNode = selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null
   const periodYears =
@@ -225,6 +232,15 @@ export default function TunnelView() {
                 <Icon name="list" size={13} /> Liste
               </button>
             </div>
+            <button
+              type="button"
+              className="tunnel-tool"
+              disabled={!active}
+              title={selectedId ? 'Ajouter une carte sous ce nœud' : 'Ajouter une carte sous le sujet'}
+              onClick={() => void addCard(selectedId ?? null)}
+            >
+              <Icon name="plus" size={14} /> Carte
+            </button>
             <button type="button" className="tunnel-tool" onClick={() => setProjectsOpen(true)}>
               <Icon name="folder" size={14} /> Projets
             </button>
@@ -249,8 +265,14 @@ export default function TunnelView() {
                   <button type="button" role="menuitem" onClick={() => void exportPng(svgRef.current).then(() => setExportOpen(false))}>
                     Image PNG
                   </button>
+                  <button type="button" role="menuitem" onClick={() => void exportSvg(svgRef.current).then(() => setExportOpen(false))}>
+                    Image SVG
+                  </button>
                   <button type="button" role="menuitem" onClick={() => void exportJson().then(() => setExportOpen(false))}>
                     JSON
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => void exportOpml().then(() => setExportOpen(false))}>
+                    OPML
                   </button>
                 </div>
               )}
@@ -389,6 +411,34 @@ export default function TunnelView() {
                 <option value="en">Anglais</option>
               </select>
             </label>
+            <label>
+              <span>Niveau de détail</span>
+              <select
+                value={filters.minExcerpt}
+                onChange={(event) => setFilters({ minExcerpt: Number(event.target.value) })}
+              >
+                <option value={0}>Toutes les pages</option>
+                <option value={200}>Extrait de 200 caractères</option>
+                <option value={600}>Extrait de 600 caractères</option>
+              </select>
+            </label>
+            <div className="tunnel-tag-filter" role="group" aria-label="Étiquettes">
+              <span>Étiquettes</span>
+              <div>
+                {FILTER_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="tunnel-chip"
+                    aria-pressed={filters.tags.includes(tag)}
+                    data-active={filters.tags.includes(tag)}
+                    onClick={() => toggleTag(tag)}
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button type="button" className="ghost-btn" onClick={resetFilters} disabled={!filtersActive}>
               Réinitialiser
             </button>

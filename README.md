@@ -134,7 +134,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
-| **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue et type. Export Markdown, PDF, PNG, JSON et rapport en note. |
+| **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
 | **Notes** | Markdown stocké en fichiers `.md`, capturés depuis la page, à côté du web. |
 | **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
@@ -238,8 +238,14 @@ telle. Les résultats sous 35 % de pertinence ne créent aucun nœud, deux pages
 domaine, et le seuil de l’entonnoir (60 % par défaut) masque le reste. Les sous-angles sont des thèmes
 communs aux pages (« Outils », « Comparatifs », « Guides », « Limites »), jamais des noms de domaine.
 Les tensions s’appuient uniquement sur des phrases citées, jamais sur une déduction.
-La carte, la mise en page, les filtres, le rapport et les exports sont dans `src/shared/tunnel.ts`, testés
-sans Electron.
+L’entonnoir agit en direct sur la carte : il se combine selon le type de source, la pertinence, la période,
+la langue, une étiquette (« histoire », « technique »…) et le niveau de détail de la page (longueur de
+l’extrait). Les cartes survivent à l’entonnoir dès qu’elles sont écrites à la main : on peut les déplacer,
+les renommer, en ajouter sous n’importe quel nœud, en relier ou en supprimer, y compris avec leur descendance.
+Le fond de la carte est un canvas animé (constellation qui suit le pointeur), désactivé avec « Réduire les
+animations » ; les cartes sont en verre dépoli avec un liseré d’accent au survol et un badge de catégorie.
+La carte, la mise en page, les filtres, l’édition, le rapport et les exports sont dans `src/shared/tunnel.ts`,
+testés sans Electron.
 
 ### Traduction de BD
 

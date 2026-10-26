@@ -45,6 +45,7 @@ export type IconName =
   | 'list'
   | 'image'
   | 'refresh'
+  | 'link'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -227,6 +228,12 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M20 11a8 8 0 1 0-2.3 6" />
       <path d="M20 5v6h-6" />
+    </>
+  ),
+  link: (
+    <>
+      <path d="M10.5 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5" />
+      <path d="M13.5 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.5-1.5" />
     </>
   )
 }

@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addCard,
   buildTunnelHtml,
   buildTunnelReport,
   boxesOverlap,
   detectTensions,
   filterMap,
   layoutMap,
+  removeCard,
   scoreRelevance,
   suggestQueryFix,
   toJsonExport,
+  toOpmlExport,
+  toggleLink,
   DEFAULT_FILTERS,
   type MapNode,
   type TunnelMap
@@ -100,6 +104,26 @@ describe('filtres du tunnel', () => {
     expect(french.hiddenSites).toBe(1)
   })
 
+  it('filtre par étiquette et par niveau de détail de la page', () => {
+    const tagged = [
+      node({ id: 'subject', kind: 'subject', title: 'Sujet' }),
+      node({ id: 'angle', kind: 'angle', title: 'Angle', parentId: 'subject' }),
+      site('histoire', {
+        parentId: 'angle',
+        title: 'Histoire du web',
+        excerpt: 'Une histoire longue, racontée par ses acteurs.'
+      }),
+      site('bref', { parentId: 'angle', title: 'Note brève', excerpt: 'Trois lignes.' })
+    ]
+    const byTag = filterMap(tagged, { ...DEFAULT_FILTERS, tags: ['histoire'] })
+    expect(byTag.visible.has('histoire')).toBe(true)
+    expect(byTag.visible.has('bref')).toBe(false)
+
+    const detailed = filterMap(tagged, { ...DEFAULT_FILTERS, minExcerpt: 40 })
+    expect(detailed.visible.has('histoire')).toBe(true)
+    expect(detailed.visible.has('bref')).toBe(false)
+  })
+
   it('filtre par date et par type de source', () => {
     const byDate = filterMap(tree, { ...DEFAULT_FILTERS, from: now - 1000 * 60 * 60 * 24 * 30 })
     expect(byDate.visible.has('old')).toBe(false)
@@ -107,6 +131,52 @@ describe('filtres du tunnel', () => {
     expect(byType.visible.has('good')).toBe(false)
     expect(byType.hiddenSites).toBe(3)
     expect(byType.visible.has('angle')).toBe(false)
+  })
+})
+
+describe('édition de la carte', () => {
+  const map: TunnelMap = {
+    id: 'map',
+    spaceId: 'space',
+    query: 'sujet',
+    lang: 'fr',
+    createdAt: now,
+    updatedAt: now,
+    nodes: [
+      node({ id: 'subject', kind: 'subject', title: 'Sujet' }),
+      node({ id: 'angle', kind: 'angle', title: 'Angle', parentId: 'subject' }),
+      site('a', { parentId: 'angle' }),
+      site('b', { parentId: 'angle' })
+    ]
+  }
+
+  it('ajoute une carte sous le nœud choisi, marquée comme manuelle', () => {
+    const next = addCard(map, 'angle', { title: 'Limites', kind: 'detail' })
+    expect(next.nodes).toHaveLength(map.nodes.length + 1)
+    const created = next.nodes[next.nodes.length - 1]
+    expect(created.title).toBe('Limites')
+    expect(created.parentId).toBe('angle')
+    expect(created.manual).toBe(true)
+    // Une carte manuelle échappe à l’entonnoir.
+    const filtered = filterMap(next.nodes, { ...DEFAULT_FILTERS, minRelevance: 95 })
+    expect(filtered.visible.has(created.id)).toBe(true)
+  })
+
+  it('supprime une carte avec sa descendance et nettoie les liens', () => {
+    const withLink = toggleLink(map, 'a', 'b')
+    expect(withLink.nodes.find((entry) => entry.id === 'a')?.relatedIds).toEqual(['b'])
+    const pruned = removeCard(withLink, 'angle')
+    expect(pruned.nodes.map((entry) => entry.id)).toEqual(['subject'])
+    const prunedSite = removeCard(withLink, 'a')
+    expect(prunedSite.nodes.map((entry) => entry.id)).toEqual(['subject', 'angle', 'b'])
+    expect(prunedSite.nodes.find((entry) => entry.id === 'b')?.relatedIds).toEqual([])
+  })
+
+  it('relie puis délie deux cartes sans doublon', () => {
+    const once = toggleLink(map, 'a', 'b')
+    const twice = toggleLink(once, 'a', 'b')
+    expect(twice.nodes.find((entry) => entry.id === 'a')?.relatedIds).toEqual([])
+    expect(toggleLink(map, 'a', 'a')).toBe(map)
   })
 })
 
@@ -223,5 +293,38 @@ describe('correction de requête', () => {
   it('ne corrige pas une requête déjà propre ni les sigles courts', () => {
     expect(suggestQueryFix('navigateur minimaliste')).toBeNull()
     expect(suggestQueryFix('ia locale')).toBeNull()
+  })
+})
+
+describe('export OPML', () => {
+  it('garde la hiérarchie, les URL et échappe le XML', () => {
+    const map: TunnelMap = {
+      id: 'map',
+      spaceId: 'space',
+      query: 'navigateurs & vie privée',
+      title: 'Veille',
+      lang: 'fr',
+      nodes: [
+        node({ id: 'sujet', kind: 'subject', title: 'Navigateurs', parentId: null }),
+        node({ id: 'angle', kind: 'angle', title: 'Vie privée', parentId: 'sujet' }),
+        node({
+          id: 'site',
+          kind: 'site',
+          title: 'DuckDuckGo <privé>',
+          parentId: 'angle',
+          url: 'https://duckduckgo.com/'
+        }),
+        node({ id: 'ecarte', kind: 'site', title: 'Hors sujet', parentId: 'angle', status: 'dismissed' })
+      ],
+      createdAt: now,
+      updatedAt: now
+    }
+    const opml = toOpmlExport(map)
+    expect(opml).toContain('<opml version="2.0">')
+    expect(opml).toContain('text="Navigateurs"')
+    expect(opml).toContain('text="Vie privée"')
+    expect(opml).toContain('text="DuckDuckGo &lt;privé&gt;"')
+    expect(opml).toContain('htmlUrl="https://duckduckgo.com/"')
+    expect(opml).not.toContain('Hors sujet')
   })
 })

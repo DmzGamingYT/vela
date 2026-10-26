@@ -7517,6 +7517,25 @@ html[data-mode="dark"] {
   justify-self: start;
 }
 
+.tunnel-tag-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tunnel-tag-filter > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tunnel-tag-filter .tunnel-chip {
+  padding: 3px 7px;
+  font-size: 11px;
+}
+
 .tunnel-privacy {
   grid-column: 1 / -1;
   display: flex;
@@ -7558,6 +7577,15 @@ html[data-mode="dark"] {
   background: radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--clay) 5%, transparent), transparent 60%);
 }
 
+.tunnel-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
 .tunnel-stage {
   position: absolute;
   inset: 0;
@@ -7576,10 +7604,6 @@ html[data-mode="dark"] {
   user-select: none;
 }
 
-.tunnel-dot {
-  fill: color-mix(in srgb, var(--ink) 14%, transparent);
-}
-
 .tunnel-edge {
   fill: none;
   stroke: color-mix(in srgb, var(--ink) 26%, transparent);
@@ -7590,6 +7614,11 @@ html[data-mode="dark"] {
 .tunnel-edge[data-tension="true"] {
   stroke: color-mix(in srgb, var(--tunnel-warn) 70%, transparent);
   stroke-dasharray: 4 4;
+}
+
+.tunnel-edge-link {
+  stroke: color-mix(in srgb, var(--clay) 45%, transparent);
+  stroke-dasharray: 2 5;
 }
 
 .tunnel-edge-group[data-dim="true"] {
@@ -7607,8 +7636,19 @@ html[data-mode="dark"] {
 
 .tunnel-node {
   outline: none;
-  cursor: pointer;
+  cursor: grab;
   transition: opacity 0.18s ease;
+}
+
+.tunnel-node[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tunnel-edge,
+  .tunnel-node {
+    transition: none;
+  }
 }
 
 .tunnel-node[data-dim="true"] {
@@ -7623,7 +7663,64 @@ html[data-mode="dark"] {
 }
 
 .tunnel-node:hover .tunnel-card {
-  stroke: color-mix(in srgb, var(--clay) 45%, var(--line));
+  stroke: color-mix(in srgb, var(--clay) 50%, var(--line));
+  fill: color-mix(in srgb, var(--surface) 92%, var(--clay));
+  filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--ink) 16%, transparent));
+}
+
+.tunnel-card-halo {
+  fill: none;
+  stroke: color-mix(in srgb, var(--clay) 55%, transparent);
+  stroke-width: 1.4;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.tunnel-node:hover .tunnel-card-halo,
+.tunnel-node[data-selected="true"] .tunnel-card-halo,
+.tunnel-node:focus-visible .tunnel-card-halo {
+  opacity: 0.9;
+}
+
+.tunnel-card-sheen {
+  fill: #ffffff;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.tunnel-badge rect {
+  fill: color-mix(in srgb, var(--ink) 7%, transparent);
+  stroke: color-mix(in srgb, var(--ink) 12%, transparent);
+  stroke-width: 0.6;
+}
+
+.tunnel-badge text {
+  fill: var(--muted);
+  font-family: var(--sans);
+}
+
+.tunnel-node[data-kind="subject"] .tunnel-badge rect,
+.tunnel-node[data-kind="angle"] .tunnel-badge rect {
+  fill: color-mix(in srgb, var(--clay) 14%, transparent);
+  stroke: color-mix(in srgb, var(--clay) 26%, transparent);
+}
+
+.tunnel-badge[data-kind="concept"] rect,
+.tunnel-badge[data-kind="site"] rect {
+  fill: color-mix(in srgb, var(--tunnel-ok) 13%, transparent);
+  stroke: color-mix(in srgb, var(--tunnel-ok) 26%, transparent);
+}
+
+.tunnel-badge[data-kind="tension"] rect {
+  fill: color-mix(in srgb, var(--tunnel-warn) 15%, transparent);
+  stroke: color-mix(in srgb, var(--tunnel-warn) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tunnel-card-halo {
+    transition: none;
+  }
 }
 
 .tunnel-node[data-selected="true"] .tunnel-card {
@@ -7660,6 +7757,10 @@ html[data-mode="dark"] {
 .tunnel-node[data-kind="site"] .tunnel-card {
   fill: var(--paper-deep);
   fill: color-mix(in srgb, var(--paper-deep) 45%, var(--surface));
+}
+
+.tunnel-node[data-manual="true"] .tunnel-card {
+  stroke: color-mix(in srgb, var(--clay) 32%, var(--line));
 }
 
 .tunnel-node[data-dismissed="true"] {
@@ -8426,6 +8527,105 @@ html[data-mode="dark"] {
 .tunnel-detail-actions .ghost-btn[data-active="true"] {
   color: var(--clay);
   background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.tunnel-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.tunnel-edit h3 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 560;
+}
+
+.tunnel-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tunnel-edit-actions .ghost-btn {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  border-radius: 8px;
+}
+
+.tunnel-edit-actions .ghost-btn[data-active="true"] {
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.tunnel-edit-actions .ghost-btn.danger {
+  color: var(--tunnel-warn);
+  border-color: color-mix(in srgb, var(--tunnel-warn) 32%, var(--line));
+}
+
+.tunnel-edit-actions .ghost-btn:disabled {
+  opacity: 0.45;
+}
+
+.tunnel-edit-form {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.tunnel-edit-form input,
+.tunnel-edit-form select {
+  height: 28px;
+  min-width: 0;
+  flex: 1;
+  padding: 0 7px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 11.5px;
+}
+
+.tunnel-edit-form button {
+  flex: 0 0 auto;
+}
+
+.tunnel-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+}
+
+.tunnel-links li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--clay) 6%, transparent);
+  font-size: 10.5px;
+  max-width: 100%;
+}
+
+.tunnel-links li > button:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 190px;
+}
+
+.tunnel-edit-hint {
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .tunnel-tension-grid {

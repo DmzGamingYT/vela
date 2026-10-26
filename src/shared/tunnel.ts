@@ -35,6 +35,11 @@ export interface MapNode {
   relation?: string
   /** Langue dominante de la page, pour l’entonnoir. */
   lang?: 'fr' | 'en'
+  /** Position choisie à la main sur la carte (coordonnées du plan). */
+  x?: number
+  y?: number
+  /** Carte ajoutée à la main : jamais masquée par l’entonnoir. */
+  manual?: boolean
 }
 
 export interface TunnelMap {
@@ -63,14 +68,23 @@ export interface TunnelFilters {
   /** Date minimale de publication (ms) ; null = pas de limite. */
   from: number | null
   lang: 'all' | 'fr' | 'en'
+  /** Étiquettes thématiques demandées (histoire, technique…). */
+  tags: string[]
+  /** Longueur minimale de l’extrait : niveau de détail de la page. */
+  minExcerpt: number
 }
 
 export const DEFAULT_FILTERS: TunnelFilters = {
   sourceTypes: [],
   minRelevance: 60,
   from: null,
-  lang: 'all'
+  lang: 'all',
+  tags: [],
+  minExcerpt: 0
 }
+
+/** Étiquettes proposées dans l’entonnoir, alignées sur les affinages du tunnel. */
+export const FILTER_TAGS = ['histoire', 'technique', 'critique', 'exemples', 'guide'] as const
 
 export const SOURCE_TYPES: { id: SourceType; label: string }[] = [
   { id: 'academic', label: 'Académique' },
@@ -297,6 +311,22 @@ export function filterMap(
       hiddenSites += 1
       continue
     }
+    if (filters.minExcerpt > 0 && (site.excerpt ?? '').length < filters.minExcerpt) {
+      hiddenSites += 1
+      continue
+    }
+    if (filters.tags.length > 0) {
+      const words = tokenize(`${site.title} ${site.summary} ${site.excerpt ?? ''}`)
+      const hit = filters.tags.some((tag) => {
+        const wanted = stripAccents(tag.toLowerCase())
+        const stem = wanted.slice(0, Math.min(5, wanted.length))
+        return words.some((word) => word.startsWith(stem))
+      })
+      if (!hit) {
+        hiddenSites += 1
+        continue
+      }
+    }
     kept.add(site.id)
   }
 
@@ -305,6 +335,19 @@ export function filterMap(
   const visible = new Set<string>(kept)
   for (const id of kept) {
     let current = byId.get(id)?.parentId ?? null
+    let guard = 0
+    while (current && guard < 12) {
+      visible.add(current)
+      current = byId.get(current)?.parentId ?? null
+      guard += 1
+    }
+  }
+  // Les cartes écrites à la main restent visibles avec leur contexte :
+  // l’entonnoir filtre des sources, pas les notes de l’utilisateur.
+  for (const node of nodes) {
+    if (!node.manual) continue
+    visible.add(node.id)
+    let current = node.parentId
     let guard = 0
     while (current && guard < 12) {
       visible.add(current)
@@ -326,6 +369,89 @@ export function filterMap(
     }
   }
   return { visible, hiddenSites }
+}
+
+/* ------------------------------------------------------------------ */
+/* Édition manuelle de la carte                                        */
+/* ------------------------------------------------------------------ */
+
+function newId(prefix: string): string {
+  const random = Math.random().toString(36).slice(2, 8)
+  return `${prefix}-${Date.now().toString(36)}-${random}`
+}
+
+/** Carte ajoutée à la main : elle n’a pas de source, donc pas d’URL ni de score. */
+export function addCard(
+  map: TunnelMap,
+  parentId: string | null,
+  input: { title: string; kind?: MapNodeKind; summary?: string }
+): TunnelMap {
+  const title = input.title.trim().slice(0, 200) || 'Nouvelle carte'
+  const parent = parentId ? map.nodes.find((node) => node.id === parentId) ?? null : null
+  const kind = input.kind ?? (parent?.kind === 'subject' ? 'angle' : 'detail')
+  const card: MapNode = {
+    id: newId('card'),
+    kind,
+    title,
+    summary: input.summary?.slice(0, 1200) ?? '',
+    relevance: 0,
+    confidence: 0,
+    reason: 'Carte ajoutée à la main.',
+    status: 'kept',
+    parentId: parent?.id ?? null,
+    createdAt: Date.now(),
+    relation: 'ajouté à la main',
+    manual: true
+  }
+  return { ...map, updatedAt: Date.now(), nodes: [...map.nodes, card] }
+}
+
+/** Retire une carte et sa descendance ; les liens vers elles disparaissent aussi. */
+export function removeCard(map: TunnelMap, id: string): TunnelMap {
+  const removed = new Set<string>([id])
+  let grew = true
+  while (grew) {
+    grew = false
+    for (const node of map.nodes) {
+      if (node.parentId && removed.has(node.parentId) && !removed.has(node.id)) {
+        removed.add(node.id)
+        grew = true
+      }
+    }
+  }
+  const nodes = map.nodes
+    .filter((node) => !removed.has(node.id))
+    .map((node) => {
+      if (!node.relatedIds) return node
+      const related = node.relatedIds.filter((entry) => !removed.has(entry))
+      return related.length === node.relatedIds.length ? node : { ...node, relatedIds: related }
+    })
+  return { ...map, updatedAt: Date.now(), nodes }
+}
+
+/** Relie deux cartes (lien courbe étiqueté), sans doublon ni lien vers soi-même. */
+export function toggleLink(map: TunnelMap, aId: string, bId: string): TunnelMap {
+  if (aId === bId) return map
+  const a = map.nodes.find((node) => node.id === aId)
+  const b = map.nodes.find((node) => node.id === bId)
+  if (!a || !b) return map
+  const linked = (a.relatedIds ?? []).includes(bId)
+  const patch = (node: MapNode, other: string): MapNode => {
+    const current = node.relatedIds ?? []
+    const next = linked
+      ? current.filter((entry) => entry !== other)
+      : [...current, other].slice(0, 8)
+    return { ...node, relatedIds: next }
+  }
+  return {
+    ...map,
+    updatedAt: Date.now(),
+    nodes: map.nodes.map((node) => {
+      if (node.id === aId) return patch(node, bId)
+      if (node.id === bId) return patch(node, aId)
+      return node
+    })
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -604,6 +730,58 @@ export function toJsonExport(map: TunnelMap): string {
   return JSON.stringify(map, null, 2)
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+/**
+ * Export OPML : la hiérarchie du tunnel devient des plans imbriqués, ouvrables
+ * dans un lecteur de flux ou un outliner. Les sites gardent leur URL et leur
+ * note de pertinence.
+ */
+export function toOpmlExport(map: TunnelMap): string {
+  const children = new Map<string | null, MapNode[]>()
+  for (const node of map.nodes) {
+    if (node.status === 'dismissed') continue
+    const key = node.parentId ?? null
+    const list = children.get(key) ?? []
+    list.push(node)
+    children.set(key, list)
+  }
+  for (const list of children.values()) {
+    list.sort((a, b) => a.createdAt - b.createdAt)
+  }
+
+  const renderNode = (node: MapNode, depth: number): string => {
+    const attributes = [
+      `text="${escapeXml(node.title)}"`,
+      `_note="${escapeXml(
+        [NODE_LABELS[node.kind], node.summary, node.reason].filter(Boolean).join(' — ').slice(0, 900)
+      )}"`
+    ]
+    if (node.url) attributes.push(`htmlUrl="${escapeXml(node.url)}"`)
+    if (node.kind === 'site') attributes.push(`type="link"`)
+    const inner = renderList(node.id, depth + 1)
+    if (!inner) return `<outline ${attributes.join(' ')} />`
+    return `<outline ${attributes.join(' ')}>\n${inner}\n</outline>`
+  }
+
+  const renderList = (parentId: string | null, depth: number): string => {
+    if (depth > 8) return ''
+    return (children.get(parentId) ?? []).map((node) => renderNode(node, depth)).join('\n')
+  }
+
+  const body = renderList(null, 0)
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n<head>\n<title>${escapeXml(
+    tunnelMapTitle(map)
+  )}</title>\n<dateCreated>${new Date(map.updatedAt).toUTCString()}</dateCreated>\n</head>\n<body>\n${body}\n</body>\n</opml>\n`
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -740,7 +918,10 @@ export function sanitizeMap(raw: unknown): TunnelMap | null {
       excerpt: typeof node.excerpt === 'string' ? node.excerpt.slice(0, 2000) : undefined,
       reachable: typeof node.reachable === 'boolean' ? node.reachable : undefined,
       relation: typeof node.relation === 'string' ? node.relation.slice(0, 60) : undefined,
-      lang: node.lang === 'en' || node.lang === 'fr' ? node.lang : undefined
+      lang: node.lang === 'en' || node.lang === 'fr' ? node.lang : undefined,
+      x: typeof node.x === 'number' && Number.isFinite(node.x) ? Math.round(node.x) : undefined,
+      y: typeof node.y === 'number' && Number.isFinite(node.y) ? Math.round(node.y) : undefined,
+      manual: node.manual === true ? true : undefined
     })
     if (nodes.length >= 200) break
   }

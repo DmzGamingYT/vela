@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { NODE_LABELS, SOURCE_TYPES, type MapNode } from '@shared/tunnel'
+import { NODE_LABELS, SOURCE_TYPES, type MapNode, type MapNodeKind } from '@shared/tunnel'
 import { useBrowser } from '../store/browser'
 import { useTunnel } from '../store/tunnel'
 import { Icon } from './Icon'
@@ -29,11 +29,20 @@ export default function TunnelDetail() {
   const select = useTunnel((s) => s.select)
   const setStatus = useTunnel((s) => s.setStatus)
   const renameNode = useTunnel((s) => s.renameNode)
+  const addCard = useTunnel((s) => s.addCard)
+  const removeNode = useTunnel((s) => s.removeNode)
+  const toggleLink = useTunnel((s) => s.toggleLink)
   const runTunnel = useTunnel((s) => s.runTunnel)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [copied, setCopied] = useState(false)
   const [noteState, setNoteState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [adding, setAdding] = useState(false)
+  const [cardTitle, setCardTitle] = useState('')
+  const [cardKind, setCardKind] = useState<MapNodeKind>('detail')
+  const [linking, setLinking] = useState(false)
+  const [linkId, setLinkId] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const node = active && selectedId ? active.nodes.find((entry) => entry.id === selectedId) ?? null : null
 
@@ -55,6 +64,17 @@ export default function TunnelDetail() {
     return node.relatedIds
       .map((id) => active.nodes.find((entry) => entry.id === id))
       .filter((entry): entry is MapNode => Boolean(entry))
+  }, [active, node])
+
+  const linkCandidates = useMemo(() => {
+    if (!active || !node) return [] as MapNode[]
+    return active.nodes.filter(
+      (entry) =>
+        entry.id !== node.id &&
+        entry.id !== node.parentId &&
+        !(node.relatedIds ?? []).includes(entry.id) &&
+        entry.kind !== 'subject'
+    )
   }, [active, node])
 
   if (!node) return null
@@ -113,6 +133,21 @@ export default function TunnelDetail() {
   const startRename = (): void => {
     setDraft(node.title)
     setEditing(true)
+  }
+
+  const createCard = (): void => {
+    const title = cardTitle.trim()
+    if (!title) return
+    void addCard(node.id, { title, kind: cardKind })
+    setCardTitle('')
+    setAdding(false)
+  }
+
+  const linkNode = (): void => {
+    if (!linkId) return
+    void toggleLink(node.id, linkId)
+    setLinkId('')
+    setLinking(false)
   }
 
   return (
@@ -295,6 +330,120 @@ export default function TunnelDetail() {
         </button>
         {noteState === 'error' && <p className="tunnel-warn">Note non enregistrée.</p>}
       </div>
+
+      <section className="tunnel-edit" aria-label="Modifier la carte">
+        <h3>Modifier la carte</h3>
+
+        <div className="tunnel-edit-actions">
+          <button type="button" className="ghost-btn" data-active={adding} onClick={() => setAdding(!adding)}>
+            <Icon name="plus" size={13} /> Ajouter une carte
+          </button>
+          <button
+            type="button"
+            className="ghost-btn"
+            data-active={linking}
+            onClick={() => setLinking(!linking)}
+            disabled={linkCandidates.length === 0}
+          >
+            <Icon name="link" size={13} /> Relier à…
+          </button>
+          <button
+            type="button"
+            className="ghost-btn danger"
+            disabled={node.kind === 'subject'}
+            onClick={() => {
+              if (confirmDelete) {
+                void removeNode(node.id)
+                setConfirmDelete(false)
+              } else {
+                setConfirmDelete(true)
+                setTimeout(() => setConfirmDelete(false), 4000)
+              }
+            }}
+          >
+            <Icon name="trash" size={13} />
+            {confirmDelete ? 'Confirmer la suppression' : 'Supprimer'}
+          </button>
+        </div>
+
+        {adding && (
+          <form
+            className="tunnel-edit-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              createCard()
+            }}
+          >
+            <input
+              autoFocus
+              value={cardTitle}
+              onChange={(event) => setCardTitle(event.target.value)}
+              placeholder="Titre de la carte"
+              aria-label="Titre de la nouvelle carte"
+            />
+            <select
+              value={cardKind}
+              onChange={(event) => setCardKind(event.target.value as MapNodeKind)}
+              aria-label="Type de la nouvelle carte"
+            >
+              <option value="angle">Angle</option>
+              <option value="subangle">Sous-angle</option>
+              <option value="detail">Détail</option>
+              <option value="concept">Concept</option>
+            </select>
+            <button type="submit" className="ghost-btn" disabled={!cardTitle.trim()}>
+              Créer
+            </button>
+          </form>
+        )}
+
+        {linking && (
+          <form
+            className="tunnel-edit-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              linkNode()
+            }}
+          >
+            <select value={linkId} onChange={(event) => setLinkId(event.target.value)} aria-label="Carte à relier">
+              <option value="">Choisir une carte…</option>
+              {linkCandidates.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {NODE_LABELS[entry.kind]} — {entry.title}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className="ghost-btn" disabled={!linkId}>
+              Relier
+            </button>
+          </form>
+        )}
+
+        {related.length > 0 && (
+          <ul className="tunnel-links">
+            {related.map((entry) => (
+              <li key={entry.id}>
+                <button type="button" onClick={() => select(entry.id)}>
+                  {entry.title}
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`Délier ${entry.title}`}
+                  title="Délier"
+                  onClick={() => void toggleLink(node.id, entry.id)}
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="tunnel-edit-hint">
+          Glissez une carte sur la toile pour la déplacer, double-cliquez pour ouvrir sa source.
+        </p>
+      </section>
     </aside>
   )
 }

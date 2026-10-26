@@ -10,6 +10,7 @@ import {
 import { useBrowser } from '../store/browser'
 import { useTunnel } from '../store/tunnel'
 import { Icon, type IconName } from './Icon'
+import TunnelBackdrop from './TunnelBackdrop'
 
 const NODE_WIDTH = 230
 const NODE_HEIGHT = 74
@@ -99,6 +100,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
   const setHover = useTunnel((s) => s.setHover)
   const select = useTunnel((s) => s.select)
   const setStatus = useTunnel((s) => s.setStatus)
+  const moveNode = useTunnel((s) => s.moveNode)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [size, setSize] = useState({ width: 900, height: 560 })
@@ -106,6 +108,17 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
   const [pan, setPan] = useState({ x: 24, y: 24 })
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
   const fitted = useRef<string>('')
+  // Déplacement d'un nœud : aperçu local pendant le geste, écriture à la fin.
+  const [nodeDrag, setNodeDrag] = useState<{ id: string; x: number; y: number } | null>(null)
+  const nodeDragRef = useRef<{
+    id: string
+    startX: number
+    startY: number
+    originX: number
+    originY: number
+    moved: boolean
+  } | null>(null)
+  const suppressClick = useRef(0)
 
   const { visible, hiddenSites } = useMemo(
     () => filterMap(active?.nodes ?? [], filters),
@@ -135,6 +148,9 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
     if (!active) return [] as MapNode[]
     return active.nodes.filter((node) => {
       if (!visible.has(node.id)) return false
+      // Une carte écrite à la main ne disparaît pas selon le niveau affiché :
+      // elle vit sous la source où l’utilisateur l’a posée.
+      if (node.manual) return true
       const depth = depths.get(node.id) ?? 0
       return depth < level
     })
@@ -195,11 +211,24 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       y += NODE_HEIGHT + ROW_GAP
       width = Math.max(width, tree.width + 40 + NODE_WIDTH)
     }
+    // Une position choisie à la main prime sur la disposition automatique.
+    for (const node of layoutNodes) {
+      const box = result[node.id]
+      if (box && typeof node.x === 'number' && typeof node.y === 'number') {
+        result[node.id] = { ...box, x: node.x, y: node.y }
+      }
+    }
     const height = Math.max(tree.height, y > 0 ? y - ROW_GAP : 0)
     return { boxes: result, width: width || NODE_WIDTH, height: height || NODE_HEIGHT }
   }, [layoutNodes, subject])
 
-  const boxes = layout.boxes as Record<string, Box>
+  const boxes = useMemo(() => {
+    const base = layout.boxes as Record<string, Box>
+    if (!nodeDrag) return base
+    const target = base[nodeDrag.id]
+    if (!target) return base
+    return { ...base, [nodeDrag.id]: { ...target, x: nodeDrag.x, y: nodeDrag.y } }
+  }, [layout, nodeDrag])
   const byId = useMemo(() => new Map(layoutNodes.map((node) => [node.id, node])), [layoutNodes])
 
   // Estompage seulement pendant le survol : une sélection ne doit pas
@@ -243,7 +272,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       (rect.height - 108) / Math.max(1, layout.height),
       1.15
     )
-    const clamped = Math.max(0.5, next)
+    const clamped = Math.max(0.38, next)
     setZoom(Number(clamped.toFixed(3)))
     setPan({
       x: Math.max(24, (rect.width - layout.width * clamped) / 2),
@@ -282,7 +311,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       const py = event.clientY - rect.top
       const factor = Math.exp(-event.deltaY * 0.0016)
       setZoom((current) => {
-        const next = Math.min(2.6, Math.max(0.38, current * factor))
+        const next = Math.min(2.6, Math.max(0.34, current * factor))
         const ratio = next / current
         setPan((previous) => ({
           x: px - (px - previous.x) * ratio,
@@ -305,7 +334,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
         setZoom((z) => Math.min(2.6, z * 1.14))
       } else if (event.key === '-') {
         event.preventDefault()
-        setZoom((z) => Math.max(0.38, z / 1.14))
+        setZoom((z) => Math.max(0.34, z / 1.14))
       } else if (event.key === '0') {
         event.preventDefault()
         fit()
@@ -370,22 +399,29 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
 
   if (!active) return <div className="tunnel-canvas" />
 
-  const fontUnit = 1 / Math.max(0.5, zoom)
+  // Le texte garde une taille lisible à l’écran ; seuls les cadres rétrécissent.
+  const fontUnit = 1 / Math.max(0.38, zoom)
   const titleSize = 13 * fontUnit
   const metaSize = 12.2 * fontUnit
   const excerptSize = 11.5 * fontUnit
+  // Le titre commence après l’icône, dont l’échelle suit le zoom : la largeur
+  // disponible doit être calculée dans la même unité que la police.
+  const titleLeft = 8 * fontUnit + 21 * fontUnit
   const maxChars = Math.max(
-    10,
-    Math.floor((NODE_WIDTH - 30) / (titleSize * 0.5))
+    8,
+    Math.floor((NODE_WIDTH - titleLeft - 8 * fontUnit) / (titleSize * 0.52))
   )
   // Zoom sémantique : loin = pastille avec le titre, moyen = carte complète,
   // proche = extrait. Deux lignes seulement si la hauteur écran le permet.
-  const compact = zoom < 0.62
-  const maxLines = zoom >= 0.7 ? 2 : 1
+  const compact = zoom < 0.5
+  const maxLines = zoom >= 0.55 ? 2 : 1
+  // Le zoom sémantique remplace le badge par un extrait, sans jamais
+  // superposer les deux dans une carte de 74 px.
   const showExcerpt = zoom >= 1.32
 
   return (
     <div className="tunnel-canvas" ref={containerRef}>
+      <TunnelBackdrop />
       <div
         className="tunnel-stage"
         onPointerDown={startPan}
@@ -404,12 +440,6 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
           role="group"
           aria-label="Carte mentale du tunnel de recherche"
         >
-          <defs>
-            <pattern id="tunnel-dots" width="22" height="22" patternUnits="userSpaceOnUse">
-              <circle cx="1.1" cy="1.1" r="1.05" className="tunnel-dot" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#tunnel-dots)" />
           <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
             {layoutNodes.map((node) => {
               const box = boxes[node.id]
@@ -460,6 +490,42 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
             })}
 
             {layoutNodes.map((node) => {
+              if (!node.relatedIds?.length) return null
+              const box = boxes[node.id]
+              if (!box) return null
+              const satellite =
+                (node.kind === 'tension' || node.kind === 'concept') &&
+                (node.relatedIds?.length ?? 0) > 0
+              // Les tensions et concepts tirent déjà leurs arêtes de leurs
+              // sources liées : on ne trace ici que les liens ajoutés à la main.
+              if (satellite) return null
+              const dim = branch ? !branch.has(node.id) : false
+              return node.relatedIds.map((relatedId) => {
+                const other = boxes[relatedId]
+                const target = byId.get(relatedId)
+                if (!other || !target) return null
+                // Le lien est stocké des deux côtés : on ne le peint qu’une fois.
+                if (node.id > relatedId) return null
+                if (node.parentId === relatedId || target.parentId === node.id) return null
+                const left = other.x <= box.x ? other : box
+                const right = other.x <= box.x ? box : other
+                const startX = left.x + left.width
+                const startY = left.y + left.height / 2
+                const endX = right.x
+                const endY = right.y + right.height / 2
+                const midX = startX + Math.max(18, (endX - startX) / 2)
+                return (
+                  <path
+                    key={`link-${node.id}-${relatedId}`}
+                    className="tunnel-edge tunnel-edge-link"
+                    data-dim={dim}
+                    d={`M${startX} ${startY} C${midX} ${startY} ${midX} ${endY} ${endX} ${endY}`}
+                  />
+                )
+              })
+            })}
+
+            {layoutNodes.map((node) => {
               const box = boxes[node.id]
               if (!box) return null
               const dim = branch ? !branch.has(node.id) : false
@@ -470,6 +536,14 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
               const paddingY = 5 * fontUnit
               const metaY = box.height - paddingY - fontUnit * 0.9
               const titleTop = paddingY + titleSize * 0.95
+              const metaText = shorten(
+                metaLabel(node),
+                Math.floor((NODE_WIDTH - 2 * padding) / (metaSize * 0.58))
+              )
+              const badgeWidth = Math.min(
+                box.width - padding * 2,
+                metaText.length * metaSize * 0.56 + 12 * fontUnit
+              )
               return (
                 <g
                   key={node.id}
@@ -479,11 +553,58 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                   data-selected={isSelected}
                   data-checked={isChecked}
                   data-dismissed={node.status === 'dismissed'}
+                  data-manual={node.manual === true}
+                  data-dragging={nodeDrag?.id === node.id}
                   transform={`translate(${box.x} ${box.y})`}
                   tabIndex={0}
                   role="button"
                   aria-label={`${NODE_LABELS[node.kind]} : ${node.title}${node.kind === 'site' ? `, ${shortDomain(node)}` : ''}`}
+                  onPointerDown={(event) => {
+                    if (event.button !== 0 || event.shiftKey) return
+                    event.stopPropagation()
+                    nodeDragRef.current = {
+                      id: node.id,
+                      startX: event.clientX,
+                      startY: event.clientY,
+                      originX: box.x,
+                      originY: box.y,
+                      moved: false
+                    }
+                    setNodeDrag({ id: node.id, x: box.x, y: box.y })
+                    ;(event.currentTarget as SVGGElement).setPointerCapture(event.pointerId)
+                  }}
+                  onPointerMove={(event) => {
+                    const current = nodeDragRef.current
+                    if (!current) return
+                    const dx = (event.clientX - current.startX) / zoom
+                    const dy = (event.clientY - current.startY) / zoom
+                    if (!current.moved && Math.hypot(dx, dy) > 3) current.moved = true
+                    setNodeDrag({
+                      id: current.id,
+                      x: Math.round(current.originX + dx),
+                      y: Math.round(current.originY + dy)
+                    })
+                  }}
+                  onPointerUp={(event) => {
+                    const current = nodeDragRef.current
+                    if (!current) return
+                    const dx = (event.clientX - current.startX) / zoom
+                    const dy = (event.clientY - current.startY) / zoom
+                    const x = Math.round(current.originX + dx)
+                    const y = Math.round(current.originY + dy)
+                    if (current.moved) {
+                      suppressClick.current = Date.now()
+                      void moveNode(current.id, x, y)
+                    }
+                    nodeDragRef.current = null
+                    setNodeDrag(null)
+                  }}
+                  onPointerCancel={() => {
+                    nodeDragRef.current = null
+                    setNodeDrag(null)
+                  }}
                   onClick={(event) => {
+                    if (Date.now() - suppressClick.current < 250) return
                     if (event.shiftKey) select(node.id, { toggle: true })
                     else select(node.id)
                   }}
@@ -527,10 +648,26 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                     {`${node.title}${node.domain ? ` — ${node.domain}` : ''}`}
                   </title>
                   <rect
+                    className="tunnel-card-halo"
+                    x={-2 * fontUnit}
+                    y={-2 * fontUnit}
+                    width={box.width + 4 * fontUnit}
+                    height={box.height + 4 * fontUnit}
+                    rx={16}
+                  />
+                  <rect
                     className="tunnel-card"
                     width={box.width}
                     height={box.height}
                     rx={14}
+                  />
+                  <rect
+                    className="tunnel-card-sheen"
+                    width={box.width - 2 * fontUnit}
+                    height={Math.min(box.height / 2, 26 * fontUnit)}
+                    x={fontUnit}
+                    y={fontUnit}
+                    rx={12}
                   />
                   <rect
                     className="tunnel-node-accent"
@@ -557,24 +694,28 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                       {line}
                     </text>
                   ))}
-                  {!compact && (
-                    <text
-                      className="tunnel-node-meta"
-                      x={padding}
-                      y={metaY}
-                      fontSize={metaSize}
-                    >
-                      {shorten(metaLabel(node), Math.floor((NODE_WIDTH - 2 * padding) / (metaSize * 0.58)))}
-                    </text>
+                  {!compact && !showExcerpt && (
+                    <g className="tunnel-badge" data-kind={node.kind}>
+                      <rect
+                        x={padding - 2 * fontUnit}
+                        y={metaY - metaSize * 1.15}
+                        width={badgeWidth}
+                        height={metaSize * 1.5}
+                        rx={metaSize * 0.75}
+                      />
+                      <text x={padding + 4 * fontUnit} y={metaY} fontSize={metaSize}>
+                        {metaText}
+                      </text>
+                    </g>
                   )}
                   {showExcerpt && node.kind === 'site' && node.excerpt && (
                     <text
                       className="tunnel-node-excerpt"
                       x={padding}
-                      y={box.height - padding - metaSize * 1.7}
+                      y={metaY}
                       fontSize={excerptSize}
                     >
-                      {`${node.excerpt.slice(0, 70)}${node.excerpt.length > 70 ? '…' : ''}`}
+                      {shorten(node.excerpt.replace(/\s+/g, ' '), Math.floor((NODE_WIDTH - 2 * padding) / (excerptSize * 0.56)))}
                     </text>
                   )}
                   {node.kind === 'site' && (
