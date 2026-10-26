@@ -1,13 +1,18 @@
 # Vela — site vitrine
 
-Site public de Vela, en HTML, CSS et JavaScript statiques. Il suit l’identité de l’application :
-neutres chauds façon Dia — charbon doux `#151518` la nuit, papier crème `#f6f5f2` le jour — et une
-seule lumière d’accent (bleu `#62c8ff`, indigo `#5b7dff`, violet `#a88cff`). Les trois orbes floues
-animées ont été remplacées par un unique dégradé radial statique, comme la lueur de la page
-d’accueil de l’app : aucun `blur()` animé, donc aucun coût GPU au défilement.
+Site public de Vela, en HTML, CSS et JavaScript statiques. La page suit une direction sobre,
+inspirée de Dia et Zephium : d’abord un navigateur crédible, l’atelier ensuite.
 
-Le thème clair suit le système par défaut ; le bouton soleil/lune de la barre de navigation force
-un thème et le retient dans `localStorage` (`vela-theme`). Les maquettes de l’application suivent elles aussi le thème choisi, pour rester lisibles en mode clair.
+- **Palette** : neutre chaud — papier `#faf8f5` le jour, charbon `#151518` la nuit — et un seul
+  accent indigo (`#5b56d6` en clair, `#a8a3ff` en sombre).
+- **Typographie** : Iowan Old Style / Georgia pour les titres, sans-serif système pour le reste,
+  monospace pour les fichiers et les empreintes.
+- **Matière** : coins de 20 à 26 px, ombres douces, verre réservé à l’en-tête et à la palette ⌘K.
+- **Mouvement** : uniquement l’ouverture de la palette et la démo de l’atelier. Aucun contenu
+  n’est masqué en attendant le défilement, et `prefers-reduced-motion` coupe les deux animations.
+
+Le thème clair suit le système par défaut ; le bouton soleil/lune force un thème et le retient dans
+`localStorage` (`vela-theme`). Les maquettes de l’application suivent le thème choisi.
 
 ## En ligne
 
@@ -27,16 +32,34 @@ Ouvrir <http://localhost:4173>.
 ```text
 site/
 ├── public/
-│   ├── index.html     page unique (héros, démo, agent, confidentialité, modèles, version)
-│   ├── styles.css     thème, verre, maquettes d’interface
-│   ├── script.js      thème, menu, onglets de démo, note de version, révélations
+│   ├── index.html     page unique en neuf sections
+│   ├── styles.css     thème, maquettes d’interface, adaptation mobile
+│   ├── script.js      thème, menu, bascule Browse/Work, CTA par plateforme
+│   ├── captures/      accueil réel de l’app, JPEG 1440×900 (clair et sombre)
+│   ├── og-vela.png    visuel 1200×630
 │   ├── favicon.svg
 │   └── robots.txt
+├── og/
+│   ├── og.html        source du visuel 1200×630
+│   └── make-og.cjs    capture via le Chromium d’Electron
 ├── worker.js          sert les assets via env.ASSETS
 └── deploy.json        manifeste Sites (assetsDirectory: ./public)
 ```
 
-Aucune dépendance, aucun appel réseau, aucune police distante : la page fonctionne hors ligne.
+Les neuf sections : héros et palette ⌘K, bascule Browse/Work, capture réelle de l’app, trois
+fondamentaux, commandes, confidentialité en deux colonnes, modèles (marques des fournisseurs),
+téléchargement (fichiers, tailles, états, empreintes SHA-256), FAQ et feuille de route. La feuille de
+route distingue explicitement ce qui est disponible de ce qui est prévu.
+
+Les captures viennent de l’application elle-même, prises à 1440×900 en @2x puis converties en JPEG
+(82 et 87 Ko). Le thème du site choisit l’image affichée, sans requête supplémentaire.
+
+Aucune dépendance, aucun appel réseau, aucune police distante : la page fonctionne hors ligne. Le
+visuel Open Graph est généré avec le Chromium d’Electron, depuis `site/og/og.html` :
+
+```bash
+./node_modules/.bin/electron site/og/make-og.cjs   # écrit site/public/og-vela.png
+```
 
 ## Déploiement
 
@@ -48,10 +71,12 @@ les deux balises dans `public/index.html`.
 
 ## Vérifié
 
-Page et assets en 200 avec les bons types, aucun appel réseau externe, aucun débordement horizontal
-de 1440 px à 390 px, menu mobile et Échap, onglets de démo au clavier, note de version (`<dialog>`) et
-révélations au défilement (les éléments déjà dans le viewport sont révélés dès le chargement).
+Assets en 200 avec les bons types, aucun appel réseau externe, aucun débordement horizontal de
+1440 px à 390 px (le tableau des fichiers défile dans son conteneur), menu mobile et Échap, bascule
+Browse/Work au clavier (`aria-pressed`) avec ses trois étapes animées, CTA qui pointe vers le bon
+fichier selon la plateforme, capture réelle servie en 1440×900 et permutée par le thème, dix marques
+de fournisseurs, `details` pour les empreintes et la FAQ.
 
-Thème clair vérifié par calcul de contraste (AA sur les textes ≥ 11 px), bascule sans rechargement,
-choix persistant et priorité au système en l’absence de choix. La navigation tient à 320 px avec le
-bouton de thème et le menu.
+Contrastes calculés dans les deux thèmes : texte principal 16:1, texte secondaire 6,7:1 (clair) et
+8,3:1 (sombre), texte tertiaire 5,2:1 et 5,3:1, accent 5,3:1 et 8,1:1, `kbd` 5:1 et 4,7:1. Tous les
+textes courants passent AA.

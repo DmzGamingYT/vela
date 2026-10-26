@@ -1,7 +1,7 @@
 import { HOME_URL, type PersistedState, type ProviderId, type ProviderSettings, type Settings, type Space, type TabGroup, type TabState } from './types'
 import { PROVIDERS, providerDefaults } from './providers'
 
-export const SPACE_COLORS = ['#5B7DFF', '#3FA98A', '#A88CFF', '#E6B95C', '#E07A9E', '#4FB6D8']
+export const SPACE_COLORS = ['#5B56D6', '#3FA98A', '#A88CFF', '#E6B95C', '#E07A9E', '#4FB6D8']
 
 export function defaultProviders(): Record<ProviderId, ProviderSettings> {
   return Object.fromEntries(PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])) as Record<

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #151518;
+        color: #f3f1ee;
+        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 64px 68px;
+        display: flex;
+        align-items: center;
+        gap: 56px;
+        background:
+          radial-gradient(720px 460px at 88% 12%, rgba(168, 163, 255, 0.2), transparent 70%),
+          radial-gradient(560px 420px at 6% 96%, rgba(168, 163, 255, 0.08), transparent 72%),
+          #151518;
+      }
+
+      .frame::after {
+        content: "";
+        position: absolute;
+        inset: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+      }
+
+      .copy {
+        position: relative;
+        z-index: 1;
+        width: 660px;
+      }
+
+      .kicker {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #928d86;
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .kicker i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #a8a3ff;
+      }
+
+      h1 {
+        margin: 26px 0 0;
+        font-family: "Iowan Old Style", Georgia, serif;
+        font-size: 88px;
+        font-weight: 400;
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+      }
+
+      h1 em {
+        color: #a8a3ff;
+        font-style: italic;
+      }
+
+      .sub {
+        margin-top: 26px;
+        color: #b3aea7;
+        font-size: 21px;
+        line-height: 1.5;
+      }
+
+      .foot {
+        margin-top: 40px;
+        color: #928d86;
+        font-size: 14.5px;
+        letter-spacing: 0.02em;
+      }
+
+      .mock {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        background: #1c1c21;
+        box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+        overflow: hidden;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 42px;
+        padding: 0 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: #202027;
+      }
+
+      .dots {
+        display: flex;
+        gap: 6px;
+      }
+
+      .dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .omni {
+        flex: 1;
+        height: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: #151518;
+      }
+
+      .stage {
+        padding: 26px 22px 24px;
+      }
+
+      .stage p {
+        color: #928d86;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .stage strong {
+        display: block;
+        margin: 4px 0 18px;
+        font-family: "Iowan Old Style", Georgia, serif;
+        font-size: 22px;
+        font-weight: 400;
+        text-align: center;
+      }
+
+      .palette {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        background: rgba(30, 30, 36, 0.92);
+        overflow: hidden;
+      }
+
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 12.5px;
+      }
+
+      .field code {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 11px;
+        color: #f3f1ee;
+      }
+
+      .caret {
+        width: 1.5px;
+        height: 12px;
+        background: #a8a3ff;
+      }
+
+      .field span {
+        margin-left: auto;
+        padding: 2px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        color: #928d86;
+        font-size: 10px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        color: #b3aea7;
+        font-size: 12px;
+      }
+
+      .row + .row {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .row.on {
+        background: rgba(168, 163, 255, 0.14);
+        color: #f3f1ee;
+      }
+
+      .row small {
+        margin-left: auto;
+        color: #928d86;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .row b {
+        padding: 1px 5px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        color: #928d86;
+        font-size: 9px;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="copy">
+        <p class="kicker"><i></i> Vela · v0.1.12</p>
+        <h1>Le web,<br /><em>votre atelier.</em></h1>
+        <p class="sub">Onglets verticaux. Espaces isolés.<br />Un agent qui lit les pages que vous joignez.</p>
+        <p class="foot">macOS · Windows · Linux — sans compte ni télémétrie</p>
+      </div>
+
+      <div class="mock">
+        <div class="bar">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span class="omni"></span>
+        </div>
+        <div class="stage">
+          <p>Bonjour</p>
+          <strong>Qu’est-ce qu’on fait ?</strong>
+          <div class="palette">
+            <div class="field">
+              <i class="caret"></i>
+              <code>com</code>
+              <span>Échap</span>
+            </div>
+            <div class="row on">Comparer les onglets joints <small>Atelier</small><b>⌘J</b></div>
+            <div class="row">Passer en Work <small>Mode</small><b>⌘⇧A</b></div>
+            <div class="row">Brief du jour <small>Accueil</small><b>⌘⇧B</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

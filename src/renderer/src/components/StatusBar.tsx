@@ -49,7 +49,7 @@ export default function StatusBar() {
             : `Revenir à Browse (${shortcut('⇧A')})`
         }
       >
-        <span className="status-mode-dot" />
+        <Icon name={workMode === 'browse' ? 'globe' : 'sparkles'} size={12} />
         {workMode === 'browse' ? 'Browse' : 'Work'}
       </button>
 

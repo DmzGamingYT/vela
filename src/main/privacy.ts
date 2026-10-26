@@ -1,7 +1,6 @@
 import { session, webContents, type Session } from 'electron'
 import { isAuthPage, isTracker } from './blocklist'
-import { chromeUserAgent } from '@shared/userAgent'
-import { ACCEPT_LANGUAGES } from './identity'
+import { applySessionIdentity } from './identity'
 
 const attached = new WeakSet<Session>()
 
@@ -48,14 +47,10 @@ export function attachPrivacy(
   })
 }
 
-export function userAgentForPlatform(): string {
-  return chromeUserAgent(process.versions.chrome ?? '140.0.0.0', process.platform)
-}
-
 export function prepareSession(partition: string): Session {
   const ses = session.fromPartition(partition)
-  // Second argument = liste de langues : Chromium construit lui-même les q-values.
-  // Passer un en-tête complet ici produisait « fr-FR,fr;q=0.9;q=0.9,… », invalide.
-  ses.setUserAgent(userAgentForPlatform(), ACCEPT_LANGUAGES)
+  // Identité Chrome complète (UA, langues, client hints) sur chaque requête de
+  // l'espace, y compris celles qui ne passent pas par la page.
+  applySessionIdentity(ses)
   return ses
 }

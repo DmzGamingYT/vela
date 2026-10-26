@@ -192,8 +192,14 @@ export default function Sidebar() {
     <aside className="sidebar" style={{ '--space': space.color } as CSSProperties}>
       <header className="sidebar-top drag">
         <div className="browse-work" role="tablist" aria-label="Mode">
-          <button type="button" role="tab" aria-selected={workMode === 'browse'} data-active={workMode === 'browse'} onClick={() => setWorkMode('browse')}>Browse</button>
-          <button type="button" role="tab" aria-selected={workMode === 'work'} data-active={workMode === 'work'} onClick={() => setWorkMode('work')}>Work</button>
+          <button type="button" role="tab" aria-selected={workMode === 'browse'} data-active={workMode === 'browse'} onClick={() => setWorkMode('browse')}>
+            <Icon name="globe" size={12} />
+            Browse
+          </button>
+          <button type="button" role="tab" aria-selected={workMode === 'work'} data-active={workMode === 'work'} onClick={() => setWorkMode('work')}>
+            <Icon name="sparkles" size={12} />
+            Work
+          </button>
         </div>
         <span className="wordmark">
           Vela<span className="wordmark-dot">.</span>

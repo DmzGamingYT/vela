@@ -8,7 +8,7 @@ Le site vitrine public se trouve dans [site/](site/).
 
 Construit avec Electron, React et TypeScript. Aucun compte, aucune télémétrie, aucun serveur Vela.
 
-L’interface reprend la palette et le verre liquide de **Zephium** : fond nuit `#09090b`, texte `#f4f4f6`, surfaces translucides floutées, halos bleu `#62c8ff`, indigo `#5b7dff` et violet `#a88cff`. Les réglages sont organisés en deux panneaux, et la page **Modèles** reprend la liste de fournisseurs et de clés de leur vidéo.
+L’interface suit l’identité du site vitrine : papier chaud `#faf8f5` le jour et charbon `#151518` la nuit, un seul accent indigo (`#5b56d6` en clair, `#a8a3ff` en sombre), titres en Iowan Old Style / Georgia, contenu mat et verre réservé au chrome (rail, barre latérale, feuilles) et un lavis d’accent discret. Les réglages sont organisés en deux panneaux, et la page **Modèles** reprend la liste de fournisseurs et de clés.
 
 ---
 
@@ -93,7 +93,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
 | **Espaces isolés** | Une partition Chromium par espace : deux comptes au même site, sans conflit. |
-| **Identité de navigation** | UA, client hints (`Sec-CH-UA`) et langues alignés sur un Chrome officiel, onglets comme popups : les sites ne prennent pas Vela pour un navigateur embarqué. |
+| **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups : Google ne prend plus Vela pour un navigateur embarqué. |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
@@ -192,8 +192,8 @@ Aperçu local : `python3 -m http.server 4173 --directory site/public`.
 - Pas de zoom par onglet, pas de gestionnaire de téléchargements.
 - Le filtre est une liste embarquée : pas de mise à jour distante ni de filtrage cosmétique.
 - Aucune clé n’est fournie : le mode connecté demande la vôtre pour être essayé.
-- La connexion Google reste soumise au jugement de Google : si un profil a déjà été marqué, ouvrez
-  un nouvel espace (session Chromium vierge) pour repartir d’une identité propre.
+- La connexion Google passe le contrôle « navigateur sécurisé » ; Google peut malgré tout refuser un
+  profil déjà marqué côté serveur — un espace neuf repart d’une session Chromium vierge.
 
 ## Licence
 

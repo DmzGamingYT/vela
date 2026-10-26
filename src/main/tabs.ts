@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { BrowserWindow, nativeTheme, WebContentsView, type Event as ElectronEvent, type Input, type Session } from 'electron'
 import { HOME_URL } from '@shared/types'
 import type {
@@ -13,6 +14,12 @@ import { shouldOpenAsPopup } from '@shared/navigation'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
 import { applyBrowserIdentity } from './identity'
+
+/**
+ * Preload des pages web : complète `window.chrome` (cf. `src/preload/page.ts`).
+ * Distinct de celui de l'interface, qui seul expose `window.vela`.
+ */
+const PAGE_PRELOAD = join(__dirname, '../preload/page.js')
 
 export interface TabHost {
   tab(id: string): TabState | undefined
@@ -136,6 +143,7 @@ export class TabManager {
     const view = new WebContentsView({
       webPreferences: {
         session: this.sessionFor(space),
+        preload: PAGE_PRELOAD,
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,
@@ -187,6 +195,12 @@ export class TabManager {
             minWidth: 360,
             minHeight: 480,
             autoHideMenuBar: true,
+            webPreferences: {
+              preload: PAGE_PRELOAD,
+              sandbox: true,
+              contextIsolation: true,
+              nodeIntegration: false
+            },
             title: 'Vela',
             backgroundColor: this.backgroundForPages()
           }

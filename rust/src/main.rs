@@ -14,6 +14,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
+#[cfg(target_os = "macos")]
+use std::sync::OnceLock;
 use tao::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
@@ -558,12 +560,53 @@ impl App {
     }
 }
 
+/**
+ * User-Agent Safari pour les pages (macOS).
+ *
+ * WKWebView annonce par défaut « … AppleWebKit/605.1.15 (KHTML, like Gecko) »,
+ * sans « Version/x Safari/x » : Google y reconnaît une webview embarquée et
+ * refuse la connexion (« Ce navigateur ou cette application ne sont peut-être
+ * pas sécurisés »). On reprend la version de Safari installée, ou 26.0 à défaut.
+ */
+#[cfg(target_os = "macos")]
+fn safari_user_agent() -> &'static str {
+    static AGENT: OnceLock<String> = OnceLock::new();
+    AGENT
+        .get_or_init(|| {
+            let version = std::process::Command::new("defaults")
+                .args([
+                    "read",
+                    "/Applications/Safari.app/Contents/Info",
+                    "CFBundleShortVersionString",
+                ])
+                .output()
+                .ok()
+                .filter(|output| output.status.success())
+                .and_then(|output| String::from_utf8(output.stdout).ok())
+                .map(|value| value.trim().to_string())
+                .filter(|value| {
+                    !value.is_empty() && value.chars().next().is_some_and(|c| c.is_ascii_digit())
+                })
+                .unwrap_or_else(|| "26.0".into());
+            format!(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 \
+                 (KHTML, like Gecko) Version/{version} Safari/605.1.15"
+            )
+        })
+        .as_str()
+}
+
 fn configure_tab_view<'a>(
     builder: WebViewBuilder<'a>,
     proxy: EventLoopProxy<UserEvent>,
     tab: &Tab,
     bounds: Rect,
 ) -> WebViewBuilder<'a> {
+    // Sans cet UA, WKWebView se présente comme une webview nue : Google bloque
+    // la connexion. WebView2 (Windows) annonce déjà un Edge complet.
+    #[cfg(target_os = "macos")]
+    let builder = builder.with_user_agent(safari_user_agent());
+
     let title_proxy = proxy.clone();
     let load_proxy = proxy.clone();
     let popup_proxy = proxy.clone();

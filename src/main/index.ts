@@ -1,11 +1,14 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, globalShortcut, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, globalShortcut, nativeTheme, session, shell } from 'electron'
 import { Browser } from './browser'
 import { installMenu } from './menu'
 import { initUpdater } from './updater'
-import { applyBrowserIdentity } from './identity'
+import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
 
 app.setName('Vela')
+// Identité par défaut de tout le processus : favicons, préconnexions et
+// service workers n'ont pas de page à qui emprunter un User-Agent propre.
+app.userAgentFallback = CHROME_UA
 if (process.env.VELA_USER_DATA) app.setPath('userData', process.env.VELA_USER_DATA)
 
 let browser: Browser | null = null
@@ -25,7 +28,7 @@ function createWindow(): void {
     minHeight: 620,
     show: false,
     title: 'Vela',
-    backgroundColor: dark ? '#09090b' : '#eef2f8',
+    backgroundColor: dark ? '#151518' : '#faf8f5',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     trafficLightPosition: { x: 20, y: 21 },
     autoHideMenuBar: process.platform !== 'darwin',
@@ -82,6 +85,7 @@ function main(): void {
   })
 
   app.whenReady().then(() => {
+    applySessionIdentity(session.defaultSession)
     browser = new Browser(app.getPath('userData'))
     initUpdater((channel, payload) => {
       if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)

@@ -41,7 +41,7 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
 ]
 
 const COPY: Record<Page, { title: string; lede: string }> = {
-  appearance: { title: 'Apparence', lede: 'Verre liquide, thème clair ou sombre, ou comme le système.' },
+  appearance: { title: 'Apparence', lede: 'Verre dépoli, thème clair ou sombre, ou comme le système.' },
   navigation: { title: 'Navigation', lede: 'Le moteur utilisé quand vous tapez une question, et la mémoire locale.' },
   privacy: { title: 'Confidentialité', lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.' },
   models: { title: 'Modèles', lede: 'Les modèles que l’agent utilise et les clés associées.' },
@@ -261,7 +261,7 @@ export default function SettingsPanel() {
                       </button>
                     )}
                     <button type="button" className="ghost-btn" onClick={() => openEditor(definition.id)}>
-                      {state.hasKey ? 'Modifier' : 'Ajouter une clé'}
+                      {state.hasKey ? 'Modifier' : definition.local ? 'Configurer l’endpoint' : 'Ajouter une clé'}
                     </button>
                     {state.hasKey && (
                       <button
@@ -281,7 +281,8 @@ export default function SettingsPanel() {
                     <div className="field-grid">
                       <label className="field">
                         <span>
-                          Clé API {state.hasKey && <em>· enregistrée</em>}
+                          {definition.local ? 'Clé API (facultative)' : 'Clé API'}{' '}
+                          {state.hasKey && <em>· enregistrée</em>}
                         </span>
                         <input
                           type="password"
@@ -458,7 +459,7 @@ export default function SettingsPanel() {
           <section className="setting-block">
             <div className="setting-head">
               <h2>Thème</h2>
-              <p>Le verre liquide s’adapte au fond et à la lumière.</p>
+              <p>La transparence du châssis suit le fond et la lumière.</p>
             </div>
             <div className="theme-cards">
               {THEMES.map((theme) => (

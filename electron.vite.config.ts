@@ -13,6 +13,15 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
     resolve: {
       alias: { '@shared': resolve('src/shared') }
+    },
+    build: {
+      rollupOptions: {
+        input: {
+          // Interface (expose `window.vela`) et pages web (identité seulement).
+          index: resolve('src/preload/index.ts'),
+          page: resolve('src/preload/page.ts')
+        }
+      }
     }
   },
   renderer: {

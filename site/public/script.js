@@ -1,18 +1,18 @@
 (() => {
-  const nav = document.querySelector('.site-nav')
-  const toggle = document.querySelector('.nav-toggle')
-  const links = document.querySelectorAll('.nav-links a')
-
-  // --- Thème clair / sombre ------------------------------------
-
-  const themeToggle = document.querySelector('.theme-toggle')
-  const themeColor = document.querySelector('meta[name="theme-color"]')
+  const root = document.documentElement
   const THEME_KEY = 'vela-theme'
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
+
+  /* --- Thème ------------------------------------------------------------- */
+
+  const themeButton = document.querySelector('.theme')
+  const themeColor = document.querySelector('meta[name="theme-color"]')
 
   const applyTheme = (theme, persist) => {
-    document.documentElement.dataset.theme = theme
-    if (themeColor) themeColor.setAttribute('content', theme === 'light' ? '#f6f5f2' : '#151518')
-    themeToggle?.setAttribute(
+    root.dataset.theme = theme
+    themeColor?.setAttribute('content', theme === 'light' ? '#faf8f5' : '#151518')
+    themeButton?.setAttribute('aria-pressed', String(theme === 'light'))
+    themeButton?.setAttribute(
       'aria-label',
       theme === 'light' ? 'Passer au thème sombre' : 'Passer au thème clair'
     )
@@ -24,197 +24,158 @@
     }
   }
 
-  const storedTheme = (() => {
-    try {
-      return localStorage.getItem(THEME_KEY)
-    } catch (error) {
-      return null
-    }
-  })()
+  applyTheme(root.dataset.theme === 'light' ? 'light' : 'dark', false)
 
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark', false)
+  themeButton?.addEventListener('click', () => {
+    applyTheme(root.dataset.theme === 'light' ? 'dark' : 'light', true)
+  })
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true)
-    })
+  let stored = null
+  try {
+    stored = localStorage.getItem(THEME_KEY)
+  } catch (error) {
+    stored = null
   }
 
-  if (!storedTheme) {
+  if (!stored) {
     matchMedia('(prefers-color-scheme: light)').addEventListener('change', (event) => {
       applyTheme(event.matches ? 'light' : 'dark', false)
     })
   }
 
-  if (nav) {
-    const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 18)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-  }
+  /* --- En-tête ----------------------------------------------------------- */
+
+  const head = document.getElementById('head')
+  const menuButton = document.querySelector('.menu-btn')
+  const nav = document.getElementById('nav')
+
+  const onScroll = () => head?.classList.toggle('is-scrolled', window.scrollY > 12)
+  onScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
 
   const closeMenu = () => {
-    if (!nav || !toggle) return
-    nav.classList.remove('is-open')
-    document.body.classList.remove('menu-open')
-    toggle.setAttribute('aria-expanded', 'false')
-    toggle.setAttribute('aria-label', 'Ouvrir le menu')
+    head?.classList.remove('is-open')
+    menuButton?.setAttribute('aria-expanded', 'false')
+    menuButton?.setAttribute('aria-label', 'Ouvrir le menu')
   }
 
-  if (toggle && nav) {
-    toggle.addEventListener('click', () => {
-      const open = !nav.classList.contains('is-open')
-      nav.classList.toggle('is-open', open)
-      document.body.classList.toggle('menu-open', open)
-      toggle.setAttribute('aria-expanded', String(open))
-      toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu')
-    })
-
-    links.forEach((link) => link.addEventListener('click', closeMenu))
-
-    document.addEventListener('click', (event) => {
-      if (!nav.contains(event.target)) closeMenu()
-    })
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeMenu()
-    })
-
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 920) closeMenu()
-    })
-  }
-
-  // --- Onglets de l’aperçu -------------------------------------
-
-  const demoTabs = Array.from(document.querySelectorAll('.demo-tab'))
-  const scenes = Array.from(document.querySelectorAll('.scene'))
-
-  const activateDemo = (tab) => {
-    if (!tab) return
-    const mode = tab.dataset.mode
-    demoTabs.forEach((item) => {
-      const selected = item === tab
-      item.classList.toggle('is-active', selected)
-      item.setAttribute('aria-selected', String(selected))
-      item.tabIndex = selected ? 0 : -1
-    })
-    scenes.forEach((scene) => {
-      scene.hidden = scene.id !== `scene-${mode}`
-    })
-  }
-
-  demoTabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => activateDemo(tab))
-    tab.addEventListener('keydown', (event) => {
-      const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End']
-      if (!keys.includes(event.key)) return
-      event.preventDefault()
-      let next = index
-      if (event.key === 'ArrowLeft') next = (index - 1 + demoTabs.length) % demoTabs.length
-      if (event.key === 'ArrowRight') next = (index + 1) % demoTabs.length
-      if (event.key === 'Home') next = 0
-      if (event.key === 'End') next = demoTabs.length - 1
-      demoTabs[next].focus()
-      activateDemo(demoTabs[next])
-    })
+  menuButton?.addEventListener('click', () => {
+    const open = !head?.classList.contains('is-open')
+    head?.classList.toggle('is-open', open)
+    menuButton.setAttribute('aria-expanded', String(open))
+    menuButton.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu')
   })
 
-  if (demoTabs.length && scenes.length) activateDemo(demoTabs[0])
+  nav?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu))
 
-  // --- Note de version -----------------------------------------
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMenu()
+  })
 
-  const dialog = document.getElementById('release-dialog')
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) closeMenu()
+  })
 
-  if (dialog) {
-    document.querySelectorAll('[data-open-release]').forEach((button) => {
-      button.addEventListener('click', () => {
-        if (typeof dialog.showModal === 'function') dialog.showModal()
-        else dialog.setAttribute('open', '')
-      })
-    })
+  /* --- Téléchargement adapté à la plateforme ----------------------------- */
 
-    document.querySelectorAll('[data-close-release]').forEach((button) => {
-      button.addEventListener('click', () => dialog.close())
-    })
+  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.1.12/'
+  const files = {
+    mac: { href: `${RELEASE}Vela-0.1.12-arm64.dmg`, label: 'Télécharger pour macOS' },
+    win: { href: `${RELEASE}Vela-0.1.12-x64.exe`, label: 'Télécharger pour Windows' },
+    linux: { href: `${RELEASE}Vela-0.1.12-x86_64.AppImage`, label: 'Télécharger pour Linux' }
+  }
 
-    dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close()
-    })
+  const platform = (() => {
+    const reported = navigator.userAgentData?.platform || navigator.platform || ''
+    if (/mac/i.test(reported)) return 'mac'
+    if (/win/i.test(reported)) return 'win'
+    if (/linux|x11/i.test(reported) && !/android/i.test(navigator.userAgent)) return 'linux'
+    return null
+  })()
 
-    // Secours : les navigateurs sans showModal n'ont ni Échap natif ni backdrop.
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && dialog.hasAttribute('open')) dialog.close()
+  if (platform) {
+    const target = files[platform]
+    document.querySelectorAll('[data-platform-cta]').forEach((link) => {
+      if (link.closest('.head-actions')) return
+      link.setAttribute('href', target.href)
+      const label = link.querySelector('[data-platform-label]')
+      if (label) label.textContent = target.label
     })
   }
 
-  // --- Révélation au défilement --------------------------------
+  /* --- Bascule Browse / Work --------------------------------------------- */
 
-  const reveal = document.querySelectorAll('[data-reveal]')
+  const switchButtons = Array.from(document.querySelectorAll('.switch-btn'))
+  const panes = {
+    browse: document.querySelector('[data-pane="browse"]'),
+    work: document.querySelector('[data-pane="work"]')
+  }
+  const steps = Array.from(document.querySelectorAll('[data-steps] li'))
+  let stepTimer = 0
 
-  const inViewport = (element) => {
-    const rect = element.getBoundingClientRect()
-    return rect.top < window.innerHeight && rect.bottom > 0
+  const playSteps = () => {
+    window.clearTimeout(stepTimer)
+    steps.forEach((step) => step.classList.remove('is-live', 'is-done'))
+
+    if (reduceMotion.matches) {
+      steps.forEach((step) => step.classList.add('is-done'))
+      return
+    }
+
+    const advance = (index) => {
+      if (index >= steps.length) return
+      steps.forEach((step) => step.classList.remove('is-live'))
+      steps[index].classList.add('is-live')
+      stepTimer = window.setTimeout(() => {
+        steps[index].classList.remove('is-live')
+        steps[index].classList.add('is-done')
+        advance(index + 1)
+      }, 620)
+    }
+
+    stepTimer = window.setTimeout(() => advance(0), 180)
   }
 
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(
+  const showMode = (mode) => {
+    switchButtons.forEach((button) => {
+      const on = button.dataset.mode === mode
+      button.classList.toggle('is-on', on)
+      button.setAttribute('aria-pressed', String(on))
+    })
+    Object.entries(panes).forEach(([name, pane]) => {
+      if (pane) pane.hidden = name !== mode
+    })
+    if (mode === 'work') playSteps()
+    else {
+      window.clearTimeout(stepTimer)
+      steps.forEach((step) => step.classList.remove('is-live', 'is-done'))
+    }
+  }
+
+  switchButtons.forEach((button) => {
+    button.addEventListener('click', () => showMode(button.dataset.mode))
+  })
+
+  /* --- Section courante dans l'en-tête ----------------------------------- */
+
+  const navLinks = Array.from(nav?.querySelectorAll('a') ?? [])
+  const sections = navLinks
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean)
+
+  if ('IntersectionObserver' in window && sections.length) {
+    const spy = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return
-          entry.target.classList.add('is-in')
-          observer.unobserve(entry.target)
-        })
-      },
-      { threshold: 0.08, rootMargin: '0px 0px -6% 0px' }
-    )
-    reveal.forEach((element) => {
-      if (inViewport(element)) element.classList.add('is-in')
-      else observer.observe(element)
-    })
-  } else {
-    reveal.forEach((element) => element.classList.add('is-in'))
-  }
-
-  document.documentElement.setAttribute('data-reveal-ready', '')
-
-  // --- Navigation active ---------------------------------------
-
-  const watched = Array.from(document.querySelectorAll('main section[id]'))
-  const navLinks = Array.from(document.querySelectorAll('.nav-links a'))
-  const navIds = new Set(navLinks.map((link) => link.getAttribute('href')?.slice(1)))
-
-  if ('IntersectionObserver' in window) {
-    const navObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting || !navIds.has(entry.target.id)) return
           navLinks.forEach((link) => {
-            const current = link.getAttribute('href') === `#${entry.target.id}`
-            if (current) link.setAttribute('aria-current', 'true')
+            if (link.getAttribute('href') === `#${entry.target.id}`) link.setAttribute('aria-current', 'true')
             else link.removeAttribute('aria-current')
           })
         })
       },
-      { rootMargin: '-36% 0px -55% 0px', threshold: 0 }
+      { rootMargin: '-42% 0px -52% 0px', threshold: 0 }
     )
-    watched.forEach((section) => navObserver.observe(section))
-  }
-
-  // --- Reflet qui suit le curseur ------------------------------
-
-  if (window.matchMedia('(hover: hover)').matches) {
-    document.querySelectorAll('.glass-card').forEach((card) => {
-      card.addEventListener('pointermove', (event) => {
-        const rect = card.getBoundingClientRect()
-        const x = ((event.clientX - rect.left) / rect.width) * 100
-        const y = ((event.clientY - rect.top) / rect.height) * 100
-        card.style.setProperty('--mx', `${x}%`)
-        card.style.setProperty('--my', `${y}%`)
-      })
-      card.addEventListener('pointerleave', () => {
-        card.style.removeProperty('--mx')
-        card.style.removeProperty('--my')
-      })
-    })
+    sections.forEach((section) => spy.observe(section))
   }
 })()
