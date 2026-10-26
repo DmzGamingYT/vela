@@ -120,6 +120,20 @@ export interface Task {
   dueAt: number | null
 }
 
+/** Un travail de l'atelier : une demande, ses sources et le rapport produit. */
+export interface WorkItem {
+  id: string
+  title: string
+  prompt: string
+  markdown: string
+  mode: AgentMode
+  sources: { title: string; url: string }[]
+  spaceId: string
+  createdAt: number
+  updatedAt: number
+  archived: boolean
+}
+
 export interface DownloadItem {
   id: string
   name: string
@@ -154,6 +168,7 @@ export interface PersistedState {
   history: HistoryEntry[]
   closed: ClosedTab[]
   tasks: Task[]
+  works: WorkItem[]
 }
 
 export interface TabView extends TabState {
@@ -195,6 +210,7 @@ export interface AppView {
   history: HistoryEntry[]
   notes: NoteMeta[]
   tasks: Task[]
+  works: WorkItem[]
   downloads: DownloadItem[]
   brief: Brief
   blockedTotal: number

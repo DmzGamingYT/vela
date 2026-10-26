@@ -141,6 +141,10 @@ export interface VelaApi {
     toggle(id: string): Promise<void>
     remove(id: string): Promise<void>
   }
+  works: {
+    rename(input: { id: string; title: string }): Promise<void>
+    archive(input: { id: string; archived: boolean }): Promise<void>
+  }
   notes: {
     get(id: string): Promise<Note | null>
     save(input: SaveNoteInput): Promise<Note>

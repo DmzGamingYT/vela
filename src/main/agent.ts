@@ -2,7 +2,7 @@ import type { BrowserWindow } from 'electron'
 import { planDemoRun } from '@shared/agent'
 import { newId } from '@shared/defaults'
 import { buildChatRequest, parseStreamPayload, providerById, providerState } from '@shared/providers'
-import type { AgentEvent, AgentRunRequest, ProviderId, Settings } from '@shared/types'
+import type { AgentEvent, AgentMode, AgentRunRequest, ProviderId, Settings } from '@shared/types'
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -10,6 +10,21 @@ interface ActiveRun {
   id: string
   cancelled: boolean
   controller: AbortController
+  request: AgentRunRequest
+  title: string
+  markdown: string
+  mode: AgentMode
+}
+
+/** Ce qu'il faut retenir d'un travail terminé pour l'archiver dans l'atelier. */
+export interface FinishedWork {
+  title: string
+  markdown: string
+  prompt: string
+  mode: AgentMode
+  sources: { title: string; url: string }[]
+  spaceId: string
+  status: 'done' | 'error' | 'cancelled'
 }
 
 /**
@@ -24,12 +39,21 @@ export class AgentRunner {
     private getWindow: () => BrowserWindow | null,
     private getSettings: () => Settings,
     private getSecret: (provider: ProviderId) => string | null,
-    private excerpt: (tabId: string) => Promise<string>
+    private excerpt: (tabId: string) => Promise<string>,
+    private onFinish: (work: FinishedWork) => void
   ) {}
 
   start(request: AgentRunRequest): { runId: string } {
     this.cancel()
-    const run: ActiveRun = { id: newId(), cancelled: false, controller: new AbortController() }
+    const run: ActiveRun = {
+      id: newId(),
+      cancelled: false,
+      controller: new AbortController(),
+      request,
+      title: '',
+      markdown: '',
+      mode: this.getSettings().agent.mode
+    }
     this.current = run
     const settings = this.getSettings()
     const definition = providerById(settings.agent.provider)
@@ -39,6 +63,7 @@ export class AgentRunner {
       void this.runApi(run, request, settings).catch((error: unknown) => {
         if (run.cancelled) return
         this.emit({ runId: run.id, type: 'error', message: this.describe(error) })
+        this.archive(run, 'error')
         this.finish(run)
       })
     } else {
@@ -53,7 +78,26 @@ export class AgentRunner {
     this.current.cancelled = true
     this.current.controller.abort()
     this.emit({ runId: this.current.id, type: 'cancelled' })
+    this.archive(this.current, 'cancelled')
     this.current = null
+  }
+
+  /** Un travail n'est archivé que s'il a produit du texte. */
+  private archive(run: ActiveRun, status: FinishedWork['status']): void {
+    if (!run.markdown.trim()) return
+    try {
+      this.onFinish({
+        title: run.title || run.request.prompt.slice(0, 60) || 'Rapport Vela',
+        markdown: run.markdown,
+        prompt: run.request.prompt,
+        mode: run.mode,
+        sources: run.request.sources.map((source) => ({ title: source.title, url: source.url })),
+        spaceId: run.request.spaceId,
+        status
+      })
+    } catch {
+      /* l'archivage ne doit jamais faire échouer une exécution */
+    }
   }
 
   private alive(run: ActiveRun): boolean {
@@ -82,6 +126,8 @@ export class AgentRunner {
 
   private async runDemo(run: ActiveRun, request: AgentRunRequest): Promise<void> {
     const plan = planDemoRun(request.prompt, request.sources)
+    run.title = plan.title
+    run.mode = 'demo'
     this.emit({ runId: run.id, type: 'plan', title: plan.title, steps: plan.steps, mode: 'demo' })
 
     for (let index = 0; index < plan.steps.length; index += 1) {
@@ -99,14 +145,19 @@ export class AgentRunner {
       if (!this.alive(run)) return
       buffer += token
       if (buffer.length >= 26) {
+        run.markdown += buffer
         this.emit({ runId: run.id, type: 'delta', text: buffer })
         buffer = ''
         await wait(14)
       }
     }
-    if (buffer) this.emit({ runId: run.id, type: 'delta', text: buffer })
+    if (buffer) {
+      run.markdown += buffer
+      this.emit({ runId: run.id, type: 'delta', text: buffer })
+    }
     if (!this.alive(run)) return
     this.emit({ runId: run.id, type: 'done' })
+    this.archive(run, 'done')
     this.finish(run)
   }
 
@@ -123,10 +174,12 @@ export class AgentRunner {
       }))
     )
 
+    run.title = request.prompt.slice(0, 60) || 'Rapport Vela'
+    run.mode = 'api'
     this.emit({
       runId: run.id,
       type: 'plan',
-      title: request.prompt.slice(0, 60) || 'Rapport Vela',
+      title: run.title,
       steps: ['Connexion au modèle', `Lecture de ${sources.length || 0} source(s)`, 'Rédaction de la synthèse'],
       mode: 'api'
     })
@@ -197,6 +250,7 @@ export class AgentRunner {
         const delta = parseStreamPayload(definition.protocol, data)
         if (delta) {
           sawDelta = true
+          run.markdown += delta
           this.emit({ runId: run.id, type: 'delta', text: delta })
         }
       }
@@ -206,6 +260,7 @@ export class AgentRunner {
     if (!sawDelta) throw new Error('Le modèle n’a renvoyé aucun texte.')
     this.emit({ runId: run.id, type: 'step', index: 2, state: 'done' })
     this.emit({ runId: run.id, type: 'done' })
+    this.archive(run, 'done')
     this.finish(run)
   }
 }

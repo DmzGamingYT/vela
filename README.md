@@ -83,6 +83,7 @@ Deux modes, un seul commutateur en haut de la barre latérale (ou `⌘⇧A`).
 - **Work** — l’atelier : l’IA travaille dans la scène principale. On joint des onglets comme sources,
 on décrit le résultat attendu, l’agent lit et rédige en direct, puis on relit et on enregistre en note.
 Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Browse.
+Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renomme, on l’archive.
 
 ## Ce qu’il sait faire
 
@@ -97,6 +98,7 @@ Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Brow
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
+| **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
 | **Notes** | Markdown stocké en fichiers `.md`, capturés depuis la page, à côté du web. |
 | **Bloqueur local** | Liste embarquée de domaines publicitaires, compteur visible dans la barre d’adresse. |

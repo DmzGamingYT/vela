@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { UpdateInfo } from '@shared/api'
-import type { AgentEvent, AgentMode, AppView, Note, ProviderId, ShortcutEvent, TabGroup } from '@shared/types'
+import type { AgentEvent, AgentMode, AppView, Note, ProviderId, ShortcutEvent, TabGroup, WorkItem } from '@shared/types'
 import { HOME_URL } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
 import type { SaveNoteInput, SettingsPatch } from '@shared/api'
@@ -109,6 +109,9 @@ interface BrowserState {
   cancelAgent(): void
   resetAgent(): void
   saveAgentNote(): Promise<void>
+  openWork(work: WorkItem): void
+  renameWork(id: string, title: string): Promise<void>
+  archiveWork(id: string, archived: boolean): Promise<void>
   handleShortcut(event: ShortcutEvent): void
   handleAgentEvent(event: AgentEvent): void
 }
@@ -359,7 +362,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   setWorkMode(mode) {
-    set({ workMode: mode })
+    // Entrer dans l’atelier referme le panneau agent : c’est la même surface.
+    set((state) => ({ workMode: mode, overlay: mode === 'work' && state.overlay === 'agent' ? null : state.overlay }))
   },
 
   setApproved(value) {
@@ -495,6 +499,36 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   resetAgent() {
     set({ agent: EMPTY_AGENT })
+  },
+
+  /** Rouvre un rapport déjà produit : il redevient le contenu de l'atelier. */
+  openWork(work) {
+    set({
+      // Déjà dans l’atelier : le rapport s’affiche sur place, sans seconde fenêtre.
+      overlay: get().workMode === 'work' ? null : 'agent',
+      approved: false,
+      agentDraft: work.prompt,
+      agent: {
+        runId: null,
+        title: work.title,
+        steps: [{ label: 'Rapport enregistré', state: 'done' }],
+        markdown: work.markdown,
+        status: 'done',
+        error: null,
+        mode: work.mode,
+        prompt: work.prompt
+      }
+    })
+  },
+
+  async renameWork(id, title) {
+    const clean = title.trim()
+    if (!clean) return
+    await get().call(() => window.vela.works.rename({ id, title: clean }), 'Renommage impossible.')
+  },
+
+  async archiveWork(id, archived) {
+    await get().call(() => window.vela.works.archive({ id, archived }), 'Archivage impossible.')
   },
 
   async saveAgentNote() {

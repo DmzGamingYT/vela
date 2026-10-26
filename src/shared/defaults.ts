@@ -68,6 +68,7 @@ export function createDefaultState(now = Date.now()): PersistedState {
     },
     history: [],
     closed: [],
-    tasks: []
+    tasks: [],
+    works: []
   }
 }

@@ -77,6 +77,10 @@ const api: VelaApi = {
     toggle: (id: string) => ipcRenderer.invoke('tasks:toggle', id),
     remove: (id: string) => ipcRenderer.invoke('tasks:remove', id)
   },
+  works: {
+    rename: (input: { id: string; title: string }) => ipcRenderer.invoke('work:rename', input),
+    archive: (input: { id: string; archived: boolean }) => ipcRenderer.invoke('work:archive', input)
+  },
   notes: {
     get: (id: string) => ipcRenderer.invoke('notes:get', id),
     save: (input: SaveNoteInput) => ipcRenderer.invoke('notes:save', input),

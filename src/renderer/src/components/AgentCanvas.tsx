@@ -6,6 +6,7 @@ import { initials, tintFor } from '../lib/format'
 import { Markdown } from '../lib/markdown'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import WorkList from './WorkList'
 
 const CAPABILITIES = [
   {
@@ -35,7 +36,11 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
   const setApproved = useBrowser((state) => state.setApproved)
   const resetAgent = useBrowser((state) => state.resetAgent)
   const saveAgentNote = useBrowser((state) => state.saveAgentNote)
+  const openWork = useBrowser((state) => state.openWork)
+  const works = useBrowser((state) => state.view?.works ?? [])
+  const activeWorks = works.filter((work) => !work.archived).length
   const toast = useBrowser((state) => state.toast)
+  const [showWorks, setShowWorks] = useState(false)
 
   const [prompt, setPrompt] = useState(() => useBrowser.getState().agentDraft)
   const [selected, setSelected] = useState<string[]>(() => {
@@ -118,6 +123,17 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
             </div>
           </div>
           <div className="agent-head-actions">
+            <button
+              type="button"
+              className="work-toggle"
+              data-active={showWorks}
+              onClick={() => setShowWorks((value) => !value)}
+              title="Travaux de l’atelier"
+            >
+              <Icon name="inbox" size={14} />
+              Travaux
+              {activeWorks > 0 && <span className="work-toggle-count">{activeWorks}</span>}
+            </button>
             <span className="mode-chip" data-mode={modeLabel}>
               {modeLabel === 'api' ? 'Modèle connecté' : 'Démo locale'}
             </span>
@@ -129,7 +145,16 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
           </div>
         </header>
 
-        <div className="agent-body">
+        {showWorks && (
+          <WorkList
+            onOpen={(work) => {
+              openWork(work)
+              setShowWorks(false)
+            }}
+          />
+        )}
+
+        <div className="agent-body" data-hidden={showWorks}>
           <aside className="agent-left">
             <label className="field-label" htmlFor="agent-prompt">
               Votre demande

@@ -169,6 +169,41 @@ export function normalizeState(raw: unknown): PersistedState {
       }))
       .slice(0, 200)
 
+    const works = (Array.isArray((input as { works?: unknown }).works) ? (input as { works: unknown[] }).works : [])
+      .filter(
+        (entry): entry is {
+          id: string
+          title: string
+          prompt?: unknown
+          markdown?: unknown
+          mode?: unknown
+          sources?: unknown
+          spaceId?: unknown
+          createdAt?: unknown
+          updatedAt?: unknown
+          archived?: unknown
+        } => Boolean(entry && typeof (entry as { id?: unknown }).id === 'string' && typeof (entry as { title?: unknown }).title === 'string')
+      )
+      .map((entry) => ({
+        id: entry.id,
+        title: entry.title.slice(0, 160),
+        prompt: typeof entry.prompt === 'string' ? entry.prompt.slice(0, 2000) : '',
+        markdown: typeof entry.markdown === 'string' ? entry.markdown.slice(0, 200_000) : '',
+        mode: entry.mode === 'api' ? ('api' as const) : ('demo' as const),
+        sources: (Array.isArray(entry.sources) ? entry.sources : [])
+          .filter((source): source is { title?: unknown; url?: unknown } => Boolean(source && typeof (source as { url?: unknown }).url === 'string'))
+          .map((source) => ({
+            title: typeof source.title === 'string' ? source.title.slice(0, 200) : '',
+            url: String(source.url).slice(0, 2000)
+          }))
+          .slice(0, 12),
+        spaceId: typeof entry.spaceId === 'string' ? entry.spaceId : '',
+        createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
+        updatedAt: typeof entry.updatedAt === 'number' ? entry.updatedAt : now,
+        archived: Boolean(entry.archived)
+      }))
+      .slice(0, 120)
+
     return {
       version: 1,
       spaces,
@@ -185,7 +220,8 @@ export function normalizeState(raw: unknown): PersistedState {
       settings: mergeSettings(input.settings),
       history,
       closed,
-      tasks
+      tasks,
+      works
     }
 }
 

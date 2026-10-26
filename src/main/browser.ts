@@ -36,7 +36,7 @@ import {
   type TabView
 } from '@shared/types'
 import { isHomeUrl, titleFromUrl } from '@shared/url'
-import { AgentRunner } from './agent'
+import { AgentRunner, type FinishedWork } from './agent'
 import { NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
 import { Store } from './store'
@@ -111,8 +111,42 @@ export class Browser {
       () => this.win,
       () => this.store.get().settings,
       (provider: ProviderId) => this.store.getSecret(provider),
-      (tabId) => this.tabs.excerpt(tabId)
+      (tabId) => this.tabs.excerpt(tabId),
+      (work) => this.recordWork(work)
     )
+  }
+
+  /** Chaque travail de l'atelier entre dans la liste consultable, sans doublon. */
+  private recordWork(work: FinishedWork): void {
+    const now = Date.now()
+    const stamp = `${work.prompt}\u0000${work.spaceId}`
+    this.store.update((state) => {
+      const previous = state.works.find((item) => !item.archived && `${item.prompt}\u0000${item.spaceId}` === stamp && now - item.createdAt < 60_000)
+      if (previous) {
+        previous.title = work.title || previous.title
+        previous.markdown = work.markdown
+        previous.mode = work.mode
+        previous.sources = work.sources
+        previous.updatedAt = now
+      } else {
+        state.works = [
+          {
+            id: newId(),
+            title: work.title.slice(0, 160) || 'Rapport Vela',
+            prompt: work.prompt.slice(0, 2000),
+            markdown: work.markdown,
+            mode: work.mode,
+            sources: work.sources,
+            spaceId: work.spaceId,
+            createdAt: now,
+            updatedAt: now,
+            archived: false
+          },
+          ...state.works
+        ].slice(0, 120)
+      }
+    })
+    this.broadcast()
   }
 
   /** Pré-connecte le moteur de recherche (DNS + TLS + sockets) : 1re recherche instantanée. */
@@ -309,6 +343,7 @@ export class Browser {
       history: state.history.slice(0, 80),
       notes: this.noteCache,
       tasks: state.tasks.slice(0, 200),
+      works: state.works.slice(0, 120),
       downloads: this.downloads.slice(0, 30),
       brief,
       blockedTotal
@@ -916,6 +951,34 @@ export class Browser {
       const id = asId(payload)
       this.store.update((state) => {
         state.tasks = state.tasks.filter((item) => item.id !== id)
+      })
+      this.broadcast()
+    })
+
+    handle('work:rename', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; title?: unknown }
+      const id = typeof input.id === 'string' ? input.id : ''
+      const title = typeof input.title === 'string' ? input.title.trim().slice(0, 160) : ''
+      if (!id || !title) throw new Error('Titre de travail vide.')
+      this.store.update((state) => {
+        const work = state.works.find((item) => item.id === id)
+        if (work) {
+          work.title = title
+          work.updatedAt = Date.now()
+        }
+      })
+      this.broadcast()
+    })
+    handle('work:archive', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; archived?: unknown }
+      const id = typeof input.id === 'string' ? input.id : ''
+      if (!id) return
+      this.store.update((state) => {
+        const work = state.works.find((item) => item.id === id)
+        if (work) {
+          work.archived = Boolean(input.archived)
+          work.updatedAt = Date.now()
+        }
       })
       this.broadcast()
     })
