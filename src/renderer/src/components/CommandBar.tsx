@@ -5,6 +5,7 @@ import { appearanceState, applyAppearance } from '../lib/appearance'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
+import SpaceAvatar from './SpaceAvatar'
 
 type Filter = 'all' | 'tabs' | 'notes' | 'tasks' | 'history' | 'downloads'
 
@@ -537,7 +538,7 @@ export default function CommandBar() {
             }}
           />
           <span className="command-space">
-            <span className="space-dot" style={{ background: space?.color }} />
+            {space && <SpaceAvatar space={space} size={14} />}
             {space?.name}
           </span>
         </div>

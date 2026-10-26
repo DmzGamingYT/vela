@@ -44,6 +44,10 @@ export default function App() {
     const root = document.documentElement
     root.dataset.home = settings.homeBackground
     root.style.setProperty('--home-blur', `${settings.homeBlur}px`)
+    // Ambiance propre à l'espace : une couche derrière le châssis, jamais
+    // au-dessus du contenu des pages.
+    root.dataset.spaceBg = space?.background ?? 'none'
+    root.style.setProperty('--space-color', space?.color ?? '#5B5BD6')
   }, [settings, space])
 
   // Suit le système et, si l'option est active, l'heure (clair le jour).

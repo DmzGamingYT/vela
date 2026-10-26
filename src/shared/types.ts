@@ -35,6 +35,12 @@ export interface Space {
   color: string
   /** Thème de couleur propre à l'espace (null → thème global). */
   theme?: ThemeId | null
+  /** `monogram`, `icon:<id>` ou `image:data:image/...` — validé par shared/space. */
+  avatar?: string | null
+  /** Ambiance de fond propre à l'espace, posée sur tout le châssis. */
+  background?: import('./space').SpaceBackground
+  /** Filtre de traqueurs pour cet espace (défaut : activé). */
+  blockTrackers?: boolean
   /** Partition Chromium : cookies, sessions et cache réellement isolés. */
   partition: string
   createdAt: number

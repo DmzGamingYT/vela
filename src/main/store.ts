@@ -19,6 +19,7 @@ import type {
 import { HOME_URL } from '@shared/types'
 import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
+import { sanitizeSpaceAvatar, sanitizeSpaceBackground } from '@shared/space'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
@@ -115,7 +116,10 @@ export function normalizeState(raw: unknown): PersistedState {
   const input = raw as Partial<PersistedState>
   const spaces = (Array.isArray(input.spaces) ? input.spaces.filter(isSpace) : []).map((space) => ({
     ...space,
-    theme: isThemeId(space.theme) ? space.theme : null
+    theme: isThemeId(space.theme) ? space.theme : null,
+    avatar: sanitizeSpaceAvatar(space.avatar),
+    background: sanitizeSpaceBackground(space.background),
+    blockTrackers: space.blockTrackers !== false
   }))
   if (spaces.length === 0) return fallback
 

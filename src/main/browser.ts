@@ -21,7 +21,8 @@ import type {
   SaveNoteInput,
   SettingsPatch,
   TunnelRunInput,
-  UpdateGroupInput
+  UpdateGroupInput,
+  UpdateSpaceInput
 } from '@shared/api'
 import { detectBookmarks } from './bookmarks'
 import { TunnelService } from './tunnel'
@@ -37,6 +38,7 @@ import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import { isThemeId, parseHex } from '@shared/theme'
+import { sanitizeSpaceAvatar, sanitizeSpaceBackground } from '@shared/space'
 import {
   HOME_URL,
   type AppView,
@@ -614,6 +616,10 @@ export class Browser {
       : SPACE_COLORS[state.spaces.length % SPACE_COLORS.length]
     const now = Date.now()
     const space = createSpaceState(name, color, now)
+    space.avatar = sanitizeSpaceAvatar(payload.avatar)
+    space.background = sanitizeSpaceBackground(payload.background)
+    space.blockTrackers = payload.blockTrackers !== false
+    if (isThemeId(payload.theme)) space.theme = payload.theme
     const tab = createTabState(space.id, now)
     state.spaces.push(space)
     state.tabs.push(tab)
@@ -626,7 +632,7 @@ export class Browser {
   }
 
   private updateSpace(input: unknown): void {
-    const payload = (input ?? {}) as { id?: unknown; name?: unknown; color?: unknown; theme?: unknown }
+    const payload = (input ?? {}) as UpdateSpaceInput & { id?: unknown }
     const id = asId(payload.id)
     const state = this.store.get()
     const space = state.spaces.find((item) => item.id === id)
@@ -634,6 +640,9 @@ export class Browser {
     if (typeof payload.name === 'string' && payload.name.trim()) space.name = payload.name.trim().slice(0, 40)
     if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color)) space.color = payload.color
     if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
+    if ('avatar' in payload) space.avatar = sanitizeSpaceAvatar(payload.avatar)
+    if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
+    if (typeof payload.blockTrackers === 'boolean') space.blockTrackers = payload.blockTrackers
     this.store.schedule()
     this.broadcast()
   }

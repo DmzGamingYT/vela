@@ -2,8 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { SPACE_COLORS } from '@shared/defaults'
 import { THEME_PRESETS, presetById, type ThemeId } from '@shared/theme'
+import {
+  SPACE_AVATARS,
+  SPACE_BACKGROUNDS,
+  SPACE_PRESETS,
+  avatarImage,
+  type SpaceBackground,
+  type SpacePreset
+} from '@shared/space'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import SpaceAvatar from './SpaceAvatar'
+import SpaceAvatarEditor from './SpaceAvatarEditor'
 
 export default function SpaceDialog() {
   const view = useBrowser((state) => state.view)
@@ -18,31 +28,79 @@ export default function SpaceDialog() {
   const [color, setColor] = useState(
     existing?.color ?? SPACE_COLORS[(view?.spaces.length ?? 0) % SPACE_COLORS.length]
   )
+  const [avatar, setAvatar] = useState<string | null>(existing?.avatar ?? null)
+  const [background, setBackground] = useState<SpaceBackground>(existing?.background ?? 'none')
+  const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
+  const [photo, setPhoto] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    if (photo) return
     inputRef.current?.focus()
     inputRef.current?.select()
-  }, [])
+  }, [photo])
 
   if (!view) return null
 
   const preview = name.trim() || `Espace ${view.spaces.length + 1}`
+  const monogram = preview.slice(0, 1).toUpperCase()
+  const activePreset =
+    SPACE_PRESETS.find(
+      (preset) => preset.color === color && preset.avatar === avatar && preset.background === background
+    )?.id ?? null
+  const storedImage = avatarImage(avatar)
+
+  const applyPreset = (preset: SpacePreset): void => {
+    setName(preset.name)
+    setColor(preset.color)
+    setAvatar(preset.avatar)
+    setBackground(preset.background)
+    setBlockTrackers(true)
+    setPhoto(null)
+  }
+
+  const importPhoto = (file: File | undefined): void => {
+    setPhotoError(null)
+    if (!file) return
+    if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) {
+      setPhotoError('Choisissez une image PNG, JPEG ou WebP.')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setPhotoError('Image trop lourde (8 Mo maximum).')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setPhoto(String(reader.result))
+    reader.onerror = () => setPhotoError('Lecture de l’image impossible.')
+    reader.readAsDataURL(file)
+  }
+
+  const payload = { name: preview, color, avatar, background, blockTrackers, theme }
 
   return (
-    <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet space-sheet" role="dialog" aria-label="Espace" onMouseDown={(event) => event.stopPropagation()}>
-        <header className="sheet-head">
+    <div className="overlay space-overlay" onMouseDown={() => setOverlay(null)}>
+      <div
+        className="sheet space-sheet immersive"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Espace"
+        style={{ '--space-color': color } as CSSProperties}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="space-dialog-head">
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" />
-              {existing ? 'Modifier' : 'Nouvel espace'}
+              {existing ? 'Personnaliser' : 'Nouvel espace'}
             </p>
             <h1>{existing ? existing.name : 'Un espace à part'}</h1>
             <p className="sheet-lede">
-              Chaque espace garde ses cookies, ses sessions et ses onglets. Deux comptes au même site, sans conflit.
+              Une identité, une ambiance, et ses propres cookies. Deux comptes au même site, sans conflit.
             </p>
           </div>
           <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
@@ -51,77 +109,319 @@ export default function SpaceDialog() {
         </header>
 
         <form
-          className="space-form"
+          className="space-layout"
           onSubmit={(event) => {
             event.preventDefault()
-            if (existing) void updateSpace(existing.id, { name: preview, color, theme })
-            else void createSpace(preview, color)
+            if (existing) void updateSpace(existing.id, payload)
+            else void createSpace(payload)
           }}
         >
-          <div className="space-preview">
-            <span className="space-preview-chip" style={{ '--space': color } as CSSProperties}>
-              {preview.slice(0, 1).toUpperCase()}
-            </span>
-            <span className="space-preview-copy">
-              <strong>{preview}</strong>
-              <span>Cookies, historique et onglets isolés</span>
-            </span>
-          </div>
+          <aside
+            className="space-stage"
+            data-bg={background}
+            data-editing={photo ? 'true' : undefined}
+            style={{ '--space-color': color } as CSSProperties}
+            aria-label="Aperçu de l’espace"
+          >
+            {photo ? (
+              <SpaceAvatarEditor
+                src={photo}
+                color={color}
+                onAccept={(next) => {
+                  setAvatar(next)
+                  setPhoto(null)
+                }}
+                onCancel={() => setPhoto(null)}
+              />
+            ) : (
+              <>
+                <div className="stage-window">
+                  <div className="stage-rail">
+                    <span className="stage-chip" data-active="true">
+                      <SpaceAvatar space={{ name: preview, color, avatar }} size={20} />
+                    </span>
+                    {view.spaces
+                      .filter((space) => space.id !== editId)
+                      .slice(0, 2)
+                      .map((space) => (
+                        <span key={space.id} className="stage-chip">
+                          <SpaceAvatar space={space} size={20} />
+                        </span>
+                      ))}
+                    <span className="stage-chip stage-chip-add">
+                      <Icon name="plus" size={11} />
+                    </span>
+                  </div>
 
-          <label className="field">
-            <span>Nom</span>
-            <input
-              ref={inputRef}
-              className="space-name-input"
-              value={name}
-              maxLength={40}
-              placeholder="Travail, Veille, Personnel…"
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
+                  <div className="stage-side">
+                    <div className="stage-space">
+                      <SpaceAvatar space={{ name: preview, color, avatar }} size={17} />
+                      <span>{preview}</span>
+                    </div>
+                    <span className="stage-brief" />
+                    <div className="stage-tabs">
+                      <span className="stage-tab" data-active="true">
+                        Nouvel onglet
+                      </span>
+                      <span className="stage-tab">Notes</span>
+                      <span className="stage-tab">Recherche</span>
+                    </div>
+                  </div>
 
-          <div>
-            <span className="field-label">Couleur</span>
-            <div className="space-swatches" style={{ marginTop: 8 }}>
-              {SPACE_COLORS.map((swatch) => (
+                  <div className="stage-page">
+                    <span className="stage-address" />
+                    <span className="stage-hello">
+                      Bonsoir
+                      <span className="stage-dot">.</span>
+                    </span>
+                    <span className="stage-field" />
+                    <span className="stage-lines">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <div className="stage-cards">
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                </div>
+                <p className="stage-note">Aperçu en direct — le châssis prend cette teinte et cette ambiance.</p>
+                <dl className="stage-facts">
+                  <div>
+                    <dt>Teinte</dt>
+                    <dd>
+                      <i style={{ background: color }} />
+                      {color.toUpperCase()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Ambiance</dt>
+                    <dd>{SPACE_BACKGROUNDS.find((preset) => preset.id === background)?.label ?? 'Aucune'}</dd>
+                  </div>
+                  <div>
+                    <dt>Traqueurs</dt>
+                    <dd>{blockTrackers ? 'Filtrés' : 'Non filtrés'}</dd>
+                  </div>
+                </dl>
+              </>
+            )}
+          </aside>
+
+          <div className="space-fields">
+            {!existing && (
+              <section className="space-block">
+                <h2 className="space-block-title">Partir d’un modèle</h2>
+                <div className="preset-grid">
+                  {SPACE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className="preset-card"
+                      data-active={activePreset === preset.id}
+                      onClick={() => applyPreset(preset)}
+                      style={{ '--preset': preset.color } as CSSProperties}
+                    >
+                      <span className="preset-mark">
+                        <SpaceAvatar space={{ name: preset.label, color: preset.color, avatar: preset.avatar }} size={24} />
+                      </span>
+                      <span className="preset-copy">
+                        <strong>{preset.label}</strong>
+                        <small>{preset.background === 'none' ? 'Fond du thème' : `Ambiance ${preset.background}`}</small>
+                      </span>
+                      {activePreset === preset.id && <Icon name="check" size={12} />}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="space-block">
+              <label className="field">
+                <span>Nom</span>
+                <input
+                  ref={inputRef}
+                  className="space-name-input"
+                  value={name}
+                  maxLength={40}
+                  placeholder="Travail, Veille, Personnel…"
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </label>
+
+              <div className="space-row">
+                <span className="space-row-label">Avatar</span>
+                <div className="avatar-grid">
+                  <button
+                    type="button"
+                    className="avatar-choice"
+                    data-active={!avatar || avatar === 'monogram'}
+                    onClick={() => setAvatar('monogram')}
+                    title="Initiales de l’espace"
+                    aria-label="Initiales de l’espace"
+                  >
+                    <span className="avatar-choice-mono" style={{ background: color }}>
+                      {monogram}
+                    </span>
+                  </button>
+                  {SPACE_AVATARS.map((mark) => (
+                    <button
+                      key={mark.id}
+                      type="button"
+                      className="avatar-choice"
+                      data-active={avatar === `icon:${mark.id}`}
+                      onClick={() => setAvatar(`icon:${mark.id}`)}
+                      title={mark.label}
+                      aria-label={mark.label}
+                    >
+                      <svg viewBox="0 0 24 24" width={16} height={16}>
+                        <path
+                          d={mark.path}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.7}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="avatar-choice avatar-choice-add"
+                    data-active={Boolean(storedImage)}
+                    onClick={() => fileRef.current?.click()}
+                    title="Importer une photo"
+                    aria-label="Importer une photo"
+                  >
+                    {storedImage ? <img src={storedImage} alt="" /> : <Icon name="image" size={14} />}
+                  </button>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={(event) => {
+                    importPhoto(event.target.files?.[0])
+                    event.target.value = ''
+                  }}
+                />
+              </div>
+
+              {photoError && <p className="space-error">{photoError}</p>}
+
+              {storedImage && !photo && (
+                <div className="avatar-photo-actions">
+                  <button type="button" className="text-btn" onClick={() => setPhoto(storedImage)}>
+                    <Icon name="edit" size={11} />
+                    Recadrer
+                  </button>
+                  <button type="button" className="text-btn" onClick={() => setAvatar('monogram')}>
+                    <Icon name="trash" size={11} />
+                    Retirer la photo
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="space-block">
+              <h2 className="space-block-title">Couleur</h2>
+              <div className="space-swatches">
+                {SPACE_COLORS.map((swatch) => (
+                  <button
+                    type="button"
+                    key={swatch}
+                    className="swatch"
+                    data-active={swatch === color}
+                    style={{ background: swatch }}
+                    aria-label={`Couleur ${swatch}`}
+                    aria-pressed={swatch === color}
+                    onClick={() => setColor(swatch)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="space-block">
+              <h2 className="space-block-title">Ambiance</h2>
+              <div className="background-grid">
+                {SPACE_BACKGROUNDS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className="background-card"
+                    data-active={background === preset.id}
+                    data-bg={preset.id}
+                    style={{ '--space-color': color } as CSSProperties}
+                    onClick={() => setBackground(preset.id)}
+                    title={preset.detail}
+                    aria-pressed={background === preset.id}
+                  >
+                    <span className="background-swatch" />
+                    <span>{preset.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-block isolation-block">
+              <h2 className="space-block-title">Isolation</h2>
+              <div className="isolation-note">
+                <span className="isolation-icon">
+                  <Icon name="shield" size={14} />
+                </span>
+                <div>
+                  <strong>Cookies et sessions séparés</strong>
+                  <span>Chaque espace a sa partition Chromium : cache, stockage et connexions isolés.</span>
+                </div>
+              </div>
+              <div className="isolation-toggle">
+                <div>
+                  <span>Filtrer les traqueurs</span>
+                  <small>Publicités et mesure, pour cet espace seulement.</small>
+                </div>
                 <button
                   type="button"
-                  key={swatch}
-                  className="swatch"
-                  data-active={swatch === color}
-                  style={{ background: swatch }}
-                  aria-label={swatch}
-                  onClick={() => setColor(swatch)}
-                />
-              ))}
-            </div>
+                  className="switch"
+                  role="switch"
+                  aria-checked={blockTrackers}
+                  data-on={blockTrackers ? 'true' : 'false'}
+                  onClick={() => setBlockTrackers((value) => !value)}
+                  aria-label="Filtrer les traqueurs dans cet espace"
+                >
+                  <span />
+                </button>
+              </div>
+            </section>
+
+            {view.settings.perSpaceThemes ? (
+              <section className="space-block">
+                <label className="field">
+                  <span>Thème de couleur de cet espace</span>
+                  <select
+                    className="select"
+                    value={theme ?? ''}
+                    onChange={(event) => setTheme((event.target.value || null) as ThemeId | null)}
+                  >
+                    <option value="">Thème global ({presetById(view.settings.themeId)?.label ?? 'personnalisé'})</option>
+                    {THEME_PRESETS.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label}
+                      </option>
+                    ))}
+                    <option value="custom">Couleur personnalisée</option>
+                  </select>
+                </label>
+              </section>
+            ) : (
+              <p className="setting-hint">
+                Un thème de couleur par espace s’active dans Réglages › Apparence.
+              </p>
+            )}
           </div>
 
-          {view.settings.perSpaceThemes && existing && (
-            <label className="field">
-              <span>Thème de cet espace</span>
-              <select
-                className="select"
-                value={theme ?? ''}
-                onChange={(event) => setTheme((event.target.value || null) as ThemeId | null)}
-              >
-                <option value="">
-                  Thème global ({presetById(view.settings.themeId)?.label ?? 'personnalisé'})
-                </option>
-                {THEME_PRESETS.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.label}
-                  </option>
-                ))}
-                <option value="custom">Couleur personnalisée</option>
-              </select>
-              <small className="setting-hint">
-                L’accent du châssis change en douceur quand vous ouvrez cet espace.
-              </small>
-            </label>
-          )}
-
-          <div className="dialog-foot" style={{ padding: '6px 0 0' }}>
+          <footer className="dialog-foot space-foot">
             {existing && view.spaces.length > 1 ? (
               <button
                 type="button"
@@ -149,7 +449,7 @@ export default function SpaceDialog() {
                 {existing ? 'Enregistrer' : 'Créer l’espace'}
               </button>
             </div>
-          </div>
+          </footer>
         </form>
       </div>
     </div>

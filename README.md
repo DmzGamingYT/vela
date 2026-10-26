@@ -143,7 +143,7 @@ garde le relevé trente minutes sur l’appareil. Aucune clé, aucun compte, auc
 | **Onglets verticaux** | Titres lisibles, épinglage, réouverture du dernier onglet fermé. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
-| **Espaces isolés** | Une partition Chromium par espace : deux comptes au même site, sans conflit. |
+| **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct et modèles Travail, Personnel, Gaming, Études. |
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups : Google ne prend plus Vela pour un navigateur embarqué. |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
@@ -244,6 +244,23 @@ L’historique et les compteurs de blocage peuvent être effacés depuis **Régl
 Les clés vivent dans le trousseau système, jamais dans `vela.json` ni dans l’interface. « Tester » interroge la liste des modèles du fournisseur et affiche *Clé acceptée* ou l’erreur exacte. Le modèle et l’endpoint sont modifiables par fournisseur ; Anthropic et Google utilisent leur propre protocole, les autres le format OpenAI en streaming SSE.
 
 Le canvas permet de choisir les onglets sources, d’arrêter une recherche, de copier le rapport ou de l’enregistrer en note.
+
+### Espaces
+
+La fenêtre d’espace montre à gauche un aperçu vivant du châssis (rail, barre latérale, onglets,
+accueil) et règle à droite le nom, l’avatar, la teinte, l’ambiance et l’isolation. Quatre modèles
+préremplissent l’ensemble en un clic ; un espace existant se rouvre par double-clic sur sa pastille.
+
+L’avatar peut être l’initiale de l’espace, l’une des huit marques dessinées, ou une photo importée :
+elle est recadrée au carré, zoomée, déplacée, puis teintée aux couleurs de l’espace et enregistrée en
+144 px dans `vela.json` — jamais envoyée ailleurs. L’ambiance (Aurore, Brume, Braise, Nuit) teinte le
+fond du châssis derrière le verre, jamais le contenu des pages ; « Aurore » respire lentement et se
+tait avec « Réduire les animations ».
+
+Chaque espace garde sa partition Chromium : cookies, cache et sessions réellement séparés. Le filtre
+de traqueurs peut être retiré pour un espace précis sans toucher aux autres — vérifié en chargeant une
+page de test : deux requêtes de mesure arrêtées dans un espace filtré, aucune dans l’espace sans filtre.
+Les raccourcis clavier par espace et les extensions ne sont pas gérés par cette version.
 
 ### Tunnel de recherche
 

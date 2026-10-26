@@ -48,6 +48,20 @@ export interface UpdateGroupInput {
 export interface CreateSpaceInput {
   name: string
   color: string
+  avatar?: string | null
+  background?: import('./space').SpaceBackground
+  blockTrackers?: boolean
+  theme?: string | null
+}
+
+export interface UpdateSpaceInput {
+  id: string
+  name?: string
+  color?: string
+  theme?: string | null
+  avatar?: string | null
+  background?: import('./space').SpaceBackground
+  blockTrackers?: boolean
 }
 
 export interface SaveNoteInput {
@@ -161,7 +175,7 @@ export interface VelaApi {
   view(): Promise<AppView>
   spaces: {
     create(input: CreateSpaceInput): Promise<void>
-    update(input: { id: string; name?: string; color?: string; theme?: string | null }): Promise<void>
+    update(input: UpdateSpaceInput): Promise<void>
     remove(id: string): Promise<void>
     activate(id: string): Promise<void>
   }

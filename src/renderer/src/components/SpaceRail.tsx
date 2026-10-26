@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import SpaceAvatar from './SpaceAvatar'
 
 export default function SpaceRail() {
   const view = useBrowser((state) => state.view)
@@ -60,12 +61,13 @@ export default function SpaceRail() {
               type="button"
               className="space-chip"
               data-active={active}
+              data-avatar="true"
               style={{ '--space': space.color } as CSSProperties}
               onClick={() => activateSpace(space.id)}
               title={space.name}
               onDoubleClick={() => openSpaceDialog(space.id)}
             >
-              <span>{space.name.slice(0, 1).toUpperCase()}</span>
+              <SpaceAvatar space={space} size={34} />
             </button>
           )
         })}

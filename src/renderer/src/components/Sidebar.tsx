@@ -5,6 +5,7 @@ import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import TabRow from './TabRow'
 import TunnelSidebar from './TunnelSidebar'
+import SpaceAvatar from './SpaceAvatar'
 
 type DropTarget =
   | { kind: 'tab'; id: string; edge: 'before' | 'after' }
@@ -193,7 +194,7 @@ export default function Sidebar() {
       </header>
 
       <div className="space-head">
-        <span className="space-dot" style={{ background: space.color }} />
+        <SpaceAvatar space={space} size={18} />
         <button type="button" className="space-name" onDoubleClick={() => openSpaceDialog(space.id)}>
           {space.name}
         </button>

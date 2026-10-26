@@ -156,7 +156,9 @@ export class TabManager {
     }
     attachPrivacy(
       ses,
-      () => this.host.settings().blockTrackers,
+      // Le réglage global peut être retiré espace par espace (la session, elle,
+      // reste la même : le filtre lit la valeur courante à chaque requête).
+      () => this.host.settings().blockTrackers && space.blockTrackers !== false,
       (webContentsId, host) => this.countBlocked(webContentsId, host),
       (pageUrl) => {
         try {

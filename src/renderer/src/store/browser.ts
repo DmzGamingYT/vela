@@ -13,7 +13,7 @@ import type {
 } from '@shared/types'
 import { HOME_URL } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
-import type { SaveNoteInput, SettingsPatch } from '@shared/api'
+import type { CreateSpaceInput, SaveNoteInput, SettingsPatch, UpdateSpaceInput } from '@shared/api'
 
 export type Overlay =
   | 'command'
@@ -114,8 +114,8 @@ interface BrowserState {
   setSplitRatio(ratio: number): void
   commitSplitRatio(ratio: number): void
   activateSpace(id: string): void
-  createSpace(name: string, color: string): Promise<void>
-  updateSpace(id: string, patch: { name?: string; color?: string; theme?: string | null }): Promise<void>
+  createSpace(input: CreateSpaceInput): Promise<void>
+  updateSpace(id: string, patch: Omit<UpdateSpaceInput, 'id'>): Promise<void>
   removeSpace(id: string): Promise<void>
   toggleNotes(open?: boolean): void
   toggleAgent(open?: boolean): void
@@ -398,8 +398,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     void get().call(() => window.vela.spaces.activate(id), 'Espace introuvable.')
   },
 
-  async createSpace(name, color) {
-    await get().call(() => window.vela.spaces.create({ name, color }), 'Impossible de créer l’espace.')
+  async createSpace(input) {
+    await get().call(() => window.vela.spaces.create(input), 'Impossible de créer l’espace.')
     set({ overlay: null })
     get().toast('Nouvel espace prêt.')
   },
