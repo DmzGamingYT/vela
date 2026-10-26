@@ -6,5 +6,6 @@ build/Vela.iconset/
 build/icon.iconset/
 .DS_Store
 *.log
+*.tsbuildinfo
 .freebuff/
 *.blockmap
