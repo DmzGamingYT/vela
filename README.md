@@ -136,7 +136,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
 | **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
-| **Notes** | Markdown stocké en fichiers `.md`, capturés depuis la page, à côté du web. |
+| **Notes** | Panneau en verre, notes Markdown en fichiers `.md` avec étiquettes, épinglage et recherche ; extraction par glisser-déposer depuis la page, surlignage synchronisé, croquis et réécriture par le modèle. |
 | **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
 | **Marque-pages** | `⌘D` garde la page affichée (étoile dans la barre d’adresse), `⌘⇧O` ouvre la liste, import des favoris Chrome, Brave, Edge et Safari. |
 | **Historique** | `⌘Y` : liste groupée par jour, réouverture et suppression entrée par entrée. |
@@ -258,6 +258,30 @@ l’onglet et traduire des répliques, derrière un jeton propre à l’onglet q
 
 Limite : les lecteurs qui dessinent la planche dans un `<canvas>` échappent à la détection, faute d’image
 à relire.
+
+### Notes
+
+Le panneau Notes vit à droite de la page : recherche immédiate, filtres par étiquette, notes épinglées en
+tête, cartes en verre dépoli et éditeur Markdown avec aperçu. Chaque note garde son espace, sa source et
+ses étiquettes dans `index.json` ; le corps reste un fichier `.md` lisible dans n’importe quel éditeur.
+
+Trois formats cohabitent sans plugin : Markdown enrichi (titres, listes, tableaux, liens, blocs de code),
+listes de tâches rendues avec leurs cases, et croquis dessiné dans une petite ardoise puis inséré en image
+dans la note. Un extrait déposé conserve l’URL et le titre de la page d’origine : sur une page, la poignée
+« Glisser dans les notes » apparaît près de la sélection et lance un glisser natif (un clic capture
+directement le passage). Le fichier glissé porte un en-tête `source` / `titre`, relu à la dépose.
+
+Le surlignage utilise l’API Highlight de Chromium : un clic sur « Surligner la sélection » colore le passage
+dans la page et l’ajoute à la note de cette page (créée au besoin), avec sa date. Les surlignages sont
+repeints au chargement suivant, uniquement sur la même URL.
+
+Cinq actions IA s’appliquent à la note ouverte — reformuler, résumer, traduire, corriger, embellir — et
+« Générer une note IA » lit la page active et propose points clés, synthèse et plan d’action. Sans modèle
+configuré, le repli est local et clairement étiqueté « Mode démo » ; avec une clé, l’appel passe par le
+fournisseur choisi dans Réglages › Modèles. Aucune télémétrie.
+
+Limite : la note vocale n’est pas livrée dans cette version (micro, stockage audio et transcription restent
+à arbitrer) ; le reste des formats est disponible.
 
 ## Site public
 

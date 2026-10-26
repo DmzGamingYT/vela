@@ -8,6 +8,7 @@ import type {
   HistoryEntry,
   LayoutRequest,
   Note,
+  PageHighlight,
   ProviderId,
   SelectionPayload,
   Settings,
@@ -55,6 +56,23 @@ export interface SaveNoteInput {
   body: string
   spaceId?: string
   url?: string
+  tags?: string[]
+  pinned?: boolean
+}
+
+export type NoteAiAction = 'generate' | 'reformulate' | 'summarize' | 'translate' | 'correct' | 'beautify'
+
+export interface NoteAiInput {
+  action: NoteAiAction
+  body?: string
+  title?: string
+  url?: string
+}
+
+export interface NoteAiResult {
+  text: string
+  /** api = modèle configuré ; demo = repli local clairement étiqueté. */
+  mode: 'api' | 'demo'
 }
 
 export interface ProviderPatch {
@@ -206,10 +224,18 @@ export interface VelaApi {
   notes: {
     get(id: string): Promise<Note | null>
     save(input: SaveNoteInput): Promise<Note>
+    /** Change le titre, les étiquettes ou l'épinglage sans réécrire le corps. */
+    patch(input: { id: string; title?: string; pinned?: boolean; tags?: string[] }): Promise<Note | null>
     remove(id: string): Promise<void>
     openFolder(): Promise<void>
     /** Capture la sélection de la page active avec sa source et la date. */
     captureSelection(): Promise<Note | null>
+    /** Surligne la sélection et l'ajoute à la note de la page. */
+    highlight(): Promise<Note | null>
+    /** Surlignages enregistrés pour la page active. */
+    highlights(): Promise<PageHighlight[]>
+    /** Génère ou réécrit une note avec le modèle configuré. */
+    ai(input: NoteAiInput): Promise<NoteAiResult>
   }
   privacy: {
     /** Désactive ou réactive le bloqueur pour un site ; true = exempté. */

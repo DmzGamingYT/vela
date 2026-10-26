@@ -77,6 +77,10 @@ export interface Note {
   body: string
   spaceId: string
   url?: string
+  /** Étiquettes libres, affichées en badges et utilisées par la recherche. */
+  tags: string[]
+  /** Note épinglée en tête de liste. */
+  pinned: boolean
   updatedAt: number
 }
 
@@ -86,7 +90,18 @@ export interface NoteMeta {
   preview: string
   spaceId: string
   url?: string
+  tags: string[]
+  pinned: boolean
   updatedAt: number
+}
+
+/** Passage surligné sur une page, rattaché à son URL et à sa note. */
+export interface PageHighlight {
+  id: string
+  url: string
+  title: string
+  text: string
+  createdAt: number
 }
 
 export interface ProviderSettings {
@@ -366,7 +381,7 @@ export interface ShortcutEvent {
   digit?: number
 }
 
-export type SelectionAction = 'summarize' | 'explain' | 'translate' | 'simplify' | 'note'
+export type SelectionAction = 'summarize' | 'explain' | 'translate' | 'simplify' | 'note' | 'highlight'
 
 /** Sélection de texte envoyée par le menu contextuel d’une page. */
 export interface SelectionPayload {

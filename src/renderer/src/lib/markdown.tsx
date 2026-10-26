@@ -9,8 +9,14 @@ function safeUrl(value: string): string | null {
   }
 }
 
+/** Images de note : https, ou croquis embarqué en data URL PNG/JPEG. */
+function safeImage(value: string): string | null {
+  if (/^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(value)) return value
+  return safeUrl(value)
+}
+
 function renderInline(text: string, prefix: string): ReactNode[] {
-  const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g)
+  const tokens = text.split(/(!\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g)
   return tokens.filter(Boolean).map((token, index) => {
     const key = `${prefix}-${index}`
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
@@ -24,6 +30,12 @@ function renderInline(text: string, prefix: string): ReactNode[] {
     }
     if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
       return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
+    }
+    const image = token.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    if (image) {
+      const src = safeImage(image[2])
+      if (!src) return image[1]
+      return <img key={key} className="md-image" src={src} alt={image[1]} loading="lazy" />
     }
     const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
     if (link) {
@@ -169,11 +181,22 @@ export function Markdown({
         index += 1
       }
       const listKey = key++
+      const tasks = items.some((item) => /^\[[ xX]\]\s+/.test(item))
       blocks.push(
-        <ul key={listKey}>
-          {items.map((item, itemIndex) => (
-            <li key={itemIndex}>{renderInline(item, `ul-${listKey}-${itemIndex}`)}</li>
-          ))}
+        <ul key={listKey} className={tasks ? 'md-tasks' : undefined}>
+          {items.map((item, itemIndex) => {
+            const task = item.match(/^\[([ xX])\]\s+(.*)$/)
+            return (
+              <li key={itemIndex} className={task ? 'md-task' : undefined}>
+                {task && (
+                  <span className="md-check" data-done={task[1].toLowerCase() === 'x'} aria-hidden="true">
+                    {task[1].toLowerCase() === 'x' ? '✓' : ''}
+                  </span>
+                )}
+                {renderInline(task ? task[2] : item, `ul-${listKey}-${itemIndex}`)}
+              </li>
+            )
+          })}
         </ul>
       )
       continue
@@ -200,6 +223,21 @@ export function Markdown({
       blocks.push(<hr key={key++} />)
       index += 1
       continue
+    }
+
+    const soleImage = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    if (soleImage) {
+      const src = safeImage(soleImage[2])
+      if (src) {
+        blocks.push(
+          <figure className="md-figure" key={key++}>
+            <img className="md-image" src={src} alt={soleImage[1]} loading="lazy" />
+            {soleImage[1] && <figcaption>{soleImage[1]}</figcaption>}
+          </figure>
+        )
+        index += 1
+        continue
+      }
     }
 
     const paragraph: string[] = [line]

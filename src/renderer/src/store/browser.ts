@@ -536,6 +536,19 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       void get().captureSelection()
       return
     }
+    if (payload.action === 'highlight') {
+      void get()
+        .call(() => window.vela.notes.highlight(), 'Surlignage impossible.')
+        .then((note) => {
+          if (!note) {
+            get().toast('Sélectionnez un passage dans la page.', 'error')
+            return
+          }
+          get().toast('Passage surligné et ajouté à la note de la page.')
+          set({ notesOpen: true })
+        })
+      return
+    }
     const text = payload.text.trim().slice(0, 4000)
     if (!text) {
       get().toast('Rien de sélectionné.', 'error')

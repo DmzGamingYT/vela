@@ -45,6 +45,8 @@ export interface TabHost {
   visited(spaceId: string, url: string, title: string): void
   selection(payload: SelectionPayload): void
   isExempted(host: string): boolean
+  /** Surlignages déjà enregistrés pour cette URL, repeints au chargement. */
+  highlightsFor?(url: string): string[]
 }
 
 interface Runtime {
@@ -293,6 +295,12 @@ export class TabManager {
       this.host.changed()
     })
 
+    wc.on('did-finish-load', () => {
+      const tab = this.host.tab(tabId)
+      const saved = tab ? this.host.highlightsFor?.(tab.url) ?? [] : []
+      if (saved.length > 0) void this.paintHighlights(tabId, saved)
+    })
+
     wc.on('did-navigate-in-page', (_event, url, isMainFrame) => {
       if (!isMainFrame) return
       this.record(tabId, url)
@@ -333,6 +341,7 @@ export class TabManager {
           { label: 'Traduire', click: () => send('translate') },
           { label: 'Simplifier', click: () => send('simplify') },
           { type: 'separator' },
+          { label: 'Surligner et annoter', click: () => send('highlight') },
           { label: 'Ajouter à une note', click: () => send('note') },
           { type: 'separator' },
           { role: 'copy', label: 'Copier' }
@@ -663,6 +672,109 @@ export class TabManager {
     } catch {
       return ''
     }
+  }
+
+  /** Entoure la sélection courante d'un surlignage (API Highlight de Chromium). */
+  async highlightSelection(tabId: string): Promise<boolean> {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return false
+    try {
+      const painted: unknown = await view.webContents.executeJavaScript(
+        `(() => {
+          const selection = window.getSelection();
+          if (!selection || selection.rangeCount === 0 || !selection.toString().trim()) return false;
+          const styleId = '__vela_highlight_style';
+          if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = '::highlight(vela-annotation){background-color: rgba(245,197,66,.55);color:inherit}';
+            document.documentElement.appendChild(style);
+          }
+          if (!CSS.highlights) return false;
+          const name = 'vela-annotation';
+          const existing = CSS.highlights.get(name) || new Highlight();
+          existing.add(selection.getRangeAt(0));
+          CSS.highlights.set(name, existing);
+          return true;
+        })()`,
+        true
+      )
+      return painted === true
+    } catch {
+      return false
+    }
+  }
+
+  /** Repeint les passages déjà surlignés sur cette page. */
+  async paintHighlights(tabId: string, texts: string[]): Promise<number> {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed() || texts.length === 0) return 0
+    const payload = JSON.stringify(texts.map((text) => text.split('\n')[0].slice(0, 160)))
+    try {
+      const painted: unknown = await view.webContents.executeJavaScript(
+        `(() => {
+          const saved = ${payload};
+          if (!CSS.highlights) return 0;
+          const styleId = '__vela_highlight_style';
+          if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = '::highlight(vela-annotation){background-color: rgba(245,197,66,.55);color:inherit}';
+            document.documentElement.appendChild(style);
+          }
+          const body = document.body;
+          if (!body) return 0;
+          const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+          const nodes = [];
+          const starts = [];
+          let full = '';
+          let node;
+          while ((node = walker.nextNode())) {
+            if (node.parentElement?.closest('script,style,noscript,svg,[hidden],[aria-hidden="true"]')) continue;
+            nodes.push(node);
+            starts.push(full.length);
+            full += node.textContent || '';
+          }
+          const locate = (offset) => {
+            for (let i = nodes.length - 1; i >= 0; i -= 1) {
+              if (offset >= starts[i]) return { node: nodes[i], offset: offset - starts[i] };
+            }
+            return null;
+          };
+          const ranges = [];
+          for (const text of saved) {
+            const index = full.indexOf(text);
+            if (index === -1) continue;
+            const start = locate(index);
+            const end = locate(index + text.length);
+            if (!start || !end) continue;
+            try {
+              const range = document.createRange();
+              range.setStart(start.node, start.offset);
+              range.setEnd(end.node, end.offset);
+              ranges.push(range);
+            } catch {
+              /* plage invalide : passage ignoré */
+            }
+          }
+          if (ranges.length === 0) return 0;
+          CSS.highlights.set('vela-annotation', new Highlight(...ranges));
+          return ranges.length;
+        })()`,
+        true
+      )
+      return typeof painted === 'number' ? painted : 0
+    } catch {
+      return 0
+    }
+  }
+
+  /** Identifie l'onglet qui porte ce webContents (glisser-déposer depuis la page). */
+  tabIdForWebContents(id: number): string | null {
+    for (const [tabId, view] of this.views) {
+      if (!view.webContents.isDestroyed() && view.webContents.id === id) return tabId
+    }
+    return null
   }
 
   async excerpt(tabId: string): Promise<{ text: string; anchor: string }> {

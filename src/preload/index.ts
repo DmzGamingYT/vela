@@ -3,6 +3,7 @@ import type {
   CreateGroupInput,
   CreateSpaceInput,
   CreateTabInput,
+  NoteAiInput,
   ReorderTabsInput,
   SaveNoteInput,
   SetKeyInput,
@@ -99,9 +100,14 @@ const api: VelaApi = {
   notes: {
     get: (id: string) => ipcRenderer.invoke('notes:get', id),
     save: (input: SaveNoteInput) => ipcRenderer.invoke('notes:save', input),
+    patch: (input: { id: string; title?: string; pinned?: boolean; tags?: string[] }) =>
+      ipcRenderer.invoke('notes:patch', input),
     remove: (id: string) => ipcRenderer.invoke('notes:remove', id),
     openFolder: () => ipcRenderer.invoke('notes:open-folder'),
-    captureSelection: () => ipcRenderer.invoke('notes:capture-selection')
+    captureSelection: () => ipcRenderer.invoke('notes:capture-selection'),
+    highlight: () => ipcRenderer.invoke('notes:highlight'),
+    highlights: () => ipcRenderer.invoke('notes:highlights'),
+    ai: (input: NoteAiInput) => ipcRenderer.invoke('notes:ai', input)
   },
   privacy: {
     toggleSite: (host: string) => ipcRenderer.invoke('privacy:toggle-site', host)

@@ -32,6 +32,40 @@ export interface FinishedWork {
  * - démo : rapport déterministe construit localement, flux simulé ;
  * - api : streaming SSE vers un endpoint compatible OpenAI, texte des onglets joint.
  */
+/** Repli local : une note structurée, honnêtement étiquetée, sans modèle. */
+export function demoNote(input: { title: string; url?: string; text: string }): string {
+  const sentences = input.text
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*[-*+]\s+(\[[ xX]\]\s+)?/gm, '')
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 40)
+    .slice(0, 3)
+  const lines = [
+    '> **Mode démo** — note construite localement à partir du texte de la page. Aucun modèle n’a été appelé.',
+    '',
+    `## ${input.title || 'Page sans titre'}`,
+    ''
+  ]
+  if (input.url) lines.push(`Source : [${input.url}](${input.url})`, '')
+  lines.push('## Points clés', '')
+  if (sentences.length === 0) lines.push('- La page ne contient pas assez de texte pour une synthèse.')
+  for (const sentence of sentences) lines.push(`- ${sentence.slice(0, 240)}`)
+  lines.push('', '## Plan d’action', '')
+  lines.push('- Relire la source et vérifier les chiffres cités.')
+  lines.push('- Ajouter votre commentaire sous chaque point.')
+  lines.push('- Configurer un modèle dans Réglages › Modèles pour une synthèse rédigée.')
+  return lines.join('\n')
+}
+
+export interface NoteCompletionInput {
+  system: string
+  prompt: string
+  /** Texte de la page, utilisé seulement quand aucun modèle n’est configuré. */
+  fallback?: { title: string; url?: string; text: string }
+}
+
 export class AgentRunner {
   private current: ActiveRun | null = null
 
@@ -70,6 +104,67 @@ export class AgentRunner {
       void this.runDemo(run, request)
     }
     return { runId: run.id }
+  }
+
+  /**
+   * Réponse complète, hors atelier : notes générées ou réécrites. Un seul
+   * appel, sans étape ni archivage, mais avec le même repli local honnête.
+   */
+  async complete(input: NoteCompletionInput): Promise<{ text: string; mode: 'api' | 'demo' }> {
+    const settings = this.getSettings()
+    const definition = providerById(settings.agent.provider)
+    const key = this.getSecret(definition.id)
+    if (settings.agent.mode !== 'api' || (!key && !definition.local)) {
+      return {
+        text: demoNote(input.fallback ?? { title: 'Note', text: input.prompt }),
+        mode: 'demo'
+      }
+    }
+    const state = providerState(settings)
+    const chat = buildChatRequest(definition, { baseUrl: state.baseUrl, model: state.model }, key, [
+      { role: 'system', content: input.system },
+      { role: 'user', content: input.prompt }
+    ])
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 60_000)
+    try {
+      const response = await fetch(chat.url, {
+        method: 'POST',
+        headers: chat.headers,
+        body: chat.body,
+        signal: controller.signal
+      })
+      if (!response.ok || !response.body) {
+        const detail = await response.text().catch(() => '')
+        throw new Error(
+          `Modèle indisponible (${response.status}). ${detail.slice(0, 160) || 'Vérifiez la clé et l’URL.'}`
+        )
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let text = ''
+      for (;;) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data:')) continue
+          const data = trimmed.slice(5).trim()
+          if (!data || data === '[DONE]') continue
+          const delta = parseStreamPayload(definition.protocol, data)
+          if (delta) text += delta
+        }
+      }
+      const clean = text.trim()
+      if (!clean) throw new Error('Le modèle n’a renvoyé aucun texte.')
+      return { text: clean, mode: 'api' }
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   cancel(runId?: string): void {
