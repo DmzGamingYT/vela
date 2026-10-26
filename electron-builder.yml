@@ -17,6 +17,15 @@ publish:
 mac:
   icon: build/icon.icns
   category: public.app-category.productivity
+  # Signature Developer ID + notarisation : la notarisation se déclenche seule
+  # quand APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (ou APPLE_API_*)
+  # sont présents dans l'environnement, et elle est simplement ignorée sinon.
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  extendInfo:
+    NSCameraUsageDescription: "Vela utilise la caméra pour les visioconférences et les appels lancés depuis vos pages web."
+    NSMicrophoneUsageDescription: "Vela utilise le microphone pour les appels et la dictée lancés depuis vos pages web."
   target:
     - target: dmg
       arch: [arm64, x64]

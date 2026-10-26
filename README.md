@@ -43,7 +43,9 @@ Chaque plateforme a son dossier dans `release/` : `mac/`, `win/`, `linux/`
 (avec `latest-*.yml` pour la mise à jour automatique).
 ```
 
-Les builds ne sont pas signés en v0.1 : macOS demandera un clic droit → Ouvrir, Windows affichera SmartScreen.
+macOS est signé (Developer ID) et notarisé dès que les secrets de signature sont configurés — voir
+[Signature macOS](#signature-macos). À défaut, le build reste signé ad hoc : clic droit → Ouvrir au
+premier lancement, et la mise à jour automatique macOS reste inopérante. Windows affiche SmartScreen.
 
 ## Mises à jour automatiques
 
@@ -59,10 +61,40 @@ Vela se met à jour toute seule en arrière-plan via `electron-updater` et les r
   contrôle manuel.
 - macOS : `.dmg`/`.zip` (arm64 + x64). Windows : NSIS. Linux : AppImage ; `.deb` — réinstallez le paquet.
 
-> macOS exige une signature Developer ID pour que ShipIt remplace le bundle tout seul. Sans
-> certificat Apple, le téléchargement est automatique mais l’installation peut être refusée :
-> l’app affiche alors l’erreur et le lien `Releases` (installez le `.dmg`). Windows et Linux
-> installent sans intervention.
+> macOS exige une signature Developer ID **et** une notarisation pour que ShipIt remplace le bundle
+> tout seul. Avec les secrets ci-dessous, l’installation est silencieuse : Vela télécharge le `.zip`
+> de sa plateforme et le bundle est remplacé à la fermeture, sans repasser par le `.dmg`. Sans
+> certificat Apple, le téléchargement reste automatique mais l’installation est refusée par
+> Gatekeeper : l’app affiche l’erreur et le lien `Releases` (installez le `.dmg`).
+
+## Signature macOS
+
+La chaîne complète est automatisée dans `.github/workflows/release.yml`. Il faut une adhésion au
+[programme développeur Apple](https://developer.apple.com/programs/) (99 $/an) et un certificat
+**Developer ID Application** exporté en `.p12` depuis Trousseau d’accès.
+
+Cinq secrets suffisent, à envoyer une seule fois :
+
+```bash
+scripts/mac-signing.sh ~/Desktop/DeveloperID.p12
+```
+
+| Secret | Contenu |
+|---|---|
+| `MAC_CERT_P12` | le `.p12` encodé en base64 (le script s’en charge) |
+| `MAC_CERT_PASSWORD` | mot de passe du `.p12` |
+| `APPLE_ID` | identifiant Apple du compte développeur |
+| `APPLE_APP_SPECIFIC_PASSWORD` | mot de passe d’application généré sur appleid.apple.com |
+| `APPLE_TEAM_ID` | Team ID à 10 caractères (developer.apple.com → Membership) |
+
+Le certificat est importé dans un trousseau temporaire du runner, `electron-builder` signe avec
+`build/entitlements.mac.plist` (hardened runtime), puis `@electron/notarize` soumet l’app à Apple et
+agrafe le ticket (`xcrun stapler`). Le job vérifie ensuite `codesign --verify --deep --strict`,
+`spctl --assess` et `stapler validate` avant de publier.
+
+Sans `MAC_CERT_P12`, le workflow continue de produire un build ad hoc (aucun échec) mais prévient
+dans les annotations : la mise à jour automatique macOS ne peut pas fonctionner dans ce cas,
+Squirrel.Mac exigeant que l’ancien et le nouvel app partagent la même identité de signature.
 
 Publier une version : **rien à faire à la main**. Le workflow `.github/workflows/release.yml`
 construit les 3 plateformes et publie la release dès qu’un commit sur `main` porte une version de
