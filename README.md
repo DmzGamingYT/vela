@@ -107,14 +107,16 @@ npm version patch   # 0.1.1 → 0.1.2 : bump + commit
 git push            # la release se construit et se publie en arrière-plan
 ```
 
-## Browse et Work
+## Navigation et Travail
 
 Deux modes, un seul commutateur en haut de la barre latérale (ou `⌘⇧A`).
 
-- **Browse** — la navigation ordinaire : onglets, dossiers, vue scindée, historique, tout le web.
-- **Work** — l’atelier : l’IA travaille dans la scène principale. On joint des onglets comme sources,
-on décrit le résultat attendu, l’agent lit et rédige en direct, puis on relit et on enregistre en note.
-Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Browse.
+- **Navigation** — le web ordinaire : onglets, dossiers, vue scindée, historique, tout le web.
+- **Travail** — le tunnel de recherche occupe la scène : un sujet descend en angles, sous-angles puis
+sources réelles, avec leur extrait, leur pertinence et les contradictions entre pages. L’agent reste
+accessible en panneau (`⌘J`) sans masquer la carte. Chaque carte est enregistrée automatiquement dans
+l’espace actif, et la barre latérale les liste : on rouvre, on renomme, on duplique.
+Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Navigation.
 Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renomme, on l’archive.
 
 ## Ce qu’il sait faire
@@ -131,10 +133,20 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
+| **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue et type. Export Markdown, PDF, PNG, JSON et rapport en note. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
 | **Notes** | Markdown stocké en fichiers `.md`, capturés depuis la page, à côté du web. |
 | **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
+| **Marque-pages** | `⌘D` garde la page affichée (étoile dans la barre d’adresse), `⌘⇧O` ouvre la liste, import des favoris Chrome, Brave, Edge et Safari. |
+| **Historique** | `⌘Y` : liste groupée par jour, réouverture et suppression entrée par entrée. |
+| **Impression** | `⌘P` : boîte de dialogue système, export PDF compris. |
 | **Bloqueur local** | Liste embarquée de domaines publicitaires, compteur visible dans la barre d’adresse. |
+| **Bouclier par site** | Le bouclier ouvre le détail des requêtes arrêtées sur la page, avec un interrupteur par site (rien pour les autres). |
+| **Sélection → agent** | Menu contextuel sur un passage : résumer, expliquer, traduire, simplifier, ou l’ajouter aux notes. |
+| **Citations** | « Capturer la sélection » garde le passage, l’URL source et la date dans une note Markdown. |
+| **Onglets en veille** | Les vues inactives sont déchargées (5 max en mémoire), avec indicateur discret et mémoire rendue affichée. |
+| **Rangement par site** | La palette crée des dossiers automatiques par domaine, annulables depuis la notification. |
+| **Skills** | `⌘K` puis `/résumer`, `/comparer`, `/extraire`, `/citer` préparent la demande de l’agent. |
 
 ## Raccourcis
 
@@ -147,14 +159,19 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘F` | Rechercher dans la page |
 | `⌘T` / `⌘W` | Nouvel onglet / fermer |
 | `⌘⇧T` | Rouvrir le dernier onglet fermé |
+| `⌘D` | Garder la page en marque-page |
+| `⌘⇧O` | Marque-pages |
+| `⌘Y` | Historique |
+| `⌘P` | Imprimer |
 | `⌘⇧D` | Vue scindée |
 | `⌘E` | Notes |
 | `⌘J` | Agent |
-| `⌘⇧A` | Basculer Browse / Work |
+| `⌘⇧A` | Basculer Navigation / Travail |
 | `⌘⇧B` | Brief du jour |
 | `⌘S` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |
 | `⌘,` | Réglages |
+| `⌘⇧Espace` | Vela et la palette depuis n’importe quelle app (global) |
 | `Échap` | Fermer une surcouche |
 
 ## Architecture
@@ -206,6 +223,19 @@ L’historique et les compteurs de blocage peuvent être effacés depuis **Régl
 Les clés vivent dans le trousseau système, jamais dans `vela.json` ni dans l’interface. « Tester » interroge la liste des modèles du fournisseur et affiche *Clé acceptée* ou l’erreur exacte. Le modèle et l’endpoint sont modifiables par fournisseur ; Anthropic et Google utilisent leur propre protocole, les autres le format OpenAI en streaming SSE.
 
 Le canvas permet de choisir les onglets sources, d’arrêter une recherche, de copier le rapport ou de l’enregistrer en note.
+
+### Tunnel de recherche
+
+Le mode **Travail** ne démarre pas par un formulaire mais par un tunnel : le sujet saisi devient la racine
+d’une carte où chaque niveau affine la recherche (angles, sous-angles, puis pages). Les fournisseurs sont
+remplaçables (`src/main/tunnel.ts`) : DuckDuckGo (HTML, sans clé), Wikipédia, arXiv, Hacker News et GDELT.
+Chaque nœud *Site* correspond à une page effectivement récupérée ; une page inaccessible est marquée comme
+telle. Les résultats sous 35 % de pertinence ne créent aucun nœud, deux pages maximum viennent d’un même
+domaine, et le seuil de l’entonnoir (60 % par défaut) masque le reste. Les sous-angles sont des thèmes
+communs aux pages (« Outils », « Comparatifs », « Guides », « Limites »), jamais des noms de domaine.
+Les tensions s’appuient uniquement sur des phrases citées, jamais sur une déduction.
+La carte, la mise en page, les filtres, le rapport et les exports sont dans `src/shared/tunnel.ts`, testés
+sans Electron.
 
 ## Site public
 

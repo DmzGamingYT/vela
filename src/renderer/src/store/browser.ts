@@ -6,15 +6,26 @@ import type {
   AppView,
   Note,
   ProviderId,
+  SelectionPayload,
   ShortcutEvent,
   TabGroup,
   WorkSummary
 } from '@shared/types'
 import { HOME_URL } from '@shared/types'
-import { isHomeUrl } from '@shared/url'
+import { hostOf, isHomeUrl } from '@shared/url'
 import type { SaveNoteInput, SettingsPatch } from '@shared/api'
 
-export type Overlay = 'command' | 'brief' | 'agent' | 'settings' | 'space' | 'processes' | 'downloads' | null
+export type Overlay =
+  | 'command'
+  | 'brief'
+  | 'settings'
+  | 'space'
+  | 'processes'
+  | 'downloads'
+  | 'history'
+  | 'bookmarks'
+  | 'protection'
+  | null
 
 export type WorkMode = 'browse' | 'work'
 
@@ -22,6 +33,7 @@ export interface Toast {
   id: string
   text: string
   tone: 'info' | 'error'
+  action?: { label: string; run: () => void }
 }
 
 export interface AgentStep {
@@ -59,12 +71,18 @@ interface BrowserState {
   view: AppView | null
   overlay: Overlay
   notesOpen: boolean
+  /** Panneau agent ancré à droite : la page reste visible à côté. */
+  agentOpen: boolean
   spaceEditId: string | null
   agent: AgentUi
   agentDraft: string
   workMode: WorkMode
   approved: boolean
   agentSentTabIds: string[]
+  /** Onglet à joindre automatiquement quand l'agent s'ouvre depuis une sélection. */
+  agentSourceTab: string | null
+  /** Dernier rangement par site, pour l'annulation en un clic. */
+  lastGrouping: { groupIds: string[]; tabIds: string[] } | null
   findOpen: boolean
   findQuery: string
   findResult: { matches: number; activeMatchOrdinal: number }
@@ -72,7 +90,7 @@ interface BrowserState {
   splitRatioLive: number | null
   init(): Promise<void>
   call<T>(task: () => Promise<T>, fallback: string): Promise<T | null>
-  toast(text: string, tone?: Toast['tone']): void
+  toast(text: string, tone?: Toast['tone'], action?: Toast['action']): void
   setOverlay(overlay: Overlay): void
   openSpaceDialog(id?: string): void
   focusAddress(): void
@@ -100,6 +118,7 @@ interface BrowserState {
   updateSpace(id: string, patch: { name?: string; color?: string }): Promise<void>
   removeSpace(id: string): Promise<void>
   toggleNotes(open?: boolean): void
+  toggleAgent(open?: boolean): void
   saveNote(input: SaveNoteInput): Promise<Note | null>
   deleteNote(id: string): Promise<void>
   createTask(title: string, dueToday?: boolean): Promise<void>
@@ -108,8 +127,17 @@ interface BrowserState {
   completeOnboarding(): Promise<void>
   setWorkMode(mode: WorkMode): void
   setApproved(value: boolean): void
-  pinEssentials(): Promise<void>
-  importBookmarks(urls: string[]): Promise<void>
+  pinEssentials(selection?: string[]): Promise<void>
+  importBookmarks(urls: string[], entries?: { title: string; url: string }[]): Promise<void>
+  printPage(): Promise<void>
+  toggleBookmark(tabId?: string): Promise<void>
+  removeBookmark(id: string): Promise<void>
+  removeHistory(url: string): Promise<void>
+  captureSelection(): Promise<void>
+  toggleSiteProtection(host: string): Promise<void>
+  handleSelection(payload: SelectionPayload): void
+  groupTabsBySite(): Promise<void>
+  undoGrouping(): Promise<void>
   updateSettings(patch: SettingsPatch): Promise<void>
   setKey(provider: ProviderId, key: string | null): Promise<boolean>
   testKey(provider: ProviderId): Promise<{ ok: boolean; message: string }>
@@ -186,12 +214,15 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   view: null,
   overlay: null,
   notesOpen: false,
+  agentOpen: false,
   spaceEditId: null,
   agent: EMPTY_AGENT,
   agentDraft: '',
   workMode: 'browse',
   approved: false,
   agentSentTabIds: [],
+  agentSourceTab: null,
+  lastGrouping: null,
   findOpen: false,
   findQuery: '',
   findResult: { matches: 0, activeMatchOrdinal: 0 },
@@ -223,6 +254,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     )
     window.vela.onShortcut((event) => get().handleShortcut(event))
     window.vela.agent.onEvent((event) => get().handleAgentEvent(event))
+    window.vela.selection.onSelect((payload) => get().handleSelection(payload))
     try {
       const status = await window.vela.updates.status()
       set({ update: status })
@@ -250,12 +282,15 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     }
   },
 
-  toast(text, tone = 'info') {
+  toast(text, tone = 'info', action) {
     const id = crypto.randomUUID()
-    set((state) => ({ toasts: [...state.toasts, { id, text, tone }].slice(-3) }))
-    setTimeout(() => {
-      set((state) => ({ toasts: state.toasts.filter((item) => item.id !== id) }))
-    }, 4200)
+    set((state) => ({ toasts: [...state.toasts, { id, text, tone, action }].slice(-3) }))
+    setTimeout(
+      () => {
+        set((state) => ({ toasts: state.toasts.filter((item) => item.id !== id) }))
+      },
+      action ? 7000 : 4200
+    )
   },
 
   setOverlay(overlay) {
@@ -386,6 +421,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     set({ notesOpen: open ?? !get().notesOpen })
   },
 
+  toggleAgent(open) {
+    // Le panneau vit à côté de la page : ouvrir l’agent ne masque plus rien.
+    set({ agentOpen: open ?? !get().agentOpen, overlay: null })
+  },
+
   async saveNote(input) {
     return get().call(() => window.vela.notes.save(input), 'La note n’a pas été enregistrée.')
   },
@@ -421,35 +461,184 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   setWorkMode(mode) {
     // Entrer dans l’atelier referme le panneau agent : c’est la même surface.
-    set((state) => ({ workMode: mode, overlay: mode === 'work' && state.overlay === 'agent' ? null : state.overlay }))
+    set((state) => ({ workMode: mode, agentOpen: mode === 'work' ? false : state.agentOpen }))
   },
 
   setApproved(value) {
     set({ approved: value })
   },
 
-  async pinEssentials() {
+  async pinEssentials(selection) {
     const view = get().view
     if (!view) return
     const existing = new Set(view.tabs.map((t) => t.url))
-    const essentials = ['https://github.com', 'https://mail.google.com', 'https://www.notion.so']
+    const essentials = selection && selection.length > 0 ? selection : ['https://github.com', 'https://www.notion.so']
+    let pinned = 0
     for (const url of essentials) {
       if (existing.has(url)) continue
-      await get().call(() => window.vela.tabs.create({ url, pinned: true, activate: false }), 'Épinglage impossible.')
+      const created = await get().call(
+        () => window.vela.tabs.create({ url, pinned: true, activate: false }),
+        'Épinglage impossible.'
+      )
+      if (created) pinned += 1
     }
-    get().toast('Essentiels épinglés.')
+    get().toast(pinned > 0 ? `${pinned} page${pinned > 1 ? 's' : ''} épinglée${pinned > 1 ? 's' : ''}.` : 'Déjà épinglé.')
   },
 
-  async importBookmarks(urls) {
-    const clean = Array.from(new Set(urls.filter((u) => /^https?:\/\//i.test(u)))).slice(0, 200)
+  async toggleBookmark(tabId) {
+    const view = get().view
+    if (!view) return
+    const tab = view.tabs.find((item) => item.id === (tabId ?? view.activeTabId))
+    if (!tab || isHomeUrl(tab.url)) {
+      get().toast('Ouvrez une page pour la mettre en marque-page.', 'error')
+      return
+    }
+    const added = await get().call(
+      () => window.vela.bookmarks.toggle({ url: tab.url, title: tab.title, favicon: tab.favicon }),
+      'Marque-page non enregistré.'
+    )
+    if (added === null) return
+    get().toast(added ? 'Page ajoutée aux marque-pages.' : 'Page retirée des marque-pages.')
+  },
+
+  async removeBookmark(id) {
+    await get().call(() => window.vela.bookmarks.remove(id), 'Marque-page non supprimé.')
+  },
+
+  async removeHistory(url) {
+    await get().call(() => window.vela.history.remove(url), 'Entrée non supprimée.')
+  },
+
+  async captureSelection() {
+    const note = await get().call(() => window.vela.notes.captureSelection(), 'Capture impossible.')
+    if (note === null) {
+      get().toast('Sélectionnez du texte dans la page pour le capturer.', 'error')
+      return
+    }
+    get().toast('Extrait enregistré dans les notes.')
+    set({ notesOpen: true })
+  },
+
+  async toggleSiteProtection(host) {
+    if (!host) return
+    const exempted = await get().call(() => window.vela.privacy.toggleSite(host), 'Réglage non enregistré.')
+    if (exempted === null) return
+    get().toast(
+      exempted ? `Bloqueur désactivé pour ${host}.` : `Bloqueur réactivé pour ${host}.`
+    )
+    const view = get().view
+    const active = view?.tabs.find((tab) => tab.id === view.activeTabId)
+    if (active && !isHomeUrl(active.url)) get().reload(active.id)
+  },
+
+  handleSelection(payload) {
+    if (payload.action === 'note') {
+      void get().captureSelection()
+      return
+    }
+    const text = payload.text.trim().slice(0, 4000)
+    if (!text) {
+      get().toast('Rien de sélectionné.', 'error')
+      return
+    }
+    const prompts: Record<'summarize' | 'explain' | 'translate' | 'simplify', string> = {
+      summarize: `Résume ce passage en trois points, puis dis ce qu’il faut retenir :\n\n"""${text}"""`,
+      explain: `Explique ce passage simplement, à quelqu’un qui découvre le sujet :\n\n"""${text}"""`,
+      translate: `Traduis ce passage en français s’il est en anglais, sinon en anglais. Garde le ton :\n\n"""${text}"""`,
+      simplify: `Réécris ce passage plus simplement, sans rien perdre du sens :\n\n"""${text}"""`
+    }
+    set({
+      agentDraft: prompts[payload.action],
+      agentOpen: true,
+      agentSourceTab: payload.tabId,
+      workMode: 'browse',
+      overlay: null
+    })
+  },
+
+  async groupTabsBySite() {
+    const view = get().view
+    if (!view) return
+    const candidates = view.tabs.filter(
+      (tab) =>
+        !tab.pinned &&
+        !tab.groupId &&
+        tab.spaceId === view.activeSpaceId &&
+        /^https?:/i.test(tab.url)
+    )
+    const byHost = new Map<string, typeof candidates>()
+    for (const tab of candidates) {
+      const host = hostOf(tab.url)
+      if (!host) continue
+      const bucket = byHost.get(host)
+      if (bucket) bucket.push(tab)
+      else byHost.set(host, [tab])
+    }
+    const targets = Array.from(byHost).filter(([, list]) => list.length >= 2).slice(0, 6)
+    if (targets.length === 0) {
+      get().toast('Aucun groupe de deux onglets ou plus à ranger.')
+      return
+    }
+    const groupIds: string[] = []
+    for (const [host, list] of targets) {
+      const group = await get().call(
+        () => window.vela.groups.create({ name: host, tabId: list[0].id }),
+        'Rangement impossible.'
+      )
+      if (!group) continue
+      groupIds.push(group.id)
+      for (const tab of list.slice(1)) {
+        await get().call(() => window.vela.tabs.reorder({ id: tab.id, groupId: group.id }), 'Onglet non rangé.')
+      }
+    }
+    if (groupIds.length === 0) return
+    set({ lastGrouping: { groupIds, tabIds: targets.flatMap(([, list]) => list.map((tab) => tab.id)) } })
+    get().toast(
+      `${groupIds.length} dossier${groupIds.length > 1 ? 's' : ''} créé${groupIds.length > 1 ? 's' : ''} par site.`,
+      'info',
+      { label: 'Annuler', run: () => void get().undoGrouping() }
+    )
+  },
+
+  async undoGrouping() {
+    const last = get().lastGrouping
+    if (!last) {
+      get().toast('Rien à annuler.')
+      return
+    }
+    for (const id of last.groupIds) {
+      await get().call(() => window.vela.groups.remove(id), 'Annulation impossible.')
+    }
+    set({ lastGrouping: null })
+    get().toast('Rangement annulé, onglets conservés.')
+  },
+
+  async printPage() {
+    const view = get().view
+    const active = view?.tabs.find((tab) => tab.id === view.activeTabId)
+    if (!active || isHomeUrl(active.url)) {
+      get().toast('Ouvrez une page à imprimer.', 'error')
+      return
+    }
+    const ok = await get().call(() => window.vela.tabs.print(active.id), 'Impression impossible.')
+    if (ok === false) get().toast('Impression impossible.', 'error')
+  },
+
+  async importBookmarks(urls, entries) {
+    const clean = Array.from(new Set(urls.filter((u) => /^https?:\/\//i.test(u)))).slice(0, 500)
     if (clean.length === 0) {
       get().toast('Aucune URL valide trouvée.', 'error')
       return
     }
-    for (const url of clean) {
-      await get().call(() => window.vela.tabs.create({ url, activate: false }), 'Import impossible.')
-    }
-    get().toast(`${clean.length} pages importées.`)
+    const titles = new Map((entries ?? []).map((entry) => [entry.url, entry.title]))
+    const payload = clean.map((url) => ({ url, title: titles.get(url) ?? '' }))
+    const added = await get().call(
+      () => window.vela.bookmarks.addMany(payload),
+      'Import des favoris impossible.'
+    )
+    if (added === null) return
+    if (added === 0) get().toast('Ces favoris sont déjà enregistrés.')
+    else get().toast(`${added} marque-page${added > 1 ? 's' : ''} importé${added > 1 ? 's' : ''}.`)
   },
 
   async updateSettings(patch) {
@@ -513,7 +702,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   openAgent(prompt = '') {
-    set({ overlay: 'agent', agentDraft: prompt })
+    set({ agentOpen: true, overlay: null, agentDraft: prompt })
   },
 
   async startAgent(prompt, tabIds) {
@@ -527,7 +716,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       .filter((tab) => tabIds.includes(tab.id) && !isHomeUrl(tab.url))
       .map((tab) => ({ tabId: tab.id, title: tab.title, url: tab.url }))
     set({
-      overlay: 'agent',
+      agentOpen: get().workMode !== 'work',
       agentDraft: prompt,
       agentSentTabIds: view.settings.agent.mode === 'api' ? sources.map((source) => source.tabId!).filter(Boolean) : [],
       agent: {
@@ -576,7 +765,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     }
     set({
       // Déjà dans l’atelier : le rapport s’affiche sur place, sans seconde fenêtre.
-      overlay: get().workMode === 'work' ? null : 'agent',
+      agentOpen: get().workMode !== 'work',
       approved: false,
       agentSentTabIds: [],
       agentDraft: full.prompt,
@@ -635,7 +824,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     })
     if (note) {
       get().toast('Rapport enregistré dans Notes.')
-      set((state) => ({ notesOpen: true, overlay: state.overlay === 'agent' ? null : state.overlay }))
+      set({ notesOpen: true, agentOpen: false })
     }
   },
 
@@ -670,7 +859,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         state.toggleNotes()
         break
       case 'agent':
-        state.setOverlay(state.overlay === 'agent' ? null : 'agent')
+        state.toggleAgent()
         break
       case 'work':
         state.setWorkMode(state.workMode === 'work' ? 'browse' : 'work')
@@ -687,11 +876,35 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       case 'reload':
         if (active) state.reload(active.id)
         break
+      case 'zoom-in':
+        if (active) void window.vela.tabs.zoom(active.id, 'in')
+        break
+      case 'zoom-out':
+        if (active) void window.vela.tabs.zoom(active.id, 'out')
+        break
+      case 'zoom-reset':
+        if (active) void window.vela.tabs.zoom(active.id, 'reset')
+        break
       case 'back':
         if (active) state.back(active.id)
         break
       case 'forward':
         if (active) state.forward(active.id)
+        break
+      case 'bookmark':
+        void state.toggleBookmark(active?.id)
+        break
+      case 'bookmarks':
+        state.setOverlay(state.overlay === 'bookmarks' ? null : 'bookmarks')
+        break
+      case 'history':
+        state.setOverlay(state.overlay === 'history' ? null : 'history')
+        break
+      case 'print':
+        void state.printPage()
+        break
+      case 'home':
+        if (active) void window.vela.tabs.home(active.id)
         break
       case 'find':
         set({ findOpen: true })
@@ -711,6 +924,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         if (state.findOpen) state.closeFind()
         else if (state.overlay) state.setOverlay(null)
         else if (state.notesOpen) state.toggleNotes(false)
+        else if (state.agentOpen) state.toggleAgent(false)
         break
       default:
         break

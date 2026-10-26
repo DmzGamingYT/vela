@@ -1,5 +1,6 @@
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, nativeTheme, session, shell, type Session } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, session, shell, type Session } from 'electron'
 import type {
   CreateGroupInput,
   CreateSpaceInput,
@@ -7,8 +8,11 @@ import type {
   ReorderTabsInput,
   SaveNoteInput,
   SettingsPatch,
+  TunnelRunInput,
   UpdateGroupInput
 } from '@shared/api'
+import { detectBookmarks } from './bookmarks'
+import { TunnelService } from './tunnel'
 import { buildBrief } from '@shared/brief'
 import {
   createGroup as createGroupState,
@@ -19,7 +23,7 @@ import {
 } from '@shared/defaults'
 import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
-import { engineHost } from '@shared/url'
+import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import {
   HOME_URL,
   type AppView,
@@ -70,6 +74,7 @@ export class Browser {
   readonly notes: NotesStore
   readonly tabs: TabManager
   readonly agent: AgentRunner
+  readonly tunnel: TunnelService
 
   private win: BrowserWindow | null = null
   private noteCache: NoteMeta[]
@@ -102,7 +107,9 @@ export class Browser {
     settings: () => this.store.get().settings,
     visited: (spaceId, url, title) => {
       this.store.pushHistory({ id: newId(), spaceId, url, title, visitedAt: Date.now() })
-    }
+    },
+    selection: (payload) => this.send('selection', payload),
+    isExempted: (host) => this.store.isExempted(host)
   }
 
   constructor(dir: string) {
@@ -111,6 +118,10 @@ export class Browser {
     this.notes.prune()
     this.noteCache = this.notes.list()
     this.tabs = new TabManager(() => this.win, this.host)
+    this.tunnel = new TunnelService({
+      saveMap: (map) => this.store.saveTunnelMap(map),
+      getMap: (id) => this.store.getTunnelMap(id)
+    })
     this.startSweeper()
     this.agent = new AgentRunner(
       () => this.win,
@@ -168,7 +179,7 @@ export class Browser {
       ).preconnect
       if (typeof preconnect !== 'function') return
       const result = preconnect.call(ses, {
-        url: `https://${engineHost(state.settings.searchEngine)}`,
+        url: `https://${engineHost(state.settings.searchEngine, state.settings.searxInstance)}`,
         numSockets: 3
       })
       if (result && typeof (result as Promise<unknown>).catch === 'function') {
@@ -353,6 +364,10 @@ export class Browser {
       splitRatio: state.splitRatio,
       settings: state.settings,
       history: state.history.slice(0, 80),
+      bookmarks: state.bookmarks,
+      privacyExemptions: state.privacyExemptions,
+      memoryFreed: this.tabs.memoryFreedMb(),
+      tunnelMaps: this.store.listTunnelMaps(),
       notes: this.noteCache,
       tasks: state.tasks.slice(0, 200),
       // Les rapports restent sur le disque : l'état ne transporte que leur résumé.
@@ -708,13 +723,12 @@ export class Browser {
     this.store.update((state) => {
       const settings: Settings = state.settings
       if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system') settings.theme = input.theme
-      if (
-        input.searchEngine === 'duckduckgo' ||
-        input.searchEngine === 'brave' ||
-        input.searchEngine === 'startpage' ||
-        input.searchEngine === 'searxng'
-      ) {
+      if (input.searchEngine && input.searchEngine in SEARCH_ENGINES) {
         settings.searchEngine = input.searchEngine
+      }
+      if (typeof input.searxInstance === 'string') settings.searxInstance = input.searxInstance.trim().slice(0, 200)
+      if (input.accent === 'violet' || input.accent === 'clay' || input.accent === 'sage' || input.accent === 'ocean') {
+        settings.accent = input.accent
       }
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
       if (typeof input.sidebarCollapsed === 'boolean') settings.sidebarCollapsed = input.sidebarCollapsed
@@ -917,6 +931,11 @@ export class Browser {
     handle('tab:reload', (payload) => {
       this.tabs.reload(asId(payload))
     })
+    handle('tab:zoom', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; direction?: unknown }
+      const direction = input.direction === 'in' || input.direction === 'out' ? input.direction : 'reset'
+      this.tabs.zoom(asId(input.id), direction)
+    })
     handle('tab:stop', (payload) => {
       this.tabs.stop(asId(payload))
     })
@@ -963,6 +982,186 @@ export class Browser {
       this.store.clearHistory()
       this.broadcast()
     })
+    handle('history:list', () => this.store.get().history.slice(0, 500))
+    handle('history:remove', (payload) => {
+      const url = typeof payload === 'string' ? payload : ''
+      if (!url) return
+      this.store.removeHistory(url)
+      this.broadcast()
+    })
+
+    handle('bookmark:toggle', (payload) => {
+      const input = (payload ?? {}) as { url?: unknown; title?: unknown; favicon?: unknown }
+      const url = typeof input.url === 'string' ? input.url : ''
+      if (!url || isHomeUrl(url)) return false
+      const added = this.store.toggleBookmark(
+        url,
+        typeof input.title === 'string' ? input.title : url,
+        typeof input.favicon === 'string' ? input.favicon : undefined
+      )
+      this.broadcast()
+      return added
+    })
+    handle('bookmark:remove', (payload) => {
+      const id = typeof payload === 'string' ? payload : ''
+      if (!id) return
+      this.store.removeBookmark(id)
+      this.broadcast()
+    })
+    handle('privacy:toggle-site', (payload) => {
+      const host = typeof payload === 'string' ? payload.trim().toLowerCase() : ''
+      if (!host) return false
+      const exempted = this.store.togglePrivacyExemption(host)
+      this.broadcast()
+      return exempted
+    })
+    handle('tunnel:run', (payload) => {
+      const input = (payload ?? {}) as TunnelRunInput
+      const state = this.store.get()
+      const spaceId =
+        typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
+          ? input.spaceId
+          : state.activeSpaceId
+      const query = asString(input.query).slice(0, 300)
+      if (!query.trim()) throw new Error('Décrivez un sujet pour lancer le tunnel.')
+      const runId = newId()
+      void this.tunnel
+        .start(
+          runId,
+          {
+            query,
+            spaceId,
+            parentId: typeof input.parentId === 'string' ? input.parentId : undefined,
+            mapId: typeof input.mapId === 'string' ? input.mapId : undefined
+          },
+          (event) => this.send('tunnel:event', event)
+        )
+        .catch((error: unknown) => {
+          this.send('tunnel:event', {
+            runId,
+            type: 'error',
+            message: error instanceof Error ? error.message : 'Recherche interrompue.'
+          })
+        })
+      return { runId }
+    })
+    ipcMain.on('tunnel:cancel', (_event, runId: unknown) => {
+      if (typeof runId === 'string') this.tunnel.cancel(runId)
+    })
+    handle('tunnel:maps', () => this.store.listTunnelMaps())
+    handle('tunnel:save', (payload) => {
+      const map = payload as import('@shared/tunnel').TunnelMap | undefined
+      if (!map || typeof map !== 'object') return
+      this.store.saveTunnelMap(map)
+      this.broadcast()
+    })
+    handle('tunnel:load', (payload) => this.store.getTunnelMap(asId(payload)))
+    handle('tunnel:rename', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; title?: unknown }
+      const id = typeof input.id === 'string' ? input.id : ''
+      const title = typeof input.title === 'string' ? input.title : ''
+      if (!id || !title.trim()) return
+      this.store.renameTunnelMap(id, title)
+      this.broadcast()
+    })
+    handle('tunnel:remove', (payload) => {
+      const id = asId(payload)
+      if (!id) return
+      this.store.removeTunnelMap(id)
+      this.broadcast()
+    })
+    handle('tunnel:duplicate', (payload) => {
+      const copy = this.store.duplicateTunnelMap(asId(payload))
+      if (copy) this.broadcast()
+      return copy
+    })
+    handle('tunnel:save-png', async (payload) => {
+      const input = (payload ?? {}) as { dataUrl?: unknown; name?: unknown }
+      const dataUrl = typeof input.dataUrl === 'string' ? input.dataUrl : ''
+      const name = typeof input.name === 'string' ? input.name : 'tunnel-vela.png'
+      const base64 = dataUrl.split(',')[1]
+      if (!base64) return null
+      const result = await dialog.showSaveDialog({
+        defaultPath: join(app.getPath('pictures'), name),
+        filters: [{ name: 'Image PNG', extensions: ['png'] }]
+      })
+      if (result.canceled || !result.filePath) return null
+      await writeFile(result.filePath, Buffer.from(base64, 'base64'))
+      return result.filePath
+    })
+    handle('tunnel:export-pdf', async (payload) => {
+      const input = (payload ?? {}) as { html?: unknown; name?: unknown }
+      const html = typeof input.html === 'string' ? input.html : ''
+      const name = typeof input.name === 'string' ? input.name : 'tunnel-vela.pdf'
+      if (!html) return false
+      const printer = new BrowserWindow({
+        show: false,
+        webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
+      })
+      try {
+        await printer.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+        const pdf = await printer.webContents.printToPDF({ printBackground: true })
+        const result = await dialog.showSaveDialog({
+          defaultPath: join(app.getPath('documents'), name),
+          filters: [{ name: 'PDF', extensions: ['pdf'] }]
+        })
+        if (result.canceled || !result.filePath) return false
+        await writeFile(result.filePath, pdf)
+        return true
+      } catch {
+        return false
+      } finally {
+        if (!printer.isDestroyed()) printer.destroy()
+      }
+    })
+
+    handle('notes:capture-selection', async () => {
+      const state = this.store.get()
+      const tabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
+      const tab = state.tabs.find((item) => item.id === tabId)
+      if (!tab || isHomeUrl(tab.url)) return null
+      const text = await this.tabs.selectionText(tabId)
+      if (!text) return null
+      const host = (() => {
+        try {
+          return new URL(tab.url).hostname.replace(/^www\./, '')
+        } catch {
+          return tab.url
+        }
+      })()
+      const date = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(
+        new Date()
+      )
+      const quote = text
+        .split(/\n+/)
+        .map((line) => `> ${line.trim()}`)
+        .join('\n')
+      return this.saveNote({
+        title: `Extrait — ${host}`.slice(0, 160),
+        body: `${quote}\n\nSource : [${tab.title || host}](${tab.url}) — ${date}\n`,
+        spaceId: tab.spaceId,
+        url: tab.url
+      })
+    })
+    handle('bookmark:detect', () => detectBookmarks())
+    handle('bookmark:add-many', (payload) => {
+      const entries = Array.isArray(payload) ? payload : []
+      const clean = entries
+        .filter(
+          (entry): entry is { url: string; title?: unknown; favicon?: unknown } =>
+            Boolean(entry && typeof (entry as { url?: unknown }).url === 'string')
+        )
+        .slice(0, 500)
+        .map((entry) => ({
+          url: String(entry.url),
+          title: typeof entry.title === 'string' ? entry.title : '',
+          favicon: typeof entry.favicon === 'string' ? entry.favicon : undefined
+        }))
+      const added = this.store.addBookmarks(clean)
+      if (added > 0) this.broadcast()
+      return added
+    })
+    handle('tab:print', (payload) => this.tabs.print(asId(payload)))
 
     handle('downloads:list', () => this.downloads.slice(0, 30))
     handle('downloads:preview', async (payload) => {

@@ -7,7 +7,16 @@ export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
 
 export type Theme = 'light' | 'dark' | 'system'
-export type SearchEngineId = 'duckduckgo' | 'brave' | 'startpage' | 'searxng'
+export type SearchEngineId =
+  | 'duckduckgo'
+  | 'brave'
+  | 'startpage'
+  | 'google'
+  | 'bing'
+  | 'ecosia'
+  | 'qwant'
+  | 'searxng'
+export type AccentId = 'violet' | 'clay' | 'sage' | 'ocean'
 export type AgentMode = 'demo' | 'api'
 export type ProviderId =
   | 'openai'
@@ -58,6 +67,8 @@ export interface HistoryEntry {
   title: string
   visitedAt: number
   spaceId: string
+  /** Favicon déjà chargé par la page, quand il est connu. */
+  favicon?: string
 }
 
 export interface Note {
@@ -98,10 +109,30 @@ export interface AgentSettings {
 export interface Settings {
   theme: Theme
   searchEngine: SearchEngineId
+  /** Instance SearXNG choisie (vide → searx.be). */
+  searxInstance: string
+  /** Couleur d'accent de l'interface (indépendante de celle des espaces). */
+  accent: AccentId
   blockTrackers: boolean
   sidebarCollapsed: boolean
   onboarded: boolean
   agent: AgentSettings
+}
+
+export interface Bookmark {
+  id: string
+  url: string
+  title: string
+  createdAt: number
+  favicon?: string
+}
+
+/** Favoris trouvés dans un navigateur installé, prêts à être importés. */
+export interface BookmarkImportSource {
+  id: string
+  label: string
+  count: number
+  urls: { title: string; url: string }[]
 }
 
 export interface ClosedTab {
@@ -179,8 +210,12 @@ export interface PersistedState {
   settings: Settings
   history: HistoryEntry[]
   closed: ClosedTab[]
+  bookmarks: Bookmark[]
+  /** Sites où le bloqueur est désactivé volontairement. */
+  privacyExemptions: string[]
   tasks: Task[]
   works: WorkItem[]
+  tunnelMaps: import('./tunnel').TunnelMap[]
 }
 
 export interface TabView extends TabState {
@@ -192,6 +227,10 @@ export interface TabView extends TabState {
   /** La page a été envoyée au fournisseur de modèle lors de la dernière exécution. */
   agentSent: boolean
   error: string | null
+  /** Vue détruite pour libérer la mémoire ; la page se recharge à l’activation. */
+  asleep: boolean
+  /** Hôtes effectivement bloqués sur cette page (les plus fréquents d’abord). */
+  blockedHosts: { host: string; count: number }[]
 }
 
 export interface BriefItem {
@@ -222,6 +261,11 @@ export interface AppView {
   splitRatio: number
   settings: Settings
   history: HistoryEntry[]
+  bookmarks: Bookmark[]
+  privacyExemptions: string[]
+  /** Mémoire rendue par les onglets mis en veille depuis le lancement (Mo). */
+  memoryFreed: number
+  tunnelMaps: import('./tunnel').TunnelMapSummary[]
   notes: NoteMeta[]
   tasks: Task[]
   works: WorkSummary[]
@@ -287,15 +331,34 @@ export type ShortcutAction =
   | 'reload'
   | 'back'
   | 'forward'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'zoom-reset'
   | 'find'
   | 'find-next'
   | 'find-prev'
+  | 'bookmark'
+  | 'bookmarks'
+  | 'history'
+  | 'print'
+  | 'home'
   | 'tab-select'
   | 'escape'
 
 export interface ShortcutEvent {
   action: ShortcutAction
   digit?: number
+}
+
+export type SelectionAction = 'summarize' | 'explain' | 'translate' | 'simplify' | 'note'
+
+/** Sélection de texte envoyée par le menu contextuel d’une page. */
+export interface SelectionPayload {
+  action: SelectionAction
+  text: string
+  url: string
+  title: string
+  tabId: string
 }
 
 export interface LayoutRequest {

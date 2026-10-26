@@ -4,17 +4,20 @@ import { safeStorage } from 'electron'
 import { createDefaultState, createTab, defaultProviders, SPACE_COLORS } from '@shared/defaults'
 import { isProviderId, PROVIDERS, providerDefaults } from '@shared/providers'
 import type {
+  Bookmark,
   HistoryEntry,
   PersistedState,
   ProviderId,
   ProviderSettings,
   ProviderStatus,
+  SearchEngineId,
   Settings,
   Space,
   TabGroup,
   TabState
 } from '@shared/types'
 import { HOME_URL } from '@shared/types'
+import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
@@ -42,6 +45,21 @@ function isGroup(value: unknown): value is TabGroup {
 function isHistory(value: unknown): value is HistoryEntry {
   const entry = value as HistoryEntry
   return Boolean(entry && typeof entry.url === 'string' && typeof entry.visitedAt === 'number')
+}
+
+const SEARCH_ENGINES: SearchEngineId[] = [
+  'duckduckgo',
+  'brave',
+  'startpage',
+  'google',
+  'bing',
+  'ecosia',
+  'qwant',
+  'searxng'
+]
+
+function isSearchEngine(value: unknown): value is SearchEngineId {
+  return typeof value === 'string' && SEARCH_ENGINES.includes(value as SearchEngineId)
 }
 
 function mergeProvider(raw: unknown, id: ProviderId): ProviderSettings {
@@ -80,10 +98,10 @@ function mergeSettings(raw: unknown): Settings {
 
   return {
     theme: input.theme === 'light' || input.theme === 'dark' ? input.theme : 'system',
-    searchEngine:
-      input.searchEngine === 'brave' || input.searchEngine === 'startpage' || input.searchEngine === 'searxng'
-        ? input.searchEngine
-        : 'duckduckgo',
+    searchEngine: isSearchEngine(input.searchEngine) ? input.searchEngine : 'duckduckgo',
+    searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
+    accent:
+      input.accent === 'clay' || input.accent === 'sage' || input.accent === 'ocean' ? input.accent : 'violet',
     blockTrackers: input.blockTrackers !== false,
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
@@ -142,6 +160,20 @@ export function normalizeState(raw: unknown): PersistedState {
   const history = (Array.isArray(input.history) ? input.history.filter(isHistory) : [])
     .filter((entry) => entry.url !== HOME_URL)
     .slice(0, 2000)
+
+  const bookmarks = (Array.isArray(input.bookmarks) ? input.bookmarks : [])
+    .filter(
+      (entry): entry is Bookmark =>
+        Boolean(entry && typeof (entry as Bookmark).id === 'string' && typeof (entry as Bookmark).url === 'string')
+    )
+    .map((entry) => ({
+      id: entry.id,
+      url: entry.url.slice(0, 2000),
+      title: typeof entry.title === 'string' ? entry.title.slice(0, 200) : entry.url,
+      createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
+      favicon: typeof entry.favicon === 'string' ? entry.favicon.slice(0, 2000) : undefined
+    }))
+    .slice(0, 500)
 
   const closed = (Array.isArray(input.closed) ? input.closed : [])
     .filter((entry) => entry && typeof entry.url === 'string' && typeof entry.spaceId === 'string')
@@ -208,6 +240,13 @@ export function normalizeState(raw: unknown): PersistedState {
       }))
       .slice(0, 120)
 
+    const tunnelMaps = (Array.isArray((input as { tunnelMaps?: unknown }).tunnelMaps)
+      ? ((input as { tunnelMaps: unknown[] }).tunnelMaps)
+      : [])
+      .map((entry) => sanitizeMap(entry))
+      .filter((entry): entry is TunnelMap => Boolean(entry))
+      .slice(0, 20)
+
     return {
       version: 1,
       spaces,
@@ -224,8 +263,14 @@ export function normalizeState(raw: unknown): PersistedState {
       settings: mergeSettings(input.settings),
       history,
       closed,
+      bookmarks,
+      privacyExemptions: (Array.isArray(input.privacyExemptions) ? input.privacyExemptions : [])
+        .filter((host): host is string => typeof host === 'string' && /^[a-z0-9.-]+$/i.test(host))
+        .map((host) => host.toLowerCase())
+        .slice(0, 200),
       tasks,
-      works
+      works,
+      tunnelMaps
     }
 }
 
@@ -302,6 +347,164 @@ export class Store {
   clearHistory(): void {
     this.update((state) => {
       state.history = []
+    })
+  }
+
+  removeHistory(url: string): void {
+    this.update((state) => {
+      state.history = state.history.filter((entry) => entry.url !== url)
+    })
+  }
+
+  /** Ajoute ou retire un favori ; renvoie l'état final (true = enregistré). */
+  toggleBookmark(url: string, title: string, favicon?: string): boolean {
+    let added = false
+    this.update((state) => {
+      const existing = state.bookmarks.find((entry) => entry.url === url)
+      if (existing) {
+        state.bookmarks = state.bookmarks.filter((entry) => entry.url !== url)
+        return
+      }
+      added = true
+      state.bookmarks = [
+        {
+          id: crypto.randomUUID(),
+          url,
+          title: (title || url).trim().slice(0, 200),
+          createdAt: Date.now(),
+          favicon: favicon?.slice(0, 2000)
+        },
+        ...state.bookmarks
+      ].slice(0, 500)
+    })
+    return added
+  }
+
+  /** Import en masse : fusionne par URL, garde l'ordre reçu. */
+  addBookmarks(entries: { url: string; title?: string; favicon?: string }[]): number {
+    let added = 0
+    this.update((state) => {
+      const seen = new Set(state.bookmarks.map((entry) => entry.url))
+      const fresh: Bookmark[] = []
+      for (const entry of entries) {
+        if (!/^https?:/i.test(entry.url) || seen.has(entry.url)) continue
+        seen.add(entry.url)
+        fresh.push({
+          id: crypto.randomUUID(),
+          url: entry.url.slice(0, 2000),
+          title: (entry.title || entry.url).trim().slice(0, 200),
+          createdAt: Date.now(),
+          favicon: entry.favicon?.slice(0, 2000)
+        })
+        if (state.bookmarks.length + fresh.length >= 500) break
+      }
+      added = fresh.length
+      if (fresh.length > 0) state.bookmarks = [...state.bookmarks, ...fresh]
+    })
+    return added
+  }
+
+  /** Cartes du tunnel : enregistrées localement, les plus récentes d'abord. */
+  listTunnelMaps(): TunnelMapSummary[] {
+    return [...this.state.tunnelMaps]
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .map((map) => summarizeMap(map))
+  }
+
+  getTunnelMap(id: string): TunnelMap | null {
+    return this.state.tunnelMaps.find((map) => map.id === id) ?? null
+  }
+
+  saveTunnelMap(map: TunnelMap): void {
+    const clean = sanitizeMap(map)
+    if (!clean) return
+    this.update((state) => {
+      const existing = state.tunnelMaps.findIndex((entry) => entry.id === clean.id)
+      if (existing >= 0) state.tunnelMaps[existing] = clean
+      else state.tunnelMaps = [clean, ...state.tunnelMaps].slice(0, 20)
+      state.tunnelMaps.sort((a, b) => b.updatedAt - a.updatedAt)
+    })
+  }
+
+  removeTunnelMap(id: string): void {
+    this.update((state) => {
+      state.tunnelMaps = state.tunnelMaps.filter((map) => map.id !== id)
+    })
+  }
+
+  renameTunnelMap(id: string, title: string): void {
+    const clean = title.trim().slice(0, 160)
+    if (!clean) return
+    this.update((state) => {
+      const map = state.tunnelMaps.find((entry) => entry.id === id)
+      if (!map) return
+      map.title = clean
+      map.updatedAt = Date.now()
+    })
+  }
+
+  duplicateTunnelMap(id: string): TunnelMap | null {
+    const source = this.getTunnelMap(id)
+    if (!source) return null
+    const mapId = crypto.randomUUID()
+    const ids = new Map<string, string>(source.nodes.map((node) => [node.id, crypto.randomUUID()]))
+    const copy: TunnelMap = {
+      ...source,
+      id: mapId,
+      title: `${source.title ?? source.query} (copie)`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      nodes: source.nodes.map((node) => ({
+        ...node,
+        id: ids.get(node.id) as string,
+        parentId: node.parentId ? (ids.get(node.parentId) ?? null) : null,
+        relatedIds: node.relatedIds
+          ? node.relatedIds
+              .map((related) => ids.get(related))
+              .filter((value): value is string => typeof value === 'string')
+          : undefined
+      }))
+    }
+    this.saveTunnelMap(copy)
+    return copy
+  }
+
+  /** Bascule le bloqueur pour un site ; renvoie true si le site est exempté. */
+  togglePrivacyExemption(host: string): boolean {
+    const clean = host.trim().toLowerCase().slice(0, 200)
+    if (!clean) return false
+    let exempted = false
+    this.update((state) => {
+      const known = state.privacyExemptions.includes(clean)
+      exempted = !known
+      state.privacyExemptions = known
+        ? state.privacyExemptions.filter((item) => item !== clean)
+        : [...state.privacyExemptions, clean].slice(0, 200)
+    })
+    return exempted
+  }
+
+  isExempted(host: string): boolean {
+    if (!host) return false
+    let candidate = host.toLowerCase()
+    for (;;) {
+      if (this.state.privacyExemptions.includes(candidate)) return true
+      const dot = candidate.indexOf('.')
+      if (dot < 0) return false
+      candidate = candidate.slice(dot + 1)
+    }
+  }
+
+  removeBookmark(id: string): void {
+    this.update((state) => {
+      state.bookmarks = state.bookmarks.filter((entry) => entry.id !== id)
+    })
+  }
+
+  renameBookmark(id: string, title: string): void {
+    this.update((state) => {
+      const entry = state.bookmarks.find((bookmark) => bookmark.id === id)
+      if (entry) entry.title = title.trim().slice(0, 200) || entry.title
     })
   }
 

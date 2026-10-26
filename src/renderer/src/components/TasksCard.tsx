@@ -22,7 +22,7 @@ export default function TasksCard() {
     <section className="start-section tasks-card">
       <div className="section-head">
         <h2>Tâches du jour</h2>
-        <span className="section-count">{String(open.length).padStart(2, '0')}</span>
+        <span className="section-count">{open.length}</span>
       </div>
       <div className="tasks-add">
         <input

@@ -18,9 +18,41 @@ export const SEARCH_ENGINES: Record<SearchEngineId, Engine> = {
     label: 'Startpage',
     build: (q) => `https://www.startpage.com/sp/search?query=${encodeURIComponent(q)}`
   },
+  google: {
+    label: 'Google',
+    build: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`
+  },
+  bing: {
+    label: 'Bing',
+    build: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
+  },
+  ecosia: {
+    label: 'Ecosia',
+    build: (q) => `https://www.ecosia.org/search?q=${encodeURIComponent(q)}`
+  },
+  qwant: {
+    label: 'Qwant',
+    build: (q) => `https://www.qwant.com/?q=${encodeURIComponent(q)}`
+  },
   searxng: {
-    label: 'SearXNG · searx.be',
+    label: 'SearXNG',
     build: (q) => `https://searx.be/search?q=${encodeURIComponent(q)}`
+  }
+}
+
+/**
+ * Instance SearXNG saisie par l'utilisateur : garde l'hôte, ignore le chemin.
+ * Une valeur vide ou invalide retombe sur searx.be.
+ */
+export function searxBase(instance?: string | null): string {
+  const raw = (instance ?? '').trim()
+  if (!raw) return 'https://searx.be'
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`)
+    if (!/^https?:$/.test(parsed.protocol) || !parsed.hostname) return 'https://searx.be'
+    return `${parsed.protocol}//${parsed.host}`
+  } catch {
+    return 'https://searx.be'
   }
 }
 
@@ -52,14 +84,15 @@ export function prettyUrl(url: string): string {
   }
 }
 
-export function searchUrl(query: string, engine: SearchEngineId): string {
+export function searchUrl(query: string, engine: SearchEngineId, searxInstance?: string | null): string {
+  if (engine === 'searxng') return `${searxBase(searxInstance)}/search?q=${encodeURIComponent(query)}`
   return (SEARCH_ENGINES[engine] ?? SEARCH_ENGINES.duckduckgo).build(query)
 }
 
 /** Hôte du moteur, pour pré-connecter (DNS + TLS) avant la première recherche. */
-export function engineHost(engine: SearchEngineId): string {
+export function engineHost(engine: SearchEngineId, searxInstance?: string | null): string {
   try {
-    return new URL(searchUrl('test', engine)).hostname || 'duckduckgo.com'
+    return new URL(searchUrl('test', engine, searxInstance)).hostname || 'duckduckgo.com'
   } catch {
     return 'duckduckgo.com'
   }
@@ -74,7 +107,11 @@ export interface Target {
  * Transforme ce que l'utilisateur tape en adresse ou en recherche.
  * Tout schéma exotique (javascript:, data:, file:) part en recherche : jamais exécuté.
  */
-export function normalizeInput(raw: string, engine: SearchEngineId = 'duckduckgo'): Target {
+export function normalizeInput(
+  raw: string,
+  engine: SearchEngineId = 'duckduckgo',
+  searxInstance?: string | null
+): Target {
   const input = raw.replace(/\s+/g, ' ').trim()
   if (!input) return { url: HOME_URL, kind: 'url' }
   if (input === HOME_URL) return { url: HOME_URL, kind: 'url' }
@@ -91,7 +128,7 @@ export function normalizeInput(raw: string, engine: SearchEngineId = 'duckduckgo
     return { url: `https://${input}`, kind: 'url' }
   }
 
-  return { url: searchUrl(input, engine), kind: 'search' }
+  return { url: searchUrl(input, engine, searxInstance), kind: 'search' }
 }
 
 /** Titre court et propre quand la page n'en fournit pas encore. */

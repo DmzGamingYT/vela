@@ -18,10 +18,11 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const reload = useBrowser((state) => state.reload)
   const stop = useBrowser((state) => state.stop)
   const splitToggle = useBrowser((state) => state.splitToggle)
+  const toggleBookmark = useBrowser((state) => state.toggleBookmark)
   const setOverlay = useBrowser((state) => state.setOverlay)
-  const toggleNotes = useBrowser((state) => state.toggleNotes)
-  const notesOpen = useBrowser((state) => state.notesOpen)
-  const agentRunning = useBrowser((state) => state.agent.status === 'running')
+  const bookmarked = useBrowser((state) =>
+    Boolean(state.view?.bookmarks.some((bookmark) => bookmark.url === tab.url))
+  )
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
@@ -40,7 +41,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const display = focused ? draft : home ? '' : resting
 
   return (
-    <div className="pane-head">
+    <div className="pane-head" data-primary={primary}>
       <div className="nav-group">
         <button type="button" className="icon-btn" disabled={!tab.canGoBack} onClick={() => back(tab.id)} title="Précédent">
           <Icon name="back" size={16} />
@@ -112,11 +113,21 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             {hostOf(tab.url)}
           </span>
         )}
-        {tab.blocked > 0 && (
-          <span className="address-shield" title={`${tab.blocked} requêtes bloquées sur cette page`}>
+        {!home && (
+          <button
+            type="button"
+            className="address-shield"
+            data-empty={tab.blocked === 0}
+            onClick={() => setOverlay('protection')}
+            title={
+              tab.blocked > 0
+                ? `${tab.blocked} requête${tab.blocked > 1 ? 's' : ''} bloquée${tab.blocked > 1 ? 's' : ''} — voir la protection de ce site`
+                : 'Protection de ce site'
+            }
+          >
             <Icon name="shield" size={12} />
-            {tab.blocked}
-          </span>
+            {tab.blocked > 0 ? tab.blocked : null}
+          </button>
         )}
         {tab.agentSent && (
           <span className="address-agent-sent" title="Cette page a été envoyée au fournisseur de modèle pour l’agent">
@@ -127,27 +138,17 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       </form>
 
       <div className="pane-actions">
-        {primary && (
-          <>
-            <button
-              type="button"
-              className="icon-btn"
-              data-active={notesOpen}
-              onClick={() => toggleNotes()}
-              title={`Notes (${shortcut('E')})`}
-            >
-              <Icon name="notes" size={16} />
-            </button>
-            <button
-              type="button"
-              className="icon-btn"
-              data-active={agentRunning}
-              onClick={() => setOverlay('agent')}
-              title={`Agent (${shortcut('J')})`}
-            >
-              <Icon name="sparkles" size={16} />
-            </button>
-          </>
+        {!home && (
+          <button
+            type="button"
+            className="icon-btn"
+            data-active={bookmarked}
+            onClick={() => void toggleBookmark(tab.id)}
+            aria-pressed={bookmarked}
+            title={bookmarked ? 'Retirer des marque-pages (⌘D)' : 'Garder cette page (⌘D)'}
+          >
+            <Icon name="star" size={16} filled={bookmarked} />
+          </button>
         )}
         {secondary ? (
           <button type="button" className="icon-btn" onClick={() => splitToggle()} title="Fermer la vue scindée">

@@ -11,7 +11,8 @@ const attached = new WeakSet<Session>()
 export function attachPrivacy(
   ses: Session,
   isEnabled: () => boolean,
-  onBlocked: (webContentsId: number) => void
+  onBlocked: (webContentsId: number, host: string) => void,
+  isExempt: (pageUrl: string) => boolean = () => false
 ): void {
   if (attached.has(ses)) return
   attached.add(ses)
@@ -23,15 +24,17 @@ export function attachPrivacy(
     // n'est pas un traqueur et repart sans toucher à webContents.
     if (!isTracker(details.url)) return callback({})
     const owner = details.webContentsId && details.webContentsId > 0 ? details.webContentsId : 0
-    // Pages d'auth : aucune interférence, même sur les requêtes tierces.
     if (owner) {
       try {
         const pageUrl = webContents.fromId(owner)?.getURL() ?? ''
+        // Pages d'auth : aucune interférence, même sur les requêtes tierces.
         if (pageUrl && isAuthPage(pageUrl)) return callback({})
+        // Site exempté par l'utilisateur depuis le bouclier.
+        if (pageUrl && isExempt(pageUrl)) return callback({})
       } catch {
         /* doute sur la page : on applique le filtrage normal */
       }
-      onBlocked(owner)
+      onBlocked(owner, blockedHost(details.url))
     }
     callback({ cancel: true })
   })
@@ -45,6 +48,14 @@ export function attachPrivacy(
   ses.setPermissionCheckHandler((_contents, permission) => {
     return permission === 'fullscreen' || permission === 'clipboard-sanitized-write'
   })
+}
+
+function blockedHost(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase()
+  } catch {
+    return ''
+  }
 }
 
 export function prepareSession(partition: string): Session {

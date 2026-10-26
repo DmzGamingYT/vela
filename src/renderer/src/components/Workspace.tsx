@@ -4,11 +4,11 @@ import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { clamp } from '../lib/format'
 import { useBrowser } from '../store/browser'
-import AgentCanvas from './AgentCanvas'
 import { Icon } from './Icon'
 import StatusBar from './StatusBar'
 import PaneHeader from './PaneHeader'
 import StartPage from './StartPage'
+import TunnelView from './TunnelView'
 
 function ErrorPane({ tab }: { tab: TabView }) {
   const reload = useBrowser((state) => state.reload)
@@ -74,6 +74,7 @@ export default function Workspace() {
   const overlay = useBrowser((state) => state.overlay)
   const workMode = useBrowser((state) => state.workMode)
   const notesOpen = useBrowser((state) => state.notesOpen)
+  const agentOpen = useBrowser((state) => state.agentOpen)
   const liveRatio = useBrowser((state) => state.splitRatioLive)
   const setSplitRatio = useBrowser((state) => state.setSplitRatio)
   const commitSplitRatio = useBrowser((state) => state.commitSplitRatio)
@@ -158,6 +159,7 @@ export default function Workspace() {
     ratio,
     errorKey,
     notesOpen,
+    agentOpen,
     overlay,
     workMode,
     resizing,
@@ -174,9 +176,11 @@ export default function Workspace() {
   if (!active) return <main className="workspace" />
 
   if (workMode === 'work') {
+    // Mode Travail : le tunnel de recherche occupe la scène ; l’agent reste
+    // accessible en panneau (⌘J) sans masquer la carte.
     return (
       <main className="workspace work" data-collapsed={view.settings.sidebarCollapsed}>
-        <AgentCanvas embedded />
+        <TunnelView />
         <StatusBar />
       </main>
     )

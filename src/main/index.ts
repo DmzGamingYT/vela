@@ -1,11 +1,18 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, globalShortcut, nativeTheme, session, shell } from 'electron'
+import { existsSync } from 'node:fs'
 import { Browser } from './browser'
 import { installMenu } from './menu'
 import { initUpdater } from './updater'
 import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
 
 app.setName('Vela')
+// En développement, le Dock et le menu prennent l'icône et le nom d'Electron :
+// on remet l'identité Vela (le paquet signé utilise déjà build/icon.icns).
+if (!app.isPackaged && process.platform === 'darwin') {
+  const icon = join(__dirname, '../../build/icon-1024.png')
+  if (existsSync(icon)) app.dock?.setIcon(icon)
+}
 // Identité par défaut de tout le processus : favicons, préconnexions et
 // service workers n'ont pas de page à qui emprunter un User-Agent propre.
 app.userAgentFallback = CHROME_UA
@@ -99,7 +106,7 @@ function main(): void {
         applyBrowserIdentity(contents)
       }
     })
-    const accelerator = process.platform === 'darwin' ? 'Alt+Command+Space' : 'Ctrl+Alt+Space'
+    const accelerator = process.platform === 'darwin' ? 'Command+Shift+Space' : 'Ctrl+Shift+Space'
     try {
       globalShortcut.register(accelerator, () => {
         if (!win || win.isDestroyed()) return

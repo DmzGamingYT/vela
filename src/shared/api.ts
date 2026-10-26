@@ -1,11 +1,15 @@
+import type { MapNode, TunnelMap, TunnelMapSummary } from './tunnel'
 import type {
   AgentEvent,
   AgentMode,
   AgentRunRequest,
   AppView,
+  BookmarkImportSource,
+  HistoryEntry,
   LayoutRequest,
   Note,
   ProviderId,
+  SelectionPayload,
   Settings,
   ShortcutEvent,
   TabGroup,
@@ -61,6 +65,8 @@ export interface ProviderPatch {
 export interface SettingsPatch {
   theme?: Settings['theme']
   searchEngine?: Settings['searchEngine']
+  searxInstance?: string
+  accent?: Settings['accent']
   blockTrackers?: boolean
   sidebarCollapsed?: boolean
   onboarded?: boolean
@@ -77,6 +83,28 @@ export interface KeyTestResult {
   ok: boolean
   message: string
 }
+
+export interface TunnelRunInput {
+  query: string
+  spaceId?: string
+  /** Relance ciblée depuis un nœud existant. */
+  parentId?: string
+  mapId?: string
+}
+
+export type TunnelEvent =
+  | {
+      runId: string
+      type: 'start'
+      mapId: string
+      query: string
+      suggestedQuery: string | null
+      privacy: 'local-analysis'
+    }
+  | { runId: string; type: 'node'; node: MapNode }
+  | { runId: string; type: 'phase'; message: string }
+  | { runId: string; type: 'done'; mapId: string; summary: TunnelMapSummary; sources: number; nodes: number }
+  | { runId: string; type: 'error'; message: string }
 
 export type UpdateState =
   | 'idle'
@@ -117,6 +145,7 @@ export interface VelaApi {
     back(id: string): Promise<void>
     forward(id: string): Promise<void>
     reload(id: string): Promise<void>
+    zoom(id: string, direction: 'in' | 'out' | 'reset'): Promise<void>
     stop(id: string): Promise<void>
     pin(id: string, pinned: boolean): Promise<void>
     reopen(): Promise<void>
@@ -126,6 +155,7 @@ export interface VelaApi {
     focus(id: string): Promise<void>
     discard(id: string): Promise<void>
     reorder(input: ReorderTabsInput): Promise<void>
+    print(id: string): Promise<boolean>
   }
   groups: {
     create(input?: CreateGroupInput): Promise<TabGroup>
@@ -136,7 +166,18 @@ export interface VelaApi {
     layout(request: LayoutRequest): void
   }
   history: {
+    list(): Promise<HistoryEntry[]>
+    remove(url: string): Promise<void>
     clear(): Promise<void>
+  }
+  bookmarks: {
+    /** Ajoute la page aux favoris, ou l'en retire : renvoie l'état final. */
+    toggle(input: { url: string; title?: string; favicon?: string }): Promise<boolean>
+    remove(id: string): Promise<void>
+    /** Favoris des navigateurs installés (lecture locale, rien n'est modifié). */
+    detect(): Promise<BookmarkImportSource[]>
+    /** Import en masse ; renvoie le nombre réellement ajouté. */
+    addMany(entries: { url: string; title?: string }[]): Promise<number>
   }
   tasks: {
     create(input: { title: string; dueAt?: number | null }): Promise<import('./types').Task>
@@ -154,6 +195,28 @@ export interface VelaApi {
     save(input: SaveNoteInput): Promise<Note>
     remove(id: string): Promise<void>
     openFolder(): Promise<void>
+    /** Capture la sélection de la page active avec sa source et la date. */
+    captureSelection(): Promise<Note | null>
+  }
+  privacy: {
+    /** Désactive ou réactive le bloqueur pour un site ; true = exempté. */
+    toggleSite(host: string): Promise<boolean>
+  }
+  tunnel: {
+    run(input: TunnelRunInput): Promise<{ runId: string }>
+    cancel(runId: string): void
+    onEvent(callback: (event: TunnelEvent) => void): () => void
+    maps(): Promise<TunnelMapSummary[]>
+    load(id: string): Promise<TunnelMap | null>
+    save(map: TunnelMap): Promise<void>
+    rename(input: { id: string; title: string }): Promise<void>
+    remove(id: string): Promise<void>
+    duplicate(id: string): Promise<TunnelMap | null>
+    savePng(input: { dataUrl: string; name: string }): Promise<string | null>
+    exportPdf(input: { html: string; name: string }): Promise<boolean>
+  }
+  selection: {
+    onSelect(callback: (payload: SelectionPayload) => void): () => void
   }
   agent: {
     run(input: AgentRunRequest): Promise<{ runId: string }>

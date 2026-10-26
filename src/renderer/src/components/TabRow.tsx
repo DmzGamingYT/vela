@@ -78,6 +78,11 @@ export default function TabRow({
       </span>
 
       {tab.loading && <span className="tab-loading" aria-label="Chargement" />}
+      {tab.asleep && !home && (
+        <span className="tab-asleep" title="En veille : la page se recharge à l’ouverture">
+          <Icon name="moon" size={11} />
+        </span>
+      )}
       {secondary && (
         <span className="tab-split" title="Ouvert en vue scindée">
           <Icon name="split" size={12} />

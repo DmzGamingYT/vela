@@ -18,6 +18,7 @@ export default function NotesDrawer() {
   const toggleNotes = useBrowser((state) => state.toggleNotes)
   const saveNote = useBrowser((state) => state.saveNote)
   const deleteNote = useBrowser((state) => state.deleteNote)
+  const captureSelection = useBrowser((state) => state.captureSelection)
   const toast = useBrowser((state) => state.toast)
 
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -27,6 +28,10 @@ export default function NotesDrawer() {
   const [filter, setFilter] = useState('')
   const [preview, setPreview] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [width, setWidth] = useState(() => {
+    const stored = Number(window.localStorage.getItem('vela-notes-width'))
+    return Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 384
+  })
   const latest = useRef<{ draft: Draft | null; dirty: boolean }>({ draft: null, dirty: false })
 
   latest.current = { draft, dirty }
@@ -152,7 +157,34 @@ export default function NotesDrawer() {
   }
 
   return (
-    <aside className="notes-drawer">
+    <aside className="notes-drawer" style={{ width, flexBasis: width }}>
+      <div
+        className="notes-resize"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionner les notes"
+        onPointerDown={(event) => {
+          event.preventDefault()
+          const startX = event.clientX
+          const startWidth = width
+          const move = (moveEvent: PointerEvent): void => {
+            const next = Math.min(760, Math.max(300, startWidth + (startX - moveEvent.clientX)))
+            setWidth(next)
+          }
+          const up = (): void => {
+            window.removeEventListener('pointermove', move)
+            window.removeEventListener('pointerup', up)
+            document.body.style.cursor = ''
+            setWidth((current) => {
+              window.localStorage.setItem('vela-notes-width', String(current))
+              return current
+            })
+          }
+          document.body.style.cursor = 'col-resize'
+          window.addEventListener('pointermove', move)
+          window.addEventListener('pointerup', up)
+        }}
+      />
       <header className="notes-head">
         <div className="notes-title">
           <span className="notes-mark">
@@ -261,9 +293,29 @@ export default function NotesDrawer() {
               <Icon name="plus" size={14} />
               Nouvelle note
             </button>
-            <button type="button" className="action wide" onClick={capturePage} disabled={!activeUrl}>
+            <button
+              type="button"
+              className="action wide"
+              onClick={capturePage}
+              disabled={!activeUrl}
+              title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
+            >
               <Icon name="globe" size={14} />
               Capturer la page
+            </button>
+            <button
+              type="button"
+              className="action wide"
+              onClick={() => void captureSelection()}
+              disabled={!activeUrl}
+              title={
+                activeUrl
+                  ? 'Garder le passage sélectionné, avec sa source et sa date'
+                  : 'Ouvrez une page, sélectionnez un passage'
+              }
+            >
+              <Icon name="copy" size={14} />
+              Capturer la sélection
             </button>
           </div>
 

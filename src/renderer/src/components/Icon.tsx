@@ -40,6 +40,9 @@ export type IconName =
   | 'star'
   | 'inbox'
   | 'send'
+  | 'filter'
+  | 'map'
+  | 'list'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -194,6 +197,21 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M21 3 10.5 13.5" />
       <path d="M21 3 14 21l-3.5-7.5L3 10Z" />
+    </>
+  ),
+  filter: <path d="M3 5h18l-7 8v6l-4 2v-8Z" />,
+  map: (
+    <>
+      <circle cx="6" cy="12" r="2.4" />
+      <circle cx="18" cy="7" r="2.4" />
+      <circle cx="18" cy="17" r="2.4" />
+      <path d="M8.2 11.2 15.8 7.8M8.2 12.8l7.6 3.4" />
+    </>
+  ),
+  list: (
+    <>
+      <path d="M8 6h13M8 12h13M8 18h13" />
+      <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { app, Menu, type MenuItemConstructorOptions } from 'electron'
+import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import type { ShortcutAction } from '@shared/types'
 
 const isMac = process.platform === 'darwin'
@@ -49,6 +49,7 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
         item('Rouvrir l’onglet fermé', 'reopen-tab', send, 'Cmd+Shift+T'),
         { type: 'separator' },
         item('Fermer l’onglet', 'close-tab', send, 'Cmd+W'),
+        item('Imprimer…', 'print', send, 'Cmd+P'),
         ...(isMac ? [] : [{ type: 'separator' as const }, { role: 'quit' as const, label: 'Quitter' }])
       ]
     },
@@ -65,18 +66,23 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
       ]
     },
     {
-      label: 'Présentation',
+      label: 'Affichage',
       submenu: [
         item('Barre de commande', 'command', send, 'Cmd+K'),
         item('Barre d’adresse', 'address', send, 'Cmd+L'),
+        item('Rechercher dans la page', 'find', send, 'Cmd+F'),
         { type: 'separator' },
         item('Vue scindée', 'split', send, 'Cmd+Shift+D'),
         item('Notes', 'notes', send, 'Cmd+E'),
         item('Agent', 'agent', send, 'Cmd+J'),
-        item('Atelier (Work)', 'work', send, 'Cmd+Shift+A'),
+        item('Atelier (Travail)', 'work', send, 'Cmd+Shift+A'),
         item('Brief du jour', 'brief', send, 'Cmd+Shift+B'),
         { type: 'separator' },
         item('Masquer la barre latérale', 'sidebar', send, 'Cmd+S'),
+        { type: 'separator' },
+        item('Agrandir le texte', 'zoom-in', send, 'Cmd+Plus'),
+        item('Réduire le texte', 'zoom-out', send, 'Cmd+-'),
+        item('Taille réelle du texte', 'zoom-reset', send, 'Cmd+0'),
         { type: 'separator' },
         item('Recharger', 'reload', send, 'Cmd+R'),
         { role: 'toggleDevTools', label: 'Outils de développement' },
@@ -84,11 +90,44 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
       ]
     },
     {
+      label: 'Historique',
+      submenu: [
+        item('Afficher l’historique', 'history', send, 'Cmd+Y'),
+        { type: 'separator' },
+        item('Page d’accueil', 'home', send, 'Cmd+Shift+H')
+      ]
+    },
+    {
+      label: 'Marque-pages',
+      submenu: [
+        item('Ajouter cette page', 'bookmark', send, 'Cmd+D'),
+        item('Afficher les marque-pages', 'bookmarks', send, 'Cmd+Shift+O')
+      ]
+    },
+    {
       label: 'Fenêtre',
       submenu: [
         { role: 'minimize', label: 'Réduire' },
-        { role: 'zoom', label: 'Agrandir' },
+        { role: 'zoom', label: 'Agrandir la fenêtre' },
         ...(isMac ? [{ type: 'separator' as const }, { role: 'front' as const, label: 'Tout ramener au premier plan' }] : [])
+      ]
+    },
+    {
+      role: 'help',
+      label: 'Aide',
+      submenu: [
+        {
+          label: 'Site de Vela',
+          click: () => void shell.openExternal('https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/')
+        },
+        {
+          label: 'Versions et notes',
+          click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/releases')
+        },
+        {
+          label: 'Signaler un problème',
+          click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/issues')
+        }
       ]
     }
   ]

@@ -51,6 +51,13 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   about: { title: 'À propos', lede: 'Vela 0.1 — Electron, React et Chromium.' }
 }
 
+const ACCENTS: { id: 'violet' | 'clay' | 'sage' | 'ocean'; label: string; color: string }[] = [
+  { id: 'violet', label: 'Violet', color: '#5b56d6' },
+  { id: 'clay', label: 'Argile', color: '#c8623e' },
+  { id: 'sage', label: 'Sauge', color: '#1f8a6a' },
+  { id: 'ocean', label: 'Océan', color: '#2f6bb5' }
+]
+
 const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] = [
   { value: 'light', label: 'Clair', detail: 'Verre blanc sur ciel clair.', icon: 'sun' },
   { value: 'dark', label: 'Sombre', detail: 'Verre fumé sur nuit profonde.', icon: 'moon' },
@@ -486,6 +493,28 @@ export default function SettingsPanel() {
                 </button>
               ))}
             </div>
+            <div className="setting-head accent-head">
+              <h2>Couleur d’accent</h2>
+              <p>Boutons, étoiles et sélections. Les espaces gardent leur propre couleur.</p>
+            </div>
+            <div className="accent-row" role="radiogroup" aria-label="Couleur d’accent">
+              {ACCENTS.map((accent) => (
+                <button
+                  type="button"
+                  key={accent.id}
+                  role="radio"
+                  aria-checked={settings.accent === accent.id}
+                  aria-label={accent.label}
+                  className="accent-swatch"
+                  data-active={settings.accent === accent.id}
+                  onClick={() => void updateSettings({ accent: accent.id })}
+                >
+                  <span className="accent-dot" style={{ background: accent.color }} />
+                  <span className="accent-label">{accent.label}</span>
+                  {settings.accent === accent.id && <Icon name="check" size={12} />}
+                </button>
+              ))}
+            </div>
           </section>
         )
 
@@ -514,12 +543,57 @@ export default function SettingsPanel() {
                   ))}
                 </select>
               </div>
+              {settings.searchEngine === 'searxng' && (
+                <label className="field">
+                  <span>Instance SearXNG</span>
+                  <input
+                    key={settings.searxInstance}
+                    defaultValue={settings.searxInstance}
+                    placeholder="searx.be"
+                    spellCheck={false}
+                    autoComplete="off"
+                    onBlur={(event) => void updateSettings({ searxInstance: event.target.value.trim() })}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void updateSettings({ searxInstance: event.currentTarget.value.trim() })
+                      }
+                    }}
+                  />
+                  <small className="setting-hint">Votre instance, ou searx.be si le champ reste vide.</small>
+                </label>
+              )}
+            </section>
+
+            <section className="setting-block">
+              <div className="setting-head">
+                <h2>Marque-pages</h2>
+                <p>{plural(view.bookmarks.length, 'page')} gardée{view.bookmarks.length > 1 ? 's' : ''} sur cet appareil.</p>
+              </div>
+              <div className="setting-row">
+                <div>
+                  <label>Vos pages gardées</label>
+                  <p className="setting-hint">⌘D garde la page affichée, ⇧⌘O ouvre la liste.</p>
+                </div>
+                <button type="button" className="action" onClick={() => setOverlay('bookmarks')}>
+                  <Icon name="star" size={14} /> Gérer
+                </button>
+              </div>
             </section>
 
             <section className="setting-block">
               <div className="setting-head">
                 <h2>Historique</h2>
                 <p>{plural(view.history.length, 'entrée')} conservée{view.history.length > 1 ? 's' : ''} sur cet appareil.</p>
+              </div>
+              <div className="setting-row">
+                <div>
+                  <label>Consulter l’historique</label>
+                  <p className="setting-hint">Par jour, avec suppression entrée par entrée.</p>
+                </div>
+                <button type="button" className="action" onClick={() => setOverlay('history')}>
+                  <Icon name="history" size={14} /> Ouvrir
+                </button>
               </div>
               <div className="setting-row">
                 <div>
@@ -749,7 +823,9 @@ export default function SettingsPanel() {
             </div>
             <div className="settings-nav-foot">
               <span className="privacy-dot" />
-              Tout reste local
+              <button type="button" className="settings-nav-foot-link" onClick={() => setPage('privacy')}>
+                Ce qui reste local, ce qui sort
+              </button>
             </div>
           </aside>
 

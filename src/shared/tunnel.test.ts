@@ -1,0 +1,227 @@
+import { describe, expect, it } from 'vitest'
+import {
+  buildTunnelHtml,
+  buildTunnelReport,
+  boxesOverlap,
+  detectTensions,
+  filterMap,
+  layoutMap,
+  scoreRelevance,
+  suggestQueryFix,
+  toJsonExport,
+  DEFAULT_FILTERS,
+  type MapNode,
+  type TunnelMap
+} from './tunnel'
+
+const now = Date.now()
+
+function node(patch: Partial<MapNode> & Pick<MapNode, 'id' | 'kind' | 'title'>): MapNode {
+  const base: MapNode = {
+    id: patch.id,
+    kind: patch.kind,
+    title: patch.title,
+    summary: '',
+    relevance: 80,
+    confidence: 70,
+    reason: '',
+    status: 'neutral',
+    parentId: null,
+    createdAt: now
+  }
+  return { ...base, ...patch }
+}
+
+function site(id: string, patch: Partial<MapNode> = {}): MapNode {
+  return node({
+    id,
+    kind: 'site',
+    title: `Page ${id}`,
+    url: `https://example.org/${id}`,
+    domain: 'example.org',
+    sourceType: 'wiki',
+    relevance: 80,
+    ...patch
+  })
+}
+
+describe('pertinence', () => {
+  it('classe un titre qui reprend la requête au-dessus d’une page hors sujet', () => {
+    const onTopic = scoreRelevance('navigateur minimaliste', {
+      title: 'Les navigateurs minimalistes',
+      excerpt: 'Un navigateur minimaliste réduit l’interface au strict nécessaire.'
+    })
+    const offTopic = scoreRelevance('navigateur minimaliste', {
+      title: 'Recette de pain au levain',
+      excerpt: 'Farine, eau, sel et temps.'
+    })
+    expect(onTopic).toBeGreaterThanOrEqual(60)
+    expect(offTopic).toBeLessThan(40)
+    expect(onTopic).toBeGreaterThan(offTopic)
+  })
+
+  it('ignore les verbes de demande et compare les pluriels', () => {
+    const score = scoreRelevance("utiliser l'IA pour rédiger des textes", {
+      title: 'Meilleure IA pour rédiger des textes',
+      excerpt: 'Palette d’outils pour écrire plus vite.'
+    })
+    expect(score).toBeGreaterThanOrEqual(60)
+  })
+})
+
+describe('filtres du tunnel', () => {
+  const tree = [
+    node({ id: 'subject', kind: 'subject', title: 'Sujet' }),
+    node({ id: 'angle', kind: 'angle', title: 'Angle', parentId: 'subject' }),
+    site('good', { parentId: 'angle', relevance: 82 }),
+    site('weak', { parentId: 'angle', relevance: 45 }),
+    site('old', { parentId: 'angle', relevance: 90, publishedAt: now - 1000 * 60 * 60 * 24 * 900 })
+  ]
+
+  it('masque les sources sous le seuil et les ancêtres sans descendant gardé', () => {
+    const { visible, hiddenSites } = filterMap(tree, { ...DEFAULT_FILTERS, minRelevance: 60 })
+    expect(visible.has('good')).toBe(true)
+    expect(visible.has('weak')).toBe(false)
+    expect(visible.has('old')).toBe(true)
+    expect(visible.has('angle')).toBe(true)
+    expect(hiddenSites).toBe(1)
+  })
+
+  it('filtre par langue quand la page l’indique', () => {
+    const tree = [
+      node({ id: 'subject', kind: 'subject', title: 'Sujet' }),
+      node({ id: 'angle', kind: 'angle', title: 'Angle', parentId: 'subject' }),
+      site('fr', { parentId: 'angle', lang: 'fr' }),
+      site('en', { parentId: 'angle', lang: 'en' })
+    ]
+    const french = filterMap(tree, { ...DEFAULT_FILTERS, lang: 'fr' })
+    expect(french.visible.has('fr')).toBe(true)
+    expect(french.visible.has('en')).toBe(false)
+    expect(french.hiddenSites).toBe(1)
+  })
+
+  it('filtre par date et par type de source', () => {
+    const byDate = filterMap(tree, { ...DEFAULT_FILTERS, from: now - 1000 * 60 * 60 * 24 * 30 })
+    expect(byDate.visible.has('old')).toBe(false)
+    const byType = filterMap(tree, { ...DEFAULT_FILTERS, sourceTypes: ['news'] })
+    expect(byType.visible.has('good')).toBe(false)
+    expect(byType.hiddenSites).toBe(3)
+    expect(byType.visible.has('angle')).toBe(false)
+  })
+})
+
+describe('mise en page', () => {
+  it('ne superpose aucun nœud et aligne les niveaux en colonnes', () => {
+    const tree = [
+      node({ id: 's', kind: 'subject', title: 'Sujet' }),
+      node({ id: 'a1', kind: 'angle', title: 'Angle 1', parentId: 's' }),
+      node({ id: 'a2', kind: 'angle', title: 'Angle 2', parentId: 's' }),
+      site('s1', { parentId: 'a1' }),
+      site('s2', { parentId: 'a1' }),
+      site('s3', { parentId: 'a2' })
+    ]
+    const layout = layoutMap(tree)
+    const boxes = Object.values(layout.boxes)
+    expect(boxes).toHaveLength(6)
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        expect(boxesOverlap(boxes[i], boxes[j])).toBe(false)
+      }
+    }
+    expect(layout.boxes.s.x).toBeLessThan(layout.boxes.a1.x)
+    expect(layout.boxes.a1.x).toBe(layout.boxes.a2.x)
+    expect(layout.boxes.s1.x).toBeGreaterThan(layout.boxes.a1.x)
+  })
+})
+
+describe('tensions', () => {
+  it('détecte deux valeurs divergentes et cite les deux phrases', () => {
+    const sites = [
+      site('a', {
+        domain: 'source-a.fr',
+        excerpt: 'Le prix moyen atteint 120 euros en 2019 selon cette étude.'
+      }),
+      site('b', {
+        domain: 'source-b.fr',
+        excerpt: 'Le prix moyen atteint 180 euros en 2021 selon ce rapport.'
+      })
+    ]
+    const tensions = detectTensions(sites)
+    expect(tensions.length).toBeGreaterThan(0)
+    expect(tensions[0].kind).toBe('tension')
+    expect(tensions[0].relatedIds?.sort()).toEqual(['a', 'b'])
+    expect(tensions[0].excerpt).toContain('source-a.fr')
+    expect(tensions[0].excerpt).toContain('source-b.fr')
+  })
+
+  it('ne crée rien quand les sources concordent', () => {
+    const sites = [
+      site('a', { excerpt: 'Le prix moyen atteint 120 euros en 2019.' }),
+      site('b', { excerpt: 'Le prix moyen atteint 120 euros en 2019.' })
+    ]
+    expect(detectTensions(sites)).toHaveLength(0)
+  })
+})
+
+describe('rapport', () => {
+  const map: TunnelMap = {
+    id: 'map',
+    spaceId: 'space',
+    query: 'navigateur minimaliste',
+    lang: 'fr',
+    createdAt: now,
+    updatedAt: now,
+    nodes: [
+      node({ id: 'subject', kind: 'subject', title: 'Navigateur minimaliste' }),
+      node({ id: 'angle', kind: 'angle', title: 'Panorama', parentId: 'subject' }),
+      site('a', { parentId: 'angle', title: 'Liste de navigateurs', relevance: 90 }),
+      site('b', { parentId: 'angle', title: 'Navigateur léger', relevance: 70 }),
+      site('c', { parentId: 'angle', title: 'Hors sujet', relevance: 20, status: 'dismissed' }),
+      node({
+        id: 'tension',
+        kind: 'tension',
+        title: 'Divergence',
+        relatedIds: ['a', 'b'],
+        excerpt: 'a : « 2019 »\nb : « 2021 »'
+      })
+    ]
+  }
+
+  it('numérote seulement les sources de la carte et ignore les écartées', () => {
+    const report = buildTunnelReport(map)
+    expect(report).toContain('[1] Liste de navigateurs')
+    expect(report).toContain('[2] Navigateur léger')
+    expect(report).not.toContain('Hors sujet')
+    expect(report).toContain('## Tensions entre sources')
+    expect(report).toContain('https://example.org/a')
+  })
+
+  it('respecte les sources visibles', () => {
+    const report = buildTunnelReport(map, new Set(['b']))
+    expect(report).not.toContain('[1] Liste de navigateurs')
+    expect(report).toContain('Navigateur léger')
+  })
+
+  it('exporte un document HTML autonome et un JSON complet', () => {
+    const html = buildTunnelHtml(map)
+    expect(html).toContain('<!doctype html>')
+    expect(html).toContain('Liste de navigateurs')
+    expect(html).not.toContain('Hors sujet')
+    const json = JSON.parse(toJsonExport(map)) as { nodes: MapNode[]; query: string }
+    expect(json.query).toBe(map.query)
+    expect(json.nodes).toHaveLength(map.nodes.length)
+  })
+})
+
+describe('correction de requête', () => {
+  it('propose une correction pour une faute fréquente', () => {
+    expect(suggestQueryFix('utilisr l ia pour redigir des texte')).toBe(
+      'utiliser l ia pour rédiger des texte'
+    )
+  })
+
+  it('ne corrige pas une requête déjà propre ni les sigles courts', () => {
+    expect(suggestQueryFix('navigateur minimaliste')).toBeNull()
+    expect(suggestQueryFix('ia locale')).toBeNull()
+  })
+})

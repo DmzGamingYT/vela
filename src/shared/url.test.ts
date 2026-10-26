@@ -36,7 +36,7 @@ describe('normalizeInput', () => {
     })
   })
 
-  it.each(['duckduckgo', 'brave', 'startpage', 'searxng'] as const)(
+  it.each(['duckduckgo', 'brave', 'startpage', 'google', 'bing', 'ecosia', 'qwant', 'searxng'] as const)(
     'construit une recherche pour %s',
     (engine) => {
       const result = normalizeInput('Bruxelles Charleroi', engine)
@@ -76,5 +76,13 @@ describe('engineHost', () => {
     expect(engineHost('brave')).toBe('search.brave.com')
     expect(engineHost('startpage')).toBe('www.startpage.com')
     expect(engineHost('searxng')).toBe('searx.be')
+  })
+
+  it('suit l’instance SearXNG choisie', () => {
+    expect(engineHost('searxng', 'https://searx.example.org/')).toBe('searx.example.org')
+    expect(searchUrl('verre', 'searxng', 'searx.example.org')).toBe(
+      'https://searx.example.org/search?q=verre'
+    )
+    expect(engineHost('searxng', 'pas une url')).toBe('searx.be')
   })
 })

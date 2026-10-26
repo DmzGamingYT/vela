@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { hostOf } from '@shared/url'
-import { greeting, initials, shortcut, timeAgo, tintFor } from '../lib/format'
+import { greeting, shortcut, timeAgo } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import Favicon from './Favicon'
 import { Icon } from './Icon'
 import TasksCard from './TasksCard'
 
@@ -53,7 +54,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
               <div className="recent-list">
                 {recent.map((entry) => {
                   const host = hostOf(entry.url)
-                  const tint = tintFor(host)
                   return (
                     <button
                       key={entry.id}
@@ -61,9 +61,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
                       className="recent-row"
                       onClick={() => navigate(tabId, entry.url)}
                     >
-                      <span className="recent-icon" style={{ color: tint, background: `${tint}1c` }}>
-                        {initials(host)}
-                      </span>
+                      <Favicon src={entry.favicon} label={entry.title || host} size={15} />
                       <span className="recent-copy">
                         <span className="recent-title">{entry.title || host}</span>
                         <span className="recent-host">{host}</span>
@@ -75,7 +73,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
               </div>
             ) : (
               <div className="starters">
-                <p className="starters-lede">Quelques pages pour commencer — rien n’est envoyé nulle part.</p>
+                <p className="starters-lede">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
                 <div className="starter-grid">
                   {STARTERS.map((starter) => (
                     <button
@@ -103,7 +101,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
             >
               <Icon name="chevron-right" size={13} />
               <span>Tâches du jour</span>
-              <span className="tasks-count">{String(openTasks).padStart(2, '0')}</span>
+              <span className="tasks-count">{openTasks}</span>
             </button>
 
             {tasksOpen && (

@@ -8,12 +8,36 @@ type Filter = 'all' | 'tabs' | 'notes' | 'tasks' | 'history' | 'downloads'
 
 interface CommandItem {
   id: string
-  group: 'Aller' | 'Agent' | 'Actions' | 'Onglets' | 'Espaces' | 'Historique' | 'Notes' | 'Tâches'
+  group: 'Aller' | 'Agent' | 'Actions' | 'Skills' | 'Onglets' | 'Espaces' | 'Historique' | 'Notes' | 'Tâches'
   label: string
   hint?: string
   icon: IconName
   run: () => void
 }
+
+/** Skills en commande slash : elles préparent une demande pour l’agent. */
+const SKILLS = [
+  {
+    command: '/résumer',
+    label: 'Résumer la page de l’onglet actif',
+    prompt: 'Résume la page de l’onglet joint en trois points, puis dis ce qu’il faut retenir.'
+  },
+  {
+    command: '/comparer',
+    label: 'Comparer les onglets joints',
+    prompt: 'Compare les onglets joints : un tableau des différences, puis une recommandation nette.'
+  },
+  {
+    command: '/extraire',
+    label: 'Extraire le tableau ou la liste principale',
+    prompt: 'Extrais le tableau ou la liste principale des onglets joints, en tableau Markdown copiable.'
+  },
+  {
+    command: '/citer',
+    label: 'Citer les passages utiles, avec leurs sources',
+    prompt: 'Cite les passages utiles des onglets joints, avec le titre et l’URL de chaque source.'
+  }
+] as const
 
 function normalize(value: string): string {
   return value
@@ -37,6 +61,11 @@ export default function CommandBar() {
   const toggleNotes = useBrowser((state) => state.toggleNotes)
   const toggleTask = useBrowser((state) => state.toggleTask)
   const reload = useBrowser((state) => state.reload)
+  const toggleBookmark = useBrowser((state) => state.toggleBookmark)
+  const printPage = useBrowser((state) => state.printPage)
+  const groupTabsBySite = useBrowser((state) => state.groupTabsBySite)
+  const undoGrouping = useBrowser((state) => state.undoGrouping)
+  const lastGrouping = useBrowser((state) => state.lastGrouping)
   const updateSettings = useBrowser((state) => state.updateSettings)
   const workMode = useBrowser((state) => state.workMode)
   const setWorkMode = useBrowser((state) => state.setWorkMode)
@@ -64,6 +93,22 @@ export default function CommandBar() {
       }
     }
 
+    // Mode skills : « / » en tête de requête.
+    const typed = query.trim()
+    if (typed.startsWith('/')) {
+      const token = normalize(typed.slice(1))
+      return SKILLS.filter((skill) => !token || normalize(`${skill.command} ${skill.label}`).includes(token)).map(
+        (skill) => ({
+          id: `skill-${skill.command}`,
+          group: 'Skills' as const,
+          label: skill.command,
+          hint: skill.label,
+          icon: 'command' as const,
+          run: run(() => openAgent(skill.prompt))
+        })
+      )
+    }
+
     const all: CommandItem[] = []
 
     if (search) {
@@ -71,7 +116,10 @@ export default function CommandBar() {
         id: 'open',
         group: 'Aller',
         label: `Ouvrir « ${query.trim()} »`,
-        hint: normalizeInput(query.trim(), view.settings.searchEngine).kind === 'search' ? 'Recherche' : 'Adresse',
+        hint:
+          normalizeInput(query.trim(), view.settings.searchEngine, view.settings.searxInstance).kind === 'search'
+            ? 'Recherche'
+            : 'Adresse',
         icon: 'globe',
         run: run(() => navigate(view.activeTabId, query.trim()))
       })
@@ -135,6 +183,26 @@ export default function CommandBar() {
         run: run(() => setOverlay('brief'))
       },
       {
+        id: 'action-group-site',
+        group: 'Actions',
+        label: 'Ranger les onglets par site',
+        hint: 'Dossiers automatiques',
+        icon: 'folder',
+        run: run(() => void groupTabsBySite())
+      },
+      ...(lastGrouping
+        ? [
+            {
+              id: 'action-ungroup',
+              group: 'Actions',
+              label: 'Annuler le dernier rangement',
+              hint: 'Onglets conservés',
+              icon: 'reload',
+              run: run(() => void undoGrouping())
+            } satisfies CommandItem
+          ]
+        : []),
+      {
         id: 'action-reload',
         group: 'Actions',
         label: 'Recharger l’onglet',
@@ -149,6 +217,40 @@ export default function CommandBar() {
         hint: shortcut('⇧T'),
         icon: 'clock',
         run: run(() => reopen())
+      },
+      {
+        id: 'action-bookmark',
+        group: 'Actions',
+        label: active && view.bookmarks.some((entry) => entry.url === active.url)
+          ? 'Retirer la page des marque-pages'
+          : 'Garder cette page en marque-page',
+        hint: shortcut('D'),
+        icon: 'star',
+        run: run(() => void toggleBookmark(active?.id))
+      },
+      {
+        id: 'action-bookmarks',
+        group: 'Actions',
+        label: 'Afficher les marque-pages',
+        hint: shortcut('⇧O'),
+        icon: 'star',
+        run: run(() => setOverlay('bookmarks'))
+      },
+      {
+        id: 'action-history',
+        group: 'Actions',
+        label: 'Afficher l’historique',
+        hint: shortcut('Y'),
+        icon: 'history',
+        run: run(() => setOverlay('history'))
+      },
+      {
+        id: 'action-print',
+        group: 'Actions',
+        label: 'Imprimer la page',
+        hint: shortcut('P'),
+        icon: 'download',
+        run: run(() => void printPage())
       },
       {
         id: 'action-sidebar',
@@ -292,7 +394,12 @@ export default function CommandBar() {
     reload,
     updateSettings,
     workMode,
-    setWorkMode
+    setWorkMode,
+    groupTabsBySite,
+    undoGrouping,
+    lastGrouping,
+    toggleBookmark,
+    printPage
   ])
 
   useEffect(() => {

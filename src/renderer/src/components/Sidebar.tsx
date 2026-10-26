@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
 import type { TabGroup, TabView } from '@shared/types'
-import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import TabRow from './TabRow'
+import TunnelSidebar from './TunnelSidebar'
 
 type DropTarget =
   | { kind: 'tab'; id: string; edge: 'before' | 'after' }
@@ -16,11 +16,7 @@ export default function Sidebar() {
   const view = useBrowser((state) => state.view)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
-  const openAgent = useBrowser((state) => state.openAgent)
-  const toggleNotes = useBrowser((state) => state.toggleNotes)
   const workMode = useBrowser((state) => state.workMode)
-  const setWorkMode = useBrowser((state) => state.setWorkMode)
-  const notesOpen = useBrowser((state) => state.notesOpen)
   const newTab = useBrowser((state) => state.newTab)
   const reorderTab = useBrowser((state) => state.reorderTab)
   const moveTabToGroup = useBrowser((state) => state.moveTabToGroup)
@@ -191,27 +187,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar" style={{ '--space': space.color } as CSSProperties}>
       <header className="sidebar-top drag">
-        <div className="browse-work" role="tablist" aria-label="Mode">
-          <button type="button" role="tab" aria-selected={workMode === 'browse'} data-active={workMode === 'browse'} onClick={() => setWorkMode('browse')}>
-            <Icon name="globe" size={12} />
-            Browse
-          </button>
-          <button type="button" role="tab" aria-selected={workMode === 'work'} data-active={workMode === 'work'} onClick={() => setWorkMode('work')}>
-            <Icon name="sparkles" size={12} />
-            Work
-          </button>
-        </div>
         <span className="wordmark">
           Vela<span className="wordmark-dot">.</span>
         </span>
-        <button
-          type="button"
-          className="icon-btn no-drag"
-          title={`Replier la barre latérale (${shortcut('S')})`}
-          onClick={() => useBrowser.getState().updateSettings({ sidebarCollapsed: true })}
-        >
-          <Icon name="panel" size={15} />
-        </button>
       </header>
 
       <div className="space-head">
@@ -240,12 +218,9 @@ export default function Sidebar() {
         </span>
       </button>
 
-      <button type="button" className="command-trigger" onClick={() => setOverlay('command')}>
-        <Icon name="search" size={15} />
-        <span>Rechercher ou agir</span>
-        <kbd>{shortcut('K')}</kbd>
-      </button>
-
+      {workMode === 'work' ? (
+        <TunnelSidebar spaceId={space.id} />
+      ) : (
       <div className="tabs-scroll">
         {pinnedCount > 0 && (
           <>
@@ -258,8 +233,13 @@ export default function Sidebar() {
         )}
 
         <div className="tabs-head">
-          <span>{workMode === 'work' ? 'Sources de l’atelier' : 'Onglets'}</span>
+          <span>Onglets</span>
           <span className="tabs-count">{unpinned.length}</span>
+          {view.memoryFreed > 0 && (
+            <span className="tabs-savings" title="Mémoire rendue par les onglets en veille depuis le lancement">
+              {view.memoryFreed} Mo
+            </span>
+          )}
           <span className="tabs-tools">
             <button
               type="button"
@@ -410,19 +390,8 @@ export default function Sidebar() {
           </div>
         )}
       </div>
+      )}
 
-      <footer className="sidebar-foot">
-        <button type="button" className="foot-btn" data-active={notesOpen} onClick={() => toggleNotes()}>
-          <Icon name="notes" size={15} />
-          <span>Notes</span>
-          <kbd>{shortcut('E')}</kbd>
-        </button>
-        <button type="button" className="foot-btn" onClick={() => openAgent()}>
-          <Icon name="sparkles" size={15} />
-          <span>Agent</span>
-          <kbd>{shortcut('J')}</kbd>
-        </button>
-      </footer>
     </aside>
   )
 }

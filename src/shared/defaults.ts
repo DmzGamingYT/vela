@@ -13,6 +13,8 @@ export function defaultProviders(): Record<ProviderId, ProviderSettings> {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   searchEngine: 'duckduckgo',
+  searxInstance: '',
+  accent: 'violet',
   blockTrackers: true,
   sidebarCollapsed: false,
   onboarded: false,
@@ -68,7 +70,10 @@ export function createDefaultState(now = Date.now()): PersistedState {
     },
     history: [],
     closed: [],
+    bookmarks: [],
+    privacyExemptions: [],
     tasks: [],
-    works: []
+    works: [],
+    tunnelMaps: []
   }
 }

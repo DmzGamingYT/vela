@@ -1,9 +1,20 @@
 import { join } from 'node:path'
-import { BrowserWindow, nativeTheme, WebContentsView, type Event as ElectronEvent, type Input, type Session } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  nativeTheme,
+  WebContentsView,
+  type Event as ElectronEvent,
+  type Input,
+  type MenuItemConstructorOptions,
+  type Session
+} from 'electron'
 import { HOME_URL } from '@shared/types'
 import type {
   LayoutRequest,
   PaneRect,
+  SelectionPayload,
   Settings,
   ShortcutAction,
   ShortcutEvent,
@@ -32,6 +43,8 @@ export interface TabHost {
   shortcut(event: ShortcutEvent): void
   settings(): Settings
   visited(spaceId: string, url: string, title: string): void
+  selection(payload: SelectionPayload): void
+  isExempted(host: string): boolean
 }
 
 interface Runtime {
@@ -47,6 +60,8 @@ export interface TabRuntime {
   blocked: number
   agentSent: boolean
   error: string | null
+  asleep: boolean
+  blockedHosts: { host: string; count: number }[]
 }
 
 const MAX_LIVE_VIEWS = 5
@@ -56,6 +71,8 @@ export class TabManager {
   private views = new Map<string, WebContentsView>()
   private runtimes = new Map<string, Runtime>()
   private blocked = new Map<string, number>()
+  private blockedHosts = new Map<string, Map<string, number>>()
+  private freedMb = 0
   private byWebContents = new Map<number, string>()
   private lastUsed = new Map<string, number>()
   private visible = new Set<string>()
@@ -78,14 +95,40 @@ export class TabManager {
     const view = this.views.get(tabId)
     const runtime = this.runtimes.get(tabId)
     const alive = Boolean(view && !view.webContents.isDestroyed())
+    const hosts = this.blockedHosts.get(tabId)
     return {
       loading: runtime?.loading ?? false,
       canGoBack: alive ? view!.webContents.navigationHistory.canGoBack() : false,
       canGoForward: alive ? view!.webContents.navigationHistory.canGoForward() : false,
       blocked: this.blocked.get(tabId) ?? 0,
       agentSent: Boolean(runtime?.agentSent),
-      error: runtime?.error ?? null
+      error: runtime?.error ?? null,
+      // Une vue déchargée par le balayeur : la page reste dans la liste, sa
+      // mémoire est rendue au système.
+      asleep: !alive && !isHomeUrl(this.host.tab(tabId)?.url),
+      blockedHosts: hosts
+        ? Array.from(hosts, ([host, count]) => ({ host, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 12)
+        : []
     }
+  }
+
+  /** Mémoire approximative rendue par les onglets mis en veille (Mo). */
+  memoryFreedMb(): number {
+    return Math.round(this.freedMb)
+  }
+
+  private countBlocked(webContentsId: number, host: string): void {
+    const tabId = this.byWebContents.get(webContentsId)
+    if (!tabId) return
+    this.blocked.set(tabId, (this.blocked.get(tabId) ?? 0) + 1)
+    if (host) {
+      const hosts = this.blockedHosts.get(tabId) ?? new Map<string, number>()
+      hosts.set(host, (hosts.get(host) ?? 0) + 1)
+      this.blockedHosts.set(tabId, hosts)
+    }
+    this.host.changed()
   }
 
   blockedTotal(): number {
@@ -112,11 +155,13 @@ export class TabManager {
     attachPrivacy(
       ses,
       () => this.host.settings().blockTrackers,
-      (webContentsId) => {
-        const tabId = this.byWebContents.get(webContentsId)
-        if (!tabId) return
-        this.blocked.set(tabId, (this.blocked.get(tabId) ?? 0) + 1)
-        this.host.changed()
+      (webContentsId, host) => this.countBlocked(webContentsId, host),
+      (pageUrl) => {
+        try {
+          return this.host.isExempted(new URL(pageUrl).hostname)
+        } catch {
+          return false
+        }
       }
     )
     return ses
@@ -235,6 +280,14 @@ export class TabManager {
       this.host.changed()
     })
 
+    // Nouvelle page : le décompte du bouclier repart de zéro pour cette URL.
+    wc.on('did-start-navigation', (details, _url, _inPlace, isMainFrame) => {
+      const mainFrame = details.isMainFrame ?? isMainFrame
+      if (!mainFrame) return
+      this.blocked.delete(tabId)
+      this.blockedHosts.delete(tabId)
+    })
+
     wc.on('did-navigate', (_event, url) => {
       this.record(tabId, url)
       this.host.changed()
@@ -264,6 +317,48 @@ export class TabManager {
 
     wc.on('before-input-event', (event, input) => this.handleInput(event, input))
 
+    // Menu contextuel : les actions sur la sélection sont le cœur de l’agent
+    // « à côté de la page ». Les rôles natifs gardent le copier/coller habituel.
+    wc.on('context-menu', (_event, params) => {
+      const tab = this.host.tab(tabId)
+      if (!tab) return
+      const selection = params.selectionText.trim().slice(0, 4000)
+      const items: MenuItemConstructorOptions[] = []
+      if (selection) {
+        const send = (action: SelectionPayload['action']): void =>
+          this.host.selection({ action, text: selection, url: tab.url, title: tab.title, tabId })
+        items.push(
+          { label: 'Résumer la sélection', click: () => send('summarize') },
+          { label: 'Expliquer', click: () => send('explain') },
+          { label: 'Traduire', click: () => send('translate') },
+          { label: 'Simplifier', click: () => send('simplify') },
+          { type: 'separator' },
+          { label: 'Ajouter à une note', click: () => send('note') },
+          { type: 'separator' },
+          { role: 'copy', label: 'Copier' }
+        )
+        if (params.isEditable) {
+          items.push({ role: 'cut', label: 'Couper' }, { role: 'paste', label: 'Coller' })
+        }
+      } else if (params.isEditable) {
+        items.push(
+          { role: 'cut', label: 'Couper' },
+          { role: 'copy', label: 'Copier' },
+          { role: 'paste', label: 'Coller' },
+          { role: 'selectAll', label: 'Tout sélectionner' }
+        )
+      }
+      if (params.linkURL && /^https?:/i.test(params.linkURL)) {
+        if (items.length > 0) items.push({ type: 'separator' })
+        items.push({
+          label: 'Ouvrir le lien dans un nouvel onglet',
+          click: () => this.host.createTab(tab.spaceId, params.linkURL)
+        })
+      }
+      if (items.length === 0) return
+      Menu.buildFromTemplate(items).popup({ window: this.getWindow() ?? undefined })
+    })
+
     wc.on('destroyed', () => {
       this.byWebContents.delete(wc.id)
       if (this.views.get(tabId)?.webContents === wc) this.views.delete(tabId)
@@ -283,7 +378,8 @@ export class TabManager {
     const tab = this.host.tab(tabId)
     if (!tab) return
     this.touch(tabId)
-    const target = normalizeInput(input, this.host.settings().searchEngine)
+    const settings = this.host.settings()
+    const target = normalizeInput(input, settings.searchEngine, settings.searxInstance)
     if (isHomeUrl(target.url)) {
       this.goHome(tabId)
       return
@@ -354,6 +450,23 @@ export class TabManager {
     if (wc && wc.navigationHistory.canGoForward()) wc.navigationHistory.goForward()
   }
 
+  /** Zoom du texte de la page, par paliers, comme un navigateur classique. */
+  zoom(tabId: string, direction: 'in' | 'out' | 'reset'): void {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return
+    const current = view.webContents.getZoomLevel()
+    const next = direction === 'reset' ? 0 : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
+    view.webContents.setZoomLevel(next)
+  }
+
+  /** Impression de la page : boîte de dialogue système, PDF possible. */
+  print(tabId: string): boolean {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return false
+    view.webContents.print({ printBackground: true, silent: false })
+    return true
+  }
+
   reload(tabId: string): void {
     this.touch(tabId)
     const view = this.views.get(tabId)
@@ -413,16 +526,30 @@ export class TabManager {
   /** Libère le processus d'un onglet sans perdre son url/titre (façon Zephium : charge au focus). */
   suspend(tabId: string): void {
     void this.captureScroll(tabId).finally(() => {
-    const view = this.views.get(tabId)
-    this.views.delete(tabId)
-    this.visible.delete(tabId)
-    if (view) {
-      this.byWebContents.delete(view.webContents.id)
-      this.getWindow()?.contentView.removeChildView(view)
-      if (!view.webContents.isDestroyed()) view.webContents.close()
-    }
-    const runtime = this.runtimes.get(tabId)
-    this.runtimes.set(tabId, { loading: false, error: runtime?.error ?? null })
+      const view = this.views.get(tabId)
+      this.views.delete(tabId)
+      this.visible.delete(tabId)
+      const release = (): void => {
+        if (!view) return
+        this.byWebContents.delete(view.webContents.id)
+        this.getWindow()?.contentView.removeChildView(view)
+        if (!view.webContents.isDestroyed()) view.webContents.close()
+        const runtime = this.runtimes.get(tabId)
+        this.runtimes.set(tabId, { loading: false, error: runtime?.error ?? null })
+        this.host.changed()
+      }
+      // La mémoire du processus est relevée juste avant de le fermer : c’est
+      // l’estimation honnête du gain affiché dans l’interface.
+      if (view && !view.webContents.isDestroyed()) {
+        try {
+          const pid = view.webContents.getOSProcessId()
+          const metric = app.getAppMetrics().find((entry) => entry.pid === pid)
+          this.freedMb += (metric?.memory?.workingSetSize ?? 0) / 1024
+        } catch {
+          /* métriques indisponibles : le gain reste inconnu, la veille s’applique */
+        }
+      }
+      release()
     })
   }
 
@@ -523,6 +650,21 @@ export class TabManager {
     this.evictExcess(visible)
   }
 
+  /** Texte sélectionné dans la page (capture de citation). */
+  async selectionText(tabId: string): Promise<string> {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return ''
+    try {
+      const text: unknown = await view.webContents.executeJavaScript(
+        'String(window.getSelection ? window.getSelection().toString() : "")',
+        true
+      )
+      return typeof text === 'string' ? text.trim().slice(0, 8000) : ''
+    } catch {
+      return ''
+    }
+  }
+
   async excerpt(tabId: string): Promise<{ text: string; anchor: string }> {
     const view = this.views.get(tabId)
     if (!view || view.webContents.isDestroyed()) return { text: '', anchor: '' }
@@ -575,6 +717,22 @@ export class TabManager {
     }
     if (!mod || input.alt) return
     const key = input.key.toLowerCase()
+    // Zoom du texte : ⌘+ / ⌘- / ⌘0 (le « + » arrive souvent comme « = »).
+    if (input.key === '+' || input.key === '=') {
+      event.preventDefault()
+      this.host.shortcut({ action: 'zoom-in' })
+      return
+    }
+    if (input.key === '-' || input.key === '–') {
+      event.preventDefault()
+      this.host.shortcut({ action: 'zoom-out' })
+      return
+    }
+    if (input.key === '0') {
+      event.preventDefault()
+      this.host.shortcut({ action: 'zoom-reset' })
+      return
+    }
     if (key === 'f' && !input.shift) {
       event.preventDefault()
       this.host.shortcut({ action: 'find' })
@@ -599,6 +757,9 @@ export class TabManager {
         ',': 'settings',
         s: 'sidebar',
         r: 'reload',
+        p: 'print',
+        y: 'history',
+        d: 'bookmark',
         '[': 'back',
         ']': 'forward'
       }
@@ -615,6 +776,10 @@ export class TabManager {
       action = 'brief'
     } else if (key === 'a') {
       action = 'work'
+    } else if (key === 'o') {
+      action = 'bookmarks'
+    } else if (key === 'h') {
+      action = 'home'
     }
 
     if (!action) return

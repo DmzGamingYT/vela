@@ -1,11 +1,14 @@
 import { useEffect } from 'react'
 import AgentCanvas from './components/AgentCanvas'
+import BookmarksPanel from './components/BookmarksPanel'
 import BriefPanel from './components/BriefPanel'
+import HistoryPanel from './components/HistoryPanel'
 import CommandBar from './components/CommandBar'
 import DownloadsPanel from './components/DownloadsPanel'
 import Onboarding from './components/Onboarding'
 import ProcessManager from './components/ProcessManager'
 import NotesDrawer from './components/NotesDrawer'
+import ProtectionPanel from './components/ProtectionPanel'
 import SettingsPanel from './components/SettingsPanel'
 import Sidebar from './components/Sidebar'
 import SpaceDialog from './components/SpaceDialog'
@@ -26,7 +29,9 @@ export default function App() {
   const overlay = useBrowser((state) => state.overlay)
   const collapsed = useBrowser((state) => state.view?.settings.sidebarCollapsed ?? false)
   const notesOpen = useBrowser((state) => state.notesOpen)
+  const agentOpen = useBrowser((state) => state.agentOpen)
   const theme = useBrowser((state) => state.view?.settings.theme ?? 'system')
+  const accent = useBrowser((state) => state.view?.settings.accent ?? 'violet')
   const spaceColor = useBrowser((state) => {
     const view = state.view
     if (!view) return null
@@ -36,6 +41,12 @@ export default function App() {
   useEffect(() => {
     void useBrowser.getState().init()
   }, [])
+
+  // La couleur d'accent reste indépendante de celle de l'espace actif :
+  // l'espace teinte la pastille, l'accent teinte les actions de l'app.
+  useEffect(() => {
+    document.documentElement.dataset.accent = accent
+  }, [accent])
 
   useEffect(() => {
     applyTheme(theme)
@@ -61,6 +72,8 @@ export default function App() {
         state.setOverlay(null)
       } else if (state.notesOpen) {
         state.toggleNotes(false)
+      } else if (state.agentOpen) {
+        state.toggleAgent(false)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -81,14 +94,17 @@ export default function App() {
       <SpaceRail />
       {!collapsed && <Sidebar />}
       <Workspace />
+      {agentOpen && <AgentCanvas docked />}
       {notesOpen && <NotesDrawer />}
       {overlay === 'command' && <CommandBar />}
       {overlay === 'brief' && <BriefPanel />}
-      {overlay === 'agent' && <AgentCanvas />}
       {overlay === 'settings' && <SettingsPanel />}
       {overlay === 'space' && <SpaceDialog />}
       {overlay === 'processes' && <ProcessManager />}
       {overlay === 'downloads' && <DownloadsPanel />}
+      {overlay === 'history' && <HistoryPanel />}
+      {overlay === 'bookmarks' && <BookmarksPanel />}
+      {overlay === 'protection' && <ProtectionPanel />}
       {!onboarded && <Onboarding />}
       <Toasts />
     </div>

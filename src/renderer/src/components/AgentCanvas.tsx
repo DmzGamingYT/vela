@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { AGENT_EXAMPLES } from '@shared/agent'
 import { providerReady } from '@shared/providers'
 import { hostOf, isHomeUrl } from '@shared/url'
-import { initials, tintFor } from '../lib/format'
 import { Markdown } from '../lib/markdown'
 import { useBrowser } from '../store/browser'
+import Favicon from './Favicon'
 import { Icon } from './Icon'
 import WorkList from './WorkList'
 
@@ -26,10 +26,17 @@ const CAPABILITIES = [
   }
 ]
 
-export default function AgentCanvas({ embedded = false }: { embedded?: boolean }) {
+export default function AgentCanvas({
+  embedded = false,
+  docked = false
+}: {
+  embedded?: boolean
+  docked?: boolean
+}) {
   const view = useBrowser((state) => state.view)
   const agent = useBrowser((state) => state.agent)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const toggleAgent = useBrowser((state) => state.toggleAgent)
   const startAgent = useBrowser((state) => state.startAgent)
   const cancelAgent = useBrowser((state) => state.cancelAgent)
   const approved = useBrowser((state) => state.approved)
@@ -37,6 +44,7 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
   const resetAgent = useBrowser((state) => state.resetAgent)
   const saveAgentNote = useBrowser((state) => state.saveAgentNote)
   const openWork = useBrowser((state) => state.openWork)
+  const agentSourceTab = useBrowser((state) => state.agentSourceTab)
   const works = useBrowser((state) => state.view?.works ?? [])
   const activeWorks = works.filter((work) => !work.archived).length
   const toast = useBrowser((state) => state.toast)
@@ -59,6 +67,16 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
   useEffect(() => {
     if (embedded) promptRef.current?.focus()
   }, [embedded])
+
+  // Ouverture depuis une sélection de page : l’onglet d’origine est joint.
+  useEffect(() => {
+    if (!agentSourceTab) return
+    setSelected((current) =>
+      current.includes(agentSourceTab) ? current : [...current, agentSourceTab]
+    )
+    useBrowser.setState({ agentSourceTab: null })
+    promptRef.current?.focus()
+  }, [agentSourceTab])
 
   const running = agent.status === 'running'
   const sources = (view?.tabs ?? [])
@@ -100,13 +118,16 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
     }
   }
 
+  const currentTab = view?.tabs.find((tab) => tab.id === view.activeTabId)
+  const canAttachCurrent = Boolean(currentTab && !isHomeUrl(currentTab.url))
+
   const canvas = (
     <div
       className="agent"
       data-embedded={embedded}
-      role={embedded ? 'region' : 'dialog'}
+      data-docked={docked}
+      role={embedded ? 'region' : docked ? 'complementary' : 'dialog'}
       aria-label={embedded ? 'Atelier Vela' : 'Agent Vela'}
-      onMouseDown={embedded ? undefined : (event) => event.stopPropagation()}
     >
         <header className="agent-head">
           <div className="agent-identity">
@@ -118,7 +139,7 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
               <p>
                 {embedded
                   ? 'Le mode où l’IA travaille : joignez des onglets, demandez, relisez.'
-                  : 'Lit les onglets que vous joignez, puis écrit un rapport utilisable.'}
+                  : 'Lit les onglets joints et rédige à côté de la page, sans la masquer.'}
               </p>
             </div>
           </div>
@@ -138,7 +159,13 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
               {modeLabel === 'api' ? 'Modèle connecté' : 'Démo locale'}
             </span>
             {!embedded && (
-              <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => toggleAgent(false)}
+                title="Fermer l’agent (⌘J)"
+                aria-label="Fermer l’agent"
+              >
                 <Icon name="close" size={18} />
               </button>
             )}
@@ -155,6 +182,25 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
 
         <div className="agent-body" data-hidden={showWorks}>
           <aside className="agent-left">
+            {!configured && (
+              <div className="agent-setup">
+                <span className="agent-setup-icon">
+                  <Icon name="key" size={15} />
+                </span>
+                <div className="agent-setup-copy">
+                  <strong>Aucun modèle connecté</strong>
+                  <p>
+                    La démo locale écrit un rapport simulé à partir des titres. Pour un vrai rapport :
+                    une clé, ou un modèle local comme Ollama.
+                  </p>
+                  <button type="button" className="action" onClick={() => setOverlay('settings')}>
+                    <Icon name="settings" size={14} />
+                    Ajouter une clé ou Ollama
+                  </button>
+                </div>
+              </div>
+            )}
+
             <label className="field-label" htmlFor="agent-prompt">
               Votre demande
             </label>
@@ -185,6 +231,15 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
             <div className="sources-head">
               <span>Onglets joints</span>
               <span className="sources-count">{selected.length}</span>
+              {canAttachCurrent && currentTab && !selected.includes(currentTab.id) && (
+                <button
+                  type="button"
+                  className="text-btn"
+                  onClick={() => setSelected((current) => [...current, currentTab.id])}
+                >
+                  Joindre l’onglet actuel
+                </button>
+              )}
               <button
                 type="button"
                 className="text-btn"
@@ -200,13 +255,10 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
               )}
               {sources.map((tab) => {
                 const checked = selected.includes(tab.id)
-                const tint = tintFor(hostOf(tab.url))
                 return (
                   <label key={tab.id} className="source-row" data-selected={checked}>
                     <input type="checkbox" checked={checked} onChange={() => toggleSource(tab.id)} />
-                    <span className="source-icon" style={{ color: tint, background: `${tint}1c` }}>
-                      {initials(tab.title || hostOf(tab.url))}
-                    </span>
+                    <Favicon src={tab.favicon} label={tab.title || hostOf(tab.url)} size={14} />
                     <span className="source-copy">
                       <span className="source-title">{tab.title}</span>
                       <span className="source-host">{hostOf(tab.url)}</span>
@@ -376,9 +428,6 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
 
   if (embedded) return <div className="work-stage">{canvas}</div>
 
-  return (
-    <div className="overlay agent-overlay" onMouseDown={() => setOverlay(null)}>
-      {canvas}
-    </div>
-  )
+  // Panneau ancré : la page reste vivante à gauche du panneau.
+  return <aside className="agent-dock">{canvas}</aside>
 }
