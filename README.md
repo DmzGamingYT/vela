@@ -101,6 +101,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
 | **Notes** | Markdown stocké en fichiers `.md`, capturés depuis la page, à côté du web. |
+| **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
 | **Bloqueur local** | Liste embarquée de domaines publicitaires, compteur visible dans la barre d’adresse. |
 
 ## Raccourcis
@@ -111,6 +112,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | --- | --- |
 | `⌘K` | Barre de commande |
 | `⌘L` | Barre d’adresse |
+| `⌘F` | Rechercher dans la page |
 | `⌘T` / `⌘W` | Nouvel onglet / fermer |
 | `⌘⇧T` | Rouvrir le dernier onglet fermé |
 | `⌘⇧D` | Vue scindée |
