@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, nativeTheme, session, shell, type Session } from 'electron'
 import type {
   CreateGroupInput,
@@ -36,6 +37,7 @@ import {
   type TabView
 } from '@shared/types'
 import { isHomeUrl, titleFromUrl } from '@shared/url'
+import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
@@ -73,10 +75,13 @@ export class Browser {
   private noteCache: NoteMeta[]
   private downloads: DownloadItem[] = []
   private trackedSessions = new Set<string>()
+  private agentSentTabIds = new Set<string>()
+  private agentSentTimer: NodeJS.Timeout | null = null
   private broadcastTimer: NodeJS.Timeout | null = null
   private sweepTimer: NodeJS.Timeout | null = null
   private briefCacheKey = ''
   private briefCache: ReturnType<typeof buildBrief> | null = null
+  private workPreviews = new Map<string, { updatedAt: number; preview: string }>()
   private overlay = false
   private registered = false
 
@@ -125,6 +130,7 @@ export class Browser {
       if (previous) {
         previous.title = work.title || previous.title
         previous.markdown = work.markdown
+        previous.preview = previewOf(work.markdown)
         previous.mode = work.mode
         previous.sources = work.sources
         previous.updatedAt = now
@@ -135,6 +141,7 @@ export class Browser {
             title: work.title.slice(0, 160) || 'Rapport Vela',
             prompt: work.prompt.slice(0, 2000),
             markdown: work.markdown,
+            preview: previewOf(work.markdown),
             mode: work.mode,
             sources: work.sources,
             spaceId: work.spaceId,
@@ -246,6 +253,7 @@ export class Browser {
       }
       this.downloads = [entry, ...this.downloads].slice(0, 30)
       this.broadcast()
+      item.setSavePath(join(app.getPath('downloads'), name))
       item.on('updated', (_e, state) => {
         const found = this.downloads.find((d) => d.id === id)
         if (!found) return
@@ -320,7 +328,11 @@ export class Browser {
     const activeTabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
     const candidate = state.split ? (state.secondTabBySpace[state.activeSpaceId] ?? null) : null
     const secondTabId = candidate && state.tabs.some((tab) => tab.id === candidate) ? candidate : null
-    const tabs: TabView[] = state.tabs.map((tab) => ({ ...tab, ...this.tabs.runtimeOf(tab.id) }))
+    const tabs: TabView[] = state.tabs.map((tab) => ({
+      ...tab,
+      ...this.tabs.runtimeOf(tab.id),
+      agentSent: this.agentSentTabIds.has(tab.id)
+    }))
     const blockedTotal = this.tabs.blockedTotal()
     const briefKey = `${state.history.length}:${state.history[0]?.visitedAt ?? 0}:${state.tabs.length}:${state.tabs.map((tab) => tab.lastActiveAt).join(',')}:${blockedTotal}`
     let brief = this.briefCache
@@ -343,7 +355,26 @@ export class Browser {
       history: state.history.slice(0, 80),
       notes: this.noteCache,
       tasks: state.tasks.slice(0, 200),
-      works: state.works.slice(0, 120),
+      // Les rapports restent sur le disque : l'état ne transporte que leur résumé.
+      works: state.works.slice(0, 120).map((work) => {
+        const cached = this.workPreviews.get(work.id)
+        const preview =
+          cached && cached.updatedAt === work.updatedAt ? cached.preview : previewOf(work.markdown)
+        if (!cached || cached.updatedAt !== work.updatedAt) {
+          this.workPreviews.set(work.id, { updatedAt: work.updatedAt, preview })
+        }
+        return {
+          id: work.id,
+          title: work.title,
+          preview,
+          mode: work.mode,
+          sourceCount: work.sources.length,
+          spaceId: work.spaceId,
+          createdAt: work.createdAt,
+          updatedAt: work.updatedAt,
+          archived: work.archived
+        }
+      }),
       downloads: this.downloads.slice(0, 30),
       brief,
       blockedTotal
@@ -677,7 +708,12 @@ export class Browser {
     this.store.update((state) => {
       const settings: Settings = state.settings
       if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system') settings.theme = input.theme
-      if (input.searchEngine === 'duckduckgo' || input.searchEngine === 'google' || input.searchEngine === 'brave') {
+      if (
+        input.searchEngine === 'duckduckgo' ||
+        input.searchEngine === 'brave' ||
+        input.searchEngine === 'startpage' ||
+        input.searchEngine === 'searxng'
+      ) {
         settings.searchEngine = input.searchEngine
       }
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
@@ -781,6 +817,9 @@ export class Browser {
   private runAgent(input: unknown): { runId: string } {
     const payload = (input ?? {}) as { prompt?: unknown; sources?: unknown; spaceId?: unknown }
     const prompt = asString(payload.prompt).slice(0, 8000)
+    this.tabs.markAgentSent(this.agentSentTabIds, false)
+    this.agentSentTabIds.clear()
+    if (this.agentSentTimer) clearTimeout(this.agentSentTimer)
     const sources = Array.isArray(payload.sources)
       ? payload.sources
           .filter(
@@ -794,6 +833,23 @@ export class Browser {
             url: source.url.slice(0, 2000)
           }))
       : []
+    const settings = this.store.get().settings.agent
+    const provider = providerById(settings.provider)
+    const endpoint = this.store.get().settings.agent.providers[provider.id].baseUrl
+    const localEndpoint = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(endpoint)
+    const usesRemoteProvider = settings.mode === 'api' && Boolean(this.store.getSecret(provider.id) || !localEndpoint)
+    if (usesRemoteProvider) {
+      for (const source of sources) if (source.tabId) this.agentSentTabIds.add(source.tabId)
+      this.tabs.markAgentSent(this.agentSentTabIds, true)
+      this.broadcast()
+      this.agentSentTimer = setTimeout(() => {
+        this.tabs.markAgentSent(this.agentSentTabIds, false)
+        this.agentSentTabIds.clear()
+        this.agentSentTimer = null
+        this.broadcast()
+      }, 60_000)
+      this.agentSentTimer.unref()
+    }
     return this.agent.start({
       prompt,
       sources,
@@ -839,6 +895,15 @@ export class Browser {
     handle('tab:navigate', (payload) => {
       const input = (payload ?? {}) as { id?: unknown; input?: unknown }
       this.tabs.navigate(asId(input.id), asString(input.input))
+    })
+    handle('tab:find', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; query?: unknown; forward?: unknown }
+      return this.tabs.find(asId(input.id), asString(input.query), input.forward !== false)
+    })
+    handle('tab:find-stop', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; action?: unknown }
+      const action = input.action === 'keepSelection' ? 'keepSelection' : 'clearSelection'
+      this.tabs.findStop(asId(input.id), action)
     })
     handle('tab:home', (payload) => {
       this.tabs.goHome(asId(payload))
@@ -900,6 +965,18 @@ export class Browser {
     })
 
     handle('downloads:list', () => this.downloads.slice(0, 30))
+    handle('downloads:preview', async (payload) => {
+      const item = this.downloads.find((download) => download.id === asId(payload))
+      if (!item?.path || item.state !== 'done') return false
+      const extension = item.name.split('.').pop()?.toLowerCase() ?? ''
+      if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'json'].includes(extension)) return false
+      try {
+        const opened = await shell.openPath(item.path)
+        return !opened
+      } catch {
+        return false
+      }
+    })
     handle('downloads:open', async (payload) => {
       const item = this.downloads.find((d) => d.id === asId(payload))
       if (item?.path) await shell.showItemInFolder(item.path)
@@ -955,6 +1032,10 @@ export class Browser {
       this.broadcast()
     })
 
+    handle('works:get', (payload) => {
+      const id = typeof payload === 'string' ? payload : ''
+      return this.store.get().works.find((work) => work.id === id) ?? null
+    })
     handle('work:rename', (payload) => {
       const input = (payload ?? {}) as { id?: unknown; title?: unknown }
       const id = typeof input.id === 'string' ? input.id : ''

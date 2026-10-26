@@ -1,5 +1,14 @@
 import { createElement, type ReactNode } from 'react'
 
+function safeUrl(value: string): string | null {
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null
+  } catch {
+    return null
+  }
+}
+
 function renderInline(text: string, prefix: string): ReactNode[] {
   const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g)
   return tokens.filter(Boolean).map((token, index) => {
@@ -18,8 +27,10 @@ function renderInline(text: string, prefix: string): ReactNode[] {
     }
     const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
     if (link) {
+      const href = safeUrl(link[2])
+      if (!href) return link[1]
       return (
-        <a key={key} href={link[2]} target="_blank" rel="noreferrer">
+        <a key={key} href={href} target="_blank" rel="noreferrer">
           {link[1]}
         </a>
       )
@@ -50,7 +61,13 @@ function isBlockStart(line: string): boolean {
 }
 
 /** Rendu Markdown minimal : titres, listes, tableaux, citations, code et liens. */
-export function Markdown({ text }: { text: string }) {
+export function Markdown({
+  text,
+  sourceLinks = []
+}: {
+  text: string
+  sourceLinks?: { title: string; url: string; anchor?: string }[]
+}) {
   const lines = text.replace(/\r\n/g, '\n').split('\n')
   const blocks: ReactNode[] = []
   let index = 0
@@ -193,6 +210,33 @@ export function Markdown({ text }: { text: string }) {
     }
     const paragraphKey = key++
     blocks.push(<p key={paragraphKey}>{renderInline(paragraph.join(' '), `p-${paragraphKey}`)}</p>)
+  }
+
+  if (sourceLinks.length > 0) {
+    const unique = sourceLinks.filter((source, index, all) => all.findIndex((item) => item.url === source.url) === index)
+    blocks.push(
+      <section className="markdown-sources" key="source-links" aria-label="Sources et passages cités">
+        <h2>Sources</h2>
+        <ul>
+          {unique.map((source, index) => (
+            <li key={`${source.url}-${index}`}>
+              {safeUrl(source.url) ? (
+                <a href={safeUrl(source.url)!} target="_blank" rel="noreferrer">
+                  {source.title || source.url}
+                </a>
+              ) : (
+                <span>{source.title || source.url}</span>
+              )}
+              {source.anchor && safeUrl(source.url) && (
+                <a className="markdown-source-quote" href={`${safeUrl(source.url)}${source.anchor}`} target="_blank" rel="noreferrer">
+                  Aller au passage transmis ↗
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
   }
 
   return <div className="markdown">{blocks}</div>

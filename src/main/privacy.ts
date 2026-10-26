@@ -20,17 +20,20 @@ export function attachPrivacy(
   ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (details, callback) => {
     if (!isEnabled()) return callback({})
     if (details.resourceType === 'mainFrame') return callback({})
+    // Test le moins cher d'abord : la quasi-totalité des requêtes d'une page
+    // n'est pas un traqueur et repart sans toucher à webContents.
+    if (!isTracker(details.url)) return callback({})
+    const owner = details.webContentsId && details.webContentsId > 0 ? details.webContentsId : 0
     // Pages d'auth : aucune interférence, même sur les requêtes tierces.
-    if (details.webContentsId && details.webContentsId > 0) {
+    if (owner) {
       try {
-        const pageUrl = webContents.fromId(details.webContentsId)?.getURL() ?? ''
+        const pageUrl = webContents.fromId(owner)?.getURL() ?? ''
         if (pageUrl && isAuthPage(pageUrl)) return callback({})
       } catch {
         /* doute sur la page : on applique le filtrage normal */
       }
+      onBlocked(owner)
     }
-    if (!isTracker(details.url)) return callback({})
-    if (details.webContentsId && details.webContentsId > 0) onBlocked(details.webContentsId)
     callback({ cancel: true })
   })
 

@@ -30,6 +30,7 @@ export interface TabHost {
 interface Runtime {
   loading: boolean
   error: string | null
+  agentSent?: boolean
 }
 
 export interface TabRuntime {
@@ -37,6 +38,7 @@ export interface TabRuntime {
   canGoBack: boolean
   canGoForward: boolean
   blocked: number
+  agentSent: boolean
   error: string | null
 }
 
@@ -58,6 +60,13 @@ export class TabManager {
     private host: TabHost
   ) {}
 
+  markAgentSent(tabIds: Iterable<string>, sent: boolean): void {
+    for (const tabId of tabIds) {
+      const runtime = this.runtimes.get(tabId)
+      if (runtime) runtime.agentSent = sent
+    }
+  }
+
   runtimeOf(tabId: string): TabRuntime {
     const view = this.views.get(tabId)
     const runtime = this.runtimes.get(tabId)
@@ -67,6 +76,7 @@ export class TabManager {
       canGoBack: alive ? view!.webContents.navigationHistory.canGoBack() : false,
       canGoForward: alive ? view!.webContents.navigationHistory.canGoForward() : false,
       blocked: this.blocked.get(tabId) ?? 0,
+      agentSent: Boolean(runtime?.agentSent),
       error: runtime?.error ?? null
     }
   }
@@ -187,13 +197,14 @@ export class TabManager {
     })
 
     wc.on('did-start-loading', () => {
-      this.runtimes.set(tabId, { loading: true, error: null })
+      const previous = this.runtimes.get(tabId)
+      this.runtimes.set(tabId, { loading: true, error: null, agentSent: previous?.agentSent ?? false })
       this.host.changed()
     })
 
     wc.on('did-stop-loading', () => {
       const current = this.runtimes.get(tabId)
-      this.runtimes.set(tabId, { loading: false, error: current?.error ?? null })
+      this.runtimes.set(tabId, { loading: false, error: current?.error ?? null, agentSent: current?.agentSent ?? false })
       this.restoreScroll(tabId, view)
       this.host.changed()
     })
@@ -223,14 +234,16 @@ export class TabManager {
 
     wc.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
       if (!isMainFrame || code === -3 || url === HOME_URL) return
-      this.runtimes.set(tabId, { loading: false, error: description || 'Chargement impossible' })
+      const current = this.runtimes.get(tabId)
+      this.runtimes.set(tabId, { loading: false, error: description || 'Chargement impossible', agentSent: current?.agentSent ?? false })
       this.host.changed()
     })
 
     wc.on('render-process-gone', (_event, details) => {
       this.runtimes.set(tabId, {
         loading: false,
-        error: details.reason === 'clean-exit' ? null : 'La page a cessé de répondre.'
+        error: details.reason === 'clean-exit' ? null : 'La page a cessé de répondre.',
+        agentSent: this.runtimes.get(tabId)?.agentSent ?? false
       })
       this.host.changed()
     })
@@ -283,6 +296,36 @@ export class TabManager {
     this.host.patchTab(tabId, { url: HOME_URL, title: 'Nouvel onglet', favicon: undefined })
     this.applyLayout()
     this.host.changed()
+  }
+
+  find(
+    tabId: string,
+    query: string,
+    forward = true
+  ): Promise<{ matches: number; activeMatchOrdinal: number }> {
+    const view = this.ensure(tabId)
+    if (!view || view.webContents.isDestroyed()) return Promise.resolve({ matches: 0, activeMatchOrdinal: 0 })
+    const clean = query.slice(0, 300)
+    if (!clean) {
+      view.webContents.stopFindInPage('clearSelection')
+      return Promise.resolve({ matches: 0, activeMatchOrdinal: 0 })
+    }
+    return new Promise((resolve) => {
+      let requestId = -1
+      const listener = (_event: ElectronEvent, result: unknown): void => {
+        const detail = result as { requestId?: number; matches?: number; activeMatchOrdinal?: number; finalUpdate?: boolean }
+        if (detail.requestId !== requestId || !detail.finalUpdate) return
+        view.webContents.removeListener('found-in-page', listener)
+        resolve({ matches: detail.matches ?? 0, activeMatchOrdinal: detail.activeMatchOrdinal ?? 0 })
+      }
+      view.webContents.on('found-in-page', listener)
+      requestId = view.webContents.findInPage(clean, { findNext: true, forward })
+    })
+  }
+
+  findStop(tabId: string, action: 'clearSelection' | 'keepSelection' = 'clearSelection'): void {
+    const view = this.views.get(tabId)
+    if (view && !view.webContents.isDestroyed()) view.webContents.stopFindInPage(action)
   }
 
   back(tabId: string): void {
@@ -466,17 +509,44 @@ export class TabManager {
     this.evictExcess(visible)
   }
 
-  async excerpt(tabId: string): Promise<string> {
+  async excerpt(tabId: string): Promise<{ text: string; anchor: string }> {
     const view = this.views.get(tabId)
-    if (!view || view.webContents.isDestroyed()) return ''
+    if (!view || view.webContents.isDestroyed()) return { text: '', anchor: '' }
     try {
-      const text: unknown = await view.webContents.executeJavaScript(
-        'document.body ? document.body.innerText.slice(0, 6000) : ""',
+      const result: unknown = await view.webContents.executeJavaScript(
+        `(() => {
+          const body = document.body;
+          if (!body) return { text: '', anchor: '' };
+          const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+          let total = 0;
+          let text = '';
+          let anchor = '';
+          let node;
+          while ((node = walker.nextNode()) && total < 6000) {
+            const parent = node.parentElement;
+            if (!node.textContent?.trim() || !parent || parent.closest('script,style,noscript,svg,[hidden],[aria-hidden="true"]')) continue;
+            const style = getComputedStyle(parent);
+            if (style.display === 'none' || style.visibility === 'hidden') continue;
+            const chunk = node.textContent.slice(0, 6000 - total);
+            text += chunk + ' ';
+            total += chunk.length;
+            if (!anchor && chunk.trim().length >= 40) {
+              const quote = chunk.trim().slice(0, 120).trim();
+              anchor = quote ? '#:~:text=' + encodeURIComponent(quote) : '';
+            }
+          }
+          return { text: text.trim(), anchor };
+        })()`,
         true
       )
-      return typeof text === 'string' ? text : ''
+      if (!result || typeof result !== 'object') return { text: '', anchor: '' }
+      const excerpt = result as { text?: unknown; anchor?: unknown }
+      return {
+        text: typeof excerpt.text === 'string' ? excerpt.text.slice(0, 6000) : '',
+        anchor: typeof excerpt.anchor === 'string' ? excerpt.anchor : ''
+      }
     } catch {
-      return ''
+      return { text: '', anchor: '' }
     }
   }
 
@@ -491,6 +561,16 @@ export class TabManager {
     }
     if (!mod || input.alt) return
     const key = input.key.toLowerCase()
+    if (key === 'f' && !input.shift) {
+      event.preventDefault()
+      this.host.shortcut({ action: 'find' })
+      return
+    }
+    if (input.shift && key === 'g') {
+      event.preventDefault()
+      this.host.shortcut({ action: 'find-prev' })
+      return
+    }
     let action: ShortcutAction | null = null
     let digit: number | undefined
 

@@ -77,6 +77,24 @@ export default function Workspace() {
   const liveRatio = useBrowser((state) => state.splitRatioLive)
   const setSplitRatio = useBrowser((state) => state.setSplitRatio)
   const commitSplitRatio = useBrowser((state) => state.commitSplitRatio)
+  const findOpen = useBrowser((state) => state.findOpen)
+  const findQuery = useBrowser((state) => state.findQuery)
+  const findResult = useBrowser((state) => state.findResult)
+  const activeTabId = useBrowser((state) => state.view?.activeTabId)
+  const findInPage = useBrowser((state) => state.findInPage)
+  const closeFind = useBrowser((state) => state.closeFind)
+  const findInput = useRef<HTMLInputElement>(null)
+  const findDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!findOpen) return
+    findInput.current?.focus()
+    findInput.current?.select()
+  }, [findOpen, activeTabId])
+
+  useEffect(() => () => {
+    if (findDebounce.current) clearTimeout(findDebounce.current)
+  }, [])
 
   const panesRef = useRef<HTMLDivElement>(null)
   const resizingRef = useRef(false)
@@ -194,6 +212,30 @@ export default function Workspace() {
       data-resizing={resizing}
       data-collapsed={view.settings.sidebarCollapsed}
     >
+      {findOpen && (
+        <div className="find-bar" role="search" aria-label="Rechercher dans la page">
+          <input
+            ref={findInput}
+            value={findQuery}
+            placeholder="Rechercher dans la page"
+            aria-label="Texte recherché"
+            onChange={(event) => {
+              const value = event.target.value
+              useBrowser.setState({ findQuery: value, findResult: { matches: 0, activeMatchOrdinal: 0 } })
+              if (findDebounce.current) clearTimeout(findDebounce.current)
+              findDebounce.current = setTimeout(() => void findInPage(value), 120)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') closeFind()
+              if (event.key === 'Enter') void findInPage(findQuery, !event.shiftKey)
+            }}
+          />
+          <span aria-live="polite">{findResult.matches ? `${findResult.activeMatchOrdinal} / ${findResult.matches}` : findQuery ? 'Aucun résultat' : ''}</span>
+          <button type="button" className="icon-btn" aria-label="Correspondance précédente" onClick={() => void findInPage(findQuery, false)}>↑</button>
+          <button type="button" className="icon-btn" aria-label="Correspondance suivante" onClick={() => void findInPage(findQuery, true)}>↓</button>
+          <button type="button" className="icon-btn" aria-label="Fermer la recherche" onClick={closeFind}><Icon name="close" size={14} /></button>
+        </div>
+      )}
       <div
         className={`panes${split ? ' is-split' : ''}`}
         ref={panesRef}

@@ -36,6 +36,15 @@ describe('normalizeInput', () => {
     })
   })
 
+  it.each(['duckduckgo', 'brave', 'startpage', 'searxng'] as const)(
+    'construit une recherche pour %s',
+    (engine) => {
+      const result = normalizeInput('Bruxelles Charleroi', engine)
+      expect(result.kind).toBe('search')
+      expect(result.url).toBe(searchUrl('Bruxelles Charleroi', engine))
+    }
+  )
+
   it('ne laisse pas passer les schémas dangereux', () => {
     const result = normalizeInput('javascript:alert(1)')
     expect(result.kind).toBe('search')
@@ -64,7 +73,8 @@ describe('helpers', () => {
 describe('engineHost', () => {
   it('renvoie l’hôte pré-connectable de chaque moteur', () => {
     expect(engineHost('duckduckgo')).toBe('duckduckgo.com')
-    expect(engineHost('google')).toBe('www.google.com')
     expect(engineHost('brave')).toBe('search.brave.com')
+    expect(engineHost('startpage')).toBe('www.startpage.com')
+    expect(engineHost('searxng')).toBe('searx.be')
   })
 })

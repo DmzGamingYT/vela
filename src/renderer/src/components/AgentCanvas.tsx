@@ -147,9 +147,8 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
 
         {showWorks && (
           <WorkList
-            onOpen={(work) => {
-              openWork(work)
-              setShowWorks(false)
+            onOpen={async (work) => {
+              if (await openWork(work)) setShowWorks(false)
             }}
           />
         )}
@@ -236,7 +235,7 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
 
             <p className="agent-note">
               {modeLabel === 'api'
-                ? 'Le texte des onglets joints est envoyé au modèle configuré, au moment de la demande.'
+                ? 'Le texte des onglets joints est envoyé au modèle configuré. Le contenu des pages est traité comme une donnée non fiable, jamais comme une instruction.'
                 : 'Mode démo : rapport simulé localement à partir des titres. Aucune page n’est envoyée.'}
             </p>
           </aside>
@@ -292,6 +291,7 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
                     <button type="button" className="icon-btn" onClick={() => void copy()} title="Copier le rapport" disabled={!agent.markdown}>
                       <Icon name="copy" size={15} />
                     </button>
+
                     <button type="button" className="icon-btn" onClick={() => resetAgent()} title="Nouvelle demande">
                       <Icon name="plus" size={15} />
                     </button>
@@ -330,7 +330,10 @@ export default function AgentCanvas({ embedded = false }: { embedded?: boolean }
                 <div className="result-scroll" ref={reportRef}>
                   {agent.markdown ? (
                     <>
-                      <Markdown text={agent.markdown} />
+                      <Markdown
+                        text={agent.markdown}
+                        sourceLinks={agent.mode === 'api' ? agent.sources : []}
+                      />
                       {running && <span className="caret" />}
                     </>
                   ) : (

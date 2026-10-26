@@ -108,6 +108,8 @@ export interface VelaApi {
   }
   tabs: {
     create(input?: CreateTabInput): Promise<TabState>
+    find(id: string, query: string, forward?: boolean): Promise<{ matches: number; activeMatchOrdinal: number }>
+    findStop(id: string, action?: 'clearSelection' | 'keepSelection'): Promise<void>
     close(id: string): Promise<void>
     activate(id: string): Promise<void>
     navigate(id: string, input: string): Promise<void>
@@ -142,6 +144,8 @@ export interface VelaApi {
     remove(id: string): Promise<void>
   }
   works: {
+    /** Rapport complet, chargé seulement à l'ouverture. */
+    get(id: string): Promise<import('./types').WorkItem | null>
     rename(input: { id: string; title: string }): Promise<void>
     archive(input: { id: string; archived: boolean }): Promise<void>
   }
@@ -163,6 +167,7 @@ export interface VelaApi {
   }
   downloads: {
     list(): Promise<import('./types').DownloadItem[]>
+    preview(id: string): Promise<boolean>
     open(id: string): Promise<void>
     clear(): Promise<void>
   }

@@ -81,7 +81,9 @@ function mergeSettings(raw: unknown): Settings {
   return {
     theme: input.theme === 'light' || input.theme === 'dark' ? input.theme : 'system',
     searchEngine:
-      input.searchEngine === 'google' || input.searchEngine === 'brave' ? input.searchEngine : 'duckduckgo',
+      input.searchEngine === 'brave' || input.searchEngine === 'startpage' || input.searchEngine === 'searxng'
+        ? input.searchEngine
+        : 'duckduckgo',
     blockTrackers: input.blockTrackers !== false,
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
@@ -176,6 +178,7 @@ export function normalizeState(raw: unknown): PersistedState {
           title: string
           prompt?: unknown
           markdown?: unknown
+          preview?: unknown
           mode?: unknown
           sources?: unknown
           spaceId?: unknown
@@ -189,6 +192,7 @@ export function normalizeState(raw: unknown): PersistedState {
         title: entry.title.slice(0, 160),
         prompt: typeof entry.prompt === 'string' ? entry.prompt.slice(0, 2000) : '',
         markdown: typeof entry.markdown === 'string' ? entry.markdown.slice(0, 200_000) : '',
+        preview: typeof entry.preview === 'string' ? entry.preview.slice(0, 180) : '',
         mode: entry.mode === 'api' ? ('api' as const) : ('demo' as const),
         sources: (Array.isArray(entry.sources) ? entry.sources : [])
           .filter((source): source is { title?: unknown; url?: unknown } => Boolean(source && typeof (source as { url?: unknown }).url === 'string'))

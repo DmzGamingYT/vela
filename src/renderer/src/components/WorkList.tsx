@@ -1,41 +1,11 @@
 import { useState } from 'react'
-import type { WorkItem } from '@shared/types'
+import type { WorkSummary } from '@shared/types'
 import { plural, timeAgo } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
 interface Props {
-  onOpen: (work: WorkItem) => void
-}
-
-/**
- * Première phrase de prose du rapport : titres, listes et tableaux sont écartés
- * pour ne garder qu'un aperçu lisible du contenu.
- */
-function excerpt(markdown: string): string {
-  const clean = (line: string): string =>
-    line
-      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-      .replace(/[*_`~]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-  const lines = markdown.split('\n')
-  let fenced = false
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      fenced = !fenced
-      continue
-    }
-    if (fenced) continue
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    if (/^(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|\|)/.test(trimmed)) continue
-    const text = clean(trimmed)
-    if (text.length < 40) continue
-    return text.length > 150 ? `${text.slice(0, 149)}…` : text
-  }
-  return ''
+  onOpen: (work: WorkSummary) => void
 }
 
 /**
@@ -54,7 +24,7 @@ export default function WorkList({ onOpen }: Props) {
   const openCount = works.length - works.filter((work) => work.archived).length
   const archivedCount = works.length - openCount
 
-  const commit = (work: WorkItem): void => {
+  const commit = (work: WorkSummary): void => {
     if (draft.trim() && draft.trim() !== work.title) void renameWork(work.id, draft)
     setEditing(null)
     setDraft('')
@@ -123,10 +93,10 @@ export default function WorkList({ onOpen }: Props) {
                     <span className="work-title">{work.title}</span>
                     <span className="work-meta">
                       {timeAgo(work.updatedAt || work.createdAt)}
-                      {work.sources.length > 0 && ` · ${plural(work.sources.length, 'source')}`}
+                      {work.sourceCount > 0 && ` · ${plural(work.sourceCount, 'source')}`}
                       {work.mode === 'api' ? ' · modèle' : ' · démo'}
                     </span>
-                    {excerpt(work.markdown) && <span className="work-excerpt">{excerpt(work.markdown)}</span>}
+                    {work.preview && <span className="work-excerpt">{work.preview}</span>}
                   </span>
                 </button>
                 <div className="work-actions">

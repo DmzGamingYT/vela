@@ -1,6 +1,15 @@
 import { create } from 'zustand'
 import type { UpdateInfo } from '@shared/api'
-import type { AgentEvent, AgentMode, AppView, Note, ProviderId, ShortcutEvent, TabGroup, WorkItem } from '@shared/types'
+import type {
+  AgentEvent,
+  AgentMode,
+  AppView,
+  Note,
+  ProviderId,
+  ShortcutEvent,
+  TabGroup,
+  WorkSummary
+} from '@shared/types'
 import { HOME_URL } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
 import type { SaveNoteInput, SettingsPatch } from '@shared/api'
@@ -29,6 +38,7 @@ export interface AgentUi {
   error: string | null
   mode: AgentMode
   prompt: string
+  sources: { title: string; url: string; anchor?: string }[]
 }
 
 const EMPTY_AGENT: AgentUi = {
@@ -39,7 +49,8 @@ const EMPTY_AGENT: AgentUi = {
   status: 'idle',
   error: null,
   mode: 'demo',
-  prompt: ''
+  prompt: '',
+  sources: []
 }
 
 interface BrowserState {
@@ -53,6 +64,10 @@ interface BrowserState {
   agentDraft: string
   workMode: WorkMode
   approved: boolean
+  agentSentTabIds: string[]
+  findOpen: boolean
+  findQuery: string
+  findResult: { matches: number; activeMatchOrdinal: number }
   toasts: Toast[]
   splitRatioLive: number | null
   init(): Promise<void>
@@ -109,11 +124,50 @@ interface BrowserState {
   cancelAgent(): void
   resetAgent(): void
   saveAgentNote(): Promise<void>
-  openWork(work: WorkItem): void
+  openWork(work: WorkSummary): Promise<boolean>
   renameWork(id: string, title: string): Promise<void>
   archiveWork(id: string, archived: boolean): Promise<void>
+  findInPage(query: string, forward?: boolean): Promise<void>
+  closeFind(): void
   handleShortcut(event: ShortcutEvent): void
   handleAgentEvent(event: AgentEvent): void
+}
+
+/**
+ * Deltas du modèle : ils arrivent par paquets de quelques mots. Les appliquer
+ * un par un relançait le rendu Markdown des centaines de fois par rapport ;
+ * on les regroupe pour un rendu fluide (≈ 14 par seconde) et beaucoup moins
+ * de travail pour le processeur.
+ */
+const DELTA_FLUSH_MS = 70
+let deltaBuffer = ''
+let deltaRunId = ''
+let deltaTimer: ReturnType<typeof setTimeout> | null = null
+
+function flushAgentDelta(): void {
+  if (deltaTimer) {
+    clearTimeout(deltaTimer)
+    deltaTimer = null
+  }
+  const chunk = deltaBuffer
+  const runId = deltaRunId
+  deltaBuffer = ''
+  deltaRunId = ''
+  if (!chunk) return
+  useBrowser.setState((state) =>
+    state.agent.runId === runId
+      ? { agent: { ...state.agent, markdown: state.agent.markdown + chunk } }
+      : {}
+  )
+}
+
+function discardAgentDelta(): void {
+  if (deltaTimer) {
+    clearTimeout(deltaTimer)
+    deltaTimer = null
+  }
+  deltaBuffer = ''
+  deltaRunId = ''
 }
 
 function cleanError(error: unknown, fallback: string): string {
@@ -137,6 +191,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   agentDraft: '',
   workMode: 'browse',
   approved: false,
+  agentSentTabIds: [],
+  findOpen: false,
+  findQuery: '',
+  findResult: { matches: 0, activeMatchOrdinal: 0 },
   toasts: [],
   splitRatioLive: null,
   update: null,
@@ -383,7 +441,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async importBookmarks(urls) {
-    const clean = urls.filter((u) => /^https?:/i.test(u)).slice(0, 20)
+    const clean = Array.from(new Set(urls.filter((u) => /^https?:\/\//i.test(u)))).slice(0, 200)
     if (clean.length === 0) {
       get().toast('Aucune URL valide trouvée.', 'error')
       return
@@ -471,11 +529,13 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     set({
       overlay: 'agent',
       agentDraft: prompt,
+      agentSentTabIds: view.settings.agent.mode === 'api' ? sources.map((source) => source.tabId!).filter(Boolean) : [],
       agent: {
         ...EMPTY_AGENT,
         status: 'running',
         mode: view.settings.agent.mode,
-        prompt
+        prompt,
+        sources: []
       }
     })
     const result = await get().call(
@@ -493,32 +553,46 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   cancelAgent() {
     const runId = get().agent.runId ?? undefined
+    flushAgentDelta()
     window.vela.agent.cancel(runId)
+    discardAgentDelta()
     set((state) => ({ agent: { ...state.agent, status: 'cancelled' } }))
   },
 
   resetAgent() {
-    set({ agent: EMPTY_AGENT })
+    discardAgentDelta()
+    set({ agent: EMPTY_AGENT, agentSentTabIds: [] })
   },
 
-  /** Rouvre un rapport déjà produit : il redevient le contenu de l'atelier. */
-  openWork(work) {
+  /**
+   * Rouvre un rapport déjà produit : il redevient le contenu de l'atelier.
+   * Le texte complet est lu à ce moment-là, pas pendant les mises à jour d'état.
+   */
+  async openWork(work) {
+    const full = await get().call(() => window.vela.works.get(work.id), 'Rapport introuvable.')
+    if (!full) {
+      get().toast('Ce rapport n’a pas pu être ouvert.', 'error')
+      return false
+    }
     set({
       // Déjà dans l’atelier : le rapport s’affiche sur place, sans seconde fenêtre.
       overlay: get().workMode === 'work' ? null : 'agent',
       approved: false,
-      agentDraft: work.prompt,
+      agentSentTabIds: [],
+      agentDraft: full.prompt,
       agent: {
         runId: null,
-        title: work.title,
+        title: full.title,
         steps: [{ label: 'Rapport enregistré', state: 'done' }],
-        markdown: work.markdown,
+        markdown: full.markdown,
         status: 'done',
         error: null,
-        mode: work.mode,
-        prompt: work.prompt
+        mode: full.mode,
+        prompt: full.prompt,
+        sources: full.sources
       }
     })
+    return true
   },
 
   async renameWork(id, title) {
@@ -529,6 +603,24 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   async archiveWork(id, archived) {
     await get().call(() => window.vela.works.archive({ id, archived }), 'Archivage impossible.')
+  },
+
+  async findInPage(query, forward = true) {
+    const view = get().view
+    const tabId = view?.activeTabId
+    if (!tabId) return
+    set({ findQuery: query })
+    const result = await get().call(
+      () => window.vela.tabs.find(tabId, query, forward),
+      'Recherche dans la page impossible.'
+    )
+    if (result && get().view?.activeTabId === tabId && get().findQuery === query) set({ findResult: result })
+  },
+
+  closeFind() {
+    const tabId = get().view?.activeTabId
+    if (tabId) void window.vela.tabs.findStop(tabId)
+    set({ findOpen: false, findQuery: '', findResult: { matches: 0, activeMatchOrdinal: 0 } })
   },
 
   async saveAgentNote() {
@@ -601,13 +693,23 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       case 'forward':
         if (active) state.forward(active.id)
         break
+      case 'find':
+        set({ findOpen: true })
+        break
+      case 'find-next':
+        if (state.findQuery) void state.findInPage(state.findQuery, true)
+        break
+      case 'find-prev':
+        if (state.findQuery) void state.findInPage(state.findQuery, false)
+        break
       case 'tab-select': {
         const target = spaceTabs[(event.digit ?? 1) - 1]
         if (target) state.selectTab(target.id)
         break
       }
       case 'escape':
-        if (state.overlay) state.setOverlay(null)
+        if (state.findOpen) state.closeFind()
+        else if (state.overlay) state.setOverlay(null)
         else if (state.notesOpen) state.toggleNotes(false)
         break
       default:
@@ -616,6 +718,16 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   handleAgentEvent(event) {
+    if (event.type === 'delta') {
+      const current = get().agent
+      if (current.runId && event.runId !== current.runId) return
+      deltaBuffer += event.text
+      deltaRunId = event.runId
+      if (!deltaTimer) deltaTimer = setTimeout(flushAgentDelta, DELTA_FLUSH_MS)
+      return
+    }
+    // Toute autre étape (fin, erreur, arrêt) doit voir le texte déjà reçu.
+    flushAgentDelta()
     set((state) => {
       const agent = state.agent
       if (event.type !== 'plan' && agent.runId && event.runId !== agent.runId) return {}
@@ -630,7 +742,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
               markdown: '',
               status: 'running',
               error: null,
-              mode: event.mode
+              mode: event.mode,
+              sources: event.sources ?? []
             }
           }
         case 'step':
@@ -642,8 +755,6 @@ export const useBrowser = create<BrowserState>((set, get) => ({
               )
             }
           }
-        case 'delta':
-          return { agent: { ...agent, markdown: agent.markdown + event.text } }
         case 'done':
           return {
             agent: {

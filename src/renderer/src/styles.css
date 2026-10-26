@@ -6393,3 +6393,106 @@ kbd {
 
 /* --- fin de la couche Zephium --- */
 
+
+/* ---------------------------------------------------------------
+   Recherche dans la page, citations et badge « envoyée au modèle »
+   --------------------------------------------------------------- */
+
+.find-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper-deep);
+  animation: rise 0.16s ease;
+}
+
+.find-bar input {
+  flex: 0 1 280px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.find-bar input::placeholder {
+  color: var(--faint);
+}
+
+.find-bar input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--space-accent) 55%, var(--line));
+  background: var(--fill);
+}
+
+.find-bar > span {
+  min-width: 68px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.find-bar .icon-btn {
+  color: var(--muted);
+}
+
+.address-agent-sent {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--space-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--space-accent) 30%, transparent);
+}
+
+.markdown .markdown-sources {
+  margin: 26px 0 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.markdown .markdown-sources h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.markdown-sources ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.markdown-sources a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1px;
+}
+
+.markdown-sources a:hover {
+  color: var(--ink);
+  border-bottom-color: color-mix(in srgb, var(--space-accent) 55%, var(--line));
+}

@@ -10,13 +10,17 @@ export const SEARCH_ENGINES: Record<SearchEngineId, Engine> = {
     label: 'DuckDuckGo',
     build: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
   },
-  google: {
-    label: 'Google',
-    build: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`
-  },
   brave: {
     label: 'Brave',
     build: (q) => `https://search.brave.com/search?q=${encodeURIComponent(q)}`
+  },
+  startpage: {
+    label: 'Startpage',
+    build: (q) => `https://www.startpage.com/sp/search?query=${encodeURIComponent(q)}`
+  },
+  searxng: {
+    label: 'SearXNG · searx.be',
+    build: (q) => `https://searx.be/search?q=${encodeURIComponent(q)}`
   }
 }
 

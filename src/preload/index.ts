@@ -32,6 +32,8 @@ const api: VelaApi = {
     close: (id: string) => ipcRenderer.invoke('tab:close', id),
     activate: (id: string) => ipcRenderer.invoke('tab:activate', id),
     navigate: (id: string, input: string) => ipcRenderer.invoke('tab:navigate', { id, input }),
+    find: (id: string, query: string, forward?: boolean) => ipcRenderer.invoke('tab:find', { id, query, forward }),
+    findStop: (id: string, action?: 'clearSelection' | 'keepSelection') => ipcRenderer.invoke('tab:find-stop', { id, action }),
     home: (id: string) => ipcRenderer.invoke('tab:home', id),
     back: (id: string) => ipcRenderer.invoke('tab:back', id),
     forward: (id: string) => ipcRenderer.invoke('tab:forward', id),
@@ -59,6 +61,7 @@ const api: VelaApi = {
   },
   downloads: {
     list: () => ipcRenderer.invoke('downloads:list'),
+    preview: (id: string) => ipcRenderer.invoke('downloads:preview', id),
     open: (id: string) => ipcRenderer.invoke('downloads:open', id),
     clear: () => ipcRenderer.invoke('downloads:clear')
   },
@@ -78,6 +81,7 @@ const api: VelaApi = {
     remove: (id: string) => ipcRenderer.invoke('tasks:remove', id)
   },
   works: {
+    get: (id: string) => ipcRenderer.invoke('works:get', id),
     rename: (input: { id: string; title: string }) => ipcRenderer.invoke('work:rename', input),
     archive: (input: { id: string; archived: boolean }) => ipcRenderer.invoke('work:archive', input)
   },

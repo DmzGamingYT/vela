@@ -59,6 +59,7 @@ const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] 
 
 const SHORTCUTS: [string, string][] = [
   ['Barre de commande', shortcut('K')],
+  ['Rechercher dans la page', shortcut('F')],
   ['Barre d’adresse', shortcut('L')],
   ['Nouvel onglet', shortcut('T')],
   ['Fermer l’onglet', shortcut('W')],

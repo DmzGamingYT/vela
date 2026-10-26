@@ -118,6 +118,11 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             {tab.blocked}
           </span>
         )}
+        {tab.agentSent && (
+          <span className="address-agent-sent" title="Cette page a été envoyée au fournisseur de modèle pour l’agent">
+            <Icon name="sparkles" size={12} /> Envoyée au modèle
+          </span>
+        )}
         <span className="address-hint">{shortcut('L')}</span>
       </form>
 

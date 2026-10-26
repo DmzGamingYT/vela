@@ -22,21 +22,28 @@ const STEPS: Step[] = [
 
 const ENGINE_LOOK: Record<SearchEngineId, { initial: string; tint: string }> = {
   duckduckgo: { initial: 'D', tint: '#de5833' },
-  google: { initial: 'G', tint: '#4285f4' },
-  brave: { initial: 'B', tint: '#fb542b' }
+  brave: { initial: 'B', tint: '#fb542b' },
+  startpage: { initial: 'S', tint: '#6a73d8' },
+  searxng: { initial: 'X', tint: '#62a583' }
 }
 
 const ESSENTIALS = ['GitHub', 'Gmail', 'Notion', 'Figma', 'Slack', 'YouTube', 'Spotify', 'ChatGPT']
 
-function extractUrls(html: string): string[] {
-  const urls: string[] = []
-  const re = /HREF="([^"]+)"/gi
-  let m: RegExpExecArray | null
-  while ((m = re.exec(html)) !== null) {
-    if (/^https?:/i.test(m[1])) urls.push(m[1])
-    if (urls.length >= 20) break
+function extractBookmarkEntries(html: string): { title: string; url: string }[] {
+  const entries = new Map<string, string>()
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  for (const anchor of Array.from(doc.querySelectorAll('a[href]'))) {
+    try {
+      const url = new URL(anchor.getAttribute('href') || '')
+      if ((url.protocol === 'https:' || url.protocol === 'http:') && !entries.has(url.href)) {
+        entries.set(url.href, anchor.textContent?.trim().slice(0, 160) || url.hostname)
+      }
+    } catch {
+      // Ignore invalid bookmark URLs.
+    }
+    if (entries.size >= 200) break
   }
-  return urls
+  return Array.from(entries, ([url, title]) => ({ title, url }))
 }
 
 export default function Onboarding() {
@@ -130,7 +137,7 @@ export default function Onboarding() {
                   <span className="onboarding-row-icon"><Icon name="download" size={22} /></span>
                   <span className="onboarding-row-copy">
                     <strong>Importer mes favoris</strong>
-                    <small>Depuis un export HTML</small>
+                    <small>Favoris Chrome, Firefox ou Safari · export HTML</small>
                   </span>
                   <Icon name="arrow-right" size={16} />
                   <input
@@ -140,7 +147,7 @@ export default function Onboarding() {
                     onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      void file.text().then((text) => void importBookmarks(extractUrls(text)))
+                      void file.text().then((text) => void importBookmarks(extractBookmarkEntries(text).map(({ url }) => url)))
                     }}
                   />
                 </label>

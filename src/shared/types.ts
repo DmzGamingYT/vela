@@ -7,7 +7,7 @@ export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
 
 export type Theme = 'light' | 'dark' | 'system'
-export type SearchEngineId = 'duckduckgo' | 'google' | 'brave'
+export type SearchEngineId = 'duckduckgo' | 'brave' | 'startpage' | 'searxng'
 export type AgentMode = 'demo' | 'api'
 export type ProviderId =
   | 'openai'
@@ -120,18 +120,30 @@ export interface Task {
   dueAt: number | null
 }
 
-/** Un travail de l'atelier : une demande, ses sources et le rapport produit. */
-export interface WorkItem {
+/**
+ * Ce que l'interface reçoit pour chaque travail : tout sauf le rapport.
+ * Le texte complet est demandé à l'ouverture (`works.get`) pour ne pas
+ * transporter des dizaines de rapports dans chaque message d'état.
+ */
+export interface WorkSummary {
   id: string
   title: string
-  prompt: string
-  markdown: string
+  /** Première phrase de prose du rapport, calculée côté processus principal. */
+  preview: string
   mode: AgentMode
-  sources: { title: string; url: string }[]
+  /** Nombre de sources jointes : la liste elle-même n'est utile qu'à l'ouverture. */
+  sourceCount: number
   spaceId: string
   createdAt: number
   updatedAt: number
   archived: boolean
+}
+
+/** Un travail de l'atelier : une demande, ses sources et le rapport produit. */
+export interface WorkItem extends Omit<WorkSummary, 'sourceCount'> {
+  prompt: string
+  sources: { title: string; url: string }[]
+  markdown: string
 }
 
 export interface DownloadItem {
@@ -177,6 +189,8 @@ export interface TabView extends TabState {
   canGoForward: boolean
   /** Requêtes bloquées par le filtre local pour cet onglet. */
   blocked: number
+  /** La page a été envoyée au fournisseur de modèle lors de la dernière exécution. */
+  agentSent: boolean
   error: string | null
 }
 
@@ -210,7 +224,7 @@ export interface AppView {
   history: HistoryEntry[]
   notes: NoteMeta[]
   tasks: Task[]
-  works: WorkItem[]
+  works: WorkSummary[]
   downloads: DownloadItem[]
   brief: Brief
   blockedTotal: number
@@ -233,6 +247,8 @@ export interface AgentSource {
   url: string
   /** Texte extrait de la page au moment du lancement (mode API uniquement). */
   excerpt?: string
+  /** Ancre textuelle du passage précis, comme texte sélectionnable dans l’URL. */
+  anchor?: string
 }
 
 export interface AgentRunRequest {
@@ -241,8 +257,14 @@ export interface AgentRunRequest {
   spaceId: string
 }
 
+export interface AgentCitationSource {
+  title: string
+  url: string
+  anchor?: string
+}
+
 export type AgentEvent =
-  | { runId: string; type: 'plan'; title: string; steps: string[]; mode: AgentMode }
+  | { runId: string; type: 'plan'; title: string; steps: string[]; mode: AgentMode; sources?: AgentCitationSource[] }
   | { runId: string; type: 'step'; index: number; state: 'active' | 'done' }
   | { runId: string; type: 'delta'; text: string }
   | { runId: string; type: 'done' }
@@ -265,6 +287,9 @@ export type ShortcutAction =
   | 'reload'
   | 'back'
   | 'forward'
+  | 'find'
+  | 'find-next'
+  | 'find-prev'
   | 'tab-select'
   | 'escape'
 

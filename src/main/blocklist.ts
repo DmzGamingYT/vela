@@ -64,6 +64,23 @@ export const TRACKER_HOSTS: readonly string[] = [
 ]
 
 const ALLOW: readonly string[] = []
+const TRACKER_INDEX = new Set(TRACKER_HOSTS)
+const ALLOW_INDEX = new Set(ALLOW)
+
+/**
+ * Le domaine ou l'un de ses parents appartient-il à `index` ?
+ * Un Set et une poignée de découpes remplacent le balayage de toute la liste,
+ * sur le chemin d'une requête : c'est appelé pour chaque ressource de chaque page.
+ */
+function matches(host: string, index: Set<string>): boolean {
+  let candidate = host
+  for (;;) {
+    if (index.has(candidate)) return true
+    const dot = candidate.indexOf('.')
+    if (dot < 0) return false
+    candidate = candidate.slice(dot + 1)
+  }
+}
 
 /**
  * Pages d'authentification : le bloqueur s'y désactive entièrement.
@@ -84,6 +101,8 @@ export const AUTH_PAGE_HOSTS: readonly string[] = [
   'login.yahoo.com'
 ]
 
+const AUTH_PAGE_INDEX = new Set(AUTH_PAGE_HOSTS)
+
 export function isAuthPage(url: string): boolean {
   let host: string
   try {
@@ -92,7 +111,7 @@ export function isAuthPage(url: string): boolean {
     return false
   }
   if (!host) return false
-  return AUTH_PAGE_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`))
+  return matches(host, AUTH_PAGE_INDEX)
 }
 
 export function isTracker(url: string): boolean {
@@ -102,6 +121,6 @@ export function isTracker(url: string): boolean {
   } catch {
     return false
   }
-  if (!host || ALLOW.some((allowed) => host === allowed || host.endsWith(`.${allowed}`))) return false
-  return TRACKER_HOSTS.some((tracker) => host === tracker || host.endsWith(`.${tracker}`))
+  if (!host || matches(host, ALLOW_INDEX)) return false
+  return matches(host, TRACKER_INDEX)
 }
