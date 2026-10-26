@@ -78,11 +78,11 @@
 
   /* --- Téléchargement adapté à la plateforme ----------------------------- */
 
-  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.1.13/'
+  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.2.0/'
   const files = {
-    mac: { href: `${RELEASE}Vela-0.1.13-arm64.dmg`, label: 'Télécharger pour macOS' },
-    win: { href: `${RELEASE}Vela-0.1.13-x64.exe`, label: 'Télécharger pour Windows' },
-    linux: { href: `${RELEASE}Vela-0.1.13-x86_64.AppImage`, label: 'Télécharger pour Linux' }
+    mac: { href: `${RELEASE}Vela-0.2.0-arm64.dmg`, label: 'Télécharger pour macOS' },
+    win: { href: `${RELEASE}Vela-0.2.0-x64.exe`, label: 'Télécharger pour Windows' },
+    linux: { href: `${RELEASE}Vela-0.2.0-x86_64.AppImage`, label: 'Télécharger pour Linux' }
   }
 
   const platform = (() => {
@@ -155,6 +155,42 @@
   switchButtons.forEach((button) => {
     button.addEventListener('click', () => showMode(button.dataset.mode))
   })
+
+  /* --- Thèmes de couleur : aperçu vivant ---------------------------------- */
+
+  const demo = document.querySelector('[data-demo]')
+  const swatches = Array.from(document.querySelectorAll('[data-swatches] .swatch'))
+
+  const channel = (value) => {
+    const c = value / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+
+  const luminance = (hex) => {
+    const clean = hex.replace('#', '')
+    const r = parseInt(clean.slice(0, 2), 16)
+    const g = parseInt(clean.slice(2, 4), 16)
+    const b = parseInt(clean.slice(4, 6), 16)
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+  }
+
+  const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+  const inkLuminance = luminance('#17150f')
+
+  const previewTheme = (button) => {
+    swatches.forEach((item) => item.setAttribute('aria-pressed', String(item === button)))
+    if (!demo) return
+    const color = button.dataset.swatch
+    if (!color) return
+    // Même règle que dans l'app : le texte du bouton prend la teinte qui se lit
+    // le mieux sur l'accent, blanc ou presque noir.
+    const light = luminance(color)
+    const ink = ratio(light, 1) >= ratio(light, inkLuminance) ? '#ffffff' : '#17150f'
+    demo.style.setProperty('--demo', color)
+    demo.style.setProperty('--demo-ink', ink)
+  }
+
+  swatches.forEach((button) => button.addEventListener('click', () => previewTheme(button)))
 
   /* --- Section courante dans l'en-tête ----------------------------------- */
 
