@@ -141,6 +141,7 @@ garde le relevé trente minutes sur l’appareil. Aucune clé, aucun compte, auc
 | --- | --- |
 | **Accueil** | Fond aurora qui dérive et suit le pointeur, salutation en cascade, champ unique qui ouvre une adresse ou cherche, pages récentes en tuiles de verre inclinables, horloge et tâches avec progression. |
 | **Onglets verticaux** | Titres lisibles, épinglage, réouverture du dernier onglet fermé. |
+| **Épinglés et favoris** | Les onglets épinglés et les favoris forment une grille de cases compactes en verre, réduites au favicon du site avec une infobulle au survol ; les onglets normaux gardent leur ligne complète. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
 | **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct, modèles Travail, Personnel, Gaming, Études, Développement et sites épinglés préremplis. |

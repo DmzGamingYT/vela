@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CSSProperties, DragEvent } from 'react'
 import type { TabGroup, TabView } from '@shared/types'
 import { useBrowser } from '../store/browser'
+import Favicon from './Favicon'
 import { Icon } from './Icon'
 import TabRow from './TabRow'
 import TunnelSidebar from './TunnelSidebar'
@@ -13,9 +15,24 @@ type DropTarget =
   | { kind: 'loose' }
   | null
 
+/**
+ * Favicon demandé au site lui-même quand l'onglet n'en a pas mémorisé :
+ * aucune requête tierce, et la case n'affiche pas une initiale par défaut.
+ */
+function iconFrom(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return `https://${parsed.hostname}/favicon.ico`
+  } catch {
+    return null
+  }
+}
+
 export default function Sidebar() {
   const view = useBrowser((state) => state.view)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const selectTab = useBrowser((state) => state.selectTab)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const workMode = useBrowser((state) => state.workMode)
   const newTab = useBrowser((state) => state.newTab)
@@ -31,6 +48,9 @@ export default function Sidebar() {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [confirmGroup, setConfirmGroup] = useState<string | null>(null)
+  // Infobulle des cases compactes : positionnée en `fixed` pour ne pas être
+  // rognée par la liste qui défile.
+  const [tip, setTip] = useState<{ label: string; x: number; y: number } | null>(null)
   const cancelRename = useRef(false)
 
   if (!view) return <aside className="sidebar" />
@@ -50,7 +70,14 @@ export default function Sidebar() {
   const sourceTab = (): TabView | undefined =>
     draggingRef.current ? spaceTabs.find((tab) => tab.id === draggingRef.current) : undefined
 
-  const beginDrag = (event: DragEvent<HTMLDivElement>, tab: TabView): void => {
+  const showTip = (event: { currentTarget: HTMLElement }, label: string): void => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    setTip({ label, x: rect.right + 8, y: rect.top + rect.height / 2 })
+  }
+
+  const hideTip = (): void => setTip((current) => (current ? null : current))
+
+  const beginDrag = (event: DragEvent<HTMLElement>, tab: TabView): void => {
     draggingRef.current = tab.id
     setDraggingId(tab.id)
     setDrop(null)
@@ -126,6 +153,29 @@ export default function Sidebar() {
     event.preventDefault()
     event.stopPropagation()
     moveTabToGroup(source.id, null)
+    endDrag()
+  }
+
+  const canDropOnTile = (tab: TabView): boolean => {
+    const source = sourceTab()
+    return Boolean(source && source.id !== tab.id && source.pinned === tab.pinned)
+  }
+
+  const overTile = (event: DragEvent<HTMLElement>, tab: TabView): void => {
+    if (!canDropOnTile(tab)) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  const dropOnTile = (event: DragEvent<HTMLElement>, tab: TabView): void => {
+    if (!canDropOnTile(tab)) return
+    event.preventDefault()
+    event.stopPropagation()
+    const source = draggingRef.current
+    if (!source) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    reorderTab(source, tab.id, event.clientX < rect.left + rect.width / 2 ? 'before' : 'after')
     endDrag()
   }
 
@@ -222,14 +272,79 @@ export default function Sidebar() {
       {workMode === 'work' ? (
         <TunnelSidebar spaceId={space.id} />
       ) : (
-      <div className="tabs-scroll">
+      <div className="tabs-scroll" onScroll={hideTip}>
         {pinnedCount > 0 && (
           <>
             <div className="tabs-head">
               <span>Épinglés</span>
               <span className="tabs-count">{pinnedCount}</span>
             </div>
-            <div className="tabs-group">{pinned.map(renderTab)}</div>
+            <div className="mini-grid" role="list" aria-label={`Sites épinglés de ${space.name}`}>
+              {pinned.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="listitem"
+                  className="mini-tile"
+                  data-active={tab.id === view.activeTabId}
+                  data-secondary={view.split && tab.id === view.secondTabId ? 'true' : undefined}
+                  data-dragging={draggingId === tab.id ? 'true' : undefined}
+                  draggable
+                  aria-label={tab.title}
+                  onMouseEnter={(event) => showTip(event, tab.title)}
+                  onMouseLeave={hideTip}
+                  onFocus={(event) => showTip(event, tab.title)}
+                  onBlur={hideTip}
+                  onDragStart={(event) => {
+                    hideTip()
+                    beginDrag(event, tab)
+                  }}
+                  onDragEnd={endDrag}
+                  onDragOver={(event) => overTile(event, tab)}
+                  onDrop={(event) => dropOnTile(event, tab)}
+                  onClick={() => selectTab(tab.id)}
+                >
+                  <Favicon src={tab.favicon ?? iconFrom(tab.url)} label={tab.title} size={18} />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {view.bookmarks.length > 0 && (
+          <>
+            <div className="tabs-head">
+              <span>Favoris</span>
+              <span className="tabs-count">{view.bookmarks.length}</span>
+              <span className="tabs-tools">
+                <button
+                  type="button"
+                  className="icon-btn subtle"
+                  title="Tous les favoris"
+                  onClick={() => setOverlay('bookmarks')}
+                >
+                  <Icon name="arrow-right" size={14} />
+                </button>
+              </span>
+            </div>
+            <div className="mini-grid" role="list" aria-label="Favoris">
+              {view.bookmarks.slice(0, 12).map((bookmark) => (
+                <button
+                  key={bookmark.id}
+                  type="button"
+                  role="listitem"
+                  className="mini-tile"
+                  aria-label={bookmark.title}
+                  onMouseEnter={(event) => showTip(event, bookmark.title)}
+                  onMouseLeave={hideTip}
+                  onFocus={(event) => showTip(event, bookmark.title)}
+                  onBlur={hideTip}
+                  onClick={() => newTab(bookmark.url)}
+                >
+                  <Favicon src={bookmark.favicon ?? iconFrom(bookmark.url)} label={bookmark.title} size={18} />
+                </button>
+              ))}
+            </div>
           </>
         )}
 
@@ -393,6 +508,13 @@ export default function Sidebar() {
       </div>
       )}
 
+      {tip &&
+        createPortal(
+          <div className="side-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
+            {tip.label}
+          </div>,
+          document.body
+        )}
     </aside>
   )
 }
