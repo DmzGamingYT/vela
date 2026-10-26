@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { THEME_PRESETS } from '@shared/theme'
 import { SEARCH_ENGINES, searxBase } from '@shared/url'
 import type { BookmarkImportSource, SearchEngineId } from '@shared/types'
 import { useBrowser } from '../store/browser'
@@ -17,6 +18,7 @@ const STEPS: Step[] = [
   { kicker: 'Essentiels', title: 'Vos habitués, en un clic.', lede: 'Épinglés dans l’espace, chargés seulement à l’ouverture.', icon: 'folder' },
   { kicker: 'Raccourcis', title: 'Tout à une touche.', lede: 'Onglets, notes, agent : sans quitter la page.', icon: 'command' },
   { kicker: 'Agent', title: 'Déléguez le fastidieux.', lede: 'Il lit les onglets que vous choisissez, vous relisez.', icon: 'sparkles' },
+  { kicker: 'Couleur', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.', icon: 'sun' },
   { kicker: 'Prêt', title: 'Vous êtes chez vous.', lede: 'Ce qui est déjà en place sur cet appareil.', icon: 'shield' }
 ]
 
@@ -367,6 +369,29 @@ export default function Onboarding() {
             )}
 
             {step === 4 && (
+              <div className="appearance-grid" role="radiogroup" aria-label="Thème de couleur">
+                {THEME_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={settings.themeId === preset.id}
+                    className="appearance-choice"
+                    data-active={settings.themeId === preset.id}
+                    onClick={() => void updateSettings({ themeId: preset.id })}
+                  >
+                    <span
+                      className="appearance-choice-dot"
+                      style={{ background: preset.light }}
+                      aria-hidden="true"
+                    />
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {step === 5 && (
               <div className="ready-grid">
                 <div className="ready-tile">
                   <Icon name="shield" size={24} />

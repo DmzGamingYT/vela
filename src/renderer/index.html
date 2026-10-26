@@ -10,10 +10,25 @@
     <meta name="color-scheme" content="dark light" />
     <title>Vela</title>
     <script>
+      // Rejoue le thème mémorisé avant le premier rendu : pas de flash indigo.
       try {
-        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        var root = document.documentElement;
+        var cached = JSON.parse(localStorage.getItem('vela.appearance') || 'null');
+        if (cached && cached.tokens) {
+          root.dataset.mode = cached.mode || 'light';
+          root.dataset.theme = cached.themeId || 'indigo';
+          root.dataset.glass = cached.glass || 'normal';
+          root.dataset.contrast = cached.highContrast ? 'high' : 'normal';
+          root.style.colorScheme = cached.mode || 'light';
+          for (var name in cached.tokens) {
+            if (typeof cached.tokens[name] === 'string') root.style.setProperty(name, cached.tokens[name]);
+          }
+          root.style.setProperty('--space-accent', cached.tokens['--accent-label'] || '');
+        } else {
+          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.mode = dark ? 'dark' : 'light';
+          root.style.colorScheme = dark ? 'dark' : 'light';
+        }
       } catch (e) {}
     </script>
   </head>

@@ -66,7 +66,15 @@ export interface SettingsPatch {
   theme?: Settings['theme']
   searchEngine?: Settings['searchEngine']
   searxInstance?: string
-  accent?: Settings['accent']
+  themeId?: Settings['themeId']
+  customAccent?: string
+  glass?: Settings['glass']
+  homeBackground?: Settings['homeBackground']
+  homeImage?: string | null
+  homeBlur?: number
+  highContrast?: boolean
+  hourTheme?: boolean
+  perSpaceThemes?: boolean
   blockTrackers?: boolean
   sidebarCollapsed?: boolean
   onboarded?: boolean
@@ -130,7 +138,7 @@ export interface VelaApi {
   view(): Promise<AppView>
   spaces: {
     create(input: CreateSpaceInput): Promise<void>
-    update(input: { id: string; name?: string; color?: string }): Promise<void>
+    update(input: { id: string; name?: string; color?: string; theme?: string | null }): Promise<void>
     remove(id: string): Promise<void>
     activate(id: string): Promise<void>
   }
@@ -227,6 +235,13 @@ export interface VelaApi {
     update(patch: SettingsPatch): Promise<void>
     setKey(input: SetKeyInput): Promise<boolean>
     testKey(provider: ProviderId): Promise<KeyTestResult>
+  }
+  appearance: {
+    /** Ouvre un sélecteur d'image ; le chemin est enregistré dans les réglages. */
+    pickImage(): Promise<{ path: string; dataUrl: string } | null>
+    /** Relit l'image d'accueil enregistrée (null si aucune). */
+    image(): Promise<string | null>
+    clearImage(): Promise<void>
   }
   downloads: {
     list(): Promise<import('./types').DownloadItem[]>

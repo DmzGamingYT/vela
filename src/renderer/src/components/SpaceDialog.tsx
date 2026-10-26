@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { SPACE_COLORS } from '@shared/defaults'
+import { THEME_PRESETS, presetById, type ThemeId } from '@shared/theme'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
@@ -17,6 +18,7 @@ export default function SpaceDialog() {
   const [color, setColor] = useState(
     existing?.color ?? SPACE_COLORS[(view?.spaces.length ?? 0) % SPACE_COLORS.length]
   )
+  const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
   const [confirming, setConfirming] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -52,7 +54,7 @@ export default function SpaceDialog() {
           className="space-form"
           onSubmit={(event) => {
             event.preventDefault()
-            if (existing) void updateSpace(existing.id, { name: preview, color })
+            if (existing) void updateSpace(existing.id, { name: preview, color, theme })
             else void createSpace(preview, color)
           }}
         >
@@ -94,6 +96,30 @@ export default function SpaceDialog() {
               ))}
             </div>
           </div>
+
+          {view.settings.perSpaceThemes && existing && (
+            <label className="field">
+              <span>Thème de cet espace</span>
+              <select
+                className="select"
+                value={theme ?? ''}
+                onChange={(event) => setTheme((event.target.value || null) as ThemeId | null)}
+              >
+                <option value="">
+                  Thème global ({presetById(view.settings.themeId)?.label ?? 'personnalisé'})
+                </option>
+                {THEME_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.label}
+                  </option>
+                ))}
+                <option value="custom">Couleur personnalisée</option>
+              </select>
+              <small className="setting-hint">
+                L’accent du châssis change en douceur quand vous ouvrez cet espace.
+              </small>
+            </label>
+          )}
 
           <div className="dialog-foot" style={{ padding: '6px 0 0' }}>
             {existing && view.spaces.length > 1 ? (

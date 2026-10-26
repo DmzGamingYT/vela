@@ -18,6 +18,7 @@ import type {
 } from '@shared/types'
 import { HOME_URL } from '@shared/types'
 import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
+import { isThemeId, sanitizeAppearance } from '@shared/theme'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
@@ -100,8 +101,7 @@ function mergeSettings(raw: unknown): Settings {
     theme: input.theme === 'light' || input.theme === 'dark' ? input.theme : 'system',
     searchEngine: isSearchEngine(input.searchEngine) ? input.searchEngine : 'duckduckgo',
     searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
-    accent:
-      input.accent === 'clay' || input.accent === 'sage' || input.accent === 'ocean' ? input.accent : 'violet',
+    ...sanitizeAppearance(input),
     blockTrackers: input.blockTrackers !== false,
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
@@ -113,7 +113,10 @@ export function normalizeState(raw: unknown): PersistedState {
   const fallback = createDefaultState()
   if (!raw || typeof raw !== 'object') return fallback
   const input = raw as Partial<PersistedState>
-  const spaces = Array.isArray(input.spaces) ? input.spaces.filter(isSpace) : []
+  const spaces = (Array.isArray(input.spaces) ? input.spaces.filter(isSpace) : []).map((space) => ({
+    ...space,
+    theme: isThemeId(space.theme) ? space.theme : null
+  }))
   if (spaces.length === 0) return fallback
 
   const spaceIds = new Set(spaces.map((space) => space.id))

@@ -115,7 +115,7 @@ interface BrowserState {
   commitSplitRatio(ratio: number): void
   activateSpace(id: string): void
   createSpace(name: string, color: string): Promise<void>
-  updateSpace(id: string, patch: { name?: string; color?: string }): Promise<void>
+  updateSpace(id: string, patch: { name?: string; color?: string; theme?: string | null }): Promise<void>
   removeSpace(id: string): Promise<void>
   toggleNotes(open?: boolean): void
   toggleAgent(open?: boolean): void

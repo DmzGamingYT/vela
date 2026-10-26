@@ -130,6 +130,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups : Google ne prend plus Vela pour un navigateur embarqué. |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
+| **Thèmes de couleur** | Dix teintes (indigo, rouge, orange, ambre, vert, turquoise, bleu, violet, rose, graphite) et une couleur personnalisée : tout le châssis suit, jamais le contenu des sites. Mode clair/sombre, verre réglable, thème par espace, contraste élevé. |
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
@@ -189,9 +190,11 @@ src/
 │   ├── store.ts          vela.json, clés chiffrées par fournisseur, normalisation
 │   └── menu.ts           menu natif français
 ├── preload/              pont typé `window.vela`, aucune API Node côté page
-├── shared/               types, URL, brief, agent, fournisseurs (testés avec Vitest)
+├── shared/               types, URL, brief, agent, fournisseurs, thèmes (testés avec Vitest)
 └── renderer/             interface React + zustand
 ```
+
+**Apparence** — `shared/theme.ts` ne contient que des couleurs de départ : chaque thème est une teinte d’accent dont on dérive le survol, le fond doux, le texte sur accent, le verre, le focus et les liens ; une couleur personnalisée passe par le même calcul. Le renderer pose ces jetons sur `:root` (`data-mode`, `data-theme`, `data-glass`, `data-contrast`) et les met en cache dans `localStorage` pour être rejoués avant le premier pixel. Le contenu des onglets vit dans des `WebContentsView` séparées : aucun jeton ne l’atteint.
 
 **Chaque onglet est un `WebContentsView` natif**, pas une `<webview>`. Le renderer mesure les zones `.pane-body` et envoie leurs rectangles au processus principal ; les vues sont placées au-dessus du DOM. Les surcouches (palette, brief, réglages, agent) masquent les vues natives le temps de l’interaction ; le tiroir de notes, lui, réduit la largeur de la page.
 

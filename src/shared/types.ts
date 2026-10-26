@@ -1,11 +1,10 @@
 /**
  * Types partagés entre le processus principal, le preload et le renderer.
  * Une seule source de vérité pour l'état persisté et l'état exposé à l'interface.
- */
+ */import type { GlassIntensity, HomeBackground, ThemeId } from './theme'
 
 export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
-
 export type Theme = 'light' | 'dark' | 'system'
 export type SearchEngineId =
   | 'duckduckgo'
@@ -16,7 +15,6 @@ export type SearchEngineId =
   | 'ecosia'
   | 'qwant'
   | 'searxng'
-export type AccentId = 'violet' | 'clay' | 'sage' | 'ocean'
 export type AgentMode = 'demo' | 'api'
 export type ProviderId =
   | 'openai'
@@ -35,6 +33,8 @@ export interface Space {
   id: string
   name: string
   color: string
+  /** Thème de couleur propre à l'espace (null → thème global). */
+  theme?: ThemeId | null
   /** Partition Chromium : cookies, sessions et cache réellement isolés. */
   partition: string
   createdAt: number
@@ -111,8 +111,24 @@ export interface Settings {
   searchEngine: SearchEngineId
   /** Instance SearXNG choisie (vide → searx.be). */
   searxInstance: string
-  /** Couleur d'accent de l'interface (indépendante de celle des espaces). */
-  accent: AccentId
+  /** Thème de couleur du châssis (indigo, rouge, custom…). */
+  themeId: ThemeId
+  /** Teinte utilisée quand themeId vaut « custom ». */
+  customAccent: string
+  /** Teinte et transparence du verre dépoli. */
+  glass: GlassIntensity
+  /** Arrière-plan de la page d'accueil. */
+  homeBackground: HomeBackground
+  /** Image locale de l'accueil (chemin disque, jamais transmis aux sites). */
+  homeImage: string | null
+  /** Flou appliqué à l'image d'accueil, en pixels. */
+  homeBlur: number
+  /** Bordures renforcées, transparences supprimées. */
+  highContrast: boolean
+  /** Clair le jour, sombre le soir, quel que soit le mode choisi. */
+  hourTheme: boolean
+  /** Chaque espace peut porter son propre thème. */
+  perSpaceThemes: boolean
   blockTrackers: boolean
   sidebarCollapsed: boolean
   onboarded: boolean

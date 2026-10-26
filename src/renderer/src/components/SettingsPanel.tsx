@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { SEARCH_ENGINES } from '@shared/url'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
+import {
+  THEME_PRESETS,
+  adjustAccent,
+  parseHex,
+  resolveMode,
+  type GlassIntensity,
+  type HomeBackground
+} from '@shared/theme'
 import type {
   AgentMode,
   ProviderId,
@@ -8,6 +16,7 @@ import type {
   SearchEngineId,
   Theme
 } from '@shared/types'
+import { swatchColor } from '../lib/appearance'
 import { plural, shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
@@ -41,7 +50,7 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
 ]
 
 const COPY: Record<Page, { title: string; lede: string }> = {
-  appearance: { title: 'Apparence', lede: 'Verre dépoli, thème clair ou sombre, ou comme le système.' },
+  appearance: { title: 'Apparence', lede: 'Mode, thème de couleur et verre dépoli, réglés en direct.' },
   navigation: { title: 'Navigation', lede: 'Le moteur utilisé quand vous tapez une question, et la mémoire locale.' },
   privacy: { title: 'Confidentialité', lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.' },
   models: { title: 'Modèles', lede: 'Les modèles que l’agent utilise et les clés associées.' },
@@ -51,11 +60,16 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   about: { title: 'À propos', lede: 'Vela 0.1 — Electron, React et Chromium.' }
 }
 
-const ACCENTS: { id: 'violet' | 'clay' | 'sage' | 'ocean'; label: string; color: string }[] = [
-  { id: 'violet', label: 'Violet', color: '#5b56d6' },
-  { id: 'clay', label: 'Argile', color: '#c8623e' },
-  { id: 'sage', label: 'Sauge', color: '#1f8a6a' },
-  { id: 'ocean', label: 'Océan', color: '#2f6bb5' }
+const GLASS_OPTIONS: { value: GlassIntensity; label: string }[] = [
+  { value: 'light', label: 'Léger' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'strong', label: 'Prononcé' }
+]
+
+const BACKGROUND_OPTIONS: { value: HomeBackground; label: string; icon: IconName }[] = [
+  { value: 'gradient', label: 'Dégradé du thème', icon: 'sparkles' },
+  { value: 'plain', label: 'Couleur unie', icon: 'circle' },
+  { value: 'image', label: 'Image locale', icon: 'image' }
 ]
 
 const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] = [
@@ -123,10 +137,15 @@ export default function SettingsPanel() {
   const [urlDraft, setUrlDraft] = useState('')
   const [testing, setTesting] = useState<ProviderId | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
+  const [hexNote, setHexNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
 
   if (!view) return null
 
   const settings = view.settings
+  const mode = resolveMode(settings.theme, {
+    hourTheme: settings.hourTheme,
+    systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
   const agent = settings.agent
   const activeDefinition = providerById(agent.provider)
   const activeState = providerState(settings)
@@ -172,6 +191,55 @@ export default function SettingsPanel() {
 
   const setMode = (mode: AgentMode): void => {
     void updateSettings({ agent: { mode } })
+  }
+
+  const applyCustom = (value: string): void => {
+    const parsed = parseHex(value)
+    if (!parsed) {
+      setHexNote({ text: 'Couleur invalide : utilisez un code #RRGGBB.', tone: 'error' })
+      return
+    }
+    const result = adjustAccent(parsed, mode)
+    void updateSettings({ customAccent: result.color, themeId: 'custom' })
+    setHexNote(
+      result.adjusted && result.reason
+        ? { text: result.reason, tone: 'info' }
+        : { text: 'Thème personnalisé appliqué.', tone: 'info' }
+    )
+  }
+
+  const chooseBackground = async (value: HomeBackground): Promise<void> => {
+    if (value !== 'image') {
+      await updateSettings({ homeBackground: value })
+      return
+    }
+    if (settings.homeImage) {
+      await updateSettings({ homeBackground: 'image' })
+      return
+    }
+    const picked = await window.vela.appearance.pickImage()
+    if (!picked) {
+      toast('Image non lue : choisissez un PNG, JPEG, WebP ou AVIF de moins de 8 Mo.', 'error')
+      return
+    }
+    await updateSettings({ homeImage: picked.path, homeBackground: 'image' })
+    toast('Image d’accueil appliquée.')
+  }
+
+  const resetAppearance = (): void => {
+    setHexNote(null)
+    void updateSettings({
+      themeId: 'indigo',
+      customAccent: '#5B5BD6',
+      glass: 'normal',
+      homeBackground: 'gradient',
+      homeImage: null,
+      homeBlur: 18,
+      highContrast: false,
+      hourTheme: false,
+      perSpaceThemes: false
+    })
+    toast('Apparence réinitialisée.')
   }
 
   const renderModels = () => (
@@ -465,8 +533,8 @@ export default function SettingsPanel() {
         return (
           <section className="setting-block">
             <div className="setting-head">
-              <h2>Thème</h2>
-              <p>La transparence du châssis suit le fond et la lumière.</p>
+              <h2>Mode</h2>
+              <p>Clair, sombre, ou comme le système. Il se combine avec le thème de couleur.</p>
             </div>
             <div className="theme-cards">
               {THEMES.map((theme) => (
@@ -494,27 +562,210 @@ export default function SettingsPanel() {
               ))}
             </div>
             <div className="setting-head accent-head">
-              <h2>Couleur d’accent</h2>
-              <p>Boutons, étoiles et sélections. Les espaces gardent leur propre couleur.</p>
+              <h2>Thème de couleur</h2>
+              <p>Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.</p>
             </div>
-            <div className="accent-row" role="radiogroup" aria-label="Couleur d’accent">
-              {ACCENTS.map((accent) => (
+            <div className="theme-swatches" role="radiogroup" aria-label="Thème de couleur">
+              {THEME_PRESETS.map((preset) => {
+                const active = settings.themeId === preset.id
+                return (
+                  <button
+                    type="button"
+                    key={preset.id}
+                    role="radio"
+                    aria-checked={active}
+                    aria-label={preset.label}
+                    className="theme-tile"
+                    data-active={active}
+                    style={{ '--swatch': swatchColor(preset.id, settings.customAccent, mode) } as CSSProperties}
+                    onClick={() => void updateSettings({ themeId: preset.id })}
+                  >
+                    <span className="theme-tile-preview">
+                      <span className="theme-tile-rail" />
+                      <span className="theme-tile-side" />
+                      <span className="theme-tile-pane">
+                        <span className="theme-tile-dot" />
+                      </span>
+                    </span>
+                    <span className="theme-tile-name">
+                      {preset.label}
+                      {active && <span className="theme-tile-badge" />}
+                    </span>
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={settings.themeId === 'custom'}
+                aria-label="Couleur personnalisée"
+                className="theme-tile"
+                data-active={settings.themeId === 'custom'}
+                style={{ '--swatch': settings.customAccent } as CSSProperties}
+                onClick={() => void updateSettings({ themeId: 'custom' })}
+              >
+                <span className="theme-tile-preview">
+                  <span className="theme-tile-rail" />
+                  <span className="theme-tile-side" />
+                  <span className="theme-tile-pane">
+                    <span className="theme-tile-dot" />
+                  </span>
+                </span>
+                <span className="theme-tile-name">
+                  Personnalisé
+                  {settings.themeId === 'custom' && <span className="theme-tile-badge" />}
+                </span>
+              </button>
+            </div>
+
+            <div className="custom-color">
+              <input
+                type="color"
+                aria-label="Choisir une couleur personnalisée"
+                value={settings.customAccent}
+                onChange={(event) => applyCustom(event.target.value)}
+              />
+              <input
+                type="text"
+                aria-label="Code hexadécimal"
+                key={settings.customAccent}
+                defaultValue={settings.customAccent.toUpperCase()}
+                spellCheck={false}
+                onBlur={(event) => applyCustom(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    applyCustom(event.currentTarget.value)
+                  }
+                }}
+              />
+              <span className="setting-hint">Couleur personnalisée</span>
+              {hexNote && (
+                <p className="custom-color-note" data-tone={hexNote.tone}>
+                  {hexNote.text}
+                </p>
+              )}
+            </div>
+
+            <div className="setting-head">
+              <h2>Intensité du verre</h2>
+              <p>Teinte et transparence du fond des panneaux.</p>
+            </div>
+            <div className="appearance-grid" role="radiogroup" aria-label="Intensité du verre">
+              {GLASS_OPTIONS.map((option) => (
                 <button
                   type="button"
-                  key={accent.id}
+                  key={option.value}
                   role="radio"
-                  aria-checked={settings.accent === accent.id}
-                  aria-label={accent.label}
-                  className="accent-swatch"
-                  data-active={settings.accent === accent.id}
-                  onClick={() => void updateSettings({ accent: accent.id })}
+                  aria-checked={settings.glass === option.value}
+                  className="appearance-choice"
+                  data-active={settings.glass === option.value}
+                  onClick={() => void updateSettings({ glass: option.value })}
                 >
-                  <span className="accent-dot" style={{ background: accent.color }} />
-                  <span className="accent-label">{accent.label}</span>
-                  {settings.accent === accent.id && <Icon name="check" size={12} />}
+                  {option.label}
                 </button>
               ))}
             </div>
+
+            <div className="setting-head">
+              <h2>Arrière-plan de l’accueil</h2>
+              <p>Le dégradé suit le thème. Une image reste sur cet appareil.</p>
+            </div>
+            <div className="appearance-grid" role="radiogroup" aria-label="Arrière-plan de l’accueil">
+              {BACKGROUND_OPTIONS.map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  role="radio"
+                  aria-checked={settings.homeBackground === option.value}
+                  className="appearance-choice"
+                  data-active={settings.homeBackground === option.value}
+                  onClick={() => void chooseBackground(option.value)}
+                >
+                  <Icon name={option.icon} size={13} />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {settings.homeBackground === 'image' && settings.homeImage && (
+              <div className="setting-row">
+                <div>
+                  <label>Flou de l’image</label>
+                  <p className="setting-hint">{settings.homeBlur} px · {settings.homeImage.split(/[\\/]/).pop()}</p>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  step={1}
+                  aria-label="Flou de l’image d’accueil"
+                  value={settings.homeBlur}
+                  onChange={(event) => void updateSettings({ homeBlur: Number(event.target.value) })}
+                />
+              </div>
+            )}
+
+            <div className="setting-head">
+              <h2>Options</h2>
+              <p>Accessibilité et variation automatique, sans changer de thème.</p>
+            </div>
+            <div className="setting-toggles">
+              <div className="setting-row">
+                <div>
+                  <label>Contraste élevé</label>
+                  <p className="setting-hint">Bordures renforcées, transparences supprimées.</p>
+                </div>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.highContrast}
+                  data-on={settings.highContrast}
+                  onClick={() => void updateSettings({ highContrast: !settings.highContrast })}
+                >
+                  <span />
+                </button>
+              </div>
+              <div className="setting-row">
+                <div>
+                  <label>Thème selon l’heure</label>
+                  <p className="setting-hint">Clair de 7 h à 19 h, sombre le soir, avec la même couleur.</p>
+                </div>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.hourTheme}
+                  data-on={settings.hourTheme}
+                  onClick={() => void updateSettings({ hourTheme: !settings.hourTheme })}
+                >
+                  <span />
+                </button>
+              </div>
+              <div className="setting-row">
+                <div>
+                  <label>Un thème par espace</label>
+                  <p className="setting-hint">
+                    Chaque espace garde son thème ; sinon le thème global s’applique. Voir Modifier un espace.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.perSpaceThemes}
+                  data-on={settings.perSpaceThemes}
+                  onClick={() => void updateSettings({ perSpaceThemes: !settings.perSpaceThemes })}
+                >
+                  <span />
+                </button>
+              </div>
+            </div>
+
+            <button type="button" className="action wide" onClick={resetAppearance}>
+              <Icon name="refresh" size={13} />
+              Réinitialiser l’apparence
+            </button>
           </section>
         )
 

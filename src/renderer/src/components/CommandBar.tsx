@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { THEME_PRESETS, type ThemeId } from '@shared/theme'
 import { isHomeUrl, normalizeInput, prettyUrl } from '@shared/url'
+import { appearanceState, applyAppearance } from '../lib/appearance'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
@@ -8,11 +10,23 @@ type Filter = 'all' | 'tabs' | 'notes' | 'tasks' | 'history' | 'downloads'
 
 interface CommandItem {
   id: string
-  group: 'Aller' | 'Agent' | 'Actions' | 'Skills' | 'Onglets' | 'Espaces' | 'Historique' | 'Notes' | 'Tâches'
+  group:
+    | 'Aller'
+    | 'Agent'
+    | 'Actions'
+    | 'Skills'
+    | 'Onglets'
+    | 'Espaces'
+    | 'Historique'
+    | 'Notes'
+    | 'Tâches'
+    | 'Apparence'
   label: string
   hint?: string
   icon: IconName
   run: () => void
+  /** Aperçu temporaire au survol, sans enregistrer le réglage. */
+  preview?: () => void
 }
 
 /** Skills en commande slash : elles préparent une demande pour l’agent. */
@@ -91,6 +105,14 @@ export default function CommandBar() {
         setOverlay(null)
         setTimeout(action, 0)
       }
+    }
+
+    const activeSpaceView = view.spaces.find((item) => item.id === view.activeSpaceId) ?? null
+    const previewTheme = (themeId: ThemeId): void => {
+      applyAppearance(
+        { ...appearanceState(view.settings, activeSpaceView), themeId },
+        { cache: false }
+      )
     }
 
     // Mode skills : « / » en tête de requête.
@@ -302,6 +324,27 @@ export default function CommandBar() {
       })
     }
 
+    // Apparence : changer de thème depuis ⌘K, avec un aperçu au survol.
+    actions.push(
+      {
+        id: 'action-theme-toggle',
+        group: 'Apparence',
+        label: view.settings.theme === 'dark' ? 'Passer en clair' : 'Passer en sombre',
+        hint: 'Basculer clair / sombre',
+        icon: view.settings.theme === 'dark' ? 'sun' : 'moon',
+        run: run(() => void updateSettings({ theme: view.settings.theme === 'dark' ? 'light' : 'dark' }))
+      },
+      ...THEME_PRESETS.map((preset) => ({
+        id: `theme-${preset.id}`,
+        group: 'Apparence' as const,
+        label: `Thème : ${preset.label}`,
+        hint: view.settings.themeId === preset.id ? 'Actuel' : 'Changer de thème',
+        icon: 'sparkles' as const,
+        preview: () => previewTheme(preset.id),
+        run: run(() => void updateSettings({ themeId: preset.id }))
+      }))
+    )
+
     const tabs: CommandItem[] = view.tabs
       .filter((tab) => !isHomeUrl(tab.url))
       .map((tab) => ({
@@ -435,6 +478,11 @@ export default function CommandBar() {
     item.run()
   }
 
+  const restoreAppearance = (): void => {
+    const activeSpace = view.spaces.find((item) => item.id === view.activeSpaceId) ?? null
+    applyAppearance(appearanceState(view.settings, activeSpace), { cache: false })
+  }
+
   let cursor = 0
   const offsets = groups.map((group) => {
     const offset = cursor
@@ -476,7 +524,7 @@ export default function CommandBar() {
           </span>
         </div>
 
-        <div className="command-list" ref={listRef}>
+        <div className="command-list" ref={listRef} onMouseLeave={restoreAppearance}>
           {items.length === 0 && <p className="command-empty">Rien ne correspond. Essayez une adresse ou une action.</p>}
           {groups.map((group, groupIndex) => (
             <div className="command-group" key={group.name}>
@@ -490,7 +538,10 @@ export default function CommandBar() {
                     key={item.id}
                     className="command-item"
                     data-active={selected}
-                    onMouseEnter={() => setIndex(globalIndex)}
+                    onMouseEnter={() => {
+                      setIndex(globalIndex)
+                      item.preview?.()
+                    }}
                     onClick={() => trigger(item)}
                   >
                     <span className="command-icon">

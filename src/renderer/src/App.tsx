@@ -16,12 +16,7 @@ import SpaceRail from './components/SpaceRail'
 import Toasts from './components/Toasts'
 import Workspace from './components/Workspace'
 import { useBrowser } from './store/browser'
-
-function applyTheme(theme: 'light' | 'dark' | 'system'): void {
-  const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-  document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
-}
+import { appearanceState, applyAppearance } from './lib/appearance'
 
 export default function App() {
   const ready = useBrowser((state) => state.ready)
@@ -30,38 +25,58 @@ export default function App() {
   const collapsed = useBrowser((state) => state.view?.settings.sidebarCollapsed ?? false)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
-  const theme = useBrowser((state) => state.view?.settings.theme ?? 'system')
-  const accent = useBrowser((state) => state.view?.settings.accent ?? 'violet')
-  const spaceColor = useBrowser((state) => {
+  const settings = useBrowser((state) => state.view?.settings ?? null)
+  const space = useBrowser((state) => {
     const view = state.view
     if (!view) return null
-    return view.spaces.find((space) => space.id === view.activeSpaceId)?.color ?? null
+    return view.spaces.find((item) => item.id === view.activeSpaceId) ?? null
   })
 
   useEffect(() => {
     void useBrowser.getState().init()
   }, [])
 
-  // La couleur d'accent reste indépendante de celle de l'espace actif :
-  // l'espace teinte la pastille, l'accent teinte les actions de l'app.
+  // Mode, thème de couleur et intensité du verre : un seul passage pose tous
+  // les jetons. L'espace actif peut fournir son propre thème.
   useEffect(() => {
-    document.documentElement.dataset.accent = accent
-  }, [accent])
+    if (!settings) return
+    applyAppearance(appearanceState(settings, space))
+    const root = document.documentElement
+    root.dataset.home = settings.homeBackground
+    root.style.setProperty('--home-blur', `${settings.homeBlur}px`)
+  }, [settings, space])
 
+  // Suit le système et, si l'option est active, l'heure (clair le jour).
   useEffect(() => {
-    applyTheme(theme)
-    if (theme !== 'system') return
+    if (!settings) return
     const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const listener = (): void => applyTheme('system')
-    media.addEventListener('change', listener)
-    return () => media.removeEventListener('change', listener)
-  }, [theme])
+    const apply = (): void => {
+      applyAppearance(appearanceState(settings, space))
+    }
+    media.addEventListener('change', apply)
+    const timer = settings.hourTheme ? window.setInterval(apply, 60_000) : null
+    return () => {
+      media.removeEventListener('change', apply)
+      if (timer !== null) window.clearInterval(timer)
+    }
+  }, [settings, space])
 
-  // Identité visuelle pilotée par l'espace actif (façon Dia) : la couleur
-  // du profil teinte pastille, indicateur d'onglet et lueur d'accueil.
+  // Image d'accueil : lue à la demande, jamais incluse dans l'état diffusé.
   useEffect(() => {
-    if (spaceColor) document.documentElement.style.setProperty('--space-accent', spaceColor)
-  }, [spaceColor])
+    if (!settings || settings.homeBackground !== 'image' || !settings.homeImage) {
+      document.documentElement.style.removeProperty('--home-image')
+      return
+    }
+    let alive = true
+    void window.vela.appearance.image().then((dataUrl) => {
+      if (!alive) return
+      if (dataUrl) document.documentElement.style.setProperty('--home-image', `url("${dataUrl}")`)
+      else document.documentElement.style.removeProperty('--home-image')
+    })
+    return () => {
+      alive = false
+    }
+  }, [settings?.homeBackground, settings?.homeImage])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {

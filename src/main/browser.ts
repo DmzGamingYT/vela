@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme, session, shell, type Session } from 'electron'
 import type {
@@ -24,6 +24,7 @@ import {
 import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
+import { isThemeId, parseHex } from '@shared/theme'
 import {
   HOME_URL,
   type AppView,
@@ -55,6 +56,28 @@ function asString(value: unknown, fallback = ''): string {
 function asId(value: unknown): string {
   if (typeof value !== 'string' || !value) throw new Error('Identifiant invalide.')
   return value
+}
+
+const IMAGE_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  avif: 'image/avif'
+}
+
+/** Lit une image locale pour l'aperçu d'accueil, sans dépasser 8 Mo. */
+async function readImageDataUrl(file: string): Promise<string | null> {
+  const extension = file.split('.').pop()?.toLowerCase() ?? ''
+  const mime = IMAGE_MIME[extension]
+  if (!mime) return null
+  try {
+    const buffer = await readFile(file)
+    if (buffer.byteLength > 8 * 1024 * 1024) return null
+    return `data:${mime};base64,${buffer.toString('base64')}`
+  } catch {
+    return null
+  }
 }
 
 function isPane(value: unknown): value is PaneRect {
@@ -581,13 +604,14 @@ export class Browser {
   }
 
   private updateSpace(input: unknown): void {
-    const payload = (input ?? {}) as { id?: unknown; name?: unknown; color?: unknown }
+    const payload = (input ?? {}) as { id?: unknown; name?: unknown; color?: unknown; theme?: unknown }
     const id = asId(payload.id)
     const state = this.store.get()
     const space = state.spaces.find((item) => item.id === id)
     if (!space) return
     if (typeof payload.name === 'string' && payload.name.trim()) space.name = payload.name.trim().slice(0, 40)
     if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color)) space.color = payload.color
+    if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
     this.store.schedule()
     this.broadcast()
   }
@@ -727,9 +751,30 @@ export class Browser {
         settings.searchEngine = input.searchEngine
       }
       if (typeof input.searxInstance === 'string') settings.searxInstance = input.searxInstance.trim().slice(0, 200)
-      if (input.accent === 'violet' || input.accent === 'clay' || input.accent === 'sage' || input.accent === 'ocean') {
-        settings.accent = input.accent
+      if (isThemeId(input.themeId)) settings.themeId = input.themeId
+      if (typeof input.customAccent === 'string') {
+        settings.customAccent = parseHex(input.customAccent) ?? settings.customAccent
       }
+      if (input.glass === 'light' || input.glass === 'normal' || input.glass === 'strong') {
+        settings.glass = input.glass
+      }
+      if (
+        input.homeBackground === 'gradient' ||
+        input.homeBackground === 'plain' ||
+        input.homeBackground === 'image'
+      ) {
+        settings.homeBackground = input.homeBackground
+      }
+      if (input.homeImage === null) settings.homeImage = null
+      else if (typeof input.homeImage === 'string' && input.homeImage.length < 2000) {
+        settings.homeImage = input.homeImage
+      }
+      if (typeof input.homeBlur === 'number' && input.homeBlur >= 0 && input.homeBlur <= 40) {
+        settings.homeBlur = Math.round(input.homeBlur)
+      }
+      if (typeof input.highContrast === 'boolean') settings.highContrast = input.highContrast
+      if (typeof input.hourTheme === 'boolean') settings.hourTheme = input.hourTheme
+      if (typeof input.perSpaceThemes === 'boolean') settings.perSpaceThemes = input.perSpaceThemes
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
       if (typeof input.sidebarCollapsed === 'boolean') settings.sidebarCollapsed = input.sidebarCollapsed
       if (typeof (input as { onboarded?: unknown }).onboarded === 'boolean') {
@@ -1275,6 +1320,37 @@ export class Browser {
       return ok
     })
     handle('settings:test-key', (payload) => this.testKey(payload))
+
+    // L'image d'accueil reste un chemin local : on ne renvoie son contenu au
+    // châssis que sur demande, pour ne pas alourdir chaque état diffusé.
+    handle('appearance:pick-image', async () => {
+      if (!this.win) return null
+      const result = await dialog.showOpenDialog(this.win, {
+        title: 'Choisir une image de fond',
+        properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'avif'] }]
+      })
+      if (result.canceled || !result.filePaths[0]) return null
+      const file = result.filePaths[0]
+      const dataUrl = await readImageDataUrl(file)
+      if (!dataUrl) return null
+      this.store.update((state) => {
+        state.settings.homeImage = file
+      })
+      this.broadcast()
+      return { path: file, dataUrl }
+    })
+    handle('appearance:image', async () => {
+      const file = this.store.get().settings.homeImage
+      if (!file) return null
+      return readImageDataUrl(file)
+    })
+    handle('appearance:clear-image', () => {
+      this.store.update((state) => {
+        state.settings.homeImage = null
+      })
+      this.broadcast()
+    })
 
     handle('update:status', () => updateStatus())
     handle('update:check', () => checkForUpdates(true))

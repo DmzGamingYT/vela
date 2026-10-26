@@ -132,6 +132,11 @@ const api: VelaApi = {
     setKey: (input: SetKeyInput) => ipcRenderer.invoke('settings:set-key', input),
     testKey: (provider) => ipcRenderer.invoke('settings:test-key', { provider })
   },
+  appearance: {
+    pickImage: () => ipcRenderer.invoke('appearance:pick-image'),
+    image: () => ipcRenderer.invoke('appearance:image'),
+    clearImage: () => ipcRenderer.invoke('appearance:clear-image')
+  },
   onState: (callback: (view: AppView) => void) => subscribe('state:changed', callback),
   onShortcut: (callback: (event: ShortcutEvent) => void) => subscribe('shortcut', callback)
 }

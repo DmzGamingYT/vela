@@ -43,6 +43,8 @@ export type IconName =
   | 'filter'
   | 'map'
   | 'list'
+  | 'image'
+  | 'refresh'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -212,6 +214,19 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M8 6h13M8 12h13M8 18h13" />
       <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
+    </>
+  ),
+  image: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="m4 18 5-5 4 3 3-3 4 5" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 11a8 8 0 1 0-2.3 6" />
+      <path d="M20 5v6h-6" />
     </>
   )
 }
