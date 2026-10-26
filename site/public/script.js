@@ -78,11 +78,11 @@
 
   /* --- Téléchargement adapté à la plateforme ----------------------------- */
 
-  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.1.12/'
+  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.1.13/'
   const files = {
-    mac: { href: `${RELEASE}Vela-0.1.12-arm64.dmg`, label: 'Télécharger pour macOS' },
-    win: { href: `${RELEASE}Vela-0.1.12-x64.exe`, label: 'Télécharger pour Windows' },
-    linux: { href: `${RELEASE}Vela-0.1.12-x86_64.AppImage`, label: 'Télécharger pour Linux' }
+    mac: { href: `${RELEASE}Vela-0.1.13-arm64.dmg`, label: 'Télécharger pour macOS' },
+    win: { href: `${RELEASE}Vela-0.1.13-x64.exe`, label: 'Télécharger pour Windows' },
+    linux: { href: `${RELEASE}Vela-0.1.13-x86_64.AppImage`, label: 'Télécharger pour Linux' }
   }
 
   const platform = (() => {
