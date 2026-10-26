@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { hostOf } from '@shared/url'
-import { greeting, shortcut, timeAgo } from '../lib/format'
+import { useEffect, useState } from 'react'
+import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react'
+import { hostOf, isHomeUrl, normalizeInput, SEARCH_ENGINES } from '@shared/url'
+import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
+import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
 import TasksCard from './TasksCard'
 
@@ -13,104 +15,299 @@ const STARTERS = [
   { label: 'Wikipédia', detail: 'La référence libre', url: 'https://fr.wikipedia.org' }
 ]
 
+interface Tile {
+  id: string
+  url: string
+  title: string
+  host: string
+  favicon?: string
+  meta: string
+  kind: 'history' | 'bookmark' | 'starter'
+}
+
 export default function StartPage({ tabId }: { tabId: string }) {
   const view = useBrowser((state) => state.view)
   const navigate = useBrowser((state) => state.navigate)
   const setOverlay = useBrowser((state) => state.setOverlay)
-  const [tasksOpen, setTasksOpen] = useState(false)
+  const openAgent = useBrowser((state) => state.openAgent)
+  const [query, setQuery] = useState('')
+  const [calm, setCalm] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+
+  // Le fond et les inclinaisons se taisent avec « Réduire les animations ».
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = (): void => setCalm(media.matches)
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
 
   if (!view) return null
 
-  const recent = view.history.filter((entry) => /^https?:/i.test(entry.url)).slice(0, 5)
-  const openTasks = view.tasks.filter((task) => !task.done).length
+  const settings = view.settings
+  const engine = SEARCH_ENGINES[settings.searchEngine]?.label ?? 'DuckDuckGo'
+
+  const tiles: Tile[] = []
+  const seen = new Set<string>()
+  for (const entry of view.history) {
+    if (!/^https?:/i.test(entry.url)) continue
+    const key = entry.url.split('#')[0]
+    if (seen.has(key)) continue
+    seen.add(key)
+    tiles.push({
+      id: entry.id,
+      url: entry.url,
+      title: entry.title || hostOf(entry.url),
+      host: hostOf(entry.url),
+      favicon: entry.favicon,
+      meta: timeAgo(entry.visitedAt),
+      kind: 'history'
+    })
+    if (tiles.length >= 6) break
+  }
+  if (tiles.length < 4) {
+    for (const bookmark of view.bookmarks) {
+      if (!/^https?:/i.test(bookmark.url)) continue
+      const key = bookmark.url.split('#')[0]
+      if (seen.has(key)) continue
+      seen.add(key)
+      tiles.push({
+        id: bookmark.id,
+        url: bookmark.url,
+        title: bookmark.title || hostOf(bookmark.url),
+        host: hostOf(bookmark.url),
+        favicon: bookmark.favicon,
+        meta: 'Favori',
+        kind: 'bookmark'
+      })
+      if (tiles.length >= 6) break
+    }
+  }
+  // Une grille pleine plutôt qu'une carte isolée : les raccourcis complètent
+  // l'historique jusqu'à trois ou six tuiles, sans jamais dépasser.
+  if (tiles.length < 6) {
+    const target = tiles.length <= 3 ? 3 : 6
+    for (const starter of STARTERS) {
+      if (tiles.length >= target) break
+      if (seen.has(starter.url)) continue
+      seen.add(starter.url)
+      tiles.push({
+        id: starter.url,
+        url: starter.url,
+        title: starter.label,
+        host: hostOf(starter.url),
+        meta: 'Raccourci',
+        kind: 'starter'
+      })
+    }
+  }
+  const onlyStarters = tiles.every((tile) => tile.kind === 'starter')
+
+  const openTabs = view.tabs.filter((tab) => !isHomeUrl(tab.url)).length
+  const pages = view.brief.pages
+  const pagesLabel = `${pages} page${pages > 1 ? 's' : ''} cette semaine`
+  const lede =
+    openTabs === 0
+      ? `Aucun onglet ouvert · ${pagesLabel}`
+      : `${openTabs} onglet${openTabs > 1 ? 's' : ''} ouvert${openTabs > 1 ? 's' : ''} · ${pagesLabel}`
+
+  const trimmed = query.trim()
+  const preview = trimmed ? normalizeInput(trimmed, settings.searchEngine, settings.searxInstance) : null
+  const hint = !trimmed
+    ? 'Entrée pour ouvrir la palette'
+    : preview?.kind === 'url'
+      ? `Ouvrir ${hostOf(preview.url)}`
+      : `Rechercher sur ${engine}`
+
+  const submit = (event: FormEvent): void => {
+    event.preventDefault()
+    if (!trimmed) {
+      setOverlay('command')
+      return
+    }
+    const target = normalizeInput(trimmed, settings.searchEngine, settings.searxInstance)
+    navigate(tabId, target.url)
+    setQuery('')
+  }
+
+  const parallax = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    if (calm) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    event.currentTarget.style.setProperty('--aurora-x', ((event.clientX - rect.left) / rect.width - 0.5).toFixed(3))
+    event.currentTarget.style.setProperty('--aurora-y', ((event.clientY - rect.top) / rect.height - 0.5).toFixed(3))
+  }
+
+  const resetParallax = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    event.currentTarget.style.setProperty('--aurora-x', '0')
+    event.currentTarget.style.setProperty('--aurora-y', '0')
+  }
+
+  const tilt = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    if (calm || event.pointerType !== 'mouse') return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = (event.clientX - rect.left) / rect.width - 0.5
+    const y = (event.clientY - rect.top) / rect.height - 0.5
+    event.currentTarget.style.setProperty('--tilt-y', `${(x * 7).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--tilt-x', `${(-y * 7).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--glow-x', `${((x + 0.5) * 100).toFixed(1)}%`)
+    event.currentTarget.style.setProperty('--glow-y', `${((y + 0.5) * 100).toFixed(1)}%`)
+  }
+
+  const untilt = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    event.currentTarget.style.setProperty('--tilt-y', '0deg')
+    event.currentTarget.style.setProperty('--tilt-x', '0deg')
+  }
+
+  const tileStyle = (tile: Tile): CSSProperties =>
+    ({ '--tile-tint': tintFor(tile.host || tile.title) }) as CSSProperties
 
   return (
-    <div className="start">
-      <div className="start-inner">
-        <header className="start-hero">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            {view.brief.dateLabel}
-          </p>
-          <h1 className="hero-title">
-            {greeting()}
-            <span className="hero-dot">.</span>
-          </h1>
+    <div
+      className="start"
+      data-calm={calm ? 'true' : undefined}
+      onPointerMove={parallax}
+      onPointerLeave={resetParallax}
+    >
+      <div className="home-aurora" aria-hidden="true">
+        <span className="aurora-field">
+          <span className="aurora-blob" data-i="1" />
+          <span className="aurora-blob" data-i="2" />
+          <span className="aurora-blob" data-i="3" />
+        </span>
+      </div>
 
-          <button type="button" className="hero-field" onClick={() => setOverlay('command')}>
-            <Icon name="search" size={15} />
-            <span>Rechercher, saisir une adresse ou demander à l’agent</span>
-            <kbd>{shortcut('K')}</kbd>
-          </button>
+      <div className="start-inner home">
+        <header className="home-head">
+          <div className="home-hello">
+            <p className="home-date">
+              <span className="eyebrow-dot" />
+              {view.brief.dateLabel}
+            </p>
+            <h1 className="home-title" aria-label={greeting()}>
+              {greeting()
+                .split(' ')
+                .map((word, index) => (
+                  <span
+                    key={`${word}-${index}`}
+                    className="home-word"
+                    style={{ animationDelay: `${80 + index * 90}ms` }}
+                  >
+                    {word}
+                  </span>
+                ))}
+              <span className="home-title-dot" aria-hidden="true">
+                .
+              </span>
+            </h1>
+            <p className="home-lede">{lede}</p>
+          </div>
+          <HomeWeather />
         </header>
 
-        <div className="start-body">
-          <section className="start-section recent">
-            <div className="section-head">
-              <h2>Récemment</h2>
+        <section className="home-search" aria-label="Recherche">
+          <form className="home-field" onSubmit={submit}>
+            <span className="home-field-icon">
+              <Icon name="search" size={16} />
+            </span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setQuery('')
+              }}
+              placeholder="Rechercher, saisir une adresse ou demander à l’agent"
+              aria-label="Rechercher, saisir une adresse ou demander à l’agent"
+              spellCheck={false}
+            />
+            <span className="home-field-hint" aria-hidden="true">
+              {hint}
+            </span>
+            <kbd>{shortcut('K')}</kbd>
+            <button type="submit" className="home-go" title="Ouvrir (Entrée)" aria-label="Ouvrir">
+              <Icon name="arrow-right" size={15} />
+            </button>
+          </form>
+
+          <div className="home-chips">
+            <button type="button" className="home-chip" onClick={() => setOverlay('command')}>
+              <Icon name="command" size={12} />
+              Palette
+            </button>
+            <button type="button" className="home-chip" onClick={() => openAgent()}>
+              <Icon name="sparkles" size={12} />
+              Agent
+            </button>
+            <button type="button" className="home-chip" onClick={() => setOverlay('brief')}>
+              <Icon name="calendar" size={12} />
+              Brief du jour
+            </button>
+            <span className="home-engine">via {engine}</span>
+          </div>
+        </section>
+
+        <div className="home-grid">
+          <section className="home-card home-recent" aria-label="Récemment">
+            <div className="home-card-head">
+              <h2>{onlyStarters ? 'Pour commencer' : 'Récemment'}</h2>
+              <button
+                type="button"
+                className="home-card-action"
+                onClick={() => setOverlay('history')}
+                title="Ouvrir l’historique"
+              >
+                <span>Historique</span>
+                <Icon name="arrow-right" size={12} />
+              </button>
             </div>
 
-            {recent.length > 0 ? (
-              <div className="recent-list">
-                {recent.map((entry) => {
-                  const host = hostOf(entry.url)
-                  return (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      className="recent-row"
-                      onClick={() => navigate(tabId, entry.url)}
-                    >
-                      <Favicon src={entry.favicon} label={entry.title || host} size={15} />
-                      <span className="recent-copy">
-                        <span className="recent-title">{entry.title || host}</span>
-                        <span className="recent-host">{host}</span>
-                      </span>
-                      <span className="recent-time">{timeAgo(entry.visitedAt)}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="starters">
-                <p className="starters-lede">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
-                <div className="starter-grid">
-                  {STARTERS.map((starter) => (
-                    <button
-                      key={starter.url}
-                      type="button"
-                      className="starter-link"
-                      onClick={() => navigate(tabId, starter.url)}
-                    >
-                      <span className="starter-label">{starter.label}</span>
-                      <span className="starter-detail">{starter.detail}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {onlyStarters ? (
+              <p className="home-hint">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
+            ) : null}
+
+            <div className="recent-grid">
+              {tiles.map((tile) => (
+                <button
+                  key={`${tile.kind}-${tile.id}`}
+                  type="button"
+                  className="recent-tile"
+                  data-kind={tile.kind}
+                  style={tileStyle(tile)}
+                  onPointerMove={tilt}
+                  onPointerLeave={untilt}
+                  onClick={() => navigate(tabId, tile.url)}
+                  title={tile.title}
+                >
+                  <span className="tile-top">
+                    <Favicon src={tile.favicon} label={tile.host || tile.title} size={18} />
+                    <span className="tile-host">{tile.host}</span>
+                    <span className="tile-badge">{tile.meta}</span>
+                  </span>
+                  <span className="tile-title">{tile.title}</span>
+                  <span className="tile-arrow">
+                    <Icon name="arrow-right" size={13} />
+                  </span>
+                </button>
+              ))}
+            </div>
           </section>
 
-          <section className="start-tasks" data-open={tasksOpen}>
-            <button
-              type="button"
-              className="tasks-toggle"
-              aria-expanded={tasksOpen}
-              aria-controls="start-tasks-panel"
-              onClick={() => setTasksOpen((open) => !open)}
-            >
-              <Icon name="chevron-right" size={13} />
-              <span>Tâches du jour</span>
-              <span className="tasks-count">{openTasks}</span>
-            </button>
-
-            {tasksOpen && (
-              <div id="start-tasks-panel">
-                <TasksCard />
-              </div>
-            )}
-          </section>
+          <aside className="home-side">
+            <TasksCard />
+          </aside>
         </div>
+
+        <footer className="home-foot">
+          <span className="home-foot-note">
+            <Icon name="shield" size={12} />
+            Aucune télémétrie. Vos recherches ne partent que vers le moteur choisi.
+          </span>
+          <span className="home-foot-key">
+            <Icon name="command" size={12} />
+            <kbd>{shortcut('K')}</kbd>
+            palette
+          </span>
+        </footer>
       </div>
     </div>
   )

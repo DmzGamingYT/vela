@@ -119,10 +119,27 @@ l’espace actif, et la barre latérale les liste : on rouvre, on renomme, on du
 Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Navigation.
 Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renomme, on l’archive.
 
+## Accueil
+
+La page d’accueil est un seul champ : une adresse s’ouvre, une question part vers le moteur choisi
+(l’indication dans le champ dit lequel des deux se produira). En dessous, les pages récentes forment
+une grille de tuiles en verre qui s’inclinent au pointeur et gardent leur favicon ; les raccourcis
+complètent la grille quand l’historique est court. Les tâches du jour affichent leur progression et
+une coche animée.
+
+Le fond est une aurora d’accent : trois nappes qui dérivent lentement et suivent le curseur. Elle
+s’efface avec « Réduire les animations », le mode contraste élevé ou un arrière-plan uni, et ne
+touche jamais le contenu des sites.
+
+L’horloge est locale. La météo ne demande **aucune** donnée tant que vous n’avez pas nommé une ville :
+une fois celle-ci choisie, le renderer interroge Open-Meteo pour ces coordonnées et rien d’autre, puis
+garde le relevé trente minutes sur l’appareil. Aucune clé, aucun compte, aucune télémétrie.
+
 ## Ce qu’il sait faire
 
 | | |
 | --- | --- |
+| **Accueil** | Fond aurora qui dérive et suit le pointeur, salutation en cascade, champ unique qui ouvre une adresse ou cherche, pages récentes en tuiles de verre inclinables, horloge et tâches avec progression. |
 | **Onglets verticaux** | Titres lisibles, épinglage, réouverture du dernier onglet fermé. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |

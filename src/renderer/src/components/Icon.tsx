@@ -47,6 +47,12 @@ export type IconName =
   | 'refresh'
   | 'link'
   | 'code'
+  | 'cloud'
+  | 'rain'
+  | 'snow'
+  | 'storm'
+  | 'fog'
+  | 'wind'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -237,7 +243,28 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M13.5 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.5-1.5" />
     </>
   ),
-  code: <path d="m8 6-5 6 5 6M16 6l5 6-5 6" />
+  code: <path d="m8 6-5 6 5 6M16 6l5 6-5 6" />,
+  cloud: <path d="M7 18a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 18Z" />,
+  rain: (
+    <>
+      <path d="M7 15a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 15Z" />
+      <path d="M8.5 18.5v2M12 18.5v2M15.5 18.5v2" />
+    </>
+  ),
+  snow: (
+    <>
+      <path d="M7 14a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 14Z" />
+      <path d="M8.5 17.5v.01M12 19.5v.01M15.5 17.5v.01M10.2 20.6v.01M13.8 20.6v.01" />
+    </>
+  ),
+  storm: (
+    <>
+      <path d="M7 14a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 14Z" />
+      <path d="m12.5 16-3 4h3l-1.5 3" />
+    </>
+  ),
+  fog: <path d="M4 9h16M5.5 13h11M8 17h11" />,
+  wind: <path d="M3 8h9.5a2.8 2.8 0 1 0-2.8-2.8M3 12h13a2.8 2.8 0 1 1-2.8 2.8M3 16h7.5" />
 }
 
 interface IconProps {
