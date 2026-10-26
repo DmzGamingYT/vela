@@ -148,6 +148,7 @@ Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renom
 | **Onglets en veille** | Les vues inactives sont déchargées (5 max en mémoire), avec indicateur discret et mémoire rendue affichée. |
 | **Rangement par site** | La palette crée des dossiers automatiques par domaine, annulables depuis la notification. |
 | **Skills** | `⌘K` puis `/résumer`, `/comparer`, `/extraire`, `/citer` préparent la demande de l’agent. |
+| **Traduction de BD** | `⌘K` → « Traduire la BD » : OCR local des planches, traduction par le fournisseur réglé, calque français lisible par-dessus les bulles. |
 
 ## Raccourcis
 
@@ -239,6 +240,18 @@ communs aux pages (« Outils », « Comparatifs », « Guides », « Limites »)
 Les tensions s’appuient uniquement sur des phrases citées, jamais sur une déduction.
 La carte, la mise en page, les filtres, le rapport et les exports sont dans `src/shared/tunnel.ts`, testés
 sans Electron.
+
+### Traduction de BD
+
+Sur une page de lecture, `⌘K` → **Traduire la BD** injecte le script de `userscripts/comic-translate.user.js`
+dans l’onglet actif. Les planches sont relues par Tesseract (OCR local, dans la page), les bulles regroupées,
+puis les répliques traduites par le fournisseur choisi dans Réglages › Modèles. Le calque est posé sur
+l’image : fond clair sur le texte d’origine, texte français ajusté à la boîte. Le script ne détient aucune
+clé : deux appels seulement lui sont prêtés par le preload des pages, lire une image avec la session de
+l’onglet et traduire des répliques, derrière un jeton propre à l’onglet qui expire en trente minutes.
+
+Limite : les lecteurs qui dessinent la planche dans un `<canvas>` échappent à la détection, faute d’image
+à relire.
 
 ## Site public
 

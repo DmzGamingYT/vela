@@ -133,6 +133,11 @@ export interface UpdateInfo {
 }
 
 /** API exposée à la fenêtre par le preload. Aucun accès Node dans le renderer. */
+export interface ComicRunResult {
+  ok: boolean
+  reason?: string
+}
+
 export interface VelaApi {
   platform: string
   view(): Promise<AppView>
@@ -230,6 +235,11 @@ export interface VelaApi {
     run(input: AgentRunRequest): Promise<{ runId: string }>
     cancel(runId?: string): void
     onEvent(callback: (event: AgentEvent) => void): () => void
+  }
+  comic: {
+    /** Injecte la traduction de BD dans l'onglet, avec sa propre session. */
+    run(tabId: string): Promise<ComicRunResult>
+    clear(tabId: string): Promise<void>
   }
   settings: {
     update(patch: SettingsPatch): Promise<void>

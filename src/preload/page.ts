@@ -1,4 +1,4 @@
-import { webFrame } from 'electron'
+import { contextBridge, ipcRenderer, webFrame } from 'electron'
 
 /**
  * Preload des pages web (l'interface a le sien : `index.ts`).
@@ -13,6 +13,11 @@ import { webFrame } from 'electron'
  * `webFrame.executeJavaScript` s'exécute dans le monde principal — contrairement
  * au preload lui-même — et ce dès le document naissant. L'isolation de contexte
  * reste donc active pour les pages.
+ *
+ * Il expose aussi le pont de traduction de BD, volontairement réduit à deux
+ * appels : lire une image et traduire des répliques. Les deux exigent le jeton
+ * remis au script injecté, lié à cet onglet et à une demi-heure. Sans jeton,
+ * une page ne peut ni lire d'image avec vos cookies ni dépenser votre clé.
  */
 const CHROME_OBJECT = `(() => {
   const w = window
@@ -66,4 +71,9 @@ const CHROME_OBJECT = `(() => {
 
 void webFrame.executeJavaScript(CHROME_OBJECT).catch(() => {
   /* page déjà remplacée : le prochain document repartira du preload */
+})
+
+contextBridge.exposeInMainWorld('__velaComicBridge', {
+  image: (token: string, url: string) => ipcRenderer.invoke('comic:image', { token, url }),
+  translate: (token: string, texts: string[]) => ipcRenderer.invoke('comic:translate', { token, texts })
 })

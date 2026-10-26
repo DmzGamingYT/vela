@@ -127,6 +127,10 @@ const api: VelaApi = {
     cancel: (runId?: string) => ipcRenderer.send('agent:cancel', runId),
     onEvent: (callback: (event: AgentEvent) => void) => subscribe('agent:event', callback)
   },
+  comic: {
+    run: (tabId: string) => ipcRenderer.invoke('comic:run', { tabId }),
+    clear: (tabId: string) => ipcRenderer.invoke('comic:clear', { tabId })
+  },
   settings: {
     update: (patch: SettingsPatch) => ipcRenderer.invoke('settings:update', patch),
     setKey: (input: SetKeyInput) => ipcRenderer.invoke('settings:set-key', input),

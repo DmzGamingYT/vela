@@ -5,6 +5,7 @@ directories:
   output: release
 files:
   - out/**
+  - userscripts/**
   - package.json
 asar: true
 afterPack: ./scripts/after-pack.cjs

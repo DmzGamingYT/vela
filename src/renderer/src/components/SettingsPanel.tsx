@@ -88,7 +88,7 @@ const SHORTCUTS: [string, string][] = [
   ['Vue scindée', shortcut('⇧D')],
   ['Notes', shortcut('E')],
   ['Agent', shortcut('J')],
-  ['Atelier (Work)', shortcut('⇧A')],
+  ['Travail', shortcut('⇧A')],
   ['Brief du jour', shortcut('⇧B')],
   ['Barre latérale', shortcut('S')],
   ['Onglets 1 à 9', `${shortcut('1')} … ${shortcut('9')}`],

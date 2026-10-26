@@ -44,6 +44,7 @@ import {
 import { isHomeUrl, titleFromUrl } from '@shared/url'
 import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
+import { ComicBridge } from './comic'
 import { NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
 import { Store } from './store'
@@ -97,6 +98,7 @@ export class Browser {
   readonly notes: NotesStore
   readonly tabs: TabManager
   readonly agent: AgentRunner
+  readonly comic: ComicBridge
   readonly tunnel: TunnelService
 
   private win: BrowserWindow | null = null
@@ -152,6 +154,11 @@ export class Browser {
       (provider: ProviderId) => this.store.getSecret(provider),
       (tabId) => this.tabs.excerpt(tabId),
       (work) => this.recordWork(work)
+    )
+    this.comic = new ComicBridge(
+      this.tabs,
+      () => this.store.get().settings,
+      (provider: ProviderId) => this.store.getSecret(provider)
     )
   }
 
@@ -923,6 +930,8 @@ export class Browser {
     const handle = (channel: string, handler: (payload: unknown) => unknown): void => {
       ipcMain.handle(channel, (_event, payload: unknown) => handler(payload))
     }
+
+    this.comic.registerIpc()
 
     handle('app:view', () => this.view())
     handle('app:platform', () => process.platform)
