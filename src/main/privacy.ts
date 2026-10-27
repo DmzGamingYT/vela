@@ -40,7 +40,7 @@ export function attachPrivacy(
   })
 
   ses.setPermissionRequestHandler((_contents, permission, callback) => {
-    // v0.1 : la navigation n'obtient jamais caméra, micro, position ni notifications.
+    // Par défaut : la navigation n’obtient jamais caméra, micro, position ni notifications.
     const allowed = permission === 'fullscreen' || permission === 'clipboard-sanitized-write'
     callback(allowed)
   })

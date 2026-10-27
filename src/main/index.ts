@@ -44,7 +44,10 @@ function createWindow(): void {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-      spellcheck: true
+      // Chromium télécharge ses dictionnaires de correction depuis un CDN
+      // Google dès qu'un champ est corrigible. Les onglets sont déjà à false :
+      // on garde zéro téléchargement caché, quitte à perdre le soulignement.
+      spellcheck: false
     }
   })
 

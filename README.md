@@ -132,8 +132,13 @@ s’efface avec « Réduire les animations », le mode contraste élevé ou un a
 touche jamais le contenu des sites.
 
 L’horloge est locale. La météo ne demande **aucune** donnée tant que vous n’avez pas nommé une ville :
-une fois celle-ci choisie, le renderer interroge Open-Meteo pour ces coordonnées et rien d’autre, puis
-garde le relevé trente minutes sur l’appareil. Aucune clé, aucun compte, aucune télémétrie.
+en validant, le nom tapé part vers `geocoding-api.open-meteo.com` pour trouver la ville ; ensuite, seules
+ses coordonnées vont à `api.open-meteo.com`, au plus une fois par demi-heure, et le relevé reste sur
+l’appareil. Aucune clé, aucun compte, aucune télémétrie. « Retirer » coupe le flux et efface la ville.
+
+Toutes les destinations que Vela contacte elle-même sont listées dans `src/shared/network.ts` et
+reprises dans Réglages › Confidentialité ; le test `network.test.ts` échoue si une adresse apparaît
+dans le code sans y être déclarée.
 
 ## Ce qu’il sait faire
 

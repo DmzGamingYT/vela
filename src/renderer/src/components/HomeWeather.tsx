@@ -194,6 +194,22 @@ export default function HomeWeather() {
     }
   }
 
+  /** Retire la ville et le relevé : plus aucune requête météo ne repartira. */
+  const forgetPlace = (): void => {
+    setPlace(null)
+    setWeather(null)
+    setStatus('idle')
+    setMessage(null)
+    setCity('')
+    setEditing(true)
+    try {
+      localStorage.removeItem(PLACE_KEY)
+      localStorage.removeItem(CACHE_KEY)
+    } catch {
+      /* stockage indisponible : la ville reste seulement en mémoire */
+    }
+  }
+
   const condition = weather ? describe(weather.code, weather.isDay) : null
   const hours = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(now)
   const seconds = new Intl.DateTimeFormat('fr-FR', { second: '2-digit' }).format(now)
@@ -248,6 +264,9 @@ export default function HomeWeather() {
               <button type="button" onClick={() => setEditing(true)} title="Changer de ville">
                 Changer
               </button>
+              <button type="button" onClick={forgetPlace} title="Retirer la ville et couper la météo">
+                Retirer
+              </button>
             </p>
           </div>
         </div>
@@ -256,8 +275,8 @@ export default function HomeWeather() {
       <p className="day-note">
         {message ??
           (place
-            ? 'Météo Open-Meteo, uniquement pour cette ville.'
-            : 'Aucune requête tant qu’aucune ville n’est choisie.')}
+            ? 'Open-Meteo reçoit seulement les coordonnées de cette ville, une fois par demi-heure ; le relevé reste sur l’appareil.'
+            : 'Aucune requête avant votre choix. En validant, le nom tapé part vers geocoding-api.open-meteo.com ; ensuite, seules les coordonnées vont à api.open-meteo.com, une fois par demi-heure.')}
       </p>
     </section>
   )

@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react'
+import { LOCAL_ONLY, NETWORK_FLOWS } from '@shared/network'
 import { SEARCH_ENGINES } from '@shared/url'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
 import {
@@ -899,7 +900,7 @@ export default function SettingsPanel() {
             <div className="setting-row">
               <div>
                 <label>Permissions des pages</label>
-                <p className="setting-hint">Caméra, micro, position et notifications sont refusés en v0.1.</p>
+                <p className="setting-hint">Caméra, micro, position et notifications sont refusés par défaut.</p>
               </div>
               <span className="tag">Refusées</span>
             </div>
@@ -907,6 +908,58 @@ export default function SettingsPanel() {
               <Icon name="lock" size={14} />
               <span>Aucun compte, aucune synchronisation, aucune télémétrie.</span>
             </div>
+
+            <div className="setting-head flow-head">
+              <h2>Ce qui quitte l’appareil</h2>
+              <p>
+                Les requêtes que Vela déclenche elle-même, hors pages que vous ouvrez. Chacune dit
+                quand elle part, ce qu’elle emporte et comment l’éviter.
+              </p>
+            </div>
+            <ul className="flow-list" aria-label="Destinations réseau de Vela">
+              {NETWORK_FLOWS.map((flow) => (
+                <li key={flow.id} className="flow-row" data-local={flow.local ? 'true' : undefined}>
+                  <div className="flow-title">
+                    <strong>{flow.label}</strong>
+                    <span className="flow-target">{flow.local ? 'Sur cet appareil' : flow.target}</span>
+                  </div>
+                  {flow.hosts.length > 1 && !flow.local && (
+                    <p className="flow-hosts">{flow.hosts.join(' · ')}</p>
+                  )}
+                  <dl className="flow-detail">
+                    <div>
+                      <dt>Quand</dt>
+                      <dd>{flow.trigger}</dd>
+                    </div>
+                    <div>
+                      <dt>Envoyé</dt>
+                      <dd>{flow.data}</dd>
+                    </div>
+                    <div>
+                      <dt>Pour l’éviter</dt>
+                      <dd>{flow.off ?? 'Aucun réglage dans cette version.'}</dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+
+            <div className="setting-head flow-head">
+              <h2>Ce qui ne sort jamais</h2>
+              <p>Ces données restent sur le disque, sans requête pour les déposer ailleurs.</p>
+            </div>
+            <ul className="flow-local-list">
+              {LOCAL_ONLY.map((item) => (
+                <li key={item}>
+                  <Icon name="check" size={13} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="setting-hint flow-note">
+              Les pages que vous ouvrez sortent par définition : Vela ne fait que les demander, comme
+              tout navigateur. En mode démo, l’agent ne contacte aucun modèle.
+            </p>
           </section>
         )
 
