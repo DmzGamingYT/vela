@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
+import { version } from '../../package.json'
+
 /**
  * L'aide (README) et le site vitrine décrivent les mêmes limites. Ce test
  * échoue dès qu'un des deux textes prend de l'avance sur l'autre — c'est ce qui
@@ -9,6 +11,7 @@ import { describe, expect, it } from 'vitest'
  */
 const readme = readFileSync(join(process.cwd(), 'README.md'), 'utf8')
 const site = readFileSync(join(process.cwd(), 'site', 'public', 'index.html'), 'utf8')
+const script = readFileSync(join(process.cwd(), 'site', 'public', 'script.js'), 'utf8')
 const texts: [string, string][] = [
   ['README', readme],
   ['site', site]
@@ -41,16 +44,27 @@ describe('limites documentées dans l’aide et sur le site', () => {
     }
   })
 
-  it('décrit le build macOS universel sans le promettre pour la 0.3.7', () => {
+  it('décrit le build macOS universel comme livré, pas comme à venir', () => {
     for (const [name, text] of texts) {
       expect(text, name).toMatch(/universel/)
       expect(text, name).toMatch(/Apple silicon/)
       expect(text, name).toMatch(/Intel/)
+      // Les deux disent qu’un essai sur une vraie machine Intel reste à faire.
+      expect(text, name).toMatch(/vraie machine Intel/)
     }
-    // L’aide dit que l’universel attend une validation sur machine Intel…
-    expect(readme).toMatch(/le temps que\s*l’universel soit validé/i)
-    // …et le site ne l’annonce que pour la prochaine version.
-    expect(site).toMatch(/prochaine version/)
+    // Le site ne renvoie plus l’universel à une version future : il est publié.
+    expect(site).not.toMatch(/prochaine version/)
+  })
+
+  it('annonce sur le site la version de package.json', () => {
+    expect(site, 'titre de téléchargement').toContain(`Vela ${version}`)
+    expect(site, 'badge de version').toContain(`>${version}</span>`)
+    // Les liens du tableau pointent vers la release de cette version…
+    expect(site).toContain(`releases/download/v${version}/Vela-${version}-universal.dmg`)
+    expect(site).toContain(`Vela-${version}-amd64.deb`)
+    // …et le bouton adapté à la plateforme aussi.
+    expect(script).toContain(`releases/download/v${version}/`)
+    expect(script).toContain(`Vela-${version}-universal.dmg`)
   })
 
   it('explique SmartScreen sous Windows', () => {

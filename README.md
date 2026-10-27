@@ -91,7 +91,7 @@ Vela se met à jour toute seule en arrière-plan via `electron-updater` et les r
 
 ## Signature macOS et Windows (préparation)
 
-**État réel : rien n’est signé.** La release v0.3.7 est signée ad hoc (pas de Developer ID, pas de
+**État réel : rien n’est signé.** La release v0.3.8 est signée ad hoc (pas de Developer ID, pas de
 notarisation) et l’installateur Windows n’a pas de certificat. Ce dépôt ne contient aucun secret et
 ne fabrique aucune signature : les deux tableaux ci-dessous disent seulement ce qu’il faudra
 renseigner, une fois les certificats obtenus.
