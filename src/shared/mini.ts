@@ -6,11 +6,22 @@
 
 /** Hauteur de la barre compacte, en points CSS : la page commence juste après. */
 export const MINI_CHROME_HEIGHT = 44
-/** Taille d'ouverture, bornée par la zone utile de l'écran. */
-export const MINI_WIDTH = 560
-export const MINI_HEIGHT = 660
-export const MINI_MIN_WIDTH = 380
-export const MINI_MIN_HEIGHT = 320
+/** Taille d'ouverture sans fenêtre principale connue, bornée par l'écran. */
+export const MINI_WIDTH = 780
+export const MINI_HEIGHT = 880
+/** Taille minimale quand on la redimensionne à la main. */
+export const MINI_MIN_WIDTH = 480
+export const MINI_MIN_HEIGHT = 380
+/**
+ * Part de la fenêtre principale qu'elle occupe. Little Arc se cale sur la
+ * fenêtre qui l'ouvre plutôt que sur l'écran : sur un grand écran la page reste
+ * lisible, sur un petit elle ne déborde pas.
+ */
+const WIDTH_RATIO = 0.5
+const HEIGHT_RATIO = 0.9
+/** Plafond, pour qu'elle reste une petite fenêtre sur un très grand écran. */
+const MAX_WIDTH = 1120
+const MAX_HEIGHT = 1140
 /** Marge gardée avec les bords de l'écran. */
 const MINI_MARGIN = 16
 
@@ -19,6 +30,22 @@ export interface Rect {
   y: number
   width: number
   height: number
+}
+
+/**
+ * Taille d'ouverture : proportionnelle à la fenêtre qui l'ouvre, bornée pour
+ * rester utilisable — la moitié de sa largeur, 90 % de sa hauteur, jamais sous
+ * 480 × 380 ni au-delà de 1120 × 1140.
+ */
+export function miniWindowSize(parent?: { width: number; height: number } | null): {
+  width: number
+  height: number
+} {
+  if (!parent) return { width: MINI_WIDTH, height: MINI_HEIGHT }
+  return {
+    width: Math.round(clamp(parent.width * WIDTH_RATIO, MINI_MIN_WIDTH, MAX_WIDTH)),
+    height: Math.round(clamp(parent.height * HEIGHT_RATIO, MINI_MIN_HEIGHT, MAX_HEIGHT))
+  }
 }
 
 export interface MiniPlacement {

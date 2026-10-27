@@ -1,10 +1,48 @@
 import { describe, expect, it } from 'vitest'
-import { MINI_MIN_WIDTH, MINI_WIDTH, miniKeyAction, placeMiniWindow, type MiniKeyInput } from './mini'
+import {
+  MINI_HEIGHT,
+  MINI_MIN_HEIGHT,
+  MINI_MIN_WIDTH,
+  MINI_WIDTH,
+  miniKeyAction,
+  miniWindowSize,
+  placeMiniWindow,
+  type MiniKeyInput
+} from './mini'
 
 /** Écran 1920 × 1080, menu et Dock déduits. */
 const SCREEN = { x: 0, y: 25, width: 1920, height: 1030 }
 /** Portable : 1512 × 982, zone utile plus courte que la fenêtre demandée. */
 const LAPTOP = { x: 0, y: 25, width: 1512, height: 930 }
+
+describe('miniWindowSize', () => {
+  it('prend la moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre', () => {
+    expect(miniWindowSize({ width: 1440, height: 900 })).toEqual({ width: 720, height: 810 })
+    expect(miniWindowSize({ width: 1710, height: 1110 })).toEqual({ width: 855, height: 999 })
+  })
+
+  it('ne descend pas sous la taille utilisable sur une petite fenêtre', () => {
+    const size = miniWindowSize({ width: 700, height: 380 })
+    expect(size.width).toBe(MINI_MIN_WIDTH)
+    expect(size.height).toBe(MINI_MIN_HEIGHT)
+  })
+
+  it('plafonne sur un très grand écran, pour rester une petite fenêtre', () => {
+    const size = miniWindowSize({ width: 3200, height: 1600 })
+    expect(size.width).toBe(1120)
+    expect(size.height).toBe(1140)
+  })
+
+  it('garde une taille par défaut sans fenêtre principale', () => {
+    expect(miniWindowSize(null)).toEqual({ width: MINI_WIDTH, height: MINI_HEIGHT })
+  })
+
+  it('reste plus grande que la version précédente sur un portable', () => {
+    const size = miniWindowSize({ width: 1512, height: 930 })
+    expect(size.width).toBeGreaterThan(560)
+    expect(size.height).toBeGreaterThan(660)
+  })
+})
 
 describe('placeMiniWindow', () => {
   it('ouvre la petite fenêtre au milieu de l’écran', () => {

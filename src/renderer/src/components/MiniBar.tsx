@@ -177,6 +177,8 @@ export default function MiniBar(): React.JSX.Element {
         >
           <Icon name="close" size={15} />
         </button>
+        {/* Le filet de chargement : la page arrive dessous, sans masquer le geste. */}
+        {state.loading && <span className="mini-progress" aria-hidden="true" />}
       </header>
 
       <p className="sr-only" role="status" aria-live="polite">

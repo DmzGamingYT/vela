@@ -180,9 +180,14 @@ Les autres gestes gardent leur sens habituel : `⌘` + clic ouvre l’onglet **e
 que vous lisiez garde le focus), `⌥` + clic télécharge le lien comme dans Chromium, et une popup de
 site (fenêtre de connexion OAuth) reste une vraie fenêtre.
 
+Elle prend la moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre (690 × 792 sur
+une fenêtre de 1380 × 880, contre 560 × 660 avant), avec un plancher de 480 × 380 : une page de
+bureau reste lisible, et un petit écran la réduit au lieu de la faire déborder. Elle peut être
+redimensionnée comme n’importe quelle fenêtre.
+
 La petite fenêtre emprunte la session de l’espace — mêmes cookies, même filtre de traqueurs, même
 identité — et sa barre compacte montre l’espace qui la prête, l’adresse (modifiable), l’état de
-chargement et les gestes utiles. Le bouton d’ouverture installe la page dans un vrai onglet et
+chargement (un filet court sous la barre) et les gestes utiles. Le bouton d’ouverture installe la page dans un vrai onglet et
 referme la petite fenêtre ; `Échap` et `⌘W` la referment aussi. À l’intérieur, les mêmes gestes de
 lien s’appliquent : elle se recharge elle-même plutôt que d’en ouvrir une seconde. La visite, elle,
 reste dans l’historique de l’espace.

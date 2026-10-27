@@ -12,11 +12,10 @@ import {
 import type { MiniState, Settings, Space } from '@shared/types'
 import {
   MINI_CHROME_HEIGHT,
-  MINI_HEIGHT,
   MINI_MIN_HEIGHT,
   MINI_MIN_WIDTH,
-  MINI_WIDTH,
   miniKeyAction,
+  miniWindowSize,
   placeMiniWindow
 } from '@shared/mini'
 import { opensMiniWindow } from '@shared/navigation'
@@ -169,11 +168,14 @@ export class MiniWindow {
     const parent = this.host.parent()
     const alive = parent && !parent.isDestroyed() ? parent : null
     const display = alive ? screen.getDisplayMatching(alive.getBounds()) : screen.getPrimaryDisplay()
-    // Comme Little Arc : au milieu de l'écran, pas collée au bord de Vela.
+    // Comme Little Arc : au milieu de l'écran, pas collée au bord de Vela, et
+    // à l'échelle de la fenêtre qui l'ouvre — la moitié de sa largeur, 90 % de
+    // sa hauteur, bornées par la zone utile de l'écran.
+    const size = miniWindowSize(alive ? alive.getContentBounds() : null)
     const bounds = placeMiniWindow({
       workArea: display.workArea,
-      width: MINI_WIDTH,
-      height: MINI_HEIGHT
+      width: size.width,
+      height: size.height
     })
 
     const win = new BrowserWindow({

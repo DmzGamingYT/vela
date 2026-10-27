@@ -12936,6 +12936,7 @@ html[data-mode="dark"] {
 }
 
 .mini-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -12946,6 +12947,44 @@ html[data-mode="dark"] {
   box-shadow: var(--glass-highlight);
   /* La fenêtre se déplace en attrapant sa barre, comme n'importe quel titre. */
   -webkit-app-region: drag;
+}
+
+/* Filet de chargement, sous la barre : il occupe l'attente sans la commenter. */
+.mini-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  overflow: hidden;
+  background: var(--accent-soft);
+}
+
+.mini-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 38%;
+  background: var(--accent);
+  animation: mini-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes mini-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(265%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-progress::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.55;
+  }
 }
 
 /* macOS : les feux de circulation gardent leur place à gauche. */
