@@ -158,7 +158,12 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
       state: 'downloaded',
       version: versionOf(info),
       progress: 100,
-      message: 'S’installe automatiquement à la fermeture.'
+      // macOS refuse le remplacement du bundle sans signature Developer ID :
+      // on ne promet donc pas une installation silencieuse sur cette plateforme.
+      message:
+        process.platform === 'darwin'
+          ? 'Téléchargée — redémarrez pour installer ; si macOS refuse, prenez le .dmg.'
+          : 'S’installe automatiquement à la fermeture.'
     })
   })
   autoUpdater.on('download-progress', (progress) => {

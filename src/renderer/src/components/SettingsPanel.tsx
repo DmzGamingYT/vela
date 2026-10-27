@@ -963,7 +963,7 @@ export default function SettingsPanel() {
               : update?.state === 'downloading'
                 ? `Téléchargement en arrière-plan ${update.progress}%`
                 : update?.state === 'downloaded'
-                  ? 'Prête — s’installe automatiquement à la fermeture'
+                  ? 'Prête à installer — redémarrez Vela'
                   : update?.state === 'not-available'
                     ? 'Vela est à jour'
                     : update?.state === 'error'

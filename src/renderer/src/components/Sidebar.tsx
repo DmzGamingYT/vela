@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { CSSProperties, DragEvent } from 'react'
+import type { CSSProperties, DragEvent, KeyboardEvent } from 'react'
 import type { TabGroup, TabView } from '@shared/types'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
@@ -52,6 +52,16 @@ export default function Sidebar() {
   // rognée par la liste qui défile.
   const [tip, setTip] = useState<{ label: string; x: number; y: number } | null>(null)
   const cancelRename = useRef(false)
+  // Après un déplacement au clavier, la case déplacée reprend le focus une fois
+  // la nouvelle ordonnance arrivée : sans cela, Tab repartirait du début.
+  const focusAfterMove = useRef<string | null>(null)
+
+  useEffect(() => {
+    const id = focusAfterMove.current
+    if (!id) return
+    focusAfterMove.current = null
+    document.querySelector<HTMLElement>(`.mini-tile[data-tab-id="${CSS.escape(id)}"]`)?.focus()
+  }, [view])
 
   if (!view) return <aside className="sidebar" />
 
@@ -179,6 +189,21 @@ export default function Sidebar() {
     endDrag()
   }
 
+  /** Alt + flèches : même déplacement que le glisser, sans quitter le clavier. */
+  const moveTile = (event: KeyboardEvent<HTMLElement>, tab: TabView, list: TabView[]): void => {
+    if (!event.altKey) return
+    const step = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0
+    if (!step) return
+    const index = list.findIndex((item) => item.id === tab.id)
+    const target = list[index + step]
+    if (index < 0 || !target) return
+    event.preventDefault()
+    event.stopPropagation()
+    hideTip()
+    focusAfterMove.current = tab.id
+    reorderTab(tab.id, target.id, step < 0 ? 'before' : 'after')
+  }
+
   const startRename = (group: TabGroup): void => {
     cancelRename.current = false
     setRenamingId(group.id)
@@ -279,13 +304,18 @@ export default function Sidebar() {
               <span>Épinglés</span>
               <span className="tabs-count">{pinnedCount}</span>
             </div>
-            <div className="mini-grid" role="list" aria-label={`Sites épinglés de ${space.name}`}>
+            <div
+              className="mini-grid"
+              role="list"
+              aria-label={`Sites épinglés de ${space.name} — Alt + flèches pour réordonner`}
+            >
               {pinned.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   role="listitem"
                   className="mini-tile"
+                  data-tab-id={tab.id}
                   data-active={tab.id === view.activeTabId}
                   data-secondary={view.split && tab.id === view.secondTabId ? 'true' : undefined}
                   data-dragging={draggingId === tab.id ? 'true' : undefined}
@@ -302,6 +332,7 @@ export default function Sidebar() {
                   onDragEnd={endDrag}
                   onDragOver={(event) => overTile(event, tab)}
                   onDrop={(event) => dropOnTile(event, tab)}
+                  onKeyDown={(event) => moveTile(event, tab, pinned)}
                   onClick={() => selectTab(tab.id)}
                 >
                   <Favicon src={tab.favicon ?? iconFrom(tab.url)} label={tab.title} size={18} />
@@ -334,6 +365,7 @@ export default function Sidebar() {
                   type="button"
                   role="listitem"
                   className="mini-tile"
+                  data-bookmark-id={bookmark.id}
                   aria-label={bookmark.title}
                   onMouseEnter={(event) => showTip(event, bookmark.title)}
                   onMouseLeave={hideTip}
