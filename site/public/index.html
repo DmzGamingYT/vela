@@ -110,7 +110,7 @@
       <a class="brand" href="#top" aria-label="Vela, retour en haut">
         <span class="brand-mark" aria-hidden="true">V</span>
         <span class="brand-name">Vela</span>
-        <span class="brand-version">0.3.8</span>
+        <span class="brand-version">0.3.9</span>
       </a>
 
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
@@ -148,7 +148,7 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <p class="kicker">
           <span class="dot" aria-hidden="true"></span>
-          v0.3.8 · macOS, Windows, Linux
+          v0.3.9 · macOS, Windows, Linux
         </p>
         <h1 id="hero-title">
           Le web,<br />
@@ -159,7 +159,7 @@
         </p>
         <a class="hero-new" href="#nouveautes">
           <span>Nouveau</span>
-          Épinglés et favoris en cases compactes : un favicon, une infobulle, un clic.
+          ⌘⌥ + clic sur un lien l’ouvre dans une petite fenêtre, au centre, sans toucher à vos onglets.
         </a>
         <div class="hero-actions">
           <a class="btn" href="#telecharger" data-platform-cta>
@@ -167,7 +167,7 @@
             <span data-platform-label>Télécharger</span>
           </a>
           <a class="btn btn-quiet" href="https://github.com/DmzGamingYT/vela/releases/latest" target="_blank" rel="noreferrer">
-            Voir la version 0.3.8
+            Voir la version 0.3.9
           </a>
         </div>
         <p class="fine">Sans compte Vela · Sans télémétrie · MIT</p>
@@ -396,10 +396,11 @@
       <section class="section" id="nouveautes" aria-labelledby="news-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Nouveautés</p>
-          <h2 id="news-title">Quatre fonctions arrivées coup sur coup.</h2>
+          <h2 id="news-title">Six fonctions arrivées coup sur coup.</h2>
           <p class="section-lede">
-            L’accueil, les espaces, les notes et le rail des onglets ont changé dans la 0.3.8. Voici
-            ce que ça donne à l’usage, sans capture retouchée.
+            L’accueil, les espaces, les notes et le rail ont changé dans la 0.3.8 ; la 0.3.9 ajoute la
+            petite fenêtre et des mises à jour qui ne demandent plus rien. Voici ce que ça donne à
+            l’usage, sans capture retouchée.
           </p>
         </div>
 
@@ -472,11 +473,41 @@
               </div>
             </div>
           </article>
+
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-split" /></svg></span>
+            <h3>Une petite fenêtre pour un lien</h3>
+            <p>
+              <kbd>⌘⌥</kbd> + clic — le geste de Little Arc — ouvre le lien dans une fenêtre étroite
+              posée au milieu de l’écran, par-dessus l’onglet en cours. Elle a sa barre d’adresse, un
+              retour vers l’onglet d’origine, et un bouton pour garder la page dans un vrai onglet.
+              Les connexions qui ont besoin d’une vraie popup, elles, restent des fenêtres normales.
+            </p>
+            <div class="card-visual card-spaces" aria-hidden="true">
+              <span class="space-pill"><span class="space-dot"></span>Petite fenêtre</span>
+              <span class="space-pill"><span class="space-dot alt"></span>Onglet d’origine</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-download" /></svg></span>
+            <h3>Des mises à jour qui ne demandent plus rien</h3>
+            <p>
+              Vela cherche sa nouvelle version douze secondes après le démarrage, puis toutes les
+              trois heures, au réveil et au retour du focus : ni fenêtre ni son. Sur Windows et Linux,
+              elle s’installe à la fermeture. Sur macOS, faute de certificat Apple, Vela télécharge le
+              <code>.dmg</code> en arrière-plan et la barre d’état n’offre qu’un bouton Installer.
+            </p>
+            <div class="card-visual" aria-hidden="true">
+              <p class="mini-tab is-active">Mise à jour 0.3.9 prête</p>
+              <p class="mini-tab">Installer</p>
+            </div>
+          </article>
         </div>
 
         <p class="fine">
-          Livré dans la 0.3.8, en clair comme en sombre. La météo attend une ville, et la réécriture
-          des notes passe par votre modèle ou par la démo locale.
+          Livré dans la 0.3.8 et la 0.3.9, en clair comme en sombre. La météo attend une ville, et la
+          réécriture des notes passe par votre modèle ou par la démo locale.
         </p>
       </section>
 
@@ -753,7 +784,7 @@
       <section class="section download" id="telecharger" aria-labelledby="download-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Télécharger</p>
-          <h2 id="download-title">Vela 0.3.8</h2>
+          <h2 id="download-title">Vela 0.3.9</h2>
           <p class="section-lede">
             Builds non signés par un certificat commercial. Comptez un clic droit → Ouvrir sur macOS,
             et SmartScreen sur Windows.
@@ -768,7 +799,7 @@
 
         <div class="table-wrap">
           <table class="dl">
-            <caption class="visually-hidden">Fichiers de la version 0.3.8</caption>
+            <caption class="visually-hidden">Fichiers de la version 0.3.9</caption>
             <thead>
               <tr>
                 <th scope="col">Plateforme</th>
@@ -781,11 +812,11 @@
             <tbody>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon <em>et</em> Intel</span></th>
-                <td><code>Vela-0.3.8-universal.dmg</code></td>
+                <td><code>Vela-0.3.9-universal.dmg</code></td>
                 <td>215,5 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-universal.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-universal.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le fichier universel macOS</span>
                   </a>
@@ -793,11 +824,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon</span></th>
-                <td><code>Vela-0.3.8-arm64.dmg</code></td>
+                <td><code>Vela-0.3.9-arm64.dmg</code></td>
                 <td>116,6 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-arm64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-arm64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Apple silicon</span>
                   </a>
@@ -805,11 +836,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Intel</span></th>
-                <td><code>Vela-0.3.8-x64.dmg</code></td>
+                <td><code>Vela-0.3.9-x64.dmg</code></td>
                 <td>123,5 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-x64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-x64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Intel</span>
                   </a>
@@ -817,11 +848,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Windows</span><span class="plat-sub">x64</span></th>
-                <td><code>Vela-0.3.8-x64.exe</code></td>
+                <td><code>Vela-0.3.9-x64.exe</code></td>
                 <td>116,3 Mo</td>
                 <td><span class="state state-warn">SmartScreen</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-x64.exe">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-x64.exe">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour Windows</span>
                   </a>
@@ -829,11 +860,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">AppImage</span></th>
-                <td><code>Vela-0.3.8-x86_64.AppImage</code></td>
+                <td><code>Vela-0.3.9-x86_64.AppImage</code></td>
                 <td>120,7 Mo</td>
                 <td><span class="state">Portable</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-x86_64.AppImage">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-x86_64.AppImage">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger l’AppImage Linux</span>
                   </a>
@@ -841,11 +872,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">Debian, Ubuntu</span></th>
-                <td><code>Vela-0.3.8-amd64.deb</code></td>
+                <td><code>Vela-0.3.9-amd64.deb</code></td>
                 <td>97,0 Mo</td>
                 <td><span class="state">Paquet</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.8/Vela-0.3.8-amd64.deb">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-amd64.deb">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le paquet Debian</span>
                   </a>
@@ -865,19 +896,20 @@
             <code>certutil -hashfile &lt;fichier&gt; SHA256</code> sur Windows.
           </p>
           <ul class="checks-list">
-            <li><code>Vela-0.3.8-universal.dmg</code><span>ec9ec50b34c78c54edb1883d318d54978cefa7bdf90165b5498cb433ac950b51</span></li>
-            <li><code>Vela-0.3.8-arm64.dmg</code><span>7ccdba1efb638fc3c92f464aaab941016140bf09499ea508c9d169a0ce0d1349</span></li>
-            <li><code>Vela-0.3.8-x64.dmg</code><span>f0fca83279a120ff583ab4aeb5e0ade8fa3f4a9c8a0e2528e5843a4dddcc53e2</span></li>
-            <li><code>Vela-0.3.8-x64.exe</code><span>e94ec0a1b80ea1920da1a3c0a99dfbe1c21d1a6d07d26fe1ff738773cc6d1e7f</span></li>
-            <li><code>Vela-0.3.8-x86_64.AppImage</code><span>e5943e8e0ecd93ba308c82f497d4224ca6bcf549351714590117d17acc95e54d</span></li>
-            <li><code>Vela-0.3.8-amd64.deb</code><span>19036f926aea23965889b6aae59794959c231453c5026e0d81d76cd7bdf04b7f</span></li>
+            <li><code>Vela-0.3.9-universal.dmg</code><span>190bfcc05c7a69db1ec718d66b134ae6d2d7cbad81dd15cb94f6a6f570d6d9e2</span></li>
+            <li><code>Vela-0.3.9-arm64.dmg</code><span>77659e3be3c1aec7ff97eab70ed18828ce0e2a794780899e7b75f56c05b9bf3f</span></li>
+            <li><code>Vela-0.3.9-x64.dmg</code><span>a8c1b5d701494a67d5eb9a3870d200b4f549753a7fddec81a2a7f9d5eedf51ef</span></li>
+            <li><code>Vela-0.3.9-x64.exe</code><span>bc2d12bb5ee75d561ba848ac79bb00e7f2ceac0166243dc0d4ba22e1f3d5f41d</span></li>
+            <li><code>Vela-0.3.9-x86_64.AppImage</code><span>73ad3620be1caf52dba77472c35997ffba15c36ba79bf32dd0106a94fcb4b2df</span></li>
+            <li><code>Vela-0.3.9-amd64.deb</code><span>7fceb9d1a6c28859adab03e277dca97524f191cc6ff4d56eea107a0b449372c7</span></li>
           </ul>
         </details>
 
         <p class="fine">
           Mise à jour automatique via les releases GitHub : contrôle discret au démarrage, puis
-          toutes les trois heures. Sur macOS, l’installation automatique peut être refusée sans
-          signature Developer ID — le <code>.dmg</code> reste la voie sûre.
+          toutes les trois heures. Windows et Linux installent à la fermeture. Sans certificat
+          Developer ID, macOS ne peut pas remplacer le bundle tout seul : Vela télécharge alors le
+          <code>.dmg</code> en arrière-plan et ne laisse qu’un bouton Installer.
         </p>
       </section>
 
