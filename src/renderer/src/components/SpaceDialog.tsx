@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { GALLERY_AVATARS } from '@shared/avatarGallery'
 import { SPACE_COLORS } from '@shared/defaults'
 import { THEME_PRESETS, presetById, type ThemeId } from '@shared/theme'
 import {
@@ -8,6 +9,7 @@ import {
   SPACE_BACKGROUNDS,
   SPACE_PRESETS,
   SPACE_SHORTCUT_SETS,
+  avatarFile,
   avatarImage,
   normalizeShortcutUrl,
   sanitizeSpaceShortcuts,
@@ -20,15 +22,10 @@ import {
 import { hostOf } from '@shared/url'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
+import GalleryAvatar from './GalleryAvatar'
 import { Icon } from './Icon'
 import SpaceAvatar from './SpaceAvatar'
 import SpaceAvatarEditor from './SpaceAvatarEditor'
-
-/** Favicon du site épinglé, demandé au site lui-même. */
-function iconUrl(url: string): string | null {
-  const host = hostOf(url)
-  return host ? `https://${host}/favicon.ico` : null
-}
 
 export default function SpaceDialog() {
   const view = useBrowser((state) => state.view)
@@ -58,14 +55,35 @@ export default function SpaceDialog() {
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [filePreview, setFilePreview] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // La photo peut être un fichier du dossier de données : on la relit pour
+  // l'aperçu et le recadrage, sans la remettre dans vela.json.
+  const storedFile = avatarFile(avatar)
 
   useEffect(() => {
     if (photo) return
     inputRef.current?.focus()
     inputRef.current?.select()
   }, [photo])
+
+  useEffect(() => {
+    if (!storedFile) {
+      setFilePreview(null)
+      return
+    }
+    let alive = true
+    void window.vela.avatars
+      .read(storedFile)
+      .then((data) => {
+        if (alive) setFilePreview(data)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [storedFile])
 
   if (!view) return null
 
@@ -75,7 +93,7 @@ export default function SpaceDialog() {
     SPACE_PRESETS.find(
       (preset) => preset.color === color && preset.avatar === avatar && preset.background === background
     )?.id ?? null
-  const storedImage = avatarImage(avatar)
+  const storedImage = avatarImage(avatar) ?? filePreview
 
   const applyPreset = (preset: SpacePreset): void => {
     setName(preset.name)
@@ -395,6 +413,26 @@ export default function SpaceDialog() {
                 />
               </div>
 
+              <div className="space-row">
+                <span className="space-row-label">Galerie</span>
+                <div className="avatar-gallery" role="group" aria-label="Avatars de la galerie">
+                  {GALLERY_AVATARS.map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      className="avatar-gallery-choice"
+                      data-active={avatar === `gallery:${entry.id}`}
+                      aria-pressed={avatar === `gallery:${entry.id}`}
+                      title={entry.label}
+                      aria-label={entry.label}
+                      onClick={() => setAvatar(`gallery:${entry.id}`)}
+                    >
+                      <GalleryAvatar id={entry.id} initial={monogram} size={26} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {photoError && <p className="space-error">{photoError}</p>}
 
               {storedImage && !photo && (
@@ -507,7 +545,7 @@ export default function SpaceDialog() {
                       }}
                     >
                       <span className="pin-grip" aria-hidden="true" />
-                      <Favicon src={iconUrl(shortcut.url)} label={shortcut.title} size={16} />
+                      <Favicon url={shortcut.url} label={shortcut.title} size={16} spaceId={editId ?? undefined} />
                       <span className="pin-edit-copy">
                         <strong>{shortcut.title}</strong>
                         <small>{hostOf(shortcut.url)}</small>

@@ -128,8 +128,10 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     target: 'Le fournisseur configuré dans Réglages › Modèles',
     hosts: MODEL_HOSTS,
     category: 'modeles',
-    trigger: 'Quand vous lancez l’agent, une réécriture de note ou la traduction d’une planche.',
-    data: 'Votre demande, le texte des onglets joints ou de la note, et la clé dans l’en-tête. Rien d’autre.',
+    trigger:
+      'Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.',
+    data:
+      'Votre demande, le texte des onglets joints ou de la note, et la clé dans l’en-tête. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
     off: 'Rester en démo locale, ou brancher un serveur local.'
   },
   {
@@ -138,8 +140,8 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     target: 'localhost:11434 (Ollama) ou votre endpoint local',
     hosts: ['localhost'],
     category: 'modeles',
-    trigger: 'Même actions, avec le fournisseur Local.',
-    data: 'Rien ne quitte la machine : le modèle tourne sur localhost.',
+    trigger: 'Même actions, avec le fournisseur Local, transcription des notes vocales comprise.',
+    data: 'Rien ne quitte la machine : le modèle et l’audio restent sur localhost.',
     off: 'Rien à couper : ce serveur est déjà sur votre machine.',
     local: true
   },
@@ -229,10 +231,12 @@ export const IGNORED_HOSTS: readonly string[] = ['www.w3.org', 'vela.local']
 export const LOCAL_ONLY = [
   'Historique, onglets, espaces, réglages et brief du jour',
   'Notes Markdown et surlignages, dans un dossier à vous',
+  'Notes vocales, en fichiers audio dans le dossier de données de l’espace : lues sur place, jamais téléversées sans votre accord',
   'Clés d’API, chiffrées par le trousseau du système',
   'Liste de blocage des traqueurs, embarquée dans l’app',
   'Rapports de l’agent en mode démo, simulés sur place',
   'Cartes du tunnel, enregistrées avec l’espace',
+  'Photos d’avatar et vignettes des pages récentes, en fichiers dans le dossier de données',
   'Correction orthographique désactivée : aucun dictionnaire n’est téléchargé'
 ] as const
 

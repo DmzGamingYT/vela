@@ -1,4 +1,5 @@
-import { createElement, type ReactNode } from 'react'
+import { createContext, createElement, useContext, type ReactNode } from 'react'
+import NoteAudio from '../components/NoteAudio'
 
 function safeUrl(value: string): string | null {
   try {
@@ -15,8 +16,69 @@ function safeImage(value: string): string | null {
   return safeUrl(value)
 }
 
+export interface NoteLinkContext {
+  /** Note qui porte ce titre, ou null. */
+  resolve(title: string): { id: string; title: string } | null
+  open(id: string): void
+  create?(title: string): void
+}
+
+export interface NoteAudioContext {
+  remove?(name: string): void
+  transcribe?(name: string, text: string): void
+  error?(message: string): void
+}
+
+const LinkContext = createContext<NoteLinkContext | null>(null)
+const AudioContext = createContext<NoteAudioContext | null>(null)
+
+/** Lien `[[Titre]]` : cliquable s'il pointe vers une note, marqué sinon. */
+function WikiToken({ title, shown, raw }: { title: string; shown: string; raw: string }) {
+  const links = useContext(LinkContext)
+  if (!links) return <>{raw}</>
+  const found = links.resolve(title)
+  if (found) {
+    return (
+      <button
+        type="button"
+        className="md-wikilink"
+        onClick={() => links.open(found.id)}
+        title={`Ouvrir la note « ${found.title} »`}
+      >
+        {shown}
+      </button>
+    )
+  }
+  return (
+    <span className="md-wikilink missing">
+      <span title={`La note « ${title} » n’existe pas encore`}>{shown}</span>
+      {links.create && (
+        <button type="button" className="md-wikilink-create" onClick={() => links.create?.(title)}>
+          Créer la note
+        </button>
+      )}
+    </span>
+  )
+}
+
+/** Enregistrement vocal d'une note, lu depuis le disque de l'espace. */
+function AudioToken({ name, label }: { name: string; label?: string }) {
+  const audio = useContext(AudioContext)
+  return (
+    <NoteAudio
+      name={name}
+      label={label}
+      onRemove={audio?.remove}
+      onTranscribe={audio?.transcribe}
+      onError={audio?.error}
+    />
+  )
+}
+
 function renderInline(text: string, prefix: string): ReactNode[] {
-  const tokens = text.split(/(!\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g)
+  const tokens = text.split(
+    /(!\[[^\]]*\]\([^)]+\)|\[\[[^[\]|\n]+(?:\|[^[\]\n]+)?\]\]|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g
+  )
   return tokens.filter(Boolean).map((token, index) => {
     const key = `${prefix}-${index}`
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
@@ -31,8 +93,22 @@ function renderInline(text: string, prefix: string): ReactNode[] {
     if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
       return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
     }
+    const wiki = token.match(/^\[\[([^[\]|\n]{1,120})(?:\|([^[\]\n]{1,120}))?\]\]$/)
+    if (wiki) {
+      return (
+        <WikiToken
+          key={key}
+          title={wiki[1].trim()}
+          shown={(wiki[2] ?? wiki[1]).trim()}
+          raw={token}
+        />
+      )
+    }
     const image = token.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
     if (image) {
+      if (image[2].startsWith('vela-audio:')) {
+        return <AudioToken key={key} name={image[2].slice('vela-audio:'.length)} label={image[1]} />
+      }
       const src = safeImage(image[2])
       if (!src) return image[1]
       return <img key={key} className="md-image" src={src} alt={image[1]} loading="lazy" />
@@ -75,10 +151,16 @@ function isBlockStart(line: string): boolean {
 /** Rendu Markdown minimal : titres, listes, tableaux, citations, code et liens. */
 export function Markdown({
   text,
-  sourceLinks = []
+  sourceLinks = [],
+  links,
+  audio
 }: {
   text: string
   sourceLinks?: { title: string; url: string; anchor?: string }[]
+  /** Fourni dans les notes : liens cliquables et création d'une note manquante. */
+  links?: NoteLinkContext
+  /** Fourni dans les notes : suppression et transcription des enregistrements. */
+  audio?: NoteAudioContext
 }) {
   const lines = text.replace(/\r\n/g, '\n').split('\n')
   const blocks: ReactNode[] = []
@@ -277,5 +359,11 @@ export function Markdown({
     )
   }
 
-  return <div className="markdown">{blocks}</div>
+  return (
+    <LinkContext.Provider value={links ?? null}>
+      <AudioContext.Provider value={audio ?? null}>
+        <div className="markdown">{blocks}</div>
+      </AudioContext.Provider>
+    </LinkContext.Provider>
+  )
 }

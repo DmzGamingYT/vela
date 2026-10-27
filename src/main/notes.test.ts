@@ -90,6 +90,60 @@ describe('NotesStore', () => {
   })
 })
 
+describe('liens entre notes dans le stockage', () => {
+  function linked(): { store: NotesStore; a: string; b: string; c: string } {
+    const store = new NotesStore(tempDir())
+    const c = store.save({ title: 'Sources', body: 'Rien encore.', spaceId: 'space' })
+    const b = store.save({ title: 'Méthode', body: 'Voir [[Sources]] et [[Projet TFE|le projet]].', spaceId: 'space' })
+    const a = store.save({ title: 'Projet TFE', body: 'La [[Méthode]] avant tout.', spaceId: 'space' })
+    return { store, a: a.id, b: b.id, c: c.id }
+  }
+
+  it('met à jour les liens lors d’un renommage, et sait revenir en arrière', () => {
+    const { store, a, b } = linked()
+    const renamed = store.rename(a, 'Projet de mémoire')
+    expect(renamed?.previous).toBe('Projet TFE')
+    expect(renamed?.updated).toBe(1)
+    expect(store.get(b)?.body).toBe('Voir [[Sources]] et [[Projet de mémoire|le projet]].')
+
+    store.rename(a, 'Projet TFE')
+    expect(store.get(b)?.body).toBe('Voir [[Sources]] et [[Projet TFE|le projet]].')
+  })
+
+  it('gère un cycle A → B → A sans lien cassé', () => {
+    const { store, a, b } = linked()
+    store.save({ id: b, title: 'Méthode et outils', body: store.get(b)?.body ?? '', spaceId: 'space' })
+    expect(store.get(a)?.body).toBe('La [[Méthode et outils]] avant tout.')
+    store.save({ id: b, title: 'Méthode', body: store.get(b)?.body ?? '', spaceId: 'space' })
+    expect(store.get(a)?.body).toBe('La [[Méthode]] avant tout.')
+    expect(store.graph(a).outgoing.map((ref) => ref.title)).toEqual(['Méthode'])
+    expect(store.graph(b).incoming.map((ref) => ref.title)).toEqual(['Projet TFE'])
+  })
+
+  it('signale un titre cité qui n’existe pas', () => {
+    const { store, c } = linked()
+    store.save({ id: c, title: 'Sources', body: 'Voir [[Note disparue]].', spaceId: 'space' })
+    expect(store.graph(c).missing).toEqual(['Note disparue'])
+  })
+
+  it('renommer n’abîme pas les notes qui ne citent rien', () => {
+    const { store, c } = linked()
+    const before = store.get(c)?.body
+    store.rename(store.list().find((note) => note.title === 'Méthode')?.id ?? '', 'Autre titre')
+    expect(store.get(c)?.body).toBe(before)
+  })
+
+  it('liste les enregistrements vocaux cités par les notes', () => {
+    const store = new NotesStore(tempDir())
+    store.save({
+      title: 'Note vocale',
+      body: '![Note vocale 0:12](vela-audio:space-1/abcd1234.webm)',
+      spaceId: 'space-1'
+    })
+    expect([...store.audioNames()]).toEqual(['space-1/abcd1234.webm'])
+  })
+})
+
 describe('HighlightsStore', () => {
   it('ajoute un surlignage une seule fois et le range par page', () => {
     const store = new HighlightsStore(tempDir())

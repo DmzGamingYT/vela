@@ -54,6 +54,39 @@ describe('moveTab', () => {
     expect(ids(moved)).toEqual(['a', 'b'])
   })
 
+  it('épingle un onglet en fin de groupe quand aucune cible n’est donnée', () => {
+    const tabs = [tab('p1', { pinned: true }), tab('a'), tab('b')]
+    const moved = moveTab(tabs, { id: 'a', pinned: true })
+    expect(moved.find((item) => item.id === 'a')?.pinned).toBe(true)
+    expect(ids(moved)).toEqual(['p1', 'a', 'b'])
+  })
+
+  it('désépingle un onglet en fin de liste', () => {
+    const tabs = [tab('p1', { pinned: true }), tab('p2', { pinned: true }), tab('a')]
+    const moved = moveTab(tabs, { id: 'p1', pinned: false })
+    expect(moved.find((item) => item.id === 'p1')?.pinned).toBe(false)
+    expect(ids(moved)).toEqual(['p2', 'a', 'p1'])
+  })
+
+  it('change d’état en visant un onglet de l’autre groupe', () => {
+    const tabs = [tab('p1', { pinned: true }), tab('a'), tab('b')]
+    const moved = moveTab(tabs, { id: 'p1', targetId: 'a', position: 'after', pinned: false })
+    expect(moved.find((item) => item.id === 'p1')?.pinned).toBe(false)
+    expect(ids(moved)).toEqual(['a', 'p1', 'b'])
+  })
+
+  it('épingle en visant une case de l’autre groupe', () => {
+    const tabs = [tab('p1', { pinned: true }), tab('a'), tab('b')]
+    const moved = moveTab(tabs, { id: 'b', targetId: 'p1', position: 'before', pinned: true })
+    expect(moved.find((item) => item.id === 'b')?.pinned).toBe(true)
+    expect(ids(moved)).toEqual(['b', 'p1', 'a'])
+  })
+
+  it('refuse un épinglé dans un dossier', () => {
+    const tabs = [tab('p1', { pinned: true }), tab('a')]
+    expect(moveTab(tabs, { id: 'p1', groupId: 'g1' })).toBe(tabs)
+  })
+
   it('détache un onglet épinglé de tout dossier', () => {
     const tabs = [tab('a', { pinned: true, groupId: 'g1' }), tab('b', { pinned: true })]
     const moved = moveTab(tabs, { id: 'a', targetId: 'b', position: 'after' })

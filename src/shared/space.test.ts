@@ -8,6 +8,7 @@ import {
   avatarIcon,
   avatarImage,
   isSpaceBackground,
+  partitionFor,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
   sanitizeSpaceShortcuts,
@@ -115,6 +116,23 @@ describe('sites épinglés', () => {
     expect(sanitizeSpaceShortcuts('nope')).toEqual([])
   })
 
+  it('garde quarante sites, tous utilisables', () => {
+    const many = Array.from({ length: 40 }, (_, index) => ({ url: `site${index}.fr`, title: `Site ${index}` }))
+    const list = sanitizeSpaceShortcuts(many)
+    expect(list).toHaveLength(40)
+    expect(new Set(list.map((item) => item.id)).size).toBe(40)
+  })
+
+  it('reste rapide sur une barre très chargée (test de performance)', () => {
+    // 600 entrées : le plafond doit couper avant, sans ralentir la lecture.
+    const many = Array.from({ length: 600 }, (_, index) => ({ url: `site${index}.fr`, title: `Site ${index}` }))
+    const start = performance.now()
+    const list = sanitizeSpaceShortcuts(many)
+    const elapsed = performance.now() - start
+    expect(list).toHaveLength(MAX_SHORTCUTS)
+    expect(elapsed).toBeLessThan(100)
+  })
+
   it('chaque modèle livre une barre valide et propre à son usage', () => {
     for (const preset of SPACE_PRESETS) {
       const shortcuts = shortcutsForSet(preset.id)
@@ -132,5 +150,30 @@ describe('sites épinglés', () => {
     expect(suggestShortcutSet('Gaming')).toBe('gaming')
     expect(suggestShortcutSet('Développement')).toBe('dev')
     expect(suggestShortcutSet('Jardinage')).toBeNull()
+  })
+})
+
+describe('partition d’un espace', () => {
+  it('garde une partition valide telle quelle', () => {
+    expect(partitionFor({ id: 'space-1', partition: 'persist:vela-space-1' })).toBe('persist:vela-space-1')
+    expect(partitionFor({ id: 'space-1', partition: '  persist:perso  ' })).toBe('persist:perso')
+  })
+
+  it('calcule une partition stable quand elle manque', () => {
+    // Le cas du plantage : un vela.json sans partition passait `undefined` à
+    // Chromium, qui refusait l'argument et fermait l'app.
+    expect(partitionFor({ id: 'space-1' })).toBe('persist:vela-space-1')
+    expect(partitionFor({ id: 'space-1', partition: undefined })).toBe('persist:vela-space-1')
+    expect(partitionFor({ id: 'space-2', partition: null })).toBe('persist:vela-space-2')
+    expect(partitionFor({ id: 'space-3', partition: 42 })).toBe('persist:vela-space-3')
+    expect(partitionFor({ id: 'space-1' })).toBe(partitionFor({ id: 'space-1' }))
+  })
+
+  it('refuse une valeur douteuse et ne partage jamais la session', () => {
+    expect(partitionFor({ id: 'space-1', partition: '../partagee' })).toBe('persist:vela-space-1')
+    expect(partitionFor({ id: 'space-1', partition: '' })).toBe('persist:vela-space-1')
+    expect(partitionFor(null)).toBe('persist:vela-recovery')
+    expect(partitionFor({ id: '../' })).toBe('persist:vela-recovery')
+    expect(partitionFor({ id: 'space-1' })).not.toBe(partitionFor({ id: 'space-2' }))
   })
 })

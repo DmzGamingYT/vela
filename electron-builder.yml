@@ -25,13 +25,24 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
   extendInfo:
+    # Nom affiché par Finder, le Dock et la barre de menus. electron-builder le
+    # déduit déjà de productName ; on l'écrit pour qu'aucun script de
+    # rebranding ne puisse le perdre.
+    CFBundleName: Vela
+    CFBundleDisplayName: Vela
     NSCameraUsageDescription: "Vela utilise la caméra pour les visioconférences et les appels lancés depuis vos pages web."
-    NSMicrophoneUsageDescription: "Vela utilise le microphone pour les appels et la dictée lancés depuis vos pages web."
+    NSMicrophoneUsageDescription: "Vela utilise le microphone pour vos notes vocales et les appels lancés depuis vos pages web. L’enregistrement reste sur cet appareil."
+  # Trois architectures livrées ensemble : universel (un seul .dmg et un seul
+  # .zip pour Apple silicon et Intel), plus arm64 et x64 séparés tant que
+  # l'universel n'a pas été validé sur une vraie machine Intel. Le nom du
+  # fichier garde l'architecture, donc latest-mac.yml reste lisible par
+  # electron-updater : il préfère l'arm64 sur Apple silicon et écarte l'arm64
+  # sur Intel (cf. MacUpdater.filterFilesForArch).
   target:
     - target: dmg
-      arch: [arm64, x64]
+      arch: [universal, arm64, x64]
     - target: zip
-      arch: [arm64, x64]
+      arch: [universal, arm64, x64]
   darkModeSupport: true
 win:
   icon: build/icon.ico

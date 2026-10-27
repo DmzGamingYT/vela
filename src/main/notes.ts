@@ -9,6 +9,7 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 import { newId } from '@shared/defaults'
+import { audioRefs, noteGraph, rewriteWikiTargets, type NoteGraph } from '@shared/noteLinks'
 import type { Note, NoteMeta, PageHighlight } from '@shared/types'
 
 interface NoteIndexEntry {
@@ -61,6 +62,7 @@ function previewOf(body: string): string {
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '[croquis]')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/^#+\s*/gm, '')
+    .replace(/\[\[([^[\]|]+)(?:\|([^[\]]+))?\]\]/g, (_match, target: string, alias?: string) => alias || target)
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\[[ xX]\]\s?/g, '')
     .replace(/[*_>`|-]/g, ' ')
@@ -172,9 +174,32 @@ export class NotesStore {
   }): Note {
     const existing = input.id ? this.entries.find((entry) => entry.id === input.id) : undefined
     const id = existing?.id ?? newId()
+    const previousTitle = existing?.title
     const title = input.title.trim() || 'Note sans titre'
-    const body = input.body
     const filename = `${slugify(title)}-${id.slice(0, 8)}.md`
+
+    // Un renommage met à jour les liens qui citaient l'ancien titre, dans
+    // toutes les notes. Une seule passe par corps : un cycle A → B → A ne
+    // peut pas boucler, et rien n'est réécrit quand le titre n'a pas changé.
+    let body = input.body
+    let linksUpdated = 0
+    if (existing && previousTitle && previousTitle !== title) {
+      for (const entry of this.entries) {
+        if (entry.id === id) {
+          body = rewriteWikiTargets(body, previousTitle, title).body
+          continue
+        }
+        const source = this.bodyOf(entry)
+        const rewritten = rewriteWikiTargets(source, previousTitle, title)
+        if (rewritten.count === 0) continue
+        try {
+          writeFileSync(join(this.dir, entry.file), rewritten.body, 'utf8')
+          linksUpdated += 1
+        } catch {
+          /* fichier verrouillé : la note garde son ancien texte */
+        }
+      }
+    }
 
     if (existing && existing.file !== filename) {
       const oldFile = join(this.dir, existing.file)
@@ -210,8 +235,44 @@ export class NotesStore {
       url: next.url,
       tags: next.tags,
       pinned: next.pinned,
-      updatedAt: next.updatedAt
+      updatedAt: next.updatedAt,
+      linksUpdated
     }
+  }
+
+  /**
+   * Renomme sans passer par le corps de l'éditeur, et rend de quoi annuler :
+   * l'ancien titre et le nombre de notes dont les liens ont suivi.
+   */
+  rename(id: string, title: string): { note: Note; previous: string; updated: number } | null {
+    const entry = this.entries.find((item) => item.id === id)
+    if (!entry) return null
+    const previous = entry.title
+    const note = this.save({
+      id,
+      title,
+      body: this.bodyOf(entry),
+      spaceId: entry.spaceId,
+      url: entry.url,
+      tags: entry.tags,
+      pinned: entry.pinned
+    })
+    return { note, previous, updated: note.linksUpdated ?? 0 }
+  }
+
+  /** Liens entrants, sortants et cassés de la note ouverte. */
+  graph(id: string): NoteGraph {
+    return noteGraph(
+      this.entries.map((entry) => ({ id: entry.id, title: entry.title, body: this.bodyOf(entry) })),
+      id
+    )
+  }
+
+  /** Enregistrements vocaux cités par au moins une note. */
+  audioNames(): Set<string> {
+    const names = new Set<string>()
+    for (const entry of this.entries) for (const name of audioRefs(this.bodyOf(entry))) names.add(name)
+    return names
   }
 
   remove(id: string): void {

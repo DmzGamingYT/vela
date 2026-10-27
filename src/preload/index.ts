@@ -22,7 +22,18 @@ function subscribe<T>(channel: string, callback: (payload: T) => void): () => vo
 
 const api: VelaApi = {
   platform: process.platform,
+  // Architecture réellement exécutée (arm64, x64) : le bundle universel en a
+  // deux, et « À propos » comme les diagnostics doivent pouvoir le dire.
+  arch: process.arch,
   view: () => ipcRenderer.invoke('app:view'),
+  avatars: {
+    read: (name: string) => ipcRenderer.invoke('avatar:read', name)
+  },
+  thumbs: {
+    get: (url: string) => ipcRenderer.invoke('thumbs:get', url),
+    count: () => ipcRenderer.invoke('thumbs:count'),
+    purge: () => ipcRenderer.invoke('thumbs:purge')
+  },
   spaces: {
     create: (input: CreateSpaceInput) => ipcRenderer.invoke('space:create', input),
     update: (input) => ipcRenderer.invoke('space:update', input),
@@ -65,11 +76,17 @@ const api: VelaApi = {
     remove: (url: string) => ipcRenderer.invoke('history:remove', url),
     clear: () => ipcRenderer.invoke('history:clear')
   },
+  favicons: {
+    get: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:get', { host, spaceId }),
+    purge: () => ipcRenderer.invoke('favicons:purge')
+  },
   bookmarks: {
     toggle: (input: { url: string; title?: string; favicon?: string }) => ipcRenderer.invoke('bookmark:toggle', input),
     remove: (id: string) => ipcRenderer.invoke('bookmark:remove', id),
     detect: () => ipcRenderer.invoke('bookmark:detect'),
-    addMany: (entries: { url: string; title?: string }[]) => ipcRenderer.invoke('bookmark:add-many', entries)
+    addMany: (entries: { url: string; title?: string }[]) => ipcRenderer.invoke('bookmark:add-many', entries),
+    move: (id: string, position: number) => ipcRenderer.invoke('bookmark:move', { id, position }),
+    reorder: (ids: string[]) => ipcRenderer.invoke('bookmark:reorder', ids)
   },
   downloads: {
     list: () => ipcRenderer.invoke('downloads:list'),
@@ -107,7 +124,15 @@ const api: VelaApi = {
     captureSelection: () => ipcRenderer.invoke('notes:capture-selection'),
     highlight: () => ipcRenderer.invoke('notes:highlight'),
     highlights: () => ipcRenderer.invoke('notes:highlights'),
-    ai: (input: NoteAiInput) => ipcRenderer.invoke('notes:ai', input)
+    ai: (input: NoteAiInput) => ipcRenderer.invoke('notes:ai', input),
+    rename: (input: { id: string; title: string }) => ipcRenderer.invoke('notes:rename', input),
+    graph: (id: string) => ipcRenderer.invoke('notes:graph', id),
+    audio: {
+      save: (input: { spaceId: string; dataUrl: string }) => ipcRenderer.invoke('notes:audio-save', input),
+      get: (name: string) => ipcRenderer.invoke('notes:audio-get', name),
+      remove: (name: string) => ipcRenderer.invoke('notes:audio-remove', name)
+    },
+    transcribe: (input: { name: string; consent: boolean }) => ipcRenderer.invoke('notes:transcribe', input)
   },
   privacy: {
     toggleSite: (host: string) => ipcRenderer.invoke('privacy:toggle-site', host)

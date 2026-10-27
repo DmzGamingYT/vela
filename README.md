@@ -35,12 +35,34 @@ Build de production et vérifications :
 npm run typecheck   # TypeScript (main, preload, renderer)
 npm test            # tests unitaires (URL, brief, agent, fournisseurs)
 npm run build       # build dans out/
-npm run dist:mac    # .dmg + .zip (arm64 et x64) → release/mac/
+npm run dist:mac    # .dmg + .zip universel, arm64 et x64 → release/mac/
 npm run dist:win    # installateur NSIS → release/win/
 npm run dist:linux  # AppImage + .deb → release/linux/
 
 Chaque plateforme a son dossier dans `release/` : `mac/`, `win/`, `linux/`
 (avec `latest-*.yml` pour la mise à jour automatique).
+```
+
+### Builds macOS
+
+Trois bundles sortent du même build, tous les trois conservés le temps que
+l’universel soit validé sur une vraie machine Intel :
+
+| Fichier | Usage |
+| --- | --- |
+| `Vela-<version>-universal.dmg` / `.zip` | un seul téléchargement, Apple silicon **et** Intel |
+| `Vela-<version>-arm64.dmg` / `.zip` | Apple silicon seul, plus léger |
+| `Vela-<version>-x64.dmg` / `.zip` | Intel seul |
+
+`latest-mac.yml` liste les trois `.zip` : electron-updater préfère l’arm64 sur
+Apple silicon et écarte l’arm64 sur Intel (il prend alors l’x64 ou
+l’universel). Le script de contrôle lit le manifeste et interroge la vraie
+fonction d’electron-updater :
+
+```bash
+node scripts/verify-mac-update.cjs release/mac/latest-mac.yml
+lipo -archs release/mac/mac-universal/Vela.app/Contents/MacOS/Vela
+# arm64 x86_64
 ```
 
 macOS est signé (Developer ID) et notarisé dès que les secrets de signature sont configurés — voir
@@ -59,7 +81,7 @@ Vela se met à jour toute seule en arrière-plan via `electron-updater` et les r
 - Installation automatique à la fermeture de Vela ; `Redémarrer maintenant` reste disponible pour
   l’appliquer tout de suite. `Vérifier` et `Releases` restent dans `Réglages → À propos` pour un
   contrôle manuel.
-- macOS : `.dmg`/`.zip` (arm64 + x64). Windows : NSIS. Linux : AppImage ; `.deb` — réinstallez le paquet.
+- macOS : `.dmg`/`.zip` universel, arm64 et x64. Windows : NSIS. Linux : AppImage ; `.deb` — réinstallez le paquet.
 
 > macOS exige une signature Developer ID **et** une notarisation pour que ShipIt remplace le bundle
 > tout seul. Avec les secrets ci-dessous, l’installation est silencieuse : Vela télécharge le `.zip`
@@ -67,19 +89,22 @@ Vela se met à jour toute seule en arrière-plan via `electron-updater` et les r
 > certificat Apple, le téléchargement reste automatique mais l’installation est refusée par
 > Gatekeeper : l’app affiche l’erreur et le lien `Releases` (installez le `.dmg`).
 
-## Signature macOS
+## Signature macOS et Windows (préparation)
 
-La chaîne complète est automatisée dans `.github/workflows/release.yml`. Il faut une adhésion au
+**État réel : rien n’est signé.** La release v0.3.7 est signée ad hoc (pas de Developer ID, pas de
+notarisation) et l’installateur Windows n’a pas de certificat. Ce dépôt ne contient aucun secret et
+ne fabrique aucune signature : les deux tableaux ci-dessous disent seulement ce qu’il faudra
+renseigner, une fois les certificats obtenus.
+
+La chaîne macOS est déjà automatisée dans `.github/workflows/release.yml`. Il faut une adhésion au
 [programme développeur Apple](https://developer.apple.com/programs/) (99 $/an) et un certificat
 **Developer ID Application** exporté en `.p12` depuis Trousseau d’accès.
 
-Cinq secrets suffisent, à envoyer une seule fois :
-
 ```bash
-scripts/mac-signing.sh ~/Desktop/DeveloperID.p12
+scripts/mac-signing.sh ~/Desktop/DeveloperID.p12   # prépare et envoie les cinq secrets
 ```
 
-| Secret | Contenu |
+| Secret macOS | Contenu |
 |---|---|
 | `MAC_CERT_P12` | le `.p12` encodé en base64 (le script s’en charge) |
 | `MAC_CERT_PASSWORD` | mot de passe du `.p12` |
@@ -89,12 +114,34 @@ scripts/mac-signing.sh ~/Desktop/DeveloperID.p12
 
 Le certificat est importé dans un trousseau temporaire du runner, `electron-builder` signe avec
 `build/entitlements.mac.plist` (hardened runtime), puis `@electron/notarize` soumet l’app à Apple et
-agrafe le ticket (`xcrun stapler`). Le job vérifie ensuite `codesign --verify --deep --strict`,
-`spctl --assess` et `stapler validate` avant de publier.
+agrafe le ticket (`xcrun stapler`). Le job vérifie ensuite les trois bundles, `codesign --verify
+--deep --strict`, `spctl --assess` et `stapler validate` avant de publier.
 
-Sans `MAC_CERT_P12`, le workflow continue de produire un build ad hoc (aucun échec) mais prévient
-dans les annotations : la mise à jour automatique macOS ne peut pas fonctionner dans ce cas,
-Squirrel.Mac exigeant que l’ancien et le nouvel app partagent la même identité de signature.
+Pour Windows, le certificat de signature de code se prépare de la même façon, mais **le workflow ne
+l’utilise pas encore** : c’est le second point de blocage.
+
+| Secret Windows | Contenu |
+|---|---|
+| `WIN_CERT_P12` | certificat de signature de code (`.pfx`) encodé en base64 |
+| `WIN_CERT_PASSWORD` | mot de passe du `.pfx` |
+
+`electron-builder` lit aussi `CSC_LINK` / `CSC_KEY_PASSWORD` pour les deux plateformes ; n’utiliser
+qu’un seul couple à la fois, sinon le certificat chargé n’est pas celui qu’on croit.
+
+### Ce qui bloque aujourd’hui
+
+1. **Aucun certificat Apple** : pas d’adhésion au programme développeur, donc pas de Developer ID à
+exporter. Le workflow produit un build ad hoc et le signale en annotation ; Squirrel.Mac exige que
+l’ancien et le nouvel app partagent la même identité de signature, donc la mise à jour macOS ne peut
+pas s’installer seule.
+2. **Aucun certificat Windows** : SmartScreen affiche « Windows a protégé votre PC ». Le workflow
+Windows n’a pas d’étape de signature, et un certificat OV ou EV doit d’abord être acheté puis validé
+auprès de l’autorité de certification (pièce d’identité de l’entreprise ou du développeur).
+3. **Pas de test d’installation silencieuse** : elle ne peut être validée qu’avec les certificats en
+place et une release publiée, sur une machine Apple silicon **et** une machine Intel.
+
+Sans `MAC_CERT_P12`, le workflow continue de produire les trois builds macOS (aucun échec) mais
+prévient dans les annotations : la mise à jour automatique macOS ne peut pas fonctionner dans ce cas.
 
 Publier une version : **rien à faire à la main**. Le workflow `.github/workflows/release.yml`
 construit les 3 plateformes et publie la release dès qu’un commit sur `main` porte une version de
@@ -146,12 +193,12 @@ dans le code sans y être déclarée.
 | --- | --- |
 | **Accueil** | Fond aurora qui dérive et suit le pointeur, salutation en cascade, champ unique qui ouvre une adresse ou cherche, pages récentes en tuiles de verre inclinables, horloge et tâches avec progression. |
 | **Onglets verticaux** | Titres lisibles, épinglage, réouverture du dernier onglet fermé. |
-| **Épinglés et favoris** | Les onglets épinglés et les favoris forment une grille de cases compactes en verre, réduites au favicon du site avec une infobulle au survol ; les onglets normaux gardent leur ligne complète. Les épinglés se réordonnent au glisser-déposer ou au clavier, avec <kbd>Alt</kbd> + flèches. |
+| **Épinglés et favoris** | Les onglets épinglés et les favoris forment une grille de cases compactes en verre, réduites au favicon du site avec une infobulle titre et domaine ; les onglets normaux gardent leur ligne complète. Au-delà de onze cases, une tuile « +N » ouvre la liste complète plutôt que de masquer les favoris. Les épinglés se réordonnent au glisser-déposer ou au clavier (<kbd>Alt</kbd> + flèches), passent d’un état à l’autre en les déposant sur la zone prévue (<kbd>Échap</kbd> annule), et un menu contextuel (clic droit, touche Menu ou <kbd>⇧</kbd><kbd>F10</kbd>) donne fermer, désépingler, copier l’adresse, ouvrir en vue scindée ou dans un nouvel onglet. Les icônes sont gardées sept jours dans les données de l’espace, une requête par domaine. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
 | **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct, modèles Travail, Personnel, Gaming, Études, Développement et sites épinglés préremplis. |
-| **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, réorganisation au glisser-déposer, ajout d’une adresse glissée depuis la page, suppression d’un clic. Enregistrée avec l’espace, restaurée au redémarrage. |
-| **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups : Google ne prend plus Vela pour un navigateur embarqué. |
+| **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, ajout d’une adresse glissée depuis la page. Réorganisation au glisser ou par `Alt` + flèches (focus conservé, annonce lecteur d’écran), menu contextuel (clic droit, touche Menu ou `⇧F10`) avec renommage et adresse modifiables sur place, copie vers un autre espace ou déplacement, annulable. 200 sites au plus, la barre défile au-delà de quelques rangées. Enregistrée avec l’espace, restaurée au redémarrage. |
+| **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups, pour la compatibilité des sites. Google peut malgré tout refuser une connexion : voir [Limites connues](#limites-connues). |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Thèmes de couleur** | Dix teintes (indigo, rouge, orange, ambre, vert, turquoise, bleu, violet, rose, graphite) et une couleur personnalisée : tout le châssis suit, jamais le contenu des sites. Mode clair/sombre, verre réglable, thème par espace, contraste élevé. |
@@ -160,9 +207,9 @@ dans le code sans y être déclarée.
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
 | **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
-| **Notes** | Panneau en verre, notes Markdown en fichiers `.md` avec étiquettes, épinglage et recherche ; extraction par glisser-déposer depuis la page, surlignage synchronisé, croquis et réécriture par le modèle. |
+| **Notes** | Panneau en verre, notes Markdown en fichiers `.md` avec étiquettes, épinglage et recherche ; extraction par glisser-déposer depuis la page, surlignage synchronisé, croquis, liens `[[note]]`, notes vocales locales et réécriture par le modèle. |
 | **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
-| **Marque-pages** | `⌘D` garde la page affichée (étoile dans la barre d’adresse), `⌘⇧O` ouvre la liste, import des favoris Chrome, Brave, Edge et Safari. |
+| **Marque-pages** | `⌘D` garde la page affichée (étoile dans la barre d’adresse), `⌘⇧O` ouvre la liste, import des favoris Chrome, Brave, Edge et Safari. Les favoris ont un ordre explicite (champ `order`, de 0 à n-1) : réordonnancement au glisser ou par `Alt` + flèches depuis le rail, nouveaux favoris en fin de liste, import dans l’ordre du fichier source. Au premier démarrage après la 0.3.7, l’ordre est attribué selon la liste existante, après copie horodatée de `vela.json` et une ligne dans `migration.log`. |
 | **Historique** | `⌘Y` : liste groupée par jour, réouverture et suppression entrée par entrée. |
 | **Impression** | `⌘P` : boîte de dialogue système, export PDF compris. |
 | **Bloqueur local** | Liste embarquée de domaines publicitaires, compteur visible dans la barre d’adresse. |
@@ -317,7 +364,9 @@ ses étiquettes dans `index.json` ; le corps reste un fichier `.md` lisible dans
 
 Trois formats cohabitent sans plugin : Markdown enrichi (titres, listes, tableaux, liens, blocs de code),
 listes de tâches rendues avec leurs cases, et croquis dessiné dans une petite ardoise puis inséré en image
-dans la note. Un extrait déposé conserve l’URL et le titre de la page d’origine : sur une page, la poignée
+dans la note. Les liens `[[Titre]]` relient les notes entre elles avec autocomplétion, un panneau « Notes
+liées » (vers, citée par, liens cassés) et la création d’une note manquante en un clic ; renommer une note
+met à jour ceux qui la citent, avec annulation. Un extrait déposé conserve l’URL et le titre de la page d’origine : sur une page, la poignée
 « Glisser dans les notes » apparaît près de la sélection et lance un glisser natif (un clic capture
 directement le passage). Le fichier glissé porte un en-tête `source` / `titre`, relu à la dépose.
 
@@ -330,8 +379,10 @@ Cinq actions IA s’appliquent à la note ouverte — reformuler, résumer, trad
 configuré, le repli est local et clairement étiqueté « Mode démo » ; avec une clé, l’appel passe par le
 fournisseur choisi dans Réglages › Modèles. Aucune télémétrie.
 
-Limite : la note vocale n’est pas livrée dans cette version (micro, stockage audio et transcription restent
-à arbitrer) ; le reste des formats est disponible.
+Une note vocale s’enregistre depuis l’éditeur : l’autorisation du micro est expliquée avant la demande
+système, la durée et la pause sont visibles, et le fichier audio reste dans le dossier de données de
+l’espace. Il se lit dans la note et peut être supprimé. La transcription passe d’abord par un serveur local ;
+vers un fournisseur distant, l’enregistrement ne part qu’après une confirmation explicite.
 
 ## Site public
 
@@ -342,16 +393,68 @@ Le site vitrine est dans [site/](site/) : HTML, CSS et JavaScript statiques, ser
 
 Aperçu local : `python3 -m http.server 4173 --directory site/public`.
 
-## Limites connues de la v0.1
+## Limites connues
+
+### Connexion Google
+
+L’identité annoncée (User-Agent, client hints, `window.chrome`) suffit à ouvrir la plupart des sites,
+mais Google peut **refuser la connexion** : un profil peut être marqué côté serveur, et rien dans
+l’app ne peut annuler ce marquage. Vela n’ajoute **aucune imitation supplémentaire de Chrome** —
+empiler des leurres ne rend pas le compte plus sûr, et casse la compatibilité au premier changement
+de Google.
+
+- **Solution durable : importer votre session depuis Chrome ou Safari** (cookies du profil déjà
+  connecté). Ce n’est **pas encore pris en charge** ; l’import existant ne concerne que les favoris.
+- **En attendant :** pour un bouton « Se connecter avec Google » sur un site tiers, ouvrez la
+  connexion dans votre navigateur système (clic droit sur le bouton, ou depuis le menu Vela), puis
+  revenez sur la page : Vela n’essaie pas de contourner le contrôle de Google.
+- Un **nouvel espace** part d’une session Chromium vierge, ce qui suffit parfois, mais ne règle pas
+  un profil déjà marqué.
+
+### Extensions et synchronisation
+
+- **Extensions Chrome : non prises en charge.** Aucun chargeur, aucun dossier d’extensions, aucune
+  API `chrome.*` d’extension. Ce n’est pas un réglage caché.
+- **Synchronisation de compte : non prise en charge.** Vela n’a ni compte, ni serveur, ni
+  synchronisation entre appareils. Les favoris, notes et espaces restent sur la machine ; les
+  favoris peuvent être importés depuis Chrome, Brave, Edge, Chromium ou Safari, ou depuis un export
+  HTML.
+
+### macOS sans signature
+
+Le build n’est pas notarié. Au premier lancement, macOS peut dire que Vela est endommagé ou d’un
+développeur non identifié :
+
+1. Ouvrez le `.dmg`, glissez **Vela** dans **Applications**.
+2. **Clic droit sur Vela → Ouvrir**, puis confirmez « Ouvrir ».
+3. Si le message persiste :
+
+   ```bash
+   xattr -cr /Applications/Vela.app
+   open /Applications/Vela.app
+   ```
+
+**Pourquoi l’installation silencieuse n’est pas possible :** macOS ne remplace un bundle que si
+l’ancien et le nouveau portent la **même identité de signature Developer ID** et si le nouveau est
+notarié. Sans certificat, Gatekeeper refuse le remplacement ; Vela télécharge bien la mise à jour,
+mais l’installation échoue et renvoie vers le `.dmg`. Il n’existe pas de contournement honnête :
+seule une vraie signature Apple débloque ce point (voir
+[Signature macOS et Windows](#signature-macos-et-windows-préparation)).
+
+### Windows et SmartScreen
+
+L’installateur NSIS n’est pas signé. Windows SmartScreen peut donc afficher « Windows a protégé votre
+PC » : l’éditeur est inconnu et le fichier n’a pas encore de réputation. Cliquez sur **Informations
+complémentaires → Exécuter quand même**. Un certificat de signature de code supprime cet écran ; il
+n’est pas encore en place.
+
+### Le reste
 
 - Une seule fenêtre ; les dossiers ne se réordonnent pas entre eux et ne s’imbriquent pas.
-- Pas d’extensions Chrome, d’import de favoris ni de synchronisation.
-- Caméra, micro, position et notifications sont refusés aux pages.
-- Pas de zoom par onglet, pas de gestionnaire de téléchargements.
+- Caméra, position et notifications sont refusés aux pages. Le micro n’est ouvert qu’à Vela, pour
+  vos notes vocales, après une demande système explicite.
 - Le filtre est une liste embarquée : pas de mise à jour distante ni de filtrage cosmétique.
 - Aucune clé n’est fournie : le mode connecté demande la vôtre pour être essayé.
-- La connexion Google passe le contrôle « navigateur sécurisé » ; Google peut malgré tout refuser un
-  profil déjà marqué côté serveur — un espace neuf repart d’une session Chromium vierge.
 
 ## Licence
 

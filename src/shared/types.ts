@@ -43,6 +43,8 @@ export interface Space {
   shortcuts?: import('./space').SpaceShortcut[]
   /** Filtre de traqueurs pour cet espace (défaut : activé). */
   blockTrackers?: boolean
+  /** Espace privé : rien n'est conservé, aucune vignette n'est capturée. */
+  private?: boolean
   /** Partition Chromium : cookies, sessions et cache réellement isolés. */
   partition: string
   createdAt: number
@@ -90,6 +92,8 @@ export interface Note {
   /** Note épinglée en tête de liste. */
   pinned: boolean
   updatedAt: number
+  /** Nombre de notes dont les liens ont été réécrits par ce renommage. */
+  linksUpdated?: number
 }
 
 export interface NoteMeta {
@@ -153,6 +157,8 @@ export interface Settings {
   /** Chaque espace peut porter son propre thème. */
   perSpaceThemes: boolean
   blockTrackers: boolean
+  /** Capture une vignette des pages à la fermeture de l'onglet (désactivé par défaut). */
+  thumbnails: boolean
   sidebarCollapsed: boolean
   onboarded: boolean
   agent: AgentSettings
@@ -164,6 +170,8 @@ export interface Bookmark {
   title: string
   createdAt: number
   favicon?: string
+  /** Position dans la liste, de 0 à n-1. La liste et ce champ disent la même chose. */
+  order: number
 }
 
 /** Favoris trouvés dans un navigateur installé, prêts à être importés. */

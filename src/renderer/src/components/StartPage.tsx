@@ -44,6 +44,34 @@ export default function StartPage({ tabId }: { tabId: string }) {
     return () => media.removeEventListener('change', sync)
   }, [])
 
+  // Vignettes des pages récentes : demandées seulement si le réglage est actif
+  // et seulement pour les adresses de l'historique affiché.
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  const thumbsEnabled = view?.settings.thumbnails === true
+  const historyKey = view ? view.history.slice(0, 12).map((entry) => entry.url).join('\n') : ''
+
+  useEffect(() => {
+    if (!thumbsEnabled || !historyKey) {
+      setThumbs({})
+      return
+    }
+    let alive = true
+    const urls = historyKey.split('\n')
+    void Promise.all(
+      urls.map(async (url) => [url, await window.vela.thumbs.get(url).catch(() => null)] as const)
+    ).then((entries) => {
+      if (!alive) return
+      const next: Record<string, string> = {}
+      for (const [url, data] of entries) if (data) next[url] = data
+      setThumbs(next)
+    })
+    return () => {
+      alive = false
+    }
+    // `view.history` change à chaque diffusion : après une purge des vignettes,
+    // l'accueil redemande donc les images au lieu de garder les anciennes.
+  }, [thumbsEnabled, historyKey, view?.history])
+
   if (!view) return null
 
   const settings = view.settings
@@ -275,12 +303,18 @@ export default function StartPage({ tabId }: { tabId: string }) {
                   type="button"
                   className="recent-tile"
                   data-kind={tile.kind}
+                  data-thumb={thumbs[tile.url] ? 'true' : undefined}
                   style={tileStyle(tile)}
                   onPointerMove={tilt}
                   onPointerLeave={untilt}
                   onClick={() => navigate(tabId, tile.url)}
                   title={tile.title}
                 >
+                  {thumbs[tile.url] && (
+                    <span className="tile-thumb" aria-hidden="true">
+                      <img src={thumbs[tile.url]} alt="" draggable={false} loading="lazy" />
+                    </span>
+                  )}
                   <span className="tile-top">
                     <Favicon src={tile.favicon} label={tile.host || tile.title} size={18} />
                     <span className="tile-host">{tile.host}</span>

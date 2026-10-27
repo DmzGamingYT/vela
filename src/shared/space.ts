@@ -6,6 +6,8 @@
  * valeur inconnue retombe toujours sur un rendu sûr.
  */
 
+import { GALLERY_BY_ID } from './avatarGallery'
+
 export type SpaceBackground = 'none' | 'aurora' | 'mist' | 'ember' | 'night'
 
 export interface SpaceAvatarMark {
@@ -141,6 +143,14 @@ export function sanitizeSpaceAvatar(value: unknown): string | null {
     const id = raw.slice(5)
     return ICON_IDS.has(id) ? `icon:${id}` : null
   }
+  if (raw.startsWith('gallery:')) {
+    const id = raw.slice(8)
+    return GALLERY_BY_ID.has(id) ? `gallery:${id}` : null
+  }
+  if (raw.startsWith('image:file:')) {
+    const name = raw.slice(11)
+    return AVATAR_FILE.test(name) ? `image:file:${name}` : null
+  }
   if (raw.startsWith('image:data:')) {
     const data = raw.slice(6)
     if (data.length > MAX_AVATAR_LENGTH) return null
@@ -148,6 +158,25 @@ export function sanitizeSpaceAvatar(value: unknown): string | null {
   }
   return null
 }
+
+/** Identifiant de galerie d'un avatar, si c'en est un. */
+export function avatarGalleryId(value: string | null | undefined): string | null {
+  if (!value || !value.startsWith('gallery:')) return null
+  const id = value.slice(8)
+  return GALLERY_BY_ID.has(id) ? id : null
+}
+
+/** Nom de fichier d'un avatar stocké sur disque, si c'en est un. */
+export function avatarFile(value: string | null | undefined): string | null {
+  if (!value || !value.startsWith('image:file:')) return null
+  const name = value.slice(11)
+  return AVATAR_FILE.test(name) ? name : null
+}
+
+/** Nom de fichier accepté : empreinte hexadécimale et extension d'image. */
+export const AVATAR_FILE = /^[a-f0-9]{16,64}\.(png|jpe?g|webp)$/
+/** Taille maximale d'une photo d'avatar, une fois décodée. */
+export const MAX_AVATAR_BYTES = 512 * 1024
 
 export function avatarMark(id: string): SpaceAvatarMark | undefined {
   return SPACE_AVATARS.find((mark) => mark.id === id)
@@ -174,8 +203,11 @@ export interface SpaceShortcut {
   title: string
 }
 
-/** Une barre reste lisible et rapide à charger au-delà de deux douzaines. */
-export const MAX_SHORTCUTS = 24
+/**
+ * Plafond de sécurité, pas de confort : la barre défile au-delà de quelques
+ * rangées, donc un espace chargé garde tous ses sites atteignables.
+ */
+export const MAX_SHORTCUTS = 200
 
 interface ShortcutSeed {
   title: string
@@ -311,4 +343,30 @@ export function suggestShortcutSet(name: string): string | null {
     if (entry.words.test(clean)) return entry.set
   }
   return null
+}
+
+const PARTITION = /^persist:[a-z0-9._-]{1,64}$/i
+
+/**
+ * Partition Chromium à utiliser pour un espace, calculée à partir de son
+ * identifiant quand le fichier n'en contient pas (ou une valeur douteuse).
+ *
+ * Chromium lève « conversion failure from undefined » si on lui passe autre
+ * chose qu'une chaîne : chaque session passe donc par ici, y compris quand
+ * l'espace vient d'un vela.json ancien. Deux espaces ne partagent jamais la
+ * même partition, et le résultat est stable d'un lancement à l'autre.
+ */
+export function partitionFor(space: { id?: unknown; partition?: unknown } | null | undefined): string {
+  const given = typeof space?.partition === 'string' ? space.partition.trim() : ''
+  if (PARTITION.test(given)) return given
+  const id =
+    typeof space?.id === 'string'
+      ? space.id
+          .replace(/[^a-zA-Z0-9._-]/g, '')
+          // Un identifiant fait de points ou de tirets ne donne pas un nom de
+          // partition lisible : mieux vaut la session de secours.
+          .replace(/^[._-]+/, '')
+          .slice(0, 64)
+      : ''
+  return `persist:vela-${id || 'recovery'}`
 }

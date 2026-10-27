@@ -678,6 +678,7 @@
             <ul class="ticks">
               <li>Historique, onglets, espaces et réglages</li>
               <li>Notes Markdown en fichiers <code>.md</code></li>
+              <li>Notes vocales, en fichiers audio dans le dossier de l’espace</li>
               <li>Brief du jour, calculé sans requête réseau</li>
               <li>Clés API chiffrées par le trousseau système</li>
             </ul>
@@ -699,6 +700,11 @@
               <li class="is-out">
                 <strong>Avec un modèle : les onglets joints</strong>, envoyés au fournisseur que vous
                 avez choisi, avec votre clé. Personne d’autre.
+              </li>
+              <li class="is-out">
+                <strong>Transcription d’une note vocale :</strong> le serveur local d’abord, sans
+                sortie réseau. Vers un fournisseur distant, l’enregistrement ne part qu’après
+                votre confirmation explicite ; sans accord, il reste sur l’appareil.
               </li>
             </ul>
           </div>
@@ -871,6 +877,13 @@
               </p>
               <pre><code>xattr -cr /Applications/Vela.app
 open /Applications/Vela.app</code></pre>
+              <p>
+                L’installation silencieuse des mises à jour n’est pas possible dans ce cas : macOS ne
+                remplace un bundle que si l’ancien et le nouveau partagent la même signature
+                Developer ID et si le nouveau est notarié. Sans certificat, Gatekeeper refuse, et
+                Vela renvoie vers le <code>.dmg</code>. Il n’y a pas de contournement honnête — seule
+                une vraie signature Apple débloque ce point.
+              </p>
             </div>
           </details>
 
@@ -890,11 +903,13 @@ open /Applications/Vela.app</code></pre>
             <summary>Les extensions Chrome sont-elles prises en charge ?<span><svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></span></summary>
             <div class="faq-body">
               <p>
-                Pas dans cette version. La synchronisation de compte n’existe pas non plus — Vela
-                n’a pas de compte. En revanche, les favoris s’importent : Chrome, Brave, Edge et
-                Chromium sont détectés sur l’appareil, et un fichier HTML exporté depuis n’importe
-                quel navigateur fait l’affaire. Les extensions restent une limite assumée, pas un
-                réglage caché.
+                <strong>Non prises en charge.</strong> Aucun chargeur d’extensions, aucun dossier
+                d’extensions, aucune API <code>chrome.*</code> d’extension. La synchronisation de
+                compte est également <strong>non prise en charge</strong> : Vela n’a ni compte, ni
+                serveur, ni synchronisation entre appareils. Les favoris, notes et espaces restent
+                sur la machine ; les favoris s’importent depuis Chrome, Brave, Edge, Chromium ou
+                Safari, ou depuis un export HTML. Ce sont des limites assumées, pas des réglages
+                cachés.
               </p>
             </div>
           </details>
@@ -903,11 +918,32 @@ open /Applications/Vela.app</code></pre>
             <summary>Pourquoi Google refuse parfois la connexion ?<span><svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></span></summary>
             <div class="faq-body">
               <p>
-                Vela annonce l’identité d’un Chrome officiel : User-Agent, client hints et langues,
-                plus l’objet <code>window.chrome</code> que Google vérifie avant d’accepter
-                l’identifiant. Sans lui, un User-Agent Chrome propre suffit encore à déclencher
-                « navigateur non sécurisé ». Si un profil a déjà été marqué côté Google, ouvrez un
-                nouvel espace : la session Chromium y est vierge.
+                L’identité annoncée (User-Agent, client hints, <code>window.chrome</code>) suffit à
+                ouvrir la plupart des sites, mais Google peut <strong>refuser la connexion</strong> :
+                un profil peut être marqué côté serveur, et rien dans l’app ne peut annuler ce
+                marquage. Vela n’ajoute <strong>aucune imitation supplémentaire de Chrome</strong> —
+                empiler des leurres ne rend pas le compte plus sûr et casse la compatibilité au
+                premier changement de Google.
+              </p>
+              <p>
+                <strong>Solution durable : importer votre session depuis Chrome ou Safari</strong>
+                (cookies du profil déjà connecté). Ce n’est pas encore pris en charge ; l’import
+                existant ne concerne que les favoris. En attendant, pour un bouton « Se connecter
+                avec Google » sur un site tiers, ouvrez la connexion dans votre navigateur système,
+                puis revenez sur la page. Un nouvel espace repart d’une session Chromium vierge, ce
+                qui suffit parfois, mais ne règle pas un profil déjà marqué.
+              </p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Windows affiche SmartScreen, est-ce normal ?<span><svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></span></summary>
+            <div class="faq-body">
+              <p>
+                Oui. L’installateur n’est pas signé, donc l’éditeur est inconnu et le fichier n’a pas
+                encore de réputation. Cliquez sur <strong>Informations complémentaires → Exécuter
+                quand même</strong>. Un certificat de signature de code supprime cet écran ; il
+                n’est pas encore en place.
               </p>
             </div>
           </details>
@@ -928,8 +964,8 @@ open /Applications/Vela.app</code></pre>
         <div class="roadmap">
           <p class="roadmap-title">Feuille de route</p>
           <ul>
-            <li><span>Extensions Chrome</span><em>prévues</em></li>
-            <li><span>Signature Developer ID et notarisation macOS</span><em>en préparation</em></li>
+            <li><span>Extensions Chrome et synchronisation</span><em>non prises en charge</em></li>
+            <li><span>Signature Developer ID, notarisation et certificat Windows</span><em>bloquée : certificats à obtenir</em></li>
             <li><span>Filtrage cosmétique des publicités</span><em>à l’étude</em></li>
             <li><span>Plusieurs fenêtres</span><em>à l’étude</em></li>
           </ul>

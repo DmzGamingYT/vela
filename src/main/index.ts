@@ -6,7 +6,19 @@ import { installMenu } from './menu'
 import { initUpdater } from './updater'
 import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
 
+// Le nom du produit est fixé avant toute autre chose : `app.name` alimente le
+// premier menu macOS, la fenêtre « À propos » et les dossiers de données. Sans
+// cela, la barre de menus affiche « Electron » en développement (le paquet,
+// lui, prend CFBundleName = Vela grâce à electron-builder).
 app.setName('Vela')
+if (process.platform === 'darwin') {
+  app.setAboutPanelOptions({
+    applicationName: 'Vela',
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    copyright: 'Vela — navigateur de travail. MIT.'
+  })
+}
 // En développement, le Dock et le menu prennent l'icône et le nom d'Electron :
 // on remet l'identité Vela (le paquet signé utilise déjà build/icon.icns).
 if (!app.isPackaged && process.platform === 'darwin') {

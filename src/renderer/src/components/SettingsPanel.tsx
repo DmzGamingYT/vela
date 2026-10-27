@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { LOCAL_ONLY, NETWORK_FLOWS } from '@shared/network'
 import { SEARCH_ENGINES } from '@shared/url'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
@@ -20,6 +20,7 @@ import type {
 import { swatchColor } from '../lib/appearance'
 import { plural, shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import { clearFaviconMemo } from './Favicon'
 import { Icon, type IconName } from './Icon'
 
 type Page = 'appearance' | 'navigation' | 'privacy' | 'models' | 'agent' | 'notes' | 'shortcuts' | 'about'
@@ -139,6 +140,29 @@ export default function SettingsPanel() {
   const [testing, setTesting] = useState<ProviderId | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [hexNote, setHexNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
+
+  const [thumbCount, setThumbCount] = useState<number | null>(null)
+
+  const refreshThumbs = async (): Promise<void> => {
+    setThumbCount(await window.vela.thumbs.count().catch(() => 0))
+  }
+
+  const purgeThumbs = async (): Promise<void> => {
+    const removed = await window.vela.thumbs.purge()
+    setThumbCount(0)
+    toast(removed > 0 ? plural(removed, 'vignette retirée', 'vignettes retirées') : 'Aucune vignette à retirer.')
+  }
+
+  useEffect(() => {
+    if (page !== 'privacy') return
+    void refreshThumbs()
+  }, [page])
+
+  const purgeFavicons = async (): Promise<void> => {
+    const count = await window.vela.favicons.purge()
+    clearFaviconMemo()
+    toast(count > 0 ? plural(count, 'icône retirée', 'icônes retirées') : 'Le cache est déjà vide.')
+  }
 
   if (!view) return null
 
@@ -903,6 +927,48 @@ export default function SettingsPanel() {
                 <p className="setting-hint">Caméra, micro, position et notifications sont refusés par défaut.</p>
               </div>
               <span className="tag">Refusées</span>
+            </div>
+            <div className="setting-row">
+              <div>
+                <label>Vignettes des pages récentes</label>
+                <p className="setting-hint">
+                  Une capture réduite à la fermeture de l’onglet, gardée dans le dossier de données.
+                  Désactivé par défaut ; rien n’est capturé pour un espace privé ou une page en erreur.
+                  {thumbCount !== null ? ` ${plural(thumbCount, 'vignette sur cet appareil')}.` : ''}
+                </p>
+              </div>
+              <div className="setting-actions">
+                <button type="button" className="action" onClick={() => void purgeThumbs()}>
+                  <Icon name="trash" size={13} />
+                  Vider
+                </button>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.thumbnails}
+                  data-on={settings.thumbnails}
+                  aria-label="Vignettes des pages récentes"
+                  onClick={() => {
+                    void updateSettings({ thumbnails: !settings.thumbnails })
+                    void refreshThumbs()
+                  }}
+                >
+                  <span />
+                </button>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div>
+                <label>Icônes de sites</label>
+                <p className="setting-hint">
+                  Une requête par domaine, gardée sept jours sur l’appareil. Vider force la prochaine demande.
+                </p>
+              </div>
+              <button type="button" className="action" onClick={() => void purgeFavicons()}>
+                <Icon name="trash" size={13} />
+                Vider le cache
+              </button>
             </div>
             <div className="glass-note">
               <Icon name="lock" size={14} />

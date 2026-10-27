@@ -103,7 +103,7 @@ interface BrowserState {
   reload(id: string): void
   stop(id: string): void
   pin(id: string, pinned: boolean): void
-  reorderTab(id: string, targetId: string, position: 'before' | 'after'): void
+  reorderTab(id: string, targetId: string | null, position: 'before' | 'after', pinned?: boolean): void
   moveTabToGroup(id: string, groupId: string | null): void
   createGroup(tabId?: string): Promise<TabGroup | null>
   updateGroup(id: string, patch: { name?: string; color?: string; collapsed?: boolean }): Promise<void>
@@ -111,6 +111,7 @@ interface BrowserState {
   reopen(): void
   splitToggle(): void
   splitWith(id: string): void
+  openSplit(url: string): void
   setSplitRatio(ratio: number): void
   commitSplitRatio(ratio: number): void
   activateSpace(id: string): void
@@ -133,6 +134,8 @@ interface BrowserState {
   printPage(): Promise<void>
   toggleBookmark(tabId?: string): Promise<void>
   removeBookmark(id: string): Promise<void>
+  moveBookmark(id: string, position: number): Promise<boolean>
+  reorderBookmarks(ids: string[]): Promise<boolean>
   removeHistory(url: string): Promise<void>
   captureSelection(): Promise<void>
   toggleSiteProtection(host: string): Promise<void>
@@ -350,8 +353,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     void get().call(() => window.vela.tabs.pin(id, pinned), 'Impossible d’épingler l’onglet.')
   },
 
-  reorderTab(id, targetId, position) {
-    void get().call(() => window.vela.tabs.reorder({ id, targetId, position }), 'Onglet non déplacé.')
+  reorderTab(id, targetId, position, pinned) {
+    void get().call(
+      () => window.vela.tabs.reorder({ id, targetId, position, ...(pinned === undefined ? {} : { pinned }) }),
+      'Onglet non déplacé.'
+    )
   },
 
   moveTabToGroup(id, groupId) {
@@ -384,6 +390,14 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   splitWith(id) {
     void get().call(() => window.vela.tabs.splitSet(id), 'Vue scindée indisponible.')
+  },
+
+  /** Ouvre une adresse dans un nouvel onglet, puis la place en vue scindée. */
+  openSplit(url) {
+    void (async () => {
+      const created = await get().call(() => window.vela.tabs.create({ url }), 'Onglet non ouvert.')
+      if (created) get().splitWith(created.id)
+    })()
   },
 
   setSplitRatio(ratio) {
@@ -525,6 +539,22 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   async removeBookmark(id) {
     await get().call(() => window.vela.bookmarks.remove(id), 'Marque-page non supprimé.')
+  },
+
+  async moveBookmark(id, position) {
+    const moved = await get().call(
+      () => window.vela.bookmarks.move(id, position),
+      'Favori non déplacé.'
+    )
+    return moved === true
+  },
+
+  async reorderBookmarks(ids) {
+    const applied = await get().call(
+      () => window.vela.bookmarks.reorder(ids),
+      'Favoris non réordonnés.'
+    )
+    return applied === true
   },
 
   async removeHistory(url) {

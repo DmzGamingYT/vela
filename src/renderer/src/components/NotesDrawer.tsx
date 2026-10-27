@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { NoteAiAction } from '@shared/api'
 import { parseDroppedExcerpt } from '@shared/noteDrop'
+import {
+  completeLink,
+  findNoteByTitle,
+  linkQueryAt,
+  removeAudioToken,
+  suggestNotes,
+  type NoteGraph
+} from '@shared/noteLinks'
 import type { Note, NoteMeta, PageHighlight } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { shortDate, timeAgo } from '../lib/format'
-import { Markdown } from '../lib/markdown'
+import { Markdown, type NoteAudioContext, type NoteLinkContext } from '../lib/markdown'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import NoteRecorder from './NoteRecorder'
 
 interface Draft {
   id?: string
@@ -61,6 +70,12 @@ export default function NotesDrawer() {
   const [sketchOpen, setSketchOpen] = useState(false)
   const [dropping, setDropping] = useState(false)
   const [highlights, setHighlights] = useState<PageHighlight[]>([])
+  const [linkMenu, setLinkMenu] = useState<{ query: string; index: number } | null>(null)
+  const [graph, setGraph] = useState<NoteGraph | null>(null)
+  const [linksOpen, setLinksOpen] = useState(true)
+  const [renameUndo, setRenameUndo] = useState<{ id: string; from: string; updated: number } | null>(null)
+  const [recorderOpen, setRecorderOpen] = useState(false)
+  const loadedTitle = useRef('')
   const [width, setWidth] = useState(() => {
     const stored = Number(window.localStorage.getItem('vela-notes-width'))
     return Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 400
@@ -117,7 +132,14 @@ export default function NotesDrawer() {
         if (!note) return
         setSavedAt(Date.now())
         setDirty(false)
+        // Un titre changé réécrit les liens des autres notes : on propose de
+        // revenir en arrière tant que la trace est fraîche.
+        if (draft.id && loadedTitle.current && loadedTitle.current !== note.title && note.linksUpdated) {
+          setRenameUndo({ id: note.id, from: loadedTitle.current, updated: note.linksUpdated })
+        }
+        loadedTitle.current = note.title
         setDraft((current) => (current && !current.id ? { ...current, id: note.id } : current))
+        void window.vela.notes.graph(note.id).then(setGraph).catch(() => undefined)
       })
     }, 600)
     return () => clearTimeout(timer)
@@ -153,6 +175,36 @@ export default function NotesDrawer() {
     }
   }, [activeUrl])
 
+  const linkSuggestions = useMemo(
+    () =>
+      linkMenu && draft
+        ? suggestNotes(
+            (view?.notes ?? []).map((note) => ({ id: note.id, title: note.title })),
+            linkMenu.query,
+            draft.id
+          )
+        : [],
+    [linkMenu, draft, view?.notes]
+  )
+
+  useEffect(() => {
+    const id = draft?.id
+    if (!id) {
+      setGraph(null)
+      return
+    }
+    let alive = true
+    void window.vela.notes
+      .graph(id)
+      .then((next) => {
+        if (alive) setGraph(next)
+      })
+      .catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [draft?.id])
+
   useEffect(() => {
     if (!sketchOpen) return
     const canvas = canvasRef.current
@@ -178,6 +230,10 @@ export default function NotesDrawer() {
       setConfirming(false)
       setSavedAt(note.updatedAt)
       setAiMode(null)
+      setRenameUndo(null)
+      setLinkMenu(null)
+      loadedTitle.current = note.title
+      setGraph(await window.vela.notes.graph(note.id).catch(() => null))
     } catch {
       toast('Cette note est introuvable.', 'error')
     }
@@ -197,6 +253,10 @@ export default function NotesDrawer() {
     setConfirming(false)
     setSavedAt(null)
     setAiMode(null)
+    setRenameUndo(null)
+    setLinkMenu(null)
+    setGraph(null)
+    loadedTitle.current = ''
   }
 
   const capturePage = (): void => {
@@ -327,6 +387,96 @@ export default function NotesDrawer() {
       .join('\n')
     insertMarkdown(block || prefix)
   }
+
+  /** Met à jour l'autocomplétion d'après le curseur, ou la ferme. */
+  const updateLinkMenu = (body: string, caret: number | null): void => {
+    if (caret === null) {
+      setLinkMenu(null)
+      return
+    }
+    const query = linkQueryAt(body, caret)
+    setLinkMenu(query ? { query: query.query, index: 0 } : null)
+  }
+
+  /** Remplace `[[frappe` par un lien complet vers la note choisie. */
+  const applyLinkSuggestion = (title: string): void => {
+    if (!draft) return
+    const area = textareaRef.current
+    const caret = area?.selectionStart ?? draft.body.length
+    const result = completeLink(draft.body, caret, title)
+    setDraft({ ...draft, body: result.body })
+    setDirty(true)
+    setPreview(false)
+    setLinkMenu(null)
+    requestAnimationFrame(() => {
+      if (!area) return
+      area.focus()
+      area.setSelectionRange(result.caret, result.caret)
+    })
+  }
+
+  /** Crée la note manquante d'un lien, puis l'ouvre. */
+  const createLinkedNote = async (title: string): Promise<void> => {
+    if (!draft) return
+    try {
+      const note = await window.vela.notes.save({
+        title: title.slice(0, 160),
+        body: `# ${title}\n\n`,
+        spaceId: draft.spaceId
+      })
+      toast(`Note « ${title} » créée.`)
+      await openNote(note.id)
+    } catch {
+      toast('Cette note n’a pas pu être créée.', 'error')
+    }
+  }
+
+  const undoRename = async (): Promise<void> => {
+    if (!renameUndo) return
+    try {
+      const result = await window.vela.notes.rename({ id: renameUndo.id, title: renameUndo.from })
+      if (!result) throw new Error('note absente')
+      loadedTitle.current = result.note.title
+      setDraft((current) => (current && current.id === result.note.id ? { ...current, title: result.note.title } : current))
+      setRenameUndo(null)
+      toast('Renommage annulé, liens rétablis.')
+      void window.vela.notes.graph(result.note.id).then(setGraph).catch(() => undefined)
+    } catch {
+      toast('Le renommage n’a pas pu être annulé.', 'error')
+    }
+  }
+
+  const noteLinks: NoteLinkContext | undefined = draft
+    ? {
+        resolve: (title) => {
+          const found = findNoteByTitle(
+            (view.notes ?? []).map((note) => ({ id: note.id, title: note.title })),
+            title
+          )
+          return found ? { id: found.id, title: found.title } : null
+        },
+        open: (id) => void openNote(id),
+        create: (title) => void createLinkedNote(title)
+      }
+    : undefined
+
+  const noteAudio: NoteAudioContext | undefined = draft
+    ? {
+        remove: (name) => {
+          setDraft((current) => (current ? { ...current, body: removeAudioToken(current.body, name) } : current))
+          setDirty(true)
+        },
+        transcribe: (_name, text) => {
+          setDraft((current) =>
+            current ? { ...current, body: `${current.body.trimEnd()}\n\n> ${text}\n` } : current
+          )
+          setDirty(true)
+          setPreview(true)
+          toast('Transcription ajoutée à la note.')
+        },
+        error: (message) => toast(message, 'error')
+      }
+    : undefined
 
   const runAi = async (action: NoteAiAction): Promise<void> => {
     if (!draft) return
@@ -635,6 +785,27 @@ export default function NotesDrawer() {
             <button type="button" className="note-tool" onClick={() => insertMarkdown('[', '](https://)')} title="Lien">
               <Icon name="link" size={14} />
             </button>
+            <button
+              type="button"
+              className="note-tool"
+              onClick={() => {
+                // On n'insère que l'ouverture : le titre choisi complète le lien.
+                insertMarkdown('[[')
+                setLinkMenu({ query: '', index: 0 })
+              }}
+              title="Lien vers une note ([[)"
+            >
+              <span className="note-tool-brackets">[[ ]]</span>
+            </button>
+            <button
+              type="button"
+              className="note-tool"
+              onClick={() => setRecorderOpen(true)}
+              title="Enregistrer une note vocale"
+              aria-label="Enregistrer une note vocale"
+            >
+              <Icon name="mic" size={14} />
+            </button>
             <button type="button" className="note-tool" onClick={() => setSketchOpen(true)} title="Insérer un croquis">
               <Icon name="edit" size={14} />
             </button>
@@ -668,6 +839,41 @@ export default function NotesDrawer() {
             ))}
           </div>
 
+          {linkMenu && (
+            <div className="note-link-menu" role="listbox" aria-label="Liens vers une note">
+              <p className="note-link-menu-head">
+                <Icon name="notes" size={12} /> Lien vers une note
+              </p>
+              {linkSuggestions.map((note, index) => (
+                <button
+                  key={note.id}
+                  type="button"
+                  role="option"
+                  aria-selected={linkMenu.index === index}
+                  className="note-link-option"
+                  data-active={linkMenu.index === index}
+                  onMouseEnter={() => setLinkMenu({ ...linkMenu, index })}
+                  onClick={() => applyLinkSuggestion(note.title)}
+                >
+                  {note.title}
+                </button>
+              ))}
+              {linkMenu.query.trim() && (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={linkSuggestions.length === 0}
+                  className="note-link-option"
+                  data-active={linkSuggestions.length === 0}
+                  onClick={() => applyLinkSuggestion(linkMenu.query)}
+                >
+                  <Icon name="plus" size={12} /> Lier « {linkMenu.query.trim()} »
+                </button>
+              )}
+              <span className="note-link-hint">Entrée pour insérer · Échap pour fermer</span>
+            </div>
+          )}
+
           <div className="note-modes">
             <button type="button" className="seg" data-active={!preview} onClick={() => setPreview(false)}>
               Écrire
@@ -694,19 +900,136 @@ export default function NotesDrawer() {
             <p className="note-ai-note">Repli local : aucun modèle n’est configuré (Réglages › Modèles).</p>
           )}
 
+          {renameUndo && (
+            <div className="note-rename-undo" role="status">
+              <span>
+                <Icon name="link" size={12} /> Liens mis à jour dans {renameUndo.updated} note
+                {renameUndo.updated > 1 ? 's' : ''}
+              </span>
+              <button type="button" className="text-btn" onClick={() => void undoRename()}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setRenameUndo(null)}
+                aria-label="Ignorer la modification des liens"
+              >
+                <Icon name="close" size={12} />
+              </button>
+            </div>
+          )}
+
           {preview ? (
             <div className="note-preview">
-              {draft.body.trim() ? <Markdown text={draft.body} /> : <p className="note-empty-preview">Rien à prévisualiser.</p>}
+              {draft.body.trim() ? (
+                <Markdown text={draft.body} links={noteLinks} audio={noteAudio} />
+              ) : (
+                <p className="note-empty-preview">Rien à prévisualiser.</p>
+              )}
             </div>
           ) : (
             <textarea
               ref={textareaRef}
               className="note-textarea"
               value={draft.body}
-              placeholder="Écrivez en Markdown, glissez un extrait depuis la page, ou demandez une synthèse à l’IA."
+              placeholder="Écrivez en Markdown, glissez un extrait depuis la page, ou liez une note avec [[Titre]]."
               spellCheck
-              onChange={(event) => patchDraft({ body: event.target.value })}
+              onChange={(event) => {
+                const value = event.target.value
+                patchDraft({ body: value })
+                updateLinkMenu(value, event.target.selectionStart)
+              }}
+              onClick={(event) => updateLinkMenu(draft.body, event.currentTarget.selectionStart)}
+              onKeyDown={(event) => {
+                if (!linkMenu) return
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  setLinkMenu(null)
+                  return
+                }
+                const count = linkSuggestions.length
+                if (count === 0) return
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  setLinkMenu({ ...linkMenu, index: (linkMenu.index + 1) % count })
+                  return
+                }
+                if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  setLinkMenu({ ...linkMenu, index: (linkMenu.index - 1 + count) % count })
+                  return
+                }
+                if (event.key === 'Enter' || event.key === 'Tab') {
+                  event.preventDefault()
+                  applyLinkSuggestion(linkSuggestions[linkMenu.index]?.title ?? linkMenu.query)
+                }
+              }}
             />
+          )}
+
+          {draft.id && graph && (graph.outgoing.length > 0 || graph.incoming.length > 0 || graph.missing.length > 0) && (
+            <section className="note-links" data-open={linksOpen} aria-label="Notes liées">
+              <button
+                type="button"
+                className="note-links-head"
+                aria-expanded={linksOpen}
+                onClick={() => setLinksOpen(!linksOpen)}
+              >
+                <Icon name={linksOpen ? 'chevron-down' : 'chevron-right'} size={12} />
+                Notes liées
+                <span className="note-links-count">
+                  {graph.outgoing.length + graph.incoming.length + graph.missing.length}
+                </span>
+              </button>
+              {linksOpen && (
+                <div className="note-links-body">
+                  {graph.outgoing.length > 0 && (
+                    <div className="note-links-group">
+                      <h3>Vers</h3>
+                      <ul>
+                        {graph.outgoing.map((ref) => (
+                          <li key={`out-${ref.id}`}>
+                            <button type="button" onClick={() => ref.id && void openNote(ref.id)}>
+                              {ref.title}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {graph.incoming.length > 0 && (
+                    <div className="note-links-group">
+                      <h3>Citée par</h3>
+                      <ul>
+                        {graph.incoming.map((ref) => (
+                          <li key={`in-${ref.id}`}>
+                            <button type="button" onClick={() => ref.id && void openNote(ref.id)}>
+                              {ref.title}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {graph.missing.length > 0 && (
+                    <div className="note-links-group broken">
+                      <h3>Liens cassés</h3>
+                      <ul>
+                        {graph.missing.map((title) => (
+                          <li key={`missing-${title}`}>
+                            <span>{title}</span>
+                            <button type="button" className="text-btn" onClick={() => void createLinkedNote(title)}>
+                              Créer la note
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
           )}
 
           <footer className="note-foot">
@@ -898,6 +1221,18 @@ export default function NotesDrawer() {
             </button>
           </footer>
         </div>
+      )}
+
+      {recorderOpen && draft && (
+        <NoteRecorder
+          spaceId={draft.spaceId}
+          onInsert={(token) => {
+            insertMarkdown(`\n\n${token}\n\n`)
+            setPreview(true)
+          }}
+          onClose={() => setRecorderOpen(false)}
+          onError={(message) => toast(message, 'error')}
+        />
       )}
 
       {sketchOpen && (

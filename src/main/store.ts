@@ -1,6 +1,21 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  appendFileSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { safeStorage } from 'electron'
+import {
+  migrateBookmarkOrder,
+  moveBookmark as moveBookmarkList,
+  orderBookmarks,
+  reorderBookmarks as reorderBookmarkList
+} from '@shared/bookmarkOrder'
 import { createDefaultState, createTab, defaultProviders, SPACE_COLORS } from '@shared/defaults'
 import { isProviderId, PROVIDERS, providerDefaults } from '@shared/providers'
 import type {
@@ -19,7 +34,14 @@ import type {
 import { HOME_URL } from '@shared/types'
 import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
-import { sanitizeSpaceAvatar, sanitizeSpaceBackground, sanitizeSpaceShortcuts } from '@shared/space'
+import {
+  avatarFile,
+  partitionFor,
+  sanitizeSpaceAvatar,
+  sanitizeSpaceBackground,
+  sanitizeSpaceShortcuts
+} from '@shared/space'
+import { saveAvatarDataUrl } from './avatars'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
@@ -104,6 +126,7 @@ function mergeSettings(raw: unknown): Settings {
     searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
     ...sanitizeAppearance(input),
     blockTrackers: input.blockTrackers !== false,
+    thumbnails: input.thumbnails === true,
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
     agent: { mode, provider, providers }
@@ -116,6 +139,9 @@ export function normalizeState(raw: unknown): PersistedState {
   const input = raw as Partial<PersistedState>
   const spaces = (Array.isArray(input.spaces) ? input.spaces.filter(isSpace) : []).map((space) => ({
     ...space,
+    // Un fichier ancien ou bricolé peut omettre la partition : sans elle,
+    // Chromium refuse la session et l'ouverture d'un onglet plante l'app.
+    partition: partitionFor(space),
     theme: isThemeId(space.theme) ? space.theme : null,
     avatar: sanitizeSpaceAvatar(space.avatar),
     background: sanitizeSpaceBackground(space.background),
@@ -174,14 +200,17 @@ export function normalizeState(raw: unknown): PersistedState {
       (entry): entry is Bookmark =>
         Boolean(entry && typeof (entry as Bookmark).id === 'string' && typeof (entry as Bookmark).url === 'string')
     )
-    .map((entry) => ({
+    .map((entry, index) => ({
       id: entry.id,
       url: entry.url.slice(0, 2000),
       title: typeof entry.title === 'string' ? entry.title.slice(0, 200) : entry.url,
       createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
-      favicon: typeof entry.favicon === 'string' ? entry.favicon.slice(0, 2000) : undefined
+      favicon: typeof entry.favicon === 'string' ? entry.favicon.slice(0, 2000) : undefined,
+      order: Number.isInteger(entry.order) && entry.order >= 0 ? entry.order : index
     }))
     .slice(0, 500)
+    .sort((a, b) => a.order - b.order)
+    .map((entry, order) => ({ ...entry, order }))
 
   const closed = (Array.isArray(input.closed) ? input.closed : [])
     .filter((entry) => entry && typeof entry.url === 'string' && typeof entry.spaceId === 'string')
@@ -305,10 +334,120 @@ export class Store {
         raw = null
       }
     }
-    this.state = normalizeState(raw)
+    const migratedBookmarks = this.migrateBookmarks(raw)
+    const migratedAvatars = this.migrateAvatars(migratedBookmarks)
+    this.state = normalizeState(migratedAvatars)
+    // Écrit tout de suite : le fichier reste lisible par une version antérieure
+    // (les favoris gardent leur ordre) et les migrations ne sont jamais rejouées.
+    if (migratedAvatars !== raw) this.flush()
     this.secrets = this.readSecrets()
     this.migrateLegacySecret()
     this.syncKeyFlags()
+  }
+
+  /**
+   * Ajoute le champ d'ordre aux favoris de la 0.3.7. Le fichier est copié
+   * avant toute écriture ; un échec est journalisé et l'app démarre quand même.
+   */
+  private migrateBookmarks(raw: unknown): unknown {
+    let result
+    try {
+      result = migrateBookmarkOrder(raw)
+    } catch (error) {
+      this.journal('Migration de l’ordre des favoris impossible : fichier conservé tel quel.', error)
+      return raw
+    }
+    if (!result.changed) return raw
+
+    let backup = 'aucune (fichier absent)'
+    try {
+      if (existsSync(this.file)) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+        backup = join(this.dir, `vela-backup-${stamp}.json`)
+        copyFileSync(this.file, backup)
+      }
+      this.journal(result.journal.join(' '), undefined, `sauvegarde : ${backup}`)
+    } catch (error) {
+      // Sans sauvegarde, on préfère ne rien écrire : les favoris restent tels quels.
+      this.journal('Sauvegarde impossible avant migration : migration reportée.', error)
+      return raw
+    }
+    return result.state
+  }
+
+  /**
+   * Sort les photos d'avatar de vela.json : chaque `image:data:` devient un
+   * fichier et une référence `image:file:<nom>`. Un échec d'écriture laisse
+   * l'avatar intact, et rien n'est perdu.
+   */
+  private migrateAvatars(raw: unknown): unknown {
+    if (!raw || typeof raw !== 'object') return raw
+    const input = raw as { spaces?: unknown }
+    if (!Array.isArray(input.spaces)) return raw
+
+    let changed = false
+    let moved = 0
+    let kept = 0
+    const spaces = input.spaces.map((space) => {
+      if (!space || typeof space !== 'object') return space
+      const entry = space as { avatar?: unknown }
+      if (typeof entry.avatar !== 'string' || !entry.avatar.startsWith('image:data:')) return space
+      const saved = saveAvatarDataUrl(this.dir, entry.avatar)
+      if (!saved) {
+        kept += 1
+        return space
+      }
+      moved += 1
+      changed = true
+      return { ...entry, avatar: saved }
+    })
+
+    if (!changed) {
+      if (kept > 0) this.journal(`${kept} photo(s) d’avatar non converties : format ou taille refusés.`)
+      return raw
+    }
+
+    let backup = 'aucune (fichier absent)'
+    try {
+      if (existsSync(this.file)) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+        backup = join(this.dir, `vela-backup-${stamp}.json`)
+        copyFileSync(this.file, backup)
+      }
+    } catch (error) {
+      this.journal('Sauvegarde impossible avant conversion des avatars : conversion reportée.', error)
+      return raw
+    }
+
+    this.journal(
+      `${moved} photo(s) d’avatar déplacées de vela.json vers avatars/.`,
+      undefined,
+      `sauvegarde : ${backup}`
+    )
+    return { ...input, spaces }
+  }
+
+  /** Images d'avatar encore référencées par un espace. */
+  referencedAvatars(): Set<string> {
+    const names = new Set<string>()
+    for (const space of this.state.spaces) {
+      const name = avatarFile(space.avatar)
+      if (name) names.add(name)
+    }
+    return names
+  }
+
+  /** Journal lisible, dans le dossier de données ; ne bloque jamais le démarrage. */
+  private journal(message: string, error?: unknown, extra?: string): void {
+    const line = `[${new Date().toISOString()}] ${message}${extra ? ` (${extra})` : ''}${
+      error instanceof Error ? ` — ${error.message}` : ''
+    }`
+    console.error(`[vela] ${line}`)
+    try {
+      appendFileSync(join(this.dir, 'migration.log'), `${line}\n`, 'utf8')
+    } catch {
+      /* dossier non inscriptible : la ligne console suffit */
+    }
   }
 
   get(): PersistedState {
@@ -374,15 +513,17 @@ export class Store {
         return
       }
       added = true
+      // En fin de liste : un favori ajouté ne bouscule pas l'ordre choisi.
       state.bookmarks = [
+        ...state.bookmarks,
         {
           id: crypto.randomUUID(),
           url,
           title: (title || url).trim().slice(0, 200),
           createdAt: Date.now(),
-          favicon: favicon?.slice(0, 2000)
-        },
-        ...state.bookmarks
+          favicon: favicon?.slice(0, 2000),
+          order: state.bookmarks.length
+        }
       ].slice(0, 500)
     })
     return added
@@ -402,7 +543,8 @@ export class Store {
           url: entry.url.slice(0, 2000),
           title: (entry.title || entry.url).trim().slice(0, 200),
           createdAt: Date.now(),
-          favicon: entry.favicon?.slice(0, 2000)
+          favicon: entry.favicon?.slice(0, 2000),
+          order: state.bookmarks.length + fresh.length
         })
         if (state.bookmarks.length + fresh.length >= 500) break
       }
@@ -505,8 +647,34 @@ export class Store {
 
   removeBookmark(id: string): void {
     this.update((state) => {
-      state.bookmarks = state.bookmarks.filter((entry) => entry.id !== id)
+      state.bookmarks = state.bookmarks
+        .filter((entry) => entry.id !== id)
+        .map((entry, order) => ({ ...entry, order }))
     })
+  }
+
+  /** Déplace un favori à une position absolue ; refuse une demande invalide. */
+  moveBookmark(id: string, position: number): boolean {
+    let moved = false
+    this.update((state) => {
+      const next = moveBookmarkList(orderBookmarks(state.bookmarks), id, position)
+      if (!next) return
+      state.bookmarks = next
+      moved = true
+    })
+    return moved
+  }
+
+  /** Applique une permutation complète des favoris ; refuse tout doublon. */
+  reorderBookmarks(ids: string[]): boolean {
+    let applied = false
+    this.update((state) => {
+      const next = reorderBookmarkList(orderBookmarks(state.bookmarks), ids)
+      if (!next) return
+      state.bookmarks = next
+      applied = true
+    })
+    return applied
   }
 
   renameBookmark(id: string, title: string): void {

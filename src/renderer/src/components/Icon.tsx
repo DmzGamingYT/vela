@@ -53,6 +53,10 @@ export type IconName =
   | 'storm'
   | 'fog'
   | 'wind'
+  | 'mic'
+  | 'upload'
+  | 'pause'
+  | 'play'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -244,6 +248,15 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   code: <path d="m8 6-5 6 5 6M16 6l5 6-5 6" />,
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6" />
+    </>
+  ),
+  upload: <path d="M12 20V8M7.5 12.5 12 8l4.5 4.5M4 4h16" />,
+  pause: <path d="M9 5v14M15 5v14" />,
+  play: <path d="M7 4.5v15l12-7.5Z" />,
   cloud: <path d="M7 18a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 18Z" />,
   rain: (
     <>

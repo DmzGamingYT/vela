@@ -31,6 +31,15 @@ function hasDeveloperIdIdentity() {
 
 exports.default = async function afterPack(context) {
   if (process.platform !== 'darwin') return
+
+  // Build universel : @electron/universal assemble deux bundles temporaires
+  // (`…-arm64-temp`, `…-x64-temp`) et exige que tous leurs fichiers non
+  // binaires soient identiques. Une signature ad hoc ici réécrit
+  // `_CodeSignature/CodeResources` et casse la fusion. On ignore donc les
+  // dossiers temporaires : le bundle fusionné repasse par ce hook, et c'est
+  // lui qu'on signe.
+  if (/-temp$/.test(context.appOutDir)) return
+
   const appPath = join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`)
   if (!existsSync(appPath)) return
 

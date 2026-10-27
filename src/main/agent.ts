@@ -1,7 +1,13 @@
 import type { BrowserWindow } from 'electron'
 import { planDemoRun } from '@shared/agent'
 import { newId } from '@shared/defaults'
-import { buildChatRequest, parseStreamPayload, providerById, providerState } from '@shared/providers'
+import {
+  buildChatRequest,
+  parseStreamPayload,
+  providerById,
+  providerReady,
+  providerState
+} from '@shared/providers'
 import type { AgentEvent, AgentMode, AgentRunRequest, ProviderId, Settings } from '@shared/types'
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
@@ -162,6 +168,113 @@ export class AgentRunner {
       const clean = text.trim()
       if (!clean) throw new Error('Le modèle n’a renvoyé aucun texte.')
       return { text: clean, mode: 'api' }
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  /**
+   * Transcription d'une note vocale. Le serveur local passe en premier, sans
+   * aucune sortie réseau. Un fournisseur distant n'est appelé qu'après un
+   * consentement explicite de l'utilisateur, et avec le même enregistrement.
+   */
+  async transcribe(
+    audio: { buffer: Buffer; mime: string; filename: string },
+    consent: boolean
+  ): Promise<{
+    ok: boolean
+    text?: string
+    mode?: 'local' | 'cloud'
+    reason?: 'local-required' | 'consent-required' | 'unavailable' | 'failed'
+    detail?: string
+  }> {
+    const settings = this.getSettings()
+    const definition = providerById(settings.agent.provider)
+    const state = providerState(settings)
+    const ready = providerReady(settings)
+
+    if (definition.local && !ready) {
+      return {
+        ok: false,
+        reason: 'local-required',
+        detail:
+          'Aucun modèle local n’est actif. Ouvrez Réglages › Modèles, choisissez Local, puis réessayez : l’enregistrement restera sur cet appareil.'
+      }
+    }
+    if (!definition.local) {
+      // Sans modèle configuré, il n'y a rien à envoyer : on ne demande pas un
+      // accord pour une requête qui ne peut pas aboutir.
+      if (!ready) {
+        return {
+          ok: false,
+          reason: 'unavailable',
+          detail: 'Aucun modèle n’est actif. Ouvrez Réglages › Modèles pour transcrire sur cet appareil.'
+        }
+      }
+      if (!consent) {
+        return {
+          ok: false,
+          reason: 'consent-required',
+          detail: `L’enregistrement partirait vers ${definition.label} avec votre demande. Il ne quitte l’appareil qu’avec votre accord.`
+        }
+      }
+    }
+    const key = this.getSecret(definition.id)
+    if (!definition.local && !key) {
+      return { ok: false, reason: 'unavailable', detail: 'Aucune clé API enregistrée pour ce fournisseur.' }
+    }
+
+    const url = `${state.baseUrl.replace(/\/+$/, '')}/audio/transcriptions`
+    const boundary = `----vela${Date.now().toString(36)}`
+    const head = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n${state.model}\r\n` +
+        `--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\nfr\r\n` +
+        `--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n` +
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${audio.filename}"\r\n` +
+        `Content-Type: ${audio.mime}\r\n\r\n`,
+      'utf8'
+    )
+    const tail = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8')
+    const body = Buffer.concat([head, audio.buffer, tail])
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 180_000)
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': `multipart/form-data; boundary=${boundary}`,
+          ...(key ? { authorization: `Bearer ${key}` } : {})
+        },
+        body,
+        signal: controller.signal
+      })
+      if (!response.ok) {
+        const detail = await response.text().catch(() => '')
+        return {
+          ok: false,
+          reason: 'failed',
+          detail: `Transcription refusée (${response.status}). ${detail.slice(0, 160) || 'Ce modèle accepte-t-il l’audio ?'}`
+        }
+      }
+      const raw = await response.text()
+      let text = raw.trim()
+      try {
+        const parsed = JSON.parse(raw) as { text?: unknown }
+        if (typeof parsed.text === 'string') text = parsed.text.trim()
+      } catch {
+        /* certains serveurs répondent du texte brut */
+      }
+      if (!text) {
+        return { ok: false, reason: 'failed', detail: 'Le modèle n’a renvoyé aucun texte.' }
+      }
+      return { ok: true, text: text.slice(0, 4000), mode: definition.local ? 'local' : 'cloud' }
+    } catch (error) {
+      const message =
+        error instanceof Error && error.name === 'AbortError'
+          ? 'La transcription a dépassé trois minutes.'
+          : 'Le serveur du modèle n’a pas répondu. Vérifiez qu’il tourne et qu’il accepte l’audio.'
+      return { ok: false, reason: 'failed', detail: message }
     } finally {
       clearTimeout(timer)
     }

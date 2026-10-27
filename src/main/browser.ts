@@ -38,7 +38,12 @@ import { moveTab } from '@shared/ordering'
 import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import { isThemeId, parseHex } from '@shared/theme'
-import { sanitizeSpaceAvatar, sanitizeSpaceBackground, sanitizeSpaceShortcuts } from '@shared/space'
+import {
+  partitionFor,
+  sanitizeSpaceAvatar,
+  sanitizeSpaceBackground,
+  sanitizeSpaceShortcuts
+} from '@shared/space'
 import {
   HOME_URL,
   type AppView,
@@ -59,6 +64,10 @@ import { isHomeUrl, titleFromUrl } from '@shared/url'
 import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
+import { faviconDataUrl, purgeFavicons } from './favicons'
+import { pruneAvatars, readAvatarDataUrl, saveAvatarDataUrl } from './avatars'
+import { Thumbnails } from './thumbnails'
+import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
 import { Store } from './store'
@@ -110,11 +119,13 @@ function isPane(value: unknown): value is PaneRect {
 export class Browser {
   readonly store: Store
   readonly notes: NotesStore
+  readonly noteAudio: NoteAudioStore
   readonly highlights: HighlightsStore
   readonly tabs: TabManager
   readonly agent: AgentRunner
   readonly comic: ComicBridge
   readonly tunnel: TunnelService
+  readonly thumbs: Thumbnails
 
   private win: BrowserWindow | null = null
   private noteCache: NoteMeta[]
@@ -155,9 +166,13 @@ export class Browser {
 
   constructor(dir: string) {
     this.store = new Store(dir)
+    this.thumbs = new Thumbnails(dir, () => this.store.get().settings.thumbnails)
     this.notes = new NotesStore(dir)
+    this.noteAudio = new NoteAudioStore(dir)
     this.highlights = new HighlightsStore(dir)
     this.notes.prune()
+    // Un fichier audio n'est gardé que si une note le cite encore.
+    this.noteAudio.prune(this.notes.audioNames())
     this.noteCache = this.notes.list()
     this.tabs = new TabManager(() => this.win, this.host)
     this.tunnel = new TunnelService({
@@ -220,7 +235,7 @@ export class Browser {
       const state = this.store.get()
       const space = state.spaces.find((item) => item.id === state.activeSpaceId) ?? state.spaces[0]
       if (!space) return
-      const ses = session.fromPartition(space.partition)
+      const ses = session.fromPartition(partitionFor(space))
       const preconnect = (
         ses as Session & { preconnect?: (options: { url: string; numSockets?: number }) => unknown }
       ).preconnect
@@ -335,13 +350,13 @@ export class Browser {
   private async clearIdleCaches(): Promise<void> {
     try {
       const state = this.store.get()
-      const activePartition = state.spaces.find((s) => s.id === state.activeSpaceId)?.partition
+      const activePartition = partitionFor(state.spaces.find((s) => s.id === state.activeSpaceId))
       for (const space of state.spaces) {
-        if (space.partition === activePartition) continue
+        if (partitionFor(space) === activePartition) continue
         const hasLive = state.tabs.some((t) => t.spaceId === space.id && this.tabs.liveIds().has(t.id))
         if (hasLive) continue
         try {
-          await session.fromPartition(space.partition).clearCache()
+          await session.fromPartition(partitionFor(space)).clearCache()
         } catch {
           /* partition déjà libérée */
         }
@@ -510,7 +525,7 @@ export class Browser {
     this.focusActive()
   }
 
-  private closeTab(id: string): void {
+  private async closeTab(id: string): Promise<void> {
     const state = this.store.get()
     const tab = state.tabs.find((item) => item.id === id)
     if (!tab) return
@@ -538,10 +553,27 @@ export class Browser {
       if (state.secondTabBySpace[spaceId] === next.id) state.secondTabBySpace[spaceId] = null
     }
 
+    await this.captureThumbnail(id, tab)
     this.tabs.destroy(id)
     this.store.schedule()
     this.broadcast()
     this.focusActive()
+  }
+
+  /**
+   * Vignette de la page qui se ferme. Rien pour un espace privé, une page en
+   * erreur ou une adresse interne, et rien du tout si le réglage est coupé.
+   */
+  private async captureThumbnail(tabId: string, tab: TabState): Promise<void> {
+    const state = this.store.get()
+    if (!state.settings.thumbnails) return
+    const space = state.spaces.find((item) => item.id === tab.spaceId)
+    if (!space || space.private === true) return
+    if (!/^https?:/i.test(tab.url)) return
+    const contents = this.tabs.captureSource(tabId)
+    if (!contents) return
+    // La capture est attendue : la vue meurt juste après la fermeture.
+    await this.thumbs.capture(contents, tab.url)
   }
 
   private reopenTab(): void {
@@ -616,7 +648,7 @@ export class Browser {
       : SPACE_COLORS[state.spaces.length % SPACE_COLORS.length]
     const now = Date.now()
     const space = createSpaceState(name, color, now)
-    space.avatar = sanitizeSpaceAvatar(payload.avatar)
+    space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
     space.background = sanitizeSpaceBackground(payload.background)
     space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
     space.blockTrackers = payload.blockTrackers !== false
@@ -641,12 +673,29 @@ export class Browser {
     if (typeof payload.name === 'string' && payload.name.trim()) space.name = payload.name.trim().slice(0, 40)
     if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color)) space.color = payload.color
     if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
-    if ('avatar' in payload) space.avatar = sanitizeSpaceAvatar(payload.avatar)
+    if ('avatar' in payload) space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
     if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
     if ('shortcuts' in payload) space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
     if (typeof payload.blockTrackers === 'boolean') space.blockTrackers = payload.blockTrackers
     this.store.schedule()
+    this.pruneAvatars()
     this.broadcast()
+  }
+
+  /**
+   * Une photo choisie dans la fenêtre arrive en data URL : elle part sur le
+   * disque et vela.json ne garde qu'un nom de fichier. En cas d'échec, la
+   * data URL est conservée pour ne rien perdre.
+   */
+  private storedAvatar(value: string | null): string | null {
+    if (!value || !value.startsWith('image:data:')) return value
+    const saved = saveAvatarDataUrl(this.store.dir, value)
+    return saved ?? value
+  }
+
+  /** Les photos remplacées ne restent pas sur le disque. */
+  private pruneAvatars(): void {
+    pruneAvatars(this.store.dir, this.store.referencedAvatars())
   }
 
   private removeSpace(id: string): void {
@@ -665,6 +714,7 @@ export class Browser {
       if (next) state.activeTabBySpace[state.activeSpaceId] = next.id
     }
     this.store.schedule()
+    this.pruneAvatars()
     this.broadcast()
     this.focusActive()
   }
@@ -714,7 +764,8 @@ export class Browser {
       id,
       targetId: typeof payload.targetId === 'string' ? payload.targetId : null,
       position: payload.position === 'after' ? 'after' : 'before',
-      groupId
+      groupId,
+      ...(typeof payload.pinned === 'boolean' ? { pinned: payload.pinned } : {})
     })
     if (next === state.tabs) return
     state.tabs = next
@@ -809,6 +860,7 @@ export class Browser {
       if (typeof input.hourTheme === 'boolean') settings.hourTheme = input.hourTheme
       if (typeof input.perSpaceThemes === 'boolean') settings.perSpaceThemes = input.perSpaceThemes
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
+      if (typeof input.thumbnails === 'boolean') settings.thumbnails = input.thumbnails
       if (typeof input.sidebarCollapsed === 'boolean') settings.sidebarCollapsed = input.sidebarCollapsed
       if (typeof (input as { onboarded?: unknown }).onboarded === 'boolean') {
         settings.onboarded = (input as { onboarded: boolean }).onboarded
@@ -1005,8 +1057,26 @@ export class Browser {
     this.comic.registerIpc()
 
     handle('app:view', () => this.view())
+    handle('favicons:get', (input) => {
+      const payload = (input ?? {}) as { host?: unknown; spaceId?: unknown }
+      if (typeof payload.host !== 'string') return null
+      return faviconDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
+    })
+    handle('favicons:purge', () => purgeFavicons())
     handle('app:platform', () => process.platform)
 
+    handle('avatar:read', (payload) => {
+      const name = typeof payload === 'string' ? payload : ''
+      return readAvatarDataUrl(this.store.dir, name)
+    })
+    handle('thumbs:get', (payload) => this.thumbs.dataUrl(typeof payload === 'string' ? payload : ''))
+    handle('thumbs:count', () => this.thumbs.count())
+    handle('thumbs:purge', () => {
+      const removed = this.thumbs.purge()
+      // L'accueil redemande ses vignettes : aucune capture périmée à l'écran.
+      this.broadcast()
+      return removed
+    })
     handle('space:create', (payload) => {
       this.addSpace(payload)
       return this.view()
@@ -1025,9 +1095,7 @@ export class Browser {
     })
 
     handle('tab:create', (payload) => this.createTab((payload ?? {}) as CreateTabInput))
-    handle('tab:close', (payload) => {
-      this.closeTab(asId(payload))
-    })
+    handle('tab:close', (payload) => this.closeTab(asId(payload)))
     handle('tab:activate', (payload) => {
       this.activateTab(asId(payload))
     })
@@ -1132,6 +1200,19 @@ export class Browser {
       if (!id) return
       this.store.removeBookmark(id)
       this.broadcast()
+    })
+    handle('bookmark:move', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; position?: unknown }
+      if (typeof input.id !== 'string' || typeof input.position !== 'number') return false
+      const moved = this.store.moveBookmark(input.id, input.position)
+      if (moved) this.broadcast()
+      return moved
+    })
+    handle('bookmark:reorder', (payload) => {
+      const ids = Array.isArray(payload) ? payload.filter((id): id is string => typeof id === 'string') : []
+      const applied = this.store.reorderBookmarks(ids)
+      if (applied) this.broadcast()
+      return applied
     })
     handle('privacy:toggle-site', (payload) => {
       const host = typeof payload === 'string' ? payload.trim().toLowerCase() : ''
@@ -1344,6 +1425,43 @@ export class Browser {
       })
       return { text: result.text, mode: result.mode }
     })
+    handle('notes:rename', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; title?: unknown }
+      const result = this.notes.rename(asId(input.id), asString(input.title).slice(0, 160))
+      if (!result) return null
+      this.noteCache = this.notes.list()
+      this.broadcast()
+      return result
+    })
+    handle('notes:graph', (payload) => this.notes.graph(asId(payload)))
+    handle('notes:audio-save', (payload) => {
+      const input = (payload ?? {}) as { spaceId?: unknown; dataUrl?: unknown }
+      const state = this.store.get()
+      const spaceId =
+        typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
+          ? input.spaceId
+          : state.activeSpaceId
+      const saved = this.noteAudio.save(spaceId, input.dataUrl)
+      return saved ? { name: saved.name } : null
+    })
+    handle('notes:audio-get', (payload) => this.noteAudio.read(payload))
+    handle('notes:audio-remove', (payload) => {
+      const removed = this.noteAudio.remove(payload)
+      if (removed) this.noteAudio.prune(this.notes.audioNames())
+      return removed
+    })
+    handle('notes:transcribe', async (payload) => {
+      const input = (payload ?? {}) as { name?: unknown; consent?: unknown }
+      const file = this.noteAudio.file(input.name)
+      if (!file) {
+        return {
+          ok: false,
+          reason: 'unavailable',
+          detail: 'Cet enregistrement est introuvable sur cet appareil.'
+        }
+      }
+      return this.agent.transcribe(file, input.consent === true)
+    })
     ipcMain.on('notes:drag-selection', (event, payload) => {
       try {
         this.startSelectionDrag(event.sender, typeof payload === 'string' ? payload : '')
@@ -1415,6 +1533,7 @@ export class Browser {
     })
     handle('notes:remove', (payload) => {
       this.notes.remove(asId(payload))
+      this.noteAudio.prune(this.notes.audioNames())
       this.noteCache = this.notes.list()
       this.broadcast()
     })

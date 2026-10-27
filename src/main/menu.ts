@@ -125,6 +125,11 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
           click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/releases')
         },
         {
+          label: 'Limites connues et signature',
+          click: () =>
+            void shell.openExternal('https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/#faq')
+        },
+        {
           label: 'Signaler un problème',
           click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/issues')
         }

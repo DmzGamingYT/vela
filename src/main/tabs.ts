@@ -22,6 +22,7 @@ import type {
   TabState
 } from '@shared/types'
 import { shouldOpenAsPopup } from '@shared/navigation'
+import { partitionFor } from '@shared/space'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
 import { applyBrowserIdentity } from './identity'
@@ -148,9 +149,12 @@ export class TabManager {
   }
 
   private sessionFor(space: Space) {
-    const ses = prepareSession(space.partition)
+    // Une partition absente arrive en `undefined` jusqu'à Chromium, qui refuse
+    // alors l'argument et tue le processus principal : on la calcule ici.
+    const partition = partitionFor(space)
+    const ses = prepareSession(partition)
     try {
-      this.host.trackSession?.(ses, space.partition)
+      this.host.trackSession?.(ses, partition)
     } catch {
       /* suivi téléchargements optionnel */
     }
@@ -468,6 +472,17 @@ export class TabManager {
     const current = view.webContents.getZoomLevel()
     const next = direction === 'reset' ? 0 : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
     view.webContents.setZoomLevel(next)
+  }
+
+  /**
+   * Vue encore vivante d'un onglet, pour en prendre une capture avant de le
+   * fermer. `null` si l'onglet est en veille ou si sa page a échoué.
+   */
+  captureSource(tabId: string): Electron.WebContents | null {
+    if (this.runtimes.get(tabId)?.error) return null
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return null
+    return view.webContents
   }
 
   /** Impression de la page : boîte de dialogue système, PDF possible. */

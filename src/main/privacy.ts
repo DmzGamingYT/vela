@@ -59,7 +59,13 @@ function blockedHost(url: string): string {
 }
 
 export function prepareSession(partition: string): Session {
-  const ses = session.fromPartition(partition)
+  // `fromPartition(undefined)` tue le processus principal : on refuse toute
+  // valeur qui n'est pas une partition persistante nommée.
+  const safe =
+    typeof partition === 'string' && /^persist:[a-z0-9._-]{1,64}$/i.test(partition.trim())
+      ? partition.trim()
+      : 'persist:vela-recovery'
+  const ses = session.fromPartition(safe)
   // Identité Chrome complète (UA, langues, client hints) sur chaque requête de
   // l'espace, y compris celles qui ne passent pas par la page.
   applySessionIdentity(ses)

@@ -1,3 +1,4 @@
+import type { NoteGraph } from './noteLinks'
 import type { MapNode, TunnelMap, TunnelMapSummary } from './tunnel'
 import type {
   AgentEvent,
@@ -30,6 +31,8 @@ export interface ReorderTabsInput {
   targetId?: string | null
   position?: 'before' | 'after'
   groupId?: string | null
+  /** Change l'état épinglé ↔ normal en même temps que la position. */
+  pinned?: boolean
 }
 
 export interface CreateGroupInput {
@@ -110,6 +113,7 @@ export interface SettingsPatch {
   hourTheme?: boolean
   perSpaceThemes?: boolean
   blockTrackers?: boolean
+  thumbnails?: boolean
   sidebarCollapsed?: boolean
   onboarded?: boolean
   agent?: { mode?: AgentMode; provider?: ProviderId }
@@ -172,9 +176,40 @@ export interface ComicRunResult {
   reason?: string
 }
 
+export interface NoteRenameResult {
+  note: Note
+  previous: string
+  /** Nombre de notes dont les liens ont suivi le renommage. */
+  updated: number
+}
+
+export interface NoteTranscriptionResult {
+  ok: boolean
+  text?: string
+  mode?: 'local' | 'cloud'
+  reason?: 'local-required' | 'consent-required' | 'unavailable' | 'failed'
+  /** Message lisible, jamais une trace technique. */
+  detail?: string
+}
+
 export interface VelaApi {
   platform: string
+  /** Architecture du processus (arm64, x64) — utile pour le bundle universel. */
+  arch: string
   view(): Promise<AppView>
+  /** Photos d'avatar stockées sur disque, jamais en base64 dans vela.json. */
+  avatars: {
+    /** Data URL de la photo, ou null si le fichier a disparu. */
+    read(name: string): Promise<string | null>
+  }
+  /** Vignettes des pages récentes, en fichiers locaux. */
+  thumbs: {
+    /** Data URL de la vignette d'une adresse, ou null si absente ou désactivée. */
+    get(url: string): Promise<string | null>
+    count(): Promise<number>
+    /** Supprime toutes les vignettes ; renvoie le nombre effacé. */
+    purge(): Promise<number>
+  }
   spaces: {
     create(input: CreateSpaceInput): Promise<void>
     update(input: UpdateSpaceInput): Promise<void>
@@ -217,14 +252,24 @@ export interface VelaApi {
     remove(url: string): Promise<void>
     clear(): Promise<void>
   }
+  favicons: {
+    /** Data URL de l'icône du domaine, servie par le cache local de l'espace. */
+    get(host: string, spaceId?: string): Promise<string | null>
+    /** Vide mémoire et disque ; renvoie le nombre d'entrées supprimées. */
+    purge(): Promise<number>
+  }
   bookmarks: {
     /** Ajoute la page aux favoris, ou l'en retire : renvoie l'état final. */
     toggle(input: { url: string; title?: string; favicon?: string }): Promise<boolean>
     remove(id: string): Promise<void>
     /** Favoris des navigateurs installés (lecture locale, rien n'est modifié). */
     detect(): Promise<BookmarkImportSource[]>
-    /** Import en masse ; renvoie le nombre réellement ajouté. */
+    /** Import en masse ; renvoie le nombre réellement ajouté, dans l'ordre du fichier. */
     addMany(entries: { url: string; title?: string }[]): Promise<number>
+    /** Déplace un favori à une position absolue ; false si la demande est invalide. */
+    move(id: string, position: number): Promise<boolean>
+    /** Applique une permutation complète ; false si un doublon ou un inconnu apparaît. */
+    reorder(ids: string[]): Promise<boolean>
   }
   tasks: {
     create(input: { title: string; dueAt?: number | null }): Promise<import('./types').Task>
@@ -252,6 +297,19 @@ export interface VelaApi {
     highlights(): Promise<PageHighlight[]>
     /** Génère ou réécrit une note avec le modèle configuré. */
     ai(input: NoteAiInput): Promise<NoteAiResult>
+    /** Renomme et réécrit les liens qui citaient l'ancien titre. */
+    rename(input: { id: string; title: string }): Promise<NoteRenameResult | null>
+    /** Liens entrants, sortants et cassés de la note ouverte. */
+    graph(id: string): Promise<NoteGraph>
+    /** Enregistrements vocaux, en fichiers dans le dossier de l'espace. */
+    audio: {
+      save(input: { spaceId: string; dataUrl: string }): Promise<{ name: string } | null>
+      /** Data URL pour le lecteur, ou null si le fichier a disparu. */
+      get(name: string): Promise<string | null>
+      remove(name: string): Promise<boolean>
+    }
+    /** Transcription locale, ou distante avec un consentement explicite. */
+    transcribe(input: { name: string; consent: boolean }): Promise<NoteTranscriptionResult>
   }
   privacy: {
     /** Désactive ou réactive le bloqueur pour un site ; true = exempté. */

@@ -42,6 +42,7 @@ export default function TabRow({
   return (
     <div
       className="tab-row"
+      data-tab-id={tab.id}
       data-active={active}
       data-secondary={secondary}
       data-home={home}
