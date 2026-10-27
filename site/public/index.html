@@ -119,6 +119,7 @@
 
       <nav class="nav" id="nav" aria-label="Sections">
         <a href="#modes">Modes</a>
+        <a href="#nouveautes">Nouveautés</a>
         <a href="#bases">Fondamentaux</a>
         <a href="#commandes">Commandes</a>
         <a href="#themes">Thèmes</a>
@@ -156,7 +157,7 @@
         <p class="lede">
           Un navigateur qui reste un navigateur. L’atelier s’ouvre quand vous en avez besoin.
         </p>
-        <a class="hero-new" href="#bases">
+        <a class="hero-new" href="#nouveautes">
           <span>Nouveau</span>
           Épinglés et favoris en cases compactes : un favicon, une infobulle, un clic.
         </a>
@@ -391,6 +392,91 @@
         </figure>
       </section>
 
+      <!-- 2c. Ce qui est arrivé ces derniers jours, une carte par fonction. -->
+      <section class="section" id="nouveautes" aria-labelledby="news-title">
+        <div class="section-head">
+          <p class="kicker"><span class="dot" aria-hidden="true"></span>Nouveautés</p>
+          <h2 id="news-title">Quatre fonctions arrivées coup sur coup.</h2>
+          <p class="section-lede">
+            L’accueil, les espaces, les notes et le rail des onglets ont changé dans la 0.3.7. Voici
+            ce que ça donne à l’usage, sans capture retouchée.
+          </p>
+        </div>
+
+        <div class="cards cards-two">
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-search" /></svg></span>
+            <h3>Un accueil qui respire</h3>
+            <p>
+              Le fond aurora dérive et suit le pointeur, la salutation apparaît mot par mot, et un
+              seul champ ouvre une adresse ou lance une recherche. Les pages récentes s’affichent en
+              tuiles de verre qui s’inclinent sous le curseur ; l’horloge et les tâches du jour
+              restent à côté. La météo ne s’affiche qu’après une ville choisie.
+            </p>
+            <div class="card-visual card-home" aria-hidden="true">
+              <span class="home-sample">
+                <svg class="ico"><use href="#i-search" /></svg>
+                Demander, naviguer, chercher…
+                <kbd>⌘K</kbd>
+              </span>
+              <div class="home-sample-tiles"><span></span><span></span><span></span></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-folder" /></svg></span>
+            <h3>Un espace, une ambiance</h3>
+            <p>
+              Une photo d’avatar recadrée, une teinte et une ambiance de fond propres à chaque
+              espace, et des modèles Travail, Personnel, Gaming, Études et Développement. Chaque
+              modèle préremplit sa barre de sites — Notion, Gmail, Drive et Slack pour le travail —
+              et garde ses cookies séparés des autres espaces.
+            </p>
+            <div class="card-visual card-spaces" aria-hidden="true">
+              <span class="space-pill"><span class="space-dot"></span>Recherche</span>
+              <span class="space-pill"><span class="space-dot alt"></span>Client</span>
+              <span class="space-pill"><span class="space-dot third"></span>Perso</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-spark" /></svg></span>
+            <h3>Des notes qui gardent la source</h3>
+            <p>
+              Un extrait glissé depuis la page arrive avec son adresse et sa date, le surlignage
+              reste rattaché à la note de la page, et un croquis s’insère directement en Markdown.
+              Reformuler, résumer, traduire, corriger ou embellir : par votre modèle, ou par la démo
+              locale — toujours étiquetée comme telle.
+            </p>
+            <div class="card-visual card-note" aria-hidden="true">
+              <p class="note-quote">« Le niveau des océans a progressé de 4,3 mm par an. »</p>
+              <span class="note-source">lemonde.fr · extrait gardé avec sa date</span>
+              <span class="line w70"></span>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-tabs" /></svg></span>
+            <h3>Épinglés et favoris en cases</h3>
+            <p>
+              Les sites épinglés et les favoris tiennent en cases compactes, réduites au favicon avec
+              une infobulle au survol. <kbd>Alt</kbd> + flèches déplace une case sans lâcher le
+              clavier ; les onglets normaux, eux, gardent leur ligne complète et leur titre lisible.
+            </p>
+            <div class="card-visual" aria-hidden="true">
+              <div class="tile-strip">
+                <span class="is-active">G</span><span>M</span><span>F</span><span>W</span><span>N</span><span>+</span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <p class="fine">
+          Livré dans la 0.3.7, en clair comme en sombre. La météo attend une ville, et la réécriture
+          des notes passe par votre modèle ou par la démo locale.
+        </p>
+      </section>
+
       <!-- 3. Trois fondamentaux, rien de plus. -->
       <section class="section" id="bases" aria-labelledby="bases-title">
         <div class="section-head">
@@ -405,8 +491,7 @@
             <h3>Onglets verticaux et dossiers</h3>
             <p>
               Les titres complets restent lisibles. Épinglez, repliez un dossier d’un clic, glissez
-              un onglet dans un autre dossier. Épinglés et favoris, eux, tiennent en cases compactes :
-              un favicon, une infobulle, un clic — et Alt + flèches pour les réordonner.
+              un onglet dans un autre dossier, et chaque dossier se replie d’un clic.
             </p>
             <div class="card-visual" aria-hidden="true">
               <p class="mini-tab is-active">Hébergeurs — comparatif</p>

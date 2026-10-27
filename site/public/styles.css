@@ -1272,6 +1272,98 @@ html[data-theme="light"] .ico-moon {
   background: var(--surface);
 }
 
+/* Deux colonnes pour les cartes de nouveautés : quatre fonctions, pas six. */
+.cards-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-home {
+  gap: 8px;
+  min-height: 132px;
+}
+
+.home-sample {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.home-sample .ico {
+  width: 12px;
+  height: 12px;
+  color: var(--accent);
+}
+
+.home-sample kbd {
+  margin-left: auto;
+}
+
+.home-sample-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.home-sample-tiles span {
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(152deg, var(--accent-soft), transparent 72%), var(--surface);
+}
+
+.card-note {
+  gap: 7px;
+  min-height: 132px;
+}
+
+.note-quote {
+  margin: 0;
+  padding-left: 9px;
+  border-left: 2px solid var(--accent);
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.note-source {
+  padding-left: 11px;
+  color: var(--ink-3);
+  font-size: 9.5px;
+}
+
+.tile-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 32px);
+  gap: 7px;
+}
+
+.tile-strip span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.tile-strip span.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 /* --- Commandes ----------------------------------------------------------- */
 
 .split-section {
@@ -1770,7 +1862,28 @@ html[data-theme="light"] .ico-moon {
 
 /* --- Adaptation ---------------------------------------------------------- */
 
+@media (max-width: 1050px) {
+  /* La barre garde ses sept sections : le lien GitHub passe au pied de page. */
+  .ghost-link {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .nav {
+    gap: 15px;
+  }
+
+  .nav a {
+    font-size: 12.5px;
+  }
+}
+
 @media (max-width: 900px) {
+  .cards-two {
+    grid-template-columns: 1fr;
+  }
+
   .nav {
     position: fixed;
     top: 66px;
