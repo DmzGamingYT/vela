@@ -21,7 +21,7 @@ import type {
   Space,
   TabState
 } from '@shared/types'
-import { shouldOpenAsPopup } from '@shared/navigation'
+import { opensMiniWindow, shouldOpenAsPopup } from '@shared/navigation'
 import { partitionFor } from '@shared/space'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
@@ -39,13 +39,16 @@ export interface TabHost {
   space(id: string): Space | undefined
   patchTab(id: string, patch: Partial<TabState>): void
   changed(): void
-  createTab(spaceId: string, url: string): string
+  /** `background` ouvre l'onglet sans lui donner le focus (⌘ + clic). */
+  createTab(spaceId: string, url: string, background?: boolean): string
   tabsOfSpace(spaceId: string): TabState[]
   shortcut(event: ShortcutEvent): void
   settings(): Settings
   visited(spaceId: string, url: string, title: string): void
   selection(payload: SelectionPayload): void
   isExempted(host: string): boolean
+  /** Ouvre une page dans la petite fenêtre jetable, sans créer d'onglet. */
+  openMini?(url: string, spaceId?: string): void
   /** Surlignages déjà enregistrés pour cette URL, repeints au chargement. */
   highlightsFor?(url: string): string[]
 }
@@ -142,13 +145,15 @@ export class TabManager {
 
   private scrolls = new Map<string, number>()
 
-  private backgroundForPages(): string {
+  /** Fond des pages natives : la petite fenêtre peint le même. */
+  backgroundForPages(): string {
     const theme = this.host.settings().theme
     const dark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
     return dark ? '#09090b' : '#ffffff'
   }
 
-  private sessionFor(space: Space) {
+  /** Session d'un espace (cookies, filtre de traqueurs, identité). */
+  sessionFor(space: Space) {
     // Une partition absente arrive en `undefined` jusqu'à Chromium, qui refuse
     // alors l'argument et tue le processus principal : on la calcule ici.
     const partition = partitionFor(space)
@@ -233,9 +238,15 @@ export class TabManager {
       if (!/^https?:/i.test(details.url)) return { action: 'deny' }
       const tab = this.host.tab(tabId)
       if (!tab) return { action: 'deny' }
+      // Geste de lien (⌘⌥ + clic, ⇧ + clic) : la petite fenêtre jetable, comme
+      // Little Arc — aucun onglet créé, la carte du travail reste en place.
+      if (opensMiniWindow(details.disposition, details.features)) {
+        this.host.openMini?.(details.url, tab.spaceId)
+        return { action: 'deny' }
+      }
       // Popups (window.open, OAuth « Se connecter avec Google »…) : vraie
       // fenêtre avec opener intact, héritant la session de l'espace.
-      if (shouldOpenAsPopup(details.disposition)) {
+      if (shouldOpenAsPopup(details.disposition, details.features)) {
         const parent = this.getWindow()
         return {
           action: 'allow',
@@ -259,7 +270,8 @@ export class TabManager {
           }
         }
       }
-      this.host.createTab(tab.spaceId, details.url)
+      // ⌘ + clic garde sa promesse : l'onglet s'ouvre sans voler le focus.
+      this.host.createTab(tab.spaceId, details.url, details.disposition === 'background-tab')
       return { action: 'deny' }
     })
 
@@ -365,10 +377,16 @@ export class TabManager {
       }
       if (params.linkURL && /^https?:/i.test(params.linkURL)) {
         if (items.length > 0) items.push({ type: 'separator' })
-        items.push({
-          label: 'Ouvrir le lien dans un nouvel onglet',
-          click: () => this.host.createTab(tab.spaceId, params.linkURL)
-        })
+        items.push(
+          {
+            label: 'Ouvrir le lien dans un nouvel onglet',
+            click: () => this.host.createTab(tab.spaceId, params.linkURL)
+          },
+          {
+            label: 'Ouvrir le lien dans le mini navigateur',
+            click: () => this.host.openMini?.(params.linkURL, tab.spaceId)
+          }
+        )
       }
       if (items.length === 0) return
       Menu.buildFromTemplate(items).popup({ window: this.getWindow() ?? undefined })
@@ -909,6 +927,8 @@ export class TabManager {
       action = 'bookmarks'
     } else if (key === 'h') {
       action = 'home'
+    } else if (key === 'n') {
+      action = 'mini'
     }
 
     if (!action) return

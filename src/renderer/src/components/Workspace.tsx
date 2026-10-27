@@ -114,8 +114,10 @@ export default function Workspace() {
   const sendLayout = useCallback(() => {
     const state = useBrowser.getState()
     if (!state.view) return
-    // En mode Work, l’atelier couvre la scène : aucune page native visible.
-    if (state.workMode === 'work' || state.overlay || resizingRef.current) {
+    // En mode Work, l’atelier couvre la scène : aucune page native visible —
+    // sauf lorsqu’une vue scindée y installe une source à côté de la carte.
+    const workSplit = Boolean(state.workMode === 'work' && state.view.split && state.view.secondTabId)
+    if ((state.workMode === 'work' && !workSplit) || state.overlay || resizingRef.current) {
       window.vela.views.layout({ panes: [], overlay: true })
       return
     }
@@ -175,17 +177,6 @@ export default function Workspace() {
 
   if (!active) return <main className="workspace" />
 
-  if (workMode === 'work') {
-    // Mode Travail : le tunnel de recherche occupe la scène ; l’agent reste
-    // accessible en panneau (⌘J) sans masquer la carte.
-    return (
-      <main className="workspace work" data-collapsed={view.settings.sidebarCollapsed}>
-        <TunnelView />
-        <StatusBar />
-      </main>
-    )
-  }
-
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>): void => {
     event.preventDefault()
     const container = panesRef.current
@@ -208,6 +199,46 @@ export default function Workspace() {
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+  }
+
+  if (workMode === 'work') {
+    // Mode Travail : le tunnel de recherche occupe la scène ; l’agent reste
+    // accessible en panneau (⌘J) sans masquer la carte. Une source s’ouvre en
+    // vue scindée à droite, la carte restant visible à gauche.
+    return (
+      <main
+        className="workspace work"
+        data-resizing={resizing}
+        data-split={split}
+        data-collapsed={view.settings.sidebarCollapsed}
+      >
+        <div
+          className={`work-split${split ? ' is-split' : ''}`}
+          ref={panesRef}
+          style={{ '--ratio': `${ratio * 100}%` } as CSSProperties}
+        >
+          <div className="work-stage">
+            <TunnelView />
+          </div>
+          {split && second && (
+            <>
+              <div
+                className="split-handle"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Largeur de la carte"
+                onPointerDown={startDrag}
+                onDoubleClick={() => commitSplitRatio(0.5)}
+              >
+                <span />
+              </div>
+              <Pane tab={second} primary={false} secondary resizing={resizing} />
+            </>
+          )}
+        </div>
+        <StatusBar />
+      </main>
+    )
   }
 
   return (

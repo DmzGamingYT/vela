@@ -11,7 +11,7 @@ import type {
   UpdateGroupInput,
   VelaApi
 } from '@shared/api'
-import type { AgentEvent, AppView, LayoutRequest, SelectionPayload, ShortcutEvent } from '@shared/types'
+import type { AgentEvent, AppView, LayoutRequest, MiniState, SelectionPayload, ShortcutEvent } from '@shared/types'
 import type { TunnelEvent } from '@shared/api'
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
@@ -70,6 +70,26 @@ const api: VelaApi = {
   },
   views: {
     layout: (request: LayoutRequest) => ipcRenderer.send('views:layout', request)
+  },
+  mini: {
+    open: (input) => ipcRenderer.invoke('mini:open', input ?? {}),
+    close: () => ipcRenderer.invoke('mini:close'),
+    navigate: (input: string) => ipcRenderer.invoke('mini:navigate', input),
+    back: () => ipcRenderer.invoke('mini:back'),
+    forward: () => ipcRenderer.invoke('mini:forward'),
+    reload: () => ipcRenderer.invoke('mini:reload'),
+    stop: () => ipcRenderer.invoke('mini:stop'),
+    openInTab: () => ipcRenderer.invoke('mini:open-in-tab'),
+    state: () => ipcRenderer.invoke('mini:state'),
+    // La barre n'écoute qu'à partir de son montage : elle se présente pour
+    // recevoir l'état courant, et les demandes de focus qui ont attendu.
+    ready: () => ipcRenderer.send('mini:ready'),
+    onState: (callback: (state: MiniState) => void) => subscribe('mini:state', callback),
+    onFocusAddress: (callback: () => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on('mini:focus-address', listener)
+      return () => ipcRenderer.removeListener('mini:focus-address', listener)
+    }
   },
   history: {
     list: () => ipcRenderer.invoke('history:list'),

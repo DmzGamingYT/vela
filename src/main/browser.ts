@@ -70,6 +70,7 @@ import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
+import { MiniWindow } from './mini'
 import { Store } from './store'
 import { TabManager, type TabHost } from './tabs'
 
@@ -126,6 +127,7 @@ export class Browser {
   readonly comic: ComicBridge
   readonly tunnel: TunnelService
   readonly thumbs: Thumbnails
+  readonly mini: MiniWindow
 
   private win: BrowserWindow | null = null
   private noteCache: NoteMeta[]
@@ -152,7 +154,7 @@ export class Browser {
       this.store.schedule()
     },
     changed: () => this.broadcast(),
-    createTab: (spaceId, url) => this.createTab({ spaceId, url, activate: true }).id,
+    createTab: (spaceId, url, background) => this.createTab({ spaceId, url, activate: background !== true }).id,
     tabsOfSpace: (spaceId) => this.store.get().tabs.filter((tab) => tab.spaceId === spaceId),
     shortcut: (event) => this.send('shortcut', event),
     settings: () => this.store.get().settings,
@@ -161,6 +163,7 @@ export class Browser {
     },
     selection: (payload) => this.send('selection', payload),
     isExempted: (host) => this.store.isExempted(host),
+    openMini: (url, spaceId) => this.openMini({ url, ...(spaceId ? { spaceId } : {}) }),
     highlightsFor: (url) => this.highlights.list(url).map((entry) => entry.text)
   }
 
@@ -175,6 +178,23 @@ export class Browser {
     this.noteAudio.prune(this.notes.audioNames())
     this.noteCache = this.notes.list()
     this.tabs = new TabManager(() => this.win, this.host)
+    this.mini = new MiniWindow({
+      parent: () => this.win,
+      space: (id) => this.store.get().spaces.find((space) => space.id === id),
+      sessionFor: (space) => this.tabs.sessionFor(space),
+      pageBackground: () => this.tabs.backgroundForPages(),
+      visited: (spaceId, url, title) => this.host.visited(spaceId, url, title),
+      openTab: (spaceId, url, background) => {
+        this.createTab({ spaceId, url, activate: background !== true })
+      },
+      focusMain: () => {
+        const win = this.win
+        if (!win || win.isDestroyed()) return
+        win.show()
+        win.focus()
+      },
+      settings: () => this.store.get().settings
+    })
     this.tunnel = new TunnelService({
       saveMap: (map) => this.store.saveTunnelMap(map),
       getMap: (id) => this.store.getTunnelMap(id)
@@ -465,6 +485,25 @@ export class Browser {
       if (!tab || isHomeUrl(tab.url) || this.overlay) this.win?.webContents.focus()
       else this.tabs.focus(tab.id)
     }, 40)
+  }
+
+  /**
+   * Ouvre la petite fenêtre jetable. Sans adresse, elle prend la page courante ;
+   * l'espace qui prête sa session est l'espace actif, sauf précision contraire.
+   */
+  openMini(input: { url?: string; spaceId?: string } = {}): boolean {
+    const state = this.store.get()
+    const spaceId =
+      input.spaceId && state.spaces.some((space) => space.id === input.spaceId)
+        ? input.spaceId
+        : state.activeSpaceId
+    let url = (input.url ?? '').trim()
+    if (!url) {
+      const activeId = state.activeTabBySpace[spaceId] ?? ''
+      const tab = state.tabs.find((item) => item.id === activeId)
+      if (tab && !isHomeUrl(tab.url)) url = tab.url
+    }
+    return this.mini.open({ url, spaceId })
   }
 
   createTab(input: CreateTabInput = {}): TabState {
@@ -1065,6 +1104,26 @@ export class Browser {
     handle('favicons:purge', () => purgeFavicons())
     handle('app:platform', () => process.platform)
 
+    // Petite fenêtre (façon Little Arc) : sa barre compacte est un renderer à
+    // nous, elle ne voit que ces quelques échanges.
+    handle('mini:open', (payload) => {
+      const input = (payload ?? {}) as { url?: unknown; spaceId?: unknown }
+      return this.openMini({
+        ...(typeof input.url === 'string' ? { url: input.url } : {}),
+        ...(typeof input.spaceId === 'string' ? { spaceId: input.spaceId } : {})
+      })
+    })
+    handle('mini:close', () => this.mini.close())
+    handle('mini:navigate', (payload) => this.mini.navigate(asString(payload)))
+    handle('mini:back', () => this.mini.back())
+    handle('mini:forward', () => this.mini.forward())
+    handle('mini:reload', () => this.mini.reload())
+    handle('mini:stop', () => this.mini.stop())
+    handle('mini:open-in-tab', () => this.mini.openInTab())
+    handle('mini:state', () => this.mini.current())
+    // La barre se présente par `send` : `handle` ne reçoit pas ces messages, et
+    // sans cette annonce l'état ne lui serait jamais poussé.
+
     handle('avatar:read', (payload) => {
       const name = typeof payload === 'string' ? payload : ''
       return readAvatarDataUrl(this.store.dir, name)
@@ -1660,6 +1719,7 @@ export class Browser {
       openReleases()
     })
 
+    ipcMain.on('mini:ready', () => this.mini.ready())
     ipcMain.on('views:layout', (event, payload: LayoutRequest) => {
       if (!this.win || event.sender !== this.win.webContents) return
       const panes = Array.isArray(payload?.panes) ? payload.panes.filter(isPane).slice(0, 4) : []

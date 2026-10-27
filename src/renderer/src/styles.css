@@ -2071,6 +2071,25 @@ kbd {
   display: flex;
 }
 
+/* Vue scindée de l’atelier : la carte mentale garde la part choisie et la
+   source ouverte occupe le reste, sans quitter le mode Travail. */
+.work-split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.work-split .work-stage {
+  min-width: 0;
+}
+
+.work-split.is-split .work-stage {
+  flex: 0 0 var(--ratio);
+  min-width: 0;
+  overflow: hidden;
+}
+
 .agent[data-embedded="true"] {
   width: 100%;
   height: auto;
@@ -8884,25 +8903,74 @@ html[data-mode="dark"] {
   padding-bottom: 14px;
 }
 
-.work-card {
-  width: 100%;
-  text-align: left;
+/* La ligne porte le fond et l'état actif : la carte ouvre, la croix supprime. */
+.work-card-row {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 7px 9px;
+  align-items: center;
+  gap: 2px;
   border-radius: 9px;
   border: 1px solid transparent;
   transition: background 0.14s ease, border-color 0.14s ease;
 }
 
-.work-card:hover {
+.work-card-row:hover {
   background: var(--surface-2);
 }
 
-.work-card[data-active="true"] {
+.work-card-row[data-active="true"] {
   background: color-mix(in srgb, var(--clay) 9%, transparent);
   border-color: color-mix(in srgb, var(--clay) 22%, transparent);
+}
+
+.work-card {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 4px 7px 9px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+}
+
+.work-card-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  opacity: 0.75;
+  transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
+}
+
+.work-card-row:hover .work-card-remove,
+.work-card-remove:focus-visible {
+  opacity: 1;
+}
+
+.work-card-remove:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* Deuxième appui : le geste est confirmé, la croix devient une coche. */
+.work-card-remove[data-confirm="true"] {
+  opacity: 1;
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-card-row,
+  .work-card-remove {
+    transition: none;
+  }
 }
 
 .work-card-title {
@@ -12851,5 +12919,172 @@ html[data-mode="dark"] {
 @media (prefers-reduced-motion: reduce) {
   .tile-menu {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Petite fenêtre, façon Little Arc : une barre compacte, une page en dessous
+   --------------------------------------------------------------- */
+
+.mini-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.mini-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--glass-strong);
+  box-shadow: var(--glass-highlight);
+  /* La fenêtre se déplace en attrapant sa barre, comme n'importe quel titre. */
+  -webkit-app-region: drag;
+}
+
+/* macOS : les feux de circulation gardent leur place à gauche. */
+.mini-root[data-platform="darwin"] .mini-bar {
+  padding-left: 78px;
+}
+
+.mini-bar button,
+.mini-bar input,
+.mini-address {
+  -webkit-app-region: no-drag;
+}
+
+.mini-space {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 1 auto;
+  max-width: 88px;
+  min-width: 0;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mini-space i {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mini-dot, var(--accent));
+}
+
+.mini-nav {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.mini-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.mini-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.mini-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.mini-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mini-close:hover:not(:disabled) {
+  background: var(--fill-2);
+}
+
+.mini-address {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 9px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.mini-address:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.mini-address input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font-size: 12.5px;
+  user-select: text;
+}
+
+.mini-address input::placeholder {
+  color: var(--faint);
+}
+
+.mini-warn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.mini-empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  flex: 1 1 auto;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.mini-empty p {
+  max-width: 330px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.mini-hint {
+  color: var(--faint);
+  font-size: 11.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-btn,
+  .mini-address {
+    transition: none;
   }
 }

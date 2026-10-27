@@ -67,27 +67,30 @@ lipo -archs release/mac/mac-universal/Vela.app/Contents/MacOS/Vela
 
 macOS est signé (Developer ID) et notarisé dès que les secrets de signature sont configurés — voir
 [Signature macOS](#signature-macos). À défaut, le build reste signé ad hoc : clic droit → Ouvrir au
-premier lancement, et la mise à jour automatique macOS reste inopérante. Windows affiche SmartScreen.
+premier lancement, et l’installation macOS n’est pas silencieuse (Vela prépare le `.dmg`, un geste
+suffit ensuite). Windows affiche SmartScreen.
 
 ## Mises à jour automatiques
 
 Vela se met à jour toute seule en arrière-plan via `electron-updater` et les releases GitHub
-(`DmzGamingYT/vela`). Aucune action à faire :
+(`DmzGamingYT/vela`). Rien à relancer à la main :
 
 - Contrôle silencieux ~12 s après le démarrage, puis toutes les 3 h, au retour de veille et quand
   la fenêtre reprend le focus (jamais plus d’une vérification toutes les 30 min).
-- Si une version existe : téléchargement automatique en arrière-plan (bandeau de progression dans
-  `Réglages → À propos`).
-- Installation automatique à la fermeture de Vela ; `Redémarrer maintenant` reste disponible pour
-  l’appliquer tout de suite. `Vérifier` et `Releases` restent dans `Réglages → À propos` pour un
-  contrôle manuel.
-- macOS : `.dmg`/`.zip` universel, arm64 et x64. Windows : NSIS. Linux : AppImage ; `.deb` — réinstallez le paquet.
+- Si une version existe : téléchargement automatique en arrière-plan, sans fenêtre ni son. Seule la
+  barre d’état montre la progression, et elle s’efface d’un clic.
+- **Windows et Linux** : installation silencieuse à la fermeture de Vela. `Redémarrer maintenant`
+  (barre d’état ou `Réglages → À propos`) l’applique tout de suite.
+- **macOS sans certificat Apple** : Squirrel refuse de remplacer un bundle non signé, donc Vela
+  télécharge le `.dmg` de la release en arrière-plan et la barre d’état propose `Installer`. Ce
+  bouton ouvre l’image : glissez Vela dans Applications, relancez. Un `.dmg` universel existe, plus
+  arm64 et x64 (Windows : NSIS ; Linux : AppImage, `.deb` à réinstaller à la main).
 
 > macOS exige une signature Developer ID **et** une notarisation pour que ShipIt remplace le bundle
-> tout seul. Avec les secrets ci-dessous, l’installation est silencieuse : Vela télécharge le `.zip`
-> de sa plateforme et le bundle est remplacé à la fermeture, sans repasser par le `.dmg`. Sans
-> certificat Apple, le téléchargement reste automatique mais l’installation est refusée par
-> Gatekeeper : l’app affiche l’erreur et le lien `Releases` (installez le `.dmg`).
+> tout seul. Avec les secrets ci-dessous, l’installation redevient silencieuse : Vela télécharge le
+> `.zip` de sa plateforme et le bundle est remplacé à la fermeture, sans repasser par le `.dmg`.
+> Sans certificat Apple, le téléchargement et la préparation sont automatiques, seul le dernier
+> geste reste à faire.
 
 ## Signature macOS et Windows (préparation)
 
@@ -166,6 +169,24 @@ l’espace actif, et la barre latérale les liste : on rouvre, on renomme, on du
 Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Navigation.
 Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renomme, on l’archive.
 
+### Mini navigateur
+
+`⌘⇧N`, la palette (« Ouvrir dans le mini navigateur »), le clic droit sur un lien, ou le geste
+d’Arc — **`⌘⌥` + clic** — ouvrent la page dans une petite fenêtre séparée, **au milieu de l’écran**,
+et rien n’entre dans les onglets. `⇧` + clic fait la même chose : Vela n’a pas encore de volet
+d’aperçu dans la page, et c’est toujours mieux que la fenêtre popup que ce geste ouvrait avant.
+
+Les autres gestes gardent leur sens habituel : `⌘` + clic ouvre l’onglet **en arrière-plan** (la page
+que vous lisiez garde le focus), `⌥` + clic télécharge le lien comme dans Chromium, et une popup de
+site (fenêtre de connexion OAuth) reste une vraie fenêtre.
+
+La petite fenêtre emprunte la session de l’espace — mêmes cookies, même filtre de traqueurs, même
+identité — et sa barre compacte montre l’espace qui la prête, l’adresse (modifiable), l’état de
+chargement et les gestes utiles. Le bouton d’ouverture installe la page dans un vrai onglet et
+referme la petite fenêtre ; `Échap` et `⌘W` la referment aussi. À l’intérieur, les mêmes gestes de
+lien s’appliquent : elle se recharge elle-même plutôt que d’en ouvrir une seconde. La visite, elle,
+reste dans l’historique de l’espace.
+
 ## Accueil
 
 La page d’accueil est un seul champ : une adresse s’ouvre, une question part vers le moteur choisi
@@ -200,6 +221,8 @@ dans le code sans y être déclarée.
 | **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, ajout d’une adresse glissée depuis la page. Réorganisation au glisser ou par `Alt` + flèches (focus conservé, annonce lecteur d’écran), menu contextuel (clic droit, touche Menu ou `⇧F10`) avec renommage et adresse modifiables sur place, copie vers un autre espace ou déplacement, annulable. 200 sites au plus, la barre défile au-delà de quelques rangées. Enregistrée avec l’espace, restaurée au redémarrage. |
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups, pour la compatibilité des sites. Google peut malgré tout refuser une connexion : voir [Limites connues](#limites-connues). |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
+| **Mini navigateur** | Une petite fenêtre jetable, au milieu de l’écran, pour regarder un lien ou une page sans créer d’onglet : `⌘⌥` + clic ou `⇧` + clic sur un lien, `⌘⇧N`, la palette ou le clic droit. Session de l’espace, barre compacte avec son adresse, bouton pour installer la page dans un vrai onglet. `Échap` ou `⌘W` referme. |
+| **Gestes de lien** | `⌘` + clic ouvre en arrière-plan (le focus reste où il est), `⇧` + clic et `⌘⌥` + clic ouvrent dans la petite fenêtre, `⌥` + clic télécharge, et les popups de site gardent leur vraie fenêtre. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Thèmes de couleur** | Dix teintes (indigo, rouge, orange, ambre, vert, turquoise, bleu, violet, rose, graphite) et une couleur personnalisée : tout le châssis suit, jamais le contenu des sites. Mode clair/sombre, verre réglable, thème par espace, contraste élevé. |
 | **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
@@ -237,6 +260,9 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘Y` | Historique |
 | `⌘P` | Imprimer |
 | `⌘⇧D` | Vue scindée |
+| `⌘⇧N` | Ouvrir la page courante dans le mini navigateur |
+| `⌘⌥` + clic | Ouvrir un lien dans le mini navigateur |
+| `⇧` + clic | Ouvrir un lien dans le mini navigateur |
 | `⌘E` | Notes |
 | `⌘J` | Agent |
 | `⌘⇧A` | Basculer Navigation / Travail |
@@ -255,6 +281,7 @@ src/
 │   ├── index.ts          fenêtre, cycle de vie, sécurité de la coque
 │   ├── browser.ts        état, espaces, IPC, brief, notes
 │   ├── tabs.ts           un WebContentsView natif par onglet, layout et raccourcis
+│   ├── mini.ts           petite fenêtre jetable (façon Little Arc) et sa page
 │   ├── privacy.ts        filtre local par partition, permissions, user-agent
 │   ├── blocklist.ts      domaines publicitaires et de mesure
 │   ├── agent.ts          démo locale, OpenAI, Anthropic et Google en SSE
@@ -343,6 +370,8 @@ Le fond de la carte est un canvas animé (constellation qui suit le pointeur), d
 animations » ; les cartes sont en verre dépoli avec un liseré d’accent au survol et un badge de catégorie.
 La carte, la mise en page, les filtres, l’édition, le rapport et les exports sont dans `src/shared/tunnel.ts`,
 testés sans Electron.
+Depuis le panneau de détail d’une source, **Ouvrir en vue scindée** garde la carte à gauche et ouvre la page
+à droite, avec le séparateur redimensionnable : on ne quitte pas le mode Travail.
 
 ### Traduction de BD
 
@@ -393,6 +422,21 @@ Le site vitrine est dans [site/](site/) : HTML, CSS et JavaScript statiques, ser
 
 Aperçu local : `python3 -m http.server 4173 --directory site/public`.
 
+### Outillage vidéo
+
+[site/trailer/](site/trailer/) produit une capture **réelle** de l’application (pages comprises,
+souris et son) sans toucher à son code : elle est lancée avec ses propres données de démonstration
+et pilotée par le protocole DevTools, puis montée par ffmpeg. Le site public n’affiche aucune vidéo
+pour l’instant ; l’outillage reste là pour en produire une plus tard.
+
+```bash
+node site/trailer/record.cjs   # tourne la capture (site/trailer/take/screen.mov)
+node site/trailer/sound.cjs    # synthétise la bande-son avec ffmpeg, aucun fichier tiers
+node site/trailer/edit.cjs     # monte MP4 + WebM + vignette + sous-titres
+```
+
+Les rushes (`site/trailer/take/`) ne sont pas versionnés. ffmpeg est requis (`brew install ffmpeg`).
+
 ## Limites connues
 
 ### Connexion Google
@@ -436,8 +480,9 @@ développeur non identifié :
 
 **Pourquoi l’installation silencieuse n’est pas possible :** macOS ne remplace un bundle que si
 l’ancien et le nouveau portent la **même identité de signature Developer ID** et si le nouveau est
-notarié. Sans certificat, Gatekeeper refuse le remplacement ; Vela télécharge bien la mise à jour,
-mais l’installation échoue et renvoie vers le `.dmg`. Il n’existe pas de contournement honnête :
+notarié. Sans certificat, Gatekeeper refuse ce remplacement et Squirrel l’annule ; Vela ne le tente
+donc pas : il télécharge le `.dmg` de la nouvelle version en arrière-plan et la barre d’état
+propose `Installer`, qui ouvre l’image (glisser dans Applications, relancer). Il n’existe pas de contournement honnête :
 seule une vraie signature Apple débloque ce point (voir
 [Signature macOS et Windows](#signature-macos-et-windows-préparation)).
 

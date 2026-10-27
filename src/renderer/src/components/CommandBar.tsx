@@ -147,6 +147,14 @@ export default function CommandBar() {
         run: run(() => navigate(view.activeTabId, query.trim()))
       })
       all.push({
+        id: 'open-mini',
+        group: 'Aller',
+        label: `Ouvrir « ${query.trim()} » dans le mini navigateur`,
+        hint: 'Petite fenêtre jetable',
+        icon: 'external',
+        run: run(() => void window.vela.mini.open({ url: query.trim() }))
+      })
+      all.push({
         id: 'agent-query',
         group: 'Agent',
         label: `Demander à l’agent : ${query.trim()}`,
@@ -164,6 +172,14 @@ export default function CommandBar() {
         hint: shortcut('T'),
         icon: 'plus',
         run: run(() => newTab())
+      },
+      {
+        id: 'action-mini',
+        group: 'Actions',
+        label: 'Ouvrir dans le mini navigateur',
+        hint: shortcut('⇧N'),
+        icon: 'external',
+        run: run(() => void window.vela.mini.open({}))
       },
       {
         id: 'action-new-space',

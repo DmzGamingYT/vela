@@ -1,5 +1,10 @@
+import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import { macInstallerNames, releaseAssetUrl } from '@shared/update'
 
 export type UpdateState =
   | 'idle'
@@ -27,6 +32,8 @@ const FIRST_CHECK_DELAY = 12_000
 const CHECK_INTERVAL = 3 * 60 * 60 * 1000
 /** Ne pas re-vérifier à chaque changement de fenêtre. */
 const MIN_GAP = 30 * 60 * 1000
+/** Un installateur de 150 Mo ne doit pas rester bloqué indéfiniment. */
+const DOWNLOAD_TIMEOUT = 20 * 60 * 1000
 
 let snapshot: UpdateInfo = {
   state: 'idle',
@@ -41,6 +48,9 @@ let emit: ((info: UpdateInfo) => void) | null = null
 let started = false
 let inFlight = false
 let lastCheck = 0
+/** Chemin du .dmg téléchargé (macOS), prêt pour le bouton Installer. */
+let installerPath: string | null = null
+let installing = false
 
 function set(patch: Partial<UpdateInfo>): void {
   snapshot = { ...snapshot, ...patch, currentVersion: app.getVersion() }
@@ -63,9 +73,107 @@ export function updateStatus(): UpdateInfo {
   return { ...snapshot }
 }
 
+/** Dossier des installateurs téléchargés, dans les données de l'application. */
+function installerDir(): string {
+  return join(app.getPath('userData'), 'updates')
+}
+
 /**
- * Vérifie les mises à jour. Quand une version est trouvée, electron-updater la
- * télécharge tout seul (autoDownload) : aucun clic nécessaire.
+ * Télécharge l'installateur macOS publié pour cette version.
+ *
+ * macOS refuse l'installation silencieuse d'un bundle non signé (Squirrel
+ * vérifie la signature et échoue), donc on prépare le `.dmg` de la release :
+ * le bouton Installer l'ouvre, il ne reste qu'à glisser Vela dans Applications.
+ * Le fichier vient du dépôt des releases, comme la vérification elle-même.
+ */
+async function prepareMacInstaller(version: string | null): Promise<void> {
+  if (!version || installing) return
+  if (installerPath && existsSync(installerPath)) {
+    set({
+      state: 'downloaded',
+      version,
+      progress: 100,
+      message: `${installerPath.split('/').pop() ?? 'Installateur'} est prêt.`
+    })
+    return
+  }
+  const names = macInstallerNames(version, process.arch)
+  if (names.length === 0) return
+  const dir = installerDir()
+  try {
+    mkdirSync(dir, { recursive: true })
+    // Un seul installateur gardé : celui d'une version précédente ne sert plus.
+    for (const entry of readdirSync(dir)) rmSync(join(dir, entry), { force: true, recursive: true })
+  } catch {
+    /* dossier inaccessible : le téléchargement échouera proprement */
+  }
+
+  installing = true
+  try {
+    for (const name of names) {
+      const target = join(dir, name)
+      try {
+        if (!(await downloadInstaller(releaseAssetUrl(version, name), target, version))) continue
+        installerPath = target
+        set({
+          state: 'downloaded',
+          version,
+          progress: 100,
+          message: `${name} est prêt.`
+        })
+        return
+      } catch {
+        rmSync(target, { force: true })
+      }
+    }
+    set({
+      state: 'error',
+      message: 'Installateur introuvable pour cette version — utilisez le bouton Releases.'
+    })
+  } finally {
+    installing = false
+  }
+}
+
+/** true si le fichier est bien téléchargé en entier. */
+async function downloadInstaller(url: string, target: string, version: string): Promise<boolean> {
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), DOWNLOAD_TIMEOUT)
+  try {
+    const response = await fetch(url, { redirect: 'follow', signal: abort.signal })
+    // Une version sans installateur pour cette architecture répond 404 : on
+    // essaie le nom suivant.
+    if (!response.ok || !response.body) return false
+    const total = Number(response.headers.get('content-length') ?? 0)
+    const source = Readable.fromWeb(response.body as never)
+    let received = 0
+    let lastPercent = -1
+    source.on('data', (chunk: Buffer) => {
+      received += chunk.length
+      if (total <= 0) return
+      const percent = Math.min(99, Math.round((received / total) * 100))
+      if (percent === lastPercent) return
+      lastPercent = percent
+      set({
+        state: 'downloading',
+        version,
+        progress: percent,
+        message: 'Téléchargement de l’installateur en arrière-plan…'
+      })
+    })
+    await pipeline(source, createWriteStream(target))
+    return total === 0 || received >= total
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Vérifie les mises à jour.
+ *
+ * Windows et Linux : `electron-updater` télécharge et installe à la fermeture,
+ * sans rien demander. macOS : il détecte la version, puis nous téléchargeons le
+ * `.dmg` en arrière-plan — l'installation reste un glisser, faute de signature.
  */
 export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo> {
   if (!app.isPackaged) {
@@ -107,6 +215,10 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
 }
 
 export async function downloadUpdate(): Promise<UpdateInfo> {
+  if (process.platform === 'darwin') {
+    await prepareMacInstaller(snapshot.version)
+    return updateStatus()
+  }
   try {
     await autoUpdater.downloadUpdate()
   } catch (error) {
@@ -118,9 +230,28 @@ export async function downloadUpdate(): Promise<UpdateInfo> {
   return updateStatus()
 }
 
+/**
+ * Applique la mise à jour. macOS : ouvrir le `.dmg` téléchargé (Finder monte
+ * l'image, un glisser installe). Ailleurs : redémarrage immédiat, sinon
+ * installation à la fermeture.
+ */
 export function installUpdate(): void {
+  if (process.platform === 'darwin') {
+    if (installerPath && existsSync(installerPath)) {
+      void shell.openPath(installerPath).then((error) => {
+        // Image refusée ou déplacée : on retombe sur la page des releases.
+        if (error) void shell.openExternal(snapshot.releaseUrl)
+      })
+      return
+    }
+    void shell.openExternal(snapshot.releaseUrl)
+    return
+  }
   try {
-    autoUpdater.quitAndInstall(false, true)
+    // Silencieux : aucun assistant NSIS ne s’ouvre, Vela relance la nouvelle
+    // version. C’est le même geste que l’installation à la fermeture, mais
+    // tout de suite.
+    autoUpdater.quitAndInstall(true, true)
   } catch {
     void shell.openExternal(snapshot.releaseUrl)
   }
@@ -136,33 +267,35 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   started = true
   emit = (info) => send('update:event', info)
 
-  // Tout est automatique : téléchargement dès qu'une version sort, installation
-  // à la fermeture de l'app. L'utilisateur n'a rien à faire.
-  autoUpdater.autoDownload = true
+  // Windows et Linux : tout est automatique, l'installation se fait à la
+  // fermeture. macOS : `electron-updater` ne saurait installer qu'un bundle
+  // signé, donc on garde la détection et on prépare nous-mêmes le .dmg.
+  autoUpdater.autoDownload = process.platform !== 'darwin'
   autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.autoRunAppAfterInstall = true
   autoUpdater.allowDowngrade = false
   autoUpdater.allowPrerelease = false
 
   autoUpdater.on('update-available', (info) => {
+    const version = versionOf(info)
     set({
       state: 'available',
-      version: versionOf(info),
+      version,
       progress: 0,
-      message: 'Téléchargement en arrière-plan…',
-      releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${versionOf(info) ?? app.getVersion()}`
+      message:
+        process.platform === 'darwin' ? 'Préparation de l’installateur…' : 'Téléchargement en arrière-plan…',
+      releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${version ?? app.getVersion()}`
     })
+    if (process.platform === 'darwin') void prepareMacInstaller(version)
   })
   autoUpdater.on('update-downloaded', (info) => {
     set({
       state: 'downloaded',
       version: versionOf(info),
       progress: 100,
-      // macOS refuse le remplacement du bundle sans signature Developer ID :
-      // on ne promet donc pas une installation silencieuse sur cette plateforme.
       message:
         process.platform === 'darwin'
-          ? 'Téléchargée — redémarrez pour installer ; si macOS refuse, prenez le .dmg.'
+          ? 'Installateur prêt — le .dmg s’ouvre, un glisser suffit.'
           : 'S’installe automatiquement à la fermeture.'
     })
   })
@@ -174,7 +307,7 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
     })
   })
   autoUpdater.on('update-not-available', () => {
-    // Ne pas écraser un état manuel "à jour" déjà affiché ; rester cohérent sinon.
+    // Ne pas écraser un état manuel « à jour » déjà affiché ; rester cohérent sinon.
     if (snapshot.state === 'checking') set({ state: 'not-available', message: 'Vela est à jour.' })
   })
   autoUpdater.on('error', (error) => {

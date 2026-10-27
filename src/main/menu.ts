@@ -46,6 +46,7 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
       label: 'Fichier',
       submenu: [
         item('Nouvel onglet', 'new-tab', send, 'Cmd+T'),
+        item('Ouvrir dans le mini navigateur', 'mini', send, 'Cmd+Shift+N'),
         item('Rouvrir l’onglet fermé', 'reopen-tab', send, 'Cmd+Shift+T'),
         { type: 'separator' },
         item('Fermer l’onglet', 'close-tab', send, 'Cmd+W'),

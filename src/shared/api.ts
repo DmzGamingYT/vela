@@ -8,6 +8,7 @@ import type {
   BookmarkImportSource,
   HistoryEntry,
   LayoutRequest,
+  MiniState,
   Note,
   PageHighlight,
   ProviderId,
@@ -246,6 +247,29 @@ export interface VelaApi {
   }
   views: {
     layout(request: LayoutRequest): void
+  }
+  mini: {
+    /**
+     * Ouvre la petite fenêtre, ou recharge celle qui existe déjà. Sans adresse,
+     * elle prend la page courante ; l’espace actif prête sa session.
+     * `false` si aucun espace ne peut l’accueillir.
+     */
+    open(input?: { url?: string; spaceId?: string }): Promise<boolean>
+    close(): Promise<void>
+    navigate(input: string): Promise<void>
+    back(): Promise<void>
+    forward(): Promise<void>
+    reload(): Promise<void>
+    stop(): Promise<void>
+    /** Installe la page courante dans un vrai onglet, puis referme. */
+    openInTab(): Promise<boolean>
+    /** État courant, demandé au montage de la barre. */
+    state(): Promise<MiniState>
+    /** La barre annonce qu’elle est prête : la fenêtre peut alors la piloter. */
+    ready(): void
+    onState(callback: (state: MiniState) => void): () => void
+    /** Demande de focus sur la barre d’adresse (ouverture, ⌘L). */
+    onFocusAddress(callback: () => void): () => void
   }
   history: {
     list(): Promise<HistoryEntry[]>

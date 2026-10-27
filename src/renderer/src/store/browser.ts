@@ -267,10 +267,14 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     }
     window.vela.updates.onEvent((info) => {
       set({ update: info })
-      if (info.state === 'available') {
-        get().toast(`Vela ${info.version ?? ''} : téléchargement en arrière-plan.`.trim())
-      } else if (info.state === 'downloaded') {
-        get().toast('Mise à jour prête — elle s’installera quand vous quitterez Vela.')
+      // Silencieux pendant la préparation : la barre d'état suit la progression.
+      if (info.state === 'downloaded') {
+        const version = info.version ? `${info.version} ` : ''
+        get().toast(
+          window.vela.platform === 'darwin'
+            ? `Mise à jour ${version}prête — « Installer » vous attend.`
+            : `Mise à jour ${version}prête — elle s’installera quand vous quitterez Vela.`
+        )
       } else if (info.state === 'error' && info.message) {
         get().toast(info.message, 'error')
       }
@@ -910,6 +914,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         break
       case 'new-tab':
         state.newTab()
+        break
+      case 'mini':
+        // Petite fenêtre jetable : la page courante, sans nouvel onglet.
+        void window.vela.mini.open({})
         break
       case 'close-tab':
         if (active) state.closeTab(active.id)

@@ -135,7 +135,9 @@ function main(): void {
     }
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      // La petite fenêtre compte dans `getAllWindows()` : on regarde la fenêtre
+      // principale elle-même, sinon un clic sur le Dock ne la rouvrirait pas.
+      if (!win || win.isDestroyed()) createWindow()
     })
   })
 

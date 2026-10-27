@@ -149,10 +149,16 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     id: 'mises-a-jour',
     label: 'Mises à jour',
     target: 'github.com — releases de Vela',
-    hosts: ['github.com', 'objects.githubusercontent.com'],
+    hosts: [
+      'github.com',
+      'objects.githubusercontent.com',
+      'release-assets.githubusercontent.com'
+    ],
     category: 'mises-a-jour',
-    trigger: 'Douze secondes après le démarrage, puis toutes les trois heures.',
-    data: 'La version installée et la plateforme. Aucun identifiant, aucun réglage.',
+    trigger:
+      'Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.',
+    data:
+      'La version installée et la plateforme. Sur macOS, le fichier .dmg de la nouvelle version est ensuite téléchargé en entier. Aucun identifiant, aucun réglage.',
     off: null
   },
   {

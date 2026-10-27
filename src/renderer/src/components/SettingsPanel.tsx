@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LOCAL_ONLY, NETWORK_FLOWS } from '@shared/network'
 import { SEARCH_ENGINES } from '@shared/url'
+import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
 import {
   THEME_PRESETS,
@@ -1074,20 +1075,9 @@ export default function SettingsPanel() {
         )
 
       case 'about': {
-        const updateLabel =
-          update?.state === 'checking'
-            ? 'Vérification…'
-            : update?.state === 'available'
-              ? `Vela ${update.version ?? ''} — téléchargement en arrière-plan`
-              : update?.state === 'downloading'
-                ? `Téléchargement en arrière-plan ${update.progress}%`
-                : update?.state === 'downloaded'
-                  ? 'Prête à installer — redémarrez Vela'
-                  : update?.state === 'not-available'
-                    ? 'Vela est à jour'
-                    : update?.state === 'error'
-                      ? (update.message ?? 'Vérification impossible')
-                      : 'Mises à jour automatiques en arrière-plan'
+        const isMac = window.vela.platform === 'darwin'
+        const updateLabel = updateDescription(update, isMac)
+        const notice = updateNotice(update, isMac)
         return (
           <section className="setting-block">
             <div className="about-hero">
@@ -1111,10 +1101,10 @@ export default function SettingsPanel() {
                 )}
               </div>
               <div className="setting-actions">
-                {update?.state === 'downloaded' ? (
+                {update?.state === 'downloaded' && notice?.action ? (
                   <button type="button" className="action primary" onClick={() => void installUpdate()}>
-                    <Icon name="download" size={15} />
-                    Redémarrer maintenant
+                    <Icon name={notice.action === 'install' ? 'download' : 'reload'} size={15} />
+                    {updateActionLabel(notice.action)}
                   </button>
                 ) : (
                   <button

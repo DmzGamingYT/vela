@@ -280,6 +280,26 @@ export interface TabView extends TabState {
   blockedHosts: { host: string; count: number }[]
 }
 
+/**
+ * État de la petite fenêtre, poussé vers sa propre barre compacte. Elle ne
+ * figure jamais dans les onglets : c’est une fenêtre jetable.
+ */
+export interface MiniState {
+  /** Page courante ; chaîne vide quand aucune adresse n’est encore ouverte. */
+  url: string
+  title: string
+  /** Domaine seul, pour la ligne secondaire de la barre. */
+  host: string
+  loading: boolean
+  canGoBack: boolean
+  canGoForward: boolean
+  error: string | null
+  /** Espace qui prête sa session (cookies, filtre de traqueurs). */
+  spaceId: string
+  spaceName: string
+  spaceColor: string
+}
+
 export interface BriefItem {
   kind: 'resume' | 'finish' | 'focus' | 'start'
   label: string
@@ -366,6 +386,7 @@ export type ShortcutAction =
   | 'command'
   | 'address'
   | 'new-tab'
+  | 'mini'
   | 'close-tab'
   | 'reopen-tab'
   | 'split'
