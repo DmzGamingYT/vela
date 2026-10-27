@@ -4,11 +4,14 @@ name: Release
 # une version de package.json qui n'a pas encore de release, les trois
 # installateurs sont construits et publiés sur GitHub. Rien à faire à la main.
 #
-# macOS : si les secrets de signature sont présents, l'app est signée avec un
-# certificat Developer ID puis notarisée par Apple. C'est ce qui permet à
-# electron-updater (Squirrel.Mac) de remplacer le bundle tout seul, sans repasser
-# par le .dmg. Sans secrets, le build reste signé ad hoc et l'auto-update macOS
-# est désactivé de fait (Gatekeeper refuse l'installation silencieuse).
+# macOS : trois builds sont produits — universel (un .dmg et un .zip pour
+# Apple silicon et Intel), puis arm64 et x64 séparés, conservés tant que
+# l'universel n'est pas validé sur une vraie machine Intel. Si les secrets de
+# signature sont présents, l'app est signée avec un certificat Developer ID
+# puis notarisée par Apple : c'est ce qui permet à electron-updater
+# (Squirrel.Mac) de remplacer le bundle tout seul, sans repasser par le .dmg.
+# Sans secrets, le build reste signé ad hoc et l'auto-update macOS est désactivé
+# de fait (Gatekeeper refuse l'installation silencieuse).
 on:
   push:
     branches: [main]
@@ -103,20 +106,49 @@ jobs:
             echo "::warning::Pas d'identifiants de notarisation (APPLE_ID / APPLE_TEAM_ID) : l'app sera signée mais non notarisée."
           fi
           npm run dist:mac -- --publish never
-      - name: Vérifier la signature et le ticket de notarisation
-        if: steps.detect.outputs.cert == 'true'
+      - name: Vérifier les trois bundles et la mise à jour par architecture
         env:
           NOTARY: ${{ steps.detect.outputs.notary }}
+          SIGNED: ${{ steps.detect.outputs.cert }}
         run: |
           set -euo pipefail
-          APP=$(ls -d release/mac/mac-*/Vela.app | head -1)
-          echo "Bundle : $APP"
-          codesign --verify --deep --strict --verbose=2 "$APP"
-          codesign -dv --verbose=4 "$APP" 2>&1 | grep -E "Authority|TeamIdentifier|Runtime|Identifier" || true
-          if [ "$NOTARY" = "true" ]; then
-            xcrun stapler validate "$APP"
-            spctl --assess --type execute --verbose=4 "$APP"
+          shopt -s nullglob
+          apps=(release/mac/mac*/Vela.app)
+          echo "Bundles trouvés : ${#apps[@]}"
+          if [ "${#apps[@]}" -ne 3 ]; then
+            echo "::error::Trois bundles attendus (mac-universal, mac-arm64, mac) ; trouvé ${#apps[@]}."
+            exit 1
           fi
+          for APP in "${apps[@]}"; do
+            echo "— $APP"
+            echo "  nom : $(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$APP/Contents/Info.plist")"
+            echo "  tranches : $(lipo -archs "$APP/Contents/MacOS/Vela")"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            if [ "$SIGNED" = "true" ]; then
+              codesign -dv --verbose=4 "$APP" 2>&1 | grep -E "Authority|TeamIdentifier|Runtime|Identifier" || true
+            fi
+          done
+
+          UNIVERSAL="release/mac/mac-universal/Vela.app/Contents/MacOS/Vela"
+          for ARCH in arm64 x86_64; do
+            lipo -archs "$UNIVERSAL" | tr ' ' '\n' | grep -qx "$ARCH" || {
+              echo "::error::Le binaire universel n’a pas de tranche $ARCH."
+              exit 1
+            }
+          done
+
+          if [ "$NOTARY" = "true" ]; then
+            for APP in "${apps[@]}"; do
+              xcrun stapler validate "$APP"
+              spctl --assess --type execute --verbose=4 "$APP"
+            done
+          else
+            echo "::warning::Pas de notarisation : Gatekeeper refusera l’installation silencieuse. Le .dmg reste la voie documentée."
+          fi
+
+          # Vérifie que le manifeste publié laisse electron-updater choisir le
+          # bon .zip sur Apple silicon et sur Intel.
+          node scripts/verify-mac-update.cjs release/mac/latest-mac.yml
       - uses: actions/upload-artifact@v4
         with:
           name: mac
