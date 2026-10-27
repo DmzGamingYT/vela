@@ -445,6 +445,9 @@
             <p>
               Un extrait glissé depuis la page arrive avec son adresse et sa date, le surlignage
               reste rattaché à la note de la page, et un croquis s’insère directement en Markdown.
+              Les notes se lient entre elles avec <code>[[Titre]]</code>, un panneau montre les
+              notes liées et les liens cassés, et renommer une note met à jour celles qui la citent.
+              Une note vocale s’enregistre d’un bouton et se relit dans la note, sur l’appareil.
               Reformuler, résumer, traduire, corriger ou embellir : par votre modèle, ou par la démo
               locale — toujours étiquetée comme telle.
             </p>
@@ -755,6 +758,12 @@
             Builds non signés par un certificat commercial. Comptez un clic droit → Ouvrir sur macOS,
             et SmartScreen sur Windows.
           </p>
+          <p class="fine">
+            À partir de la prochaine version, la chaîne de build joint un <strong>téléchargement
+            universel</strong> macOS — un seul <code>.dmg</code> et un seul <code>.zip</code> pour
+            Apple silicon <em>et</em> Intel — à côté des deux builds par architecture, plus légers.
+            Le tableau et les empreintes ci-dessous restent ceux de la 0.3.7.
+          </p>
         </div>
 
         <div class="table-wrap">
@@ -896,6 +905,10 @@ open /Applications/Vela.app</code></pre>
                 au prix d’un binaire plus lourd. Ce n’est ni une webview système (WKWebView,
                 WebView2) ni un fork maison : le rendu vient du Chromium embarqué.
               </p>
+              <p>
+                Le nom affiché est <strong>Vela</strong> partout : barre de menus macOS, Dock, fenêtre
+                « À propos » — en développement comme dans la version installée.
+              </p>
             </div>
           </details>
 
@@ -966,6 +979,7 @@ open /Applications/Vela.app</code></pre>
           <ul>
             <li><span>Extensions Chrome et synchronisation</span><em>non prises en charge</em></li>
             <li><span>Signature Developer ID, notarisation et certificat Windows</span><em>bloquée : certificats à obtenir</em></li>
+            <li><span>Téléchargement macOS universel, Apple silicon et Intel</span><em>prêt : prochaine version</em></li>
             <li><span>Filtrage cosmétique des publicités</span><em>à l’étude</em></li>
             <li><span>Plusieurs fenêtres</span><em>à l’étude</em></li>
           </ul>

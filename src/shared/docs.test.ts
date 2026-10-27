@@ -41,6 +41,18 @@ describe('limites documentées dans l’aide et sur le site', () => {
     }
   })
 
+  it('décrit le build macOS universel sans le promettre pour la 0.3.7', () => {
+    for (const [name, text] of texts) {
+      expect(text, name).toMatch(/universel/)
+      expect(text, name).toMatch(/Apple silicon/)
+      expect(text, name).toMatch(/Intel/)
+    }
+    // L’aide dit que l’universel attend une validation sur machine Intel…
+    expect(readme).toMatch(/le temps que\s*l’universel soit validé/i)
+    // …et le site ne l’annonce que pour la prochaine version.
+    expect(site).toMatch(/prochaine version/)
+  })
+
   it('explique SmartScreen sous Windows', () => {
     for (const [name, text] of texts) {
       expect(text, name).toMatch(/SmartScreen/)
