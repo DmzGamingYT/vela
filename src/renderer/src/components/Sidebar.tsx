@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, DragEvent, KeyboardEvent } from 'react'
 import type { Bookmark, TabGroup, TabView } from '@shared/types'
-import { hostOf } from '@shared/url'
+import { displayTitle, hostOf, titleBadge } from '@shared/url'
+import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
+import { VelaMark } from './BrandMark'
 import { Icon } from './Icon'
 import TabRow from './TabRow'
 import TileMenu, { type TileMenuItem } from './TileMenu'
@@ -27,6 +29,7 @@ const FAVORITE_LIMIT = 12
 
 export default function Sidebar() {
   const view = useBrowser((state) => state.view)
+  const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const selectTab = useBrowser((state) => state.selectTab)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
@@ -34,6 +37,7 @@ export default function Sidebar() {
   const newTab = useBrowser((state) => state.newTab)
   const closeTab = useBrowser((state) => state.closeTab)
   const pin = useBrowser((state) => state.pin)
+  const toggleMute = useBrowser((state) => state.toggleMute)
   const splitWith = useBrowser((state) => state.splitWith)
   const removeBookmark = useBrowser((state) => state.removeBookmark)
   const moveBookmark = useBrowser((state) => state.moveBookmark)
@@ -53,7 +57,13 @@ export default function Sidebar() {
   const [confirmGroup, setConfirmGroup] = useState<string | null>(null)
   // Infobulle des cases compactes : positionnée en `fixed` pour ne pas être
   // rognée par la liste qui défile.
-  const [tip, setTip] = useState<{ title: string; host: string; x: number; y: number } | null>(null)
+  const [tip, setTip] = useState<{
+    title: string
+    host: string
+    note?: string
+    x: number
+    y: number
+  } | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
   // Message lu par le lecteur d'écran après un déplacement.
   const [announce, setAnnounce] = useState('')
@@ -67,6 +77,14 @@ export default function Sidebar() {
   const [favDragId, setFavDragId] = useState<string | null>(null)
   const favDragRef = useRef<string | null>(null)
   const [favDrop, setFavDrop] = useState<{ id: string; edge: 'before' | 'after' } | null>(null)
+
+  // Une feuille ouverte (réglages, protection, palette) passe devant : une
+  // infobulle ou un menu resté ouvert flotterait par-dessus.
+  useEffect(() => {
+    if (!overlay) return
+    setTip(null)
+    setMenu(null)
+  }, [overlay])
 
   useEffect(() => {
     const id = focusAfterMove.current
@@ -150,13 +168,24 @@ export default function Sidebar() {
   const sourceTab = (): TabView | undefined =>
     draggingRef.current ? spaceTabs.find((tab) => tab.id === draggingRef.current) : undefined
 
-  const showTip = (event: { currentTarget: HTMLElement }, item: { title: string; url: string }): void => {
+  const showTip = (
+    event: { currentTarget: HTMLElement },
+    item: { title: string; url: string } & Partial<Pick<TabView, 'audible' | 'muted'>>
+  ): void => {
     const rect = event.currentTarget.getBoundingClientRect()
+    // Infobulle bornée à la fenêtre : dans une fenêtre étroite, elle restait
+    // collée au bord et son titre sortait de l’écran.
+    const width = Math.min(262, window.innerWidth - 24)
+    const x = Math.min(rect.right + 8, window.innerWidth - width - 8)
+    const y = Math.min(Math.max(rect.top + rect.height / 2, 44), window.innerHeight - 44)
+    // Le compteur du site (« (12) Gmail ») part dans la pastille de la case :
+    // l’infobulle affiche le nom seul, jamais « (1109) YouTube ».
     setTip({
-      title: item.title,
+      title: displayTitle(item.title),
       host: hostOf(item.url),
-      x: rect.right + 8,
-      y: rect.top + rect.height / 2
+      note: item.muted ? 'Son coupé' : item.audible ? 'Joue du son' : undefined,
+      x,
+      y
     })
   }
 
@@ -425,6 +454,12 @@ export default function Sidebar() {
       return [
         { id: 'close', label: 'Fermer', icon: 'close', onSelect: () => closeTab(state.tab.id) },
         { id: 'unpin', label: 'Désépingler', icon: 'pin', onSelect: () => pin(state.tab.id, false) },
+        {
+          id: 'mute',
+          label: state.tab.muted ? 'Rétablir le son' : 'Couper le son',
+          icon: state.tab.muted ? 'volume' : 'volume-off',
+          onSelect: () => toggleMute(state.tab.id, !state.tab.muted)
+        },
         { id: 'copy', label: 'Copier l’adresse', icon: 'copy', onSelect: () => void copyAddress(state.tab.url) },
         {
           id: 'split',
@@ -527,8 +562,11 @@ export default function Sidebar() {
   return (
     <aside className="sidebar" style={{ '--space': space.color } as CSSProperties}>
       <header className="sidebar-top drag">
-        <span className="wordmark">
-          Vela<span className="wordmark-dot">.</span>
+        <span className="brand-lockup" aria-label="Vela">
+          <VelaMark size={20} />
+          <span className="wordmark" aria-hidden="true">
+            Vela<span className="wordmark-dot">.</span>
+          </span>
         </span>
       </header>
 
@@ -576,7 +614,12 @@ export default function Sidebar() {
                 onDragOver={overPinnedEnd}
                 onDrop={dropOnPinnedEnd}
               >
-                {pinned.map((tab) => (
+                {pinned.map((tab) => {
+                  // Un compteur de site (« (12) Gmail ») devient une pastille ;
+                  // une page qui joue du son se repère sur sa case, sans l’ouvrir.
+                  const count = titleBadge(tab.title)
+                  const sounding = tab.audible && !tab.muted
+                  return (
                   <button
                     key={tab.id}
                     type="button"
@@ -586,8 +629,11 @@ export default function Sidebar() {
                     data-active={tab.id === view.activeTabId}
                     data-secondary={view.split && tab.id === view.secondTabId ? 'true' : undefined}
                     data-dragging={draggingId === tab.id ? 'true' : undefined}
+                    data-sounding={sounding ? 'true' : undefined}
                     draggable
-                    aria-label={`${tab.title} — ${hostOf(tab.url)}`}
+                    aria-label={`${displayTitle(tab.title)} — ${hostOf(tab.url)}${
+                      tab.muted ? ', son coupé' : sounding ? ', joue du son' : ''
+                    }`}
                     onMouseEnter={(event) => showTip(event, tab)}
                     onMouseLeave={hideTip}
                     onFocus={(event) => showTip(event, tab)}
@@ -614,8 +660,19 @@ export default function Sidebar() {
                     onClick={() => selectTab(tab.id)}
                   >
                     <Favicon src={tab.favicon} url={tab.url} label={tab.title} size={18} spaceId={space.id} />
+                    {count !== null && (
+                      <span className="mini-tile-count" aria-hidden="true">
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
+                    {(sounding || tab.muted) && (
+                      <span className="mini-tile-sound" data-muted={tab.muted ? 'true' : undefined} aria-hidden="true">
+                        <Icon name={tab.muted ? 'volume-off' : 'volume'} size={9} />
+                      </span>
+                    )}
                   </button>
-                ))}
+                  )
+                })}
               </div>
             </>
           )}
@@ -651,7 +708,7 @@ export default function Sidebar() {
                     data-bookmark-id={bookmark.id}
                     data-dragging={favDragId === bookmark.id ? 'true' : undefined}
                     data-drop={favDrop && favDrop.id === bookmark.id ? favDrop.edge : undefined}
-                    aria-label={`${bookmark.title} — ${hostOf(bookmark.url)}`}
+                    aria-label={`${displayTitle(bookmark.title)} — ${hostOf(bookmark.url)}`}
                     draggable
                     onMouseEnter={(event) => showTip(event, bookmark)}
                     onMouseLeave={hideTip}
@@ -867,6 +924,18 @@ export default function Sidebar() {
           >
             {loose.map(renderTab)}
             {loose.length === 0 && groups.length === 0 && <p className="tabs-empty">Aucun onglet ouvert.</p>}
+            <button
+              type="button"
+              className="tab-new"
+              onClick={() => newTab()}
+              title={`Nouvel onglet (${shortcut('T')})`}
+            >
+              <span className="tab-new-icon">
+                <Icon name="plus" size={13} />
+              </span>
+              <span className="tab-new-label">Nouvel onglet</span>
+              <kbd className="tab-new-key">{shortcut('T')}</kbd>
+            </button>
           </div>
 
           {draggingId && groups.length > 0 && draggingTab && !draggingTab.pinned && (
@@ -891,6 +960,7 @@ export default function Sidebar() {
           <div className="side-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
             <span className="side-tip-title">{tip.title}</span>
             {tip.host && <span className="side-tip-host">{tip.host}</span>}
+            {tip.note && <span className="side-tip-note">{tip.note}</span>}
           </div>,
           document.body
         )}
@@ -899,7 +969,7 @@ export default function Sidebar() {
         <TileMenu
           x={menu.x}
           y={menu.y}
-          label={menu.kind === 'tab' ? menu.tab.title : menu.bookmark.title}
+          label={menu.kind === 'tab' ? displayTitle(menu.tab.title) : displayTitle(menu.bookmark.title)}
           items={menuItems(menu)}
           onClose={() => closeMenu(menu.kind === 'tab' ? menu.tab.id : menu.bookmark.id)}
         />

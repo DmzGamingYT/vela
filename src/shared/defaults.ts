@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hourTheme: false,
   perSpaceThemes: false,
   blockTrackers: true,
+  blockLevel: 'trackers',
   thumbnails: false,
   sidebarCollapsed: false,
   onboarded: false,

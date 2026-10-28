@@ -133,6 +133,7 @@ interface BrowserState {
   reload(id: string): void
   stop(id: string): void
   pin(id: string, pinned: boolean): void
+  toggleMute(id: string, muted: boolean): void
   reorderTab(id: string, targetId: string | null, position: 'before' | 'after', pinned?: boolean): void
   moveTabToGroup(id: string, groupId: string | null): void
   createGroup(tabId?: string): Promise<TabGroup | null>
@@ -342,7 +343,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   focusAddress() {
     setTimeout(() => {
-      const input = document.querySelector<HTMLInputElement>('.pane-primary .address-input')
+      // Le premier champ est celui du panneau principal ; la classe
+      // `.pane-primary` n'a jamais existé, donc ⌘L ne focalisait rien.
+      const input =
+        document.querySelector<HTMLInputElement>('.pane-head[data-primary="true"] .address-input') ??
+        document.querySelector<HTMLInputElement>('.address-input')
       input?.focus()
       input?.select()
     }, 20)
@@ -386,6 +391,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   pin(id, pinned) {
     void get().call(() => window.vela.tabs.pin(id, pinned), 'Impossible d’épingler l’onglet.')
+  },
+
+  toggleMute(id, muted) {
+    void get().call(() => window.vela.tabs.mute(id, muted), 'Impossible de changer le son de l’onglet.')
   },
 
   reorderTab(id, targetId, position, pinned) {

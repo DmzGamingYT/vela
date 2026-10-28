@@ -54,6 +54,8 @@ export type IconName =
   | 'fog'
   | 'wind'
   | 'mic'
+  | 'volume'
+  | 'volume-off'
   | 'upload'
   | 'pause'
   | 'play'
@@ -256,6 +258,18 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   upload: <path d="M12 20V8M7.5 12.5 12 8l4.5 4.5M4 4h16" />,
   pause: <path d="M9 5v14M15 5v14" />,
+  volume: (
+    <>
+      <path d="M11 5 6.5 9H3v6h3.5L11 19Z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" />
+    </>
+  ),
+  'volume-off': (
+    <>
+      <path d="M11 5 6.5 9H3v6h3.5L11 19Z" />
+      <path d="m16 9.5 5 5M21 9.5l-5 5" />
+    </>
+  ),
   play: <path d="M7 4.5v15l12-7.5Z" />,
   cloud: <path d="M7 18a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.6A3.4 3.4 0 0 1 17.4 18Z" />,
   rain: (

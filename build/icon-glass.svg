@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="base" x1="200" y1="120" x2="840" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7E77FA" />
+      <stop offset="0.34" stop-color="#6961EF" />
+      <stop offset="0.7" stop-color="#564DDF" />
+      <stop offset="1" stop-color="#453CC6" />
+    </linearGradient>
+
+    <radialGradient id="auroraA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(790 210) scale(360 300)">
+      <stop offset="0" stop-color="#C3B2FF" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#C9B8FF" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="auroraB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(230 880) scale(400 320)">
+      <stop offset="0" stop-color="#63C4FF" stop-opacity="0.32" />
+      <stop offset="1" stop-color="#63C4FF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="sheen" x1="512" y1="96" x2="512" y2="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3" />
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.06" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="depth" x1="512" y1="930" x2="512" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E1870" stop-opacity="0.38" />
+      <stop offset="1" stop-color="#1E1870" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="rim" x1="240" y1="100" x2="800" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.18" />
+      <stop offset="0.75" stop-color="#FFFFFF" stop-opacity="0.32" />
+      <stop offset="1" stop-color="#EAE6FF" stop-opacity="0.7" />
+    </linearGradient>
+
+    <linearGradient id="sail" x1="520" y1="290" x2="700" y2="660" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.55" stop-color="#FAFAFF" />
+      <stop offset="1" stop-color="#E3E5FF" />
+    </linearGradient>
+
+    <linearGradient id="sailSmall" x1="400" y1="360" x2="500" y2="660" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.98" />
+      <stop offset="1" stop-color="#E4E6FF" stop-opacity="0.96" />
+    </linearGradient>
+
+    <linearGradient id="hull" x1="400" y1="670" x2="660" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.6" stop-color="#F8F9FF" />
+      <stop offset="1" stop-color="#D6DAFF" />
+    </linearGradient>
+
+    <linearGradient id="frost" x1="512" y1="280" x2="512" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0" />
+      <stop offset="0.8" stop-color="#9C99EC" stop-opacity="0.1" />
+      <stop offset="1" stop-color="#4F48B8" stop-opacity="0.22" />
+    </linearGradient>
+
+    <filter id="tileShadow" x="-25%" y="-18%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#241D80" flood-opacity="0.38" />
+    </filter>
+
+    <filter id="boatShadow" x="-30%" y="-30%" width="160%" height="175%">
+      <feDropShadow dx="0" dy="9" stdDeviation="9" flood-color="#2A2190" flood-opacity="0.26" />
+    </filter>
+
+    <filter id="soft" x="-45%" y="-45%" width="190%" height="190%">
+      <feGaussianBlur stdDeviation="30" />
+    </filter>
+
+    <filter id="glint" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+
+    <clipPath id="tile">
+      <rect x="96" y="96" width="832" height="832" rx="196" />
+    </clipPath>
+
+    <clipPath id="boat">
+      <g transform="translate(512 520) scale(.84) translate(-512 -520) translate(184 194) scale(27.3)">
+        <path d="M12.9 3.1c3.6 3.7 5.6 8 5.8 13h-5.8Z" />
+        <path d="M11.1 6.3V16H6.5c.6-3.8 2.2-7.1 4.6-9.7Z" />
+        <path d="M4.3 17.6h15.4l-1.6 2.2c-.45.6-1.15.95-1.9.95H7.8c-.75 0-1.45-.35-1.9-.95Z" />
+      </g>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#tileShadow)">
+    <rect x="96" y="96" width="832" height="832" rx="196" fill="url(#base)" />
+  </g>
+
+  <g clip-path="url(#tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#auroraA)" />
+    <rect x="96" y="96" width="832" height="832" fill="url(#auroraB)" />
+    <rect x="96" y="96" width="832" height="620" fill="url(#sheen)" />
+    <rect x="96" y="520" width="832" height="408" fill="url(#depth)" />
+
+    <!-- Épaisseur du verre : liseré clair sur le bord supérieur, bord bas dense -->
+    <rect x="100" y="100" width="824" height="824" rx="192" fill="none" stroke="url(#rim)" stroke-width="2.5" />
+    <rect x="112" y="112" width="800" height="800" rx="184" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="14" />
+
+    <!-- Caustique : l'arche de lumière qui traverse le haut du verre -->
+    <path d="M160 380c120-132 288-206 496-200 104 4 190 22 240 50v26c-56-30-146-48-250-52-202-8-360 64-462 190z"
+      fill="#FFFFFF" opacity="0.09" filter="url(#soft)" />
+
+    <!-- Reflet liquide suivant le bord supérieur, puis lumière basse -->
+    <path d="M176 300c26-84 158-152 336-152 168 0 300 62 336 150" fill="none" stroke="#FFFFFF"
+      stroke-opacity="0.34" stroke-width="5" stroke-linecap="round" filter="url(#glint)" />
+
+
+    <!-- Voilier : épaisseur, puis verre dépoli, puis givre -->
+    <g transform="translate(512 520) scale(.84) translate(-512 -520) translate(184 194) scale(27.3)">
+      <g opacity="0.5" transform="translate(0 0.12)">
+        <path d="M12.9 3.1c3.6 3.7 5.6 8 5.8 13h-5.8Z" fill="#3A31B4" />
+        <path d="M11.1 6.3V16H6.5c.6-3.8 2.2-7.1 4.6-9.7Z" fill="#3A31B4" />
+        <path d="M4.3 17.6h15.4l-1.6 2.2c-.45.6-1.15.95-1.9.95H7.8c-.75 0-1.45-.35-1.9-.95Z" fill="#3A31B4" />
+      </g>
+      <g filter="url(#boatShadow)">
+        <path d="M12.9 3.1c3.6 3.7 5.6 8 5.8 13h-5.8Z" fill="url(#sail)" />
+        <path d="M11.1 6.3V16H6.5c.6-3.8 2.2-7.1 4.6-9.7Z" fill="url(#sailSmall)" />
+        <path d="M4.3 17.6h15.4l-1.6 2.2c-.45.6-1.15.95-1.9.95H7.8c-.75 0-1.45-.35-1.9-.95Z" fill="url(#hull)" />
+      </g>
+    </g>
+
+    <!-- Givre dans la matière, borné au bateau -->
+    <rect x="300" y="270" width="430" height="500" fill="url(#frost)" clip-path="url(#boat)" />
+
+    <!-- Arêtes de lumière : mât, bôme et liston du pont -->
+    <g transform="translate(512 520) scale(.84) translate(-512 -520) translate(184 194) scale(27.3)"
+      fill="none" stroke-linecap="round">
+      <path d="M12.9 3.5v12.3" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="0.14" />
+      <path d="M4.85 17.78h14.3" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="0.13" />
+      <path d="M4.9 18.26h14.2" stroke="#5B53C9" stroke-opacity="0.25" stroke-width="0.1" />
+    </g>
+
+
+  </g>
+</svg>

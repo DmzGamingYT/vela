@@ -52,7 +52,7 @@ export default function TabRow({
       aria-selected={active}
       tabIndex={0}
       draggable
-      title={home ? 'Nouvel onglet' : tab.title}
+      title={home ? 'Accueil' : tab.title}
       onClick={() => selectTab(tab.id)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -74,7 +74,7 @@ export default function TabRow({
       </span>
 
       <span className="tab-copy">
-        <span className="tab-title">{home ? 'Nouvel onglet' : tab.title}</span>
+        <span className="tab-title">{home ? 'Accueil' : tab.title}</span>
         {!home && <span className="tab-host">{prettyUrl(tab.url)}</span>}
       </span>
 

@@ -149,3 +149,77 @@ export function isTracker(url: string): boolean {
   if (!host || matches(host, ALLOW_INDEX)) return false
   return matches(host, TRACKER_INDEX)
 }
+
+/**
+ * Niveaux proposés : « trackers » arrête les domaines de la liste, « strict »
+ * arrête en plus les ressources actives servies par un tiers (script, cadre,
+ * requête de mesure). Les images, polices et styles restent : un mode
+ * renforcé qui casse chaque page ne serait pas utilisable.
+ */
+export type BlockLevel = 'trackers' | 'strict'
+
+const STRICT_TYPES = new Set(['script', 'subFrame', 'xhr', 'ping', 'media', 'websocket', 'other'])
+
+// Suffixes en deux parties : sans eux, « co.uk » ferait passer deux sites
+// distincts pour un même domaine.
+const MULTI_SUFFIX = new Set([
+  'co.uk',
+  'org.uk',
+  'ac.uk',
+  'gov.uk',
+  'com.au',
+  'net.au',
+  'co.jp',
+  'co.kr',
+  'com.br',
+  'com.mx',
+  'co.nz',
+  'co.za',
+  'com.tr',
+  'com.cn',
+  'co.in'
+])
+
+/** Domaine enregistrable approximatif : les deux (ou trois) derniers labels. */
+function registrable(host: string): string {
+  const parts = host.split('.')
+  if (parts.length <= 2) return host
+  // IPv4 : les quatre nombres forment l'adresse entière.
+  if (parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part))) return host
+  const two = parts.slice(-2).join('.')
+  return MULTI_SUFFIX.has(two) ? parts.slice(-3).join('.') : two
+}
+
+/** Même site : même domaine enregistrable, sous-domaines compris. */
+function sameSite(a: string, b: string): boolean {
+  if (!a || !b) return true
+  return a === b || registrable(a) === registrable(b)
+}
+
+export function isThirdParty(url: string, pageUrl: string): boolean {
+  const host = parsedHost(url)
+  const page = parsedHost(pageUrl)
+  if (!host || !page) return false
+  return !sameSite(host, page)
+}
+
+export function isStrictType(resourceType: string): boolean {
+  return STRICT_TYPES.has(resourceType)
+}
+
+/**
+ * Décision pure, testable sans Electron : une requête doit-elle être arrêtée ?
+ * L'appelant a déjà écarté la navigation principale, les pages d'auth et les
+ * sites exemptés.
+ */
+export function shouldBlock(
+  url: string,
+  pageUrl: string,
+  resourceType: string,
+  level: BlockLevel
+): boolean {
+  if (isTracker(url)) return true
+  if (level !== 'strict') return false
+  if (!STRICT_TYPES.has(resourceType)) return false
+  return isThirdParty(url, pageUrl)
+}

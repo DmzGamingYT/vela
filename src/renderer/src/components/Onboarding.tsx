@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { CSSProperties } from 'react'
 import { THEME_PRESETS } from '@shared/theme'
-import { SEARCH_ENGINES, searxBase } from '@shared/url'
-import type { BookmarkImportSource, SearchEngineId } from '@shared/types'
+import { searxBase } from '@shared/url'
+import type { BookmarkImportSource } from '@shared/types'
+import { PROVIDERS } from '@shared/providers'
 import { useBrowser } from '../store/browser'
+import { BrandMark, PROVIDER_BRANDS, readableTint } from './BrandMark'
+import EnginePicker from './EnginePicker'
 import { Icon, type IconName } from './Icon'
 
 interface Step {
@@ -21,17 +23,6 @@ const STEPS: Step[] = [
   { kicker: 'Couleur', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.', icon: 'sun' },
   { kicker: 'Prêt', title: 'Vous êtes chez vous.', lede: 'Ce qui est déjà en place sur cet appareil.', icon: 'shield' }
 ]
-
-const ENGINE_LOOK: Record<SearchEngineId, { initial: string; tint: string; host: string }> = {
-  duckduckgo: { initial: 'D', tint: '#de5833', host: 'duckduckgo.com' },
-  brave: { initial: 'B', tint: '#fb542b', host: 'search.brave.com' },
-  startpage: { initial: 'S', tint: '#6a73d8', host: 'www.startpage.com' },
-  google: { initial: 'G', tint: '#4285f4', host: 'www.google.com' },
-  bing: { initial: 'B', tint: '#0ca6a6', host: 'www.bing.com' },
-  ecosia: { initial: 'E', tint: '#2f6b3f', host: 'www.ecosia.org' },
-  qwant: { initial: 'Q', tint: '#4957d6', host: 'www.qwant.com' },
-  searxng: { initial: 'X', tint: '#62a583', host: 'searx.be' }
-}
 
 const ESSENTIALS: { name: string; mark: string; tint: string; url: string }[] = [
   { name: 'GitHub', mark: 'GH', tint: '#24292f', url: 'https://github.com' },
@@ -143,35 +134,11 @@ export default function Onboarding() {
           <div className="onboarding-body">
             {step === 0 && (
               <>
-                <div className="engine-grid" role="radiogroup" aria-label="Moteur de recherche">
-                  {(Object.keys(SEARCH_ENGINES) as SearchEngineId[]).map((id) => {
-                    const look = ENGINE_LOOK[id]
-                    const active = settings.searchEngine === id
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        aria-label={SEARCH_ENGINES[id].label}
-                        className="engine-tile"
-                        data-active={active}
-                        style={{ '--tint': look.tint } as CSSProperties}
-                        onClick={() => void updateSettings({ searchEngine: id })}
-                      >
-                        <span
-                          className="engine-mark"
-                          aria-hidden="true"
-                          style={{ background: `${look.tint}22`, color: look.tint }}
-                        >
-                          {look.initial}
-                        </span>
-                        <span className="engine-label">{SEARCH_ENGINES[id].label}</span>
-                        {active && <span className="engine-check"><Icon name="check" size={13} /></span>}
-                      </button>
-                    )
-                  })}
-                </div>
+                <EnginePicker
+                  value={settings.searchEngine}
+                  onChange={(id) => void updateSettings({ searchEngine: id })}
+                  label="Moteur de recherche"
+                />
 
                 {settings.searchEngine === 'searxng' && (
                   <label className="field onboarding-instance">
@@ -344,27 +311,60 @@ export default function Onboarding() {
             )}
 
             {step === 3 && (
-              <div className="agent-modes">
-                <button
-                  type="button"
-                  className="agent-mode"
-                  data-active={settings.agent.mode === 'demo'}
-                  onClick={() => void updateSettings({ agent: { mode: 'demo' } })}
-                >
-                  <span className="agent-mode-icon"><Icon name="sparkles" size={22} /></span>
-                  <span className="agent-mode-top">Démo locale</span>
-                  <span className="agent-mode-detail">Rapport simulé depuis les titres : aucun envoi.</span>
-                </button>
-                <button
-                  type="button"
-                  className="agent-mode"
-                  data-active={settings.agent.mode === 'api'}
-                  onClick={() => { void updateSettings({ agent: { mode: 'api' } }); setOverlay('settings') }}
-                >
-                  <span className="agent-mode-icon"><Icon name="key" size={22} /></span>
-                  <span className="agent-mode-top">Votre clé ou Ollama</span>
-                  <span className="agent-mode-detail">Le texte des onglets joints part alors vers le modèle choisi.</span>
-                </button>
+              <div className="agent-step">
+                <div className="agent-modes">
+                  <button
+                    type="button"
+                    className="agent-mode"
+                    data-active={settings.agent.mode === 'demo'}
+                    onClick={() => void updateSettings({ agent: { mode: 'demo' } })}
+                  >
+                    <span className="agent-mode-icon"><Icon name="sparkles" size={22} /></span>
+                    <span className="agent-mode-top">Démo locale</span>
+                    <span className="agent-mode-detail">Rapport simulé depuis les titres : aucun envoi.</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="agent-mode"
+                    data-active={settings.agent.mode === 'api'}
+                    onClick={() => { void updateSettings({ agent: { mode: 'api' } }); setOverlay('settings') }}
+                  >
+                    <span className="agent-mode-icon"><Icon name="key" size={22} /></span>
+                    <span className="agent-mode-top">Votre clé ou Ollama</span>
+                    <span className="agent-mode-detail">Le texte des onglets joints part alors vers le modèle choisi.</span>
+                  </button>
+                </div>
+
+                {/* Les marques réelles des fournisseurs : on reconnaît sa boîte
+                    avant d’aller chercher une clé dans ses réglages. */}
+                <div className="agent-brands">
+                  <span className="agent-brand-list" aria-hidden="true">
+                    {PROVIDERS.map((provider) => (
+                      <span
+                        key={provider.id}
+                        className="agent-brand"
+                        style={{
+                          color: readableTint(provider.color),
+                          background: `color-mix(in srgb, ${readableTint(provider.color)} 14%, transparent)`,
+                          borderColor: `color-mix(in srgb, ${readableTint(provider.color)} 30%, transparent)`
+                        }}
+                      >
+                        {PROVIDER_BRANDS[provider.id] ? (
+                          <BrandMark brand={PROVIDER_BRANDS[provider.id]} size={16} />
+                        ) : (
+                          <span className="agent-brand-letter">{provider.mark}</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="agent-brand-names">
+                    Clés acceptées :{' '}
+                    {PROVIDERS.filter((provider) => !provider.local)
+                      .map((provider) => provider.label)
+                      .join(', ')}
+                    , ou Ollama en local.
+                  </span>
+                </div>
               </div>
             )}
 

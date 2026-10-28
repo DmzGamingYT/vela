@@ -8,6 +8,7 @@ import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
 import SpaceShortcuts from './SpaceShortcuts'
 import TasksCard from './TasksCard'
+import WatchlistCard from './WatchlistCard'
 
 const STARTERS = [
   { label: 'GitHub', detail: 'Vos projets', url: 'https://github.com' },
@@ -74,6 +75,11 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   if (!view) return null
 
+  // L'espace de cet onglet : il porte les sites épinglés et, s'il est activé,
+  // le gadget « À voir ».
+  const spaceId = view.tabs.find((tab) => tab.id === tabId)?.spaceId ?? view.activeSpaceId
+  const space = view.spaces.find((item) => item.id === spaceId)
+
   const settings = view.settings
   const engine = SEARCH_ENGINES[settings.searchEngine]?.label ?? 'DuckDuckGo'
 
@@ -114,10 +120,19 @@ export default function StartPage({ tabId }: { tabId: string }) {
     }
   }
   // Une grille pleine plutôt qu'une carte isolée : les raccourcis complètent
-  // l'historique jusqu'à trois ou six tuiles, sans jamais dépasser.
+  // l'historique jusqu'à trois ou six tuiles, sans jamais dépasser. Quand
+  // l'espace a ses propres sites, ce sont eux qui servent de départ — un
+  // espace cinéma ne propose pas GitHub.
+  const starters = space?.shortcuts?.length
+    ? space.shortcuts.slice(0, 4).map((shortcut) => ({
+        label: shortcut.title,
+        detail: hostOf(shortcut.url),
+        url: shortcut.url
+      }))
+    : STARTERS
   if (tiles.length < 6) {
     const target = tiles.length <= 3 ? 3 : 6
-    for (const starter of STARTERS) {
+    for (const starter of starters) {
       if (tiles.length >= target) break
       if (seen.has(starter.url)) continue
       seen.add(starter.url)
@@ -275,7 +290,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </div>
         </section>
 
-        <SpaceShortcuts spaceId={view.tabs.find((tab) => tab.id === tabId)?.spaceId ?? view.activeSpaceId} />
+        <SpaceShortcuts spaceId={spaceId} />
 
         <div className="home-grid">
           <section className="home-card home-recent" aria-label="Récemment">
@@ -330,6 +345,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </section>
 
           <aside className="home-side">
+            {space?.watchlist && <WatchlistCard spaceId={spaceId} />}
             <TasksCard />
           </aside>
         </div>

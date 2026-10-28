@@ -12,6 +12,7 @@ import {
   avatarFile,
   avatarImage,
   normalizeShortcutUrl,
+  normalizeLetterboxd,
   sanitizeSpaceShortcuts,
   shortcutsForSet,
   suggestShortcutSet,
@@ -45,6 +46,8 @@ export default function SpaceDialog() {
   const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
   const [shortcuts, setShortcuts] = useState<SpaceShortcut[]>(existing?.shortcuts ?? [])
+  const [watchlist, setWatchlist] = useState(existing?.watchlist === true)
+  const [letterboxd, setLetterboxd] = useState(existing?.letterboxd ?? '')
   const [siteInput, setSiteInput] = useState('')
   const [siteError, setSiteError] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -102,6 +105,9 @@ export default function SpaceDialog() {
     setBackground(preset.background)
     setBlockTrackers(true)
     setShortcuts(shortcutsForSet(preset.id))
+    // Le modèle cinéma arrive avec sa liste à voir : c'est le gadget qui donne
+    // un sens à l'espace, et il reste facile à éteindre juste en dessous.
+    setWatchlist(preset.id === 'cinema')
     setSiteError(null)
     setPhoto(null)
   }
@@ -181,7 +187,19 @@ export default function SpaceDialog() {
     reader.readAsDataURL(file)
   }
 
-  const payload = { name: preview, color, avatar, background, blockTrackers, theme, shortcuts }
+  const letterboxdName = normalizeLetterboxd(letterboxd)
+  const letterboxdError = letterboxd.trim() && !letterboxdName ? 'Nom de compte invalide — par exemple « votre-nom ».' : null
+  const payload = {
+    name: preview,
+    color,
+    avatar,
+    background,
+    blockTrackers,
+    theme,
+    shortcuts,
+    watchlist,
+    letterboxd: letterboxdName
+  }
 
   return (
     <div className="overlay space-overlay" onMouseDown={() => setOverlay(null)}>
@@ -341,6 +359,7 @@ export default function SpaceDialog() {
             )}
 
             <section className="space-block">
+              <h2 className="space-block-title">Identité</h2>
               <label className="field">
                 <span>Nom</span>
                 <input
@@ -450,8 +469,10 @@ export default function SpaceDialog() {
             </section>
 
             <section className="space-block">
-              <h2 className="space-block-title">Couleur</h2>
-              <div className="space-swatches">
+              <h2 className="space-block-title">Couleur et ambiance</h2>
+              <div className="space-row">
+                <span className="space-row-label">Teinte</span>
+                <div className="space-swatches">
                 {SPACE_COLORS.map((swatch) => (
                   <button
                     type="button"
@@ -464,12 +485,12 @@ export default function SpaceDialog() {
                     onClick={() => setColor(swatch)}
                   />
                 ))}
+                </div>
               </div>
-            </section>
 
-            <section className="space-block">
-              <h2 className="space-block-title">Ambiance</h2>
-              <div className="background-grid">
+              <div className="space-row">
+                <span className="space-row-label">Ambiance</span>
+                <div className="background-grid">
                 {SPACE_BACKGROUNDS.map((preset) => (
                   <button
                     key={preset.id}
@@ -486,6 +507,7 @@ export default function SpaceDialog() {
                     <span>{preset.label}</span>
                   </button>
                 ))}
+                </div>
               </div>
             </section>
 
@@ -615,6 +637,47 @@ export default function SpaceDialog() {
               </p>
             </section>
 
+            <section className="space-block">
+              <h2 className="space-block-title">Gadgets</h2>
+
+              <div className="isolation-toggle">
+                <div>
+                  <span>Liste à voir</span>
+                  <small>Une carte sur l’accueil de cet espace : titres à voir et tirage « Ce soir ».</small>
+                </div>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={watchlist}
+                  data-on={watchlist ? 'true' : 'false'}
+                  onClick={() => setWatchlist((value) => !value)}
+                  aria-label="Afficher la liste à voir sur l’accueil"
+                >
+                  <span />
+                </button>
+              </div>
+
+              <label className="field">
+                <span>Compte Letterboxd</span>
+                <input
+                  className="space-name-input"
+                  value={letterboxd}
+                  placeholder="votre-nom"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  onChange={(event) => setLetterboxd(event.target.value)}
+                />
+              </label>
+              <p className="setting-hint">
+                Facultatif. Ouvre vos pages Letterboxd — films vus, journal, liste — dans votre session. Si vous
+                cliquez sur « Importer le journal » sur l’accueil, Vela lit le flux RSS public du profil sur
+                letterboxd.com : un clic, aucun cookie, rien au démarrage.
+              </p>
+              {letterboxdError ? <p className="space-error">{letterboxdError}</p> : null}
+            </section>
+
             <section className="space-block isolation-block">
               <h2 className="space-block-title">Isolation</h2>
               <div className="isolation-note">
@@ -647,8 +710,9 @@ export default function SpaceDialog() {
 
             {view.settings.perSpaceThemes ? (
               <section className="space-block">
+                <h2 className="space-block-title">Thème de cet espace</h2>
                 <label className="field">
-                  <span>Thème de couleur de cet espace</span>
+                  <span>Thème de couleur</span>
                   <select
                     className="select"
                     value={theme ?? ''}
@@ -694,7 +758,7 @@ export default function SpaceDialog() {
               <button type="button" className="action" onClick={() => setOverlay(null)}>
                 Annuler
               </button>
-              <button type="submit" className="action primary">
+              <button type="submit" className="action primary" disabled={Boolean(letterboxdError)}>
                 <Icon name={existing ? 'check' : 'plus'} size={14} />
                 {existing ? 'Enregistrer' : 'Créer l’espace'}
               </button>

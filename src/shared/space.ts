@@ -46,7 +46,14 @@ export const SPACE_AVATARS: SpaceAvatarMark[] = [
     label: 'Flamme',
     path: 'M12 22c4 0 7-3 7-7 0-4-4-7-4-12-3 2-4 5-4 8-2-1-3-3-3-5-2 3-3 6-3 9 0 4 3 7 7 7Z'
   },
-  { id: 'code', label: 'Code', path: 'm8 7-5 5 5 5M16 7l5 5-5 5' }
+  { id: 'code', label: 'Code', path: 'm8 7-5 5 5 5M16 7l5 5-5 5' },
+  {
+    id: 'clap',
+    label: 'Clap',
+    // Clapperboard : plateau et clapet oblique, deux traits sur le clapet.
+    // Le clapet incliné est ce qui reste lisible à 16 px.
+    path: 'M3.5 10.9h17v6.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8ZM4.4 10.3 6.1 5.6l13.7 1.6-1.9 4.7ZM9.3 8.3 8 10.3M13.5 8.8 12.2 10.8'
+  }
 ]
 
 export interface SpaceBackgroundPreset {
@@ -113,6 +120,16 @@ export const SPACE_PRESETS: SpacePreset[] = [
     color: '#4FB6D8',
     avatar: 'icon:code',
     background: 'aurora'
+  },
+  {
+    id: 'cinema',
+    label: 'Cinéma',
+    name: 'Cinéma',
+    // Rouge de rideau : la seule famille de teinte absente des autres modèles.
+    color: '#C2503F',
+    avatar: 'icon:clap',
+    // Salle obscure : l’ambiance « Nuit » approfondit le fond sans le teinter.
+    background: 'night'
   }
 ]
 
@@ -252,6 +269,16 @@ export const SPACE_SHORTCUT_SETS: Record<string, ShortcutSeed[]> = {
     { title: 'ChatGPT', url: 'https://chatgpt.com' },
     { title: 'MDN', url: 'https://developer.mozilla.org' },
     { title: 'Hacker News', url: 'https://news.ycombinator.com' }
+  ],
+  // Séances, critiques, journal et disponibilité : les six pages que sert
+  // vraiment un espace cinéma, sans qu’aucune ne soit contactée par Vela.
+  cinema: [
+    { title: 'AlloCiné', url: 'https://www.allocine.fr' },
+    { title: 'SensCritique', url: 'https://www.senscritique.com' },
+    { title: 'Letterboxd', url: 'https://letterboxd.com' },
+    { title: 'IMDb', url: 'https://www.imdb.com' },
+    { title: 'JustWatch', url: 'https://www.justwatch.com/fr' },
+    { title: 'MUBI', url: 'https://mubi.com/fr' }
   ]
 }
 
@@ -325,6 +352,10 @@ const SUGGESTIONS: { set: string; words: RegExp }[] = [
     words: /\b(dev|devops|developpement|developpeur|code|programmation|veille|tech|technique|informatique)\b/
   },
   { set: 'study', words: /\b(etude|etudes|ecole|universite|uni|fac|cours|lycee|these|memoire)\b/ },
+  {
+    set: 'cinema',
+    words: /\b(cinema|films?|series?|movies?|serie|acteur|actrice|realisateur|realisation|plateau)\b/
+  },
   { set: 'gaming', words: /\b(gaming|game|games|jeu|jeux|loisir|loisirs|stream)\b/ },
   { set: 'work', words: /\b(travail|boulot|pro|professionnel|bureau|equipe|job)\b/ },
   { set: 'personal', words: /\b(perso|personnel|famille|maison|vie)\b/ }
@@ -343,6 +374,98 @@ export function suggestShortcutSet(name: string): string | null {
     if (entry.words.test(clean)) return entry.set
   }
   return null
+}
+
+/* ------------------------------------------------------------------ */
+/* Liste à voir et compte Letterboxd                                  */
+/* ------------------------------------------------------------------ */
+
+/** Un titre de la liste « À voir » d’un espace. Rien ne quitte la machine. */
+export interface SpaceWatchItem {
+  id: string
+  title: string
+  watched: boolean
+  addedAt: number
+}
+
+/** Même plafond que les sites épinglés : au-delà, on ne garde pas la suite. */
+export const MAX_WATCH_ITEMS = 200
+
+/**
+ * Valide une liste à voir : titres courts, doublons retirés (casse et espaces
+ * ignorés), entrée cassée sautée. Un titre déjà lu garde sa marque.
+ */
+export function sanitizeWatchlist(raw: unknown): SpaceWatchItem[] {
+  if (!Array.isArray(raw)) return []
+  const items: SpaceWatchItem[] = []
+  const seen = new Set<string>()
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const candidate = item as Partial<SpaceWatchItem>
+    const title = typeof candidate.title === 'string' ? candidate.title.trim().replace(/\s+/g, ' ') : ''
+    if (!title) continue
+    const clean = title.slice(0, 120)
+    const key = clean.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    const id =
+      typeof candidate.id === 'string' && /^[a-z0-9-]{4,40}$/i.test(candidate.id)
+        ? candidate.id
+        : `watch-${hash(key)}`
+    items.push({
+      id,
+      title: clean,
+      watched: candidate.watched === true,
+      addedAt: typeof candidate.addedAt === 'number' && candidate.addedAt > 0 ? candidate.addedAt : Date.now()
+    })
+    if (items.length >= MAX_WATCH_ITEMS) break
+  }
+  return items
+}
+
+/** Nom d’utilisateur Letterboxd : lettres, chiffres, tiret et souligné. */
+const LETTERBOXD_USER = /^[a-z0-9][a-z0-9_-]{1,29}$/
+
+/**
+ * Normalise un nom de compte Letterboxd. Un « @ » ou une adresse complète est
+ * toléré à la saisie, mais seul le nom est conservé : aucune URL n’est stockée,
+ * donc aucune page ne peut être forcée.
+ */
+export function normalizeLetterboxd(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const raw = value.trim().replace(/^@/, '')
+  if (!raw) return null
+  // Une adresse collée n'est acceptée que si elle pointe vers Letterboxd :
+  // sinon on ne saurait pas d'où vient le nom.
+  if (/^https?:/i.test(raw)) {
+    try {
+      const url = new URL(raw)
+      const host = url.hostname.toLowerCase()
+      if (host !== 'letterboxd.com' && !host.endsWith('.letterboxd.com')) return null
+      const parts = url.pathname.split('/').filter(Boolean)
+      const name = (parts[0] ?? '').toLowerCase()
+      return LETTERBOXD_USER.test(name) ? name : null
+    } catch {
+      return null
+    }
+  }
+  const name = raw.toLowerCase()
+  return LETTERBOXD_USER.test(name) ? name : null
+}
+
+/** Pages publiques d’un compte, ouvertes dans l’onglet et sa session. */
+export const LETTERBOXD_PAGES = [
+  { id: 'films', label: 'Films vus', path: '/films/' },
+  { id: 'diary', label: 'Journal', path: '/films/diary/' },
+  { id: 'watchlist', label: 'Ma liste', path: '/watchlist/' },
+  { id: 'popular', label: 'Populaires cette semaine', path: '/films/popular/this/week/' }
+] as const
+
+/** Adresse d’une page Letterboxd pour ce compte, ou null sans compte valide. */
+export function letterboxdUrl(user: string | null | undefined, path: string): string | null {
+  const name = normalizeLetterboxd(user)
+  if (!name) return null
+  return `https://letterboxd.com/${name}${path}`
 }
 
 const PARTITION = /^persist:[a-z0-9._-]{1,64}$/i

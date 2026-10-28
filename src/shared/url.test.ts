@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { HOME_URL } from './types'
-import { engineHost, hostOf, isHomeUrl, normalizeInput, prettyUrl, searchUrl } from './url'
+import {
+  displayTitle,
+  engineHost,
+  hostOf,
+  isHomeUrl,
+  normalizeInput,
+  prettyUrl,
+  searchUrl,
+  titleBadge
+} from './url'
 
 describe('normalizeInput', () => {
   it('renvoie l’accueil pour une saisie vide', () => {
@@ -67,6 +76,26 @@ describe('helpers', () => {
   it('affiche une adresse courte', () => {
     expect(prettyUrl('https://www.notion.so/page/')).toBe('notion.so/page')
     expect(prettyUrl(HOME_URL)).toBe('Nouvel onglet')
+  })
+})
+
+describe('compteur de titre', () => {
+  it('lit un compteur en tête de titre', () => {
+    expect(titleBadge('(12) Gmail')).toBe(12)
+    expect(titleBadge('[3] Slack')).toBe(3)
+    expect(displayTitle('(1109) YouTube')).toBe('YouTube')
+  })
+
+  it('ne confond pas une année avec un compteur', () => {
+    expect(titleBadge('(2024) Le film')).toBeNull()
+    expect(displayTitle('(2024) Le film')).toBe('(2024) Le film')
+  })
+
+  it('ignore zéro et les titres sans compteur', () => {
+    expect(titleBadge('(0) Boîte')).toBeNull()
+    expect(titleBadge('Le Monde')).toBeNull()
+    expect(displayTitle('')).toBe('')
+    expect(displayTitle('(7)')).toBe('(7)')
   })
 })
 

@@ -36,11 +36,14 @@ import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
 import {
   avatarFile,
+  normalizeLetterboxd,
   partitionFor,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
-  sanitizeSpaceShortcuts
+  sanitizeSpaceShortcuts,
+  sanitizeWatchlist
 } from '@shared/space'
+import { sanitizeLetterboxdLog } from '@shared/letterboxd'
 import { saveAvatarDataUrl } from './avatars'
 
 function isSpace(value: unknown): value is Space {
@@ -126,6 +129,8 @@ function mergeSettings(raw: unknown): Settings {
     searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
     ...sanitizeAppearance(input),
     blockTrackers: input.blockTrackers !== false,
+    // Anciens fichiers : pas de niveau → le filtre standard, jamais renforcé.
+    blockLevel: input.blockLevel === 'strict' ? 'strict' : 'trackers',
     thumbnails: input.thumbnails === true,
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
@@ -146,6 +151,15 @@ export function normalizeState(raw: unknown): PersistedState {
     avatar: sanitizeSpaceAvatar(space.avatar),
     background: sanitizeSpaceBackground(space.background),
     shortcuts: sanitizeSpaceShortcuts(space.shortcuts),
+    // Liste à voir et compte Letterboxd : des données locales, bornées ici.
+    watchlist: space.watchlist === true,
+    letterboxd: normalizeLetterboxd(space.letterboxd),
+    watchItems: sanitizeWatchlist(space.watchItems),
+    letterboxdLog: sanitizeLetterboxdLog(space.letterboxdLog),
+    letterboxdLogAt:
+      typeof space.letterboxdLogAt === 'number' && space.letterboxdLogAt > 0
+        ? space.letterboxdLogAt
+        : null,
     blockTrackers: space.blockTrackers !== false
   }))
   if (spaces.length === 0) return fallback

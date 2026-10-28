@@ -29,6 +29,9 @@ const api: VelaApi = {
   avatars: {
     read: (name: string) => ipcRenderer.invoke('avatar:read', name)
   },
+  letterboxd: {
+    import: (spaceId: string) => ipcRenderer.invoke('letterboxd:import', spaceId)
+  },
   thumbs: {
     get: (url: string) => ipcRenderer.invoke('thumbs:get', url),
     count: () => ipcRenderer.invoke('thumbs:count'),
@@ -54,6 +57,7 @@ const api: VelaApi = {
     zoom: (id: string, direction: 'in' | 'out' | 'reset') => ipcRenderer.invoke('tab:zoom', { id, direction }),
     stop: (id: string) => ipcRenderer.invoke('tab:stop', id),
     pin: (id: string, pinned: boolean) => ipcRenderer.invoke('tab:pin', { id, pinned }),
+    mute: (id: string, muted: boolean) => ipcRenderer.invoke('tab:mute', { id, muted }),
     reopen: () => ipcRenderer.invoke('tab:reopen'),
     splitToggle: () => ipcRenderer.invoke('tab:split-toggle'),
     splitSet: (id: string) => ipcRenderer.invoke('tab:split-set', id),

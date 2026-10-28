@@ -137,6 +137,33 @@ export function titleFromUrl(url: string): string {
   return hostOf(url) || 'Page'
 }
 
+/** Compteur en tête de titre : « (12) Gmail », « [3] Slack ». */
+const TITLE_COUNTER = /^[([]\s*(\d{1,4})\s*[)\]]\s*/
+
+/**
+ * Nombre que le site met en tête de son titre, ou null. Une année entre
+ * parenthèses reste un titre : « (2024) Le film » n'affiche pas de pastille.
+ */
+export function titleBadge(title: string): number | null {
+  const match = title.trim().match(TITLE_COUNTER)
+  if (!match) return null
+  const value = Number(match[1])
+  if (!Number.isFinite(value) || value <= 0) return null
+  if (value >= 1900 && value <= 2100) return null
+  return value
+}
+
+/**
+ * Titre tel qu'il doit se lire dans une case : le compteur part en pastille,
+ * donc « (1109) YouTube » devient « YouTube ». Sans compteur, rien ne bouge.
+ */
+export function displayTitle(title: string): string {
+  const trimmed = title.trim()
+  if (titleBadge(trimmed) === null) return trimmed
+  const stripped = trimmed.replace(TITLE_COUNTER, '').trim()
+  return stripped || trimmed
+}
+
 export function sameSite(a: string, b: string): boolean {
   const hostA = hostOf(a)
   return Boolean(hostA) && hostA === hostOf(b)

@@ -57,6 +57,9 @@ interface Runtime {
   loading: boolean
   error: string | null
   agentSent?: boolean
+  /** Le son de la page : un épinglé qui joue se repère sur sa case. */
+  audible?: boolean
+  muted?: boolean
 }
 
 export interface TabRuntime {
@@ -67,6 +70,8 @@ export interface TabRuntime {
   agentSent: boolean
   error: string | null
   asleep: boolean
+  audible: boolean
+  muted: boolean
   blockedHosts: { host: string; count: number }[]
 }
 
@@ -95,6 +100,27 @@ export class TabManager {
     private host: TabHost
   ) {}
 
+  /**
+   * Rend le clavier à la coque : une page qui garde le focus continue de
+   * recevoir les frappes, même quand la palette ou la barre d'adresse s'ouvre.
+   */
+  releaseFocus(): void {
+    const win = this.getWindow()
+    if (!win || win.isDestroyed()) return
+    // Un WebContentsView ne s'efface pas : c'est la coque qui reprend le focus.
+    win.webContents.focus()
+  }
+
+  /** Coupe ou rétablit le son d'un onglet, depuis sa case ou la palette. */
+  setMuted(tabId: string, muted: boolean): void {
+    const view = this.views.get(tabId)
+    const alive = Boolean(view && !view.webContents.isDestroyed())
+    if (view && alive) view.webContents.setAudioMuted(muted)
+    const current = this.runtimes.get(tabId) ?? { loading: false, error: null }
+    this.runtimes.set(tabId, { ...current, muted, audible: muted ? false : current.audible })
+    this.host.changed()
+  }
+
   markAgentSent(tabIds: Iterable<string>, sent: boolean): void {
     for (const tabId of tabIds) {
       const runtime = this.runtimes.get(tabId)
@@ -117,6 +143,9 @@ export class TabManager {
       // Une vue déchargée par le balayeur : la page reste dans la liste, sa
       // mémoire est rendue au système.
       asleep: !alive && !isHomeUrl(this.host.tab(tabId)?.url),
+      // Une page endormie ne joue plus rien : le signal suit la vue vivante.
+      audible: alive && Boolean(runtime?.audible),
+      muted: alive && Boolean(runtime?.muted),
       blockedHosts: hosts
         ? Array.from(hosts, ([host, count]) => ({ host, count }))
             .sort((a, b) => b.count - a.count)
@@ -180,7 +209,10 @@ export class TabManager {
         } catch {
           return false
         }
-      }
+      },
+      // Niveau lu à chaque requête : changer de mode n'exige pas de recréer
+      // les sessions déjà ouvertes.
+      () => (this.host.settings().blockLevel === 'strict' ? 'strict' : 'trackers')
     )
     return ses
   }
@@ -304,6 +336,14 @@ export class TabManager {
     wc.on('page-favicon-updated', (_event, favicons) => {
       const favicon = favicons.find((icon) => /^https?:/i.test(icon)) ?? favicons[0]
       if (favicon) patch({ favicon })
+      this.host.changed()
+    })
+
+    // Son : l'état vient de Chromium, jamais deviné d'après le titre. Un épinglé
+    // qui joue quelque chose se repère donc sans ouvrir l'onglet.
+    wc.on('audio-state-changed', (event) => {
+      const current = this.runtimes.get(tabId) ?? { loading: false, error: null }
+      this.runtimes.set(tabId, { ...current, audible: Boolean(event.audible), muted: wc.isAudioMuted() })
       this.host.changed()
     })
 

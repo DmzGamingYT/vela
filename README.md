@@ -209,6 +209,11 @@ en validant, le nom tapé part vers `geocoding-api.open-meteo.com` pour trouver 
 ses coordonnées vont à `api.open-meteo.com`, au plus une fois par demi-heure, et le relevé reste sur
 l’appareil. Aucune clé, aucun compte, aucune télémétrie. « Retirer » coupe le flux et efface la ville.
 
+La carte « À voir » peut importer le journal Letterboxd d’un espace : au clic sur « Importer », Vela
+demande le flux RSS public du profil (`letterboxd.com/<profil>/rss/`) — sans cookie, sans la session de
+l’espace — puis garde les titres, notes et dates dans `vela.json`. Rien ne part au démarrage ni en
+arrière-plan ; retirer le profil de l’espace coupe le flux.
+
 Toutes les destinations que Vela contacte elle-même sont listées dans `src/shared/network.ts` et
 reprises dans Réglages › Confidentialité ; le test `network.test.ts` échoue si une adresse apparaît
 dans le code sans y être déclarée.

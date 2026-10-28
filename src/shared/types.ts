@@ -41,6 +41,16 @@ export interface Space {
   background?: import('./space').SpaceBackground
   /** Barre de sites épinglés, propre à l'espace. */
   shortcuts?: import('./space').SpaceShortcut[]
+  /** Liste « À voir » affichée sur l'accueil de cet espace. */
+  watchlist?: boolean
+  /** Compte Letterboxd public : sert à construire des liens et à lire le flux RSS. */
+  letterboxd?: string | null
+  /** Titres de la liste « À voir », gardés sur l'appareil. */
+  watchItems?: import('./space').SpaceWatchItem[]
+  /** Journal Letterboxd importé depuis le flux public, gardé sur l'appareil. */
+  letterboxdLog?: import('./letterboxd').LetterboxdLogEntry[]
+  /** Dernier import réussi du journal ; null tant qu'aucun n'a abouti. */
+  letterboxdLogAt?: number | null
   /** Filtre de traqueurs pour cet espace (défaut : activé). */
   blockTrackers?: boolean
   /** Espace privé : rien n'est conservé, aucune vignette n'est capturée. */
@@ -157,6 +167,8 @@ export interface Settings {
   /** Chaque espace peut porter son propre thème. */
   perSpaceThemes: boolean
   blockTrackers: boolean
+  /** Intensité du filtre quand `blockTrackers` est actif. */
+  blockLevel: 'trackers' | 'strict'
   /** Capture une vignette des pages à la fermeture de l'onglet (désactivé par défaut). */
   thumbnails: boolean
   sidebarCollapsed: boolean
@@ -276,6 +288,10 @@ export interface TabView extends TabState {
   error: string | null
   /** Vue détruite pour libérer la mémoire ; la page se recharge à l’activation. */
   asleep: boolean
+  /** La page joue du son en ce moment. */
+  audible: boolean
+  /** Le son de l’onglet est coupé. */
+  muted: boolean
   /** Hôtes effectivement bloqués sur cette page (les plus fréquents d’abord). */
   blockedHosts: { host: string; count: number }[]
 }

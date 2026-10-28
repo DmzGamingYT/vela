@@ -9,9 +9,12 @@ import {
   avatarImage,
   isSpaceBackground,
   partitionFor,
+  letterboxdUrl,
+  normalizeLetterboxd,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
   sanitizeSpaceShortcuts,
+  sanitizeWatchlist,
   shortcutsForSet,
   suggestShortcutSet
 } from './space'
@@ -80,7 +83,76 @@ describe('modèles d’espace', () => {
 
   it('couvre les usages proposés', () => {
     const labels = SPACE_PRESETS.map((preset) => preset.label)
-    expect(labels).toEqual(expect.arrayContaining(['Travail', 'Vie personnelle', 'Gaming', 'Études']))
+    expect(labels).toEqual(expect.arrayContaining(['Travail', 'Vie personnelle', 'Gaming', 'Études', 'Cinéma']))
+  })
+
+  it('livre un espace cinéma complet, avec ses six sites', () => {
+    const cinema = SPACE_PRESETS.find((preset) => preset.id === 'cinema')
+    expect(cinema).toBeDefined()
+    expect(cinema?.avatar).toBe('icon:clap')
+    expect(sanitizeSpaceAvatar(cinema?.avatar)).toBe('icon:clap')
+    expect(isSpaceBackground(cinema?.background)).toBe(true)
+    const sites = shortcutsForSet('cinema')
+    expect(sites).toHaveLength(6)
+    expect(sites.map((site) => site.title)).toEqual(
+      expect.arrayContaining(['Letterboxd', 'AlloCiné', 'JustWatch'])
+    )
+    // Aucun doublon, et toutes les adresses passent le filtre http(s).
+    expect(new Set(sites.map((site) => site.url)).size).toBe(sites.length)
+  })
+
+  it('reconnaît un espace cinéma d’après son nom', () => {
+    expect(suggestShortcutSet('Cinéma')).toBe('cinema')
+    expect(suggestShortcutSet('Films et séries')).toBe('cinema')
+    expect(suggestShortcutSet('Séries du soir')).toBe('cinema')
+  })
+})
+
+describe('liste à voir', () => {
+  it('nettoie, dédoublonne et garde la marque « vu »', () => {
+    const list = sanitizeWatchlist([
+      { title: '  Dune   partie deux ', watched: true },
+      { title: 'dune partie deux' },
+      { title: '   ' },
+      null,
+      { title: 42 },
+      { title: 'Alien', addedAt: 1700000000000 }
+    ])
+    expect(list.map((item) => item.title)).toEqual(['Dune partie deux', 'Alien'])
+    expect(list[0].watched).toBe(true)
+    expect(list[0].id).toBe(list[0].id)
+    expect(list[1].addedAt).toBe(1700000000000)
+    expect(sanitizeWatchlist('nope')).toEqual([])
+  })
+
+  it('borne un titre très long et la taille de la liste', () => {
+    const long = sanitizeWatchlist([{ title: 'a'.repeat(400) }])
+    expect(long[0].title.length).toBe(120)
+    const many = sanitizeWatchlist(Array.from({ length: 260 }, (_, index) => ({ title: `Film ${index}` })))
+    expect(many).toHaveLength(200)
+  })
+})
+
+describe('compte Letterboxd', () => {
+  it('accepte un nom, un @ ou une adresse complète', () => {
+    expect(normalizeLetterboxd('Alessio')).toBe('alessio')
+    expect(normalizeLetterboxd('@alessio-2')).toBe('alessio-2')
+    expect(normalizeLetterboxd('https://letterboxd.com/ales_sio/')).toBe('ales_sio')
+  })
+
+  it('refuse le reste sans stocker d’adresse', () => {
+    expect(normalizeLetterboxd('deux mots')).toBeNull()
+    expect(normalizeLetterboxd('a')).toBeNull()
+    expect(normalizeLetterboxd('javascript:alert(1)')).toBeNull()
+    expect(normalizeLetterboxd('https://exemple.fr/autre-chose/')).toBeNull()
+    expect(normalizeLetterboxd('')).toBeNull()
+    expect(normalizeLetterboxd(undefined)).toBeNull()
+  })
+
+  it('construit les pages du compte, jamais une adresse libre', () => {
+    expect(letterboxdUrl('alessio', '/films/')).toBe('https://letterboxd.com/alessio/films/')
+    expect(letterboxdUrl(null, '/films/')).toBeNull()
+    expect(letterboxdUrl('deux mots', '/films/')).toBeNull()
   })
 })
 

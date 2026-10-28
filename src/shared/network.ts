@@ -11,6 +11,7 @@ export type FlowCategory =
   | 'meteo'
   | 'recherche'
   | 'tunnel'
+  | 'journal'
   | 'modeles'
   | 'mises-a-jour'
   | 'pages'
@@ -172,6 +173,18 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     off: 'Ne pas lancer la traduction de BD.'
   },
   {
+    id: 'letterboxd-journal',
+    label: 'Journal Letterboxd',
+    target: 'letterboxd.com — flux RSS public du profil',
+    hosts: ['letterboxd.com'],
+    category: 'journal',
+    trigger:
+      'Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.',
+    data:
+      'Le nom du profil public, et la demande du flux. Aucun cookie, aucune session d’espace, aucune autre donnée.',
+    off: 'Ne pas importer, ou retirer le compte Letterboxd de l’espace.'
+  },
+  {
     id: 'favicons',
     label: 'Icônes des sites',
     target: 'Le site concerné, sur son propre domaine',
@@ -199,6 +212,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
  */
 export const USER_OPENED_HOSTS: readonly string[] = [
   'aistudio.google.com',
+  'allocine.fr',
   'app.slack.com',
   'calendar.google.com',
   'chatgpt.com',
@@ -211,8 +225,12 @@ export const USER_OPENED_HOSTS: readonly string[] = [
   'discord.com',
   'drive.google.com',
   'fr.wikipedia.org',
+  'imdb.com',
+  'justwatch.com',
+  'letterboxd.com',
   'linear.app',
   'mail.google.com',
+  'mubi.com',
   'news.ycombinator.com',
   'ollama.com',
   'openclassrooms.com',
@@ -220,6 +238,7 @@ export const USER_OPENED_HOSTS: readonly string[] = [
   'platform.openai.com',
   'play.geforcenow.com',
   'scholar.google.com',
+  'senscritique.com',
   'site-cd854ef5da03437a8f42ade87147e33d.freebuff.page',
   'stackoverflow.com',
   'store.steampowered.com',
@@ -243,6 +262,7 @@ export const LOCAL_ONLY = [
   'Rapports de l’agent en mode démo, simulés sur place',
   'Cartes du tunnel, enregistrées avec l’espace',
   'Photos d’avatar et vignettes des pages récentes, en fichiers dans le dossier de données',
+  'Journal Letterboxd importé : titres, notes et dates restent dans vela.json, lisibles hors ligne',
   'Correction orthographique désactivée : aucun dictionnaire n’est téléchargé'
 ] as const
 

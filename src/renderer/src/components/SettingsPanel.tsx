@@ -1,8 +1,9 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LOCAL_ONLY, NETWORK_FLOWS } from '@shared/network'
-import { SEARCH_ENGINES } from '@shared/url'
 import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
+import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
+import EnginePicker from './EnginePicker'
 import {
   THEME_PRESETS,
   adjustAccent,
@@ -15,7 +16,6 @@ import type {
   AgentMode,
   ProviderId,
   ProviderSettings,
-  SearchEngineId,
   Theme
 } from '@shared/types'
 import { swatchColor } from '../lib/appearance'
@@ -60,7 +60,7 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   agent: { title: 'Comportement', lede: 'Démo locale, ou un fournisseur avec votre propre clé.' },
   notes: { title: 'Notes', lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.' },
   shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis la coque.' },
-  about: { title: 'À propos', lede: 'Vela 0.1 — Electron, React et Chromium.' }
+  about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
 }
 
 const GLASS_OPTIONS: { value: GlassIntensity; label: string }[] = [
@@ -327,12 +327,16 @@ export default function SettingsPanel() {
                     <span
                       className="model-mark"
                       style={{
-                        color: definition.color,
-                        background: `color-mix(in srgb, ${definition.color} 16%, transparent)`,
-                        borderColor: `color-mix(in srgb, ${definition.color} 30%, transparent)`
+                        color: readableTint(definition.color),
+                        background: `color-mix(in srgb, ${readableTint(definition.color)} 16%, transparent)`,
+                        borderColor: `color-mix(in srgb, ${readableTint(definition.color)} 30%, transparent)`
                       }}
                     >
-                      {definition.mark}
+                      {PROVIDER_BRANDS[definition.id] ? (
+                        <BrandMark brand={PROVIDER_BRANDS[definition.id]} size={18} />
+                      ) : (
+                        definition.mark
+                      )}
                     </span>
                     <span className="model-copy">
                       <span className="model-name">
@@ -803,22 +807,16 @@ export default function SettingsPanel() {
                 <h2>Recherche</h2>
                 <p>Le moteur utilisé quand vous tapez une question.</p>
               </div>
-              <div className="setting-row">
-                <label htmlFor="engine">Moteur de recherche</label>
-                <select
-                  id="engine"
-                  className="select"
+              <div className="setting-row setting-row-stacked">
+                <span className="setting-label" id="engine-label">
+                  Moteur de recherche
+                </span>
+                <EnginePicker
                   value={settings.searchEngine}
-                  onChange={(event) =>
-                    void updateSettings({ searchEngine: event.target.value as SearchEngineId })
-                  }
-                >
-                  {Object.entries(SEARCH_ENGINES).map(([id, engine]) => (
-                    <option key={id} value={id}>
-                      {engine.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => void updateSettings({ searchEngine: id })}
+                  labelledBy="engine-label"
+                  compact
+                />
               </div>
               {settings.searchEngine === 'searxng' && (
                 <label className="field">
@@ -906,22 +904,75 @@ export default function SettingsPanel() {
               <h2>Protection</h2>
               <p>Liste locale de domaines publicitaires et de mesure d’audience.</p>
             </div>
-            <div className="setting-row">
+            <div className="setting-row setting-row-top">
               <div>
-                <label>Bloquer les traqueurs</label>
-                <p className="setting-hint">{view.blockedTotal} requêtes bloquées cette session.</p>
+                <label id="block-level-label">Niveau de blocage</label>
+                <p className="setting-hint">
+                  {view.blockedTotal} requêtes arrêtées cette session.{' '}
+                  {!settings.blockTrackers
+                    ? 'Rien n’est filtré pour l’instant.'
+                    : settings.blockLevel === 'strict'
+                      ? 'Renforcé : les scripts et cadres d’un autre site sont arrêtés aussi.'
+                      : 'Standard : la liste locale de publicités et de traqueurs.'}
+                </p>
               </div>
-              <button
-                type="button"
-                className="switch"
-                role="switch"
-                aria-checked={settings.blockTrackers}
-                data-on={settings.blockTrackers}
-                onClick={() => void updateSettings({ blockTrackers: !settings.blockTrackers })}
-              >
-                <span />
-              </button>
+              <div className="segmented" role="radiogroup" aria-labelledby="block-level-label">
+                {[
+                  { id: 'off', label: 'Aucun' },
+                  { id: 'trackers', label: 'Traqueurs' },
+                  { id: 'strict', label: 'Renforcé' }
+                ].map((entry) => {
+                  const current = !settings.blockTrackers
+                    ? 'off'
+                    : settings.blockLevel === 'strict'
+                      ? 'strict'
+                      : 'trackers'
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={current === entry.id}
+                      className="segment"
+                      data-active={current === entry.id}
+                      onClick={() => {
+                        if (entry.id === 'off') void updateSettings({ blockTrackers: false })
+                        else void updateSettings({ blockTrackers: true, blockLevel: entry.id as 'trackers' | 'strict' })
+                      }}
+                    >
+                      {entry.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+            {(() => {
+              const domains = new Set(
+                view.tabs.flatMap((tab) => tab.blockedHosts.map((entry) => entry.host))
+              ).size
+              return (
+                <div
+                  className="protection-stats"
+                  role="group"
+                  aria-label="Statistiques du bloqueur depuis le lancement"
+                >
+                  <div>
+                    <span className="protection-stat-value">{view.blockedTotal}</span>
+                    <span className="protection-stat-label">Requêtes arrêtées</span>
+                  </div>
+                  <div>
+                    <span className="protection-stat-value">{domains}</span>
+                    <span className="protection-stat-label">Domaines concernés</span>
+                  </div>
+                  <div>
+                    <span className="protection-stat-value">
+                      {view.tabs.filter((tab) => tab.blocked > 0).length}
+                    </span>
+                    <span className="protection-stat-label">Onglets filtrés</span>
+                  </div>
+                </div>
+              )
+            })()}
             <div className="setting-row">
               <div>
                 <label>Permissions des pages</label>
@@ -1083,7 +1134,7 @@ export default function SettingsPanel() {
             <div className="about-hero">
               <span className="about-mark">Vela</span>
               <div>
-                <strong>Vela {update?.currentVersion || '0.1'}</strong>
+                <strong>Vela {update?.currentVersion ?? ''}</strong>
                 <p className="setting-hint">
                   Navigateur de travail — Electron, React et Chromium. Aucune télémétrie, aucun compte,
                   aucune synchronisation.
@@ -1130,7 +1181,13 @@ export default function SettingsPanel() {
               </div>
               <div>
                 <span>Bloqueur</span>
-                <strong>{settings.blockTrackers ? 'Actif' : 'Désactivé'}</strong>
+                <strong>
+                  {!settings.blockTrackers
+                    ? 'Désactivé'
+                    : settings.blockLevel === 'strict'
+                      ? 'Renforcé'
+                      : 'Traqueurs'}
+                </strong>
               </div>
               <div>
                 <span>Données</span>
@@ -1157,10 +1214,15 @@ export default function SettingsPanel() {
         <div className="settings-layout">
           <aside className="settings-nav">
             <div className="settings-nav-brand">
-              <span className="wordmark">
-                Vela<span className="wordmark-dot">.</span>
+              <span className="brand-lockup" aria-label="Vela">
+                <VelaMark size={19} />
+                <span className="wordmark" aria-hidden="true">
+                  Vela<span className="wordmark-dot">.</span>
+                </span>
               </span>
-              <span className="settings-nav-version">0.1</span>
+              <span className="settings-nav-version" title={`Vela ${update?.currentVersion ?? ''}`}>
+                {update?.currentVersion ?? ''}
+              </span>
             </div>
             <div className="settings-nav-scroll">
               {NAV.map((group) => (
@@ -1199,7 +1261,11 @@ export default function SettingsPanel() {
                 <Icon name="close" size={17} />
               </button>
             </header>
-            <div className="settings-scroll">{renderPage()}</div>
+            {/* La clé remonte le panneau à chaque section : l’animation d’entrée
+                signale le changement sans faire sauter le défilement du parent. */}
+            <div className="settings-scroll" key={page}>
+              {renderPage()}
+            </div>
           </div>
         </div>
       </div>

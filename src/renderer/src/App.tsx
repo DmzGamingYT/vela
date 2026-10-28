@@ -129,7 +129,10 @@ export default function App() {
         {overlay === 'history' && <HistoryPanel />}
         {overlay === 'bookmarks' && <BookmarksPanel />}
         {overlay === 'protection' && <ProtectionPanel />}
-        {!onboarded && <Onboarding />}
+        {/* L’accueil se retire le temps d’un panneau : sans cela, il recouvrait
+            les réglages ouverts depuis « Votre clé ou Ollama » et le bouton
+            semblait ne rien faire. */}
+        {!onboarded && !overlay && <Onboarding />}
       </Suspense>
       <Toasts />
     </div>

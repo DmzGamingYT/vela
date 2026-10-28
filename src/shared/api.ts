@@ -55,6 +55,9 @@ export interface CreateSpaceInput {
   avatar?: string | null
   background?: import('./space').SpaceBackground
   shortcuts?: import('./space').SpaceShortcut[]
+  watchlist?: boolean
+  letterboxd?: string | null
+  watchItems?: import('./space').SpaceWatchItem[]
   blockTrackers?: boolean
   theme?: string | null
 }
@@ -67,6 +70,9 @@ export interface UpdateSpaceInput {
   avatar?: string | null
   background?: import('./space').SpaceBackground
   shortcuts?: import('./space').SpaceShortcut[]
+  watchlist?: boolean
+  letterboxd?: string | null
+  watchItems?: import('./space').SpaceWatchItem[]
   blockTrackers?: boolean
 }
 
@@ -114,6 +120,7 @@ export interface SettingsPatch {
   hourTheme?: boolean
   perSpaceThemes?: boolean
   blockTrackers?: boolean
+  blockLevel?: 'trackers' | 'strict'
   thumbnails?: boolean
   sidebarCollapsed?: boolean
   onboarded?: boolean
@@ -193,6 +200,15 @@ export interface NoteTranscriptionResult {
   detail?: string
 }
 
+export interface LetterboxdImportResult {
+  ok: boolean
+  /** Entrées du journal gardées après l'import (0 en cas d'échec). */
+  count: number
+  /** Horodatage du dernier import réussi, null sinon. */
+  at: number | null
+  reason?: 'no-space' | 'no-profile' | 'not-found' | 'private' | 'offline' | 'timeout' | 'empty' | 'failed'
+}
+
 export interface VelaApi {
   platform: string
   /** Architecture du processus (arm64, x64) — utile pour le bundle universel. */
@@ -202,6 +218,14 @@ export interface VelaApi {
   avatars: {
     /** Data URL de la photo, ou null si le fichier a disparu. */
     read(name: string): Promise<string | null>
+  }
+  /** Journal Letterboxd, lu depuis le flux RSS public du profil. */
+  letterboxd: {
+    /**
+     * Demande `letterboxd.com/<profil>/rss/` et garde le journal dans l'espace.
+     * Sortie réseau unique, décrite dans l'audit et la page Confidentialité.
+     */
+    import(spaceId: string): Promise<LetterboxdImportResult>
   }
   /** Vignettes des pages récentes, en fichiers locaux. */
   thumbs: {
@@ -231,6 +255,7 @@ export interface VelaApi {
     zoom(id: string, direction: 'in' | 'out' | 'reset'): Promise<void>
     stop(id: string): Promise<void>
     pin(id: string, pinned: boolean): Promise<void>
+    mute(id: string, muted: boolean): Promise<void>
     reopen(): Promise<void>
     splitToggle(): Promise<void>
     splitSet(id: string): Promise<void>

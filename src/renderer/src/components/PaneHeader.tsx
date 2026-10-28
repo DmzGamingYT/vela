@@ -134,7 +134,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             <Icon name="sparkles" size={12} /> Envoyée au modèle
           </span>
         )}
-        <span className="address-hint">{shortcut('L')}</span>
+        {!home && <span className="address-hint">{shortcut('L')}</span>}
       </form>
 
       <div className="pane-actions">

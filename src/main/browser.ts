@@ -39,11 +39,15 @@ import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import { isThemeId, parseHex } from '@shared/theme'
 import {
+  normalizeLetterboxd,
   partitionFor,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
-  sanitizeSpaceShortcuts
+  sanitizeSpaceShortcuts,
+  sanitizeWatchlist
 } from '@shared/space'
+import { sanitizeLetterboxdLog } from '@shared/letterboxd'
+import { fetchLetterboxdLog } from './letterboxd'
 import {
   HOME_URL,
   type AppView,
@@ -117,6 +121,16 @@ function isPane(value: unknown): value is PaneRect {
       Number.isFinite(pane.height)
   )
 }
+
+/** Raccourcis qui ouvrent une surface de l'interface et attendent le clavier. */
+const UI_SHORTCUTS: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
+  'command',
+  'address',
+  'settings',
+  'history',
+  'bookmarks',
+  'brief'
+])
 
 export class Browser {
   readonly store: Store
@@ -290,6 +304,19 @@ export class Browser {
   }
 
   sendShortcut(action: ShortcutAction): void {
+    // Les surfaces de l'interface (palette, barre d'adresse, réglages…) ont
+    // besoin du clavier. Quand une page a le focus, elle le garde sinon : la
+    // palette s'ouvrait sans recevoir les frappes.
+    if (UI_SHORTCUTS.has(action)) {
+      const win = this.win
+      if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+        // Une vue de page garde le focus : sans ce retrait, la palette s'ouvre
+        // mais les frappes partent dans la page.
+        this.tabs.releaseFocus()
+        if (!win.isFocused()) win.focus()
+        win.webContents.focus()
+      }
+    }
     const event: ShortcutEvent = { action }
     this.send('shortcut', event)
   }
@@ -706,6 +733,11 @@ export class Browser {
     space.background = sanitizeSpaceBackground(payload.background)
     space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
     space.blockTrackers = payload.blockTrackers !== false
+    space.watchlist = payload.watchlist === true
+    space.letterboxd = normalizeLetterboxd(payload.letterboxd)
+    space.watchItems = sanitizeWatchlist(payload.watchItems)
+    space.letterboxdLog = []
+    space.letterboxdLogAt = null
     if (isThemeId(payload.theme)) space.theme = payload.theme
     const tab = createTabState(space.id, now)
     state.spaces.push(space)
@@ -730,6 +762,9 @@ export class Browser {
     if ('avatar' in payload) space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
     if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
     if ('shortcuts' in payload) space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
+    if ('watchlist' in payload) space.watchlist = payload.watchlist === true
+    if ('letterboxd' in payload) space.letterboxd = normalizeLetterboxd(payload.letterboxd)
+    if ('watchItems' in payload) space.watchItems = sanitizeWatchlist(payload.watchItems)
     if (typeof payload.blockTrackers === 'boolean') space.blockTrackers = payload.blockTrackers
     this.store.schedule()
     this.pruneAvatars()
@@ -914,6 +949,9 @@ export class Browser {
       if (typeof input.hourTheme === 'boolean') settings.hourTheme = input.hourTheme
       if (typeof input.perSpaceThemes === 'boolean') settings.perSpaceThemes = input.perSpaceThemes
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
+      if (input.blockLevel === 'trackers' || input.blockLevel === 'strict') {
+        settings.blockLevel = input.blockLevel
+      }
       if (typeof input.thumbnails === 'boolean') settings.thumbnails = input.thumbnails
       if (typeof input.sidebarCollapsed === 'boolean') settings.sidebarCollapsed = input.sidebarCollapsed
       if (typeof (input as { onboarded?: unknown }).onboarded === 'boolean') {
@@ -1167,6 +1205,22 @@ export class Browser {
       this.activateSpace(asId(payload))
       return this.view()
     })
+    // Import du journal Letterboxd : une seule sortie réseau, documentée dans
+    // l'audit. Aucun cookie, aucune session d'espace réutilisée.
+    handle('letterboxd:import', async (payload) => {
+      const space = this.store.get().spaces.find((item) => item.id === asId(payload))
+      if (!space) return { ok: false, count: 0, at: null, reason: 'no-space' }
+      const kept = space.letterboxdLog?.length ?? 0
+      const result = await fetchLetterboxdLog(space.letterboxd)
+      if (!result.ok) {
+        return { ok: false, count: kept, at: space.letterboxdLogAt ?? null, reason: result.reason }
+      }
+      space.letterboxdLog = sanitizeLetterboxdLog(result.entries)
+      space.letterboxdLogAt = Date.now()
+      this.store.schedule()
+      this.broadcast()
+      return { ok: true, count: space.letterboxdLog.length, at: space.letterboxdLogAt }
+    })
 
     handle('tab:create', (payload) => this.createTab((payload ?? {}) as CreateTabInput))
     handle('tab:close', (payload) => this.closeTab(asId(payload)))
@@ -1208,6 +1262,11 @@ export class Browser {
     })
     handle('tab:pin', (payload) => {
       this.pinTab(payload)
+    })
+    handle('tab:mute', (payload) => {
+      const input = (payload ?? {}) as { id?: unknown; muted?: unknown }
+      const id = asId(input.id)
+      if (id) this.tabs.setMuted(id, input.muted === true)
     })
     handle('tab:reopen', () => {
       this.reopenTab()

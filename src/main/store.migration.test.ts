@@ -294,3 +294,29 @@ describe('migration des favoris au démarrage', () => {
     expect(backups(dir)).toHaveLength(0)
   })
 })
+
+describe('niveau de blocage', () => {
+  it('ouvre un fichier sans niveau en mode traqueurs', () => {
+    const dir = tempDir()
+    const store = new Store(dir)
+    store.flush()
+    const reopened = new Store(dir)
+    expect(reopened.get().settings.blockLevel).toBe('trackers')
+    expect(reopened.get().settings.blockTrackers).toBe(true)
+  })
+
+  it('garde le mode renforcé et refuse une valeur inconnue', () => {
+    const dir = tempDir()
+    const store = new Store(dir)
+    store.update((state) => {
+      state.settings.blockLevel = 'strict'
+    })
+    store.flush()
+    expect(new Store(dir).get().settings.blockLevel).toBe('strict')
+
+    const raw = JSON.parse(readFileSync(join(dir, 'vela.json'), 'utf8'))
+    raw.settings.blockLevel = 'tout'
+    writeFileSync(join(dir, 'vela.json'), JSON.stringify(raw), 'utf8')
+    expect(new Store(dir).get().settings.blockLevel).toBe('trackers')
+  })
+})
