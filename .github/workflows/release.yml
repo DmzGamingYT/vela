@@ -46,8 +46,26 @@ jobs:
             echo "Nouvelle version v$VERSION — build et publication."
           fi
 
+  # Vérifications systématiques : les types et les tests passent avant qu'un
+  # seul installateur soit construit. Ce travail tourne à chaque poussée sur
+  # `main`, même quand aucune release n'est à produire, pour que le site et
+  # les flux réseau restent vérifiés en continu.
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Vérifier les types
+        run: npm run typecheck
+      - name: Lancer les tests
+        run: npm test
+
   build-mac:
-    needs: version
+    needs: [version, checks]
     if: needs.version.outputs.publish == 'true'
     runs-on: macos-latest
     steps:
@@ -160,7 +178,7 @@ jobs:
             release/mac/latest-mac.yml
 
   build-win:
-    needs: version
+    needs: [version, checks]
     if: needs.version.outputs.publish == 'true'
     runs-on: windows-latest
     steps:
@@ -181,7 +199,7 @@ jobs:
             release/win/latest.yml
 
   build-linux:
-    needs: version
+    needs: [version, checks]
     if: needs.version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -203,7 +221,7 @@ jobs:
             release/linux/latest-linux.yml
 
   publish:
-    needs: [version, build-mac, build-win, build-linux]
+    needs: [version, checks, build-mac, build-win, build-linux]
     if: needs.version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:

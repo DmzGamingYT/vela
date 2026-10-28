@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confidentialité — Vela</title>
+    <meta
+      name="description"
+      content="Toutes les destinations que Vela contacte d’elle-même : météo, moteur de recherche, tunnel, modèles, mises à jour, icônes. Et tout ce qui reste sur l’appareil."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Confidentialité — Vela" />
+    <meta property="og:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      ;(() => {
+        let theme = 'light'
+        let accent = '#5b56d6'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
+          const storedAccent = localStorage.getItem('vela-site-accent')
+          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
+        } catch (error) {
+          /* stockage indisponible */
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.setProperty('--accent', accent)
+      })()
+    </script>
+    <link rel="stylesheet" href="/base.css" />
+    <link rel="stylesheet" href="/pages.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4.2" />
+        <path d="M12 2.4v2.2M12 19.4v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20.5 13.4A8.6 8.6 0 1 1 10.6 3.5a7 7 0 0 0 9.9 9.9Z" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 8h16M4 16h16" />
+      </symbol>
+    </svg>
+
+    <div class="head-wrap">
+      <header class="head">
+        <a class="brand" href="/" aria-label="Vela, accueil">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+              <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+              <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width=".9" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="brand-name">Vela</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Sections">
+          <a href="/navigateur">Le navigateur</a>
+          <a href="/confidentialite" aria-current="page">Confidentialité</a>
+          <a href="/aide">Aide</a>
+          <a href="/nouveautes">Nouveautés</a>
+        </nav>
+
+        <div class="head-actions">
+          <button class="icon-btn" type="button" data-theme-toggle aria-label="Passer au thème sombre" aria-pressed="false">
+            <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <a class="btn btn-solid" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger
+          </a>
+          <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
+            <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
+      </header>
+    </div>
+
+    <main id="contenu">
+      <section class="page-head">
+        <div class="wrap">
+          <p class="eyebrow">Confidentialité</p>
+          <h1>Ce qui reste ici, ce qui sort.</h1>
+          <p class="lede">
+            Aucun compte Vela, aucun serveur Vela, aucune mesure d’audience. Cette page liste les
+            destinations que Vela contacte d’elle-même, et ce qu’elle envoie à chacune. La liste est
+            celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
+          </p>
+          <p class="meta">
+            <span>Version 0.3.13</span>
+            <span>13 flux décrits</span>
+            <span>Sources du code</span>
+          </p>
+          <nav class="sommaire" aria-label="Sections">
+            <a href="#appareil">Sur l’appareil</a>
+            <a href="#reseau">Vers le réseau</a>
+            <a href="#cles">Clés et comptes</a>
+            <a href="#jamais">Ce qui ne sort jamais</a>
+          </nav>
+        </div>
+      </section>
+
+      <div class="wrap section" style="padding-top: 56px">
+        <section class="chapter" id="appareil" style="border-bottom: 0">
+          <h2>Sur votre appareil</h2>
+          <p class="lede">
+            Tout ce qui suit vit dans votre dossier de données. Rien de cette liste n’est envoyé à
+            Vela : il n’existe aucun serveur Vela pour le recevoir.
+          </p>
+
+          <div class="table-wrap">
+            <table class="table">
+              <caption>Stockage local</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Fichier ou dossier</th>
+                  <th scope="col">Ce qu’il contient</th>
+                  <th scope="col">Comment l’effacer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest">vela.json</td>
+                  <td>Espaces, onglets, historique, favoris, réglages, cartes du tunnel et journal Letterboxd importé.</td>
+                  <td>Réglages › Données, ou supprimer le fichier.</td>
+                </tr>
+                <tr>
+                  <td class="dest">notes/</td>
+                  <td>Notes Markdown, surlignages rattachés à la page, croquis et notes vocales en fichiers audio.</td>
+                  <td>Supprimer une note depuis l’interface, ou le dossier.</td>
+                </tr>
+                <tr>
+                  <td class="dest">avatars/</td>
+                  <td>Photos d’avatar importées, en fichiers, plus leur miniature dans <code>vela.json</code>.</td>
+                  <td>Changer d’avatar dans la fenêtre d’espace.</td>
+                </tr>
+                <tr>
+                  <td class="dest">vignettes/</td>
+                  <td>Vignettes des pages récentes, prises à la fermeture de l’onglet.</td>
+                  <td>Réglages › Confidentialité › Vider les vignettes.</td>
+                </tr>
+                <tr>
+                  <td class="dest">icônes/</td>
+                  <td>Cache local des favicons, par domaine, gardé sept jours.</td>
+                  <td>Réglages › Confidentialité › Vider le cache des icônes.</td>
+                </tr>
+                <tr>
+                  <td class="dest">Trousseau du système</td>
+                  <td>Clés des fournisseurs de modèles. Elles ne sont jamais renvoyées à l’interface ni écrites dans <code>vela.json</code>.</td>
+                  <td>Réglages › Modèles, ou le trousseau du système.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="chapter" id="reseau" style="padding-top: 56px">
+          <h2>Vers le réseau</h2>
+          <p class="lede">
+            Chaque ligne dit la destination, ce qui déclenche la requête, les données réellement
+            envoyées et le moyen de l’éviter. Aucune ligne n’est omise.
+          </p>
+                    <h2 class="group-title">Météo de l’accueil</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Recherche de ville</span>geocoding-api.open-meteo.com</td>
+                  <td>Quand vous validez une ville sur l’accueil.</td>
+                  <td>Le nom de la ville saisi et la langue de recherche. Rien d’autre.</td>
+                  <td class="off">Le bouton Retirer, à côté de la ville.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><span class="name">Relevé météo</span>api.open-meteo.com</td>
+                  <td>À l’ouverture de l’accueil, une fois une ville choisie, puis au plus une fois par demi-heure (relevé gardé sur l’appareil).</td>
+                  <td>La latitude et la longitude de la ville. Aucun identifiant, aucune adresse.</td>
+                  <td class="off">Le bouton Retirer, à côté de la ville.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Moteur de recherche</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Connexion au moteur</span>Le moteur de recherche choisi<span class="hosts">duckduckgo.com · search.brave.com · www.startpage.com · www.google.com · www.bing.com · www.ecosia.org · www.qwant.com · searx.be</span></td>
+                  <td>Au démarrage et à chaque changement de moteur.</td>
+                  <td>Une connexion TLS ouverte vers le moteur, sans requête ni terme recherché.</td>
+                  <td class="off">Choisir un autre moteur : la connexion ne part que vers celui-là.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><span class="name">Recherche</span>Le moteur de recherche choisi<span class="hosts">duckduckgo.com · search.brave.com · www.startpage.com · www.google.com · www.bing.com · www.ecosia.org · www.qwant.com · searx.be</span></td>
+                  <td>Quand vous validez une recherche dans le champ d’adresse ou sur l’accueil.</td>
+                  <td>Les mots recherchés. C’est le moteur qui les reçoit, pas Vela.</td>
+                  <td class="off">Taper une adresse au lieu d’une recherche, ou changer de moteur.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Tunnel de recherche</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Tunnel de recherche</span>DuckDuckGo, Wikipédia, Hacker News, arXiv, GDELT<span class="hosts">html.duckduckgo.com · wikipedia.org · hn.algolia.com · export.arxiv.org · api.gdeltproject.org</span></td>
+                  <td>Quand vous lancez un tunnel de recherche en mode Travail.</td>
+                  <td>La requête et la langue. Chaque fournisseur ne reçoit que la requête.</td>
+                  <td class="off">Ne pas lancer de tunnel.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><span class="name">Pages citées par le tunnel</span>Les sites retenus par les résultats</td>
+                  <td>Pendant un tunnel, pour vérifier chaque source et en lire un extrait.</td>
+                  <td>La page publique demandée, comme un navigateur ; aucun onglet n’est ouvert.</td>
+                  <td class="off">Ne pas lancer de tunnel.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Modèles et agent</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Modèle choisi</span>Le fournisseur configuré dans Réglages › Modèles<span class="hosts">api.openai.com · api.anthropic.com · generativelanguage.googleapis.com · api.x.ai · api.mistral.ai · api.deepseek.com · api.groq.com · api.cerebras.ai · openrouter.ai · translation.googleapis.com</span></td>
+                  <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.</td>
+                  <td>Votre demande, le texte des onglets joints ou de la note, et la clé dans l’en-tête. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
+                  <td class="off">Rester en démo locale, ou brancher un serveur local.</td>
+                </tr>
+                <tr class="is-local">
+                  <td class="dest"><span class="name">Serveur local</span>localhost:11434 (Ollama) ou votre endpoint local<span class="off">Sur votre machine</span></td>
+                  <td>Même actions, avec le fournisseur Local, transcription des notes vocales comprise.</td>
+                  <td>Rien ne quitte la machine : le modèle et l’audio restent sur localhost.</td>
+                  <td class="off">Rien à couper : ce serveur est déjà sur votre machine.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Journal Letterboxd</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Journal Letterboxd</span>letterboxd.com — flux RSS public du profil</td>
+                  <td>Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.</td>
+                  <td>Le nom du profil public, et la demande du flux. Aucun cookie, aucune session d’espace, aucune autre donnée.</td>
+                  <td class="off">Ne pas importer, ou retirer le compte Letterboxd de l’espace.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Mises à jour</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Mises à jour</span>github.com — releases de Vela<span class="hosts">objects.githubusercontent.com · release-assets.githubusercontent.com</span></td>
+                  <td>Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.</td>
+                  <td>La version installée et la plateforme. Sur macOS, le fichier .dmg de la nouvelle version est ensuite téléchargé en entier. Aucun identifiant, aucun réglage.</td>
+                  <td class="off">Aucun réglage : la requête a lieu.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Pages et icônes</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Icônes des sites</span>Le site concerné, sur son propre domaine</td>
+                  <td>Affichage d’un épinglé ou d’un favori dont l’icône n’est pas encore connue.</td>
+                  <td>Une requête d’icône vers le site lui-même. Aucun service tiers.</td>
+                  <td class="off">Rien à couper : la requête ne vise que le site concerné.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><span class="name">Pages visitées</span>Les sites que vous ouvrez</td>
+                  <td>Chaque navigation, chaque rechargement.</td>
+                  <td>La requête normale du navigateur, avec les cookies de l’espace actif.</td>
+                  <td class="off">Fermer l’onglet, ou ne pas ouvrir la page.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="group-title">Lecture des planches</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Déclencheur</th>
+                  <th scope="col">Ce qui part</th>
+                  <th scope="col">Comment l’éviter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><span class="name">Lecture des planches</span>cdn.jsdelivr.net</td>
+                  <td>Quand vous lancez la traduction d’une planche de BD.</td>
+                  <td>Aucune donnée : téléchargement du moteur de reconnaissance de texte, une fois.</td>
+                  <td class="off">Ne pas lancer la traduction de BD.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="chapter" id="cles" style="padding-top: 56px">
+          <h2>Clés et comptes</h2>
+          <p class="lede">
+            Vela n’a pas de compte. La seule identité demandée est celle de votre fournisseur de
+            modèle, si vous en branchez un.
+          </p>
+          <ul class="ticks">
+            <li>Les clés vivent dans le trousseau du système, jamais dans un fichier du projet.</li>
+            <li>Un modèle local, Ollama ou un endpoint sur localhost, ne fait sortir aucune donnée.</li>
+            <li>En mode démo, aucun modèle n’est appelé : le rapport de l’agent est simulé sur place.</li>
+            <li>Une note vocale ne part vers un fournisseur distant qu’après votre confirmation explicite.</li>
+          </ul>
+        </section>
+
+        <section class="chapter" id="jamais" style="padding-top: 56px">
+          <h2>Ce qui ne sort jamais</h2>
+          <ul class="ticks">
+            <li>Vos onglets, votre historique et vos espaces, sauf la page que vous ouvrez elle-même.</li>
+            <li>Vos notes, vos surlignages et vos enregistrements, hors transcription demandée.</li>
+            <li>Un identifiant d’utilisateur : il n’y en a pas.</li>
+            <li>Des mesures d’audience : aucun script de mesure n’est chargé par Vela.</li>
+            <li>Les icônes des sites ne passent jamais par un service tiers : la requête va au site concerné.</li>
+          </ul>
+          <p class="lede" style="margin-top: 22px">
+            Les fichiers exacts et leur emplacement sont décrits dans le
+            <a href="https://github.com/DmzGamingYT/vela#donn%C3%A9es">README du dépôt</a>.
+          </p>
+        </section>
+      </div>
+
+      <section class="page-cta">
+        <div class="wrap">
+          <h2>Vérifier plutôt que croire.</h2>
+          <p>Le code est public : chaque flux ci-dessus a son test.</p>
+          <a class="btn btn-ghost btn-big" href="https://github.com/DmzGamingYT/vela/blob/main/src/shared/network.ts">
+            Lire la liste dans le dépôt
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-top">
+          <div>
+            <p><span class="brand-name">Vela</span></p>
+            <p>Le web, votre atelier. macOS, Windows, Linux.</p>
+          </div>
+          <nav class="foot-links" aria-label="Pied de page">
+            <a href="/navigateur">Le navigateur</a>
+            <a href="/confidentialite">Confidentialité</a>
+            <a href="/aide">Aide</a>
+            <a href="/nouveautes">Nouveautés</a>
+            <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
+          </nav>
+        </div>
+        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+      </div>
+    </footer>
+
+    <script src="/site.js" defer></script>
+  </body>
+</html>

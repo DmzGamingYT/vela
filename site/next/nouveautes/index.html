@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nouveautés — Vela</title>
+    <meta
+      name="description"
+      content="Ce que chaque version de Vela a apporté, de la 0.3.4 à la 0.3.13 : espaces, rail compact, petite fenêtre, notes liées, journal Letterboxd, marque et réglages."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Nouveautés — Vela" />
+    <meta property="og:description" content="Dix versions, une ligne chacune." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      ;(() => {
+        let theme = 'light'
+        let accent = '#5b56d6'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
+          const storedAccent = localStorage.getItem('vela-site-accent')
+          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
+        } catch (error) {
+          /* stockage indisponible */
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.setProperty('--accent', accent)
+      })()
+    </script>
+    <link rel="stylesheet" href="/base.css" />
+    <link rel="stylesheet" href="/pages.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4.2" />
+        <path d="M12 2.4v2.2M12 19.4v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20.5 13.4A8.6 8.6 0 1 1 10.6 3.5a7 7 0 0 0 9.9 9.9Z" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 8h16M4 16h16" />
+      </symbol>
+    </svg>
+
+    <div class="head-wrap">
+      <header class="head">
+        <a class="brand" href="/" aria-label="Vela, accueil">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+              <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+              <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width=".9" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="brand-name">Vela</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Sections">
+          <a href="/navigateur">Le navigateur</a>
+          <a href="/confidentialite">Confidentialité</a>
+          <a href="/aide">Aide</a>
+          <a href="/nouveautes" aria-current="page">Nouveautés</a>
+        </nav>
+
+        <div class="head-actions">
+          <button class="icon-btn" type="button" data-theme-toggle aria-label="Passer au thème sombre" aria-pressed="false">
+            <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <a class="btn btn-solid" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger
+          </a>
+          <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
+            <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
+      </header>
+    </div>
+
+    <main id="contenu">
+      <section class="page-head">
+        <div class="wrap">
+          <p class="eyebrow">Nouveautés</p>
+          <h1>Dix versions, dix changements.</h1>
+          <p class="lede">
+            Vela se construit une version à la fois. Chaque ligne dit ce qui a réellement changé, et
+            renvoie aux notes complètes de la version.
+          </p>
+          <p class="meta"><span>Version courante 0.3.13</span><span>Depuis la 0.3.4</span></p>
+        </div>
+      </section>
+
+      <div class="wrap section" style="padding-top: 40px; padding-bottom: 40px">
+        <ol class="timeline">
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.13">0.3.13</a>
+            <div>
+              <h2>Une marque, des réglages rangés, une confidentialité en tableau</h2>
+              <p>
+                L’icône devient la voile, le soleil et la vague, dans l’app comme sur le site. Les
+                réglages se resserrent : dix thèmes en deux rangées pleines, raccourcis groupés et
+                filtrables, « Comportement » fondu dans « Modèles ». Confidentialité passe en tableau
+                dense avec l’état réel de chaque flux.
+              </p>
+              <p class="tags"><span>marque</span><span>réglages</span><span>confidentialité</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.12">0.3.12</a>
+            <div>
+              <h2>Le journal Letterboxd et un bouclier à trois niveaux</h2>
+              <p>
+                Un profil Letterboxd s’importe par son flux public, avec sa ligne dans
+                Confidentialité et son entrée d’audit. Le blocage passe par aucun, traqueurs ou
+                strict, avec ses compteurs par onglet.
+              </p>
+              <p class="tags"><span>cinéma</span><span>blocage</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.11">0.3.11</a>
+            <div>
+              <h2>Démarrage plus court, mémoire sous contrôle</h2>
+              <p>
+                Les panneaux ne se chargent qu’à leur ouverture, l’onglet récent ne se recharge plus,
+                et un défaut de veille qui faisait tomber l’app après quelques onglets est corrigé.
+              </p>
+              <p class="tags"><span>performance</span><span>fiabilité</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.10">0.3.10</a>
+            <div>
+              <h2>La petite fenêtre à l’échelle de Vela</h2>
+              <p>
+                La moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre, plus un filet
+                de chargement sous la barre : les sites servent enfin leur mise en page bureau.
+              </p>
+              <p class="tags"><span>petite fenêtre</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.9">0.3.9</a>
+            <div>
+              <h2>La petite fenêtre, et des mises à jour qui ne demandent plus rien</h2>
+              <p>
+                <kbd>⌘⌥</kbd> + clic ouvre un lien au centre, sans nouvel onglet. Les mises à jour se
+                téléchargent en arrière-plan. Les onglets du tunnel se ferment et la vue scindée reste
+                dans le tunnel.
+              </p>
+              <p class="tags"><span>petite fenêtre</span><span>mises à jour</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.8">0.3.8</a>
+            <div>
+              <h2>Notes liées, note vocale, macOS universel</h2>
+              <p>
+                Les notes se citent avec <code>[[Titre]]</code>, une note vocale s’enregistre et se
+                relit sur l’appareil, et un seul <code>.dmg</code> couvre Apple silicon et Intel.
+              </p>
+              <p class="tags"><span>notes</span><span>audio</span><span>macOS</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.7">0.3.7</a>
+            <div>
+              <h2>Épinglés déplaçables au clavier</h2>
+              <p>
+                <kbd>Alt</kbd> + flèches range les cases sans lâcher le clavier, et la page
+                Confidentialité dit la vérité sur la mise à jour macOS.
+              </p>
+              <p class="tags"><span>clavier</span><span>accessibilité</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.6">0.3.6</a>
+            <div>
+              <h2>Le rail en cases compactes</h2>
+              <p>
+                Épinglés et favoris se réduisent au favicon, avec une infobulle au survol ; les
+                onglets normaux gardent leur ligne complète.
+              </p>
+              <p class="tags"><span>barre latérale</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.5">0.3.5</a>
+            <div>
+              <h2>Une barre de sites par espace</h2>
+              <p>
+                Chaque espace garde ses raccourcis, son ordre et ses transferts, sans jamais emporter
+                les cookies d’un autre espace.
+              </p>
+              <p class="tags"><span>espaces</span><span>épinglés</span></p>
+            </div>
+          </li>
+
+          <li>
+            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.4">0.3.4</a>
+            <div>
+              <h2>La fenêtre d’espace</h2>
+              <p>
+                Avatar, teinte, ambiance de fond et six modèles — Travail, Vie personnelle, Gaming,
+                Études, Développement, Cinéma — avec leurs cookies isolés.
+              </p>
+              <p class="tags"><span>espaces</span></p>
+            </div>
+          </li>
+        </ol>
+
+        <p class="lede" style="margin-top: 28px">
+          L’accueil qui respire est arrivé dans la 0.3.3, le tunnel de recherche dans la 0.3.1, les dix
+          thèmes de couleur avant. Tout l’historique est dans les
+          <a href="https://github.com/DmzGamingYT/vela/releases">notes de version</a>.
+        </p>
+      </div>
+
+      <section class="page-cta">
+        <div class="wrap">
+          <h2>La 0.3.13 est prête.</h2>
+          <p>Les mises à jour suivantes arrivent seules.</p>
+          <a class="btn btn-solid btn-big" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger Vela 0.3.13
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-top">
+          <div>
+            <p><span class="brand-name">Vela</span></p>
+            <p>Le web, votre atelier. macOS, Windows, Linux.</p>
+          </div>
+          <nav class="foot-links" aria-label="Pied de page">
+            <a href="/navigateur">Le navigateur</a>
+            <a href="/confidentialite">Confidentialité</a>
+            <a href="/aide">Aide</a>
+            <a href="/nouveautes">Nouveautés</a>
+            <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
+          </nav>
+        </div>
+        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+      </div>
+    </footer>
+
+    <script src="/site.js" defer></script>
+  </body>
+</html>

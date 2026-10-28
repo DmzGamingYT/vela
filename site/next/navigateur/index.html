@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Le navigateur — Vela</title>
+    <meta
+      name="description"
+      content="Onglets verticaux, mode Travail et tunnel de recherche, espaces isolés, notes locales, petite fenêtre : ce que fait Vela, capture par capture."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Le navigateur — Vela" />
+    <meta property="og:description" content="Cinq gestes, cinq captures de l’application réelle." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      ;(() => {
+        let theme = 'light'
+        let accent = '#5b56d6'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
+          const storedAccent = localStorage.getItem('vela-site-accent')
+          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
+        } catch (error) {
+          /* stockage indisponible */
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.setProperty('--accent', accent)
+      })()
+    </script>
+    <link rel="stylesheet" href="/base.css" />
+    <link rel="stylesheet" href="/pages.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4.2" />
+        <path d="M12 2.4v2.2M12 19.4v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20.5 13.4A8.6 8.6 0 1 1 10.6 3.5a7 7 0 0 0 9.9 9.9Z" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 8h16M4 16h16" />
+      </symbol>
+    </svg>
+
+    <div class="head-wrap">
+      <header class="head">
+        <a class="brand" href="/" aria-label="Vela, accueil">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+              <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+              <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width=".9" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="brand-name">Vela</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Sections">
+          <a href="/navigateur" aria-current="page">Le navigateur</a>
+          <a href="/confidentialite">Confidentialité</a>
+          <a href="/aide">Aide</a>
+          <a href="/nouveautes">Nouveautés</a>
+        </nav>
+
+        <div class="head-actions">
+          <button class="icon-btn" type="button" data-theme-toggle aria-label="Passer au thème sombre" aria-pressed="false">
+            <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <a class="btn btn-solid" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger
+          </a>
+          <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
+            <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
+      </header>
+    </div>
+
+    <main id="contenu">
+      <section class="page-head">
+        <div class="wrap">
+          <p class="eyebrow">Le navigateur</p>
+          <h1>Ce que Vela fait, et rien d’autre.</h1>
+          <p class="lede">
+            Un navigateur ordinaire, plus un atelier qui s’ouvre quand vous en avez besoin. Les
+            captures ci-dessous viennent de l’application, pas d’une maquette.
+          </p>
+          <p class="meta"><span>Version 0.3.13</span><span>Captures de l’app</span><span>macOS, Windows, Linux</span></p>
+          <nav class="sommaire" aria-label="Chapitres">
+            <a href="#navigation">Navigation</a>
+            <a href="#travail">Travail</a>
+            <a href="#espaces">Espaces</a>
+            <a href="#notes">Notes</a>
+            <a href="#petite-fenetre">Petite fenêtre</a>
+          </nav>
+        </div>
+      </section>
+
+      <div class="wrap section" style="padding-top: 56px">
+        <div class="split">
+          <nav class="split-index" aria-label="Sommaire des chapitres" data-scroll-spy>
+            <a href="#navigation"><span class="num">01</span> Navigation</a>
+            <a href="#travail"><span class="num">02</span> Travail</a>
+            <a href="#espaces"><span class="num">03</span> Espaces</a>
+            <a href="#notes"><span class="num">04</span> Notes</a>
+            <a href="#petite-fenetre"><span class="num">05</span> Petite fenêtre</a>
+          </nav>
+
+          <div>
+            <section class="chapter" id="navigation">
+              <h2>01 · Navigation</h2>
+              <p class="lede">
+                Les onglets sont verticaux, avec leur titre complet, et un dossier se replie d’un
+                clic. Deux pages tiennent côte à côte, séparateur redimensionnable.
+              </p>
+              <ul class="ticks">
+                <li>Épinglés et favoris en cases compactes, réordonnables à la souris comme au clavier.</li>
+                <li>Vue scindée : deux pages vivantes, sans rechargement.</li>
+                <li><kbd>⌘F</kbd> dans la page, <kbd>⌘[</kbd> et <kbd>⌘]</kbd> pour l’historique.</li>
+              </ul>
+              <figure class="capture">
+                <img src="/captures/navigation.jpg" width="1600" height="1020" loading="lazy" decoding="async"
+                  alt="Fenêtre de Vela en thème clair : barre latérale avec l’espace Cinéma, le brief du jour et un onglet ouvert ; l’accueil affiche le champ de recherche, six sites épinglés propres à l’espace et les pages récentes." />
+                <figcaption>Capture de Vela, thème clair — un espace, ses onglets et ses sites épinglés.</figcaption>
+              </figure>
+            </section>
+
+            <section class="chapter" id="travail">
+              <h2>02 · Travail</h2>
+              <p class="lede">
+                Le mode Travail ouvre le tunnel de recherche dans la scène principale. Il descend
+                d’un sujet vers ses angles, puis vers des pages réellement récupérées.
+              </p>
+              <ul class="ticks">
+                <li>Quatre sources interrogées : DuckDuckGo, Wikipédia, Hacker News, arXiv et GDELT.</li>
+                <li>Chaque source est lue, avec sa pertinence et les contradictions entre pages.</li>
+                <li>Le rapport finit en note Markdown, dans vos fichiers.</li>
+              </ul>
+              <figure class="capture">
+                <img src="/captures/travail.jpg" width="1600" height="1020" loading="lazy" decoding="async"
+                  alt="Tunnel de recherche de Vela en thème sombre : champ de requête, filtres par type de source, et carte des angles avec les sources retenues." />
+                <figcaption>Capture du tunnel de recherche, thème sombre — carte des angles et des sources.</figcaption>
+              </figure>
+            </section>
+
+            <section class="chapter" id="espaces">
+              <h2>03 · Espaces</h2>
+              <p class="lede">
+                Un espace, c’est une session séparée : cookies, stockage, avatar, teinte et barre de
+                sites épinglés. Deux comptes sur le même site, sans fenêtre privée.
+              </p>
+              <ul class="ticks">
+                <li>Six modèles : Travail, Vie personnelle, Gaming, Études, Développement, Cinéma.</li>
+                <li>Chaque modèle préremplit sa barre de sites, jusqu’à 200 épinglés.</li>
+                <li>Un transfert entre espaces ne transporte que l’adresse et le nom, jamais une session.</li>
+              </ul>
+              <figure class="capture">
+                <img src="/captures/espaces.jpg" width="1600" height="1020" loading="lazy" decoding="async"
+                  alt="Fenêtre de création d’espace : choix d’un modèle, nom, avatar, couleur, ambiance de fond et isolation des cookies." />
+                <figcaption>Capture de la fenêtre d’espace — modèle, avatar, ambiance et isolation.</figcaption>
+              </figure>
+            </section>
+
+            <section class="chapter" id="notes">
+              <h2>04 · Notes</h2>
+              <p class="lede">
+                Une note garde sa source : un extrait glissé depuis la page arrive avec son adresse
+                et sa date, le surlignage reste rattaché à la note de la page.
+              </p>
+              <ul class="ticks">
+                <li>Les notes se citent avec <code>[[Titre]]</code>, et un panneau montre les liens entrants et sortants.</li>
+                <li>Renommer une note met à jour celles qui la citent.</li>
+                <li>Une note vocale s’enregistre sur l’appareil ; la transcription demande un modèle configuré.</li>
+              </ul>
+              <figure class="capture">
+                <img src="/captures/notes.jpg" width="1600" height="1020" loading="lazy" decoding="async"
+                  alt="Vela avec le panneau Notes ouvert à droite : titre de la note, mise en forme Markdown, et liste des notes dans la barre latérale." />
+                <figcaption>Capture du panneau Notes — Markdown, plan et liens entre notes.</figcaption>
+              </figure>
+            </section>
+
+            <section class="chapter" id="petite-fenetre">
+              <h2>05 · Petite fenêtre</h2>
+              <p class="lede">
+                <kbd>⌘⌥</kbd> + clic ouvre un lien dans une fenêtre étroite, posée au milieu de
+                l’écran, par-dessus l’onglet en cours. Elle prend la moitié de la largeur et 90 % de
+                la hauteur de Vela, avec sa barre d’adresse et un retour vers l’onglet d’origine.
+              </p>
+              <ul class="ticks">
+                <li>Un bouton la garde dans un vrai onglet, un autre la referme.</li>
+                <li><kbd>⌘⇧N</kbd> y place la page courante ; <kbd>Échap</kbd> la referme.</li>
+                <li>Les connexions qui exigent une vraie popup restent des fenêtres normales.</li>
+              </ul>
+              <figure class="specimen">
+                <div class="specimen-mini" aria-hidden="true">
+                  <div class="specimen-bar">
+                    <span class="dot"></span>
+                    <span class="addr">fr.wikipedia.org/wiki/Hypertext_Transfer_Protocol</span>
+                    <span>Ouvrir</span>
+                  </div>
+                  <div class="specimen-body">
+                    <p class="title">Hypertext Transfer Protocol</p>
+                    <span class="line mid"></span>
+                    <span class="line"></span>
+                    <span class="line short"></span>
+                  </div>
+                </div>
+                <figcaption>Schéma : la petite fenêtre reprend la barre d’adresse et le retour vers l’onglet d’origine.</figcaption>
+              </figure>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <section class="page-cta">
+        <div class="wrap">
+          <h2>Le web, votre atelier.</h2>
+          <p>Gratuit, sans compte, MIT.</p>
+          <a class="btn btn-solid btn-big" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger Vela 0.3.13
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-top">
+          <div>
+            <p><span class="brand-name">Vela</span></p>
+            <p>Le web, votre atelier. macOS, Windows, Linux.</p>
+          </div>
+          <nav class="foot-links" aria-label="Pied de page">
+            <a href="/navigateur">Le navigateur</a>
+            <a href="/confidentialite">Confidentialité</a>
+            <a href="/aide">Aide</a>
+            <a href="/nouveautes">Nouveautés</a>
+            <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
+          </nav>
+        </div>
+        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+      </div>
+    </footer>
+
+    <script src="/site.js" defer></script>
+  </body>
+</html>

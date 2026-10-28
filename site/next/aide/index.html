@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aide — Vela</title>
+    <meta
+      name="description"
+      content="Installer Vela sur macOS, Windows ou Linux, ouvrir un build non signé, se connecter à Google, comprendre les mises à jour et les raccourcis."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Aide — Vela" />
+    <meta property="og:description" content="Installation, signature, Google, mises à jour, raccourcis." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      ;(() => {
+        let theme = 'light'
+        let accent = '#5b56d6'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
+          const storedAccent = localStorage.getItem('vela-site-accent')
+          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
+        } catch (error) {
+          /* stockage indisponible */
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.setProperty('--accent', accent)
+      })()
+    </script>
+    <link rel="stylesheet" href="/base.css" />
+    <link rel="stylesheet" href="/pages.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4.2" />
+        <path d="M12 2.4v2.2M12 19.4v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20.5 13.4A8.6 8.6 0 1 1 10.6 3.5a7 7 0 0 0 9.9 9.9Z" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 8h16M4 16h16" />
+      </symbol>
+    </svg>
+
+    <div class="head-wrap">
+      <header class="head">
+        <a class="brand" href="/" aria-label="Vela, accueil">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+              <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+              <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width=".9" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="brand-name">Vela</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Sections">
+          <a href="/navigateur">Le navigateur</a>
+          <a href="/confidentialite">Confidentialité</a>
+          <a href="/aide" aria-current="page">Aide</a>
+          <a href="/nouveautes">Nouveautés</a>
+        </nav>
+
+        <div class="head-actions">
+          <button class="icon-btn" type="button" data-theme-toggle aria-label="Passer au thème sombre" aria-pressed="false">
+            <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <a class="btn btn-solid" href="/#telecharger">
+            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+            Télécharger
+          </a>
+          <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
+            <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
+      </header>
+    </div>
+
+    <main id="contenu">
+      <section class="page-head">
+        <div class="wrap">
+          <p class="eyebrow">Aide</p>
+          <h1>Installer, ouvrir, comprendre.</h1>
+          <p class="lede">
+            Les builds sont signés par personne : ni certificat Apple, ni certificat Windows. Cela
+            change la première ouverture, et rien d’autre. Voici les étapes exactes.
+          </p>
+          <nav class="sommaire" aria-label="Sections">
+            <a href="#macos">macOS</a>
+            <a href="#windows">Windows</a>
+            <a href="#linux">Linux</a>
+            <a href="#google">Connexion Google</a>
+            <a href="#extensions">Extensions et synchronisation</a>
+            <a href="#mises-a-jour">Mises à jour</a>
+            <a href="#raccourcis">Raccourcis</a>
+          </nav>
+        </div>
+      </section>
+
+      <div class="wrap section" style="padding-top: 56px">
+        <section class="help-block" id="macos">
+          <h2>macOS — ouvrir un build non signé</h2>
+          <p>
+            Le fichier <code>Vela-0.3.13-universal.dmg</code> couvre Apple silicon et Intel.
+            Gatekeeper refuse la première ouverture parce que l’application n’est ni signée ni
+            notarisée : c’est un choix assumé, il n’existe pas de certificat développeur Apple.
+          </p>
+          <ol class="steps">
+            <li>Ouvrir le <code>.dmg</code>, puis glisser Vela dans le dossier Applications.</li>
+            <li>Dans le Finder, faire un clic droit sur Vela et choisir « Ouvrir ».</li>
+            <li>Confirmer « Ouvrir » dans la boîte de dialogue. Les fois suivantes, un double-clic suffit.</li>
+          </ol>
+          <p class="notice">
+            Si macOS refuse encore : Réglages › Confidentialité et sécurité, puis « Ouvrir quand
+            même » à côté du message concernant Vela. Une installation silencieuse n’est pas possible
+            sans signature.
+          </p>
+        </section>
+
+        <section class="help-block" id="windows">
+          <h2>Windows — SmartScreen</h2>
+          <p>
+            L’installateur <code>.exe</code> n’est pas signé par un certificat commercial. SmartScreen
+            affiche donc un avertissement au premier lancement.
+          </p>
+          <ol class="steps">
+            <li>Lancer <code>Vela-0.3.13-x64.exe</code>.</li>
+            <li>Dans la fenêtre bleue, cliquer « Informations complémentaires ».</li>
+            <li>Cliquer « Exécuter quand même », puis suivre l’installation.</li>
+          </ol>
+        </section>
+
+        <section class="help-block" id="linux">
+          <h2>Linux — AppImage ou .deb</h2>
+          <p>
+            L’AppImage se lance sans installation. Le paquet Debian convient à Debian, Ubuntu et
+            leurs dérivés.
+          </p>
+          <ol class="steps">
+            <li>AppImage : rendre le fichier exécutable, puis le lancer.</li>
+            <li>Debian : <code>sudo apt install ./Vela-0.3.13-amd64.deb</code>.</li>
+            <li>Les mises à jour automatiques concernent l’AppImage et les builds macOS et Windows ; un paquet <code>.deb</code> se remplace à la main.</li>
+          </ol>
+        </section>
+
+        <section class="help-block" id="google">
+          <h2>Connexion Google</h2>
+          <p>
+            Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. Ce n’est pas un
+            réglage à activer : la parade est de reprendre une session existante.
+          </p>
+          <ul class="ticks">
+            <li>Importer une session depuis Chrome ou Safari, puis ouvrir Google dans l’espace concerné.</li>
+            <li>Pour un « Se connecter avec Google » sur un site tiers, ouvrir cette connexion dans le navigateur système.</li>
+            <li>Vela n’imite pas Chrome au-delà de ce qui est nécessaire : se faire passer pour un autre navigateur casse d’autres sites.</li>
+          </ul>
+        </section>
+
+        <section class="help-block" id="extensions">
+          <h2>Extensions et synchronisation</h2>
+          <p>
+            Les extensions du Chrome Web Store ne sont pas prises en charge. La synchronisation de
+            compte Vela n’existe pas non plus : il n’y a pas de compte. Vos espaces, vos notes et vos
+            réglages restent dans le dossier de données de la machine, décrit sur la page
+            <a href="/confidentialite#appareil">Confidentialité</a>.
+          </p>
+        </section>
+
+        <section class="help-block" id="mises-a-jour">
+          <h2>Mises à jour</h2>
+          <p>
+            Vela vérifie les versions douze secondes après le démarrage, puis toutes les trois heures,
+            au retour de veille et au retour du focus. Sur macOS, l’installateur de la nouvelle
+            version est téléchargé en arrière-plan. Rien ne s’installe sans que la version soit
+            téléchargée en entier.
+          </p>
+          <p class="notice">
+            Depuis la 0.3.9, une installation existante reçoit les versions suivantes sans
+            réinstallation. Le contrôle auprès de GitHub est décrit ligne par ligne sur la page
+            Confidentialité.
+          </p>
+        </section>
+
+        <section class="help-block" id="raccourcis">
+          <h2>Raccourcis</h2>
+          <p>Sur Windows et Linux, remplacez <kbd>⌘</kbd> par <kbd>Ctrl</kbd>.</p>
+          <div class="table-wrap">
+            <table class="table keys-table">
+              <caption>Raccourcis de l’application</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Action</th>
+                  <th scope="col">Raccourci</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Barre de commande</td><td><kbd>⌘K</kbd></td></tr>
+                <tr><td>Adresse</td><td><kbd>⌘L</kbd></td></tr>
+                <tr><td>Chercher dans la page</td><td><kbd>⌘F</kbd></td></tr>
+                <tr><td>Vue scindée</td><td><kbd>⌘⇧D</kbd></td></tr>
+                <tr><td>Navigation / Travail</td><td><kbd>⌘⇧A</kbd></td></tr>
+                <tr><td>Petite fenêtre</td><td><kbd>⌘⇧N</kbd></td></tr>
+                <tr><td>Ouvrir un lien dans la petite fenêtre</td><td><kbd>⌘⌥</kbd> + clic</td></tr>
+                <tr><td>Nouvel onglet</td><td><kbd>⌘T</kbd></td></tr>
+                <tr><td>Fermer l’onglet</td><td><kbd>⌘W</kbd></td></tr>
+                <tr><td>Rouvrir l’onglet fermé</td><td><kbd>⌘⇧T</kbd></td></tr>
+                <tr><td>Précédent / suivant</td><td><kbd>⌘[</kbd> · <kbd>⌘]</kbd></td></tr>
+                <tr><td>Recharger</td><td><kbd>⌘R</kbd></td></tr>
+                <tr><td>Favori</td><td><kbd>⌘D</kbd></td></tr>
+                <tr><td>Historique</td><td><kbd>⌘Y</kbd></td></tr>
+                <tr><td>Imprimer</td><td><kbd>⌘P</kbd></td></tr>
+                <tr><td>Notes</td><td><kbd>⌘E</kbd></td></tr>
+                <tr><td>Agent</td><td><kbd>⌘J</kbd></td></tr>
+                <tr><td>Réglages</td><td><kbd>⌘,</kbd></td></tr>
+                <tr><td>Barre latérale</td><td><kbd>⌘S</kbd></td></tr>
+                <tr><td>Zoom</td><td><kbd>⌘+</kbd> · <kbd>⌘−</kbd> · <kbd>⌘0</kbd></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <section class="page-cta">
+        <div class="wrap">
+          <h2>Encore bloqué ?</h2>
+          <p>Le dépôt public accepte les rapports de bug.</p>
+          <a class="btn btn-ghost btn-big" href="https://github.com/DmzGamingYT/vela/issues">Ouvrir un rapport</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-top">
+          <div>
+            <p><span class="brand-name">Vela</span></p>
+            <p>Le web, votre atelier. macOS, Windows, Linux.</p>
+          </div>
+          <nav class="foot-links" aria-label="Pied de page">
+            <a href="/navigateur">Le navigateur</a>
+            <a href="/confidentialite">Confidentialité</a>
+            <a href="/aide">Aide</a>
+            <a href="/nouveautes">Nouveautés</a>
+            <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
+          </nav>
+        </div>
+        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+      </div>
+    </footer>
+
+    <script src="/site.js" defer></script>
+  </body>
+</html>
