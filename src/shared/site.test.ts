@@ -6,8 +6,8 @@ import { version } from '../../package.json'
 import { NETWORK_FLOWS } from './network'
 
 /**
- * Contrôle automatique du site vitrine. Il porte sur les cinq pages de la
- * refonte (site/next) et remplace la lecture d'une page unique : structure,
+ * Contrôle automatique du site vitrine. Il porte sur les cinq pages
+ * déployées (site/public) et remplace la lecture d'une page unique : structure,
  * liens, images, version annoncée, flux réseau et promesses.
  *
  * Ces tests tournent avec `npm test`, donc en intégration continue : une page
@@ -15,13 +15,13 @@ import { NETWORK_FLOWS } from './network'
  */
 
 const root = process.cwd()
-const siteDir = join(root, 'site', 'next')
+const siteDir = join(root, 'site', 'public')
 const PAGES = [
   { file: 'index.html', url: '/', nav: false },
-  { file: 'navigateur/index.html', url: '/navigateur', nav: true },
-  { file: 'confidentialite/index.html', url: '/confidentialite', nav: true },
-  { file: 'aide/index.html', url: '/aide', nav: true },
-  { file: 'nouveautes/index.html', url: '/nouveautes', nav: true }
+  { file: 'navigateur/index.html', url: '/navigateur/', nav: true },
+  { file: 'confidentialite/index.html', url: '/confidentialite/', nav: true },
+  { file: 'aide/index.html', url: '/aide/', nav: true },
+  { file: 'nouveautes/index.html', url: '/nouveautes/', nav: true }
 ] as const
 
 const read = (file: string) => readFileSync(join(siteDir, file), 'utf8')
@@ -122,7 +122,7 @@ describe('site — structure des cinq pages', () => {
 describe('site — navigation entre les pages', () => {
   it('propose les mêmes entrées sur les cinq pages', () => {
     for (const page of texts) {
-      for (const target of ['/navigateur', '/confidentialite', '/aide', '/nouveautes']) {
+      for (const target of ['/navigateur/', '/confidentialite/', '/aide/', '/nouveautes/']) {
         expect(page.html, `${page.file} : entrée ${target}`).toContain(`href="${target}"`)
       }
       expect(page.html, `${page.file} : retour à l’accueil`).toMatch(/<a class="brand" href="\/"/)
@@ -139,7 +139,7 @@ describe('site — navigation entre les pages', () => {
   it('lie chaque page depuis le pied de page', () => {
     for (const page of texts) {
       const footer = page.html.slice(page.html.indexOf('<footer'))
-      for (const target of ['/navigateur', '/confidentialite', '/aide', '/nouveautes']) {
+      for (const target of ['/navigateur/', '/confidentialite/', '/aide/', '/nouveautes/']) {
         expect(footer, `${page.file} : pied de page sans ${target}`).toContain(`href="${target}"`)
       }
     }
@@ -147,32 +147,49 @@ describe('site — navigation entre les pages', () => {
 })
 
 describe('site — version et téléchargements', () => {
+  const home = texts[0].html
+  /**
+   * La version annoncée par la page, lue sur la page elle-même.
+   *
+   * Le site ne peut pas annoncer la version en cours avant sa publication :
+   * les empreintes SHA-256 des installateurs n'existent qu'une fois les
+   * fichiers construits. Il a donc le droit de retarder d'une version, jamais
+   * de prendre de l'avance, et chaque mention doit dire la même chose.
+   */
+  const announced = (home.match(/Fichiers de la version ([\d.]+)/) || [])[1] || ''
   const files = [
-    `Vela-${version}-universal.dmg`,
-    `Vela-${version}-arm64.dmg`,
-    `Vela-${version}-x64.dmg`,
-    `Vela-${version}-x64.exe`,
-    `Vela-${version}-x86_64.AppImage`,
-    `Vela-${version}-amd64.deb`
+    `Vela-${announced}-universal.dmg`,
+    `Vela-${announced}-arm64.dmg`,
+    `Vela-${announced}-x64.dmg`,
+    `Vela-${announced}-x64.exe`,
+    `Vela-${announced}-x86_64.AppImage`,
+    `Vela-${announced}-amd64.deb`
   ]
 
-  it('annonce la version de package.json', () => {
-    const home = texts[0].html
-    expect(home).toContain(`Vela ${version}, pour les trois plateformes`)
-    expect(home).toContain(`Fichiers de la version ${version}`)
-    expect(home).toContain(`v0.${version.split('.').slice(1).join('.')} · macOS, Windows, Linux`)
+  it('annonce une seule version, et jamais celle d’une version à venir', () => {
+    expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
+    const compare = (a: string, b: string): number => {
+      const left = a.split('.').map(Number)
+      const right = b.split('.').map(Number)
+      for (let index = 0; index < 3; index += 1) {
+        if (left[index] !== right[index]) return left[index] - right[index]
+      }
+      return 0
+    }
+    expect(compare(announced, version), `site ${announced} en avance sur l’app ${version}`).toBeLessThanOrEqual(0)
+    // Toutes les mentions du site disent la même version que le tableau.
+    expect(home).toContain(`Vela ${announced}, pour les trois plateformes`)
+    expect(home).toContain(`v0.${announced.split('.').slice(1).join('.')} · macOS, Windows, Linux`)
   })
 
   it('liste les six installateurs avec leur lien de release', () => {
-    const home = texts[0].html
     for (const file of files) {
       expect(home, file).toContain(file)
-      expect(home, `${file} : lien`).toContain(`releases/download/v${version}/${file}`)
+      expect(home, `${file} : lien`).toContain(`releases/download/v${announced}/${file}`)
     }
   })
 
   it('donne une empreinte SHA-256 par installateur, toutes différentes', () => {
-    const home = texts[0].html
     const sums = [...home.matchAll(/class="sum">([0-9a-f ]{11,})…/g)].map((match) => match[1].replace(/\s/g, ''))
     expect(sums.length).toBe(files.length)
     expect(new Set(sums).size).toBe(sums.length)

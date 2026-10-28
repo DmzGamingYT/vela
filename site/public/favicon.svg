@@ -1,18 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vela">
   <defs>
-    <linearGradient id="g" x1="8" y1="4" x2="58" y2="62" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7364EF" />
-      <stop offset=".55" stop-color="#5441D2" />
-      <stop offset="1" stop-color="#422FB6" />
+    <linearGradient id="v" x1="12" y1="6" x2="55" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7F6EFF" />
+      <stop offset=".42" stop-color="#5641DE" />
+      <stop offset="1" stop-color="#241668" />
     </linearGradient>
-    <linearGradient id="s" x1="28" y1="12" x2="40" y2="46" gradientUnits="userSpaceOnUse">
+    <linearGradient id="w" x1="34" y1="15" x2="41" y2="44" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#E3E3FA" />
+      <stop offset="1" stop-color="#DCD6F6" />
     </linearGradient>
+    <radialGradient id="s" cx="43" cy="41" r="9" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC489" stop-opacity=".85" />
+      <stop offset="1" stop-color="#FF9F63" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="t">
+      <rect x="6" y="6" width="52" height="52" rx="12.2" />
+    </clipPath>
   </defs>
-  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#g)" />
-  <rect x="2" y="2" width="60" height="60" rx="15" fill="none" stroke="#ffffff" stroke-opacity=".16" />
-  <circle cx="43.6" cy="18.4" r="4.6" fill="#F3C593" />
-  <path d="M30.4 11.6c-2.1 9-5.4 22.6-9 33.1 6.8 1.3 11.9 1 16.3-.3-1.8-9.4-4.1-20.8-7.3-32.8Z" fill="url(#s)" />
-  <path d="M14.8 52.2c3.7-1.3 6.1.3 9.4 0 3.6-.3 5.6-1.5 9.7-.5" fill="none" stroke="#ffffff" stroke-opacity=".95" stroke-width="2.4" stroke-linecap="round" />
+
+  <rect x="6" y="6" width="52" height="52" rx="12.2" fill="url(#v)" />
+  <g clip-path="url(#t)">
+    <circle cx="42.9" cy="41.4" r="9" fill="url(#s)" />
+    <circle cx="42.9" cy="41.4" r="4.3" fill="#FFD79F" />
+
+    <rect x="6" y="44.4" width="52" height="13.6" fill="#0F0834" fill-opacity=".5" />
+    <path d="M8.4 44.4H55.6" stroke="#FFF3E6" stroke-opacity=".62" stroke-width=".7" />
+
+    <path d="M34.25 14.5C30.75 23.25 27 35 25.25 44.4H34.25Z" fill="#FFFFFF" fill-opacity=".55" />
+    <path d="M34.25 14.5C35.6 24.75 37.9 35.4 41.75 42.25C39.5 43.75 36.6 44.1 34.25 44.1Z" fill="url(#w)" />
+    <path d="M34.25 14.8V44" stroke="#FFFFFF" stroke-opacity=".85" stroke-width=".8" />
+    <path d="M8.8 47.4C12 46.4 14 47.8 16.6 47.4C19.2 47 20.8 46 22.8 46.6" fill="none" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="1.1" stroke-linecap="round" />
+  </g>
+  <rect x="6" y="6" width="52" height="52" rx="12.2" fill="none" stroke="#FFFFFF" stroke-opacity=".22" stroke-width=".7" />
 </svg>

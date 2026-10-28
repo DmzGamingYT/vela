@@ -18,7 +18,7 @@
     <script>
       ;(() => {
         let theme = 'light'
-        let accent = '#5b56d6'
+        let accent = '#5b5bd6'
         try {
           const stored = localStorage.getItem('vela-theme')
           if (stored === 'light' || stored === 'dark') theme = stored
@@ -69,10 +69,10 @@
         </a>
 
         <nav class="nav" id="nav" aria-label="Sections">
-          <a href="/navigateur">Le navigateur</a>
-          <a href="/confidentialite">Confidentialité</a>
-          <a href="/aide" aria-current="page">Aide</a>
-          <a href="/nouveautes">Nouveautés</a>
+          <a href="/navigateur/">Le navigateur</a>
+          <a href="/confidentialite/">Confidentialité</a>
+          <a href="/aide/" aria-current="page">Aide</a>
+          <a href="/nouveautes/">Nouveautés</a>
         </nav>
 
         <div class="head-actions">
@@ -116,9 +116,11 @@
         <section class="help-block" id="macos">
           <h2>macOS — ouvrir un build non signé</h2>
           <p>
-            Le fichier <code>Vela-0.3.13-universal.dmg</code> couvre Apple silicon et Intel.
-            Gatekeeper refuse la première ouverture parce que l’application n’est ni signée ni
-            notarisée : c’est un choix assumé, il n’existe pas de certificat développeur Apple.
+            Le fichier <code>Vela-0.3.13-universal.dmg</code> est universel : il couvre Apple silicon
+            et Intel dans un seul <code>.dmg</code>. Gatekeeper refuse la première ouverture parce que
+            l’application n’est ni signée ni notarisée : aucun certificat Developer ID n’est acheté,
+            et il n’existe pas de notarisation Apple. Le build universel est publié ; l’essai sur une
+            vraie machine Intel reste à faire.
           </p>
           <ol class="steps">
             <li>Ouvrir le <code>.dmg</code>, puis glisser Vela dans le dossier Applications.</li>
@@ -127,8 +129,9 @@
           </ol>
           <p class="notice">
             Si macOS refuse encore : Réglages › Confidentialité et sécurité, puis « Ouvrir quand
-            même » à côté du message concernant Vela. Une installation silencieuse n’est pas possible
-            sans signature.
+            même » à côté du message concernant Vela. En dernier recours, dans le Terminal :
+            <code>xattr -cr /Applications/Vela.app</code>. Une installation silencieuse n’est pas
+            possible sans signature.
           </p>
         </section>
 
@@ -252,10 +255,10 @@
             <p>Le web, votre atelier. macOS, Windows, Linux.</p>
           </div>
           <nav class="foot-links" aria-label="Pied de page">
-            <a href="/navigateur">Le navigateur</a>
-            <a href="/confidentialite">Confidentialité</a>
-            <a href="/aide">Aide</a>
-            <a href="/nouveautes">Nouveautés</a>
+            <a href="/navigateur/">Le navigateur</a>
+            <a href="/confidentialite/">Confidentialité</a>
+            <a href="/aide/">Aide</a>
+            <a href="/nouveautes/">Nouveautés</a>
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>

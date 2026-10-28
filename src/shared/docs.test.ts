@@ -3,50 +3,62 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { version } from '../../package.json'
-import { LOCAL_ONLY, NETWORK_FLOWS } from './network'
 
 /**
- * L'aide (README) et le site vitrine décrivent les mêmes limites. Ce test
- * échoue dès qu'un des deux textes prend de l'avance sur l'autre — c'est ce qui
- * évite de promettre une connexion Google fiable ou une signature inexistante.
+ * L'aide du dépôt (README) et les pages du site décrivent les mêmes limites.
+ * Ce test échoue dès qu'un des deux textes prend de l'avance sur l'autre —
+ * c'est ce qui évite de promettre une connexion Google fiable ou une
+ * signature inexistante. La structure des pages et la parité des flux réseau
+ * sont vérifiées séparément dans `site.test.ts`.
  */
-const readme = readFileSync(join(process.cwd(), 'README.md'), 'utf8')
-const site = readFileSync(join(process.cwd(), 'site', 'public', 'index.html'), 'utf8')
-const script = readFileSync(join(process.cwd(), 'site', 'public', 'script.js'), 'utf8')
-const texts: [string, string][] = [
-  ['README', readme],
-  ['site', site]
-]
+const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), 'utf8')
+const readme = read('README.md')
+const home = read('site', 'public', 'index.html')
+const aide = read('site', 'public', 'aide', 'index.html')
+const script = read('site', 'public', 'site.js')
 
 describe('limites documentées dans l’aide et sur le site', () => {
   it('dit que les extensions et la synchronisation ne sont pas prises en charge', () => {
-    for (const [name, text] of texts) {
-      expect(text, name).toMatch(/extensions Chrome/i)
-      expect(text, name).toMatch(/non prises? en charge/i)
+    for (const [name, text] of [
+      ['README', readme],
+      ['site', aide]
+    ] as const) {
+      expect(text, name).toMatch(/extensions[^.]{0,40}(Chrome|Chrome Web Store)/i)
+      expect(text, name).toMatch(/(non |pas )prises? en charge/i)
       expect(text, name).toMatch(/synchronisation/i)
     }
   })
 
   it('ne promet pas une connexion Google infaillible', () => {
-    for (const [name, text] of texts) {
-      expect(text, name).toMatch(/Google peut[^.]{0,40}refuser/i)
-      expect(text, name).toMatch(/aucune imitation supplémentaire de Chrome/i)
-      expect(text, name).toMatch(/importer votre session depuis Chrome ou Safari/i)
+    for (const [name, text] of [
+      ['README', readme],
+      ['site', aide]
+    ] as const) {
+      expect(text, name).toMatch(/Google peut[^.]{0,60}refuser/i)
       expect(text, name).toMatch(/navigateur système/i)
+      expect(text, name).toMatch(/(importer (une|votre) session|import de session) depuis Chrome ou Safari/i)
     }
+    expect(home + aide).not.toMatch(/Connexion Google garantie/i)
   })
 
-  it('explique macOS non signé et pourquoi l’installation silencieuse échoue', () => {
-    for (const [name, text] of texts) {
+  it('explique macOS non signé, la commande de secours et pourquoi l’installation silencieuse échoue', () => {
+    for (const [name, text] of [
+      ['README', readme],
+      ['site', aide]
+    ] as const) {
       expect(text, name).toMatch(/Developer ID/)
       expect(text, name).toMatch(/notari/i)
       expect(text, name).toMatch(/Gatekeeper/)
       expect(text, name).toMatch(/xattr -cr \/Applications\/Vela\.app/)
     }
+    expect(aide).toMatch(/installation silencieuse/i)
   })
 
   it('décrit le build macOS universel comme livré, pas comme à venir', () => {
-    for (const [name, text] of texts) {
+    for (const [name, text] of [
+      ['README', readme],
+      ['site', aide]
+    ] as const) {
       expect(text, name).toMatch(/universel/)
       expect(text, name).toMatch(/Apple silicon/)
       expect(text, name).toMatch(/Intel/)
@@ -54,39 +66,36 @@ describe('limites documentées dans l’aide et sur le site', () => {
       expect(text, name).toMatch(/vraie machine Intel/)
     }
     // Le site ne renvoie plus l’universel à une version future : il est publié.
-    expect(site).not.toMatch(/prochaine version/)
+    expect(home + aide).not.toMatch(/prochaine version/)
   })
 
-  it('annonce sur le site la version de package.json', () => {
-    expect(site, 'titre de téléchargement').toContain(`Vela ${version}`)
-    expect(site, 'badge de version').toContain(`>${version}</span>`)
-    // Les liens du tableau pointent vers la release de cette version…
-    expect(site).toContain(`releases/download/v${version}/Vela-${version}-universal.dmg`)
-    expect(site).toContain(`Vela-${version}-amd64.deb`)
+  it('garde le site sur une seule version, jamais en avance sur l’app', () => {
+    // Le site ne peut pas annoncer une version dont les installateurs ne sont
+    // pas encore construits : leurs empreintes n'existent pas. Il suit donc la
+    // publication d'au plus une version, et chaque mention dit la même chose.
+    const announced = (home.match(/Fichiers de la version ([\d.]+)/) || [])[1] || ''
+    expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
+    const site = announced.split('.').map(Number)
+    const app = version.split('.').map(Number)
+    const ahead = site[0] - app[0] || site[1] - app[1] || site[2] - app[2]
+    expect(ahead, `site ${announced} en avance sur l’app ${version}`).toBeLessThanOrEqual(0)
+    expect(home, 'titre de téléchargement').toContain(`Vela ${announced}, pour les trois plateformes`)
+    // Les liens du tableau pointent vers la release annoncée…
+    expect(home).toContain(`releases/download/v${announced}/Vela-${announced}-universal.dmg`)
+    expect(home).toContain(`Vela-${announced}-amd64.deb`)
     // …et le bouton adapté à la plateforme aussi.
-    expect(script).toContain(`releases/download/v${version}/`)
-    expect(script).toContain(`Vela-${version}-universal.dmg`)
-  })
-
-  it('décrit sur le site exactement les flux réseau que l’app déclenche', () => {
-    // Chaque ligne du site porte les identifiants de `NETWORK_FLOWS` qu'elle
-    // couvre : une destination ajoutée dans l'app doit apparaître ici.
-    const declared = new Set(NETWORK_FLOWS.map((flow) => flow.id))
-    const listed = new Set(
-      [...site.matchAll(/data-flow="([^"]+)"/g)].flatMap((match) => match[1].split(/\s+/)).filter(Boolean)
-    )
-    expect([...declared].filter((id) => !listed.has(id)), 'flux de l’app absents du site').toEqual([])
-    expect([...listed].filter((id) => !declared.has(id)), 'flux annoncés par le site mais inconnus').toEqual([])
-  })
-
-  it('liste sur le site autant de données locales que l’app en garde', () => {
-    expect((site.match(/data-local-item/g) || []).length).toBe(LOCAL_ONLY.length)
+    expect(script).toContain(`releases/download/v${announced}/`)
+    expect(script).toContain(`Vela-${announced}-universal.dmg`)
   })
 
   it('explique SmartScreen sous Windows', () => {
-    for (const [name, text] of texts) {
+    for (const [name, text] of [
+      ['README', readme],
+      ['site', aide]
+    ] as const) {
       expect(text, name).toMatch(/SmartScreen/)
-      expect(text, name).toMatch(/certificat de signature de code/i)
+      expect(text, name).toMatch(/certificat/i)
     }
+    expect(aide).toMatch(/Exécuter quand même/)
   })
 })

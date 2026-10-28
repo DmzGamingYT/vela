@@ -1,73 +1,174 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Vela — icône de l'app : « Voile au couchant » (adoptée en 0.3.13).
+       Maître 1024, fond transparent. Rendu par .freebuff/icon-render.cjs,
+       puis build/make-icons.py produit icon.icns, icon.ico et icon-512.png. -->
   <defs>
-    <linearGradient id="base" x1="190" y1="120" x2="880" y2="950" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7364EF" />
-      <stop offset="0.42" stop-color="#5F4EE1" />
-      <stop offset="0.78" stop-color="#4F3CCA" />
-      <stop offset="1" stop-color="#422FB6" />
+    <linearGradient id="b2-base" x1="228" y1="102" x2="856" y2="970" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A68FF" />
+      <stop offset="0.28" stop-color="#5641DE" />
+      <stop offset="0.62" stop-color="#33218F" />
+      <stop offset="0.86" stop-color="#231466" />
+      <stop offset="1" stop-color="#180E4B" />
     </linearGradient>
 
-    <radialGradient id="glowTop" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-      gradientTransform="translate(470 210) scale(520 420)">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22" />
+    <radialGradient id="b2-sky" cx="690" cy="700" r="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC489" stop-opacity="0.9" />
+      <stop offset="0.3" stop-color="#FF9F63" stop-opacity="0.36" />
+      <stop offset="1" stop-color="#FF8A5A" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="b2-spec" cx="330" cy="170" r="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32" />
+      <stop offset="0.44" stop-color="#FFFFFF" stop-opacity="0.08" />
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
     </radialGradient>
 
-    <linearGradient id="sheen" x1="512" y1="96" x2="512" y2="600" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18" />
-      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04" />
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    <linearGradient id="b2-rim" x1="240" y1="108" x2="808" y2="936" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7" />
+      <stop offset="0.22" stop-color="#FFFFFF" stop-opacity="0.18" />
+      <stop offset="0.6" stop-color="#FFD2A6" stop-opacity="0.26" />
+      <stop offset="1" stop-color="#FFE0BC" stop-opacity="0.5" />
     </linearGradient>
 
-    <linearGradient id="rim" x1="256" y1="100" x2="790" y2="940" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55" />
-      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.12" />
-      <stop offset="1" stop-color="#2A1D86" stop-opacity="0.25" />
+    <linearGradient id="b2-sea" x1="512" y1="714" x2="512" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F0834" stop-opacity="0.56" />
+      <stop offset="0.34" stop-color="#150C43" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#0B0528" stop-opacity="0.46" />
     </linearGradient>
 
-    <linearGradient id="sail" x1="470" y1="250" x2="600" y2="690" gradientUnits="userSpaceOnUse">
+    <linearGradient id="b2-waterline" x1="220" y1="714" x2="812" y2="714" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE6CB" stop-opacity="0.08" />
+      <stop offset="0.42" stop-color="#FFF3E6" stop-opacity="0.6" />
+      <stop offset="0.7" stop-color="#FFD09A" stop-opacity="1" />
+      <stop offset="1" stop-color="#FFBE84" stop-opacity="0.16" />
+    </linearGradient>
+
+    <linearGradient id="b2-left" x1="404" y1="280" x2="548" y2="710" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7" />
+      <stop offset="0.5" stop-color="#FFF4EA" stop-opacity="0.38" />
+      <stop offset="1" stop-color="#CFCAF4" stop-opacity="0.34" />
+    </linearGradient>
+
+    <linearGradient id="b2-right" x1="548" y1="250" x2="660" y2="700" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF" />
-      <stop offset="0.62" stop-color="#F7F7FF" />
-      <stop offset="1" stop-color="#E2E2FA" />
+      <stop offset="0.4" stop-color="#FDFCFF" />
+      <stop offset="0.74" stop-color="#EFECFF" />
+      <stop offset="1" stop-color="#DAD5F9" />
     </linearGradient>
 
-    <linearGradient id="sun" x1="620" y1="270" x2="710" y2="365" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F8D6A8" />
-      <stop offset="1" stop-color="#F1BE86" />
+    <linearGradient id="b2-edge" x1="548" y1="250" x2="664" y2="680" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="0.6" stop-color="#FFE4C6" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#FFC896" stop-opacity="0.4" />
     </linearGradient>
 
-    <filter id="tileShadow" x="-22%" y="-16%" width="148%" height="148%">
-      <feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#2A1F8C" flood-opacity="0.34" />
+    <linearGradient id="b2-sun" x1="660" y1="600" x2="736" y2="716" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7E8" />
+      <stop offset="0.38" stop-color="#FFD79F" />
+      <stop offset="1" stop-color="#EEA266" />
+    </linearGradient>
+
+    <radialGradient id="b2-vignette" cx="512" cy="470" r="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0.66" stop-color="#090422" stop-opacity="0" />
+      <stop offset="1" stop-color="#090422" stop-opacity="0.26" />
+    </radialGradient>
+
+    <filter id="b2-tile-shadow" x="-20%" y="-18%" width="140%" height="146%">
+      <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#130B55" flood-opacity="0.34" />
     </filter>
 
-    <filter id="sailShadow" x="-40%" y="-30%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#31219B" flood-opacity="0.28" />
+    <filter id="b2-bevel" x="-12%" y="-12%" width="124%" height="124%">
+      <feGaussianBlur stdDeviation="9" />
     </filter>
 
-    <clipPath id="tile">
-      <rect x="96" y="96" width="832" height="832" rx="196" />
+    <filter id="b2-soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+
+    <filter id="b2-sail-cast" x="-36%" y="-28%" width="172%" height="164%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#1B1163" flood-opacity="0.34" />
+    </filter>
+
+    <filter id="b2-water-cast" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="15" />
+    </filter>
+
+    <filter id="b2-grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="17" result="n" />
+      <feColorMatrix in="n" type="saturate" values="0" result="g" />
+      <feComponentTransfer in="g" result="t">
+        <feFuncA type="linear" slope="0.42" intercept="0" />
+      </feComponentTransfer>
+      <feComposite in="t" in2="SourceGraphic" operator="in" />
+    </filter>
+
+    <clipPath id="b2-tile">
+      <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" />
+    </clipPath>
+
+    <clipPath id="b2-left-clip">
+      <path d="M548 232C492 372 432 560 404 710H548Z" />
     </clipPath>
   </defs>
 
-  <g filter="url(#tileShadow)">
-    <rect x="96" y="96" width="832" height="832" rx="196" fill="url(#base)" />
+  <g filter="url(#b2-tile-shadow)">
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="url(#b2-base)" />
   </g>
 
-  <g clip-path="url(#tile)">
-    <rect x="96" y="96" width="832" height="832" fill="url(#glowTop)" />
-    <rect x="96" y="96" width="832" height="504" fill="url(#sheen)" />
-    <rect x="100" y="100" width="824" height="824" rx="192" fill="none" stroke="url(#rim)" stroke-width="2.5" />
+  <g clip-path="url(#b2-tile)">
+    <rect x="96" y="96" width="832" height="832" fill="#FFFFFF" opacity="0.03" />
+    <rect x="96" y="96" width="832" height="832" fill="url(#b2-spec)" style="mix-blend-mode: screen" />
 
-    <!-- Soleil bas, à droite de la voile -->
-    <circle cx="664" cy="316" r="50" fill="url(#sun)" />
+    <!-- Ciel : la lumière du couchant, ajoutée -->
+    <rect x="96" y="96" width="832" height="832" fill="url(#b2-sky)" style="mix-blend-mode: screen" />
 
-    <!-- Voile : apex haut, bord gauche concave, bord droit convexe -->
-    <g filter="url(#sailShadow)">
-      <path d="M494 242C462 388 408 574 352 692c112 20 192 16 264-4-28-152-64-326-122-446Z" fill="url(#sail)" />
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"
+      fill="none" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="15" filter="url(#b2-bevel)" style="mix-blend-mode: screen" />
+
+    <!-- Soleil couchant, derrière la voile -->
+    <circle cx="686" cy="662" r="68" fill="url(#b2-sun)" />
+    <circle cx="686" cy="662" r="96" fill="#FFB578" fill-opacity="0.45" filter="url(#b2-soft)" style="mix-blend-mode: screen" />
+    <circle cx="668" cy="640" r="16" fill="#FFFBEF" fill-opacity="0.55" style="mix-blend-mode: screen" />
+
+    <!-- Mer derrière la voile : l’horizon passe sous elle -->
+    <rect x="96" y="710" width="832" height="222" fill="url(#b2-sea)" style="mix-blend-mode: multiply" />
+    <path d="M214 712H818" stroke="url(#b2-waterline)" stroke-width="4" stroke-linecap="round" />
+    <g fill="#FFDAB1" style="mix-blend-mode: screen">
+      <rect x="628" y="748" width="132" height="10" rx="5" fill-opacity="0.5" />
+      <rect x="648" y="790" width="96" height="8" rx="4" fill-opacity="0.33" />
+      <rect x="666" y="828" width="62" height="6" rx="3" fill-opacity="0.2" />
+      <rect x="684" y="860" width="34" height="5" rx="2.5" fill-opacity="0.12" />
     </g>
 
-    <!-- Vague : la mer, sous la coque -->
-    <path d="M258 758c58-20 98 6 154 1 58-5 90-24 158-6" fill="none" stroke="#FFFFFF"
-      stroke-opacity="0.96" stroke-width="21" stroke-linecap="round" />
+    <!-- Ombre de la voile sur l’eau, et la lumière qu’elle laisse passer -->
+    <ellipse cx="500" cy="712" rx="160" ry="22" fill="#080320" fill-opacity="0.55" filter="url(#b2-water-cast)" style="mix-blend-mode: multiply" />
+    <ellipse cx="556" cy="716" rx="104" ry="13" fill="#FFCF9E" fill-opacity="0.3" filter="url(#b2-water-cast)" style="mix-blend-mode: screen" />
+
+    <!-- Reflet : la voile renversée, presque effacée -->
+    <g transform="translate(0 1424) scale(1 -1)" opacity="0.18" filter="url(#b2-soft)">
+      <path d="M548 232C570 396 606 566 668 676C632 700 586 706 548 706Z" fill="#FFFFFF" />
+    </g>
+
+    <!-- Voile : panneau au vent, translucide ; panneau sous le vent, opaque -->
+    <path d="M548 232C492 372 432 560 404 710H548Z" fill="url(#b2-left)" />
+    <g clip-path="url(#b2-left-clip)">
+      <rect x="404" y="232" width="144" height="478" fill="#FFFFFF" opacity="0.12" style="mix-blend-mode: screen" />
+      <path d="M548 244V706" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="18" filter="url(#b2-bevel)" style="mix-blend-mode: screen" />
+    </g>
+    <!-- Bord d’attaque : le verre s’allume sur sa tranche -->
+    <path d="M548 238C492 374 434 558 408 704" fill="none" stroke="#FFFFFF" stroke-opacity="0.62" stroke-width="3.4" stroke-linecap="round" />
+    <path d="M548 232C570 396 606 566 668 676C632 700 586 706 548 706Z" fill="url(#b2-right)" filter="url(#b2-sail-cast)" />
+
+    <!-- Arête de la voile tournée vers le soleil -->
+    <path d="M548 240C572 400 608 566 666 672" fill="none" stroke="url(#b2-edge)" stroke-width="4.2" stroke-linecap="round" />
+    <!-- Mât : pli central, lumière d’un côté, ombre de l’autre -->
+    <path d="M548 236V704" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="5.4" stroke-linecap="round" />
+    <path d="M553 240V700" stroke="#2A1B78" stroke-opacity="0.26" stroke-width="3.4" stroke-linecap="round" />
+
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"
+      fill="none" stroke="url(#b2-rim)" stroke-width="3.4" />
+
+    <rect x="96" y="96" width="832" height="832" fill="url(#b2-vignette)" />
+    <rect x="96" y="96" width="832" height="832" filter="url(#b2-grain)" opacity="0.05" style="mix-blend-mode: overlay" />
   </g>
 </svg>

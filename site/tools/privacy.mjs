@@ -1,6 +1,6 @@
 /* Génère /confidentialite/index.html depuis la liste de flux de l'application.
    Source unique : src/shared/network.ts (celle que le test d'audit surveille).
-   Usage : node site/next/tools/privacy.mjs */
+   Usage : node site/tools/privacy.mjs */
 import { buildSync } from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const siteRoot = path.resolve(here, '..')
-const projectRoot = path.resolve(siteRoot, '../..')
+const publicRoot = path.join(siteRoot, 'public')
+const projectRoot = path.resolve(siteRoot, '..')
 
 const bundlePath = path.join(siteRoot, 'tools/.network.bundle.cjs')
 buildSync({
@@ -88,7 +89,7 @@ const html = template
   .replace('{{FLOWS}}', ORDER.map(block).filter(Boolean).join('\n'))
   .replace(/\{\{FLOW_COUNT\}\}/g, String(NETWORK_FLOWS.length))
 
-const target = path.join(siteRoot, 'confidentialite/index.html')
+const target = path.join(publicRoot, 'confidentialite/index.html')
 fs.mkdirSync(path.dirname(target), { recursive: true })
 fs.writeFileSync(target, html)
 
