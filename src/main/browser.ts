@@ -73,6 +73,7 @@ import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateSta
 import { MiniWindow } from './mini'
 import { Store } from './store'
 import { TabManager, type TabHost } from './tabs'
+import { preparedPartitions } from './privacy'
 
 function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
@@ -322,7 +323,9 @@ export class Browser {
       } catch {
         /* le balayage ne doit jamais casser la boucle principale */
       }
-    }, 60_000)
+      // Toutes les dix minutes : un vidage chaque minute forçait le
+      // retéléchargement des pages au retour d'un espace.
+    }, 10 * 60_000)
     if (typeof this.sweepTimer.unref === 'function') this.sweepTimer.unref()
   }
 
@@ -367,16 +370,26 @@ export class Browser {
     })
   }
 
+  /**
+   * Vide le cache HTTP des espaces laissés de côté. On ne touche qu'aux
+   * partitions déjà ouvertes : créer la session d'un espace jamais visité
+   * coûtait plus cher que le nettoyage lui-même, et le vidage trop fréquent
+   * obligeait à retélécharger les pages au premier retour.
+   */
   private async clearIdleCaches(): Promise<void> {
     try {
       const state = this.store.get()
+      const known = preparedPartitions()
       const activePartition = partitionFor(state.spaces.find((s) => s.id === state.activeSpaceId))
+      const live = this.tabs.liveIds()
+      const busySpaces = new Set(
+        state.tabs.filter((tab) => live.has(tab.id)).map((tab) => tab.spaceId)
+      )
       for (const space of state.spaces) {
-        if (partitionFor(space) === activePartition) continue
-        const hasLive = state.tabs.some((t) => t.spaceId === space.id && this.tabs.liveIds().has(t.id))
-        if (hasLive) continue
+        const partition = partitionFor(space)
+        if (partition === activePartition || !known.has(partition) || busySpaces.has(space.id)) continue
         try {
-          await session.fromPartition(partitionFor(space)).clearCache()
+          await session.fromPartition(partition).clearCache()
         } catch {
           /* partition déjà libérée */
         }
@@ -572,6 +585,8 @@ export class Browser {
     const before = state.tabs.filter((item) => item.spaceId === spaceId)
     const index = before.findIndex((item) => item.id === id)
 
+    // L'identifiant d'un onglet fermé ne doit pas rester dans la trace de l'agent.
+    this.agentSentTabIds.delete(id)
     state.tabs = state.tabs.filter((item) => item.id !== id)
     state.closed = [
       { spaceId, url: tab.url, title: tab.title, pinned: tab.pinned, groupId: tab.groupId ?? null },

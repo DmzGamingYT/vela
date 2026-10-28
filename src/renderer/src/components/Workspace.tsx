@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
@@ -8,7 +8,10 @@ import { Icon } from './Icon'
 import StatusBar from './StatusBar'
 import PaneHeader from './PaneHeader'
 import StartPage from './StartPage'
-import TunnelView from './TunnelView'
+
+// La carte de recherche n'est chargée qu'en mode Travail : elle pèse à elle
+// seule une part notable du bundle d'une fenêtre de navigation classique.
+const TunnelView = lazy(() => import('./TunnelView'))
 
 function ErrorPane({ tab }: { tab: TabView }) {
   const reload = useBrowser((state) => state.reload)
@@ -218,7 +221,9 @@ export default function Workspace() {
           style={{ '--ratio': `${ratio * 100}%` } as CSSProperties}
         >
           <div className="work-stage">
-            <TunnelView />
+            <Suspense fallback={<div className="work-stage-loading" role="status" aria-live="polite">Chargement de la carte…</div>}>
+              <TunnelView />
+            </Suspense>
           </div>
           {split && second && (
             <>

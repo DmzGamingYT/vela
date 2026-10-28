@@ -12,4 +12,5 @@ build/icon.iconset/
 # Rushes de la bande-annonce : la capture brute et les données de démonstration
 # ne se versionnent pas, seuls les fichiers montés dans site/public/media le sont.
 site/trailer/take/
+site/trailer/probe/
 site/trailer/.record-data/

@@ -15,6 +15,36 @@ import { HOME_URL } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import type { CreateSpaceInput, SaveNoteInput, SettingsPatch, UpdateSpaceInput } from '@shared/api'
 
+/**
+ * Références stables entre deux diffusions d'état.
+ *
+ * L'état traverse l'IPC : chaque diffusion recrée tous les objets, donc un
+ * composant abonné à `settings`, `bookmarks` ou `spaces` se redessinait même
+ * quand rien de ce qu'il affiche n'avait changé (une page qui charge produit
+ * plusieurs diffusions par seconde). On garde la référence précédente des
+ * parties identiques, et React s'arrête là.
+ */
+let previousView: AppView | null = null
+let previousPrints = new Map<string, string>()
+
+function stableView(next: AppView): AppView {
+  if (!previousView) {
+    previousView = next
+    previousPrints = new Map(Object.keys(next).map((key) => [key, JSON.stringify(next[key as keyof AppView])]))
+    return next
+  }
+  const merged: Record<string, unknown> = { ...next }
+  const prints = new Map<string, string>()
+  for (const key of Object.keys(next)) {
+    const print = JSON.stringify(next[key as keyof AppView])
+    prints.set(key, print)
+    if (previousPrints.get(key) === print) merged[key] = previousView[key as keyof AppView]
+  }
+  previousView = merged as unknown as AppView
+  previousPrints = prints
+  return previousView
+}
+
 export type Overlay =
   | 'command'
   | 'brief'
@@ -243,15 +273,16 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     }
     try {
       const view = await window.vela.view()
-      set({ view, ready: true })
+      set({ view: stableView(view), ready: true })
     } catch (error) {
       get().toast(cleanError(error, 'Impossible de charger Vela.'), 'error')
     }
-    window.vela.onState((view) =>
+    window.vela.onState((incoming) =>
       set((state) => ({
-        view,
+        view: stableView(incoming),
         splitRatioLive:
-          state.splitRatioLive !== null && Math.abs(view.splitRatio - state.splitRatioLive) < 0.002
+          state.splitRatioLive !== null &&
+          Math.abs(incoming.splitRatio - state.splitRatioLive) < 0.002
             ? null
             : state.splitRatioLive
       }))

@@ -1,22 +1,26 @@
-import { useEffect } from 'react'
-import AgentCanvas from './components/AgentCanvas'
-import BookmarksPanel from './components/BookmarksPanel'
-import BriefPanel from './components/BriefPanel'
-import HistoryPanel from './components/HistoryPanel'
-import CommandBar from './components/CommandBar'
-import DownloadsPanel from './components/DownloadsPanel'
+import { Suspense, lazy, useEffect } from 'react'
 import Onboarding from './components/Onboarding'
-import ProcessManager from './components/ProcessManager'
-import NotesDrawer from './components/NotesDrawer'
-import ProtectionPanel from './components/ProtectionPanel'
-import SettingsPanel from './components/SettingsPanel'
 import Sidebar from './components/Sidebar'
-import SpaceDialog from './components/SpaceDialog'
 import SpaceRail from './components/SpaceRail'
 import Toasts from './components/Toasts'
 import Workspace from './components/Workspace'
 import { useBrowser } from './store/browser'
 import { appearanceState, applyAppearance } from './lib/appearance'
+
+// Les panneaux ne sont chargés qu'à leur première ouverture : le démarrage ne
+// paie plus l'analyse des réglages, des notes, de l'agent et des overlays
+// (plus de la moitié du bundle) et la mémoire du renderer reste plus basse.
+const AgentCanvas = lazy(() => import('./components/AgentCanvas'))
+const BookmarksPanel = lazy(() => import('./components/BookmarksPanel'))
+const BriefPanel = lazy(() => import('./components/BriefPanel'))
+const HistoryPanel = lazy(() => import('./components/HistoryPanel'))
+const CommandBar = lazy(() => import('./components/CommandBar'))
+const DownloadsPanel = lazy(() => import('./components/DownloadsPanel'))
+const ProcessManager = lazy(() => import('./components/ProcessManager'))
+const NotesDrawer = lazy(() => import('./components/NotesDrawer'))
+const ProtectionPanel = lazy(() => import('./components/ProtectionPanel'))
+const SettingsPanel = lazy(() => import('./components/SettingsPanel'))
+const SpaceDialog = lazy(() => import('./components/SpaceDialog'))
 
 export default function App() {
   const ready = useBrowser((state) => state.ready)
@@ -113,18 +117,20 @@ export default function App() {
       <SpaceRail />
       {!collapsed && <Sidebar />}
       <Workspace />
-      {agentOpen && <AgentCanvas docked />}
-      {notesOpen && <NotesDrawer />}
-      {overlay === 'command' && <CommandBar />}
-      {overlay === 'brief' && <BriefPanel />}
-      {overlay === 'settings' && <SettingsPanel />}
-      {overlay === 'space' && <SpaceDialog />}
-      {overlay === 'processes' && <ProcessManager />}
-      {overlay === 'downloads' && <DownloadsPanel />}
-      {overlay === 'history' && <HistoryPanel />}
-      {overlay === 'bookmarks' && <BookmarksPanel />}
-      {overlay === 'protection' && <ProtectionPanel />}
-      {!onboarded && <Onboarding />}
+      <Suspense fallback={null}>
+        {agentOpen && <AgentCanvas docked />}
+        {notesOpen && <NotesDrawer />}
+        {overlay === 'command' && <CommandBar />}
+        {overlay === 'brief' && <BriefPanel />}
+        {overlay === 'settings' && <SettingsPanel />}
+        {overlay === 'space' && <SpaceDialog />}
+        {overlay === 'processes' && <ProcessManager />}
+        {overlay === 'downloads' && <DownloadsPanel />}
+        {overlay === 'history' && <HistoryPanel />}
+        {overlay === 'bookmarks' && <BookmarksPanel />}
+        {overlay === 'protection' && <ProtectionPanel />}
+        {!onboarded && <Onboarding />}
+      </Suspense>
       <Toasts />
     </div>
   )

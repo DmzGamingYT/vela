@@ -319,6 +319,8 @@ export class Store {
   private state: PersistedState
   private secrets: Record<string, string>
   private timer: NodeJS.Timeout | null = null
+  /** Dernier contenu écrit : évite de réécrire le même fichier inutilement. */
+  private lastPayload: string | null = null
 
   constructor(dir: string) {
     this.dir = dir
@@ -469,10 +471,22 @@ export class Store {
       clearTimeout(this.timer)
       this.timer = null
     }
+    // Une navigation programme une sauvegarde, mais peu de choses changent :
+    // réécrire le même JSON toutes les 800 ms bloquait le processus principal
+    // pour rien. On ne touche au disque que si le contenu a bougé.
+    let payload: string
+    try {
+      payload = JSON.stringify(this.state)
+    } catch (error) {
+      console.error('[vela] état non sérialisable', error)
+      return
+    }
+    if (payload === this.lastPayload) return
     const tmp = `${this.file}.tmp`
     try {
-      writeFileSync(tmp, JSON.stringify(this.state), 'utf8')
+      writeFileSync(tmp, payload, 'utf8')
       renameSync(tmp, this.file)
+      this.lastPayload = payload
     } catch (error) {
       console.error('[vela] sauvegarde impossible', error)
     }

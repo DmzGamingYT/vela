@@ -72,6 +72,8 @@ export interface TabRuntime {
 
 const MAX_LIVE_VIEWS = 5
 const IDLE_DISCARD_MS = 5 * 60_000
+/** Budget mémoire des pages vivantes : au-delà, les plus anciennes s'endorment. */
+const PAGE_MEMORY_BUDGET_MB = 1400
 
 export class TabManager {
   private views = new Map<string, WebContentsView>()
@@ -82,6 +84,9 @@ export class TabManager {
   private byWebContents = new Map<number, string>()
   private lastUsed = new Map<string, number>()
   private visible = new Set<string>()
+  /** Onglets dont la vue est en cours de déchargement (évite le double travail). */
+  private evicting = new Set<string>()
+  private capCache: number | null = null
   private panes: PaneRect[] = []
   private overlay = false
 
@@ -218,7 +223,9 @@ export class TabManager {
     this.lastUsed.set(tabId, Date.now())
     win.contentView.addChildView(view)
     this.wire(tabId, view)
-    this.evictExcess(new Set(this.visible))
+    // Pas d'éviction ici : `applyLayout` la fait ensuite avec l'ensemble visible
+    // exact. Évincer au milieu d'une mise en page suspendait la vue qu'on venait
+    // de créer, puis la recréait au tour suivant.
     if (autoLoad) {
       void view.webContents.loadURL(tab.url).catch(() => {
         /* did-fail-load remonte déjà l'erreur */
@@ -549,8 +556,7 @@ export class TabManager {
     }
   }
 
-  async captureScroll(tabId: string): Promise<void> {
-    const view = this.views.get(tabId)
+  async captureScroll(tabId: string, view = this.views.get(tabId)): Promise<void> {
     if (!view || view.webContents.isDestroyed()) return
     try {
       const y: unknown = await view.webContents.executeJavaScript('window.scrollY || 0', true)
@@ -567,38 +573,80 @@ export class TabManager {
     void view.webContents.executeJavaScript(`window.scrollTo(0, ${Math.round(y)})`, true).catch(() => {})
   }
 
-  /** Libère le processus d'un onglet sans perdre son url/titre (façon Zephium : charge au focus). */
+  /**
+   * Libère le processus d'un onglet sans perdre son url/titre (façon Zephium :
+   * charge au focus).
+   *
+   * La vue quitte les tables **immédiatement** : `evictExcess` décide en
+   * synchrone. Avec une suppression différée, `views.size` ne baissait jamais,
+   * la boucle d'éviction ne pouvait pas se terminer et empilait des promesses
+   * jusqu'à faire mourir le processus principal (tas à 4 Go, 0.3.10).
+   */
   suspend(tabId: string): void {
-    void this.captureScroll(tabId).finally(() => {
-      const view = this.views.get(tabId)
-      this.views.delete(tabId)
-      this.visible.delete(tabId)
-      const release = (): void => {
-        if (!view) return
-        this.byWebContents.delete(view.webContents.id)
+    if (this.evicting.has(tabId)) return
+    const view = this.views.get(tabId)
+    if (!view) return
+    this.evicting.add(tabId)
+    this.views.delete(tabId)
+    this.visible.delete(tabId)
+    const wc = view.webContents
+    let wcId = -1
+    try {
+      wcId = wc.id
+    } catch {
+      /* page déjà détruite : rien à désinscrire */
+    }
+    // La mémoire du processus est relevée juste avant de le fermer : c’est
+    // l’estimation honnête du gain affiché dans l’interface.
+    if (!wc.isDestroyed()) {
+      try {
+        const metric = app.getAppMetrics().find((entry) => entry.pid === wc.getOSProcessId())
+        this.freedMb += (metric?.memory?.workingSetSize ?? 0) / 1024
+      } catch {
+        /* métriques indisponibles : le gain reste inconnu, la veille s’applique */
+      }
+    }
+    void this.captureScroll(tabId, view).finally(() => {
+      if (wcId >= 0) this.byWebContents.delete(wcId)
+      try {
         this.getWindow()?.contentView.removeChildView(view)
-        if (!view.webContents.isDestroyed()) view.webContents.close()
-        const runtime = this.runtimes.get(tabId)
-        this.runtimes.set(tabId, { loading: false, error: runtime?.error ?? null })
-        this.host.changed()
+        if (!wc.isDestroyed()) wc.close()
+      } catch {
+        /* fenêtre déjà fermée */
       }
-      // La mémoire du processus est relevée juste avant de le fermer : c’est
-      // l’estimation honnête du gain affiché dans l’interface.
-      if (view && !view.webContents.isDestroyed()) {
-        try {
-          const pid = view.webContents.getOSProcessId()
-          const metric = app.getAppMetrics().find((entry) => entry.pid === pid)
-          this.freedMb += (metric?.memory?.workingSetSize ?? 0) / 1024
-        } catch {
-          /* métriques indisponibles : le gain reste inconnu, la veille s’applique */
-        }
-      }
-      release()
+      const runtime = this.runtimes.get(tabId)
+      this.runtimes.set(tabId, { loading: false, error: runtime?.error ?? null })
+      this.evicting.delete(tabId)
+      this.host.changed()
     })
   }
 
   liveCount(): number {
     return this.views.size
+  }
+
+  /**
+   * Nombre de pages vivantes autorisées. Garder plus de pages que l'écran
+   * accélère le retour sur un onglet récent (aucune reconstruction, aucun
+   * rechargement) ; la marge suit la RAM installée : sept vues sur 16 Go,
+   * dix sur 24 Go et plus, cinq en dessous de 8 Go.
+   */
+  private liveCap(): number {
+    if (this.capCache !== null) return this.capCache
+    let cap = MAX_LIVE_VIEWS
+    try {
+      // La RAM installée, pas la mémoire « libre » : macOS garde presque tout
+      // en cache et annonce quelques centaines de Mo libres en permanence, ce
+      // qui ramenait le plafond à trois vues et rechargeait chaque onglet.
+      const totalMb = Math.round((process.getSystemMemoryInfo().total ?? 0) / 1024)
+      if (totalMb >= 24 * 1024) cap = 10
+      else if (totalMb >= 12 * 1024) cap = 7
+      else if (totalMb >= 8 * 1024) cap = 6
+    } catch {
+      /* information indisponible : plafond de base */
+    }
+    this.capCache = cap
+    return cap
   }
 
   liveIds(): Set<string> {
@@ -618,7 +666,10 @@ export class TabManager {
   }
 
   private evictExcess(keep: Set<string>): void {
-    while (this.views.size > MAX_LIVE_VIEWS) {
+    // La borne `guard` est une ceinture de sécurité : même si une vue refusait
+    // de partir, la boucle s'arrête au lieu de tuer le processus.
+    let guard = this.views.size + 1
+    while (this.views.size > this.liveCap() && guard-- > 0) {
       let oldest: string | null = null
       let oldestAt = Number.POSITIVE_INFINITY
       for (const [tabId] of this.views) {
@@ -642,6 +693,43 @@ export class TabManager {
       const at = this.lastUsed.get(tabId) ?? 0
       if (now - at > maxAgeMs) this.suspend(tabId)
     }
+    this.relieveMemoryPressure(keep)
+  }
+
+  /**
+   * Filet de sécurité mémoire : quand les pages vivantes dépassent le budget,
+   * on endort les plus anciennes invisibles. Le plafond de vues suffit en
+   * général ; celui-ci couvre les pages très lourdes (cartes, vidéos).
+   */
+  private relieveMemoryPressure(keep: Set<string>): void {
+    if (this.views.size <= 1) return
+    let byPid: Map<number, number>
+    let totalMb = 0
+    try {
+      byPid = new Map()
+      for (const metric of app.getAppMetrics()) {
+        if (metric.type !== 'Tab') continue
+        const mb = metric.memory.workingSetSize / 1024
+        byPid.set(metric.pid, mb)
+        totalMb += mb
+      }
+    } catch {
+      return
+    }
+    if (totalMb <= PAGE_MEMORY_BUDGET_MB) return
+    const candidates = [...this.views.entries()]
+      .filter(([tabId]) => !keep.has(tabId) && !this.visible.has(tabId) && !this.evicting.has(tabId))
+      .sort((a, b) => (this.lastUsed.get(a[0]) ?? 0) - (this.lastUsed.get(b[0]) ?? 0))
+    for (const [tabId, view] of candidates) {
+      if (totalMb <= PAGE_MEMORY_BUDGET_MB * 0.75) break
+      try {
+        if (view.webContents.isDestroyed()) continue
+        totalMb -= byPid.get(view.webContents.getOSProcessId()) ?? 0
+      } catch {
+        continue
+      }
+      this.suspend(tabId)
+    }
   }
 
   destroy(tabId: string): void {
@@ -649,8 +737,13 @@ export class TabManager {
     this.views.delete(tabId)
     this.runtimes.delete(tabId)
     this.blocked.delete(tabId)
+    // Les compteurs par hôte et la position de défilement suivent l'onglet :
+    // les garder après sa fermeture faisait grossir la mémoire sans fin.
+    this.blockedHosts.delete(tabId)
+    this.scrolls.delete(tabId)
     this.lastUsed.delete(tabId)
     this.visible.delete(tabId)
+    this.evicting.delete(tabId)
     if (view) {
       this.byWebContents.delete(view.webContents.id)
       this.getWindow()?.contentView.removeChildView(view)

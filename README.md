@@ -307,6 +307,15 @@ src/
 - `setWindowOpenHandler` ouvre les liens externes dans un nouvel onglet du même espace.
 - Les clés API sont chiffrées ensemble par le trousseau système (Keychain, DPAPI, libsecret) et ne sont jamais renvoyées au renderer.
 
+### Performance et mémoire
+
+- Les panneaux (réglages, notes, agent, carte du tunnel, palette, fenêtres d’espace) sont chargés à leur première ouverture : le démarrage n’analyse plus que la coque, la barre latérale et l’espace de travail.
+- Une page garde sa `WebContentsView` jusqu’à sortir du plafond (7 vues sur 16 Go de RAM, 6 sur 8 Go, 5 en dessous) ou rester invisible cinq minutes : revenir sur un onglet récent ne recharge rien.
+- Un filet de sécurité endort les pages invisibles les plus anciennes quand leur ensemble dépasse 1,4 Go, même sous le plafond.
+- Le blocage de traqueurs lit l’hôte d’une URL sans construire d’objet `URL` : deux fois plus rapide par requête.
+- `vela.json` n’est réécrit que si son contenu a changé ; le cache HTTP d’un espace n’est vidé qu’après dix minutes sans activité.
+- Une exception isolée est journalisée dans `vela-errors.log` et l’app continue ; si le renderer de l’interface meurt, la fenêtre est recréée seule.
+
 ## Données
 
 Tout est local, dans le dossier de données de l’application :

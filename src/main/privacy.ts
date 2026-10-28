@@ -4,6 +4,14 @@ import { applySessionIdentity } from './identity'
 
 const attached = new WeakSet<Session>()
 
+// Partitions réellement ouvertes depuis le démarrage : nettoyer le cache d'un
+// espace jamais visité ne sert à rien et créerait sa session pour rien.
+const prepared = new Set<string>()
+
+export function preparedPartitions(): Set<string> {
+  return prepared
+}
+
 /**
  * Filtre local, appliqué à la session d'un espace.
  * `webContentsId` permet de compter les requêtes bloquées par onglet.
@@ -65,6 +73,7 @@ export function prepareSession(partition: string): Session {
     typeof partition === 'string' && /^persist:[a-z0-9._-]{1,64}$/i.test(partition.trim())
       ? partition.trim()
       : 'persist:vela-recovery'
+  prepared.add(safe)
   const ses = session.fromPartition(safe)
   // Identité Chrome complète (UA, langues, client hints) sur chaque requête de
   // l'espace, y compris celles qui ne passent pas par la page.

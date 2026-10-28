@@ -78,12 +78,12 @@
 
   /* --- Téléchargement adapté à la plateforme ----------------------------- */
 
-  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/'
+  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/'
   const files = {
     // Sur macOS, un seul fichier vaut pour Apple silicon et Intel.
-    mac: { href: `${RELEASE}Vela-0.3.10-universal.dmg`, label: 'Télécharger pour macOS' },
-    win: { href: `${RELEASE}Vela-0.3.10-x64.exe`, label: 'Télécharger pour Windows' },
-    linux: { href: `${RELEASE}Vela-0.3.10-x86_64.AppImage`, label: 'Télécharger pour Linux' }
+    mac: { href: `${RELEASE}Vela-0.3.11-universal.dmg`, label: 'Télécharger pour macOS' },
+    win: { href: `${RELEASE}Vela-0.3.11-x64.exe`, label: 'Télécharger pour Windows' },
+    linux: { href: `${RELEASE}Vela-0.3.11-x86_64.AppImage`, label: 'Télécharger pour Linux' }
   }
 
   const platform = (() => {
@@ -192,6 +192,40 @@
   }
 
   swatches.forEach((button) => button.addEventListener('click', () => previewTheme(button)))
+
+  /* --- Démo de la petite fenêtre ------------------------------------------ */
+
+  const miniDemo = document.querySelector('#demo')
+  const miniToggle = document.querySelector('.demo-trigger')
+  const miniPanel = document.querySelector('.demo-mini')
+  const miniClose = document.querySelector('.demo-close')
+  const miniScrim = document.querySelector('.demo-scrim')
+  const miniStatus = document.querySelector('[data-demo-status]')
+  let miniOpen = false
+
+  const showMiniDemo = (open, restoreFocus) => {
+    if (!miniDemo || !miniToggle) return
+    miniOpen = open
+    miniDemo.hidden = !open
+    miniToggle.setAttribute('aria-expanded', String(open))
+    if (miniStatus) {
+      miniStatus.textContent = open
+        ? 'Petite fenêtre ouverte au centre de l’aperçu. Échap la referme.'
+        : 'Petite fenêtre refermée.'
+    }
+    if (open) miniPanel?.focus({ preventScroll: true })
+    else if (restoreFocus) miniToggle.focus({ preventScroll: true })
+  }
+
+  miniToggle?.addEventListener('click', () => showMiniDemo(!miniOpen, false))
+  miniClose?.addEventListener('click', () => showMiniDemo(false, true))
+  miniScrim?.addEventListener('click', () => showMiniDemo(false, true))
+
+  document.addEventListener('keydown', (event) => {
+    if (!miniOpen || event.key !== 'Escape') return
+    event.preventDefault()
+    showMiniDemo(false, true)
+  })
 
   /* --- Section courante dans l'en-tête ----------------------------------- */
 

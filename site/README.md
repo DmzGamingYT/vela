@@ -32,10 +32,11 @@ Ouvrir <http://localhost:4173>.
 ```text
 site/
 ├── public/
-│   ├── index.html     page unique en neuf sections
+│   ├── index.html     page unique en onze sections
 │   ├── styles.css     thème, maquettes d’interface, adaptation mobile
 │   ├── script.js      thème, menu, bascule Browse/Work, CTA par plateforme
-│   ├── captures/      accueil réel de l’app, JPEG 1440×900 (clair et sombre)
+│   ├── captures/      captures réelles de l’app, JPEG 1440×900 (accueil clair et
+│   │                  sombre, petite fenêtre)
 │   ├── og-vela.png    visuel 1200×630
 │   ├── favicon.svg
 │   └── robots.txt
@@ -46,13 +47,17 @@ site/
 └── deploy.json        manifeste Sites (assetsDirectory: ./public)
 ```
 
-Les neuf sections : héros et palette ⌘K, bascule Browse/Work, capture réelle de l’app, trois
-fondamentaux, commandes, confidentialité en deux colonnes, modèles (marques des fournisseurs),
-téléchargement (fichiers, tailles, états, empreintes SHA-256), FAQ et feuille de route. La feuille de
-route distingue explicitement ce qui est disponible de ce qui est prévu.
+Les onze sections : héros et palette ⌘K, bascule Browse/Work, deux captures réelles de l’app,
+trois gestes puis la frise des versions, trois fondamentaux, commandes, dix thèmes, confidentialité en
+deux colonnes, modèles (marques des fournisseurs), téléchargement (fichiers, tailles, états, empreintes
+SHA-256), FAQ et feuille de route. La feuille de route distingue explicitement ce qui est disponible de
+ce qui est prévu.
 
-Les captures viennent de l’application elle-même, prises à 1440×900 en @2x puis converties en JPEG
-(82 et 87 Ko). Le thème du site choisit l’image affichée, sans requête supplémentaire.
+Les captures viennent de l’application elle-même, prises à 1440×900 en @2x puis converties en JPEG.
+Le thème du site choisit l’image de l’accueil affichée, sans requête supplémentaire ; la petite fenêtre
+est donc chargée en `lazy`. Chaque légende décrit ce que l’image montre réellement :
+la frise des versions dit ce que chaque release a apporté, et le numéro de version mène à ses notes de
+version sur GitHub (un lien par ligne, pas de mot répété).
 
 Aucune dépendance, aucun appel réseau, aucune police distante : la page fonctionne hors ligne. Le
 visuel Open Graph est généré avec le Chromium d’Electron, depuis `site/og/og.html` :
@@ -73,9 +78,11 @@ les deux balises dans `public/index.html`.
 
 Assets en 200 avec les bons types, aucun appel réseau externe, aucun débordement horizontal de
 1440 px à 390 px (le tableau des fichiers défile dans son conteneur), menu mobile et Échap, bascule
-Browse/Work au clavier (`aria-pressed`) avec ses trois étapes animées, CTA qui pointe vers le bon
-fichier selon la plateforme, capture réelle servie en 1440×900 et permutée par le thème, dix marques
-de fournisseurs, `details` pour les empreintes et la FAQ.
+Browse/Work au clavier (`aria-pressed`) avec ses trois étapes animées, démo de la petite fenêtre jouable
+et coupée par `prefers-reduced-motion`, CTA qui pointe vers le bon fichier selon la plateforme, captures
+réelles servies en 1440×900 (accueil permuté par le thème, petite fenêtre en pleine largeur, chargée au
+défilement), sept lignes de frise dont le numéro de version porte le lien, dix marques de
+fournisseurs, `details` pour les empreintes et la FAQ.
 
 Contrastes calculés dans les deux thèmes : texte principal 16:1, texte secondaire 6,7:1 (clair) et
 8,3:1 (sombre), texte tertiaire 5,2:1 et 5,3:1, accent 5,3:1 et 8,1:1, `kbd` 5:1 et 4,7:1. Tous les

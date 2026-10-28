@@ -103,24 +103,49 @@ export const AUTH_PAGE_HOSTS: readonly string[] = [
 
 const AUTH_PAGE_INDEX = new Set(AUTH_PAGE_HOSTS)
 
-export function isAuthPage(url: string): boolean {
-  let host: string
-  try {
-    host = new URL(url).hostname.toLowerCase()
-  } catch {
-    return false
+/**
+ * Hôte d'une URL sans construire d'objet `URL` (coûteux et alloué pour chaque
+ * ressource de chaque page). `new URL` reste le repli des adresses tordues.
+ */
+function hostOf(url: string): string {
+  const scheme = url.indexOf('://')
+  if (scheme < 0) return ''
+  let start = scheme + 3
+  // IPv6 littéral : la lecture manuelle s'arrêterait sur les deux-points.
+  if (url.charCodeAt(start) === 91) return ''
+  const slash = url.indexOf('/', start)
+  const at = url.indexOf('@', start)
+  if (at >= 0 && (slash < 0 || at < slash)) start = at + 1
+  let end = url.length
+  for (let i = start; i < url.length; i += 1) {
+    const code = url.charCodeAt(i)
+    if (code === 47 || code === 63 || code === 35 || code === 58) {
+      end = i
+      break
+    }
   }
+  if (end <= start) return ''
+  return url.slice(start, end).toLowerCase()
+}
+
+function parsedHost(url: string): string {
+  const fast = hostOf(url)
+  if (fast) return fast
+  try {
+    return new URL(url).hostname.toLowerCase()
+  } catch {
+    return ''
+  }
+}
+
+export function isAuthPage(url: string): boolean {
+  const host = parsedHost(url)
   if (!host) return false
   return matches(host, AUTH_PAGE_INDEX)
 }
 
 export function isTracker(url: string): boolean {
-  let host: string
-  try {
-    host = new URL(url).hostname.toLowerCase()
-  } catch {
-    return false
-  }
+  const host = parsedHost(url)
   if (!host || matches(host, ALLOW_INDEX)) return false
   return matches(host, TRACKER_INDEX)
 }

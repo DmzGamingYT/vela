@@ -2071,6 +2071,16 @@ kbd {
   display: flex;
 }
 
+/* Attente du module de carte (chargé à la première ouverture du mode Travail). */
+.work-stage-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
 /* Vue scindée de l’atelier : la carte mentale garde la part choisie et la
    source ouverte occupe le reste, sans quitter le mode Travail. */
 .work-split {

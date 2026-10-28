@@ -110,7 +110,7 @@
       <a class="brand" href="#top" aria-label="Vela, retour en haut">
         <span class="brand-mark" aria-hidden="true">V</span>
         <span class="brand-name">Vela</span>
-        <span class="brand-version">0.3.10</span>
+        <span class="brand-version">0.3.11</span>
       </a>
 
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
@@ -148,7 +148,7 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <p class="kicker">
           <span class="dot" aria-hidden="true"></span>
-          v0.3.10 · macOS, Windows, Linux
+          v0.3.11 · macOS, Windows, Linux
         </p>
         <h1 id="hero-title">
           Le web,<br />
@@ -167,7 +167,7 @@
             <span data-platform-label>Télécharger</span>
           </a>
           <a class="btn btn-quiet" href="https://github.com/DmzGamingYT/vela/releases/latest" target="_blank" rel="noreferrer">
-            Voir la version 0.3.10
+            Voir la version 0.3.11
           </a>
         </div>
         <p class="fine">Sans compte Vela · Sans télémétrie · MIT</p>
@@ -246,7 +246,39 @@
               </p>
             </div>
           </div>
+
+          <!-- Démo : la petite fenêtre s’ouvre au centre, la page reste dessous. -->
+          <div class="demo" id="demo" hidden>
+            <span class="demo-scrim" aria-hidden="true"></span>
+            <div class="demo-mini" role="group" tabindex="-1" aria-label="Démo : la petite fenêtre de Vela, ouverte au centre de l’écran">
+              <div class="demo-mini-bar">
+                <span class="mini-demo-space"><i aria-hidden="true"></i>Recherche</span>
+                <span class="demo-addr">
+                  <span class="demo-fav" aria-hidden="true">P</span>
+                  mobi.gg — Pokémon TCG Pocket
+                </span>
+                <button type="button" class="demo-close" aria-label="Fermer la démo">×</button>
+              </div>
+              <div class="demo-page">
+                <p class="demo-title">How to play Pokémon TCG Pocket on PC</p>
+                <span class="demo-line w90"></span>
+                <span class="demo-line w70"></span>
+                <span class="demo-shot"></span>
+                <span class="demo-line w80"></span>
+              </div>
+              <span class="demo-progress" aria-hidden="true"></span>
+            </div>
+          </div>
         </div>
+
+        <p class="demo-actions">
+          <button type="button" class="demo-trigger" aria-controls="demo" aria-expanded="false">
+            <svg class="ico" aria-hidden="true"><use href="#i-split" /></svg>
+            Essayer le geste <kbd>⌘⌥</kbd> + clic
+          </button>
+          <span class="demo-note">Elle glisse au centre, sans nouvel onglet · <kbd>Échap</kbd> la referme</span>
+        </p>
+        <p class="visually-hidden" role="status" data-demo-status></p>
       </section>
 
       <!-- 2. Un seul interrupteur, deux modes. -->
@@ -392,38 +424,18 @@
         </figure>
       </section>
 
-      <!-- 2c. Ce qui est arrivé ces derniers jours, une carte par fonction. -->
+      <!-- 2c. Trois gestes, puis ce que chaque version a apporté. -->
       <section class="section" id="nouveautes" aria-labelledby="news-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Nouveautés</p>
-          <h2 id="news-title">Six fonctions arrivées coup sur coup.</h2>
+          <h2 id="news-title">Trois gestes, dix versions.</h2>
           <p class="section-lede">
-            L’accueil, les espaces, les notes et le rail ont changé dans la 0.3.8 ; la 0.3.9 ajoute la
-            petite fenêtre et des mises à jour qui ne demandent plus rien. Voici ce que ça donne à
-            l’usage, sans capture retouchée.
+            Vela se construit une version à la fois. Voici les trois gestes qui la définissent, ce
+            qu’ils donnent en vrai, puis la frise de ce que chaque version a apporté depuis la 0.3.4.
           </p>
         </div>
 
         <div class="cards cards-two">
-          <article class="card">
-            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-search" /></svg></span>
-            <h3>Un accueil qui respire</h3>
-            <p>
-              Le fond aurora dérive et suit le pointeur, la salutation apparaît mot par mot, et un
-              seul champ ouvre une adresse ou lance une recherche. Les pages récentes s’affichent en
-              tuiles de verre qui s’inclinent sous le curseur ; l’horloge et les tâches du jour
-              restent à côté. La météo ne s’affiche qu’après une ville choisie.
-            </p>
-            <div class="card-visual card-home" aria-hidden="true">
-              <span class="home-sample">
-                <svg class="ico"><use href="#i-search" /></svg>
-                Demander, naviguer, chercher…
-                <kbd>⌘K</kbd>
-              </span>
-              <div class="home-sample-tiles"><span></span><span></span><span></span></div>
-            </div>
-          </article>
-
           <article class="card">
             <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-folder" /></svg></span>
             <h3>Un espace, une ambiance</h3>
@@ -458,23 +470,10 @@
               <span class="line w70"></span>
             </div>
           </article>
+        </div>
 
-          <article class="card">
-            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-tabs" /></svg></span>
-            <h3>Épinglés et favoris en cases</h3>
-            <p>
-              Les sites épinglés et les favoris tiennent en cases compactes, réduites au favicon avec
-              une infobulle au survol. <kbd>Alt</kbd> + flèches déplace une case sans lâcher le
-              clavier ; les onglets normaux, eux, gardent leur ligne complète et leur titre lisible.
-            </p>
-            <div class="card-visual" aria-hidden="true">
-              <div class="tile-strip">
-                <span class="is-active">G</span><span>M</span><span>F</span><span>W</span><span>N</span><span>+</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
+        <article class="card card-wide">
+          <div class="card-copy">
             <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-split" /></svg></span>
             <h3>Une petite fenêtre pour un lien</h3>
             <p>
@@ -485,31 +484,131 @@
               Depuis la 0.3.10, elle prend la moitié de la largeur de Vela et 90 % de sa hauteur, avec
               un filet de chargement sous la barre.
             </p>
-            <div class="card-visual card-spaces" aria-hidden="true">
-              <span class="space-pill"><span class="space-dot"></span>Petite fenêtre</span>
-              <span class="space-pill"><span class="space-dot alt"></span>Onglet d’origine</span>
+          </div>
+          <div class="win-mock" aria-hidden="true">
+            <div class="demo-mini-bar">
+              <span class="mini-demo-space"><i></i>Personnel</span>
+              <span class="demo-addr">
+                <span class="demo-fav">W</span>
+                fr.wikipedia.org/wiki/Hypertext_Transfer_Protocol
+              </span>
             </div>
-          </article>
+            <div class="demo-page">
+              <p class="demo-title">Hypertext Transfer Protocol</p>
+              <span class="demo-line w90"></span>
+              <span class="demo-line w70"></span>
+              <span class="demo-line w80"></span>
+              <span class="demo-line w60"></span>
+              <span class="demo-line w90"></span>
+            </div>
+            <span class="demo-progress"></span>
+          </div>
+        </article>
 
-          <article class="card">
-            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-download" /></svg></span>
-            <h3>Des mises à jour qui ne demandent plus rien</h3>
-            <p>
-              Vela cherche sa nouvelle version douze secondes après le démarrage, puis toutes les
-              trois heures, au réveil et au retour du focus : ni fenêtre ni son. Sur Windows et Linux,
-              elle s’installe à la fermeture. Sur macOS, faute de certificat Apple, Vela télécharge le
-              <code>.dmg</code> en arrière-plan et la barre d’état n’offre qu’un bouton Installer.
-            </p>
-            <div class="card-visual" aria-hidden="true">
-              <p class="mini-tab is-active">Mise à jour 0.3.9 prête</p>
-              <p class="mini-tab">Installer</p>
+        <figure class="capture capture-solo">
+          <img
+            class="capture-img"
+            src="/captures/petite-fenetre.jpg"
+            width="1440"
+            height="900"
+            alt="Capture de Vela : la petite fenêtre ouverte au centre sur une page Wikipédia, par-dessus l’accueil et ses onglets restés intacts."
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>
+            <kbd>⌘⌥</kbd> + clic depuis l’accueil : la page s’ouvre au centre, l’espace « Personnel »
+            prête sa session, aucun onglet n’est créé. Capture de l’application, sans retouche.
+          </figcaption>
+        </figure>
+
+        <ol class="timeline">
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.11" target="_blank" rel="noreferrer">0.3.11</a>
+            <div class="timeline-copy">
+              <strong>Démarrage plus court, mémoire sous contrôle</strong>
+              <p>
+                Les panneaux ne se chargent qu’à leur ouverture, l’onglet récent ne se recharge plus,
+                et un défaut de veille qui faisait tomber l’app après quelques onglets est corrigé.
+              </p>
             </div>
-          </article>
-        </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.10" target="_blank" rel="noreferrer">0.3.10</a>
+            <div class="timeline-copy">
+              <strong>La petite fenêtre à l’échelle de Vela</strong>
+              <p>
+                La moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre, un filet de
+                chargement sous la barre : les sites servent enfin leur mise en page bureau.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.9" target="_blank" rel="noreferrer">0.3.9</a>
+            <div class="timeline-copy">
+              <strong>La petite fenêtre, et des mises à jour qui ne demandent plus rien</strong>
+              <p>
+                <kbd>⌘⌥</kbd> + clic ouvre un lien au centre, sans nouvel onglet ; les mises à jour se
+                téléchargent en arrière-plan. Les onglets du tunnel se ferment, la vue scindée reste
+                dans le tunnel.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.8" target="_blank" rel="noreferrer">0.3.8</a>
+            <div class="timeline-copy">
+              <strong>Notes liées, note vocale, macOS universel</strong>
+              <p>
+                Les notes se citent avec <code>[[Titre]]</code>, une note vocale s’enregistre et se
+                relit sur l’appareil, et un seul <code>.dmg</code> couvre Apple silicon et Intel.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.7" target="_blank" rel="noreferrer">0.3.7</a>
+            <div class="timeline-copy">
+              <strong>Épinglés déplaçables au clavier</strong>
+              <p>
+                <kbd>Alt</kbd> + flèches range les cases sans lâcher le clavier, et la page
+                Confidentialité dit la vérité sur la mise à jour macOS.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.6" target="_blank" rel="noreferrer">0.3.6</a>
+            <div class="timeline-copy">
+              <strong>Le rail en cases compactes</strong>
+              <p>
+                Épinglés et favoris se réduisent au favicon, avec une infobulle au survol ; les
+                onglets normaux gardent leur ligne complète.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.5" target="_blank" rel="noreferrer">0.3.5</a>
+            <div class="timeline-copy">
+              <strong>Une barre de sites par espace</strong>
+              <p>
+                Chaque espace garde ses raccourcis, son ordre et ses transferts, sans jamais
+                emporter les cookies d’un autre espace.
+              </p>
+            </div>
+          </li>
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.4" target="_blank" rel="noreferrer">0.3.4</a>
+            <div class="timeline-copy">
+              <strong>La fenêtre d’espace</strong>
+              <p>
+                Avatar, teinte, ambiance de fond et modèles Travail, Personnel, Gaming, Études,
+                Développement — avec leurs cookies isolés.
+              </p>
+            </div>
+          </li>
+        </ol>
 
         <p class="fine">
-          Livré dans les 0.3.8 à 0.3.10, en clair comme en sombre. La météo attend une ville, et la
-          réécriture des notes passe par votre modèle ou par la démo locale.
+          L’accueil qui respire est arrivé dans la 0.3.3, le tunnel de recherche dans la 0.3.1, les dix
+          thèmes de couleur avant. Toutes les versions sont dans les
+          <a href="https://github.com/DmzGamingYT/vela/releases" target="_blank" rel="noreferrer">notes de version</a>.
         </p>
       </section>
 
@@ -579,6 +678,15 @@
             <div><dt>Rechercher dans la page</dt><dd><kbd>⌘F</kbd></dd></div>
             <div><dt>Vue scindée</dt><dd><kbd>⌘⇧D</kbd></dd></div>
             <div><dt>Navigation / Travail</dt><dd><kbd>⌘⇧A</kbd></dd></div>
+          </dl>
+
+          <p class="keys-title" id="keys-mini">Petite fenêtre</p>
+          <dl class="keys keys-mini" aria-labelledby="keys-mini">
+            <div><dt>Ouvrir la page courante dedans</dt><dd><kbd>⌘⇧N</kbd></dd></div>
+            <div><dt>Ouvrir un lien dedans</dt><dd><kbd>⌘⌥</kbd> + clic</dd></div>
+            <div><dt>Le même geste sans souris</dt><dd><kbd>⇧</kbd> + clic</dd></div>
+            <div><dt>Son adresse</dt><dd><kbd>⌘L</kbd></dd></div>
+            <div><dt>La refermer</dt><dd><kbd>Échap</kbd> ou <kbd>⌘W</kbd></dd></div>
           </dl>
           <p class="fine">Sur Windows et Linux, remplacez ⌘ par Ctrl.</p>
         </div>
@@ -786,7 +894,7 @@
       <section class="section download" id="telecharger" aria-labelledby="download-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Télécharger</p>
-          <h2 id="download-title">Vela 0.3.10</h2>
+          <h2 id="download-title">Vela 0.3.11</h2>
           <p class="section-lede">
             Builds non signés par un certificat commercial. Comptez un clic droit → Ouvrir sur macOS,
             et SmartScreen sur Windows.
@@ -801,7 +909,7 @@
 
         <div class="table-wrap">
           <table class="dl">
-            <caption class="visually-hidden">Fichiers de la version 0.3.10</caption>
+            <caption class="visually-hidden">Fichiers de la version 0.3.11</caption>
             <thead>
               <tr>
                 <th scope="col">Plateforme</th>
@@ -814,11 +922,11 @@
             <tbody>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon <em>et</em> Intel</span></th>
-                <td><code>Vela-0.3.10-universal.dmg</code></td>
-                <td>215,5 Mo</td>
+                <td><code>Vela-0.3.11-universal.dmg</code></td>
+                <td>—</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-universal.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-universal.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le fichier universel macOS</span>
                   </a>
@@ -826,11 +934,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon</span></th>
-                <td><code>Vela-0.3.10-arm64.dmg</code></td>
-                <td>116,6 Mo</td>
+                <td><code>Vela-0.3.11-arm64.dmg</code></td>
+                <td>—</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-arm64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-arm64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Apple silicon</span>
                   </a>
@@ -838,11 +946,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Intel</span></th>
-                <td><code>Vela-0.3.10-x64.dmg</code></td>
-                <td>123,5 Mo</td>
+                <td><code>Vela-0.3.11-x64.dmg</code></td>
+                <td>—</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-x64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Intel</span>
                   </a>
@@ -850,11 +958,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Windows</span><span class="plat-sub">x64</span></th>
-                <td><code>Vela-0.3.10-x64.exe</code></td>
-                <td>116,3 Mo</td>
+                <td><code>Vela-0.3.11-x64.exe</code></td>
+                <td>—</td>
                 <td><span class="state state-warn">SmartScreen</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-x64.exe">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x64.exe">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour Windows</span>
                   </a>
@@ -862,11 +970,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">AppImage</span></th>
-                <td><code>Vela-0.3.10-x86_64.AppImage</code></td>
-                <td>120,7 Mo</td>
+                <td><code>Vela-0.3.11-x86_64.AppImage</code></td>
+                <td>—</td>
                 <td><span class="state">Portable</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-x86_64.AppImage">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x86_64.AppImage">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger l’AppImage Linux</span>
                   </a>
@@ -874,11 +982,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">Debian, Ubuntu</span></th>
-                <td><code>Vela-0.3.10-amd64.deb</code></td>
-                <td>96,7 Mo</td>
+                <td><code>Vela-0.3.11-amd64.deb</code></td>
+                <td>—</td>
                 <td><span class="state">Paquet</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.10/Vela-0.3.10-amd64.deb">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-amd64.deb">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le paquet Debian</span>
                   </a>
@@ -898,21 +1006,56 @@
             <code>certutil -hashfile &lt;fichier&gt; SHA256</code> sur Windows.
           </p>
           <ul class="checks-list">
-            <li><code>Vela-0.3.10-universal.dmg</code><span>43bb28a2feb154ed57ffa940ca8ff3b097a2045320120d4aeb74dda2a44bf133</span></li>
-            <li><code>Vela-0.3.10-arm64.dmg</code><span>bcd1710e80f2a3aaaa812ec4556e16f317989916da31e2b6724a247827d1b0d5</span></li>
-            <li><code>Vela-0.3.10-x64.dmg</code><span>789d12ee4d8765152ccede15e58865d46b22ef91a223e7ea6d51c21dc742eefa</span></li>
-            <li><code>Vela-0.3.10-x64.exe</code><span>1a235704ef98a68fd1d86d9020c639f5d909fc5e974388716b2ab2f3f798d001</span></li>
-            <li><code>Vela-0.3.10-x86_64.AppImage</code><span>08d519ec7bbdeb86260af456d63eae3f5f315c37dcd7edda92825759381efc26</span></li>
-            <li><code>Vela-0.3.10-amd64.deb</code><span>b833be085ec323ab2353be3015f553a62f97b757d10a025b2b3bef5eced2a8c0</span></li>
+            <li><code>SHA-256</code><span>Publiées avec la release v0.3.11, sur la page GitHub : les fichiers changent à chaque version.</span></li>
           </ul>
         </details>
 
-        <p class="fine">
-          Mise à jour automatique via les releases GitHub : contrôle discret au démarrage, puis
-          toutes les trois heures. Windows et Linux installent à la fermeture. Sans certificat
-          Developer ID, macOS ne peut pas remplacer le bundle tout seul : Vela télécharge alors le
-          <code>.dmg</code> en arrière-plan et ne laisse qu’un bouton Installer.
-        </p>
+        <!-- Le mécanisme de mise à jour, avec la pastille telle qu’elle apparaît. -->
+        <div class="updates" id="mises-a-jour">
+          <div class="updates-copy">
+            <p class="kicker"><span class="dot" aria-hidden="true"></span>Mises à jour</p>
+            <h3>Elles arrivent seules.</h3>
+            <p class="section-lede">
+              Vela vérifie douze secondes après le démarrage, puis toutes les trois heures, au retour
+              de veille et au retour du focus. Ni fenêtre, ni son : la seule trace est une pastille
+              dans la barre d’état, et elle se masque d’un clic.
+            </p>
+            <ul class="updates-list">
+              <li>
+                <strong>Windows et Linux</strong>
+                <span>téléchargement en arrière-plan, installation silencieuse à la fermeture</span>
+              </li>
+              <li>
+                <strong>macOS sans certificat Apple</strong>
+                <span>
+                  le <code>.dmg</code> est téléchargé tout seul ; un bouton l’ouvre, un glisser dans
+                  Applications et c’est fait
+                </span>
+              </li>
+              <li>
+                <strong>macOS signé et notarié</strong>
+                <span>même chose que Windows : le bundle est remplacé à la fermeture</span>
+              </li>
+            </ul>
+            <p class="fine">
+              La vérification ne parle qu’à github.com, et n’envoie que la version installée et la
+              plateforme. Aucun compte, aucune analyse d’usage : voir
+              <a href="#confidentialite">Confidentialité</a>.
+            </p>
+          </div>
+          <div class="updates-visual">
+            <div class="status-demo" aria-hidden="true">
+              <span class="status-demo-item">
+                <svg class="ico"><use href="#i-download" /></svg>
+                <span>Mise à jour 0.3.10 prête</span>
+                <span class="status-demo-btn">Installer</span>
+                <span class="status-demo-close">×</span>
+              </span>
+              <span class="status-demo-bar"><i></i></span>
+              <p class="status-demo-caption">Barre d’état de Vela, pendant le téléchargement puis une fois la version prête.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 8. FAQ et feuille de route. -->
