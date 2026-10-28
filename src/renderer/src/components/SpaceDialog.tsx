@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { GALLERY_AVATARS } from '@shared/avatarGallery'
-import { SPACE_COLORS } from '@shared/defaults'
+import { SPACE_COLORS, SPACE_TINTS } from '@shared/defaults'
 import { THEME_PRESETS, presetById, type ThemeId } from '@shared/theme'
 import {
   MAX_SHORTCUTS,
@@ -28,6 +28,24 @@ import { Icon } from './Icon'
 import SpaceAvatar from './SpaceAvatar'
 import SpaceAvatarEditor from './SpaceAvatarEditor'
 
+/** Les quatre sources d’avatar, réunies derrière un seul sélecteur. */
+type AvatarSource = 'monogram' | 'icons' | 'gallery' | 'photo'
+
+const AVATAR_SOURCES: { id: AvatarSource; label: string }[] = [
+  { id: 'monogram', label: 'Initiales' },
+  { id: 'icons', label: 'Formes' },
+  { id: 'gallery', label: 'Galerie' },
+  { id: 'photo', label: 'Photo' }
+]
+
+/** La valeur stockée dit d’elle-même d’où vient l’avatar. */
+function sourceOf(value: string | null): AvatarSource {
+  if (!value || value === 'monogram') return 'monogram'
+  if (value.startsWith('icon:')) return 'icons'
+  if (value.startsWith('gallery:')) return 'gallery'
+  return 'photo'
+}
+
 export default function SpaceDialog() {
   const view = useBrowser((state) => state.view)
   const editId = useBrowser((state) => state.spaceEditId)
@@ -42,6 +60,7 @@ export default function SpaceDialog() {
     existing?.color ?? SPACE_COLORS[(view?.spaces.length ?? 0) % SPACE_COLORS.length]
   )
   const [avatar, setAvatar] = useState<string | null>(existing?.avatar ?? null)
+  const [avatarSource, setAvatarSource] = useState<AvatarSource>(sourceOf(existing?.avatar ?? null))
   const [background, setBackground] = useState<SpaceBackground>(existing?.background ?? 'none')
   const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
@@ -102,6 +121,7 @@ export default function SpaceDialog() {
     setName(preset.name)
     setColor(preset.color)
     setAvatar(preset.avatar)
+    setAvatarSource(sourceOf(preset.avatar))
     setBackground(preset.background)
     setBlockTrackers(true)
     setShortcuts(shortcutsForSet(preset.id))
@@ -248,6 +268,7 @@ export default function SpaceDialog() {
                 color={color}
                 onAccept={(next) => {
                   setAvatar(next)
+                  setAvatarSource('photo')
                   setPhoto(null)
                 }}
                 onCancel={() => setPhoto(null)}
@@ -311,7 +332,8 @@ export default function SpaceDialog() {
                     <dt>Teinte</dt>
                     <dd>
                       <i style={{ background: color }} />
-                      {color.toUpperCase()}
+                      {SPACE_TINTS.find((tint) => tint.color.toLowerCase() === color.toLowerCase())?.label ??
+                        color.toUpperCase()}
                     </dd>
                   </div>
                   <div>
@@ -373,118 +395,180 @@ export default function SpaceDialog() {
               </label>
 
               <div className="space-row">
-                <span className="space-row-label">Avatar</span>
-                <div className="avatar-grid">
+                <span className="space-row-label" id="space-avatar-label">
+                  Avatar
+                </span>
+                <div className="avatar-source" role="group" aria-labelledby="space-avatar-label">
+                  {AVATAR_SOURCES.map((source) => (
+                    <button
+                      key={source.id}
+                      type="button"
+                      className="avatar-source-btn"
+                      data-active={avatarSource === source.id}
+                      aria-pressed={avatarSource === source.id}
+                      onClick={() => setAvatarSource(source.id)}
+                    >
+                      {source.label}
+                    </button>
+                  ))}
+                </div>
+
+                {avatarSource === 'monogram' && (
                   <button
                     type="button"
-                    className="avatar-choice"
+                    className="avatar-choice avatar-choice-wide"
                     data-active={!avatar || avatar === 'monogram'}
+                    aria-pressed={!avatar || avatar === 'monogram'}
                     onClick={() => setAvatar('monogram')}
                     title="Initiales de l’espace"
-                    aria-label="Initiales de l’espace"
                   >
                     <span className="avatar-choice-mono" style={{ background: color }}>
                       {monogram}
                     </span>
+                    <span className="avatar-choice-copy">
+                      <strong>Initiales</strong>
+                      <small>La lettre du nom, sur la teinte choisie</small>
+                    </span>
+                    {(!avatar || avatar === 'monogram') && <Icon name="check" size={12} />}
                   </button>
-                  {SPACE_AVATARS.map((mark) => (
-                    <button
-                      key={mark.id}
-                      type="button"
-                      className="avatar-choice"
-                      data-active={avatar === `icon:${mark.id}`}
-                      onClick={() => setAvatar(`icon:${mark.id}`)}
-                      title={mark.label}
-                      aria-label={mark.label}
-                    >
-                      <svg viewBox="0 0 24 24" width={16} height={16}>
-                        <path
-                          d={mark.path}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={1.7}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="avatar-choice avatar-choice-add"
-                    data-active={Boolean(storedImage)}
-                    onClick={() => fileRef.current?.click()}
-                    title="Importer une photo"
-                    aria-label="Importer une photo"
-                  >
-                    {storedImage ? <img src={storedImage} alt="" /> : <Icon name="image" size={14} />}
-                  </button>
-                </div>
+                )}
+
+                {avatarSource === 'icons' && (
+                  <div className="avatar-grid" role="group" aria-label="Formes">
+                    {SPACE_AVATARS.map((mark) => (
+                      <button
+                        key={mark.id}
+                        type="button"
+                        className="avatar-choice"
+                        data-active={avatar === `icon:${mark.id}`}
+                        aria-pressed={avatar === `icon:${mark.id}`}
+                        onClick={() => setAvatar(`icon:${mark.id}`)}
+                        title={mark.label}
+                        aria-label={mark.label}
+                      >
+                        <svg viewBox="0 0 24 24" width={16} height={16} aria-hidden="true">
+                          <path
+                            d={mark.path}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.7}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {avatarSource === 'gallery' && (
+                  <div className="avatar-panel">
+                    <div className="avatar-gallery" role="group" aria-label="Avatars de la galerie">
+                      {GALLERY_AVATARS.map((entry) => (
+                        <button
+                          key={entry.id}
+                          type="button"
+                          className="avatar-gallery-choice"
+                          data-active={avatar === `gallery:${entry.id}`}
+                          aria-pressed={avatar === `gallery:${entry.id}`}
+                          title={entry.label}
+                          aria-label={entry.label}
+                          onClick={() => setAvatar(`gallery:${entry.id}`)}
+                        >
+                          <GalleryAvatar id={entry.id} initial={monogram} size={26} />
+                        </button>
+                      ))}
+                    </div>
+                    <p className="avatar-gallery-caption">
+                      {GALLERY_AVATARS.length} avatars dessinés dans Vela, enregistrés avec l’espace, sans requête
+                      réseau.
+                    </p>
+                  </div>
+                )}
+
+                {avatarSource === 'photo' && (
+                  <div className="avatar-panel">
+                    <div className="avatar-photo-row">
+                      <span className="avatar-photo-preview" data-empty={storedImage ? undefined : 'true'}>
+                        {storedImage ? (
+                          <img src={storedImage} alt="Photo de profil de l’espace" />
+                        ) : (
+                          <Icon name="image" size={18} />
+                        )}
+                      </span>
+                      <span className="avatar-photo-copy">
+                        <strong>{storedImage ? 'Photo importée' : 'Aucune photo'}</strong>
+                        <small>PNG, JPEG ou WebP, 8 Mo au plus, recadrée en carré</small>
+                      </span>
+                      <button type="button" className="photo-btn" onClick={() => fileRef.current?.click()}>
+                        <Icon name="image" size={12} />
+                        {storedImage ? 'Remplacer' : 'Importer une photo'}
+                      </button>
+                    </div>
+
+                    {storedImage && !photo && (
+                      <div className="avatar-photo-actions">
+                        <button type="button" className="text-btn" onClick={() => setPhoto(storedImage)}>
+                          <Icon name="edit" size={11} />
+                          Recadrer
+                        </button>
+                        <button
+                          type="button"
+                          className="text-btn"
+                          onClick={() => {
+                            setAvatar('monogram')
+                            setAvatarSource('monogram')
+                          }}
+                        >
+                          <Icon name="trash" size={11} />
+                          Retirer la photo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {photoError && <p className="space-error">{photoError}</p>}
+
                 <input
                   ref={fileRef}
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   className="sr-only"
+                  aria-label="Choisir une photo de profil"
                   onChange={(event) => {
                     importPhoto(event.target.files?.[0])
                     event.target.value = ''
                   }}
                 />
               </div>
-
-              <div className="space-row">
-                <span className="space-row-label">Galerie</span>
-                <div className="avatar-gallery" role="group" aria-label="Avatars de la galerie">
-                  {GALLERY_AVATARS.map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      className="avatar-gallery-choice"
-                      data-active={avatar === `gallery:${entry.id}`}
-                      aria-pressed={avatar === `gallery:${entry.id}`}
-                      title={entry.label}
-                      aria-label={entry.label}
-                      onClick={() => setAvatar(`gallery:${entry.id}`)}
-                    >
-                      <GalleryAvatar id={entry.id} initial={monogram} size={26} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {photoError && <p className="space-error">{photoError}</p>}
-
-              {storedImage && !photo && (
-                <div className="avatar-photo-actions">
-                  <button type="button" className="text-btn" onClick={() => setPhoto(storedImage)}>
-                    <Icon name="edit" size={11} />
-                    Recadrer
-                  </button>
-                  <button type="button" className="text-btn" onClick={() => setAvatar('monogram')}>
-                    <Icon name="trash" size={11} />
-                    Retirer la photo
-                  </button>
-                </div>
-              )}
             </section>
 
             <section className="space-block">
               <h2 className="space-block-title">Couleur et ambiance</h2>
               <div className="space-row">
-                <span className="space-row-label">Teinte</span>
-                <div className="space-swatches">
-                {SPACE_COLORS.map((swatch) => (
-                  <button
-                    type="button"
-                    key={swatch}
-                    className="swatch"
-                    data-active={swatch === color}
-                    style={{ background: swatch }}
-                    aria-label={`Couleur ${swatch}`}
-                    aria-pressed={swatch === color}
-                    onClick={() => setColor(swatch)}
-                  />
-                ))}
+                <span className="space-row-label" id="space-tint-label">
+                  Teinte
+                </span>
+                <div className="space-swatches" role="group" aria-labelledby="space-tint-label">
+                  {SPACE_TINTS.map((tint) => {
+                    const active = tint.color.toLowerCase() === color.toLowerCase()
+                    return (
+                      <button
+                        type="button"
+                        key={tint.id}
+                        className="swatch"
+                        data-active={active}
+                        aria-pressed={active}
+                        onClick={() => setColor(tint.color)}
+                      >
+                        <span className="swatch-dot" style={{ background: tint.color }} aria-hidden="true">
+                          {active && <Icon name="check" size={10} />}
+                        </span>
+                        <span className="swatch-label">{tint.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

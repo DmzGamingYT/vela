@@ -41,7 +41,12 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const display = focused ? draft : home ? '' : resting
 
   return (
-    <div className="pane-head" data-primary={primary}>
+    <div
+      className="pane-head"
+      role="group"
+      aria-label={primary ? 'Barre d’adresse' : 'Barre d’adresse secondaire'}
+      data-primary={primary}
+    >
       <div className="nav-group">
         <button type="button" className="icon-btn" disabled={!tab.canGoBack} onClick={() => back(tab.id)} title="Précédent">
           <Icon name="back" size={16} />
@@ -67,6 +72,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
 
       <form
         className="address"
+        aria-label={primary ? 'Adresse de l’onglet' : 'Adresse de l’onglet secondaire'}
         data-focused={focused}
         data-home={home}
         onMouseEnter={() => setHovered(true)}
@@ -94,6 +100,10 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           spellCheck={false}
           autoComplete="off"
           aria-label="Adresse"
+          // Le raccourci se lit dans l'arbre d'accessibilité, pas seulement
+          // dans l'infobulle visuelle qui s'affiche au survol. La syntaxe ARIA
+          // nomme les modificateurs en anglais, d'où la traduction.
+          aria-keyshortcuts={window.vela.platform === 'darwin' ? 'Meta+L' : 'Control+L'}
           onChange={(event) => setDraft(event.target.value)}
           onFocus={(event) => {
             setFocused(true)
@@ -119,6 +129,13 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             className="address-shield"
             data-empty={tab.blocked === 0}
             onClick={() => setOverlay('protection')}
+            // Le compteur seul ne dit rien à voix haute : le nom accessible
+            // reprend la phrase du survol.
+            aria-label={
+              tab.blocked > 0
+                ? `${tab.blocked} requête${tab.blocked > 1 ? 's' : ''} bloquée${tab.blocked > 1 ? 's' : ''} — voir la protection de ce site`
+                : 'Protection de ce site'
+            }
             title={
               tab.blocked > 0
                 ? `${tab.blocked} requête${tab.blocked > 1 ? 's' : ''} bloquée${tab.blocked > 1 ? 's' : ''} — voir la protection de ce site`
@@ -134,7 +151,11 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             <Icon name="sparkles" size={12} /> Envoyée au modèle
           </span>
         )}
-        {!home && <span className="address-hint">{shortcut('L')}</span>}
+        {!home && (
+          <span className="address-hint" role="note" aria-label={`Raccourci ${shortcut('L')} — barre d’adresse`}>
+            {shortcut('L')}
+          </span>
+        )}
       </form>
 
       <div className="pane-actions">

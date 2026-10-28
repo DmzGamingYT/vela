@@ -96,6 +96,10 @@ export default function AgentCanvas({
   const run = (): void => {
     setApproved(false)
     if (running) return
+    if (selected.length === 0) {
+      toast('Joignez au moins une page à lire.', 'error')
+      return
+    }
     if (!prompt.trim()) {
       toast('Dites à l’agent quoi chercher.', 'error')
       promptRef.current?.focus()
@@ -220,14 +224,6 @@ export default function AgentCanvas({
               }}
             />
 
-            <div className="example-chips">
-              {AGENT_EXAMPLES.slice(0, 3).map((example) => (
-                <button type="button" key={example} className="chip" onClick={() => setPrompt(example)}>
-                  {example}
-                </button>
-              ))}
-            </div>
-
             <div className="sources-head">
               <span>Onglets joints</span>
               <span className="sources-count">{selected.length}</span>
@@ -243,9 +239,10 @@ export default function AgentCanvas({
               <button
                 type="button"
                 className="text-btn"
+                title="Joindre toutes les pages de cet espace"
                 onClick={() => setSelected(sources.length ? sources.map((tab) => tab.id) : [])}
               >
-                Tout
+                Tout joindre
               </button>
             </div>
 
@@ -271,17 +268,64 @@ export default function AgentCanvas({
               })}
             </div>
 
+            {!running && selected.length === 0 && (
+              <p className="agent-hint">Joignez au moins une page : l’agent ne lit que ce que vous lui donnez.</p>
+            )}
+
             <div className="agent-run">
-              <button type="button" className="action primary wide" onClick={run} disabled={running}>
+              <button
+                type="button"
+                className="action primary wide"
+                onClick={run}
+                disabled={running || selected.length === 0}
+                title={selected.length === 0 ? 'Joignez au moins une page pour lancer l’agent' : undefined}
+              >
                 <Icon name="sparkles" size={15} />
                 {running ? 'L’agent travaille…' : 'Lancer l’agent'}
-                {!running && <kbd>⌘↵</kbd>}
+                {!running && selected.length > 0 && <kbd>⌘↵</kbd>}
               </button>
               {running && (
                 <button type="button" className="action wide" onClick={() => cancelAgent()}>
                   <Icon name="stop" size={13} />
                   Arrêter
                 </button>
+              )}
+              {!running && (
+                <div className="agent-recent">
+                  <span className="field-label">{activeWorks > 0 ? 'Derniers travaux' : 'Exemples'}</span>
+                  <ul>
+                    {activeWorks > 0
+                      ? works
+                          .filter((work) => !work.archived)
+                          .slice(0, 3)
+                          .map((work) => (
+                            <li key={work.id}>
+                              <button type="button" className="agent-recent-row" onClick={() => void openWork(work)}>
+                                <Icon name="notes" size={12} />
+                                <span className="agent-recent-title">{work.title}</span>
+                                <span className="agent-recent-meta">
+                                  {work.sourceCount} source{work.sourceCount > 1 ? 's' : ''}
+                                </span>
+                              </button>
+                            </li>
+                          ))
+                      : AGENT_EXAMPLES.slice(0, 2).map((example) => (
+                          <li key={example}>
+                            <button
+                              type="button"
+                              className="agent-recent-row"
+                              onClick={() => {
+                                setPrompt(example)
+                                promptRef.current?.focus()
+                              }}
+                            >
+                              <Icon name="sparkles" size={12} />
+                              <span className="agent-recent-title">{example}</span>
+                            </button>
+                          </li>
+                        ))}
+                  </ul>
+                </div>
               )}
             </div>
 
@@ -320,7 +364,7 @@ export default function AgentCanvas({
                 </div>
               </div>
             ) : (
-              <div className="agent-result">
+              <div className="agent-result" role="region" aria-label="Rapport de l’agent">
                 <div className="result-head">
                   <div>
                     <p className="eyebrow">

@@ -19,10 +19,10 @@ export default function SpaceRail() {
   const toggleNotes = useBrowser((state) => state.toggleNotes)
   const openAgent = useBrowser((state) => state.openAgent)
 
-  if (!view) return <aside className="rail" />
+  if (!view) return <aside className="rail" aria-label="Espaces" />
 
   return (
-    <aside className="rail">
+    <aside className="rail" aria-label="Espaces">
       <div className="rail-drag drag" />
 
       <div className="rail-modes" role="tablist" aria-label="Mode de travail">

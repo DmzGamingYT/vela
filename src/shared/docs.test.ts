@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { version } from '../../package.json'
+import { LOCAL_ONLY, NETWORK_FLOWS } from './network'
 
 /**
  * L'aide (README) et le site vitrine décrivent les mêmes limites. Ce test
@@ -65,6 +66,21 @@ describe('limites documentées dans l’aide et sur le site', () => {
     // …et le bouton adapté à la plateforme aussi.
     expect(script).toContain(`releases/download/v${version}/`)
     expect(script).toContain(`Vela-${version}-universal.dmg`)
+  })
+
+  it('décrit sur le site exactement les flux réseau que l’app déclenche', () => {
+    // Chaque ligne du site porte les identifiants de `NETWORK_FLOWS` qu'elle
+    // couvre : une destination ajoutée dans l'app doit apparaître ici.
+    const declared = new Set(NETWORK_FLOWS.map((flow) => flow.id))
+    const listed = new Set(
+      [...site.matchAll(/data-flow="([^"]+)"/g)].flatMap((match) => match[1].split(/\s+/)).filter(Boolean)
+    )
+    expect([...declared].filter((id) => !listed.has(id)), 'flux de l’app absents du site').toEqual([])
+    expect([...listed].filter((id) => !declared.has(id)), 'flux annoncés par le site mais inconnus').toEqual([])
+  })
+
+  it('liste sur le site autant de données locales que l’app en garde', () => {
+    expect((site.match(/data-local-item/g) || []).length).toBe(LOCAL_ONLY.length)
   })
 
   it('explique SmartScreen sous Windows', () => {

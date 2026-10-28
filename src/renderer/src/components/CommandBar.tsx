@@ -559,11 +559,13 @@ export default function CommandBar() {
           </span>
         </div>
 
-        <div className="command-list" ref={listRef} onMouseLeave={restoreAppearance}>
+        <div className="command-list" role="group" aria-label="Résultats" ref={listRef} onMouseLeave={restoreAppearance}>
           {items.length === 0 && <p className="command-empty">Rien ne correspond. Essayez une adresse ou une action.</p>}
           {groups.map((group, groupIndex) => (
-            <div className="command-group" key={group.name}>
-              <div className="command-group-title">{group.name}</div>
+            <div className="command-group" key={group.name} role="group" aria-label={group.name}>
+              <div className="command-group-title" aria-hidden="true">
+                {group.name}
+              </div>
               {group.items.map((item, itemIndex) => {
                 const globalIndex = offsets[groupIndex] + itemIndex
                 const selected = globalIndex === index

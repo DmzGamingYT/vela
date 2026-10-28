@@ -184,6 +184,7 @@ export class Browser {
 
   constructor(dir: string) {
     this.store = new Store(dir)
+    this.dedupeHomeTabs()
     this.thumbs = new Thumbnails(dir, () => this.store.get().settings.thumbnails)
     this.notes = new NotesStore(dir)
     this.noteAudio = new NoteAudioStore(dir)
@@ -227,6 +228,33 @@ export class Browser {
       () => this.store.get().settings,
       (provider: ProviderId) => this.store.getSecret(provider)
     )
+  }
+
+  /**
+   * Un seul onglet d'accueil par espace. Les anciennes sessions pouvaient en
+   * laisser plusieurs : on garde l'actif, sinon le premier, et on recolle les
+   * références d'onglet actif et de vue scindée.
+   */
+  private dedupeHomeTabs(): void {
+    const state = this.store.get()
+    const homeTabs = state.tabs.filter((tab) => !tab.pinned && isHomeUrl(tab.url))
+    if (homeTabs.length < 2) return
+    const keep = new Map<string, string>()
+    for (const tab of homeTabs) {
+      const active = state.activeTabBySpace[tab.spaceId] === tab.id
+      const current = keep.get(tab.spaceId)
+      if (!current || active) keep.set(tab.spaceId, tab.id)
+    }
+    const kept = new Set(keep.values())
+    const dropped = new Set(homeTabs.filter((tab) => !kept.has(tab.id)).map((tab) => tab.id))
+    if (dropped.size === 0) return
+    this.store.update((next) => {
+      next.tabs = next.tabs.filter((tab) => !dropped.has(tab.id))
+      for (const [spaceId, id] of keep) {
+        if (dropped.has(next.activeTabBySpace[spaceId] ?? '')) next.activeTabBySpace[spaceId] = id
+        if (dropped.has(next.secondTabBySpace[spaceId] ?? '')) next.secondTabBySpace[spaceId] = null
+      }
+    })
   }
 
   /** Chaque travail de l'atelier entre dans la liste consultable, sans doublon. */
@@ -554,6 +582,14 @@ export class Browser {
         : state.activeSpaceId
     const url = typeof input.url === 'string' && input.url ? input.url : HOME_URL
     const pinned = Boolean(input.pinned)
+    // Une seule page d'accueil par espace : ⌘T ramène à celle qui existe.
+    if (isHomeUrl(url) && !pinned) {
+      const home = state.tabs.find((tab) => tab.spaceId === spaceId && !tab.pinned && isHomeUrl(tab.url))
+      if (home) {
+        if (input.activate !== false) this.activateTab(home.id)
+        return home
+      }
+    }
     let groupId: string | null = null
     if (!pinned && typeof input.groupId === 'string') {
       const group = state.groups.find((item) => item.id === input.groupId && item.spaceId === spaceId)

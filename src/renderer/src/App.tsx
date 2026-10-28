@@ -89,6 +89,9 @@ export default function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return
+      // Un champ ou un menu qui a déjà traité Échap garde la main : vider un
+      // filtre ne doit pas refermer le panneau par-dessus.
+      if (event.defaultPrevented) return
       const state = useBrowser.getState()
       if (state.overlay) {
         event.preventDefault()

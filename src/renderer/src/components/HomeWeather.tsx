@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { WEATHER_PLACE_KEY as PLACE_KEY, readWeatherPlace, type WeatherPlace as Place } from '@shared/place'
 import { Icon, type IconName } from './Icon'
 
 /**
@@ -10,13 +11,6 @@ import { Icon, type IconName } from './Icon'
  * pour cette ville et rien d'autre. Le dernier relevé reste sur l'appareil
  * (localStorage) et sert de repli hors ligne pendant trente minutes.
  */
-
-interface Place {
-  name: string
-  country?: string
-  latitude: number
-  longitude: number
-}
 
 interface Weather {
   temperature: number
@@ -33,25 +27,8 @@ interface Cached {
   weather: Weather
 }
 
-const PLACE_KEY = 'vela.home.place'
 const CACHE_KEY = 'vela.home.weather'
 const TTL = 30 * 60_000
-
-function readPlace(): Place | null {
-  try {
-    const raw = JSON.parse(localStorage.getItem(PLACE_KEY) ?? 'null') as Partial<Place> | null
-    if (!raw || typeof raw.name !== 'string') return null
-    if (typeof raw.latitude !== 'number' || typeof raw.longitude !== 'number') return null
-    return {
-      name: raw.name,
-      country: typeof raw.country === 'string' ? raw.country : undefined,
-      latitude: raw.latitude,
-      longitude: raw.longitude
-    }
-  } catch {
-    return null
-  }
-}
 
 function readCache(place: Place): Weather | null {
   try {
@@ -83,18 +60,27 @@ function temperature(value: number): string {
   return `${Math.round(value)}°`
 }
 
-export default function HomeWeather() {
+export default function HomeWeather({ onEditingChange }: { onEditingChange?: (editing: boolean) => void }) {
   const [now, setNow] = useState(() => new Date())
-  const [place, setPlace] = useState<Place | null>(() => readPlace())
+  const [place, setPlace] = useState<Place | null>(() => readWeatherPlace())
   const [weather, setWeather] = useState<Weather | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
-  const [editing, setEditing] = useState(() => !readPlace())
+  // Le champ de ville ne s'affiche qu'après un clic : l'accueil garde deux
+  // champs de recherche au plus (barre d'adresse et recherche).
+  const [editing, setEditing] = useState(false)
   const [city, setCity] = useState('')
   const [searching, setSearching] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
+  // Pendant la saisie d'une ville, l'accueil retire sa propre recherche :
+  // deux champs visibles au maximum, jamais trois.
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 1000)
+    onEditingChange?.(editing)
+  }, [editing, onEditingChange])
+
+  // L'heure s'affiche sans les secondes : un battement par minute suffit.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
 
@@ -212,19 +198,19 @@ export default function HomeWeather() {
 
   const condition = weather ? describe(weather.code, weather.isDay) : null
   const hours = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(now)
-  const seconds = new Intl.DateTimeFormat('fr-FR', { second: '2-digit' }).format(now)
+  const detail = place
+    ? 'Open-Meteo reçoit seulement les coordonnées de cette ville, une fois par demi-heure ; le relevé reste sur l’appareil.'
+    : 'Aucune requête avant votre choix. En validant, le nom tapé part vers geocoding-api.open-meteo.com ; ensuite, seules les coordonnées vont à api.open-meteo.com, une fois par demi-heure.'
+  const shortNote = message ?? (place ? 'Coordonnées seules, une fois par demi-heure.' : 'Aucune requête avant votre choix.')
 
   return (
     <section className="home-card home-day" aria-label="Heure et météo">
       <div className="day-clock">
-        <p className="day-time">
-          {hours}
-          <small>:{seconds}</small>
-        </p>
+        <p className="day-time">{hours}</p>
         <span className="day-zone">Heure locale</span>
       </div>
 
-      {editing || !place ? (
+      {editing ? (
         <form className="day-form" onSubmit={submit}>
           <input
             value={city}
@@ -236,7 +222,23 @@ export default function HomeWeather() {
           <button type="submit" disabled={searching || !city.trim()}>
             {searching ? 'Cherche…' : 'Voir'}
           </button>
+          <button
+            type="button"
+            className="day-cancel"
+            onClick={() => {
+              setEditing(false)
+              setCity('')
+              setMessage(null)
+            }}
+          >
+            Annuler
+          </button>
         </form>
+      ) : !place ? (
+        <button type="button" className="day-add" onClick={() => setEditing(true)}>
+          <Icon name="plus" size={13} />
+          Ajouter une ville
+        </button>
       ) : (
         <div className="day-weather">
           <span className="day-icon">
@@ -273,10 +275,19 @@ export default function HomeWeather() {
       )}
 
       <p className="day-note">
-        {message ??
-          (place
-            ? 'Open-Meteo reçoit seulement les coordonnées de cette ville, une fois par demi-heure ; le relevé reste sur l’appareil.'
-            : 'Aucune requête avant votre choix. En validant, le nom tapé part vers geocoding-api.open-meteo.com ; ensuite, seules les coordonnées vont à api.open-meteo.com, une fois par demi-heure.')}
+        <span>{shortNote}</span>
+        <button
+          type="button"
+          className="day-info"
+          data-tip={detail}
+          aria-label="Détail de la météo"
+          aria-describedby="day-weather-detail"
+        >
+          <span aria-hidden="true">i</span>
+        </button>
+        <span id="day-weather-detail" className="sr-only">
+          {detail}
+        </span>
       </p>
     </section>
   )

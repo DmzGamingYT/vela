@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { hostOf, isHomeUrl, normalizeInput, SEARCH_ENGINES } from '@shared/url'
+import { canonicalUrl, hostOf, normalizeInput, readableTitle, SEARCH_ENGINES } from '@shared/url'
 import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
@@ -33,6 +33,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const setOverlay = useBrowser((state) => state.setOverlay)
   const openAgent = useBrowser((state) => state.openAgent)
   const [query, setQuery] = useState('')
+  // Vrai pendant la saisie d'une ville : la recherche de l'accueil se retire
+  // pour ne jamais montrer plus de deux champs à la fois.
+  const [cityEditing, setCityEditing] = useState(false)
   const [calm, setCalm] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   )
@@ -83,17 +86,19 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const settings = view.settings
   const engine = SEARCH_ENGINES[settings.searchEngine]?.label ?? 'DuckDuckGo'
 
+  // Une tuile par page : la clé ignore la requête et l'ancre, donc
+  // « article/une-page » et « article/une-page?ref=home » ne font qu'une.
   const tiles: Tile[] = []
   const seen = new Set<string>()
   for (const entry of view.history) {
     if (!/^https?:/i.test(entry.url)) continue
-    const key = entry.url.split('#')[0]
+    const key = canonicalUrl(entry.url)
     if (seen.has(key)) continue
     seen.add(key)
     tiles.push({
       id: entry.id,
       url: entry.url,
-      title: entry.title || hostOf(entry.url),
+      title: readableTitle(entry.title, entry.url),
       host: hostOf(entry.url),
       favicon: entry.favicon,
       meta: timeAgo(entry.visitedAt),
@@ -104,13 +109,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
   if (tiles.length < 4) {
     for (const bookmark of view.bookmarks) {
       if (!/^https?:/i.test(bookmark.url)) continue
-      const key = bookmark.url.split('#')[0]
+      const key = canonicalUrl(bookmark.url)
       if (seen.has(key)) continue
       seen.add(key)
       tiles.push({
         id: bookmark.id,
         url: bookmark.url,
-        title: bookmark.title || hostOf(bookmark.url),
+        title: readableTitle(bookmark.title, bookmark.url),
         host: hostOf(bookmark.url),
         favicon: bookmark.favicon,
         meta: 'Favori',
@@ -148,13 +153,16 @@ export default function StartPage({ tabId }: { tabId: string }) {
   }
   const onlyStarters = tiles.every((tile) => tile.kind === 'starter')
 
-  const openTabs = view.tabs.filter((tab) => !isHomeUrl(tab.url)).length
+  // Le compteur suit exactement ce que la barre latérale montre pour cet
+  // espace : onglet d'accueil compris, puisqu'il y figure comme les autres.
+  const openTabs = view.tabs.filter((tab) => tab.spaceId === spaceId).length
   const pages = view.brief.pages
   const pagesLabel = `${pages} page${pages > 1 ? 's' : ''} cette semaine`
   const lede =
     openTabs === 0
       ? `Aucun onglet ouvert · ${pagesLabel}`
       : `${openTabs} onglet${openTabs > 1 ? 's' : ''} ouvert${openTabs > 1 ? 's' : ''} · ${pagesLabel}`
+
 
   const trimmed = query.trim()
   const preview = trimmed ? normalizeInput(trimmed, settings.searchEngine, settings.searxInstance) : null
@@ -246,10 +254,10 @@ export default function StartPage({ tabId }: { tabId: string }) {
             </h1>
             <p className="home-lede">{lede}</p>
           </div>
-          <HomeWeather />
+          <HomeWeather onEditingChange={setCityEditing} />
         </header>
 
-        <section className="home-search" aria-label="Recherche">
+        <section className="home-search" aria-label="Recherche" hidden={cityEditing}>
           <form className="home-field" onSubmit={submit}>
             <span className="home-field-icon">
               <Icon name="search" size={16} />
@@ -331,7 +339,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
                     </span>
                   )}
                   <span className="tile-top">
-                    <Favicon src={tile.favicon} label={tile.host || tile.title} size={18} />
+                    <Favicon
+                      src={tile.favicon}
+                      url={tile.url}
+                      label={tile.host || tile.title}
+                      size={18}
+                      spaceId={spaceId}
+                    />
                     <span className="tile-host">{tile.host}</span>
                     <span className="tile-badge">{tile.meta}</span>
                   </span>

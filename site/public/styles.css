@@ -239,11 +239,12 @@ kbd {
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  background: var(--ink);
-  color: var(--bg);
-  font-family: var(--serif);
-  font-size: 15px;
-  line-height: 1;
+  background: linear-gradient(150deg, #7364ef, #4f3cca 62%, #422fb6);
+  box-shadow: 0 2px 6px rgba(40, 26, 150, 0.22);
+}
+
+.brand-mark svg {
+  display: block;
 }
 
 .brand-version {

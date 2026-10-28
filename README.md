@@ -214,9 +214,11 @@ demande le flux RSS public du profil (`letterboxd.com/<profil>/rss/`) — sans c
 l’espace — puis garde les titres, notes et dates dans `vela.json`. Rien ne part au démarrage ni en
 arrière-plan ; retirer le profil de l’espace coupe le flux.
 
-Toutes les destinations que Vela contacte elle-même sont listées dans `src/shared/network.ts` et
-reprises dans Réglages › Confidentialité ; le test `network.test.ts` échoue si une adresse apparaît
-dans le code sans y être déclarée.
+Toutes les destinations que Vela contacte elle-même sont listées dans `src/shared/network.ts`,
+reprises dans Réglages › Confidentialité sous forme de tableau avec l’état réel de chaque flux
+(actif, sur demande, inactif), et sur le site. Deux tests gardent la cohérence : `network.test.ts`
+échoue si une adresse apparaît dans le code sans y être déclarée, et `docs.test.ts` si une ligne du
+site manque ou invente un flux.
 
 ## Ce qu’il sait faire
 

@@ -112,9 +112,16 @@
 
     <header class="head" id="head">
       <a class="brand" href="#top" aria-label="Vela, retour en haut">
-        <span class="brand-mark" aria-hidden="true">V</span>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+            <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+            <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+            <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95"
+              stroke-width=".9" stroke-linecap="round" />
+          </svg>
+        </span>
         <span class="brand-name">Vela</span>
-        <span class="brand-version">0.3.12</span>
+        <span class="brand-version">0.3.13</span>
       </a>
 
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
@@ -152,7 +159,7 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <p class="kicker">
           <span class="dot" aria-hidden="true"></span>
-          v0.3.12 · macOS, Windows, Linux
+          v0.3.13 · macOS, Windows, Linux
         </p>
         <h1 id="hero-title">
           Le web,<br />
@@ -171,7 +178,7 @@
             <span data-platform-label>Télécharger</span>
           </a>
           <a class="btn btn-quiet" href="https://github.com/DmzGamingYT/vela/releases/latest" target="_blank" rel="noreferrer">
-            Voir la version 0.3.12
+            Voir la version 0.3.13
           </a>
         </div>
         <p class="fine">Sans compte Vela · Sans télémétrie · MIT</p>
@@ -445,9 +452,10 @@
             <h3>Un espace, une ambiance</h3>
             <p>
               Une photo d’avatar recadrée, une teinte et une ambiance de fond propres à chaque
-              espace, et des modèles Travail, Personnel, Gaming, Études et Développement. Chaque
-              modèle préremplit sa barre de sites — Notion, Gmail, Drive et Slack pour le travail —
-              et garde ses cookies séparés des autres espaces.
+              espace, et des modèles Travail, Vie personnelle, Gaming, Études, Développement et
+              Cinéma. Chaque modèle préremplit sa barre de sites — Notion, Gmail, Drive et Slack
+              pour le travail — et garde ses cookies séparés des autres espaces. Un espace garde
+              jusqu’à 200 sites épinglés, réordonnables à la souris comme au clavier.
             </p>
             <div class="card-visual card-spaces" aria-hidden="true">
               <span class="space-pill"><span class="space-dot"></span>Recherche</span>
@@ -531,6 +539,20 @@
         </article>
 
         <ol class="timeline">
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.13" target="_blank" rel="noreferrer">0.3.13</a>
+            <div class="timeline-copy">
+              <strong>Une marque, des réglages rangés, une confidentialité en tableau</strong>
+              <p>
+                L’icône devient la voile, le soleil et la vague, dans l’app comme sur le site. Les
+                réglages se resserrent : dix thèmes en deux rangées pleines avec la teinte libre sur
+                sa propre ligne, « Comportement » fondu dans « Modèles », raccourcis groupés et
+                filtrables. Confidentialité passe en tableau dense avec l’état réel de chaque flux,
+                et la galerie d’avatars réunit initiales, formes, galerie et photo derrière un seul
+                sélecteur.
+              </p>
+            </div>
+          </li>
           <li class="timeline-row">
             <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.12" target="_blank" rel="noreferrer">0.3.12</a>
             <div class="timeline-copy">
@@ -619,8 +641,8 @@
             <div class="timeline-copy">
               <strong>La fenêtre d’espace</strong>
               <p>
-                Avatar, teinte, ambiance de fond et modèles Travail, Personnel, Gaming, Études,
-                Développement — avec leurs cookies isolés.
+                Avatar, teinte, ambiance de fond et modèles Travail, Vie personnelle, Gaming,
+                Études, Développement et Cinéma — avec leurs cookies isolés.
               </p>
             </div>
           </li>
@@ -833,7 +855,8 @@
           <p class="section-lede">
             Aucun compte Vela, aucun serveur Vela, aucune mesure d’audience. Le réseau voit les
             sites que vous ouvrez, les requêtes envoyées au moteur choisi, les sources interrogées
-            par le tunnel — et le fournisseur de modèle, seulement si vous le branchez.
+            par le tunnel, les icônes demandées aux sites eux-mêmes, la vérification de mise à jour
+            — et le fournisseur de modèle, seulement si vous le branchez.
           </p>
         </div>
 
@@ -841,40 +864,73 @@
           <div class="privacy-card">
             <p class="privacy-tag"><svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg> Sur votre appareil</p>
             <ul class="ticks">
-              <li>Historique, onglets, espaces et réglages</li>
-              <li>Notes Markdown en fichiers <code>.md</code></li>
-              <li>Notes vocales, en fichiers audio dans le dossier de l’espace</li>
-              <li>Brief du jour, calculé sans requête réseau</li>
-              <li>Clés API chiffrées par le trousseau système</li>
-              <li>Blocage des traqueurs, calculé sur l’appareil, à trois niveaux : aucun, traqueurs, strict</li>
+              <li data-local-item>Historique, onglets, espaces, réglages et brief du jour</li>
+              <li data-local-item>Notes Markdown et surlignages, dans un dossier à vous</li>
+              <li data-local-item>Notes vocales, en fichiers audio dans le dossier de l’espace</li>
+              <li data-local-item>Clés API chiffrées par le trousseau système</li>
+              <li data-local-item>
+                Blocage des traqueurs, calculé sur l’appareil, à trois niveaux : aucun, traqueurs, strict
+              </li>
+              <li data-local-item>Rapports de l’agent en mode démo, simulés sur place</li>
+              <li data-local-item>Cartes du tunnel, enregistrées avec l’espace</li>
+              <li data-local-item>Photos d’avatar et vignettes des pages récentes, en fichiers</li>
+              <li data-local-item>Journal Letterboxd importé : titres, notes et dates dans <code>vela.json</code></li>
+              <li data-local-item>Correction orthographique désactivée : aucun dictionnaire téléchargé</li>
             </ul>
           </div>
 
           <div class="privacy-card">
             <p class="privacy-tag"><svg class="ico" aria-hidden="true"><use href="#i-globe" /></svg> Vers le réseau</p>
             <ul class="ticks">
-              <li>Les pages que vous ouvrez, comme tout navigateur</li>
-              <li>Vos recherches, envoyées au seul moteur choisi</li>
-              <li class="is-out">
+              <li class="is-out" data-flow="meteo-ville meteo-releve">
+                <strong>Météo de l’accueil :</strong> seulement si vous ajoutez une ville. Le nom
+                tapé part vers geocoding-api.open-meteo.com ; ensuite, seules les coordonnées vont
+                à api.open-meteo.com, une fois par demi-heure. « Retirer » coupe tout.
+              </li>
+              <li class="is-out" data-flow="moteur-connexion moteur-recherche">
+                <strong>Moteur de recherche :</strong> une connexion TLS vers le moteur choisi au
+                démarrage, sans terme recherché ; puis vos recherches, envoyées à ce seul moteur.
+              </li>
+              <li class="is-out" data-flow="tunnel-fournisseurs tunnel-pages">
                 <strong>Tunnel de recherche :</strong> Wikipédia, Hacker News, arXiv, GDELT et
                 DuckDuckGo sont interrogés, puis les pages citées sont récupérées.
               </li>
-              <li class="is-out">
-                <strong>En mode démo : aucun modèle n’est appelé.</strong> Le rapport de l’agent est
-                simulé sur place ; le tunnel, lui, interroge les sources ci-dessus.
-              </li>
-              <li class="is-out">
+              <li class="is-out" data-flow="modeles">
                 <strong>Avec un modèle : les onglets joints</strong>, envoyés au fournisseur que vous
-                avez choisi, avec votre clé. Personne d’autre.
+                avez choisi, avec votre clé. Personne d’autre. En mode démo, aucun modèle n’est
+                appelé : le rapport de l’agent est simulé sur place.
               </li>
-              <li class="is-out">
+              <li class="is-out" data-flow="modeles">
                 <strong>Transcription d’une note vocale :</strong> le serveur local d’abord, sans
                 sortie réseau. Vers un fournisseur distant, l’enregistrement ne part qu’après
                 votre confirmation explicite ; sans accord, il reste sur l’appareil.
               </li>
-              <li class="is-out">
+              <li data-flow="modele-local">
+                <strong>Serveur local :</strong> Ollama ou votre endpoint sur localhost. Rien ne
+                quitte la machine, transcription comprise.
+              </li>
+              <li class="is-out" data-flow="mises-a-jour">
+                <strong>Mises à jour :</strong> la version installée et la plateforme partent vers
+                les releases GitHub douze secondes après le démarrage, puis toutes les trois heures.
+                Sur macOS, l’installateur .dmg de la nouvelle version est ensuite téléchargé.
+              </li>
+              <li class="is-out" data-flow="bd-ocr">
+                <strong>Lecture d’une planche de BD :</strong> le moteur de reconnaissance de texte
+                est téléchargé une fois depuis cdn.jsdelivr.net, quand vous lancez la traduction.
+                Aucune donnée n’est envoyée avec.
+              </li>
+              <li class="is-out" data-flow="letterboxd-journal">
                 <strong>Journal Letterboxd :</strong> le flux public du profil, demandé seulement
                 quand vous cliquez Importer. Aucun cookie d’espace, aucune lecture des pages.
+              </li>
+              <li data-flow="favicons">
+                <strong>Icônes des sites :</strong> une requête d’icône vers le site lui-même, pour
+                un épinglé ou un favori dont l’icône manque. Aucun service tiers, cache local de
+                sept jours.
+              </li>
+              <li class="is-out" data-flow="pages">
+                <strong>Pages que vous ouvrez :</strong> la requête normale du navigateur, avec les
+                cookies de l’espace actif, comme partout ailleurs.
               </li>
             </ul>
           </div>
@@ -920,7 +976,7 @@
       <section class="section download" id="telecharger" aria-labelledby="download-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Télécharger</p>
-          <h2 id="download-title">Vela 0.3.12</h2>
+          <h2 id="download-title">Vela 0.3.13</h2>
           <p class="section-lede">
             Builds non signés par un certificat commercial. Comptez un clic droit → Ouvrir sur macOS,
             et SmartScreen sur Windows.
@@ -935,7 +991,7 @@
 
         <div class="table-wrap">
           <table class="dl">
-            <caption class="visually-hidden">Fichiers de la version 0.3.12</caption>
+            <caption class="visually-hidden">Fichiers de la version 0.3.13</caption>
             <thead>
               <tr>
                 <th scope="col">Plateforme</th>
@@ -948,11 +1004,11 @@
             <tbody>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon <em>et</em> Intel</span></th>
-                <td><code>Vela-0.3.12-universal.dmg</code></td>
+                <td><code>Vela-0.3.13-universal.dmg</code></td>
                 <td>215,6 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-universal.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-universal.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le fichier universel macOS</span>
                   </a>
@@ -960,11 +1016,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon</span></th>
-                <td><code>Vela-0.3.12-arm64.dmg</code></td>
+                <td><code>Vela-0.3.13-arm64.dmg</code></td>
                 <td>116,7 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-arm64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-arm64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Apple silicon</span>
                   </a>
@@ -972,11 +1028,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Intel</span></th>
-                <td><code>Vela-0.3.12-x64.dmg</code></td>
+                <td><code>Vela-0.3.13-x64.dmg</code></td>
                 <td>123,6 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-x64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Intel</span>
                   </a>
@@ -984,11 +1040,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Windows</span><span class="plat-sub">x64</span></th>
-                <td><code>Vela-0.3.12-x64.exe</code></td>
+                <td><code>Vela-0.3.13-x64.exe</code></td>
                 <td>116,4 Mo</td>
                 <td><span class="state state-warn">SmartScreen</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x64.exe">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-x64.exe">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour Windows</span>
                   </a>
@@ -996,11 +1052,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">AppImage</span></th>
-                <td><code>Vela-0.3.12-x86_64.AppImage</code></td>
+                <td><code>Vela-0.3.13-x86_64.AppImage</code></td>
                 <td>120,8 Mo</td>
                 <td><span class="state">Portable</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x86_64.AppImage">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-x86_64.AppImage">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger l’AppImage Linux</span>
                   </a>
@@ -1008,11 +1064,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">Debian, Ubuntu</span></th>
-                <td><code>Vela-0.3.12-amd64.deb</code></td>
+                <td><code>Vela-0.3.13-amd64.deb</code></td>
                 <td>97,1 Mo</td>
                 <td><span class="state">Paquet</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-amd64.deb">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-amd64.deb">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le paquet Debian</span>
                   </a>
@@ -1032,12 +1088,12 @@
             <code>certutil -hashfile &lt;fichier&gt; SHA256</code> sur Windows.
           </p>
           <ul class="checks-list">
-            <li><code>Vela-0.3.12-universal.dmg</code><span>f5e231f9c8e4acaf9b5498c122433ad206137896eae3d13c787468b7b9504c53</span></li>
-            <li><code>Vela-0.3.12-arm64.dmg</code><span>b240f94408d52828e5e056ebbb42fcd4e10d8b9666f17a5f8ddce9a4f4090b19</span></li>
-            <li><code>Vela-0.3.12-x64.dmg</code><span>36168de745b84af78b45d56fface18b7b69466c6ee2be1cf8ac5105c13b9ec0e</span></li>
-            <li><code>Vela-0.3.12-x64.exe</code><span>ce990e3749ce1f4f03f0d25ea6231416dc0427ab02d72d88006ff765e76c3646</span></li>
-            <li><code>Vela-0.3.12-x86_64.AppImage</code><span>5925f407b6114c48436945a46e39161a78557d1228133e85f04eeb1595da07b1</span></li>
-            <li><code>Vela-0.3.12-amd64.deb</code><span>140567a17a93a4c67afad453c9c5d0502640f0f42e3d8a8be75ce641ba1ba175</span></li>
+            <li><code>Vela-0.3.13-universal.dmg</code><span>f5e231f9c8e4acaf9b5498c122433ad206137896eae3d13c787468b7b9504c53</span></li>
+            <li><code>Vela-0.3.13-arm64.dmg</code><span>b240f94408d52828e5e056ebbb42fcd4e10d8b9666f17a5f8ddce9a4f4090b19</span></li>
+            <li><code>Vela-0.3.13-x64.dmg</code><span>36168de745b84af78b45d56fface18b7b69466c6ee2be1cf8ac5105c13b9ec0e</span></li>
+            <li><code>Vela-0.3.13-x64.exe</code><span>ce990e3749ce1f4f03f0d25ea6231416dc0427ab02d72d88006ff765e76c3646</span></li>
+            <li><code>Vela-0.3.13-x86_64.AppImage</code><span>5925f407b6114c48436945a46e39161a78557d1228133e85f04eeb1595da07b1</span></li>
+            <li><code>Vela-0.3.13-amd64.deb</code><span>140567a17a93a4c67afad453c9c5d0502640f0f42e3d8a8be75ce641ba1ba175</span></li>
           </ul>
         </details>
 
@@ -1211,7 +1267,14 @@ open /Applications/Vela.app</code></pre>
 
     <footer class="foot">
       <div class="foot-brand">
-        <span class="brand-mark" aria-hidden="true">V</span>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+            <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+            <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+            <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95"
+              stroke-width=".9" stroke-linecap="round" />
+          </svg>
+        </span>
         <div>
           <p class="foot-name">Vela</p>
           <p class="foot-line">Le web, votre atelier. MIT, 2026.</p>

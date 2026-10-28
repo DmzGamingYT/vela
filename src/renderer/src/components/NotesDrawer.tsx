@@ -616,6 +616,7 @@ export default function NotesDrawer() {
   return (
     <aside
       className="notes-drawer"
+      aria-label="Notes"
       style={{ width, flexBasis: width }}
       data-dropping={dropping}
       onDragOver={(event) => {
@@ -695,6 +696,7 @@ export default function NotesDrawer() {
             </button>
             <input
               className="note-title-input"
+              aria-label="Titre de la note"
               value={draft.title}
               placeholder="Titre de la note"
               onChange={(event) => patchDraft({ title: event.target.value })}
@@ -881,7 +883,7 @@ export default function NotesDrawer() {
             <button type="button" className="seg" data-active={preview} onClick={() => setPreview(true)}>
               Aperçu
             </button>
-            <span className="note-saved">
+            <span className="note-saved" role="status">
               {aiBusy
                 ? aiBusy === 'generate'
                   ? 'Génération…'
@@ -932,6 +934,7 @@ export default function NotesDrawer() {
             <textarea
               ref={textareaRef}
               className="note-textarea"
+              aria-label="Texte de la note"
               value={draft.body}
               placeholder="Écrivez en Markdown, glissez un extrait depuis la page, ou liez une note avec [[Titre]]."
               spellCheck
@@ -1088,9 +1091,20 @@ export default function NotesDrawer() {
             <button
               type="button"
               className="action wide"
-              onClick={() => void generateNote()}
-              disabled={aiBusy !== null || !activeUrl}
-              title={activeUrl ? 'Lire la page et rédiger une note structurée' : 'Ouvrez une page pour la synthèse'}
+              onClick={() => {
+                if (!activeUrl || aiBusy !== null) return
+                void generateNote()
+              }}
+              // `aria-disabled` plutôt que `disabled` : un bouton réellement
+              // désactivé ne montre pas son info-bulle et sort du clavier.
+              aria-disabled={aiBusy !== null || !activeUrl}
+              title={
+                !activeUrl
+                  ? 'Ouvrez une page pour la synthèse'
+                  : aiBusy !== null
+                    ? 'Une rédaction est déjà en cours'
+                    : 'Lire la page et rédiger une note structurée'
+              }
             >
               <Icon name="sparkles" size={14} />
               {aiBusy === 'generate' ? 'Génération…' : 'Générer une note IA'}
@@ -1098,8 +1112,11 @@ export default function NotesDrawer() {
             <button
               type="button"
               className="action wide"
-              onClick={capturePage}
-              disabled={!activeUrl}
+              onClick={() => {
+                if (!activeUrl) return
+                capturePage()
+              }}
+              aria-disabled={!activeUrl}
               title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
             >
               <Icon name="globe" size={14} />
@@ -1108,8 +1125,11 @@ export default function NotesDrawer() {
             <button
               type="button"
               className="action wide"
-              onClick={() => void handleSelect()}
-              disabled={!activeUrl}
+              onClick={() => {
+                if (!activeUrl) return
+                void handleSelect()
+              }}
+              aria-disabled={!activeUrl}
               title={activeUrl ? 'Garder le passage sélectionné, avec sa source et sa date' : 'Ouvrez une page, sélectionnez un passage'}
             >
               <Icon name="copy" size={14} />
@@ -1118,8 +1138,11 @@ export default function NotesDrawer() {
             <button
               type="button"
               className="action wide"
-              onClick={() => void highlightSelection()}
-              disabled={!activeUrl}
+              onClick={() => {
+                if (!activeUrl) return
+                void highlightSelection()
+              }}
+              aria-disabled={!activeUrl}
               title={activeUrl ? 'Surligner le passage sélectionné et l’ajouter à la note de la page' : 'Ouvrez une page, sélectionnez un passage'}
             >
               <Icon name="edit" size={14} />

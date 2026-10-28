@@ -560,7 +560,7 @@ export default function Sidebar() {
   const draggingTab = sourceTab()
 
   return (
-    <aside className="sidebar" style={{ '--space': space.color } as CSSProperties}>
+    <aside className="sidebar" aria-label="Barre latérale" style={{ '--space': space.color } as CSSProperties}>
       <header className="sidebar-top drag">
         <span className="brand-lockup" aria-label="Vela">
           <VelaMark size={20} />
@@ -608,7 +608,7 @@ export default function Sidebar() {
               </div>
               <div
                 className="mini-grid"
-                role="list"
+                role="group"
                 aria-label={`Sites épinglés de ${space.name} — Alt + flèches pour réordonner`}
                 data-drop={drop?.kind === 'pinned-end'}
                 onDragOver={overPinnedEnd}
@@ -623,7 +623,6 @@ export default function Sidebar() {
                   <button
                     key={tab.id}
                     type="button"
-                    role="listitem"
                     className="mini-tile"
                     data-tab-id={tab.id}
                     data-active={tab.id === view.activeTabId}
@@ -695,7 +694,7 @@ export default function Sidebar() {
               </div>
               <div
                 className="mini-grid"
-                role="list"
+                role="group"
                 aria-label="Favoris — Alt + flèches pour réordonner"
                 data-dragging={favDragId ? 'true' : undefined}
               >
@@ -703,7 +702,6 @@ export default function Sidebar() {
                   <button
                     key={bookmark.id}
                     type="button"
-                    role="listitem"
                     className="mini-tile"
                     data-bookmark-id={bookmark.id}
                     data-dragging={favDragId === bookmark.id ? 'true' : undefined}
@@ -750,7 +748,6 @@ export default function Sidebar() {
                 {hiddenBookmarks > 0 && (
                   <button
                     type="button"
-                    role="listitem"
                     className="mini-tile mini-tile-more"
                     aria-label={`Voir les ${hiddenBookmarks} autres favoris`}
                     title={`${hiddenBookmarks} autres favoris`}
@@ -766,6 +763,7 @@ export default function Sidebar() {
           {draggingTab && (
             <div
               className="drop-zone"
+              role="status"
               data-active={drop?.kind === (draggingTab.pinned ? 'loose' : 'pinned-end')}
               onDragOver={draggingTab.pinned ? overLoose : overPinnedEnd}
               onDrop={draggingTab.pinned ? dropOnLoose : dropOnPinnedEnd}
@@ -806,6 +804,8 @@ export default function Sidebar() {
               <div className="tab-group" key={group.id}>
                 <div
                   className="group-head"
+                  role="group"
+                  aria-label={`Dossier ${group.name}`}
                   data-collapsed={group.collapsed}
                   data-live={live}
                   data-drop={drop?.kind === 'group' && drop.id === group.id}
@@ -832,6 +832,7 @@ export default function Sidebar() {
                   {renamingId === group.id ? (
                     <input
                       className="group-name-input"
+                      aria-label="Nom du dossier"
                       value={renameValue}
                       maxLength={40}
                       autoFocus
@@ -907,7 +908,7 @@ export default function Sidebar() {
                 </div>
 
                 {!group.collapsed && (
-                  <div className="group-tabs">
+                  <div className="group-tabs" role="group" aria-label={`Onglets de ${group.name}`}>
                     {groupTabs.map(renderTab)}
                     {groupTabs.length === 0 && <p className="group-empty">Glissez un onglet ici.</p>}
                   </div>
@@ -918,6 +919,8 @@ export default function Sidebar() {
 
           <div
             className="tabs-group tabs-loose"
+            role="group"
+            aria-label="Onglets hors dossier"
             data-drop={drop?.kind === 'loose' && draggingTab?.pinned === true}
             onDragOver={overLoose}
             onDrop={dropOnLoose}
@@ -951,7 +954,7 @@ export default function Sidebar() {
         </div>
       )}
 
-      <p className="sr-only" role="status" aria-live="polite">
+      <p className="sr-only" role="status" aria-live="polite" aria-label="Annonces de la barre latérale">
         {announce}
       </p>
 

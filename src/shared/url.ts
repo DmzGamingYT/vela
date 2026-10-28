@@ -56,6 +56,51 @@ export function searxBase(instance?: string | null): string {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Titres de l'accueil                                                */
+/* ------------------------------------------------------------------ */
+
+const TITLE_URL = /^(?:[a-z][a-z0-9+.-]*:\/\/|www\.)/i
+const TITLE_BARE_HOST = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?$/i
+
+/**
+ * Clé de dédoublonnage : même page = même hôte et même chemin, quels que
+ * soient la requête (`?ref=…`) et l'ancre. Deux articles distincts gardent
+ * donc deux tuiles.
+ */
+export function canonicalUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname.replace(/\/+$/, '')}`
+  } catch {
+    return url.split('#')[0]
+  }
+}
+
+/**
+ * Titre montré sur une tuile « Récemment » : débarrassé du compteur de
+ * notifications, et remplacé par le domaine et un chemin court quand le titre
+ * n'est qu'une adresse ou un nom d'hôte.
+ */
+export function readableTitle(raw: string | null | undefined, url: string): string {
+  // Même règle que la pastille des cases : un compteur part, une année reste.
+  const text = stripCounters(raw ?? '').replace(/\s+/g, ' ').trim()
+  const host = hostOf(url)
+  if (!text) return host || url
+  if (TITLE_URL.test(text) || (TITLE_BARE_HOST.test(text) && !/\s/.test(text))) {
+    try {
+      const parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `https://${text}`)
+      const path = parsed.pathname.replace(/\/+$/, '')
+      const short = path.length > 26 ? `${path.slice(0, 25)}…` : path
+      return `${parsed.host.replace(/^www\./, '')}${short}`
+    } catch {
+      return host || text
+    }
+  }
+  if (host && text.toLowerCase() === host.toLowerCase()) return host
+  return text
+}
+
 const HOST_LIKE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?(?:[/?#]|$)/i
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?(?:[/?#]|$)/i
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i
@@ -139,6 +184,15 @@ export function titleFromUrl(url: string): string {
 
 /** Compteur en tête de titre : « (12) Gmail », « [3] Slack ». */
 const TITLE_COUNTER = /^[([]\s*(\d{1,4})\s*[)\]]\s*/
+
+/** Retire les compteurs successifs d’un titre, sans toucher aux années. */
+function stripCounters(value: string): string {
+  let text = value.trim()
+  for (;;) {
+    if (titleBadge(text) === null) return text
+    text = text.replace(TITLE_COUNTER, '').trim()
+  }
+}
 
 /**
  * Nombre que le site met en tête de son titre, ou null. Une année entre

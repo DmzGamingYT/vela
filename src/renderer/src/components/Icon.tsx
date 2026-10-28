@@ -35,6 +35,7 @@ export type IconName =
   | 'clock'
   | 'circle'
   | 'key'
+  | 'keyboard'
   | 'download'
   | 'history'
   | 'star'
@@ -188,6 +189,12 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="7.5" cy="15.5" r="3.8" />
       <path d="m10.4 12.8 7.4-7.4M15 5.5l3 3M12.8 7.7l2.2 2.2" />
+    </>
+  ),
+  keyboard: (
+    <>
+      <rect x="2.5" y="6" width="19" height="12" rx="2.4" />
+      <path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 13.5h.01M9.5 13.5h.01M13 13.5h.01M16.5 13.5h.01M8 17h8" />
     </>
   ),
   download: (

@@ -262,7 +262,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
   return (
     <section
       className="home-pins"
-      aria-label={`Sites épinglés de ${space.name}`}
+      aria-label={`Sites épinglés · ${space.name}`}
       data-over={over ? 'true' : undefined}
       onDragOver={(event) => {
         event.preventDefault()
@@ -275,7 +275,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
     >
       <div className="home-pins-head">
         <h2>
-          Sites de {space.name}
+          Sites épinglés · {space.name}
           <span className="home-pins-count">
             {shortcuts.length > 0 ? `${shortcuts.length} épinglé${shortcuts.length > 1 ? 's' : ''}` : 'aucun site'}
           </span>
@@ -297,7 +297,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
           Épingler des sites pour cet espace — ou glissez une adresse ici
         </button>
       ) : (
-        <div className="pin-grid" role="list" aria-label={`Sites de ${space.name} — Alt + flèches pour réordonner`}>
+        <div className="pin-grid" role="list" aria-label={`Sites épinglés · ${space.name} — Alt + flèches pour réordonner`}>
           {shortcuts.map((shortcut) => {
             const isEditingTitle = editing?.id === shortcut.id && editing.field === 'title'
             return (

@@ -1,7 +1,24 @@
 import { HOME_URL, type PersistedState, type ProviderId, type ProviderSettings, type Settings, type Space, type TabGroup, type TabState } from './types'
 import { PROVIDERS, providerDefaults } from './providers'
+import { THEME_PRESETS } from './theme'
 
-export const SPACE_COLORS = ['#5B56D6', '#3FA98A', '#A88CFF', '#E6B95C', '#E07A9E', '#4FB6D8']
+export interface SpaceTint {
+  id: string
+  label: string
+  color: string
+}
+
+// Les dix teintes de l'app, nommées comme les thèmes de la grille des réglages
+// et dans le même ordre : choisir un espace revient à choisir un thème, sans
+// jeu de couleurs à part. Le nom sert de libellé lisible ; la couleur reste la
+// variante claire du thème, seule valeur stockée dans vela.json.
+export const SPACE_TINTS: SpaceTint[] = THEME_PRESETS.map((preset) => ({
+  id: preset.id,
+  label: preset.label,
+  color: preset.light
+}))
+
+export const SPACE_COLORS = SPACE_TINTS.map((tint) => tint.color)
 
 export function defaultProviders(): Record<ProviderId, ProviderSettings> {
   return Object.fromEntries(PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])) as Record<

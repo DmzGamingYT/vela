@@ -1,5 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { LOCAL_ONLY, NETWORK_FLOWS } from '@shared/network'
+import { LOCAL_ONLY, NETWORK_FLOWS, type NetworkFlow } from '@shared/network'
+import { readWeatherPlace } from '@shared/place'
+import { SEARCH_ENGINES } from '@shared/url'
 import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
 import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
 import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
@@ -24,7 +26,7 @@ import { useBrowser } from '../store/browser'
 import { clearFaviconMemo } from './Favicon'
 import { Icon, type IconName } from './Icon'
 
-type Page = 'appearance' | 'navigation' | 'privacy' | 'models' | 'agent' | 'notes' | 'shortcuts' | 'about'
+type Page = 'appearance' | 'navigation' | 'privacy' | 'models' | 'notes' | 'shortcuts' | 'about'
 
 const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[] }[] = [
   {
@@ -38,15 +40,14 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
   {
     group: 'Agent',
     items: [
-      { id: 'models', label: 'Modèles', icon: 'sparkles' },
-      { id: 'agent', label: 'Comportement', icon: 'command' },
+      { id: 'models', label: 'Modèles', icon: 'key' },
       { id: 'notes', label: 'Notes', icon: 'notes' }
     ]
   },
   {
     group: 'Application',
     items: [
-      { id: 'shortcuts', label: 'Raccourcis', icon: 'key' },
+      { id: 'shortcuts', label: 'Raccourcis', icon: 'keyboard' },
       { id: 'about', label: 'À propos', icon: 'circle' }
     ]
   }
@@ -56,10 +57,9 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   appearance: { title: 'Apparence', lede: 'Mode, thème de couleur et verre dépoli, réglés en direct.' },
   navigation: { title: 'Navigation', lede: 'Le moteur utilisé quand vous tapez une question, et la mémoire locale.' },
   privacy: { title: 'Confidentialité', lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.' },
-  models: { title: 'Modèles', lede: 'Les modèles que l’agent utilise et les clés associées.' },
-  agent: { title: 'Comportement', lede: 'Démo locale, ou un fournisseur avec votre propre clé.' },
+  models: { title: 'Modèles', lede: 'Le mode de l’agent, les fournisseurs et les clés associées.' },
   notes: { title: 'Notes', lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.' },
-  shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis la coque.' },
+  shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.' },
   about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
 }
 
@@ -81,21 +81,141 @@ const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] 
   { value: 'system', label: 'Système', detail: 'Suit votre Mac ou Windows.', icon: 'monitor' }
 ]
 
-const SHORTCUTS: [string, string][] = [
-  ['Barre de commande', shortcut('K')],
-  ['Rechercher dans la page', shortcut('F')],
-  ['Barre d’adresse', shortcut('L')],
-  ['Nouvel onglet', shortcut('T')],
-  ['Fermer l’onglet', shortcut('W')],
-  ['Rouvrir l’onglet', shortcut('⇧T')],
-  ['Vue scindée', shortcut('⇧D')],
-  ['Notes', shortcut('E')],
-  ['Agent', shortcut('J')],
-  ['Travail', shortcut('⇧A')],
-  ['Brief du jour', shortcut('⇧B')],
-  ['Barre latérale', shortcut('S')],
-  ['Onglets 1 à 9', `${shortcut('1')} … ${shortcut('9')}`],
-  ['Réglages', shortcut(',')]
+type FlowTone = 'on' | 'off' | 'ask' | 'local'
+
+interface FlowStateView {
+  tone: FlowTone
+  label: string
+  note?: string
+}
+
+interface FlowContext {
+  /** Ville validée pour la météo, null si aucune. */
+  place: string | null
+  engine: string
+  agentMode: AgentMode
+  providerLabel: string
+  providerLocal: boolean
+  providerReady: boolean
+  tabs: number
+  letterboxd: string
+}
+
+/**
+ * L'état réel d'un flux, pas son état théorique : la météo n'est active que si
+ * une ville existe, un modèle n'est actif que si une clé répond, Letterboxd
+ * seulement si l'espace a un profil.
+ */
+function flowStateOf(flow: NetworkFlow, context: FlowContext): FlowStateView {
+  switch (flow.id) {
+    case 'meteo-ville':
+    case 'meteo-releve':
+      return context.place
+        ? { tone: 'on', label: 'Actif', note: context.place }
+        : { tone: 'off', label: 'Inactif', note: 'Aucune ville' }
+    case 'moteur-connexion':
+    case 'moteur-recherche':
+      return { tone: 'on', label: 'Actif', note: context.engine }
+    case 'tunnel-fournisseurs':
+    case 'tunnel-pages':
+      return { tone: 'ask', label: 'Sur demande', note: 'Quand vous lancez un tunnel' }
+    case 'modeles':
+      if (context.agentMode !== 'api') return { tone: 'off', label: 'Inactif', note: 'Mode démo local' }
+      if (!context.providerReady) {
+        return { tone: 'off', label: 'Inactif', note: `Clé manquante · ${context.providerLabel}` }
+      }
+      return context.providerLocal
+        ? { tone: 'local', label: 'Local', note: context.providerLabel }
+        : { tone: 'on', label: 'Actif', note: context.providerLabel }
+    case 'modele-local':
+      return context.agentMode === 'api' && context.providerLocal
+        ? { tone: 'local', label: 'Local', note: 'Rien ne quitte la machine' }
+        : { tone: 'off', label: 'Inactif', note: 'Serveur local non choisi' }
+    case 'mises-a-jour':
+      return { tone: 'on', label: 'Actif', note: 'Toutes les trois heures' }
+    case 'bd-ocr':
+      return { tone: 'ask', label: 'Sur demande', note: 'Traduction d’une planche' }
+    case 'favicons':
+      return { tone: 'on', label: 'Actif', note: 'Au premier affichage' }
+    case 'letterboxd-journal':
+      return context.letterboxd
+        ? { tone: 'ask', label: 'Sur demande', note: `Profil ${context.letterboxd}` }
+        : { tone: 'off', label: 'Inactif', note: 'Aucun profil dans cet espace' }
+    case 'pages':
+      return {
+        tone: 'on',
+        label: 'Actif',
+        note: plural(context.tabs, 'onglet ouvert', 'onglets ouverts')
+      }
+    default:
+      return { tone: 'ask', label: 'Sur demande' }
+  }
+}
+
+/** Comparaison sans accent ni casse : « precedente » trouve « Précédente ». */
+function normalize(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+/** Les touches aussi se cherchent en mots : « cmd », « maj », « option ». */
+function spokenKeys(keys: string): string {
+  return keys
+    .replace(/⌘/g, ' commande cmd ')
+    .replace(/⇧/g, ' maj shift ')
+    .replace(/⌥/g, ' option alt ')
+    .replace(/⌫/g, ' retour arriere ')
+}
+
+const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
+  {
+    title: 'Navigation',
+    items: [
+      ['Barre de commande', shortcut('K')],
+      ['Barre d’adresse', shortcut('L')],
+      ['Précédente', shortcut('[')],
+      ['Suivante', shortcut(']')],
+      ['Recharger', shortcut('R')],
+      ['Rechercher dans la page', shortcut('F')],
+      ['Imprimer', shortcut('P')]
+    ]
+  },
+  {
+    title: 'Onglets et pages',
+    items: [
+      ['Nouvel onglet', shortcut('T')],
+      ['Fermer l’onglet', shortcut('W')],
+      ['Rouvrir l’onglet', shortcut('⇧T')],
+      ['Onglets 1 à 9', `${shortcut('1')} … ${shortcut('9')}`],
+      ['Vue scindée', shortcut('⇧D')],
+      ['Garder cette page', shortcut('D')],
+      ['Historique', shortcut('Y')],
+      ['Marque-pages', shortcut('⇧O')],
+      ['Accueil', shortcut('⇧H')]
+    ]
+  },
+  {
+    title: 'Surfaces',
+    items: [
+      ['Notes', shortcut('E')],
+      ['Agent', shortcut('J')],
+      ['Travail', shortcut('⇧A')],
+      ['Brief du jour', shortcut('⇧B')],
+      ['Replier la barre latérale', shortcut('S')],
+      ['Petite fenêtre', shortcut('⇧N')],
+      ['Réglages', shortcut(',')]
+    ]
+  },
+  {
+    title: 'Lecture',
+    items: [
+      ['Zoom avant', shortcut('+')],
+      ['Zoom arrière', shortcut('−')],
+      ['Taille normale', shortcut('0')]
+    ]
+  }
 ]
 
 interface Status {
@@ -141,6 +261,7 @@ export default function SettingsPanel() {
   const [testing, setTesting] = useState<ProviderId | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [hexNote, setHexNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
+  const [shortcutQuery, setShortcutQuery] = useState('')
 
   const [thumbCount, setThumbCount] = useState<number | null>(null)
 
@@ -315,13 +436,16 @@ export default function SettingsPanel() {
             const status = statusOf(state, definition.id)
             const isActive = agent.mode === 'api' && agent.provider === definition.id
             return (
-              <div className="model-item" key={definition.id}>
+              <div className="model-item" key={definition.id} role="group" aria-label={`Fournisseur ${definition.label}`}>
                 <div className="model-row" data-active={isActive} data-tone={status.tone}>
                   <button
                     type="button"
                     className="model-select"
                     onClick={() => chooseProvider(definition.id)}
                     aria-pressed={isActive}
+                    // Le contenu du bouton ne dit que le nom du fournisseur :
+                    // le nom accessible annonce l'action et l'état de la clé.
+                    aria-label={`Utiliser ${definition.label} — ${status.label}`}
                     title={`Utiliser ${definition.label}`}
                   >
                     <span
@@ -436,122 +560,15 @@ export default function SettingsPanel() {
             )
           })}
         </div>
-        <p className="setting-hint model-foot">
-          Aucune télémétrie. Une clé n’est utilisée que par l’agent, vers l’endpoint que vous voyez ci-dessus.
-        </p>
-      </section>
-    </>
-  )
-
-  const renderAgent = () => (
-    <>
-      <section className="setting-block">
-        <div className="setting-head">
-          <h2>Mode</h2>
-          <p>Le mode démo ne demande rien. Le mode connecté envoie le texte des onglets joints au modèle.</p>
-        </div>
-        <div className="agent-modes">
-          <button
-            type="button"
-            className="agent-mode"
-            data-active={agent.mode === 'demo'}
-            onClick={() => setMode('demo')}
-          >
-            <span className="agent-mode-top">
-              <Icon name="sparkles" size={15} />
-              Démo locale
-              {agent.mode === 'demo' && <Icon name="check" size={13} />}
-            </span>
-            <span className="agent-mode-detail">
-              Rapports simulés à partir des titres. Aucune page, aucune clé ne quitte l’appareil.
-            </span>
-          </button>
-          <button
-            type="button"
-            className="agent-mode"
-            data-active={agent.mode === 'api'}
-            onClick={() => setMode('api')}
-          >
-            <span className="agent-mode-top">
-              <Icon name="globe" size={15} />
-              Modèle connecté
-              {agent.mode === 'api' && <Icon name="check" size={13} />}
-            </span>
-            <span className="agent-mode-detail">
-              Le texte des onglets joints part vers l’endpoint que vous configurez.
-            </span>
-          </button>
-        </div>
-
         {agent.mode === 'api' && !apiReady && (
           <div className="setting-warning">
             <Icon name="warning" size={14} />
             Sans clé pour {activeDefinition.label}, l’agent reste en mode démo.
           </div>
         )}
-
-        <div className="agent-active">
-          <span
-            className="model-mark"
-            style={{
-              color: activeDefinition.color,
-              background: `color-mix(in srgb, ${activeDefinition.color} 16%, transparent)`,
-              borderColor: `color-mix(in srgb, ${activeDefinition.color} 30%, transparent)`
-            }}
-          >
-            {activeDefinition.mark}
-          </span>
-          <div className="agent-active-copy">
-            <strong>{activeDefinition.label}</strong>
-            <span>
-              {activeState.model} ·{' '}
-              {activeState.hasKey || activeDefinition.local ? 'prêt' : 'clé manquante'}
-            </span>
-          </div>
-          <button type="button" className="action" onClick={() => setPage('models')}>
-            Gérer les modèles
-          </button>
-        </div>
-      </section>
-
-      <section className="setting-block">
-        <div className="setting-head">
-          <h2>Connexion</h2>
-          <p>Endpoint et modèle du fournisseur actif.</p>
-        </div>
-        <div className="field-grid">
-          <label className="field">
-            <span>Endpoint</span>
-            <input
-              key={`${activeDefinition.id}-url`}
-              defaultValue={activeState.baseUrl}
-              onBlur={(event) => {
-                const url = event.target.value.trim()
-                if (!/^https?:\/\//i.test(url)) {
-                  toast('L’endpoint doit commencer par http:// ou https://', 'error')
-                  return
-                }
-                void updateSettings({ providers: { [activeDefinition.id]: { baseUrl: url } } })
-              }}
-              spellCheck={false}
-            />
-          </label>
-          <label className="field">
-            <span>Modèle</span>
-            <input
-              key={`${activeDefinition.id}-model`}
-              defaultValue={activeState.model}
-              onBlur={(event) => {
-                const model = event.target.value.trim()
-                if (!model) return
-                void updateSettings({ providers: { [activeDefinition.id]: { model } } })
-              }}
-              spellCheck={false}
-            />
-          </label>
-        </div>
-        <p className="setting-hint">
-          La clé se gère dans <button type="button" className="text-btn inline" onClick={() => setPage('models')}>Modèles</button>.
+        <p className="setting-hint model-foot">
+          Le comportement de l’agent suit toujours le modèle actif : il n’y a rien d’autre à régler ici.
+          Aucune télémétrie, et une clé n’est utilisée que par l’agent, vers l’endpoint que vous voyez ci-dessus.
         </p>
       </section>
     </>
@@ -595,15 +612,14 @@ export default function SettingsPanel() {
               <h2>Thème de couleur</h2>
               <p>Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.</p>
             </div>
-            <div className="theme-swatches" role="radiogroup" aria-label="Thème de couleur">
+            <div className="theme-swatches" role="group" aria-label="Thème de couleur">
               {THEME_PRESETS.map((preset) => {
                 const active = settings.themeId === preset.id
                 return (
                   <button
                     type="button"
                     key={preset.id}
-                    role="radio"
-                    aria-checked={active}
+                    aria-pressed={active}
                     aria-label={preset.label}
                     className="theme-tile"
                     data-active={active}
@@ -624,58 +640,63 @@ export default function SettingsPanel() {
                   </button>
                 )
               })}
-              <button
-                type="button"
-                role="radio"
-                aria-checked={settings.themeId === 'custom'}
-                aria-label="Couleur personnalisée"
-                className="theme-tile"
-                data-active={settings.themeId === 'custom'}
-                style={{ '--swatch': settings.customAccent } as CSSProperties}
-                onClick={() => void updateSettings({ themeId: 'custom' })}
-              >
-                <span className="theme-tile-preview">
-                  <span className="theme-tile-rail" />
-                  <span className="theme-tile-side" />
-                  <span className="theme-tile-pane">
-                    <span className="theme-tile-dot" />
+              {/* La teinte libre occupe sa propre rangée : les dix thèmes
+                  remplissent deux rangées pleines, sans tuile orpheline, et
+                  la couleur n'a qu'un seul endroit pour être réglée. */}
+              <div className="theme-custom" data-active={settings.themeId === 'custom'}>
+                <span
+                  className="theme-custom-swatch"
+                  style={{ '--swatch': settings.customAccent } as CSSProperties}
+                  aria-hidden="true"
+                />
+                <div className="theme-custom-copy">
+                  <span className="theme-custom-name">Personnalisé</span>
+                  <span className="theme-custom-hint">Teinte libre, saisie ci-contre</span>
+                </div>
+                <div className="custom-color">
+                  <input
+                    type="color"
+                    aria-label="Choisir une couleur personnalisée"
+                    value={settings.customAccent}
+                    onChange={(event) => applyCustom(event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    aria-label="Code hexadécimal"
+                    key={settings.customAccent}
+                    defaultValue={settings.customAccent.toUpperCase()}
+                    spellCheck={false}
+                    onBlur={(event) => applyCustom(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        applyCustom(event.currentTarget.value)
+                      }
+                    }}
+                  />
+                </div>
+                {settings.themeId === 'custom' ? (
+                  <span className="theme-custom-state">
+                    <Icon name="check" size={12} />
+                    Active
                   </span>
-                </span>
-                <span className="theme-tile-name">
-                  Personnalisé
-                  {settings.themeId === 'custom' && <span className="theme-tile-badge" />}
-                </span>
-              </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="action"
+                    onClick={() => void updateSettings({ themeId: 'custom' })}
+                  >
+                    Utiliser
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="custom-color">
-              <input
-                type="color"
-                aria-label="Choisir une couleur personnalisée"
-                value={settings.customAccent}
-                onChange={(event) => applyCustom(event.target.value)}
-              />
-              <input
-                type="text"
-                aria-label="Code hexadécimal"
-                key={settings.customAccent}
-                defaultValue={settings.customAccent.toUpperCase()}
-                spellCheck={false}
-                onBlur={(event) => applyCustom(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    applyCustom(event.currentTarget.value)
-                  }
-                }}
-              />
-              <span className="setting-hint">Couleur personnalisée</span>
-              {hexNote && (
-                <p className="custom-color-note" data-tone={hexNote.tone}>
-                  {hexNote.text}
-                </p>
-              )}
-            </div>
+            {hexNote && (
+              <p className="custom-color-note" data-tone={hexNote.tone}>
+                {hexNote.text}
+              </p>
+            )}
 
             <div className="setting-head">
               <h2>Intensité du verre</h2>
@@ -1030,37 +1051,70 @@ export default function SettingsPanel() {
             <div className="setting-head flow-head">
               <h2>Ce qui quitte l’appareil</h2>
               <p>
-                Les requêtes que Vela déclenche elle-même, hors pages que vous ouvrez. Chacune dit
-                quand elle part, ce qu’elle emporte et comment l’éviter.
+                Les requêtes que Vela déclenche elle-même, hors pages que vous ouvrez : ce qui les
+                déclenche, ce qu’elles emportent, et leur état maintenant.
               </p>
             </div>
-            <ul className="flow-list" aria-label="Destinations réseau de Vela">
-              {NETWORK_FLOWS.map((flow) => (
-                <li key={flow.id} className="flow-row" data-local={flow.local ? 'true' : undefined}>
-                  <div className="flow-title">
-                    <strong>{flow.label}</strong>
-                    <span className="flow-target">{flow.local ? 'Sur cet appareil' : flow.target}</span>
-                  </div>
-                  {flow.hosts.length > 1 && !flow.local && (
-                    <p className="flow-hosts">{flow.hosts.join(' · ')}</p>
-                  )}
-                  <dl className="flow-detail">
-                    <div>
-                      <dt>Quand</dt>
-                      <dd>{flow.trigger}</dd>
-                    </div>
-                    <div>
-                      <dt>Envoyé</dt>
-                      <dd>{flow.data}</dd>
-                    </div>
-                    <div>
-                      <dt>Pour l’éviter</dt>
-                      <dd>{flow.off ?? 'Aucun réglage dans cette version.'}</dd>
-                    </div>
-                  </dl>
-                </li>
-              ))}
-            </ul>
+            {(() => {
+              const space = view.spaces.find((item) => item.id === view.activeSpaceId)
+              const context: FlowContext = {
+                place: readWeatherPlace()?.name ?? null,
+                engine: SEARCH_ENGINES[settings.searchEngine]?.label ?? 'Moteur choisi',
+                agentMode: agent.mode,
+                providerLabel: activeDefinition.label,
+                providerLocal: Boolean(activeDefinition.local),
+                providerReady: apiReady,
+                tabs: view.tabs.length,
+                letterboxd: space?.letterboxd ?? ''
+              }
+              const rows = NETWORK_FLOWS.map((flow) => ({ flow, state: flowStateOf(flow, context) }))
+              const count = (tone: FlowTone): number =>
+                rows.filter((row) => row.state.tone === tone).length
+              return (
+                <>
+                  <p className="flow-summary" role="status">
+                    <span>{NETWORK_FLOWS.length} flux</span>
+                    <span>{count('on')} actifs</span>
+                    <span>{count('ask')} sur demande</span>
+                    <span>{count('off')} inactifs</span>
+                    {count('local') > 0 && <span>{count('local')} local</span>}
+                  </p>
+                  <table className="flow-table">
+                    <caption className="sr-only">
+                      Destinations réseau de Vela, avec leur état au moment où cette page est ouverte
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Flux</th>
+                        <th scope="col">Déclencheur</th>
+                        <th scope="col">Envoyé</th>
+                        <th scope="col">État</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map(({ flow, state }) => (
+                        <tr key={flow.id} data-tone={state.tone} data-local={flow.local ? 'true' : undefined}>
+                          <th scope="row">
+                            <strong>{flow.label}</strong>
+                            <span className="flow-target">{flow.local ? 'Sur cet appareil' : flow.target}</span>
+                          </th>
+                          <td>{flow.trigger}</td>
+                          <td>{flow.data}</td>
+                          <td>
+                            <span className="flow-state" data-tone={state.tone}>
+                              <i aria-hidden="true" />
+                              {state.label}
+                            </span>
+                            {state.note && <span className="flow-state-note">{state.note}</span>}
+                            {flow.off && <span className="flow-avoid">Pour l’éviter : {flow.off}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )
+            })()}
 
             <div className="setting-head flow-head">
               <h2>Ce qui ne sort jamais</h2>
@@ -1083,9 +1137,6 @@ export default function SettingsPanel() {
 
       case 'models':
         return renderModels()
-
-      case 'agent':
-        return renderAgent()
 
       case 'notes':
         return (
@@ -1111,19 +1162,72 @@ export default function SettingsPanel() {
           </section>
         )
 
-      case 'shortcuts':
+      case 'shortcuts': {
+        const search = normalize(shortcutQuery.trim())
+        const query = (label: string, keys: string): string =>
+          normalize(`${label} ${keys} ${spokenKeys(keys)}`)
+        const groups = SHORTCUT_GROUPS.map((group) => ({
+          title: group.title,
+          items: group.items.filter(([label, keys]) => !search || query(label, keys).includes(search))
+        })).filter((group) => group.items.length > 0)
+        const total = groups.reduce((count, group) => count + group.items.length, 0)
+        const all = SHORTCUT_GROUPS.reduce((count, group) => count + group.items.length, 0)
         return (
           <section className="setting-block">
-            <div className="shortcut-table">
-              {SHORTCUTS.map(([label, keys]) => (
-                <div className="shortcut-table-row" key={label}>
-                  <span>{label}</span>
-                  <kbd>{keys}</kbd>
-                </div>
-              ))}
+            <div className="shortcut-toolbar">
+              <input
+                className="shortcut-search"
+                value={shortcutQuery}
+                onChange={(event) => setShortcutQuery(event.target.value)}
+                placeholder="Filtrer les raccourcis"
+                aria-label="Filtrer les raccourcis"
+                spellCheck={false}
+                onKeyDown={(event) => {
+                  // Échap vide le filtre sans quitter les réglages.
+                  if (event.key !== 'Escape' || !shortcutQuery) return
+                  event.preventDefault()
+                  setShortcutQuery('')
+                }}
+              />
+              <button
+                type="button"
+                className="action"
+                onClick={() => setShortcutQuery('')}
+                disabled={!search}
+                title={search ? 'Effacer le filtre' : 'Aucun filtre actif'}
+              >
+                <Icon name="reload" size={13} />
+                Réinitialiser
+              </button>
             </div>
+            <p className="shortcut-count" role="status">
+              {search
+                ? `${total} sur ${all} raccourcis`
+                : `${all} raccourcis, en ${SHORTCUT_GROUPS.length} groupes`}
+            </p>
+            {total === 0 && <p className="shortcut-empty">Aucun raccourci ne correspond.</p>}
+            {groups.map((group) => (
+              <div className="shortcut-group" key={group.title}>
+                <h3 className="shortcut-group-title">
+                  {group.title}
+                  <span className="shortcut-group-count">{group.items.length}</span>
+                </h3>
+                <div className="shortcut-table">
+                  {group.items.map(([label, keys]) => (
+                    <div className="shortcut-table-row" key={label}>
+                      <span>{label}</span>
+                      <kbd aria-label={keys.replace('⌘', 'Commande ').replace('⇧', 'Maj ')}>{keys}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <p className="shortcut-note">
+              Les combinaisons viennent du menu de l’application : cette version ne les remappe pas encore.
+            </p>
           </section>
         )
+      }
 
       case 'about': {
         const isMac = window.vela.platform === 'darwin'
@@ -1132,12 +1236,16 @@ export default function SettingsPanel() {
         return (
           <section className="setting-block">
             <div className="about-hero">
-              <span className="about-mark">Vela</span>
+              <VelaMark size={52} brand />
               <div>
-                <strong>Vela {update?.currentVersion ?? ''}</strong>
-                <p className="setting-hint">
-                  Navigateur de travail — Electron, React et Chromium. Aucune télémétrie, aucun compte,
-                  aucune synchronisation.
+                <strong className="about-name">
+                  Vela<span aria-hidden="true">.</span>
+                </strong>
+                <p className="about-tagline">Le web, votre atelier.</p>
+                <p className="about-meta">
+                  Navigateur de travail · macOS, Windows, Linux
+                  <br />
+                  Gratuit · Libre (MIT) · Sans compte
                 </p>
               </div>
             </div>
@@ -1224,7 +1332,7 @@ export default function SettingsPanel() {
                 {update?.currentVersion ?? ''}
               </span>
             </div>
-            <div className="settings-nav-scroll">
+            <nav className="settings-nav-scroll" aria-label="Sections des réglages">
               {NAV.map((group) => (
                 <div className="settings-nav-group" key={group.group}>
                   <p className="settings-nav-label">{group.group}</p>
@@ -1242,7 +1350,7 @@ export default function SettingsPanel() {
                   ))}
                 </div>
               ))}
-            </div>
+            </nav>
             <div className="settings-nav-foot">
               <span className="privacy-dot" />
               <button type="button" className="settings-nav-foot-link" onClick={() => setPage('privacy')}>

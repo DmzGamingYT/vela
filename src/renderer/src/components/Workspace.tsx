@@ -18,7 +18,7 @@ function ErrorPane({ tab }: { tab: TabView }) {
   const navigate = useBrowser((state) => state.navigate)
 
   return (
-    <div className="error-pane">
+    <section className="error-pane" aria-label="Page indisponible">
       <span className="error-icon">
         <Icon name="warning" size={22} />
       </span>
@@ -34,7 +34,7 @@ function ErrorPane({ tab }: { tab: TabView }) {
           Chercher ailleurs
         </button>
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -52,7 +52,12 @@ function Pane({
   const home = isHomeUrl(tab.url)
 
   return (
-    <section className="pane" data-primary={primary} data-resizing={resizing}>
+    <section
+      className="pane"
+      aria-label={primary ? 'Panneau principal' : 'Panneau secondaire'}
+      data-primary={primary}
+      data-resizing={resizing}
+    >
       <PaneHeader tab={tab} primary={primary} secondary={secondary} />
       {tab.loading && <span className="load-line" />}
       <div className="pane-body" data-pane-tab={home ? undefined : tab.id}>
@@ -283,12 +288,12 @@ export default function Workspace() {
       >
         <Pane tab={active} primary resizing={resizing} />
         {split && second && (
-          <>
-            <div
-              className="split-handle"
-              role="separator"
-              aria-orientation="vertical"
-              onPointerDown={startDrag}
+          <>              <div
+                className="split-handle"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Largeur de la vue scindée"
+                onPointerDown={startDrag}
               onDoubleClick={() => commitSplitRatio(0.5)}
             >
               <span />

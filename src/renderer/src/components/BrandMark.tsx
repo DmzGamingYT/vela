@@ -90,27 +90,41 @@ export const ENGINE_BRANDS: Record<string, BrandId> = {
  * Marque de Vela : une voile stylisée dans un carré arrondi. Elle suit l’accent
  * du thème actif, donc elle change avec la couleur choisie.
  */
-export function VelaMark({ size = 20 }: { size?: number }) {
+export function VelaMark({ size = 20, brand = false }: { size?: number; brand?: boolean }) {
   // Deux exemplaires vivent en même temps (rail et À propos) : un identifiant
   // par instance évite que le second réutilise le dégradé du premier.
   const id = useId().replace(/:/g, '')
+  // `brand` fige la teinte de l'icône (À propos, verrouillage de marque) ;
+  // sinon la tuile suit l'accent de l'espace, comme le reste du châssis.
+  const style = brand
+    ? {
+        width: size,
+        height: size,
+        background: 'linear-gradient(150deg, #7364EF, #4F3CCA 62%, #422FB6)'
+      }
+    : { width: size, height: size }
   return (
-    <span className="vela-mark" style={{ width: size, height: size }} aria-hidden="true">
+    <span className="vela-mark" style={style} aria-hidden="true">
       <svg viewBox="0 0 24 24" width={size} height={size} focusable="false">
         <defs>
-          <linearGradient id={`${id}glass`} x1="7" y1="3" x2="17" y2="21" gradientUnits="userSpaceOnUse">
+          <linearGradient id={`${id}sail`} x1="10" y1="4" x2="16" y2="18" gradientUnits="userSpaceOnUse">
             <stop offset="0" stopColor="#FFFFFF" />
-            <stop offset="0.62" stopColor="#F6F7FF" />
-            <stop offset="1" stopColor="#D9DEFF" />
+            <stop offset="1" stopColor="#E3E3FA" />
           </linearGradient>
         </defs>
-        <g fill={`url(#${id}glass)`}>
-          <path d="M12.9 3.1c3.6 3.7 5.6 8 5.8 13h-5.8Z" />
-          <path d="M11.1 6.3V16H6.5c.6-3.8 2.2-7.1 4.6-9.7Z" opacity="0.82" />
-          <path d="M4.3 17.6h15.4l-1.6 2.2c-.45.6-1.15.95-1.9.95H7.8c-.75 0-1.45-.35-1.9-.95Z" />
-        </g>
-        <path d="M12.9 3.6v12.1" stroke="#FFFFFF" strokeOpacity="0.9" strokeWidth="0.35" />
-        <path d="M4.9 17.85h14.2" stroke="#FFFFFF" strokeOpacity="0.55" strokeWidth="0.3" />
+        <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+        <path
+          d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z"
+          fill={`url(#${id}sail)`}
+        />
+        <path
+          d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeOpacity="0.95"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+        />
       </svg>
     </span>
   )

@@ -238,8 +238,7 @@ export default function TunnelView() {
               disabled={!active}
               title={selectedId ? 'Ajouter une carte sous ce nœud' : 'Ajouter une carte sous le sujet'}
               onClick={() => void addCard(selectedId ?? null)}
-            >
-              <Icon name="plus" size={14} /> Carte
+            >                <Icon name="plus" size={14} /> Nouvelle carte
             </button>
             <button type="button" className="tunnel-tool" onClick={() => setProjectsOpen(true)}>
               <Icon name="folder" size={14} /> Projets
@@ -334,8 +333,13 @@ export default function TunnelView() {
                 type="button"
                 aria-pressed={level === entry.value}
                 data-active={level === entry.value}
+                disabled={!active}
                 onClick={() => setLevel(entry.value)}
-                title={`Afficher jusqu’au niveau ${entry.value} : ${entry.label}`}
+                title={
+                  active
+                    ? `Afficher jusqu’au niveau ${entry.value} : ${entry.label}`
+                    : 'Ouvrez une carte pour régler le niveau affiché'
+                }
               >
                 <b>{entry.value}</b> {entry.label}
               </button>
@@ -470,7 +474,7 @@ export default function TunnelView() {
                 ))}
               </div>
               <p className="tunnel-empty-foot">
-                <Icon name="lock" size={12} /> Recherche locale, aucune source inventée.
+                <Icon name="lock" size={12} /> Aucune source inventée : chaque page est réellement récupérée.
               </p>
             </div>
           )}
