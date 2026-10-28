@@ -8,6 +8,13 @@ files:
   - userscripts/**
   - package.json
 asar: true
+# Le gabarit de barre de menus vit hors de l'asar : `process.resourcesPath` le
+# cherche à côté de l'exécutable, et macOS lit le @2x posé à côté du 1x.
+extraResources:
+  - from: build/iconTemplate.png
+    to: iconTemplate.png
+  - from: build/iconTemplate@2x.png
+    to: iconTemplate@2x.png
 afterPack: ./scripts/after-pack.cjs
 artifactName: ${productName}-${version}-${arch}.${ext}
 publish:

@@ -1,5 +1,15 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, globalShortcut, nativeTheme, session, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  Menu,
+  nativeImage,
+  nativeTheme,
+  session,
+  shell,
+  Tray
+} from 'electron'
 import { appendFileSync, existsSync, statSync, writeFileSync } from 'node:fs'
 import { Browser } from './browser'
 import { installMenu } from './menu'
@@ -138,6 +148,55 @@ function createWindow(): void {
   }
 }
 
+let statusItem: Tray | null = null
+
+/** Fenêtre principale au premier plan, recréée si elle a été fermée. */
+function showWindow(): void {
+  if (!win || win.isDestroyed()) {
+    createWindow()
+    return
+  }
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+}
+
+/**
+ * Élément de barre de menus (macOS uniquement). Le gabarit est dessiné en noir
+ * sur fond transparent et marqué « template » : macOS l'inverse lui-même quand
+ * le thème est sombre, puisqu'un gabarit ne porte pas de couleur propre.
+ *
+ * Le dessin vit dans build/ : `extraResources` le copie à côté de l'exécutable
+ * une fois l'app empaquetée, sinon un paquet n'aurait pas d'icône à afficher.
+ */
+function installStatusItem(): void {
+  if (process.platform !== 'darwin') return
+  const base = app.isPackaged ? process.resourcesPath : join(__dirname, '../../build')
+  const file = join(base, 'iconTemplate.png')
+  if (!existsSync(file)) return
+  const image = nativeImage.createFromPath(file)
+  if (image.isEmpty()) return
+  image.setTemplateImage(true)
+
+  statusItem = new Tray(image)
+  statusItem.setToolTip('Vela')
+  statusItem.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Afficher Vela', click: () => showWindow() },
+      {
+        label: 'Nouvel onglet',
+        click: () => {
+          showWindow()
+          browser?.sendShortcut('new-tab')
+        }
+      },
+      { type: 'separator' },
+      { label: 'Quitter Vela', accelerator: 'Cmd+Q', click: () => app.quit() }
+    ])
+  )
+  console.log('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela')
+}
+
 function main(): void {
   if (!app.requestSingleInstanceLock()) {
     app.quit()
@@ -161,6 +220,7 @@ function main(): void {
       if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)
     })
     createWindow()
+    installStatusItem()
     // Fenêtres ouvertes par une page (connexion OAuth, popup d'un site) : elles
     // doivent annoncer la même identité que les onglets. Enregistré après la
     // coque pour ne jamais toucher au renderer local.
@@ -190,6 +250,8 @@ function main(): void {
   })
 
   app.on('will-quit', () => {
+    statusItem?.destroy()
+    statusItem = null
     try {
       globalShortcut.unregisterAll()
     } catch {
