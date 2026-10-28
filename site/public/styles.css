@@ -2788,15 +2788,6 @@ html[data-theme="light"] .ico-moon {
   line-height: 1.65;
 }
 
-/* Une capture seule, pleine largeur, avec sa propre légende. */
-.capture-solo {
-  margin-top: 28px;
-}
-
-.capture-solo .capture-img {
-  display: block;
-}
-
 @media (max-width: 720px) {
   .timeline-row {
     grid-template-columns: 62px minmax(0, 1fr);
