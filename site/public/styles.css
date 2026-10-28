@@ -1395,6 +1395,65 @@ html[data-theme="light"] .ico-moon {
   font-size: 9.5px;
 }
 
+/* Journal Letterboxd importé (0.3.12) : les lignes réelles de la carte À voir,
+   sans affiche ni service tiers. */
+.lb-mock {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 22px 50px -26px rgba(0, 0, 0, 0.45);
+}
+
+.lb-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+.lb-head i {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lb-head em,
+.lb-row em {
+  font-style: normal;
+  color: var(--ink-3);
+  font-size: 10px;
+}
+
+.lb-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-deep);
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+.lb-row b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lb-note {
+  padding-left: 2px;
+  color: var(--ink-3);
+  font-size: 9.5px;
+}
+
 .tile-strip {
   display: grid;
   grid-template-columns: repeat(6, 32px);

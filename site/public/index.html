@@ -100,6 +100,10 @@
       <symbol id="i-chevron" viewBox="0 0 24 24">
         <path d="m6 9 6 6 6-6" />
       </symbol>
+      <symbol id="i-film" viewBox="0 0 24 24">
+        <rect x="3.5" y="5" width="17" height="14" rx="2.4" />
+        <path d="M9.8 9.2v5.6l4.6-2.8Z" />
+      </symbol>
       <symbol id="i-spark" viewBox="0 0 24 24">
         <path d="M11 3.6l1.8 4.9 4.9 1.8-4.9 1.8L11 17l-1.8-4.9L4.3 10.3l4.9-1.8Z" />
         <path d="M18.2 14.6l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z" />
@@ -110,7 +114,7 @@
       <a class="brand" href="#top" aria-label="Vela, retour en haut">
         <span class="brand-mark" aria-hidden="true">V</span>
         <span class="brand-name">Vela</span>
-        <span class="brand-version">0.3.11</span>
+        <span class="brand-version">0.3.12</span>
       </a>
 
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Ouvrir le menu">
@@ -148,7 +152,7 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <p class="kicker">
           <span class="dot" aria-hidden="true"></span>
-          v0.3.11 · macOS, Windows, Linux
+          v0.3.12 · macOS, Windows, Linux
         </p>
         <h1 id="hero-title">
           Le web,<br />
@@ -167,7 +171,7 @@
             <span data-platform-label>Télécharger</span>
           </a>
           <a class="btn btn-quiet" href="https://github.com/DmzGamingYT/vela/releases/latest" target="_blank" rel="noreferrer">
-            Voir la version 0.3.11
+            Voir la version 0.3.12
           </a>
         </div>
         <p class="fine">Sans compte Vela · Sans télémétrie · MIT</p>
@@ -428,7 +432,7 @@
       <section class="section" id="nouveautes" aria-labelledby="news-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Nouveautés</p>
-          <h2 id="news-title">Trois gestes, dix versions.</h2>
+          <h2 id="news-title">Trois gestes, neuf versions.</h2>
           <p class="section-lede">
             Vela se construit une version à la fois. Voici les trois gestes qui la définissent, ce
             qu’ils donnent en vrai, puis la frise de ce que chaque version a apporté depuis la 0.3.4.
@@ -505,7 +509,40 @@
           </div>
         </article>
 
+        <article class="card card-wide">
+          <div class="card-copy">
+            <span class="card-ico" aria-hidden="true"><svg class="ico"><use href="#i-film" /></svg></span>
+            <h3>Le journal Letterboxd, sur demande</h3>
+            <p>
+              Un nom de compte suffit : le bouton Importer lit le flux public du profil et range les
+              derniers films dans l’espace cinéma, avec l’année, la note et la date de visionnage.
+              Le journal reste dans <code>vela.json</code>, lisible hors ligne, et chaque ligne ouvre
+              la fiche du film dans l’onglet. Rien ne se rafraîchit tout seul : un import par clic,
+              sinon aucun appel vers Letterboxd.
+            </p>
+          </div>
+          <div class="lb-mock" aria-hidden="true">
+            <span class="lb-head"><i>Journal</i><em>50 entrées</em></span>
+            <span class="lb-row"><b>La Haine</b><em>1995 · ★★★★</em></span>
+            <span class="lb-row"><b>Perfect Days</b><em>2023 · ★★★★½</em></span>
+            <span class="lb-row"><b>Chungking Express</b><em>1994 · ★★★★</em></span>
+            <span class="lb-note">Flux public · import au clic</span>
+          </div>
+        </article>
+
         <ol class="timeline">
+          <li class="timeline-row">
+            <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.12" target="_blank" rel="noreferrer">0.3.12</a>
+            <div class="timeline-copy">
+              <strong>Le journal Letterboxd, un bouclier à trois niveaux</strong>
+              <p>
+                Un profil Letterboxd s’importe par son flux public, avec sa ligne dans
+                Confidentialité et son entrée d’audit ; le bouclier passe par aucun, traqueurs ou
+                strict, avec ses compteurs par onglet. Les réglages sont retravaillés section par
+                section, avec les vrais logos des moteurs et des modèles.
+              </p>
+            </div>
+          </li>
           <li class="timeline-row">
             <a class="timeline-version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.11" target="_blank" rel="noreferrer">0.3.11</a>
             <div class="timeline-copy">
@@ -809,6 +846,7 @@
               <li>Notes vocales, en fichiers audio dans le dossier de l’espace</li>
               <li>Brief du jour, calculé sans requête réseau</li>
               <li>Clés API chiffrées par le trousseau système</li>
+              <li>Blocage des traqueurs, calculé sur l’appareil, à trois niveaux : aucun, traqueurs, strict</li>
             </ul>
           </div>
 
@@ -833,6 +871,10 @@
                 <strong>Transcription d’une note vocale :</strong> le serveur local d’abord, sans
                 sortie réseau. Vers un fournisseur distant, l’enregistrement ne part qu’après
                 votre confirmation explicite ; sans accord, il reste sur l’appareil.
+              </li>
+              <li class="is-out">
+                <strong>Journal Letterboxd :</strong> le flux public du profil, demandé seulement
+                quand vous cliquez Importer. Aucun cookie d’espace, aucune lecture des pages.
               </li>
             </ul>
           </div>
@@ -878,7 +920,7 @@
       <section class="section download" id="telecharger" aria-labelledby="download-title">
         <div class="section-head">
           <p class="kicker"><span class="dot" aria-hidden="true"></span>Télécharger</p>
-          <h2 id="download-title">Vela 0.3.11</h2>
+          <h2 id="download-title">Vela 0.3.12</h2>
           <p class="section-lede">
             Builds non signés par un certificat commercial. Comptez un clic droit → Ouvrir sur macOS,
             et SmartScreen sur Windows.
@@ -893,7 +935,7 @@
 
         <div class="table-wrap">
           <table class="dl">
-            <caption class="visually-hidden">Fichiers de la version 0.3.11</caption>
+            <caption class="visually-hidden">Fichiers de la version 0.3.12</caption>
             <thead>
               <tr>
                 <th scope="col">Plateforme</th>
@@ -906,11 +948,11 @@
             <tbody>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon <em>et</em> Intel</span></th>
-                <td><code>Vela-0.3.11-universal.dmg</code></td>
-                <td>215,5 Mo</td>
+                <td><code>Vela-0.3.12-universal.dmg</code></td>
+                <td>215,6 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-universal.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-universal.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le fichier universel macOS</span>
                   </a>
@@ -918,11 +960,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Apple silicon</span></th>
-                <td><code>Vela-0.3.11-arm64.dmg</code></td>
-                <td>116,6 Mo</td>
+                <td><code>Vela-0.3.12-arm64.dmg</code></td>
+                <td>116,7 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-arm64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-arm64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Apple silicon</span>
                   </a>
@@ -930,11 +972,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">macOS</span><span class="plat-sub">Intel</span></th>
-                <td><code>Vela-0.3.11-x64.dmg</code></td>
-                <td>123,5 Mo</td>
+                <td><code>Vela-0.3.12-x64.dmg</code></td>
+                <td>123,6 Mo</td>
                 <td><span class="state state-warn">Non notarisé</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x64.dmg">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x64.dmg">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour macOS Intel</span>
                   </a>
@@ -942,11 +984,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Windows</span><span class="plat-sub">x64</span></th>
-                <td><code>Vela-0.3.11-x64.exe</code></td>
-                <td>116,3 Mo</td>
+                <td><code>Vela-0.3.12-x64.exe</code></td>
+                <td>116,4 Mo</td>
                 <td><span class="state state-warn">SmartScreen</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x64.exe">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x64.exe">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger pour Windows</span>
                   </a>
@@ -954,11 +996,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">AppImage</span></th>
-                <td><code>Vela-0.3.11-x86_64.AppImage</code></td>
-                <td>120,7 Mo</td>
+                <td><code>Vela-0.3.12-x86_64.AppImage</code></td>
+                <td>120,8 Mo</td>
                 <td><span class="state">Portable</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-x86_64.AppImage">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-x86_64.AppImage">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger l’AppImage Linux</span>
                   </a>
@@ -966,11 +1008,11 @@
               </tr>
               <tr>
                 <th scope="row"><span class="plat">Linux</span><span class="plat-sub">Debian, Ubuntu</span></th>
-                <td><code>Vela-0.3.11-amd64.deb</code></td>
-                <td>97,0 Mo</td>
+                <td><code>Vela-0.3.12-amd64.deb</code></td>
+                <td>97,1 Mo</td>
                 <td><span class="state">Paquet</span></td>
                 <td>
-                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.11/Vela-0.3.11-amd64.deb">
+                  <a class="dl-link" href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.12/Vela-0.3.12-amd64.deb">
                     <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                     <span class="visually-hidden">Télécharger le paquet Debian</span>
                   </a>
@@ -990,12 +1032,12 @@
             <code>certutil -hashfile &lt;fichier&gt; SHA256</code> sur Windows.
           </p>
           <ul class="checks-list">
-            <li><code>Vela-0.3.11-universal.dmg</code><span>95438febe1ce3b826a4f979b590dae9d3cc6ddea5d8f334bee7177648f2d2635</span></li>
-            <li><code>Vela-0.3.11-arm64.dmg</code><span>fea0d5f9237a8677698d7cd8bc56c43007489fbf5e5ccd2df5eed541ab805fc8</span></li>
-            <li><code>Vela-0.3.11-x64.dmg</code><span>2211bb3801ea2d9d7e3e700551a17d5180909ce3c4de493312a738c1515eab9f</span></li>
-            <li><code>Vela-0.3.11-x64.exe</code><span>0516fe88b8320bc9daa51db551629233bfadce7817ea996fe10bc5d1f5e64e6b</span></li>
-            <li><code>Vela-0.3.11-x86_64.AppImage</code><span>babc5317cb3d6481d53e30850055059524a50a2f32d5fb4827f422700916b27f</span></li>
-            <li><code>Vela-0.3.11-amd64.deb</code><span>edb45068bb3fa0a9888a3308412a237ed8b0bc016f9ca5c3dfb49fa3e526b047</span></li>
+            <li><code>Vela-0.3.12-universal.dmg</code><span>f5e231f9c8e4acaf9b5498c122433ad206137896eae3d13c787468b7b9504c53</span></li>
+            <li><code>Vela-0.3.12-arm64.dmg</code><span>b240f94408d52828e5e056ebbb42fcd4e10d8b9666f17a5f8ddce9a4f4090b19</span></li>
+            <li><code>Vela-0.3.12-x64.dmg</code><span>36168de745b84af78b45d56fface18b7b69466c6ee2be1cf8ac5105c13b9ec0e</span></li>
+            <li><code>Vela-0.3.12-x64.exe</code><span>ce990e3749ce1f4f03f0d25ea6231416dc0427ab02d72d88006ff765e76c3646</span></li>
+            <li><code>Vela-0.3.12-x86_64.AppImage</code><span>5925f407b6114c48436945a46e39161a78557d1228133e85f04eeb1595da07b1</span></li>
+            <li><code>Vela-0.3.12-amd64.deb</code><span>140567a17a93a4c67afad453c9c5d0502640f0f42e3d8a8be75ce641ba1ba175</span></li>
           </ul>
         </details>
 
@@ -1036,7 +1078,7 @@
             <div class="status-demo" aria-hidden="true">
               <span class="status-demo-item">
                 <svg class="ico"><use href="#i-download" /></svg>
-                <span>Mise à jour 0.3.10 prête</span>
+                <span>Mise à jour 0.3.11 prête</span>
                 <span class="status-demo-btn">Installer</span>
                 <span class="status-demo-close">×</span>
               </span>
