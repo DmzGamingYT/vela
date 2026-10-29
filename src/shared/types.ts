@@ -104,6 +104,8 @@ export interface Note {
   updatedAt: number
   /** Nombre de notes dont les liens ont été réécrits par ce renommage. */
   linksUpdated?: number
+  /** Notes dont les liens n'ont pas pu être réécrits (fichier refusé). */
+  linksFailed?: number
 }
 
 export interface NoteMeta {

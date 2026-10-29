@@ -13,6 +13,7 @@ import {
   toJsonExport,
   toOpmlExport,
   tunnelMapTitle,
+  TUNNEL_MAP_LIMIT,
   type MapNode,
   type MapNodeKind,
   type NodeStatus,
@@ -203,6 +204,14 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       }
       if (event.type === 'done') {
         set({ running: false, runId: null, phase: '' })
+        // Une carte non enregistrée doit se dire : elle vit encore à l’écran,
+        // mais elle disparaîtra au prochain lancement.
+        if (!event.saved) {
+          notify(
+            `Tunnel terminé, carte non enregistrée : ${TUNNEL_MAP_LIMIT} cartes au maximum. Supprimez-en une, puis relancez.`,
+            'error'
+          )
+        }
         void get().refreshMaps()
         return
       }
@@ -284,9 +293,11 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   async duplicateMap(id) {
     const copy = await window.vela.tunnel.duplicate(id)
     await get().refreshMaps()
-    if (copy) {
-      set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null })
+    if (!copy) {
+      notify(`Copie impossible : ${TUNNEL_MAP_LIMIT} cartes au maximum. Supprimez-en une.`, 'error')
+      return
     }
+    set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null })
   },
 
   async renameMap(id, title) {
@@ -396,7 +407,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       nodes: active.nodes.map((node) => (node.id === id ? { ...node, status } : node))
     }
     set({ active: next })
-    await window.vela.tunnel.save(next)
+    await persist(next)
   },
 
   async renameNode(id, title) {
@@ -410,7 +421,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       nodes: active.nodes.map((node) => (node.id === id ? { ...node, title: clean } : node))
     }
     set({ active: next })
-    await window.vela.tunnel.save(next)
+    await persist(next)
   },
 
   async addCard(parentId, input) {
@@ -424,7 +435,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     })
     const created = next.nodes[next.nodes.length - 1] ?? null
     set({ active: next, selectedId: created?.id ?? null, viewMode: 'map' })
-    await window.vela.tunnel.save(next)
+    await persist(next)
   },
 
   async removeNode(id) {
@@ -442,7 +453,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       selectedId: get().selectedId === id ? null : get().selectedId,
       checkedIds: get().checkedIds.filter((entry) => entry !== id)
     })
-    await window.vela.tunnel.save(next)
+    await persist(next)
     notify('Carte supprimée.')
   },
 
@@ -451,7 +462,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     if (!active) return
     const next = buildLink(active, aId, bId)
     set({ active: next })
-    await window.vela.tunnel.save(next)
+    await persist(next)
   },
 
   async moveNode(id, x, y) {
@@ -465,7 +476,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       )
     }
     set({ active: next })
-    await window.vela.tunnel.save(next)
+    await persist(next)
   },
 
   async addReportToNotes(ids) {
@@ -591,6 +602,27 @@ export const useTunnel = create<TunnelState>((set, get) => ({
 
 function notify(text: string, tone: 'info' | 'error' = 'info'): void {
   useBrowser.getState().toast(text, tone)
+}
+
+/**
+ * Enregistre la carte active. Un refus (plafond atteint) reste visible à
+ * l'écran mais ne doit pas passer pour une réussite.
+ */
+async function persist(map: TunnelMap): Promise<boolean> {
+  try {
+    const result = await window.vela.tunnel.save(map)
+    if (result?.ok === false) {
+      notify(
+        `Carte non enregistrée : ${TUNNEL_MAP_LIMIT} cartes au maximum. Supprimez-en une pour garder celle-ci.`,
+        'error'
+      )
+      return false
+    }
+    return true
+  } catch {
+    notify('Carte non enregistrée : le disque n’a pas répondu.', 'error')
+    return false
+  }
 }
 
 export { unsubscribe }

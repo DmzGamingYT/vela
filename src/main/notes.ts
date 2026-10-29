@@ -80,6 +80,7 @@ export class NotesStore {
   readonly dir: string
   private readonly indexFile: string
   private entries: NoteIndexEntry[]
+  private indexReadable = true
 
   constructor(baseDir: string) {
     this.dir = join(baseDir, 'notes')
@@ -89,23 +90,54 @@ export class NotesStore {
   }
 
   private readIndex(): NoteIndexEntry[] {
-    if (!existsSync(this.indexFile)) return []
+    if (!existsSync(this.indexFile)) {
+      // Un index absent n’est normal que pour un dossier réellement neuf.
+      try {
+        const files = readdirSync(this.dir)
+        if (files.some((file) => file.endsWith('.md')) ||
+            (existsSync(join(this.dir, 'audio')) && readdirSync(join(this.dir, 'audio')).length > 0)) {
+          this.indexReadable = false
+        }
+      } catch {
+        this.indexReadable = false
+      }
+      return []
+    }
     try {
       const raw = JSON.parse(readFileSync(this.indexFile, 'utf8'))
-      if (!Array.isArray(raw)) return []
-      return raw
-        .filter(
-          (entry): entry is NoteIndexEntry =>
-            entry && typeof entry.id === 'string' && typeof entry.file === 'string' && typeof entry.title === 'string'
-        )
-        .map((entry) => ({
+      if (!Array.isArray(raw) || raw.some((entry) =>
+        !entry || typeof entry.id !== 'string' || typeof entry.file !== 'string' || typeof entry.title !== 'string'
+      )) {
+        this.indexReadable = false
+        return []
+      }
+      return (raw as NoteIndexEntry[]).map((entry) => ({
           ...entry,
           tags: normalizeTags((entry as { tags?: unknown }).tags),
           pinned: (entry as { pinned?: unknown }).pinned === true
         }))
     } catch {
+      this.indexReadable = false
       return []
     }
+  }
+
+  /** L’index illisible ne doit jamais devenir une liste vide sauvegardée. */
+  get canReadIndex(): boolean {
+    if (!this.indexReadable) return false
+    // Une note inaccessible peut contenir une référence à un enregistrement.
+    return this.entries.every((entry) => {
+      try {
+        readFileSync(join(this.dir, entry.file), 'utf8')
+        return true
+      } catch {
+        return false
+      }
+    })
+  }
+
+  private requireReadableIndex(): void {
+    if (!this.canReadIndex) throw new Error('Index ou fichier de note illisible : les fichiers ont été conservés. Restaurez-les avant de modifier les notes.')
   }
 
   private writeIndex(): void {
@@ -172,6 +204,7 @@ export class NotesStore {
     tags?: unknown
     pinned?: unknown
   }): Note {
+    this.requireReadableIndex()
     const existing = input.id ? this.entries.find((entry) => entry.id === input.id) : undefined
     const id = existing?.id ?? newId()
     const previousTitle = existing?.title
@@ -179,38 +212,17 @@ export class NotesStore {
     const filename = `${slugify(title)}-${id.slice(0, 8)}.md`
 
     // Un renommage met à jour les liens qui citaient l'ancien titre, dans
-    // toutes les notes. Une seule passe par corps : un cycle A → B → A ne
-    // peut pas boucler, et rien n'est réécrit quand le titre n'a pas changé.
+    // toutes les notes, mais seulement après que la note et l'index ont été
+    // écrits : une interruption laisse alors la note renommée et des liens
+    // anciens, jamais l'inverse (des liens neufs vers un titre inexistant).
     let body = input.body
-    let linksUpdated = 0
     if (existing && previousTitle && previousTitle !== title) {
-      for (const entry of this.entries) {
-        if (entry.id === id) {
-          body = rewriteWikiTargets(body, previousTitle, title).body
-          continue
-        }
-        const source = this.bodyOf(entry)
-        const rewritten = rewriteWikiTargets(source, previousTitle, title)
-        if (rewritten.count === 0) continue
-        try {
-          writeFileSync(join(this.dir, entry.file), rewritten.body, 'utf8')
-          linksUpdated += 1
-        } catch {
-          /* fichier verrouillé : la note garde son ancien texte */
-        }
-      }
+      body = rewriteWikiTargets(body, previousTitle, title).body
     }
 
-    if (existing && existing.file !== filename) {
-      const oldFile = join(this.dir, existing.file)
-      if (existsSync(oldFile)) {
-        try {
-          renameSync(oldFile, join(this.dir, filename))
-        } catch {
-          // garde l'ancien fichier si le renommage échoue
-        }
-      }
-    }
+    const oldFile = existing ? join(this.dir, existing.file) : ''
+    const moved = Boolean(existing && existing.file !== filename && existsSync(oldFile))
+    if (moved) renameSync(oldFile, join(this.dir, filename))
     writeFileSync(join(this.dir, filename), body, 'utf8')
 
     const tags = input.tags === undefined ? existing?.tags ?? [] : normalizeTags(input.tags)
@@ -225,8 +237,42 @@ export class NotesStore {
       pinned,
       updatedAt: Date.now()
     }
+    const previousEntries = this.entries
     this.entries = existing ? this.entries.map((entry) => (entry.id === id ? next : entry)) : [next, ...this.entries]
-    this.writeIndex()
+    try {
+      this.writeIndex()
+    } catch (error) {
+      // Sans index valide, le fichier renommé serait introuvable : on remet
+      // tout en place avant de remonter l'erreur.
+      this.entries = previousEntries
+      if (moved) {
+        try {
+          renameSync(join(this.dir, filename), oldFile)
+        } catch {
+          // la note reste sous son nouveau nom, l'index garde l'ancien : signalé plus haut
+        }
+      }
+      throw error
+    }
+
+    let linksUpdated = 0
+    let linksFailed = 0
+    if (existing && previousTitle && previousTitle !== title) {
+      for (const entry of this.entries) {
+        if (entry.id === id) continue
+        const source = this.bodyOf(entry)
+        const rewritten = rewriteWikiTargets(source, previousTitle, title)
+        if (rewritten.count === 0) continue
+        try {
+          writeFileSync(join(this.dir, entry.file), rewritten.body, 'utf8')
+          linksUpdated += 1
+        } catch {
+          // La note garde son ancien texte : on le compte pour le dire.
+          linksFailed += 1
+        }
+      }
+    }
+
     return {
       id,
       title,
@@ -236,7 +282,8 @@ export class NotesStore {
       tags: next.tags,
       pinned: next.pinned,
       updatedAt: next.updatedAt,
-      linksUpdated
+      linksUpdated,
+      linksFailed
     }
   }
 
@@ -276,6 +323,7 @@ export class NotesStore {
   }
 
   remove(id: string): void {
+    this.requireReadableIndex()
     const entry = this.entries.find((item) => item.id === id)
     if (!entry) return
     this.entries = this.entries.filter((item) => item.id !== id)
@@ -286,6 +334,7 @@ export class NotesStore {
 
   /** Nettoie les fichiers orphelins (fichier supprimé à la main, index obsolète). */
   prune(): void {
+    if (!this.canReadIndex) return
     const files = new Set(readdirSync(this.dir))
     this.entries = this.entries.filter((entry) => files.has(entry.file))
   }

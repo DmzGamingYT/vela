@@ -397,7 +397,8 @@ export interface TunnelEvents {
 }
 
 export interface TunnelHost {
-  saveMap(map: TunnelMap): void
+  /** false si le stockage local refuse une carte de plus (plafond atteint). */
+  saveMap(map: TunnelMap): boolean
   getMap(id: string): TunnelMap | null
 }
 
@@ -707,7 +708,7 @@ export class TunnelService {
       updatedAt: Date.now(),
       title: existing?.title
     }
-    this.host.saveMap(map)
+    const saved = this.host.saveMap(map)
     this.runs.delete(runId)
     emit({
       runId,
@@ -715,7 +716,8 @@ export class TunnelService {
       mapId,
       summary: summarizeMap(map),
       sources: siteCount,
-      nodes: totalNodes
+      nodes: totalNodes,
+      saved
     })
   }
 }

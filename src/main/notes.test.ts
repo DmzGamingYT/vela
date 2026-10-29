@@ -1,8 +1,9 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HighlightsStore, NotesStore, normalizeTags } from './notes'
+import { NoteAudioStore } from './noteAudio'
 
 const dirs: string[] = []
 
@@ -90,6 +91,41 @@ describe('NotesStore', () => {
   })
 })
 
+describe('protection des notes et enregistrements', () => {
+  it('conserve les enregistrements et bloque les écritures si l’index est corrompu', () => {
+    const dir = tempDir()
+    const audio = new NoteAudioStore(dir)
+    const saved = audio.save('space-1', `data:audio/webm;base64,${Buffer.from('audio').toString('base64')}`)
+    const index = join(dir, 'notes', 'index.json')
+    writeFileSync(index, '{ invalide', 'utf8')
+    const notes = new NotesStore(dir)
+    notes.prune()
+    if (notes.canReadIndex) audio.prune(notes.audioNames())
+    expect(notes.canReadIndex).toBe(false)
+    expect(saved && audio.read(saved.name)).toBeTruthy()
+    expect(() => notes.save({ title: 'Nouvelle', body: '', spaceId: 'space-1' })).toThrow(/illisible/)
+    expect(readFileSync(index, 'utf8')).toBe('{ invalide')
+  })
+
+  it('ne considère pas un index absent comme neuf si des notes existent', () => {
+    const dir = tempDir()
+    mkdirSync(join(dir, 'notes'), { recursive: true })
+    writeFileSync(join(dir, 'notes', 'ancienne.md'), 'Contenu conservé', 'utf8')
+    const notes = new NotesStore(dir)
+    expect(notes.canReadIndex).toBe(false)
+    expect(() => notes.save({ title: 'Nouvelle', body: '', spaceId: 'space' })).toThrow(/illisible/)
+  })
+
+  it('ne purge pas les références si le corps d’une note est absent', () => {
+    const dir = tempDir()
+    const notes = new NotesStore(dir)
+    const saved = notes.save({ title: 'Note', body: 'texte', spaceId: 'space' })
+    rmSync(join(dir, 'notes', `note-${saved.id.slice(0, 8)}.md`))
+    notes.prune()
+    expect(notes.canReadIndex).toBe(false)
+  })
+})
+
 describe('liens entre notes dans le stockage', () => {
   function linked(): { store: NotesStore; a: string; b: string; c: string } {
     const store = new NotesStore(tempDir())
@@ -131,6 +167,56 @@ describe('liens entre notes dans le stockage', () => {
     const before = store.get(c)?.body
     store.rename(store.list().find((note) => note.title === 'Méthode')?.id ?? '', 'Autre titre')
     expect(store.get(c)?.body).toBe(before)
+  })
+
+  /** Chemin du .md d'une note, lu dans l'index plutôt que deviné. */
+  function fileOf(store: NotesStore, title: string): string {
+    const index = JSON.parse(readFileSync(join(store.dir, 'index.json'), 'utf8')) as {
+      title: string
+      file: string
+    }[]
+    return join(store.dir, index.find((entry) => entry.title === title)?.file ?? '')
+  }
+
+  it('écrit la note et l’index avant de toucher aux notes liées', () => {
+    const { store, a, b } = linked()
+    const renamed = store.rename(a, 'Projet de mémoire')
+    expect(renamed?.updated).toBe(1)
+    expect(renamed?.note.linksFailed ?? 0).toBe(0)
+    // Le fichier renommé et l'index sont à jour, et le lien a suivi.
+    expect(existsSync(fileOf(store, 'Projet de mémoire'))).toBe(true)
+    expect(store.get(b)?.body).toContain('[[Projet de mémoire|le projet]]')
+  })
+
+  it.skipIf(process.getuid?.() === 0)('garde le renommage quand une note liée refuse l’écriture', () => {
+    const { store, a, b } = linked()
+    const linkedFile = fileOf(store, 'Méthode')
+    const before = readFileSync(linkedFile, 'utf8')
+    chmodSync(linkedFile, 0o444)
+    try {
+      const renamed = store.rename(a, 'Projet de mémoire')
+      expect(renamed?.note.title).toBe('Projet de mémoire')
+      expect(renamed?.note.linksUpdated ?? 0).toBe(0)
+      expect(renamed?.note.linksFailed).toBe(1)
+      expect(store.get(b)?.body).toBe(before)
+      expect(store.list().some((note) => note.title === 'Projet de mémoire')).toBe(true)
+    } finally {
+      chmodSync(linkedFile, 0o644)
+    }
+  })
+
+  it.skipIf(process.getuid?.() === 0)('remet le fichier en place si l’index ne peut pas être écrit', () => {
+    const { store, a } = linked()
+    const before = fileOf(store, 'Projet TFE')
+    chmodSync(store.dir, 0o555)
+    try {
+      expect(() => store.rename(a, 'Projet de mémoire')).toThrow()
+    } finally {
+      chmodSync(store.dir, 0o755)
+    }
+    expect(existsSync(before)).toBe(true)
+    expect(store.get(a)?.title).toBe('Projet TFE')
+    expect(store.get(a)?.body).toContain('[[Méthode]]')
   })
 
   it('liste les enregistrements vocaux cités par les notes', () => {

@@ -159,7 +159,16 @@ export type TunnelEvent =
     }
   | { runId: string; type: 'node'; node: MapNode }
   | { runId: string; type: 'phase'; message: string }
-  | { runId: string; type: 'done'; mapId: string; summary: TunnelMapSummary; sources: number; nodes: number }
+  | {
+      runId: string
+      type: 'done'
+      mapId: string
+      summary: TunnelMapSummary
+      sources: number
+      nodes: number
+      /** false quand le plafond de cartes empêche l'enregistrement. */
+      saved: boolean
+    }
   | { runId: string; type: 'error'; message: string }
 
 export type UpdateState =
@@ -372,7 +381,7 @@ export interface VelaApi {
     onEvent(callback: (event: TunnelEvent) => void): () => void
     maps(): Promise<TunnelMapSummary[]>
     load(id: string): Promise<TunnelMap | null>
-    save(map: TunnelMap): Promise<void>
+    save(map: TunnelMap): Promise<{ ok: boolean }>
     rename(input: { id: string; title: string }): Promise<void>
     remove(id: string): Promise<void>
     duplicate(id: string): Promise<TunnelMap | null>

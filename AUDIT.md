@@ -26,7 +26,7 @@ Captures de cette passe : [accueil, deux onglets](screenshots/audit-phase1-accue
 Deux notes, parce que l'état livré et l'arbre de travail diffèrent :
 
 - **Commit de base (`efc729f`) : risque élevé.** Trois scénarios critiques existaient dans le code : purge d'enregistrements après un index de notes illisible, remplacement d'un `vela.json` corrompu, et exécution d'actions d'agent sans validation humaine.
-- **Arbre de travail après le lot 1 : risque modéré.** Les trois scénarios critiques, l'IPC sans contrôle d'émetteur, la CSP permissive, l'intégrité du DMG et les deux descriptions de flux inexactes sont corrigés et couverts par des tests. Restent, sans perte de données ni contournement connu : la fusion de `secret.bin` (A3), l'ordre d'écriture du renommage de note (A4), le plafond silencieux des cartes du tunnel (A5), et les défauts de Tunnel et d'interface décrits plus bas. La signature et la notarisation restent impossibles sans certificat, donc le risque d'installation non vérifiée subsiste à la source, désormais détectable par empreinte.
+- **Arbre de travail après les lots 1 et 2 : risque modéré.** Les trois scénarios critiques de perte de données, la fusion de `secret.bin`, l'ordre du renommage de note et le plafond silencieux des cartes sont corrigés et couverts par des tests, comme l'IPC, la CSP, l'intégrité du DMG et les deux descriptions de flux. Restent, sans perte de données ni contournement connu : la fusion de `secret.bin` (A3), l'ordre d'écriture du renommage de note (A4), le plafond silencieux des cartes du tunnel (A5), et les défauts de Tunnel et d'interface décrits plus bas. La signature et la notarisation restent impossibles sans certificat, donc le risque d'installation non vérifiée subsiste à la source, désormais détectable par empreinte.
 
 Aucune note chiffrée : les scénarios sont qualifiés par leur impact, pas par une probabilité mesurée.
 
@@ -44,11 +44,11 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 
 | ID | Sévérité | Zone | Fichier:ligne ou capture | Description et preuve | Reproduction | Correctif proposé | Statut |
 |---|---|---|---|---|---|---|---|
-| A1 | critique | A | `src/main/notes.ts:93-118`, `src/main/browser.ts:187-194` | Un index de notes illisible était lu comme une liste vide ; la purge des audios non référencés pouvait supprimer des enregistrements valides. | Index `notes/index.json` invalide + un `.webm` dans `notes/audio`, lancer l'app : le constructeur lève désormais une erreur avant la purge. Tests unitaires ciblés verts. | Conserver le fichier, expliquer la restauration, proposer une récupération guidée. | corrigé — lot 1 |
-| A2 | critique | A | `src/main/store.ts:352-362`, `src/main/store.ts:491-510` | Un `vela.json` corrompu était remplacé par l'état par défaut à la sauvegarde suivante. | Fichier JSON invalide : la lecture lève, aucune écriture n'est programmée ; test de migration adapté. | Arrêter proprement, conserver l'original, proposer une sauvegarde horodatée. | corrigé — lot 1 |
-| A3 | majeur | A | `src/main/store.ts:744-766` | La migration de `secret.bin` supprime l'ancien fichier même si le chiffrement est indisponible, si le déchiffrement échoue ou si l'écriture n'est pas confirmée. | Lecture : `unlinkSync` est hors des conditions de succès ; aucun test d'échec de `safeStorage`. | Ne supprimer qu'après relecture du nouveau fichier ; tester chaque échec. | relevé — phase 2 |
-| A4 | majeur | A | `src/main/notes.ts:216-235` | Renommer une note réécrit les notes liées **avant** d'enregistrer la note et l'index ; les erreurs d'écriture sont ignorées. Une interruption laisse des liens partiellement mis à jour. | Lecture du flux ; test d'erreur disque absent. | Écritures préparées puis validées, ou journal de reprise ; signaler les échecs. | relevé — phase 2 |
-| A5 | majeur | A | `src/main/store.ts:602-614` | Enregistrer une 21e carte du tunnel évince silencieusement la plus ancienne (`[clean, ...maps].slice(0, 20)`). | Enregistrer 21 cartes et compter les identifiants persistés ; aucun avertissement. | Refuser explicitement ou archiver avant suppression. | relevé — phase 2 |
+| A1 | critique | A | `src/main/notes.ts:93-118`, `src/main/browser.ts:187-194` | Un index de notes illisible était lu comme une liste vide ; la purge des audios non référencés pouvait supprimer des enregistrements valides. | Index `notes/index.json` invalide + un `.webm` dans `notes/audio`, lancer l'app : le constructeur lève désormais une erreur avant la purge. Tests unitaires ciblés verts. | Conserver le fichier, expliquer la restauration, proposer une récupération guidée. | corrigé — lot 2 |
+| A2 | critique | A | `src/main/store.ts:352-362`, `src/main/store.ts:491-510` | Un `vela.json` corrompu était remplacé par l'état par défaut à la sauvegarde suivante. | Fichier JSON invalide : la lecture lève, aucune écriture n'est programmée ; test de migration adapté. | Arrêter proprement, conserver l'original, proposer une sauvegarde horodatée. | corrigé — lot 2 |
+| A3 | majeur | A | `src/main/store.ts:744-766` | La migration de `secret.bin` supprimait l'ancien fichier même si le chiffrement était indisponible, si le déchiffrement échouait ou si l'écriture n'était pas confirmée. | Corrigé : la clé n'est importée que si le fournisseur actif n'en a pas déjà une ; le fichier n'est supprimé qu'après relecture de `secrets.json` et comparaison. Chiffrement indisponible, clé illisible, écriture ratée : `secret.bin` reste en place. 5 tests dans `src/main/store.data.test.ts`. | Reste : une clé héritée non attribuable reste sur le disque sans interface pour la récupérer (aucune donnée perdue). | corrigé — lot 2 |
+| A4 | majeur | A | `src/main/notes.ts:216-235` | Renommer une note réécrivait les notes liées **avant** d'enregistrer la note et l'index ; les erreurs d'écriture étaient ignorées. Une interruption laissait des liens pointant vers un titre inexistant. | Corrigé : fichier renommé puis écrit, index écrit, et seulement ensuite les notes liées ; si l'index ne peut pas être écrit, le fichier revient à son ancien nom. Les échecs de liens sont comptés (`linksFailed`) et annoncés dans l'éditeur. 3 tests dans `src/main/notes.test.ts`. | Vérifié dans l'app réelle : renommage, liens réécrits, graphe à jour. | corrigé — lot 2 |
+| A5 | majeur | A | `src/main/store.ts:602-614` | Enregistrer une 21e carte du tunnel évinçait silencieusement la plus ancienne (`[clean, ...maps].slice(0, 20)`). | Corrigé : `saveTunnelMap` rend un booléen ; au-delà de `TUNNEL_MAP_LIMIT` (20), une nouvelle carte est refusée, la mise à jour d'une carte existante reste permise, et l'interface l'annonce (toast, événement `done.saved`, copie refusée). 3 tests dans `src/main/store.data.test.ts`. | Mesuré sur l'app réelle : avant, la 21e évince la première ; après, elle est refusée et la première reste. | corrigé — lot 2 |
 | A6 | mineur | A | `src/main/tunnel.ts:410-415`, `src/main/tunnel.ts:500-510` | Les angles de premier niveau restent nommés d'après le fournisseur : « Sites web », « Panorama », « Travaux », « Actualité », « Débats ». Ce sont des types de source, pas des angles thématiques. | Lancer un tunnel : titres d'angles visibles dans la carte. | Dériver des angles du sujet, et n'utiliser les fournisseurs que comme provenance. | relevé — phase 2 |
 | A7 | mineur | A | `src/shared/tunnel.ts:158-178`, `src/main/tunnel.ts:504` | La pertinence mesure une couverture lexicale, et un mot présent dans le titre suffit à 100 %. Les nœuds d'angle sont créés avec `relevance: 100` en dur. | `scoreRelevance('youtube', {title:'YouTube'})` vaut 100 ; lecture de la création d'angle. | Pondérer titre, description et domaine, plafonner, afficher la raison ; ne pas noter un angle comme une source. | relevé — phase 2 |
 | A8 | mineur | A | `src/main/tunnel.ts:153-160`, `src/main/tunnel.ts:537-547`, `TunnelView.tsx:466` | Les résultats arXiv sont marqués « vérifiés » depuis l'API sans récupération de la page individuelle, alors que l'interface affirme « chaque page est réellement récupérée ». | Comparer le chemin arXiv au chemin `snapshotPage` ; aucun test ne distingue les deux. | Distinguer « source d'API » et « page récupérée », ou récupérer la page. | relevé — phase 2 |
@@ -89,7 +89,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 
 **40 entrées** : 3 critiques, 10 majeures, 21 mineures, 6 de finition.
 Par zone : A 10, B 7, C 4, D 4, E 4, F 3, G 2, H 2, I 2, J 2.
-**Après le lot 1 : 9 corrigées** (A1, A2, D1, D2, D3, D4, E1, E2, E3) **et 1 mineure corrigée** (E4), soit 10. Cinq restent « à vérifier » (A10, F2, F3, G2, J1). Le décompte n'est pas le nombre de défauts du produit : l'audit reste partiel, voir la section 9.
+**Après les lots 1 et 2 : 14 corrigées** (A1, A2, A3, A4, A5, D1, D2, D3, D4, E1, E2, E3) **et 1 mineure** (E4), soit 15. Cinq restent « à vérifier » (A10, F2, F3, G2, J1). Le décompte n'est pas le nombre de défauts du produit : l'audit reste partiel, voir la section 9.
 
 ## 5. Synthèse par zone
 
@@ -205,5 +205,35 @@ Captures : [avant, endpoint distant](screenshots/lot1-avant-endpoint-distant.png
 ### Restes ouverts de ce lot
 
 - La mini-fenêtre charge encore `preload/index.js` ; elle n'atteint plus que `mini:*`, mais un pont dédié réduirait la surface exposée à zéro.
-- `A3` (fusion de `secret.bin`) et `A4` (renommage de note) touchent des données : traités au lot 2.
 - La signature Developer ID et la notarisation ne peuvent pas être vérifiées sans certificat ; l'empreinte protège l'intégrité du téléchargement, pas l'identité de l'éditeur.
+
+## 12. Phase 2 — lot 2 : pertes de données (fait)
+
+### Correctifs
+
+| Constat | Correctif | Fichiers |
+|---|---|---|
+| A1 | Un index de notes illisible n'est plus lu comme une liste vide : l'app refuse de démarrer plutôt que de purger des enregistrements, et toute écriture de note est bloquée tant que les fichiers ne sont pas restaurés. | `src/main/notes.ts`, `src/main/browser.ts` |
+| A2 | Un `vela.json` illisible lève au démarrage : le fichier d'origine reste intact et aucune sauvegarde ne l'écrase. | `src/main/store.ts` |
+| A3 | La clé héritée n'est supprimée qu'après relecture de `secrets.json` ; chiffrement indisponible, clé illisible ou écriture ratée laissent `secret.bin` en place. Une clé existante n'est jamais écrasée par une clé héritée non attribuable. | `src/main/store.ts` |
+| A4 | Renommage : le fichier et l'index sont écrits avant les notes liées ; un index non écrit remet le fichier en place, et les liens non réécrits sont comptés puis annoncés. | `src/main/notes.ts`, `src/renderer/src/components/NotesDrawer.tsx`, `src/shared/types.ts` |
+| A5 | La vingt-et-unième carte est refusée au lieu d'évincer la plus ancienne : booléen remonté par le stockage, `done.saved` pour un tunnel, refus de la copie, et message dans l'interface. | `src/main/store.ts`, `src/main/tunnel.ts`, `src/shared/tunnel.ts`, `src/shared/api.ts`, `src/renderer/src/store/tunnel.ts`, `src/main/browser.ts` |
+
+### Vérifications
+
+| Vérification | Commande ou moyen | Résultat |
+|---|---|---|
+| Types | `npm run typecheck` (arbre et état indexé isolé) | code 0 dans les deux |
+| Tests | `npm test` | **35 fichiers, 368 tests réussis** (357 avant ce lot) ; état indexé isolé : 34 fichiers, 352 tests |
+| Plafond des cartes, avant | app réelle construite sur `4eab77a` | 21e carte acceptée ; plus ancienne évincée (`oldest: carte-1`, `hasOverflow: true`) |
+| Plafond des cartes, après | app réelle reconstruite | 21e refusée (`{ ok: false }`) ; 20 cartes, plus ancienne intacte (`oldest: carte-0`) |
+| Renommage de note, app réelle | CDP : deux notes liées, renommage | `updated: 1`, `linksFailed: 0`, lien réécrit, graphe entrant cohérent |
+| Journal renderer | harnais CDP | aucune exception |
+
+Captures (clair et sombre) : [avant](screenshots/lot2-avant-cartes-clair.png) · [après](screenshots/lot2-apres-cartes-clair.png) · [avant, sombre](screenshots/lot2-avant-cartes-sombre.png) · [après, sombre](screenshots/lot2-apres-cartes-sombre.png). La première ligne de la liste dit tout : avant, « Sujet 20 » a pris la place de « Sujet 0 » ; après, « Sujet 20 » n'existe pas et « Sujet 19 » reste en tête.
+
+### Restes ouverts de ce lot
+
+- Une clé héritée impossible à attribuer (fournisseur actif déjà pourvu) reste sur le disque, sans interface pour la récupérer : rien n'est perdu, mais rien ne l'explique non plus.
+- Le renommage n'a pas de reprise après interruption entre l'écriture de la note et celle des notes liées : l'état reste lisible, les liens peuvent être anciens.
+- Les échecs d'écriture ne sont testés qu'avec un fichier en lecture seule, donc ignorés si les tests tournent en root (garde `skipIf`).

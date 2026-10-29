@@ -103,13 +103,12 @@ describe('migration des favoris au démarrage', () => {
     expect(readFileSync(join(dir, 'migration.log'), 'utf8')).toMatch(/Ordre des favoris normalisé/)
   })
 
-  it('démarre quand même sur un fichier corrompu, sans sauvegarde inutile', () => {
+  it('refuse de démarrer sur un fichier corrompu sans écraser les données', () => {
     const dir = tempDir()
-    writeFileSync(join(dir, 'vela.json'), '{ pas du json', 'utf8')
-    const store = new Store(dir)
-    store.flush()
-    expect(store.get().spaces.length).toBeGreaterThan(0)
-    expect(store.get().bookmarks).toEqual([])
+    const original = '{ pas du json'
+    writeFileSync(join(dir, 'vela.json'), original, 'utf8')
+    expect(() => new Store(dir)).toThrow(/données de Vela sont illisibles/)
+    expect(readFileSync(join(dir, 'vela.json'), 'utf8')).toBe(original)
     expect(backups(dir)).toHaveLength(0)
   })
 

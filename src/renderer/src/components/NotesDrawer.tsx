@@ -137,6 +137,16 @@ export default function NotesDrawer() {
         if (draft.id && loadedTitle.current && loadedTitle.current !== note.title && note.linksUpdated) {
           setRenameUndo({ id: note.id, from: loadedTitle.current, updated: note.linksUpdated })
         }
+        // Un fichier refusé garde son ancien lien : le dire vaut mieux que le
+        // laisser croire que tout a suivi.
+        if (note.linksFailed) {
+          toast(
+            note.linksFailed === 1
+              ? 'Une note liée n’a pas pu être mise à jour.'
+              : `${note.linksFailed} notes liées n’ont pas pu être mises à jour.`,
+            'error'
+          )
+        }
         loadedTitle.current = note.title
         setDraft((current) => (current && !current.id ? { ...current, id: note.id } : current))
         void window.vela.notes.graph(note.id).then(setGraph).catch(() => undefined)

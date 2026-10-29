@@ -32,7 +32,13 @@ import type {
   TabState
 } from '@shared/types'
 import { HOME_URL } from '@shared/types'
-import { sanitizeMap, summarizeMap, type TunnelMap, type TunnelMapSummary } from '@shared/tunnel'
+import {
+  sanitizeMap,
+  summarizeMap,
+  TUNNEL_MAP_LIMIT,
+  type TunnelMap,
+  type TunnelMapSummary
+} from '@shared/tunnel'
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
 import {
   avatarFile,
@@ -300,7 +306,7 @@ export function normalizeState(raw: unknown): PersistedState {
       : [])
       .map((entry) => sanitizeMap(entry))
       .filter((entry): entry is TunnelMap => Boolean(entry))
-      .slice(0, 20)
+      .slice(0, TUNNEL_MAP_LIMIT)
 
     return {
       version: 1,
@@ -350,8 +356,10 @@ export class Store {
     if (existsSync(this.file)) {
       try {
         raw = JSON.parse(readFileSync(this.file, 'utf8'))
-      } catch {
-        raw = null
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Format de données invalide')
+      } catch (error) {
+        this.journal('Données illisibles : le fichier original est conservé et les écritures sont suspendues.', error)
+        throw new Error('Les données de Vela sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.')
       }
     }
     const migratedBookmarks = this.migrateBookmarks(raw)
@@ -597,15 +605,27 @@ export class Store {
     return this.state.tunnelMaps.find((map) => map.id === id) ?? null
   }
 
-  saveTunnelMap(map: TunnelMap): void {
+  /**
+   * Enregistre une carte, ou la met à jour. Au-delà de vingt cartes, une
+   * nouvelle est refusée : évincer la plus ancienne sans le dire effaçait un
+   * travail que l’utilisateur n’avait pas supprimé.
+   */
+  saveTunnelMap(map: TunnelMap): boolean {
     const clean = sanitizeMap(map)
-    if (!clean) return
+    if (!clean) return false
+    let stored = false
     this.update((state) => {
       const existing = state.tunnelMaps.findIndex((entry) => entry.id === clean.id)
-      if (existing >= 0) state.tunnelMaps[existing] = clean
-      else state.tunnelMaps = [clean, ...state.tunnelMaps].slice(0, 20)
-      state.tunnelMaps.sort((a, b) => b.updatedAt - a.updatedAt)
+      if (existing >= 0) {
+        state.tunnelMaps[existing] = clean
+        stored = true
+      } else if (state.tunnelMaps.length < TUNNEL_MAP_LIMIT) {
+        state.tunnelMaps = [clean, ...state.tunnelMaps]
+        stored = true
+      }
+      if (stored) state.tunnelMaps.sort((a, b) => b.updatedAt - a.updatedAt)
     })
+    return stored
   }
 
   removeTunnelMap(id: string): void {
@@ -647,8 +667,7 @@ export class Store {
           : undefined
       }))
     }
-    this.saveTunnelMap(copy)
-    return copy
+    return this.saveTunnelMap(copy) ? copy : null
   }
 
   /** Bascule le bloqueur pour un site ; renvoie true si le site est exempté. */
@@ -740,22 +759,47 @@ export class Store {
     writeFileSync(this.secretsFile, safeStorage.encryptString(JSON.stringify(this.secrets)))
   }
 
-  /** L’ancienne clé unique (secret.bin) rejoint le fournisseur actif, puis disparaît. */
+  /**
+   * L’ancienne clé unique (secret.bin) rejoint le fournisseur actif, puis
+   * disparaît — mais seulement une fois la nouvelle copie relue sur le disque.
+   * Sans chiffrement disponible, clé illisible ou écriture ratée, le fichier
+   * reste en place : une clé perdue ne se remplace pas.
+   */
   private migrateLegacySecret(): void {
     if (!existsSync(this.legacySecretFile)) return
-    if (Object.keys(this.secrets).length === 0) {
-      try {
-        if (safeStorage.isEncryptionAvailable()) {
-          const value = safeStorage.decryptString(readFileSync(this.legacySecretFile))
-          if (value) {
-            this.secrets[this.state.settings.agent.provider] = value
-            this.writeSecrets()
-          }
-        }
-      } catch {
-        // clé illisible : on repart sans, sans bloquer le démarrage
-      }
+    if (!safeStorage.isEncryptionAvailable()) return
+
+    const provider = this.state.settings.agent.provider
+    if (this.secrets[provider]) {
+      // Le fournisseur actif a déjà sa clé : l’ancienne ne peut pas être
+      // attribuée avec certitude. On ne devine pas, on ne supprime pas.
+      return
     }
+
+    let value = ''
+    try {
+      value = safeStorage.decryptString(readFileSync(this.legacySecretFile))
+    } catch {
+      return
+    }
+    if (!value) return
+
+    this.secrets[provider] = value
+    try {
+      this.writeSecrets()
+    } catch (error) {
+      delete this.secrets[provider]
+      this.journal('Clé héritée non enregistrée : le fichier secret.bin est conservé.', error)
+      return
+    }
+
+    // Relecture : c’est le fichier qui fait foi, pas la mémoire du processus.
+    if (this.readSecrets()[provider] !== value) {
+      delete this.secrets[provider]
+      this.journal('Clé héritée non relue après écriture : le fichier secret.bin est conservé.')
+      return
+    }
+
     try {
       unlinkSync(this.legacySecretFile)
     } catch {

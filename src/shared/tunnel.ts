@@ -84,6 +84,9 @@ export const DEFAULT_FILTERS: TunnelFilters = {
 }
 
 /** Étiquettes proposées dans l’entonnoir, alignées sur les affinages du tunnel. */
+/** Nombre de cartes gardées localement. Au-delà, l'enregistrement est refusé. */
+export const TUNNEL_MAP_LIMIT = 20
+
 export const FILTER_TAGS = ['histoire', 'technique', 'critique', 'exemples', 'guide'] as const
 
 export const SOURCE_TYPES: { id: SourceType; label: string }[] = [

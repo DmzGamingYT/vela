@@ -199,7 +199,10 @@ export class Browser {
     this.noteAudio = new NoteAudioStore(dir)
     this.highlights = new HighlightsStore(dir)
     this.notes.prune()
-    // Un fichier audio n'est gardé que si une note le cite encore.
+    // Un index illisible ne permet pas de déterminer les références audio.
+    if (!this.notes.canReadIndex) {
+      throw new Error('Index ou fichier de note illisible : notes et enregistrements conservés. Restaurez les fichiers avant de relancer Vela.')
+    }
     this.noteAudio.prune(this.notes.audioNames())
     this.noteCache = this.notes.list()
     this.tabs = new TabManager(() => this.win, this.host)
@@ -1485,9 +1488,10 @@ export class Browser {
     handle('tunnel:maps', () => this.store.listTunnelMaps())
     handle('tunnel:save', (payload) => {
       const map = payload as import('@shared/tunnel').TunnelMap | undefined
-      if (!map || typeof map !== 'object') return
-      this.store.saveTunnelMap(map)
-      this.broadcast()
+      if (!map || typeof map !== 'object') return { ok: false }
+      const ok = this.store.saveTunnelMap(map)
+      if (ok) this.broadcast()
+      return { ok }
     })
     handle('tunnel:load', (payload) => this.store.getTunnelMap(asId(payload)))
     handle('tunnel:rename', (payload) => {
@@ -1675,7 +1679,7 @@ export class Browser {
     handle('notes:audio-get', (payload) => this.noteAudio.read(payload))
     handle('notes:audio-remove', (payload) => {
       const removed = this.noteAudio.remove(payload)
-      if (removed) this.noteAudio.prune(this.notes.audioNames())
+      if (removed && this.notes.canReadIndex) this.noteAudio.prune(this.notes.audioNames())
       return removed
     })
     handle('notes:transcribe', async (payload) => {
@@ -1762,7 +1766,7 @@ export class Browser {
     })
     handle('notes:remove', (payload) => {
       this.notes.remove(asId(payload))
-      this.noteAudio.prune(this.notes.audioNames())
+      if (this.notes.canReadIndex) this.noteAudio.prune(this.notes.audioNames())
       this.noteCache = this.notes.list()
       this.broadcast()
     })
