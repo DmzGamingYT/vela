@@ -16,3 +16,17 @@ build/icon.iconset/
 site/trailer/take/
 site/trailer/probe/
 site/trailer/.record-data/
+# Captures : seules les preuves avant/après citées par AUDIT.md sont versionnées,
+# le reste est une capture de travail qui n'a de sens que sur la machine qui l'a prise.
+screenshots/*
+!screenshots/lot[123]-*.png
+!screenshots/audit-phase1-*.png
+!screenshots/bento-*.png
+# Explorations d'icônes : le maître reste build/icon-1024.png, rendu de icon-glass.svg.
+build/proposals/
+build/icon-square-*
+build/icon-template-*
+build/icons-apercu.*
+build/mark-preview.png
+# Compétences fournies par le harnais de développement, pas par ce projet.
+skills/
