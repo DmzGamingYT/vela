@@ -54,7 +54,9 @@ const row = (flow) => {
   // elle est déjà écrite en clair au-dessus.
   const extra = flow.hosts.filter((host) => !flow.target.toLowerCase().includes(host.toLowerCase()))
   const hosts = extra.length ? `<span class="hosts">${extra.map(esc).join(' · ')}</span>` : ''
-  const note = flow.local ? '<span class="off">Sur votre machine</span>' : ''
+  // Un endpoint dit « local » peut viser un hôte distant : l'étiquette ne
+  // promet donc plus que la requête reste sur la machine.
+  const note = flow.local ? '<span class="off">Selon l’endpoint</span>' : ''
   return `                <tr${local}>
                   <td class="dest"><span class="name">${esc(flow.label)}</span>${esc(flow.target)}${hosts}${note}</td>
                   <td>${esc(flow.trigger)}</td>
@@ -84,10 +86,13 @@ ${flows.map(row).join('\n')}
           </div>`
 }
 
+const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'))
 const template = fs.readFileSync(path.join(here, 'privacy.template.html'), 'utf8')
 const html = template
   .replace('{{FLOWS}}', ORDER.map(block).filter(Boolean).join('\n'))
   .replace(/\{\{FLOW_COUNT\}\}/g, String(NETWORK_FLOWS.length))
+  // La page ne doit jamais annoncer une version plus ancienne que l'app.
+  .replace(/\{\{VERSION\}\}/g, String(pkg.version))
 
 const target = path.join(publicRoot, 'confidentialite/index.html')
 fs.mkdirSync(path.dirname(target), { recursive: true })

@@ -3,7 +3,14 @@ import { LOCAL_ONLY, NETWORK_FLOWS, type NetworkFlow } from '@shared/network'
 import { readWeatherPlace } from '@shared/place'
 import { SEARCH_ENGINES } from '@shared/url'
 import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
-import { PROVIDERS, providerById, providerReady, providerState } from '@shared/providers'
+import {
+  PROVIDERS,
+  endpointHost,
+  isLoopbackEndpoint,
+  providerById,
+  providerReady,
+  providerState
+} from '@shared/providers'
 import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
 import {
@@ -103,6 +110,8 @@ interface FlowContext {
   agentMode: AgentMode
   providerLabel: string
   providerLocal: boolean
+  providerBaseUrl: string
+  providerLoopback: boolean
   providerReady: boolean
   tabs: number
   letterboxd: string
@@ -131,13 +140,28 @@ function flowStateOf(flow: NetworkFlow, context: FlowContext): FlowStateView {
       if (!context.providerReady) {
         return { tone: 'off', label: 'Inactif', note: `Clé manquante · ${context.providerLabel}` }
       }
+      if (context.providerLocal && !context.providerLoopback) {
+        return {
+          tone: 'on',
+          label: 'Hôte distant',
+          note: endpointHost(context.providerBaseUrl) ?? context.providerLabel
+        }
+      }
       return context.providerLocal
         ? { tone: 'local', label: 'Local', note: context.providerLabel }
         : { tone: 'on', label: 'Actif', note: context.providerLabel }
     case 'modele-local':
-      return context.agentMode === 'api' && context.providerLocal
-        ? { tone: 'local', label: 'Local', note: 'Rien ne quitte la machine' }
-        : { tone: 'off', label: 'Inactif', note: 'Serveur local non choisi' }
+      if (context.agentMode !== 'api' || !context.providerLocal) {
+        return { tone: 'off', label: 'Inactif', note: 'Serveur local non choisi' }
+      }
+      if (!context.providerLoopback) {
+        return {
+          tone: 'ask',
+          label: 'Hôte distant',
+          note: endpointHost(context.providerBaseUrl) ?? 'Endpoint configuré'
+        }
+      }
+      return { tone: 'local', label: 'Local', note: 'Rien ne quitte la machine' }
     case 'mises-a-jour':
       return { tone: 'on', label: 'Actif', note: 'Toutes les trois heures' }
     case 'bd-ocr':
@@ -548,6 +572,13 @@ export default function SettingsPanel() {
                         spellCheck={false}
                       />
                     </label>
+                    {definition.local && urlDraft.trim() && !isLoopbackEndpoint(urlDraft) && (
+                      <p className="setting-hint space-error" role="status">
+                        <Icon name="warning" size={12} /> Cet endpoint n’est pas sur votre machine :{' '}
+                        {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent et l’audio
+                        transcrit y seront envoyés.
+                      </p>
+                    )}
                     <div className="model-editor-foot">
                       <p className="setting-hint">
                         Chiffrée par le trousseau du système, jamais exposée à l’interface.
@@ -1115,6 +1146,8 @@ export default function SettingsPanel() {
                 agentMode: agent.mode,
                 providerLabel: activeDefinition.label,
                 providerLocal: Boolean(activeDefinition.local),
+                providerBaseUrl: activeState.baseUrl,
+                providerLoopback: isLoopbackEndpoint(activeState.baseUrl),
                 providerReady: apiReady,
                 tabs: view.tabs.length,
                 letterboxd: space?.letterboxd ?? ''
@@ -1148,7 +1181,7 @@ export default function SettingsPanel() {
                         <tr key={flow.id} data-tone={state.tone} data-local={flow.local ? 'true' : undefined}>
                           <th scope="row">
                             <strong>{flow.label}</strong>
-                            <span className="flow-target">{flow.local ? 'Sur cet appareil' : flow.target}</span>
+                            <span className="flow-target">{flow.target}</span>
                           </th>
                           <td>{flow.trigger}</td>
                           <td>{flow.data}</td>

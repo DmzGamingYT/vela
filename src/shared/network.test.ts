@@ -76,6 +76,62 @@ describe('audit des destinations réseau', () => {
     }
   })
 
+  it('n’appelle jamais une destination réservée aux liens ouverts', () => {
+    const offenders: string[] = []
+    for (const file of files) {
+      const text = readFileSync(file, 'utf8')
+      for (const line of text.split('\n')) {
+        if (!/(?:net\.)?fetch\(/.test(line)) continue
+        for (const host of USER_OPENED_HOSTS) {
+          if (line.includes(host)) offenders.push(`${relative(ROOT, file)} → ${host}`)
+        }
+      }
+    }
+    expect(
+      offenders,
+      `Une destination de lien ouvert est appelée par du code : ${offenders.join(', ')}`
+    ).toEqual([])
+  })
+
+  it('garde les points d’appel réseau dans une liste revue', () => {
+    // Un nouveau fichier qui appelle fetch doit être ajouté ici après avoir été
+    // inscrit dans NETWORK_FLOWS. C'est la partie que le test d'hôtes littéraux
+    // ne peut pas voir quand l'URL est construite dans une variable.
+    const reviewed = new Set([
+      'src/main/agent.ts',
+      'src/main/browser.ts',
+      'src/main/comic.ts',
+      'src/main/favicons.ts',
+      'src/main/letterboxd.ts',
+      'src/main/tunnel.ts',
+      'src/main/updater.ts',
+      'src/renderer/src/components/HomeWeather.tsx',
+      // Script injecté dans les pages de BD : modèles et CDN OCR documentés.
+      'userscripts/comic-translate.user.js'
+    ])
+    const callers = new Set<string>()
+    for (const file of files) {
+      const text = readFileSync(file, 'utf8')
+      if (/(?:net\.)?fetch\(/.test(text)) callers.add(relative(ROOT, file).split('\\').join('/'))
+    }
+    expect(
+      [...callers].filter((file) => !reviewed.has(file)),
+      'Nouveau point d’appel réseau : documentez-le dans NETWORK_FLOWS puis ajoutez le fichier à la liste revue.'
+    ).toEqual([])
+  })
+
+  it('n’oublie aucun hôte déclaré dans le code', () => {
+    // Ces deux hôtes sont des cibles de redirection GitHub, pas des URL du
+    // code : ils n'ont pas à apparaître littéralement dans les sources.
+    const redirectOnly = new Set(['objects.githubusercontent.com', 'release-assets.githubusercontent.com'])
+    const all = files
+      .filter((file) => !file.endsWith('network.ts'))
+      .map((file) => readFileSync(file, 'utf8'))
+      .join('\n')
+    const unused = flowHosts().filter((host) => !redirectOnly.has(host) && !all.includes(host))
+    expect(unused, `Hôte déclaré mais introuvable dans le code : ${unused.join(', ')}`).toEqual([])
+  })
+
   it('distingue ce qui sort de ce qui reste sur la machine', () => {
     const local = NETWORK_FLOWS.filter((flow) => flow.local)
     expect(local.length, 'un flux local déclaré').toBeGreaterThan(0)

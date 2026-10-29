@@ -102,7 +102,7 @@
             celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
           </p>
           <p class="meta">
-            <span>Version 0.3.13</span>
+            <span>Version {{VERSION}}</span>
             <span>{{FLOW_COUNT}} flux décrits</span>
             <span>Sources du code</span>
           </p>
@@ -186,7 +186,7 @@
           </p>
           <ul class="ticks">
             <li>Les clés vivent dans le trousseau du système, jamais dans un fichier du projet.</li>
-            <li>Un modèle local, Ollama ou un endpoint sur localhost, ne fait sortir aucune donnée.</li>
+            <li>Un modèle local sur localhost (Ollama ou autre) ne fait sortir aucune donnée ; un endpoint distant configuré à la place envoie la demande à cet hôte.</li>
             <li>En mode démo, aucun modèle n’est appelé : le rapport de l’agent est simulé sur place.</li>
             <li>Une note vocale ne part vers un fournisseur distant qu’après votre confirmation explicite.</li>
           </ul>
@@ -234,7 +234,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version {{VERSION}} · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

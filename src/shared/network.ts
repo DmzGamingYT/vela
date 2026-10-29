@@ -132,18 +132,19 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     trigger:
       'Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.',
     data:
-      'Votre demande, le texte des onglets joints ou de la note, et la clé dans l’en-tête. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
+      'Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
     off: 'Rester en démo locale, ou brancher un serveur local.'
   },
   {
     id: 'modele-local',
     label: 'Serveur local',
-    target: 'localhost:11434 (Ollama) ou votre endpoint local',
+    target: 'localhost:11434 (Ollama) ou l’endpoint que vous configurez',
     hosts: ['localhost'],
     category: 'modeles',
     trigger: 'Même actions, avec le fournisseur Local, transcription des notes vocales comprise.',
-    data: 'Rien ne quitte la machine : le modèle et l’audio restent sur localhost.',
-    off: 'Rien à couper : ce serveur est déjà sur votre machine.',
+    data:
+      'Sur une adresse de boucle locale, rien ne quitte la machine. Si vous configurez un autre hôte, la demande et l’audio partent vers cet hôte, avec les mêmes métadonnées réseau.',
+    off: 'Choisir une adresse de boucle locale, ou ne pas utiliser ce fournisseur.',
     local: true
   },
   {
@@ -159,7 +160,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     trigger:
       'Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.',
     data:
-      'La version installée et la plateforme. Sur macOS, le fichier .dmg de la nouvelle version est ensuite téléchargé en entier. Aucun identifiant, aucun réglage.',
+      'La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.',
     off: null
   },
   {
@@ -169,7 +170,8 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: ['cdn.jsdelivr.net'],
     category: 'extensions',
     trigger: 'Quand vous lancez la traduction d’une planche de BD.',
-    data: 'Aucune donnée : téléchargement du moteur de reconnaissance de texte, une fois.',
+    data:
+      'Aucune donnée applicative : téléchargement du moteur de reconnaissance de texte, une fois. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.',
     off: 'Ne pas lancer la traduction de BD.'
   },
   {
@@ -181,7 +183,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     trigger:
       'Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.',
     data:
-      'Le nom du profil public, et la demande du flux. Aucun cookie, aucune session d’espace, aucune autre donnée.',
+      'Le nom du profil public et la demande du flux. Aucun cookie, aucune session d’espace. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.',
     off: 'Ne pas importer, ou retirer le compte Letterboxd de l’espace.'
   },
   {

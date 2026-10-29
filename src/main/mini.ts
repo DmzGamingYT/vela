@@ -101,6 +101,13 @@ export class MiniWindow {
     return true
   }
 
+  /** Renderer de la barre compacte, pour le contrôle d'émetteur IPC. */
+  chromeContentsId(): number | null {
+    const win = this.win
+    if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return null
+    return win.webContents.id
+  }
+
   /** La barre annonce qu'elle écoute : elle reçoit l'état, puis le focus demandé. */
   ready(): void {
     this.chromeReady = true

@@ -1,10 +1,18 @@
+import { createHash } from 'node:crypto'
 import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
-import { macInstallerNames, releaseAssetUrl } from '@shared/update'
+import {
+  macInstallerNames,
+  manifestFile,
+  parseMacManifest,
+  releaseAssetUrl,
+  type MacManifest
+} from '@shared/update'
+import { verifyDownload } from './integrity'
 
 export type UpdateState =
   | 'idle'
@@ -51,6 +59,8 @@ let lastCheck = 0
 /** Chemin du .dmg téléchargé (macOS), prêt pour le bouton Installer. */
 let installerPath: string | null = null
 let installing = false
+/** Manifeste d'une version déjà lu : une seule requête par version. */
+const manifests = new Map<string, MacManifest | null>()
 
 function set(patch: Partial<UpdateInfo>): void {
   snapshot = { ...snapshot, ...patch, currentVersion: app.getVersion() }
@@ -86,6 +96,26 @@ function installerDir(): string {
  * le bouton Installer l'ouvre, il ne reste qu'à glisser Vela dans Applications.
  * Le fichier vient du dépôt des releases, comme la vérification elle-même.
  */
+async function manifestFor(version: string): Promise<MacManifest | null> {
+  if (manifests.has(version)) return manifests.get(version) ?? null
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), 30_000)
+  try {
+    const response = await fetch(releaseAssetUrl(version, 'latest-mac.yml'), {
+      redirect: 'follow',
+      signal: abort.signal
+    })
+    const manifest = response.ok ? parseMacManifest(await response.text()) : null
+    manifests.set(version, manifest)
+    return manifest
+  } catch {
+    manifests.set(version, null)
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function prepareMacInstaller(version: string | null): Promise<void> {
   if (!version || installing) return
   if (installerPath && existsSync(installerPath)) {
@@ -99,6 +129,16 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
   }
   const names = macInstallerNames(version, process.arch)
   if (names.length === 0) return
+  // Sans manifeste, aucune empreinte : on refuse de proposer un installateur
+  // qui n'a pas été vérifié, plutôt que d'ouvrir un fichier inconnu.
+  const manifest = await manifestFor(version)
+  if (!manifest) {
+    set({
+      state: 'error',
+      message: 'Empreinte de l’installateur indisponible — téléchargez-la depuis la page Releases.'
+    })
+    return
+  }
   const dir = installerDir()
   try {
     mkdirSync(dir, { recursive: true })
@@ -109,26 +149,34 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
   }
 
   installing = true
+  let rejected = ''
   try {
     for (const name of names) {
       const target = join(dir, name)
+      const expected = manifestFile(manifest, name)
+      // Fichier absent du manifeste : il n'a pas d'empreinte publiée.
+      if (!expected) continue
       try {
-        if (!(await downloadInstaller(releaseAssetUrl(version, name), target, version))) continue
+        if (!(await downloadInstaller(releaseAssetUrl(version, name), target, version, expected))) {
+          rejected = 'Installateur rejeté : son empreinte ne correspond pas à celle publiée.'
+          continue
+        }
         installerPath = target
         set({
           state: 'downloaded',
           version,
           progress: 100,
-          message: `${name} est prêt.`
+          message: `${name} est prêt, empreinte vérifiée.`
         })
         return
       } catch {
         rmSync(target, { force: true })
+        rejected = 'Installateur rejeté : son empreinte ne correspond pas à celle publiée.'
       }
     }
     set({
       state: 'error',
-      message: 'Installateur introuvable pour cette version — utilisez le bouton Releases.'
+      message: rejected || 'Installateur introuvable pour cette version — utilisez le bouton Releases.'
     })
   } finally {
     installing = false
@@ -136,7 +184,12 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
 }
 
 /** true si le fichier est bien téléchargé en entier. */
-async function downloadInstaller(url: string, target: string, version: string): Promise<boolean> {
+async function downloadInstaller(
+  url: string,
+  target: string,
+  version: string,
+  expected: { sha512: string; size: number }
+): Promise<boolean> {
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), DOWNLOAD_TIMEOUT)
   try {
@@ -144,14 +197,14 @@ async function downloadInstaller(url: string, target: string, version: string): 
     // Une version sans installateur pour cette architecture répond 404 : on
     // essaie le nom suivant.
     if (!response.ok || !response.body) return false
-    const total = Number(response.headers.get('content-length') ?? 0)
     const source = Readable.fromWeb(response.body as never)
+    const hash = createHash('sha512')
     let received = 0
     let lastPercent = -1
     source.on('data', (chunk: Buffer) => {
+      hash.update(chunk)
       received += chunk.length
-      if (total <= 0) return
-      const percent = Math.min(99, Math.round((received / total) * 100))
+      const percent = Math.min(99, Math.round((received / expected.size) * 100))
       if (percent === lastPercent) return
       lastPercent = percent
       set({
@@ -162,7 +215,9 @@ async function downloadInstaller(url: string, target: string, version: string): 
       })
     })
     await pipeline(source, createWriteStream(target))
-    return total === 0 || received >= total
+    const verified = verifyDownload({ base64: hash.digest('base64'), bytes: received, expected })
+    if (!verified) rmSync(target, { force: true })
+    return verified
   } finally {
     clearTimeout(timer)
   }

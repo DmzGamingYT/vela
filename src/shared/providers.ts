@@ -197,6 +197,30 @@ function trimBase(baseUrl: string, fallback: string): string {
 }
 
 /**
+ * true si l'URL reste sur la machine. Un endpoint dit « local » peut viser un
+ * hôte distant : c'est l'URL qui décide, pas le nom du fournisseur.
+ */
+export function isLoopbackEndpoint(value: string): boolean {
+  try {
+    const parsed = new URL(value.trim())
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+    const host = parsed.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost')
+  } catch {
+    return false
+  }
+}
+
+/** Hôte lisible d'un endpoint, ou null si l'URL est invalide. */
+export function endpointHost(value: string): string | null {
+  try {
+    return new URL(value.trim()).host || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Construit une requête de chat en streaming pour les trois protocoles.
  * Fonction pure : testée sans réseau, réutilisée par le processus principal.
  */
@@ -233,9 +257,14 @@ export function buildChatRequest(
   }
 
   if (definition.protocol === 'google') {
+    // La clé voyage dans un en-tête : une URL peut finir dans un journal ou un
+    // historique, pas un en-tête maîtrisé par l'appelant.
     return {
-      url: `${base}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key ?? '')}`,
-      headers: { 'Content-Type': 'application/json' },
+      url: `${base}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(key ? { 'x-goog-api-key': key } : {})
+      },
       body: JSON.stringify({
         systemInstruction: system ? { parts: [{ text: system }] } : undefined,
         contents: [{ role: 'user', parts: [{ text: user }] }]
@@ -294,7 +323,10 @@ export function buildTestRequest(
     }
   }
   if (definition.protocol === 'google') {
-    return { url: `${base}/models?key=${encodeURIComponent(key ?? '')}`, headers: {} }
+    return {
+      url: `${base}/models`,
+      headers: key ? { 'x-goog-api-key': key } : {}
+    }
   }
   const headers: Record<string, string> = {}
   if (key) headers.Authorization = `Bearer ${key}`

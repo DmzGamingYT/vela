@@ -102,7 +102,7 @@
             celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
           </p>
           <p class="meta">
-            <span>Version 0.3.13</span>
+            <span>Version 0.3.15</span>
             <span>13 flux décrits</span>
             <span>Sources du code</span>
           </p>
@@ -271,14 +271,14 @@
                 <tr>
                   <td class="dest"><span class="name">Modèle choisi</span>Le fournisseur configuré dans Réglages › Modèles<span class="hosts">api.openai.com · api.anthropic.com · generativelanguage.googleapis.com · api.x.ai · api.mistral.ai · api.deepseek.com · api.groq.com · api.cerebras.ai · openrouter.ai · translation.googleapis.com</span></td>
                   <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.</td>
-                  <td>Votre demande, le texte des onglets joints ou de la note, et la clé dans l’en-tête. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
+                  <td>Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
                   <td class="off">Rester en démo locale, ou brancher un serveur local.</td>
                 </tr>
                 <tr class="is-local">
-                  <td class="dest"><span class="name">Serveur local</span>localhost:11434 (Ollama) ou votre endpoint local<span class="off">Sur votre machine</span></td>
+                  <td class="dest"><span class="name">Serveur local</span>localhost:11434 (Ollama) ou l’endpoint que vous configurez<span class="off">Selon l’endpoint</span></td>
                   <td>Même actions, avec le fournisseur Local, transcription des notes vocales comprise.</td>
-                  <td>Rien ne quitte la machine : le modèle et l’audio restent sur localhost.</td>
-                  <td class="off">Rien à couper : ce serveur est déjà sur votre machine.</td>
+                  <td>Sur une adresse de boucle locale, rien ne quitte la machine. Si vous configurez un autre hôte, la demande et l’audio partent vers cet hôte, avec les mêmes métadonnées réseau.</td>
+                  <td class="off">Choisir une adresse de boucle locale, ou ne pas utiliser ce fournisseur.</td>
                 </tr>
               </tbody>
             </table>
@@ -298,7 +298,7 @@
                 <tr>
                   <td class="dest"><span class="name">Journal Letterboxd</span>letterboxd.com — flux RSS public du profil</td>
                   <td>Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.</td>
-                  <td>Le nom du profil public, et la demande du flux. Aucun cookie, aucune session d’espace, aucune autre donnée.</td>
+                  <td>Le nom du profil public et la demande du flux. Aucun cookie, aucune session d’espace. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.</td>
                   <td class="off">Ne pas importer, ou retirer le compte Letterboxd de l’espace.</td>
                 </tr>
               </tbody>
@@ -319,7 +319,7 @@
                 <tr>
                   <td class="dest"><span class="name">Mises à jour</span>github.com — releases de Vela<span class="hosts">objects.githubusercontent.com · release-assets.githubusercontent.com</span></td>
                   <td>Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.</td>
-                  <td>La version installée et la plateforme. Sur macOS, le fichier .dmg de la nouvelle version est ensuite téléchargé en entier. Aucun identifiant, aucun réglage.</td>
+                  <td>La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.</td>
                   <td class="off">Aucun réglage : la requête a lieu.</td>
                 </tr>
               </tbody>
@@ -367,7 +367,7 @@
                 <tr>
                   <td class="dest"><span class="name">Lecture des planches</span>cdn.jsdelivr.net</td>
                   <td>Quand vous lancez la traduction d’une planche de BD.</td>
-                  <td>Aucune donnée : téléchargement du moteur de reconnaissance de texte, une fois.</td>
+                  <td>Aucune donnée applicative : téléchargement du moteur de reconnaissance de texte, une fois. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.</td>
                   <td class="off">Ne pas lancer la traduction de BD.</td>
                 </tr>
               </tbody>
@@ -383,7 +383,7 @@
           </p>
           <ul class="ticks">
             <li>Les clés vivent dans le trousseau du système, jamais dans un fichier du projet.</li>
-            <li>Un modèle local, Ollama ou un endpoint sur localhost, ne fait sortir aucune donnée.</li>
+            <li>Un modèle local sur localhost (Ollama ou autre) ne fait sortir aucune donnée ; un endpoint distant configuré à la place envoie la demande à cet hôte.</li>
             <li>En mode démo, aucun modèle n’est appelé : le rapport de l’agent est simulé sur place.</li>
             <li>Une note vocale ne part vers un fournisseur distant qu’après votre confirmation explicite.</li>
           </ul>
@@ -431,7 +431,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.15 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

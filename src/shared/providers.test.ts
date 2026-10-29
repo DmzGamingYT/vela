@@ -3,6 +3,8 @@ import { DEFAULT_SETTINGS, defaultProviders } from './defaults'
 import {
   buildChatRequest,
   buildTestRequest,
+  endpointHost,
+  isLoopbackEndpoint,
   parseStreamPayload,
   providerById,
   providerDefaults,
@@ -13,6 +15,27 @@ const openai = providerById('openai')
 const anthropic = providerById('anthropic')
 const google = providerById('google')
 const local = providerById('local')
+
+describe('endpoint local ou distant', () => {
+  it('reconnaît la boucle locale', () => {
+    for (const url of ['http://localhost:11434/v1', 'http://127.0.0.1:8080', 'https://localhost', 'http://[::1]:11434']) {
+      expect(isLoopbackEndpoint(url), url).toBe(true)
+    }
+  })
+
+  it('ne prend pas un hôte distant pour la machine', () => {
+    for (const url of ['https://exemple.fr/v1', 'http://192.168.1.20:11434', 'https://localhost.exemple.fr']) {
+      expect(isLoopbackEndpoint(url), url).toBe(false)
+    }
+    expect(isLoopbackEndpoint('pas une url')).toBe(false)
+    expect(isLoopbackEndpoint('file:///tmp/x')).toBe(false)
+  })
+
+  it('donne l’hôte à afficher', () => {
+    expect(endpointHost('https://exemple.fr:8443/v1')).toBe('exemple.fr:8443')
+    expect(endpointHost('nope')).toBeNull()
+  })
+})
 
 describe('catalogue', () => {
   it('couvre les dix fournisseurs de la page Modèles', () => {
@@ -63,14 +86,23 @@ describe('requêtes de chat', () => {
     expect(body.max_tokens).toBeGreaterThan(0)
   })
 
-  it('parle le protocole de Google', () => {
+  it('parle le protocole de Google sans mettre la clé dans l’URL', () => {
     const request = buildChatRequest(google, { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.5-flash' }, 'AIza-key', messages)
     expect(request.url).toContain('/models/gemini-2.5-flash:streamGenerateContent')
     expect(request.url).toContain('alt=sse')
-    expect(request.url).toContain('key=AIza-key')
+    expect(request.url).not.toContain('AIza-key')
+    expect(request.url).not.toContain('key=')
+    expect(request.headers['x-goog-api-key']).toBe('AIza-key')
     const body = JSON.parse(request.body)
     expect(body.contents[0].parts[0].text).toBe('Résume cette page.')
     expect(body.systemInstruction.parts[0].text).toBe('Tu es Vela.')
+  })
+
+  it('garde la clé Google hors de l’URL de test', () => {
+    const request = buildTestRequest(google, { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'x' }, 'AIza-key')
+    expect(request.url).toBe('https://generativelanguage.googleapis.com/v1beta/models')
+    expect(request.url).not.toContain('key=')
+    expect(request.headers['x-goog-api-key']).toBe('AIza-key')
   })
 })
 
@@ -85,7 +117,8 @@ describe('test de clé', () => {
     const anth = buildTestRequest(anthropic, { baseUrl: 'https://api.anthropic.com/v1', model: 'x' }, 'sk-ant')
     expect(anth.headers['x-api-key']).toBe('sk-ant')
     const goog = buildTestRequest(google, { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'x' }, 'AIza')
-    expect(goog.url).toContain('key=AIza')
+    expect(goog.url).not.toContain('key=')
+    expect(goog.headers['x-goog-api-key']).toBe('AIza')
   })
 })
 

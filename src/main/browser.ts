@@ -10,6 +10,8 @@ import {
   nativeTheme,
   session,
   shell,
+  type IpcMainEvent,
+  type IpcMainInvokeEvent,
   type Session,
   type WebContents
 } from 'electron'
@@ -35,7 +37,13 @@ import {
   SPACE_COLORS
 } from '@shared/defaults'
 import { moveTab } from '@shared/ordering'
-import { buildTestRequest, isProviderId, providerById } from '@shared/providers'
+import {
+  buildTestRequest,
+  endpointHost,
+  isLoopbackEndpoint,
+  isProviderId,
+  providerById
+} from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import { isThemeId, parseHex } from '@shared/theme'
 import {
@@ -76,6 +84,7 @@ import { HighlightsStore, NotesStore } from './notes'
 import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
 import { MiniWindow } from './mini'
 import { Store } from './store'
+import { canUseChannel, senderKindOf } from './ipcPolicy'
 import { TabManager, type TabHost } from './tabs'
 import { preparedPartitions } from './privacy'
 
@@ -1178,12 +1187,57 @@ export class Browser {
     })
   }
 
+  /**
+   * Un canal n'est ouvert qu'à la fenêtre concernée et à son cadre principal.
+   * Une page web, un cadre imbriqué ou un renderer inconnu n'obtient rien.
+   */
+  private allowIpc(event: IpcMainEvent | IpcMainInvokeEvent, channel: string): boolean {
+    try {
+      if (event.senderFrame !== event.sender.mainFrame) return false
+    } catch {
+      return false
+    }
+    const shellId = this.win && !this.win.isDestroyed() ? this.win.webContents.id : null
+    const kind = senderKindOf(event.sender.id, { shell: shellId, mini: this.mini.chromeContentsId() })
+    return canUseChannel(kind, channel)
+  }
+
+  /**
+   * Un endpoint dit « local » peut viser un hôte distant. Dans ce cas, on
+   * demande un accord explicite avant d'enregistrer la destination.
+   */
+  private async confirmRemoteEndpoint(payload: unknown): Promise<boolean> {
+    const input = (payload ?? {}) as SettingsPatch
+    const switching = input.agent?.provider === 'local'
+    const patched = input.providers?.local?.baseUrl
+    if (!switching && typeof patched !== 'string') return true
+    const current = this.store.get().settings.agent.providers.local.baseUrl
+    const url = typeof patched === 'string' ? patched.trim() : current
+    if (!/^https?:\/\//i.test(url) || isLoopbackEndpoint(url)) return true
+    const win = this.win
+    if (!win || win.isDestroyed()) return false
+    const decision = await dialog.showMessageBox(win, {
+      type: 'warning',
+      title: 'Endpoint distant',
+      message: 'Cet endpoint n’est pas sur votre machine',
+      detail: `Les textes confiés à l’agent et les notes vocales transcrites partiront vers ${endpointHost(url) ?? url}. Vela ne contrôle pas ce que cet hôte en fait.`,
+      buttons: ['Annuler', 'Utiliser cet endpoint'],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true
+    })
+    return decision.response === 1
+  }
+
   registerIpc(): void {
     if (this.registered) return
     this.registered = true
 
     const handle = (channel: string, handler: (payload: unknown) => unknown): void => {
-      ipcMain.handle(channel, (_event, payload: unknown) => handler(payload))
+      ipcMain.handle(channel, (event, payload: unknown) => {
+        if (!this.allowIpc(event, channel)) throw new Error(`Canal IPC refusé : ${channel}`)
+        return handler(payload)
+      })
     }
 
     this.comic.registerIpc()
@@ -1424,7 +1478,8 @@ export class Browser {
         })
       return { runId }
     })
-    ipcMain.on('tunnel:cancel', (_event, runId: unknown) => {
+    ipcMain.on('tunnel:cancel', (event, runId: unknown) => {
+      if (!this.allowIpc(event, 'tunnel:cancel')) return
       if (typeof runId === 'string') this.tunnel.cancel(runId)
     })
     handle('tunnel:maps', () => this.store.listTunnelMaps())
@@ -1636,6 +1691,7 @@ export class Browser {
       return this.agent.transcribe(file, input.consent === true)
     })
     ipcMain.on('notes:drag-selection', (event, payload) => {
+      if (!this.allowIpc(event, 'notes:drag-selection')) return
       try {
         this.startSelectionDrag(event.sender, typeof payload === 'string' ? payload : '')
       } catch {
@@ -1780,7 +1836,8 @@ export class Browser {
     })
 
     handle('agent:run', (payload) => this.runAgent(payload))
-    handle('settings:update', (payload) => {
+    handle('settings:update', async (payload) => {
+      if (!(await this.confirmRemoteEndpoint(payload))) return
       this.updateSettings(payload)
     })
     handle('settings:set-key', (payload) => {
@@ -1833,15 +1890,19 @@ export class Browser {
       openReleases()
     })
 
-    ipcMain.on('mini:ready', () => this.mini.ready())
+    ipcMain.on('mini:ready', (event) => {
+      if (!this.allowIpc(event, 'mini:ready')) return
+      this.mini.ready()
+    })
     ipcMain.on('views:layout', (event, payload: LayoutRequest) => {
-      if (!this.win || event.sender !== this.win.webContents) return
+      if (!this.allowIpc(event, 'views:layout')) return
       const panes = Array.isArray(payload?.panes) ? payload.panes.filter(isPane).slice(0, 4) : []
       this.overlay = Boolean(payload?.overlay)
       this.tabs.layout({ panes, overlay: this.overlay })
     })
 
-    ipcMain.on('agent:cancel', (_event, runId: unknown) => {
+    ipcMain.on('agent:cancel', (event, runId: unknown) => {
+      if (!this.allowIpc(event, 'agent:cancel')) return
       this.agent.cancel(typeof runId === 'string' ? runId : undefined)
     })
   }

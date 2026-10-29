@@ -31,6 +31,67 @@ export function releaseAssetUrl(version: string, asset: string): string {
   return `https://github.com/${OWNER}/${REPO}/releases/download/v${safeVersion(version)}/${asset}`
 }
 
+export interface MacManifestFile {
+  url: string
+  sha512: string
+  size: number
+}
+
+export interface MacManifest {
+  version: string
+  files: MacManifestFile[]
+}
+
+/**
+ * Lit le `latest-mac.yml` publié par electron-builder. Format volontairement
+ * simple : une version, puis une liste de fichiers avec empreinte et taille.
+ * Retourne null dès qu'une entrée manque ou n'est pas exploitable — mieux vaut
+ * refuser un installateur que le proposer sans preuve.
+ */
+export function parseMacManifest(text: string): MacManifest | null {
+  const lines = text.split(/\r?\n/)
+  const versionLine = lines.find((line) => /^version:\s*\S/.test(line))
+  const version = versionLine?.replace(/^version:\s*/, '').trim().replace(/^['"]|['"]$/g, '')
+  if (!version) return null
+
+  const files: MacManifestFile[] = []
+  let current: Partial<MacManifestFile> | null = null
+  const flush = (): void => {
+    if (!current) return
+    if (current.url && current.sha512 && typeof current.size === 'number') {
+      files.push({ url: current.url, sha512: current.sha512, size: current.size })
+    }
+    current = null
+  }
+
+  for (const line of lines) {
+    const item = line.match(/^\s*-\s+url:\s*(.+?)\s*$/)
+    if (item) {
+      flush()
+      current = { url: item[1].replace(/^['"]|['"]$/g, '') }
+      continue
+    }
+    if (!current) continue
+    const hash = line.match(/^\s+sha512:\s*(.+?)\s*$/)
+    if (hash) {
+      current.sha512 = hash[1].replace(/^['"]|['"]$/g, '')
+      continue
+    }
+    const size = line.match(/^\s+size:\s*(\d+)\s*$/)
+    if (size) current.size = Number(size[1])
+  }
+  flush()
+
+  if (files.length === 0) return null
+  return { version, files }
+}
+
+/** Entrée du manifeste pour un nom de fichier donné, ou null. */
+export function manifestFile(manifest: MacManifest | null, name: string): MacManifestFile | null {
+  if (!manifest) return null
+  return manifest.files.find((file) => file.url === name) ?? null
+}
+
 export type UpdateAction = 'install' | 'restart'
 
 export interface UpdateNotice {
