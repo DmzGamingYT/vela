@@ -7,6 +7,7 @@ import { PROVIDERS, providerById, providerReady, providerState } from '@shared/p
 import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
 import {
+  DRAGON_THEME,
   THEME_PRESETS,
   adjustAccent,
   parseHex,
@@ -18,6 +19,7 @@ import type {
   AgentMode,
   ProviderId,
   ProviderSettings,
+  SkyVariant,
   Theme
 } from '@shared/types'
 import { swatchColor } from '../lib/appearance'
@@ -62,6 +64,11 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.' },
   about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
 }
+
+const SKY_OPTIONS: { value: SkyVariant; label: string; detail: string; icon: IconName }[] = [
+  { value: 'braise', label: 'Braises', detail: 'Un dragon traverse le ciel, des braises montent.', icon: 'sparkles' },
+  { value: 'westeros', label: 'Nuit de Westeros', detail: 'Un ciel étoilé, sa lune et le même dragon.', icon: 'moon' }
+]
 
 const GLASS_OPTIONS: { value: GlassIntensity; label: string }[] = [
   { value: 'light', label: 'Léger' },
@@ -623,6 +630,7 @@ export default function SettingsPanel() {
                     aria-label={preset.label}
                     className="theme-tile"
                     data-active={active}
+                    data-featured={preset.id === DRAGON_THEME}
                     style={{ '--swatch': swatchColor(preset.id, settings.customAccent, mode) } as CSSProperties}
                     onClick={() => void updateSettings({ themeId: preset.id })}
                   >
@@ -761,6 +769,50 @@ export default function SettingsPanel() {
               <p>Accessibilité et variation automatique, sans changer de thème.</p>
             </div>
             <div className="setting-toggles">
+              <div className="setting-row">
+                <div>
+                  <label>Ambiance du ciel</label>
+                  <p className="setting-hint">
+                    Deux ciels pour l’accueil, avec le thème Braise : braises et dragon, ou nuit étoilée.
+                    « Réduire les animations » les fige.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.dragonSky}
+                  data-on={settings.dragonSky}
+                  aria-label="Ambiance du ciel"
+                  onClick={() => void updateSettings({ dragonSky: !settings.dragonSky })}
+                >
+                  <span />
+                </button>
+              </div>
+              <div className="setting-row" data-disabled={!settings.dragonSky}>
+                <div>
+                  <label>Ciel de l’accueil</label>
+                  <p className="setting-hint">Le dragon passe dans les deux, plus haut que la carte météo.</p>
+                </div>
+                <div className="appearance-grid" role="radiogroup" aria-label="Ciel de l’accueil">
+                  {SKY_OPTIONS.map((option) => (
+                    <button
+                      type="button"
+                      key={option.value}
+                      role="radio"
+                      aria-checked={settings.skyVariant === option.value}
+                      aria-label={`${option.label}. ${option.detail}`}
+                      className="appearance-choice"
+                      data-active={settings.skyVariant === option.value}
+                      disabled={!settings.dragonSky}
+                      onClick={() => void updateSettings({ skyVariant: option.value })}
+                    >
+                      <Icon name={option.icon} size={13} />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="setting-row">
                 <div>
                   <label>Contraste élevé</label>

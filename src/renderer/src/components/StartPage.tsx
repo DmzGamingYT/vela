@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { canonicalUrl, hostOf, normalizeInput, readableTitle, SEARCH_ENGINES } from '@shared/url'
+import { DRAGON_THEME, resolveThemeId } from '@shared/theme'
 import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import DragonSky from './DragonSky'
 import Favicon from './Favicon'
 import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
@@ -76,7 +78,21 @@ export default function StartPage({ tabId }: { tabId: string }) {
     // l'accueil redemande donc les images au lieu de garder les anciennes.
   }, [thumbsEnabled, historyKey, view?.history])
 
-  if (!view) return null
+  // Avant le premier état : trois braises, pas un écran vide.
+  if (!view) {
+    return (
+      <div className="start start-ignite" data-calm={calm ? 'true' : undefined}>
+        <div className="home-ignite" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <p className="sr-only" role="status">
+          Chargement de l’accueil
+        </p>
+      </div>
+    )
+  }
 
   // L'espace de cet onglet : il porte les sites épinglés et, s'il est activé,
   // le gadget « À voir ».
@@ -85,6 +101,15 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   const settings = view.settings
   const engine = SEARCH_ENGINES[settings.searchEngine]?.label ?? 'DuckDuckGo'
+  // Le ciel de braise n'apparaît qu'avec son thème, et se tait quand
+  // l'animation est refusée par le système.
+  const dragonSky =
+    settings.dragonSky &&
+    resolveThemeId({
+      globalTheme: settings.themeId,
+      perSpace: settings.perSpaceThemes,
+      spaceTheme: space?.theme ?? null
+    }) === DRAGON_THEME
 
   // Une tuile par page : la clé ignore la requête et l'ancre, donc
   // « article/une-page » et « article/une-page?ref=home » ne font qu'une.
@@ -228,6 +253,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
           <span className="aurora-blob" data-i="3" />
         </span>
       </div>
+
+      <DragonSky active={dragonSky} calm={calm} variant={settings.skyVariant} />
 
       <div className="start-inner home">
         <header className="home-head">

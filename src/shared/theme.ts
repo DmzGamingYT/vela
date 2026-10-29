@@ -20,6 +20,7 @@ export type ThemeId =
   | 'violet'
   | 'rose'
   | 'graphite'
+  | 'braise'
   | 'custom'
 
 export type ThemePresetId = Exclude<ThemeId, 'custom'>
@@ -34,7 +35,7 @@ export interface ThemePreset {
   dark: string
 }
 
-/** Les dix thèmes fournis, dans l'ordre de la grille des réglages. */
+/** Les thèmes fournis, dans l'ordre de la grille des réglages. */
 export const THEME_PRESETS: ThemePreset[] = [
   { id: 'indigo', label: 'Indigo', light: '#5B5BD6', dark: '#B3AEFF' },
   { id: 'rouge', label: 'Rouge', light: '#E5484D', dark: '#FF6369' },
@@ -45,8 +46,14 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: 'bleu', label: 'Bleu', light: '#0091FF', dark: '#52A9FF' },
   { id: 'violet', label: 'Violet', light: '#8E4EC6', dark: '#BF7AF0' },
   { id: 'rose', label: 'Rose', light: '#E93D82', dark: '#FF6BA7' },
-  { id: 'graphite', label: 'Graphite', light: '#6E6E73', dark: '#A1A1A6' }
+  { id: 'graphite', label: 'Graphite', light: '#6E6E73', dark: '#A1A1A6' },
+  // Braise : la teinte de l'ambiance dragons, seule à ouvrir une animation
+  // (ciel parcouru et lueur sur les cases du rail).
+  { id: 'braise', label: 'Braise', light: '#B4451F', dark: '#FF8F5E' }
 ]
+
+/** Le thème qui porte l'animation des dragons. */
+export const DRAGON_THEME: ThemePresetId = 'braise'
 
 export const DEFAULT_THEME: ThemePresetId = 'indigo'
 export const DEFAULT_CUSTOM_ACCENT = '#5B5BD6'

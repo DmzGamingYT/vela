@@ -984,6 +984,10 @@ export class Browser {
       if (typeof input.highContrast === 'boolean') settings.highContrast = input.highContrast
       if (typeof input.hourTheme === 'boolean') settings.hourTheme = input.hourTheme
       if (typeof input.perSpaceThemes === 'boolean') settings.perSpaceThemes = input.perSpaceThemes
+      if (typeof input.dragonSky === 'boolean') settings.dragonSky = input.dragonSky
+      if (input.skyVariant === 'braise' || input.skyVariant === 'westeros') {
+        settings.skyVariant = input.skyVariant
+      }
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
       if (input.blockLevel === 'trackers' || input.blockLevel === 'strict') {
         settings.blockLevel = input.blockLevel

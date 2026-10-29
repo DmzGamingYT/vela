@@ -285,6 +285,23 @@ export const GALLERY_AVATARS: GalleryAvatar[] = [
     shapes: [{ kind: 'path', d: 'M8 40a16 16 0 0 1 32 0', stroke: true, o: 0.35 }]
   },
   {
+    // L'œuf de l'ambiance Braise : un dessin original, pas une armoirie.
+    id: 'dragon-egg',
+    label: 'Œuf de dragon',
+    from: '#8C2F14',
+    to: '#3B120A',
+    ink: '#FFD9AC',
+    shapes: [
+      { kind: 'path', d: 'M24 7c8 0 14 11 14 21 0 8-6 13-14 13S10 36 10 28C10 18 16 7 24 7Z', o: 0.95 },
+      { kind: 'circle', cx: 20, cy: 21, r: 2.3, o: 0.3 },
+      { kind: 'circle', cx: 28, cy: 21, r: 2.3, o: 0.3 },
+      { kind: 'circle', cx: 24, cy: 28, r: 2.6, o: 0.3 },
+      { kind: 'circle', cx: 17, cy: 30, r: 2, o: 0.24 },
+      { kind: 'circle', cx: 31, cy: 30, r: 2, o: 0.24 },
+      { kind: 'path', d: 'M22 14l4 6-3 5 4 5', stroke: true, o: 0.5 }
+    ]
+  },
+  {
     id: 'mono-square',
     label: 'Initiales encadrées',
     from: '#E5A100',

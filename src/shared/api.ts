@@ -119,6 +119,8 @@ export interface SettingsPatch {
   highContrast?: boolean
   hourTheme?: boolean
   perSpaceThemes?: boolean
+  dragonSky?: boolean
+  skyVariant?: Settings['skyVariant']
   blockTrackers?: boolean
   blockLevel?: 'trackers' | 'strict'
   thumbnails?: boolean

@@ -132,6 +132,10 @@ function mergeSettings(raw: unknown): Settings {
     // Anciens fichiers : pas de niveau → le filtre standard, jamais renforcé.
     blockLevel: input.blockLevel === 'strict' ? 'strict' : 'trackers',
     thumbnails: input.thumbnails === true,
+    // Anciens fichiers : l'animation est proposée par défaut, elle-même
+    // suspendue par « Réduire les animations ».
+    dragonSky: input.dragonSky !== false,
+    skyVariant: input.skyVariant === 'westeros' ? 'westeros' : 'braise',
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
     agent: { mode, provider, providers }

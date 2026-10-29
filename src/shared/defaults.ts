@@ -8,7 +8,7 @@ export interface SpaceTint {
   color: string
 }
 
-// Les dix teintes de l'app, nommées comme les thèmes de la grille des réglages
+// Les teintes de l'app, nommées comme les thèmes de la grille des réglages
 // et dans le même ordre : choisir un espace revient à choisir un thème, sans
 // jeu de couleurs à part. Le nom sert de libellé lisible ; la couleur reste la
 // variante claire du thème, seule valeur stockée dans vela.json.
@@ -40,6 +40,8 @@ export const DEFAULT_SETTINGS: Settings = {
   highContrast: false,
   hourTheme: false,
   perSpaceThemes: false,
+  dragonSky: true,
+  skyVariant: 'braise',
   blockTrackers: true,
   blockLevel: 'trackers',
   thumbnails: false,

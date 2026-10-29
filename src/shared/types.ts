@@ -143,6 +143,9 @@ export interface AgentSettings {
   providers: Record<ProviderId, ProviderSettings>
 }
 
+/** Les deux ciels de l'ambiance Braise. */
+export type SkyVariant = 'braise' | 'westeros'
+
 export interface Settings {
   theme: Theme
   searchEngine: SearchEngineId
@@ -166,6 +169,10 @@ export interface Settings {
   hourTheme: boolean
   /** Chaque espace peut porter son propre thème. */
   perSpaceThemes: boolean
+  /** Ambiance animée de l'accueil, avec le thème Braise (jamais si « Réduire les animations »). */
+  dragonSky: boolean
+  /** Ciel de l'ambiance : braises et dragon, ou nuit étoilée avec sa lune. */
+  skyVariant: SkyVariant
   blockTrackers: boolean
   /** Intensité du filtre quand `blockTrackers` est actif. */
   blockLevel: 'trackers' | 'strict'
