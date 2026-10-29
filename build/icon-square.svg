@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Vela — variante pleine (icône tactile 180, sans coins arrondis ni ombre).
+       iOS et iPadOS appliquent eux-mêmes le masque : le dessin remplit le carré. -->
+  <defs>
+    <linearGradient id="sq-base" x1="120" y1="40" x2="900" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7E6DFF" />
+      <stop offset="0.3" stop-color="#5741DC" />
+      <stop offset="0.66" stop-color="#33218F" />
+      <stop offset="1" stop-color="#170D45" />
+    </linearGradient>
+
+    <radialGradient id="sq-sky" cx="690" cy="690" r="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC489" stop-opacity="0.92" />
+      <stop offset="0.32" stop-color="#FF9F63" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#FF8A5A" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="sq-spec" cx="320" cy="150" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3" />
+      <stop offset="0.46" stop-color="#FFFFFF" stop-opacity="0.07" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="sq-sea" x1="512" y1="700" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F0834" stop-opacity="0.58" />
+      <stop offset="0.34" stop-color="#150C43" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#0A0425" stop-opacity="0.5" />
+    </linearGradient>
+
+    <linearGradient id="sq-waterline" x1="160" y1="712" x2="880" y2="712" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE6CB" stop-opacity="0.06" />
+      <stop offset="0.42" stop-color="#FFF3E6" stop-opacity="0.58" />
+      <stop offset="0.7" stop-color="#FFD09A" stop-opacity="1" />
+      <stop offset="1" stop-color="#FFBE84" stop-opacity="0.14" />
+    </linearGradient>
+
+    <linearGradient id="sq-left" x1="404" y1="280" x2="548" y2="710" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7" />
+      <stop offset="0.5" stop-color="#FFF4EA" stop-opacity="0.38" />
+      <stop offset="1" stop-color="#CFCAF4" stop-opacity="0.34" />
+    </linearGradient>
+
+    <linearGradient id="sq-right" x1="548" y1="250" x2="660" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.4" stop-color="#FDFCFF" />
+      <stop offset="0.74" stop-color="#EFECFF" />
+      <stop offset="1" stop-color="#DAD5F9" />
+    </linearGradient>
+
+    <linearGradient id="sq-edge" x1="548" y1="250" x2="664" y2="680" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="0.6" stop-color="#FFE4C6" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#FFC896" stop-opacity="0.4" />
+    </linearGradient>
+
+    <linearGradient id="sq-sun" x1="660" y1="600" x2="736" y2="716" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7E8" />
+      <stop offset="0.38" stop-color="#FFD79F" />
+      <stop offset="1" stop-color="#EEA266" />
+    </linearGradient>
+
+    <filter id="sq-soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+
+    <filter id="sq-sail-cast" x="-36%" y="-28%" width="172%" height="164%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#1B1163" flood-opacity="0.34" />
+    </filter>
+
+    <filter id="sq-water-cast" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="15" />
+    </filter>
+
+    <filter id="sq-grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="17" result="n" />
+      <feColorMatrix in="n" type="saturate" values="0" result="g" />
+      <feComponentTransfer in="g" result="t">
+        <feFuncA type="linear" slope="0.42" intercept="0" />
+      </feComponentTransfer>
+      <feComposite in="t" in2="SourceGraphic" operator="in" />
+    </filter>
+
+    <clipPath id="sq-square">
+      <rect x="0" y="0" width="1024" height="1024" />
+    </clipPath>
+
+    <clipPath id="sq-left-clip">
+      <path d="M548 232C492 372 432 560 404 710H548Z" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#sq-square)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sq-base)" />
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sq-spec)" style="mix-blend-mode: screen" />
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sq-sky)" style="mix-blend-mode: screen" />
+
+    <circle cx="686" cy="662" r="68" fill="url(#sq-sun)" />
+    <circle cx="686" cy="662" r="96" fill="#FFB578" fill-opacity="0.45" filter="url(#sq-soft)" style="mix-blend-mode: screen" />
+    <circle cx="668" cy="640" r="16" fill="#FFFBEF" fill-opacity="0.55" style="mix-blend-mode: screen" />
+
+    <rect x="0" y="710" width="1024" height="314" fill="url(#sq-sea)" style="mix-blend-mode: multiply" />
+    <path d="M150 712H874" stroke="url(#sq-waterline)" stroke-width="4" stroke-linecap="round" />
+    <g fill="#FFDAB1" style="mix-blend-mode: screen">
+      <rect x="628" y="748" width="132" height="10" rx="5" fill-opacity="0.5" />
+      <rect x="648" y="790" width="96" height="8" rx="4" fill-opacity="0.33" />
+      <rect x="666" y="828" width="62" height="6" rx="3" fill-opacity="0.2" />
+      <rect x="684" y="860" width="34" height="5" rx="2.5" fill-opacity="0.12" />
+    </g>
+
+    <ellipse cx="500" cy="712" rx="160" ry="22" fill="#080320" fill-opacity="0.55" filter="url(#sq-water-cast)" style="mix-blend-mode: multiply" />
+    <ellipse cx="556" cy="716" rx="104" ry="13" fill="#FFCF9E" fill-opacity="0.3" filter="url(#sq-water-cast)" style="mix-blend-mode: screen" />
+
+    <g transform="translate(0 1424) scale(1 -1)" opacity="0.18" filter="url(#sq-soft)">
+      <path d="M548 232C570 396 606 566 668 676C632 700 586 706 548 706Z" fill="#FFFFFF" />
+    </g>
+
+    <path d="M548 232C492 372 432 560 404 710H548Z" fill="url(#sq-left)" />
+    <g clip-path="url(#sq-left-clip)">
+      <rect x="404" y="232" width="144" height="478" fill="#FFFFFF" opacity="0.12" style="mix-blend-mode: screen" />
+    </g>
+    <path d="M548 238C492 374 434 558 408 704" fill="none" stroke="#FFFFFF" stroke-opacity="0.62" stroke-width="3.4" stroke-linecap="round" />
+    <path d="M548 232C570 396 606 566 668 676C632 700 586 706 548 706Z" fill="url(#sq-right)" filter="url(#sq-sail-cast)" />
+    <path d="M548 240C572 400 608 566 666 672" fill="none" stroke="url(#sq-edge)" stroke-width="4.2" stroke-linecap="round" />
+    <path d="M548 236V704" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="5.4" stroke-linecap="round" />
+    <path d="M553 240V700" stroke="#2A1B78" stroke-opacity="0.26" stroke-width="3.4" stroke-linecap="round" />
+
+    <rect x="0" y="0" width="1024" height="1024" filter="url(#sq-grain)" opacity="0.05" style="mix-blend-mode: overlay" />
+  </g>
+</svg>

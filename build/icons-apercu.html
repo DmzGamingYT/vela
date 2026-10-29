@@ -1,0 +1,82 @@
+<!doctype html><meta charset="utf-8"><style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:1000px;height:900px;font:13px/1.4 -apple-system,'SF Pro Text',sans-serif;color:#1b1b22}
+  h2{margin:0 0 2px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;opacity:.5}
+  .band{padding:22px 40px 30px;position:relative}
+  .light{background:#f4f4f7}
+  .dark{background:#191920;color:#f3f3f8}
+  .row{display:flex;align-items:flex-end;gap:26px;margin-top:14px}
+  .row img{display:block}
+  .cap{font-size:11px;opacity:.55;margin-top:6px;text-align:center}
+  .docked{display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:18px;background:rgba(255,255,255,.55)}
+  .dark .docked{background:rgba(255,255,255,.06)}
+  .dockicons{display:flex;align-items:flex-end;gap:14px}
+  .tabbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:#e6e6ec}
+  .dark .tabbar{background:#1f1f24}
+  .tab{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:9px 9px 0 0;background:#fbfbfd;font-size:12px;box-shadow:0 1px 0 rgba(0,0,0,.05)}
+  .dark .tab{background:#2b2b31;color:#e9e9f0}
+  .menubar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:46px;border-radius:10px;font-size:12px}
+  .mb-light{background:#eeeef2;color:#111}
+  .mb-dark{background:#232329;color:#f4f4f8}
+  .mb-left,.mb-right{display:flex;align-items:center;gap:14px}
+  .mb-item{opacity:.85}
+  .template-white{filter:invert(1)}
+  .divider{height:1px;background:currentColor;opacity:.08;margin:0}
+</style>
+
+<div class="band light">
+  <h2>Icône de l’application — macOS .icns, Windows .ico, Linux 512</h2>
+  <div class="row">
+    <div><img src="icon-1024.png" width="132" height="132"><div class="cap">App, 132</div></div>
+    <div><img src="icon-1024.png" width="96" height="96"><div class="cap">96</div></div>
+    <div><img src="icon-1024.png" width="64" height="64"><div class="cap">64</div></div>
+    <div><img src="icon-1024.png" width="32" height="32"><div class="cap">32</div></div>
+    <div><img src="icon-1024.png" width="16" height="16"><div class="cap">16</div></div>
+  </div>
+  <div class="row">
+    <div class="docked">
+      <img src="icon-1024.png" width="52" height="52">
+      <img src="../site/public/favicon-32x32.png" width="36" height="36">
+      <div class="cap" style="margin:0">Dock</div>
+    </div>
+    <div class="tabbar">
+      <div class="tab"><img src="../site/public/favicon.svg" width="16" height="16"> Vela — le web, votre atelier</div>
+      <div class="tab" style="opacity:.55"><img src="../site/public/favicon.svg" width="16" height="16"> Confidentialité — Vela</div>
+    </div>
+    <div><img src="../site/public/apple-touch-icon.png" width="72" height="72" style="border-radius:16px"><div class="cap">Tactile 180</div></div>
+  </div>
+</div>
+
+<div class="band dark">
+  <h2>Sur fond sombre, et barre de menus (gabarit monochrome)</h2>
+  <div class="row">
+    <div><img src="icon-1024.png" width="132" height="132"><div class="cap">132</div></div>
+    <div><img src="icon-1024.png" width="64" height="64"><div class="cap">64</div></div>
+    <div><img src="icon-1024.png" width="32" height="32"><div class="cap">32</div></div>
+    <div><img src="icon-1024.png" width="16" height="16"><div class="cap">16</div></div>
+    <div style="flex:1"></div>
+    <div><img src="../site/public/favicon.svg" width="16" height="16"><div class="cap">Favicon 16</div></div>
+  </div>
+
+  <div class="row" style="margin-top:18px;flex-direction:column;align-items:stretch;gap:10px">
+    <div class="menubar mb-light">
+      <div class="mb-left"><strong>Vela</strong><span class="mb-item">Fichier</span><span class="mb-item">Édition</span><span class="mb-item">Présentation</span><span class="mb-item">Fenêtre</span></div>
+      <div class="mb-right">
+        <span class="mb-item">mar. 19:20</span>
+        <img src="iconTemplate@2x.png" width="16" height="16" alt="">
+      </div>
+    </div>
+    <div class="menubar mb-dark">
+      <div class="mb-left"><strong>Vela</strong><span class="mb-item">Fichier</span><span class="mb-item">Édition</span><span class="mb-item">Présentation</span><span class="mb-item">Fenêtre</span></div>
+      <div class="mb-right">
+        <span class="mb-item">mar. 19:20</span>
+        <img class="template-white" src="iconTemplate@2x.png" width="16" height="16" alt="">
+      </div>
+    </div>
+    <div style="display:flex;gap:22px;align-items:flex-end;margin-top:6px">
+      <div><img src="iconTemplate@2x.png" width="32" height="32"><div class="cap">32 (2×)</div></div>
+      <div><img src="iconTemplate.png" width="16" height="16"><div class="cap">16 (1×)</div></div>
+      <div class="cap" style="opacity:.45;text-align:left;max-width:420px">Noir sur transparent ; macOS inverse le gabarit selon le thème, d’où les deux rendus ci-dessus.</div>
+    </div>
+  </div>
+</div>
