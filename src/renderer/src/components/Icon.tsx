@@ -185,10 +185,13 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   circle: <circle cx="12" cy="12" r="8" />,
+  // Anneau percé, tige longue et deux dents de même longueur : sans le trou
+  // ni les dents égales, la clé se lit comme le symbole masculin ♂.
   key: (
     <>
-      <circle cx="7.5" cy="12" r="3.5" />
-      <path d="M11 12h9.5M16.5 12v3M19.5 12v2.2" />
+      <circle cx="6.5" cy="12" r="3.6" />
+      <circle cx="6.5" cy="12" r="1.1" />
+      <path d="M10.1 12H21M17.2 12v3.4M20.6 12v3.4" />
     </>
   ),
   keyboard: (

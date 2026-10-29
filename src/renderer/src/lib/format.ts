@@ -39,7 +39,12 @@ export function initials(value: string): string {
   if (!clean) return '·'
   const words = clean.split(/\s+/).filter(Boolean)
   if (words.length === 1) return clean.slice(0, 1).toUpperCase()
-  return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase()
+  const head = words[0][0] ?? ''
+  const last = words[words.length - 1]
+  // Un numéro final garde deux chiffres : « Favori 1 », « Favori 10 » et
+  // « Favori 14 » ne peuvent pas partager la même pastille.
+  const tail = /^\d/.test(last) ? last.slice(0, 2) : (last[0] ?? '')
+  return `${head}${tail}`.toUpperCase()
 }
 
 const TINTS = ['#C8623E', '#2F6B5B', '#5058C8', '#B08230', '#7B4B6B', '#3D6E9E']

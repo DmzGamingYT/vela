@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { canonicalUrl, hostOf, normalizeInput, readableTitle, SEARCH_ENGINES } from '@shared/url'
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import { canonicalUrl, hostOf, isHomeUrl, readableTitle, SEARCH_ENGINES } from '@shared/url'
 import { DRAGON_THEME, resolveThemeId } from '@shared/theme'
 import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
@@ -61,6 +61,7 @@ interface Tile {
 export default function StartPage({ tabId }: { tabId: string }) {
   const view = useBrowser((state) => state.view)
   const navigate = useBrowser((state) => state.navigate)
+  const focusAddress = useBrowser((state) => state.focusAddress)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const openAgent = useBrowser((state) => state.openAgent)
   const updateSettings = useBrowser((state) => state.updateSettings)
@@ -78,9 +79,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
       return next
     })
   }
-  const [query, setQuery] = useState('')
-  // Vrai pendant la saisie d'une ville : la recherche de l'accueil se retire
-  // pour ne jamais montrer plus de deux champs à la fois.
+  // Vrai pendant la saisie d'une ville : l'invite de recherche s'efface pour
+  // qu'un seul champ à la fois soit en jeu.
   const [cityEditing, setCityEditing] = useState(false)
   const [calm, setCalm] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -222,35 +222,18 @@ export default function StartPage({ tabId }: { tabId: string }) {
   }
   const onlyStarters = tiles.every((tile) => tile.kind === 'starter')
 
-  // Le compteur suit exactement ce que la barre latérale montre pour cet
-  // espace : onglet d'accueil compris, puisqu'il y figure comme les autres.
-  const openTabs = view.tabs.filter((tab) => tab.spaceId === spaceId).length
+  // L'accueil ne compte pas comme une page : une fenêtre qui ne montre que son
+  // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
+  // latérale, où ce même accueil figure comme un onglet.
+  const openPages = view.tabs.filter((tab) => tab.spaceId === spaceId && !isHomeUrl(tab.url)).length
   const pages = view.brief.pages
   const pagesLabel = `${pages} page${pages > 1 ? 's' : ''} cette semaine`
   const lede =
-    openTabs === 0
-      ? `Aucun onglet ouvert · ${pagesLabel}`
-      : `${openTabs} onglet${openTabs > 1 ? 's' : ''} ouvert${openTabs > 1 ? 's' : ''} · ${pagesLabel}`
+    openPages === 0
+      ? `Aucune page ouverte · ${pagesLabel}`
+      : `${openPages} page${openPages > 1 ? 's' : ''} ouverte${openPages > 1 ? 's' : ''} · ${pagesLabel}`
 
 
-  const trimmed = query.trim()
-  const preview = trimmed ? normalizeInput(trimmed, settings.searchEngine, settings.searxInstance) : null
-  const hint = !trimmed
-    ? 'Entrée pour ouvrir la palette'
-    : preview?.kind === 'url'
-      ? `Ouvrir ${hostOf(preview.url)}`
-      : `Rechercher sur ${engine}`
-
-  const submit = (event: FormEvent): void => {
-    event.preventDefault()
-    if (!trimmed) {
-      setOverlay('command')
-      return
-    }
-    const target = normalizeInput(trimmed, settings.searchEngine, settings.searxInstance)
-    navigate(tabId, target.url)
-    setQuery('')
-  }
 
   const parallax = (event: ReactPointerEvent<HTMLDivElement>): void => {
     if (calm) return
@@ -413,29 +396,25 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </section>
         )}
 
+        {/* Un seul champ de saisie dans toute la fenêtre : celui de la barre
+            d'adresse. L'accueil n'en affiche pas un second, il y conduit. */}
         <section className="home-search" aria-label="Recherche" hidden={cityEditing}>
-          <form className="home-field" onSubmit={submit}>
+          <button
+            type="button"
+            className="home-field home-field-button"
+            title="Saisir dans la barre d’adresse"
+            aria-label={`Chercher, saisir une adresse ou demander à l’agent — ${shortcut('L')}`}
+            onClick={() => focusAddress()}
+          >
             <span className="home-field-icon">
               <Icon name="search" size={16} />
             </span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') setQuery('')
-              }}
-              placeholder="Rechercher, saisir une adresse ou demander à l’agent"
-              aria-label="Rechercher, saisir une adresse ou demander à l’agent"
-              spellCheck={false}
-            />
-            <span className="home-field-hint" aria-hidden="true">
-              {hint}
-            </span>
-            <kbd>{shortcut('K')}</kbd>
-            <button type="submit" className="home-go" title="Ouvrir (Entrée)" aria-label="Ouvrir">
+            <span className="home-field-text">Chercher, saisir une adresse ou demander à l’agent</span>
+            <kbd>{shortcut('L')}</kbd>
+            <span className="home-go" aria-hidden="true">
               <Icon name="arrow-right" size={15} />
-            </button>
-          </form>
+            </span>
+          </button>
 
           <div className="home-chips">
             <button type="button" className="home-chip" onClick={() => setOverlay('command')}>

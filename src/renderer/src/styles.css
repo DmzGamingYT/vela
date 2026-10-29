@@ -10985,6 +10985,32 @@ html[data-mode="dark"] {
     0 26px 60px -34px rgba(var(--glow), 0.6), var(--inner-light);
 }
 
+/* L'accueil ne montre pas un second champ de saisie : il conduit à celui de la
+   barre d'adresse. Le visuel reste, le champ n'est plus. */
+.home-field-button {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-field-button:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent),
+    0 26px 60px -34px rgba(var(--glow), 0.6), var(--inner-light);
+}
+
+.home-field-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-field-icon {
   display: grid;
   place-items: center;
