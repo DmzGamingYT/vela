@@ -594,7 +594,7 @@ export default function CommandBar() {
         </div>
 
         <div className="command-filters" role="tablist" aria-label="Filtres">
-          {([['all', 'Tout'], ['tabs', 'Onglets'], ['notes', 'Notes'], ['tasks', 'Tâches'], ['history', 'Historique'], ['downloads', 'DL']] as [Filter, string][]).map(([id, label]) => (
+          {([['all', 'Tout'], ['tabs', 'Onglets'], ['notes', 'Notes'], ['tasks', 'Tâches'], ['history', 'Historique'], ['downloads', 'Téléchargements']] as [Filter, string][]).map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={filter === id} className="command-filter" data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>
           ))}
         </div>

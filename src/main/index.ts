@@ -1,7 +1,9 @@
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   app,
   BrowserWindow,
+  dialog,
   globalShortcut,
   Menu,
   nativeImage,
@@ -65,6 +67,36 @@ process.on('unhandledRejection', (reason) => journalFault('promesse rejetée', r
 
 let browser: Browser | null = null
 let win: BrowserWindow | null = null
+
+/** Autorise uniquement l'origine Vite en développement ou le HTML empaqueté exact. */
+function isAllowedShellNavigation(url: string): boolean {
+  try {
+    const target = new URL(url)
+    const dev = process.env['ELECTRON_RENDERER_URL']
+    if (dev) {
+      const expected = new URL(dev)
+      return (
+        (expected.protocol === 'http:' || expected.protocol === 'https:') &&
+        target.origin === expected.origin &&
+        target.pathname === expected.pathname &&
+        target.username === '' &&
+        target.password === ''
+      )
+    }
+
+    const rendererFile = resolve(join(__dirname, '../renderer/index.html'))
+    return (
+      target.protocol === 'file:' &&
+      target.host === '' &&
+      fileURLToPath(target) === rendererFile &&
+      target.search === '' &&
+      target.hash === '' &&
+      pathToFileURL(rendererFile).protocol === target.protocol
+    )
+  } catch {
+    return false
+  }
+}
 
 function createWindow(): void {
   const store = browser!.store
@@ -136,9 +168,7 @@ function createWindow(): void {
     return { action: 'deny' }
   })
   shellWindow.webContents.on('will-navigate', (event, url) => {
-    const dev = process.env['ELECTRON_RENDERER_URL']
-    const allowed = dev ? url.startsWith(dev) : url.startsWith('file://')
-    if (!allowed) event.preventDefault()
+    if (!isAllowedShellNavigation(url)) event.preventDefault()
   })
 
   if (process.env['ELECTRON_RENDERER_URL']) {
@@ -215,7 +245,14 @@ function main(): void {
 
   app.whenReady().then(() => {
     applySessionIdentity(session.defaultSession)
-    browser = new Browser(app.getPath('userData'))
+    try {
+      browser = new Browser(app.getPath('userData'))
+    } catch (error) {
+      journalFault('démarrage impossible', error)
+      dialog.showErrorBox('Impossible d’ouvrir Vela', error instanceof Error ? error.message : 'Les données n’ont pas pu être chargées.')
+      app.quit()
+      return
+    }
     initUpdater((channel, payload) => {
       if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)
     })

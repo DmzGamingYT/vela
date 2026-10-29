@@ -190,10 +190,19 @@ describe('site — version et téléchargements', () => {
   })
 
   it('donne une empreinte SHA-256 par installateur, toutes différentes', () => {
-    const sums = [...home.matchAll(/class="sum">([0-9a-f ]{11,})…/g)].map((match) => match[1].replace(/\s/g, ''))
-    expect(sums.length).toBe(files.length)
+    // Une ligne du tableau de téléchargement : son fichier, l'aperçu tronqué et
+    // l'empreinte complète que le bouton « copier » met dans le presse-papier.
+    const rows = [...home.matchAll(/<td class="file">[\s\S]*?<\/tr>/g)].map((match) => match[0])
+    expect(rows.length).toBe(files.length)
+    const sums = rows.map((row) => {
+      const shown = ((row.match(/<code>([0-9a-f ]{8,})…<\/code>/) || [])[1] || '').replace(/\s/g, '')
+      const full = (row.match(/data-copy="([0-9a-f]{64})"/) || [])[1] || ''
+      expect(full, 'empreinte complète').toMatch(/^[0-9a-f]{64}$/)
+      // L'aperçu affiché doit bien être le début de l'empreinte copiée.
+      expect(full.startsWith(shown), 'aperçu conforme à l’empreinte').toBe(true)
+      return full
+    })
     expect(new Set(sums).size).toBe(sums.length)
-    for (const sum of sums) expect(sum).toMatch(/^[0-9a-f]{8,}$/)
   })
 
   it('n’annonce aucune version plus récente que la version courante', () => {

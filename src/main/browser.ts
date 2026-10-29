@@ -233,7 +233,17 @@ export class Browser {
       () => this.store.get().settings,
       (provider: ProviderId) => this.store.getSecret(provider),
       (tabId) => this.tabs.excerpt(tabId),
-      (work) => this.recordWork(work)
+      (work) => this.recordWork(work),
+      {
+        // L'agent agit dans un onglet neuf de l'espace : il ne prend jamais la
+        // page que l'utilisateur est en train de lire.
+        open: (spaceId, url) => this.openAgentTab(spaceId, url),
+        go: async (tabId, url) => {
+          this.tabs.navigate(tabId, url)
+          await this.waitForLoad(tabId)
+        },
+        contents: (tabId) => this.tabs.contentOf(tabId)
+      }
     )
     this.comic = new ComicBridge(
       this.tabs,
@@ -595,10 +605,23 @@ export class Browser {
     const url = typeof input.url === 'string' && input.url ? input.url : HOME_URL
     const pinned = Boolean(input.pinned)
     // Une seule page d'accueil par espace : ⌘T ramène à celle qui existe.
+    // Le « + » d'un dossier la réclame ailleurs : elle le rejoint plutôt que
+    // d'en créer une seconde, sinon le bouton semblerait sans effet.
     if (isHomeUrl(url) && !pinned) {
       const home = state.tabs.find((tab) => tab.spaceId === spaceId && !tab.pinned && isHomeUrl(tab.url))
       if (home) {
+        const target =
+          typeof input.groupId === 'string'
+            ? state.groups.find((item) => item.id === input.groupId && item.spaceId === spaceId)
+            : undefined
+        if (target && home.groupId !== target.id) {
+          home.groupId = target.id
+          if (target.collapsed) target.collapsed = false
+          this.store.schedule()
+          this.broadcast()
+        }
         if (input.activate !== false) this.activateTab(home.id)
+        else this.broadcast()
         return home
       }
     }
@@ -1148,7 +1171,7 @@ export class Browser {
   }
 
   private runAgent(input: unknown): { runId: string } {
-    const payload = (input ?? {}) as { prompt?: unknown; sources?: unknown; spaceId?: unknown }
+    const payload = (input ?? {}) as { prompt?: unknown; sources?: unknown; spaceId?: unknown; mode?: unknown }
     const prompt = asString(payload.prompt).slice(0, 8000)
     this.tabs.markAgentSent(this.agentSentTabIds, false)
     this.agentSentTabIds.clear()
@@ -1186,8 +1209,37 @@ export class Browser {
     return this.agent.start({
       prompt,
       sources,
-      spaceId: asString(payload.spaceId) || this.store.get().activeSpaceId
+      spaceId: asString(payload.spaceId) || this.store.get().activeSpaceId,
+      mode: payload.mode === 'act' ? 'act' : 'answer'
     })
+  }
+
+  /** Onglet de travail de l'agent : neuf, au premier plan, chargé. */
+  private async openAgentTab(spaceId: string, url: string): Promise<string> {
+    const tab = this.createTab({ spaceId, url })
+    this.focusActive()
+    const deadline = Date.now() + 8000
+    while (Date.now() < deadline) {
+      if (this.tabs.contentOf(tab.id)) break
+      await new Promise((resolve) => setTimeout(resolve, 60))
+    }
+    await this.waitForLoad(tab.id)
+    return tab.id
+  }
+
+  /** Attend la fin du chargement, sans bloquer indéfiniment sur une page morte. */
+  private async waitForLoad(tabId: string): Promise<void> {
+    const deadline = Date.now() + 20_000
+    let calm = 0
+    while (Date.now() < deadline) {
+      const wc = this.tabs.contentOf(tabId)
+      if (!wc) return
+      if (wc.isLoading()) calm = 0
+      else calm += 1
+      // Deux mesures calmes d'affilée : la navigation a eu le temps de démarrer.
+      if (calm >= 2 && /^https?:/i.test(wc.getURL())) return
+      await new Promise((resolve) => setTimeout(resolve, 120))
+    }
   }
 
   /**

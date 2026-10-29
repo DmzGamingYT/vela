@@ -4,6 +4,7 @@ import type { SourceType, TunnelFilters, TunnelMap } from '@shared/tunnel'
 import {
   detectTensions,
   looksFrench,
+  relevanceReason,
   scoreConfidence,
   scoreRelevance,
   suggestQueryFix,
@@ -63,7 +64,10 @@ function decodeEntities(value: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'")
     .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_match, code: string) => String.fromCharCode(Number(code)))
+    // Entités numériques : Hacker News écrit les apostrophes en hexadécimal
+    // (&#x27;), d’autres pages en décimal.
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code: string) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (_match, code: string) => String.fromCodePoint(Number(code)))
 }
 
 function firstMatch(value: string, pattern: RegExp): string | undefined {
@@ -339,9 +343,34 @@ function cleanText(value: string): string {
   return decodeEntities(value.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * Blocs qui ne sont pas du texte lu par un humain. Les scripts sont retirés
+ * avant toute lecture de paragraphe : un `<p>` dans un script n’est pas un
+ * extrait de page.
+ */
+function withoutNoise(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<template[\s\S]*?<\/template>/gi, ' ')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, ' ')
+}
+
+/** Contenu d’une balise meta, quel que soit l’ordre de ses attributs. */
+export function metaContent(html: string, key: string): string | undefined {
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const name = /\b(?:name|property)\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.trim().toLowerCase()
+    if (name !== key) continue
+    const text = cleanText(/\bcontent\s*=\s*["']([^"']*)["']/i.exec(tag)?.[1] ?? '')
+    if (text) return text
+  }
+  return undefined
+}
+
 /** Paragraphes utiles d’une page : évite les menus, formulaires et bandeaux. */
-function mainParagraphs(html: string): string {
-  const paragraphs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi), (match) => cleanText(match[1]))
+export function mainParagraphs(html: string): string {
+  const paragraphs = Array.from(withoutNoise(html).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi), (match) => cleanText(match[1]))
     .filter((text) => text.length > 90)
     .filter(
       (text) =>
@@ -366,14 +395,20 @@ async function snapshotPage(url: string, signal: AbortSignal): Promise<PageSnaps
     }
     const html = (await response.text()).slice(0, 400_000)
     const title = firstMatch(html, /<title[^>]*>([\s\S]*?)<\/title>/i)
-    const description = firstMatch(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+    // og:description d’abord : c’est le résumé que la page destine au partage,
+    // donc du texte rédigé, jamais un bout de script.
+    const description =
+      metaContent(html, 'og:description') ??
+      metaContent(html, 'description') ??
+      metaContent(html, 'twitter:description')
     const body = readableText(html)
-    const excerpt = mainParagraphs(html) || body.slice(0, 900)
+    const paragraphs = mainParagraphs(html)
+    const excerpt = (description ? `${description}\n\n` : '') + (paragraphs || body.slice(0, 900))
     return {
       ok: true,
       reachable: true,
       title: title?.replace(/\s+/g, ' ').trim(),
-      excerpt: (description ? `${description} ` : '') + excerpt.slice(0, 900)
+      excerpt: excerpt.slice(0, 900)
     }
   } catch {
     return { ok: false, reachable: false }
@@ -408,12 +443,17 @@ interface RunState {
   query: string
 }
 
-const ANGLE_COPY: Record<string, { title: string; summary: string }> = {
-  ddg: { title: 'Sites web', summary: 'Pages trouvées sur le web, vérifiées une par une.' },
-  wikipedia: { title: 'Panorama', summary: 'Définitions et synthèses encyclopédiques.' },
-  arxiv: { title: 'Travaux', summary: 'Articles et recherches académiques.' },
+/**
+ * Lentilles de lecture de la carte. Ce ne sont pas des types de source :
+ * chaque angle dit ce qu'il apporte au sujet, et la raison du nœud nomme le
+ * fournisseur qui l'a servi.
+ */
+export const ANGLES: Record<string, { title: string; summary: string }> = {
+  ddg: { title: 'Vue d’ensemble', summary: 'Pages publiques consacrées au sujet.' },
+  wikipedia: { title: 'Définitions', summary: 'Repères et synthèses encyclopédiques.' },
+  arxiv: { title: 'Études', summary: 'Travaux de recherche et articles académiques.' },
   gdelt: { title: 'Actualité', summary: 'Articles de presse récents.' },
-  hn: { title: 'Débats', summary: 'Discussions et retours d’expérience.' }
+  hn: { title: 'Retours d’expérience', summary: 'Discussions de praticiens et avis argumentés.' }
 }
 
 export class TunnelService {
@@ -498,52 +538,44 @@ export class TunnelService {
     }
 
     const searchOne = async (provider: TunnelProvider): Promise<void> => {
-      const copy = ANGLE_COPY[provider.id] ?? { title: provider.label, summary: '' }
-      const angleId = randomUUID()
-      const angle: MapNode = {
-        id: angleId,
-        kind: 'angle',
-        title: parent ? `${copy.title} · ${query}` : copy.title,
-        summary: copy.summary,
-        relevance: 100,
-        confidence: 80,
-        reason: `Recherche ${provider.label.toLowerCase()} pour « ${query} ».`,
-        status: 'neutral',
-        parentId: containerParent,
-        createdAt: Date.now(),
-        relation: 'se décompose en'
-      }
-      pushNode(angle)
-      emit({ runId, type: 'phase', message: `Recherche ${copy.title.toLowerCase()}…` })
+      const lens = ANGLES[provider.id] ?? { title: provider.label, summary: '' }
+      emit({ runId, type: 'phase', message: `Recherche ${lens.title.toLowerCase()}…` })
 
       let raw: RawSource[] = []
       try {
         raw = await provider.search(query, controller.signal)
-      } catch (error) {
-        emit({
+      } catch (error) {        emit({
           runId,
           type: 'phase',
-          message: `${copy.title} indisponible (${error instanceof Error ? error.message : 'réseau'}).`
+          message: `${lens.title} indisponible (${error instanceof Error ? error.message : 'réseau'}).`
         })
       }
       if (controller.signal.aborted) return
+
       raw = raw.filter((source) => /^https?:/i.test(source.url)).slice(0, 6)
 
       const fresh = raw.filter((source) => !seen.has(source.url))
       for (const source of fresh) seen.add(source.url)
-      const verified: { source: RawSource; page: PageSnapshot }[] = await Promise.all(
-        fresh.map(async (source) => ({
-          source,
-          page: source.verified
-            ? { ok: true, reachable: true, title: source.title, excerpt: source.snippet ?? '' }
-            : await snapshotPage(source.url, controller.signal)
-        }))
+      // Chaque page est réellement ouverte. Une notice d'API (arXiv) reste
+      // utile quand la page refuse l'accès, mais elle est alors marquée comme
+      // non récupérée : l'interface ne peut plus prétendre l'inverse.
+      const verified: { source: RawSource; page: PageSnapshot; notice?: boolean }[] = await Promise.all(
+        fresh.map(async (source) => {
+          const page = await snapshotPage(source.url, controller.signal)
+          if (page.ok || !source.verified || !source.snippet) return { source, page }
+          return {
+            source,
+            page: { ok: true, reachable: false, title: source.title, excerpt: source.snippet },
+            notice: true
+          }
+        })
       )
       if (controller.signal.aborted) return
 
-      const withPages = verified.map(({ source, page }) => ({
+      const withPages = verified.map(({ source, page, notice }) => ({
         source,
         page,
+        notice,
         title: (page.title || source.title || '').trim().slice(0, 180) || source.url,
         excerpt: (page.excerpt || source.snippet || '').trim().slice(0, 1200),
         domain: domainOf(source.url)
@@ -552,14 +584,14 @@ export class TunnelService {
       // Pertinence d’abord : un hors-sujet franc ne crée aucun nœud et ne
       // compte pas dans la densité qui décide des sous-angles.
       const scored = withPages
-        .map((entry) => ({
-          ...entry,
-          relevance: scoreRelevance(query, {
-            title: entry.title,
-            excerpt: entry.excerpt,
-            domain: entry.domain
-          })
-        }))
+        .map((entry) => {
+          const candidate = { title: entry.title, excerpt: entry.excerpt, domain: entry.domain }
+          return {
+            ...entry,
+            relevance: scoreRelevance(query, candidate),
+            relevanceReason: relevanceReason(query, candidate)
+          }
+        })
         .filter((entry) => entry.relevance >= 35)
 
       // Diversité : deux pages maximum par domaine, les mieux classées d’abord.
@@ -569,6 +601,38 @@ export class TunnelService {
         if (count >= 2) return false
         perDomain.set(entry.domain, count + 1)
         return true
+      })
+
+      // Aucune page retenue : pas d'angle vide qui laisse croire à un résultat.
+      if (diverse.length === 0) {
+        emit({
+          runId,
+          type: 'phase',
+          message: fresh.length === 0
+            ? `${lens.title} : aucun résultat.`
+            : `${lens.title} : ${fresh.length} page${fresh.length > 1 ? 's' : ''} examinée${fresh.length > 1 ? 's' : ''}, aucune retenue.`
+        })
+        return
+      }
+
+      // L'angle porte une lentille de lecture (contexte, études, presse…) ; le
+      // fournisseur n'est plus qu'une provenance, citée dans la raison.
+      const angleId = randomUUID()
+      const angleRelevance = Math.round(
+        diverse.reduce((sum, entry) => sum + entry.relevance, 0) / diverse.length
+      )
+      pushNode({
+        id: angleId,
+        kind: 'angle',
+        title: parent ? `${lens.title} · ${query}` : lens.title,
+        summary: lens.summary,
+        relevance: angleRelevance,
+        confidence: 80,
+        reason: `Recherche ${provider.label.toLowerCase()} pour « ${query} » : ${diverse.length} page${diverse.length > 1 ? 's' : ''} retenue${diverse.length > 1 ? 's' : ''}.`,
+        status: 'neutral',
+        parentId: containerParent,
+        createdAt: Date.now(),
+        relation: 'se décompose en'
       })
 
       // Sous-angles réels : un thème commun aux pages (« Outils », « Guides »,
@@ -595,7 +659,7 @@ export class TunnelService {
           kind: 'subangle',
           title,
           summary: `Sources classées « ${title} » pour « ${query} ».`,
-          relevance: 100,
+          relevance: Math.round(entries.reduce((sum, entry) => sum + entry.relevance, 0) / entries.length),
           confidence: 75,
           reason: 'Thème commun aux pages récupérées.',
           status: 'neutral',
@@ -627,12 +691,15 @@ export class TunnelService {
           relevance,
           confidence,
           publishedAt: entry.source.publishedAt,
-          reason: `Trouvé par ${provider.label.toLowerCase()} pour « ${query} »${entry.page.reachable ? '' : ', page inaccessible'}.`,
+          reason: entry.notice
+            ? `Notice ${provider.label} pour « ${query} » : la page n’a pas été ouverte, seul le résumé de l’API est repris.`
+            : `Trouvé par ${provider.label.toLowerCase()} pour « ${query} »${entry.page.reachable ? '' : ', page inaccessible'}.`,
           status: 'neutral',
           parentId,
           createdAt: Date.now(),
           excerpt: entry.excerpt,
           reachable: entry.page.reachable,
+          relevanceReason: entry.relevanceReason,
           relation: 'cite',
           lang: looksFrench(`${entry.title} ${entry.excerpt.slice(0, 400)}`) ? 'fr' : 'en'
         }

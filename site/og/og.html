@@ -2,18 +2,29 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
+    <title>Vela — visuel de partage 1200×630</title>
     <style>
       * {
         margin: 0;
         box-sizing: border-box;
       }
 
+      :root {
+        --paper: #faf8f5;
+        --surface: #fffdfa;
+        --ink: #1b1a18;
+        --ink-2: #5d574f;
+        --ink-3: #6f6860;
+        --accent: #5b5bd6;
+        --line: rgba(27, 26, 24, 0.12);
+      }
+
       body {
         width: 1200px;
         height: 630px;
         overflow: hidden;
-        background: #151518;
-        color: #f3f1ee;
+        background: var(--paper);
+        color: var(--ink);
         font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
@@ -22,36 +33,38 @@
         position: relative;
         width: 100%;
         height: 100%;
-        padding: 64px 68px;
-        display: flex;
+        padding: 58px 64px;
+        display: grid;
+        grid-template-columns: 470px 1fr;
+        gap: 46px;
         align-items: center;
-        gap: 56px;
         background:
-          radial-gradient(720px 460px at 88% 12%, rgba(168, 163, 255, 0.2), transparent 70%),
-          radial-gradient(560px 420px at 6% 96%, rgba(168, 163, 255, 0.08), transparent 72%),
-          #151518;
+          radial-gradient(620px 420px at 96% 4%, rgba(91, 91, 214, 0.16), transparent 68%),
+          radial-gradient(520px 360px at 2% 100%, rgba(91, 91, 214, 0.07), transparent 70%),
+          var(--paper);
       }
 
       .frame::after {
         content: "";
         position: absolute;
-        inset: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
+        inset: 18px;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        pointer-events: none;
       }
 
       .copy {
         position: relative;
-        z-index: 1;
-        width: 660px;
+        z-index: 2;
       }
 
       .kicker {
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #928d86;
-        font-size: 14px;
+        gap: 9px;
+        color: var(--ink-3);
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 13px;
         letter-spacing: 0.16em;
         text-transform: uppercase;
       }
@@ -60,56 +73,57 @@
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #a8a3ff;
+        background: var(--accent);
       }
 
       h1 {
-        margin: 26px 0 0;
-        font-family: "Iowan Old Style", Georgia, serif;
-        font-size: 88px;
+        margin-top: 24px;
+        font-family: "Iowan Old Style", Palatino, Georgia, serif;
+        font-size: 76px;
         font-weight: 400;
         line-height: 0.98;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.025em;
       }
 
       h1 em {
-        color: #a8a3ff;
+        color: var(--accent);
         font-style: italic;
       }
 
       .sub {
-        margin-top: 26px;
-        color: #b3aea7;
-        font-size: 21px;
+        margin-top: 24px;
+        max-width: 24ch;
+        color: var(--ink-2);
+        font-size: 20px;
         line-height: 1.5;
       }
 
       .foot {
-        margin-top: 40px;
-        color: #928d86;
-        font-size: 14.5px;
+        margin-top: 34px;
+        color: var(--ink-3);
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 13px;
         letter-spacing: 0.02em;
       }
 
-      .mock {
+      .shot {
         position: relative;
         z-index: 1;
-        flex: 1;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 18px;
-        background: #1c1c21;
-        box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 44px 80px -34px rgba(48, 38, 24, 0.55);
         overflow: hidden;
       }
 
       .bar {
         display: flex;
         align-items: center;
-        gap: 14px;
-        height: 42px;
+        gap: 12px;
+        height: 38px;
         padding: 0 14px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        background: #202027;
+        border-bottom: 1px solid var(--line);
+        background: #f6f2ea;
       }
 
       .dots {
@@ -121,137 +135,45 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.18);
+        background: rgba(27, 26, 24, 0.16);
       }
 
-      .omni {
+      .addr {
         flex: 1;
-        height: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
         border-radius: 999px;
-        background: #151518;
-      }
-
-      .stage {
-        padding: 26px 22px 24px;
-      }
-
-      .stage p {
-        color: #928d86;
-        font-size: 12px;
-        text-align: center;
-      }
-
-      .stage strong {
-        display: block;
-        margin: 4px 0 18px;
-        font-family: "Iowan Old Style", Georgia, serif;
-        font-size: 22px;
-        font-weight: 400;
-        text-align: center;
-      }
-
-      .palette {
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 12px;
-        background: rgba(30, 30, 36, 0.92);
-        overflow: hidden;
-      }
-
-      .field {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 12.5px;
-      }
-
-      .field code {
+        background: var(--surface);
+        color: var(--ink-3);
         font-family: ui-monospace, Menlo, monospace;
-        font-size: 11px;
-        color: #f3f1ee;
+        font-size: 10.5px;
       }
 
-      .caret {
-        width: 1.5px;
-        height: 12px;
-        background: #a8a3ff;
-      }
-
-      .field span {
-        margin-left: auto;
-        padding: 2px 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 5px;
-        color: #928d86;
-        font-size: 10px;
-      }
-
-      .row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        color: #b3aea7;
-        font-size: 12px;
-      }
-
-      .row + .row {
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .row.on {
-        background: rgba(168, 163, 255, 0.14);
-        color: #f3f1ee;
-      }
-
-      .row small {
-        margin-left: auto;
-        color: #928d86;
-        font-size: 9px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .row b {
-        padding: 1px 5px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-        color: #928d86;
-        font-size: 9px;
-        font-weight: 400;
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
       }
     </style>
   </head>
   <body>
     <div class="frame">
       <div class="copy">
-        <p class="kicker"><i></i> Vela · v0.1.13</p>
+        <p class="kicker"><i></i> Vela · v0.3.15</p>
         <h1>Le web,<br /><em>votre atelier.</em></h1>
-        <p class="sub">Onglets verticaux. Espaces isolés.<br />Un agent qui lit les pages que vous joignez.</p>
-        <p class="foot">macOS · Windows · Linux — sans compte ni télémétrie</p>
+        <p class="sub">Onglets verticaux, espaces isolés, notes locales. L’atelier s’ouvre quand vous en avez besoin.</p>
+        <p class="foot">macOS · Windows · Linux — gratuit, MIT, sans compte</p>
       </div>
 
-      <div class="mock">
+      <div class="shot">
         <div class="bar">
           <span class="dots"><span></span><span></span><span></span></span>
-          <span class="omni"></span>
+          <span class="addr">vela.local — Accueil</span>
         </div>
-        <div class="stage">
-          <p>Bonjour</p>
-          <strong>Qu’est-ce qu’on fait ?</strong>
-          <div class="palette">
-            <div class="field">
-              <i class="caret"></i>
-              <code>com</code>
-              <span>Échap</span>
-            </div>
-            <div class="row on">Comparer les onglets joints <small>Atelier</small><b>⌘J</b></div>
-            <div class="row">Passer en Work <small>Mode</small><b>⌘⇧A</b></div>
-            <div class="row">Brief du jour <small>Accueil</small><b>⌘⇧B</b></div>
-          </div>
-        </div>
+        <img src="../public/captures/accueil-clair-1080.jpg" alt="" />
       </div>
     </div>
   </body>

@@ -540,6 +540,16 @@ export class TabManager {
   }
 
   /**
+   * Contenu vivant d'un onglet, accueil compris : c'est la page que l'agent
+   * pilote. `null` si l'onglet est en veille ou détruit.
+   */
+  contentOf(tabId: string): Electron.WebContents | null {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return null
+    return view.webContents
+  }
+
+  /**
    * Vue encore vivante d'un onglet, pour en prendre une capture avant de le
    * fermer. `null` si l'onglet est en veille ou si sa page a échoué.
    */

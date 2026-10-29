@@ -31,6 +31,8 @@ export interface MapNode {
   createdAt: number
   excerpt?: string
   reachable?: boolean
+  /** Ce que la mesure de pertinence a vu, pour ne pas afficher un score sec. */
+  relevanceReason?: string
   /** Étiquette du lien depuis le parent (« se décompose en », « cite »…). */
   relation?: string
   /** Langue dominante de la page, pour l’entonnoir. */
@@ -134,7 +136,12 @@ export function tokenize(value: string): string[] {
 }
 
 export function looksFrench(query: string): boolean {
-  return /\b(le|la|les|des|du|de|un|une|pour|comment|pourquoi|est|sont|avec|sur|dans|quand)\b/i.test(query)
+  const words = /\b(le|la|les|des|du|de|un|une|pour|comment|pourquoi|est|sont|avec|sur|dans|quand|quel|quelle|quels|quelles|sans|plus|aux|ce|cette|ces)\b/i
+  if (words.test(query)) return true
+  // Accents et ligatures du français : « vélo cargo » est une requête
+  // française même sans petit mot grammatical, et interroger Wikipédia en
+  // anglais pour la traduire ne donne que des pages hors sujet.
+  return /[àâäçéèêëîïôöùûüÿœæ]/i.test(query)
 }
 
 /**
@@ -157,27 +164,68 @@ const INTENT_WORDS = new Set([
   'meilleur','meilleure','meilleurs','meilleures','bon','bonne','quel','quelle','quels','quelles'
 ])
 
-/** Couverture des mots de la requête par le titre, l'extrait et le domaine. */
+function queryTokens(query: string): string[] {
+  const raw = Array.from(new Set(tokenize(query).filter((word) => !INTENT_WORDS.has(word))))
+  return Array.from(new Set((raw.length > 0 ? raw : tokenize(query)).map(stem)))
+}
+
+/**
+ * Couverture des mots de la requête par le titre, l'extrait et le domaine.
+ *
+ * Un score de 100 % laisserait croire à une certitude : la mesure reste une
+ * heuristique lexicale. Elle est donc plafonnée, et un mot unique trouvé dans
+ * le seul titre ne suffit pas à classer une page au maximum.
+ */
 export function scoreRelevance(
   query: string,
   candidate: { title: string; excerpt?: string; domain?: string }
 ): number {
-  const raw = Array.from(new Set(tokenize(query)
-    .filter((word) => !INTENT_WORDS.has(word))))
-  const wanted = Array.from(new Set((raw.length > 0 ? raw : tokenize(query)).map(stem)))
+  const wanted = queryTokens(query)
   if (wanted.length === 0) return 0
   const title = new Set(tokenize(candidate.title).map(stem))
   const excerpt = tokenize(candidate.excerpt ?? '').map(stem)
   const excerptSet = new Set(excerpt)
   const domain = new Set(tokenize(candidate.domain ?? '').map(stem))
   let score = 0
+  let inTitle = 0
   for (const token of wanted) {
-    if (title.has(token)) score += 1
-    else if (excerptSet.has(token)) score += 0.6
-    else if (domain.has(token)) score += 0.4
-    else if (excerpt.some((word) => word.startsWith(token.slice(0, 5)))) score += 0.25
+    if (title.has(token)) {
+      score += 1
+      inTitle += 1
+    } else if (excerptSet.has(token)) score += 0.55
+    else if (domain.has(token)) score += 0.35
+    else if (excerpt.some((word) => word.startsWith(token.slice(0, 5)))) score += 0.2
   }
-  return Math.round(Math.min(100, (score / wanted.length) * 100))
+  let percent = (score / wanted.length) * 100
+  // Un seul mot, présent seulement dans le titre : page probablement juste,
+  // mais rien ne prouve qu'elle traite le sujet plutôt qu'un homonyme.
+  if (wanted.length === 1 && inTitle === 1) {
+    const domainMatch = domain.has(wanted[0]) ? 6 : 0
+    percent = Math.min(percent, 88 + domainMatch)
+  }
+  return Math.round(Math.max(0, Math.min(97, percent)))
+}
+
+/** Ce que la mesure a réellement vu, en une phrase lisible. */
+export function relevanceReason(
+  query: string,
+  candidate: { title: string; excerpt?: string; domain?: string }
+): string {
+  const wanted = queryTokens(query)
+  if (wanted.length === 0) return 'Requête sans mot mesurable.'
+  const title = new Set(tokenize(candidate.title).map(stem))
+  const excerpt = new Set(tokenize(candidate.excerpt ?? '').map(stem))
+  const domain = new Set(tokenize(candidate.domain ?? '').map(stem))
+  const inTitle = wanted.filter((token) => title.has(token)).length
+  const inText = wanted.filter((token) => !title.has(token) && excerpt.has(token)).length
+  const inDomain = wanted.filter((token) => !title.has(token) && !excerpt.has(token) && domain.has(token)).length
+  const missing = wanted.length - inTitle - inText - inDomain
+  const parts: string[] = []
+  if (inTitle > 0) parts.push(`${inTitle} dans le titre`)
+  if (inText > 0) parts.push(`${inText} dans le texte`)
+  if (inDomain > 0) parts.push(`${inDomain} dans le domaine`)
+  if (missing > 0) parts.push(`${missing} absent${missing > 1 ? 's' : ''}`)
+  return `${wanted.length} mot${wanted.length > 1 ? 's' : ''} de la requête : ${parts.join(', ')}.`
 }
 
 export function scoreConfidence(input: {
@@ -920,6 +968,8 @@ export function sanitizeMap(raw: unknown): TunnelMap | null {
       createdAt: typeof node.createdAt === 'number' ? node.createdAt : Date.now(),
       excerpt: typeof node.excerpt === 'string' ? node.excerpt.slice(0, 2000) : undefined,
       reachable: typeof node.reachable === 'boolean' ? node.reachable : undefined,
+      relevanceReason:
+        typeof node.relevanceReason === 'string' ? node.relevanceReason.slice(0, 240) : undefined,
       relation: typeof node.relation === 'string' ? node.relation.slice(0, 60) : undefined,
       lang: node.lang === 'en' || node.lang === 'fr' ? node.lang : undefined,
       x: typeof node.x === 'number' && Number.isFinite(node.x) ? Math.round(node.x) : undefined,

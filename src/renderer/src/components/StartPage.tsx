@@ -11,6 +11,7 @@ import { Icon } from './Icon'
 import SpaceShortcuts from './SpaceShortcuts'
 import TasksCard from './TasksCard'
 import WatchlistCard from './WatchlistCard'
+import QuickNotesCard from './QuickNotesCard'
 
 const STARTERS = [
   { label: 'GitHub', detail: 'Vos projets', url: 'https://github.com' },
@@ -18,6 +19,34 @@ const STARTERS = [
   { label: 'Le Monde', detail: 'L’actualité', url: 'https://www.lemonde.fr' },
   { label: 'Wikipédia', detail: 'La référence libre', url: 'https://fr.wikipedia.org' }
 ]
+
+export interface BentoModules {
+  weather: boolean
+  shortcuts: boolean
+  recent: boolean
+  tasks: boolean
+  quickNotes: boolean
+}
+
+const DEFAULT_BENTO_MODULES: BentoModules = {
+  weather: true,
+  shortcuts: true,
+  recent: true,
+  tasks: true,
+  quickNotes: true
+}
+
+const BENTO_STORAGE_KEY = 'vela.home.bento.modules'
+
+function readBentoModules(): BentoModules {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(BENTO_STORAGE_KEY) : null
+    if (!raw) return DEFAULT_BENTO_MODULES
+    return { ...DEFAULT_BENTO_MODULES, ...JSON.parse(raw) }
+  } catch {
+    return DEFAULT_BENTO_MODULES
+  }
+}
 
 interface Tile {
   id: string
@@ -34,6 +63,21 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const navigate = useBrowser((state) => state.navigate)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const openAgent = useBrowser((state) => state.openAgent)
+  const updateSettings = useBrowser((state) => state.updateSettings)
+  const [modules, setModules] = useState<BentoModules>(readBentoModules)
+  const [customizing, setCustomizing] = useState(false)
+
+  const toggleModule = (key: keyof BentoModules): void => {
+    setModules((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      try {
+        localStorage.setItem(BENTO_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        /* localStorage indisponible */
+      }
+      return next
+    })
+  }
   const [query, setQuery] = useState('')
   // Vrai pendant la saisie d'une ville : la recherche de l'accueil se retire
   // pour ne jamais montrer plus de deux champs à la fois.
@@ -259,10 +303,23 @@ export default function StartPage({ tabId }: { tabId: string }) {
       <div className="start-inner home">
         <header className="home-head">
           <div className="home-hello">
-            <p className="home-date">
-              <span className="eyebrow-dot" />
-              {view.brief.dateLabel}
-            </p>
+            <div className="home-meta-row">
+              <p className="home-date">
+                <span className="eyebrow-dot" />
+                {view.brief.dateLabel}
+              </p>
+              <button
+                type="button"
+                className="home-customize-btn"
+                data-active={customizing}
+                onClick={() => setCustomizing((c) => !c)}
+                title="Personnaliser les modules de l’accueil"
+                aria-expanded={customizing}
+              >
+                <Icon name="settings" size={13} />
+                <span>{customizing ? 'Terminer' : 'Personnaliser'}</span>
+              </button>
+            </div>
             <h1 className="home-title" aria-label={greeting()}>
               {greeting()
                 .split(' ')
@@ -281,8 +338,80 @@ export default function StartPage({ tabId }: { tabId: string }) {
             </h1>
             <p className="home-lede">{lede}</p>
           </div>
-          <HomeWeather onEditingChange={setCityEditing} />
+          {modules.weather && <HomeWeather onEditingChange={setCityEditing} />}
         </header>
+
+        {customizing && (
+          <section className="home-customize-bar" aria-label="Personnalisation de l’accueil">
+            <div className="customize-group">
+              <span className="customize-label">Modules visibles :</span>
+              <div className="customize-chips">
+                <button
+                  type="button"
+                  className="customize-chip"
+                  data-active={modules.weather}
+                  onClick={() => toggleModule('weather')}
+                >
+                  <Icon name="sun" size={12} />
+                  Météo
+                </button>
+                <button
+                  type="button"
+                  className="customize-chip"
+                  data-active={modules.shortcuts}
+                  onClick={() => toggleModule('shortcuts')}
+                >
+                  <Icon name="pin" size={12} />
+                  Sites épinglés
+                </button>
+                <button
+                  type="button"
+                  className="customize-chip"
+                  data-active={modules.recent}
+                  onClick={() => toggleModule('recent')}
+                >
+                  <Icon name="history" size={12} />
+                  Récents
+                </button>
+                <button
+                  type="button"
+                  className="customize-chip"
+                  data-active={modules.tasks}
+                  onClick={() => toggleModule('tasks')}
+                >
+                  <Icon name="check" size={12} />
+                  Tâches
+                </button>
+                <button
+                  type="button"
+                  className="customize-chip"
+                  data-active={modules.quickNotes}
+                  onClick={() => toggleModule('quickNotes')}
+                >
+                  <Icon name="edit" size={12} />
+                  Notes rapides
+                </button>
+              </div>
+            </div>
+
+            <div className="customize-group">
+              <span className="customize-label">Ambiance de fond :</span>
+              <div className="customize-chips">
+                {(['gradient', 'plain'] as const).map((bg) => (
+                  <button
+                    key={bg}
+                    type="button"
+                    className="customize-chip"
+                    data-active={settings.homeBackground === bg}
+                    onClick={() => void updateSettings({ homeBackground: bg })}
+                  >
+                    {bg === 'gradient' ? 'Dégradé doux' : 'Papier épuré'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="home-search" aria-label="Recherche" hidden={cityEditing}>
           <form className="home-field" onSubmit={submit}>
@@ -325,70 +454,75 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </div>
         </section>
 
-        <SpaceShortcuts spaceId={spaceId} />
+        {modules.shortcuts && <SpaceShortcuts spaceId={spaceId} />}
 
-        <div className="home-grid">
-          <section className="home-card home-recent" aria-label="Récemment">
-            <div className="home-card-head">
-              <h2>{onlyStarters ? 'Pour commencer' : 'Récemment'}</h2>
-              <button
-                type="button"
-                className="home-card-action"
-                onClick={() => setOverlay('history')}
-                title="Ouvrir l’historique"
-              >
-                <span>Historique</span>
-                <Icon name="arrow-right" size={12} />
-              </button>
-            </div>
-
-            {onlyStarters ? (
-              <p className="home-hint">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
-            ) : null}
-
-            <div className="recent-grid">
-              {tiles.map((tile) => (
+        <div className="home-grid" data-no-side={!modules.tasks && !modules.quickNotes && !space?.watchlist ? 'true' : undefined}>
+          {modules.recent && (
+            <section className="home-card home-recent" aria-label="Récemment">
+              <div className="home-card-head">
+                <h2>{onlyStarters ? 'Pour commencer' : 'Récemment'}</h2>
                 <button
-                  key={`${tile.kind}-${tile.id}`}
                   type="button"
-                  className="recent-tile"
-                  data-kind={tile.kind}
-                  data-thumb={thumbs[tile.url] ? 'true' : undefined}
-                  style={tileStyle(tile)}
-                  onPointerMove={tilt}
-                  onPointerLeave={untilt}
-                  onClick={() => navigate(tabId, tile.url)}
-                  title={tile.title}
+                  className="home-card-action"
+                  onClick={() => setOverlay('history')}
+                  title="Ouvrir l’historique"
                 >
-                  {thumbs[tile.url] && (
-                    <span className="tile-thumb" aria-hidden="true">
-                      <img src={thumbs[tile.url]} alt="" draggable={false} loading="lazy" />
-                    </span>
-                  )}
-                  <span className="tile-top">
-                    <Favicon
-                      src={tile.favicon}
-                      url={tile.url}
-                      label={tile.host || tile.title}
-                      size={18}
-                      spaceId={spaceId}
-                    />
-                    <span className="tile-host">{tile.host}</span>
-                    <span className="tile-badge">{tile.meta}</span>
-                  </span>
-                  <span className="tile-title">{tile.title}</span>
-                  <span className="tile-arrow">
-                    <Icon name="arrow-right" size={13} />
-                  </span>
+                  <span>Historique</span>
+                  <Icon name="arrow-right" size={12} />
                 </button>
-              ))}
-            </div>
-          </section>
+              </div>
 
-          <aside className="home-side">
-            {space?.watchlist && <WatchlistCard spaceId={spaceId} />}
-            <TasksCard />
-          </aside>
+              {onlyStarters ? (
+                <p className="home-hint">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
+              ) : null}
+
+              <div className="recent-grid">
+                {tiles.map((tile) => (
+                  <button
+                    key={`${tile.kind}-${tile.id}`}
+                    type="button"
+                    className="recent-tile"
+                    data-kind={tile.kind}
+                    data-thumb={thumbs[tile.url] ? 'true' : undefined}
+                    style={tileStyle(tile)}
+                    onPointerMove={tilt}
+                    onPointerLeave={untilt}
+                    onClick={() => navigate(tabId, tile.url)}
+                    title={tile.title}
+                  >
+                    {thumbs[tile.url] && (
+                      <span className="tile-thumb" aria-hidden="true">
+                        <img src={thumbs[tile.url]} alt="" draggable={false} loading="lazy" />
+                      </span>
+                    )}
+                    <span className="tile-top">
+                      <Favicon
+                        src={tile.favicon}
+                        url={tile.url}
+                        label={tile.host || tile.title}
+                        size={18}
+                        spaceId={spaceId}
+                      />
+                      <span className="tile-host">{tile.host}</span>
+                      <span className="tile-badge">{tile.meta}</span>
+                    </span>
+                    <span className="tile-title">{tile.title}</span>
+                    <span className="tile-arrow">
+                      <Icon name="arrow-right" size={13} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {(space?.watchlist || modules.tasks || modules.quickNotes) && (
+            <aside className="home-side">
+              {space?.watchlist && <WatchlistCard spaceId={spaceId} />}
+              {modules.tasks && <TasksCard />}
+              {modules.quickNotes && <QuickNotesCard spaceId={spaceId} />}
+            </aside>
+          )}
         </div>
 
         <footer className="home-foot">
@@ -396,6 +530,15 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <Icon name="shield" size={12} />
             Aucune télémétrie. Vos recherches ne partent que vers le moteur choisi.
           </span>
+          <button
+            type="button"
+            className="home-customize-foot"
+            onClick={() => setCustomizing((c) => !c)}
+            title="Personnaliser les modules de l’accueil"
+          >
+            <Icon name="settings" size={12} />
+            <span>{customizing ? 'Fermer la personnalisation' : 'Personnaliser l’accueil'}</span>
+          </button>
           <span className="home-foot-key">
             <Icon name="command" size={12} />
             <kbd>{shortcut('K')}</kbd>

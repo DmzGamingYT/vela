@@ -1,7 +1,8 @@
 /**
  * Types partagés entre le processus principal, le preload et le renderer.
  * Une seule source de vérité pour l'état persisté et l'état exposé à l'interface.
- */import type { GlassIntensity, HomeBackground, ThemeId } from './theme'
+ */import type { AgentActionEntry } from './agentLoop'
+import type { GlassIntensity, HomeBackground, ThemeId } from './theme'
 
 export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
@@ -391,6 +392,8 @@ export interface AgentRunRequest {
   prompt: string
   sources: AgentSource[]
   spaceId: string
+  /** « answer » rédige un rapport ; « act » exécute des actions dans un onglet. */
+  mode?: 'answer' | 'act'
 }
 
 export interface AgentCitationSource {
@@ -402,6 +405,7 @@ export interface AgentCitationSource {
 export type AgentEvent =
   | { runId: string; type: 'plan'; title: string; steps: string[]; mode: AgentMode; sources?: AgentCitationSource[] }
   | { runId: string; type: 'step'; index: number; state: 'active' | 'done' }
+  | { runId: string; type: 'action'; entry: AgentActionEntry }
   | { runId: string; type: 'delta'; text: string }
   | { runId: string; type: 'done' }
   | { runId: string; type: 'cancelled' }

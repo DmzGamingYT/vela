@@ -38,6 +38,7 @@ export default function TunnelDetail() {
   const [copied, setCopied] = useState(false)
   const [noteState, setNoteState] = useState<'idle' | 'saved' | 'error'>('idle')
   const [adding, setAdding] = useState(false)
+  const [excerptOpen, setExcerptOpen] = useState(false)
   const [cardTitle, setCardTitle] = useState('')
   const [cardKind, setCardKind] = useState<MapNodeKind>('detail')
   const [linking, setLinking] = useState(false)
@@ -232,7 +233,23 @@ export default function TunnelDetail() {
         </section>
       ) : (
         <>
-          {node.excerpt && <p className="tunnel-detail-excerpt">{node.excerpt.slice(0, 420)}</p>}
+          {node.excerpt && (
+            <>
+              <p className="tunnel-detail-excerpt" data-open={excerptOpen}>
+                {excerptOpen ? node.excerpt.slice(0, 1200) : node.excerpt.slice(0, 420)}
+              </p>
+              {(node.excerpt.length > 240 || node.excerpt.trim().split(/\n\s*\n/).length > 1) && (
+                <button
+                  type="button"
+                  className="tunnel-detail-more"
+                  aria-expanded={excerptOpen}
+                  onClick={() => setExcerptOpen(!excerptOpen)}
+                >
+                  {excerptOpen ? 'Voir moins' : 'Voir plus'}
+                </button>
+              )}
+            </>
+          )}
           <section>
             <h3>Pourquoi cette source</h3>
             <p className="tunnel-detail-text">{node.reason}</p>
@@ -273,6 +290,9 @@ export default function TunnelDetail() {
           {node.kind === 'site' ? publishLabel(node.publishedAt) : NODE_LABELS[node.kind]}
           {node.reachable === false && <span className="tunnel-warn"> · page inaccessible</span>}
         </p>
+        {node.relevanceReason && node.kind === 'site' && (
+          <p className="tunnel-detail-reason">{node.relevanceReason}</p>
+        )}
       </section>
 
       {node.summary && node.kind !== 'tension' && (

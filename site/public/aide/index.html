@@ -9,9 +9,22 @@
       content="Installer Vela sur macOS, Windows ou Linux, ouvrir un build non signé, se connecter à Google, comprendre les mises à jour et les raccourcis."
     />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151518" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/aide/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Aide — Vela" />
     <meta property="og:description" content="Installation, signature, Google, mises à jour, raccourcis." />
+    <meta property="og:site_name" content="Vela" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/aide/" />
+    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Installer Vela, ouvrir un build non signé, retrouver ses raccourcis." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -116,7 +129,7 @@
         <section class="help-block" id="macos">
           <h2>macOS — ouvrir un build non signé</h2>
           <p>
-            Le fichier <code>Vela-0.3.13-universal.dmg</code> est universel : il couvre Apple silicon
+            Le fichier <code>Vela-0.3.15-universal.dmg</code> est universel : il couvre Apple silicon
             et Intel dans un seul <code>.dmg</code>. Gatekeeper refuse la première ouverture parce que
             l’application n’est ni signée ni notarisée : aucun certificat Developer ID n’est acheté,
             et il n’existe pas de notarisation Apple. Le build universel est publié ; l’essai sur une
@@ -142,7 +155,7 @@
             affiche donc un avertissement au premier lancement.
           </p>
           <ol class="steps">
-            <li>Lancer <code>Vela-0.3.13-x64.exe</code>.</li>
+            <li>Lancer <code>Vela-0.3.15-x64.exe</code>.</li>
             <li>Dans la fenêtre bleue, cliquer « Informations complémentaires ».</li>
             <li>Cliquer « Exécuter quand même », puis suivre l’installation.</li>
           </ol>
@@ -156,7 +169,7 @@
           </p>
           <ol class="steps">
             <li>AppImage : rendre le fichier exécutable, puis le lancer.</li>
-            <li>Debian : <code>sudo apt install ./Vela-0.3.13-amd64.deb</code>.</li>
+            <li>Debian : <code>sudo apt install ./Vela-0.3.15-amd64.deb</code>.</li>
             <li>Les mises à jour automatiques concernent l’AppImage et les builds macOS et Windows ; un paquet <code>.deb</code> se remplace à la main.</li>
           </ol>
         </section>
@@ -262,7 +275,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.13 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.15 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

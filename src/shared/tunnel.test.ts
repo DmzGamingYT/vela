@@ -7,7 +7,9 @@ import {
   detectTensions,
   filterMap,
   layoutMap,
+  looksFrench,
   removeCard,
+  relevanceReason,
   scoreRelevance,
   suggestQueryFix,
   toJsonExport,
@@ -70,6 +72,53 @@ describe('pertinence', () => {
       excerpt: 'Palette d’outils pour écrire plus vite.'
     })
     expect(score).toBeGreaterThanOrEqual(60)
+  })
+
+  it('ne promet pas 100 % sur un seul mot trouvé dans le titre', () => {
+    const score = scoreRelevance('youtube', { title: 'YouTube' })
+    expect(score).toBeLessThan(95)
+    expect(score).toBeGreaterThanOrEqual(60)
+  })
+
+  it('plafonne aussi une page parfaite : la mesure reste une heuristique', () => {
+    const score = scoreRelevance('navigateur minimaliste', {
+      title: 'Navigateur minimaliste',
+      excerpt: 'Un navigateur minimaliste, sans distraction.',
+      domain: 'navigateur-minimaliste.example'
+    })
+    expect(score).toBeLessThanOrEqual(97)
+  })
+
+  it('explique ce que la mesure a réellement vu', () => {
+    const reason = relevanceReason('navigateur minimaliste', {
+      title: 'Les navigateurs modernes',
+      excerpt: 'Un point sur les navigateurs minimalistes.',
+      domain: 'example.org'
+    })
+    expect(reason).toContain('2 mots de la requête')
+    expect(reason).toContain('1 dans le titre')
+    expect(reason).toContain('1 dans le texte')
+
+    const empty = relevanceReason('navigateur minimaliste', {
+      title: 'Recette de pain au levain',
+      excerpt: 'Farine, eau, sel et temps.'
+    })
+    expect(empty).toContain('2 absents')
+  })
+})
+
+describe('langue de la requête', () => {
+  it('reconnaît le français à ses petits mots et à ses accents', () => {
+    expect(looksFrench('le meilleur navigateur')).toBe(true)
+    expect(looksFrench('navigateur pour lire')).toBe(true)
+    // Sans petit mot, l’accent suffit : « vélo cargo » est une requête française.
+    expect(looksFrench('vélo cargo')).toBe(true)
+    expect(looksFrench('rédiger sans distraction')).toBe(true)
+  })
+
+  it('laisse l’anglais à l’anglais', () => {
+    expect(looksFrench('cargo bike')).toBe(false)
+    expect(looksFrench('minimal browser')).toBe(false)
   })
 })
 

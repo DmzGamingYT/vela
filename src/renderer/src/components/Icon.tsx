@@ -187,8 +187,8 @@ const PATHS: Record<IconName, ReactNode> = {
   circle: <circle cx="12" cy="12" r="8" />,
   key: (
     <>
-      <circle cx="7.5" cy="15.5" r="3.8" />
-      <path d="m10.4 12.8 7.4-7.4M15 5.5l3 3M12.8 7.7l2.2 2.2" />
+      <circle cx="7.5" cy="12" r="3.5" />
+      <path d="M11 12h9.5M16.5 12v3M19.5 12v2.2" />
     </>
   ),
   keyboard: (

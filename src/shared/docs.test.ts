@@ -83,8 +83,9 @@ describe('limites documentées dans l’aide et sur le site', () => {
     // Les liens du tableau pointent vers la release annoncée…
     expect(home).toContain(`releases/download/v${announced}/Vela-${announced}-universal.dmg`)
     expect(home).toContain(`Vela-${announced}-amd64.deb`)
-    // …et le bouton adapté à la plateforme aussi.
-    expect(script).toContain(`releases/download/v${announced}/`)
+    // …et le bouton adapté à la plateforme aussi : le script compose ses liens
+    // depuis une base de release unique, à laquelle s'ajoute le numéro annoncé.
+    expect(script).toContain(`/download/v${announced}/`)
     expect(script).toContain(`Vela-${announced}-universal.dmg`)
   })
 

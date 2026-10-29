@@ -61,6 +61,44 @@
   color: var(--ink);
 }
 
+/* --- Page 404 ------------------------------------------------------------ */
+
+.notfound {
+  padding: 148px 0 96px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--bg)), var(--bg) 70%);
+}
+
+.notfound h1 {
+  max-width: 24ch;
+  margin-top: 16px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(36px, 5.4vw, 60px);
+  line-height: 1.03;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.notfound .lede {
+  max-width: 56ch;
+  margin-top: 18px;
+  color: var(--ink-2);
+  font-size: 17px;
+}
+
+.notfound-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.notfound .sommaire {
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
 /* --- Sections numérotées, liste collante --------------------------------- */
 
 .split {
@@ -167,6 +205,10 @@
   background: var(--surface);
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+
+.capture picture {
+  display: block;
 }
 
 .capture img {
@@ -530,8 +572,11 @@
   }
 
   .split {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) : sans lui, la piste prend la largeur du sommaire
+       et pousse la page à 471 px sur un écran de 390. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
+    min-width: 0;
   }
 
   .split-index {
@@ -540,6 +585,10 @@
     grid-auto-columns: max-content;
     gap: 8px;
     overflow-x: auto;
+    /* Sans min-width: 0, la piste de grille prend la largeur du contenu
+       et pousse la page à 471 px sur un écran de 390. */
+    min-width: 0;
+    max-width: 100%;
     padding-bottom: 6px;
     scrollbar-width: none;
   }

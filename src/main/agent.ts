@@ -1,5 +1,14 @@
-import type { BrowserWindow } from 'electron'
+import { dialog, type BrowserWindow } from 'electron'
 import { planDemoRun } from '@shared/agent'
+import {
+  ACT_SYSTEM_PROMPT,
+  AGENT_BUDGET,
+  buildActReport,
+  buildStepPrompt,
+  describeAction,
+  parseAgentAction,
+  type AgentActionEntry
+} from '@shared/agentLoop'
 import { newId } from '@shared/defaults'
 import {
   buildChatRequest,
@@ -9,6 +18,7 @@ import {
   providerState
 } from '@shared/providers'
 import type { AgentEvent, AgentMode, AgentRunRequest, ProviderId, Settings } from '@shared/types'
+import { PageDriver, type DriverWorkspace } from './pageDriver'
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -80,7 +90,9 @@ export class AgentRunner {
     private getSettings: () => Settings,
     private getSecret: (provider: ProviderId) => string | null,
     private excerpt: (tabId: string) => Promise<{ text: string; anchor: string }>,
-    private onFinish: (work: FinishedWork) => void
+    private onFinish: (work: FinishedWork) => void,
+    /**Onglets de travail de l'agent : ouverts et pilotés par lui seul. */
+    private workspace: DriverWorkspace
   ) {}
 
   start(request: AgentRunRequest): { runId: string } {
@@ -100,12 +112,17 @@ export class AgentRunner {
     const useApi =
       settings.agent.mode === 'api' && (definition.local || Boolean(this.getSecret(definition.id)))
     if (useApi) {
-      void this.runApi(run, request, settings).catch((error: unknown) => {
+      const loop = request.mode === 'act' ? this.runAct(run, request, settings) : this.runApi(run, request, settings)
+      void loop.catch((error: unknown) => {
         if (run.cancelled) return
         this.emit({ runId: run.id, type: 'error', message: this.describe(error) })
         this.archive(run, 'error')
         this.finish(run)
       })
+    } else if (request.mode === 'act') {
+      // Agir exige un modèle : la démo locale ne sait rien exécuter, et le dire
+      // vaut mieux que simuler des clics qui n'ont pas eu lieu.
+      void this.refuseAct(run)
     } else {
       void this.runDemo(run, request)
     }
@@ -374,6 +391,244 @@ export class AgentRunner {
     this.emit({ runId: run.id, type: 'done' })
     this.archive(run, 'done')
     this.finish(run)
+  }
+
+  /**
+   * Boucle d'actions : une action par tour, exécutée dans un onglet de travail,
+   * dans la limite d'un budget. Chaque action entre au journal avant que son
+   * résultat ne reparte au modèle ; rien n'est simulé.
+   */
+  private async runAct(run: ActiveRun, request: AgentRunRequest, settings: Settings): Promise<void> {
+    const definition = providerById(settings.agent.provider)
+    const state = providerState(settings)
+    const key = this.getSecret(definition.id)
+    if (!key && !definition.local) throw new Error('Aucune clé API enregistrée pour ce fournisseur.')
+
+    run.title = request.prompt.slice(0, 60) || 'Tâche de l’agent'
+    run.mode = 'api'
+    this.emit({
+      runId: run.id,
+      type: 'plan',
+      title: run.title,
+      steps: [
+        'Préparer l’onglet de travail',
+        `Agir sur la page (${AGENT_BUDGET.steps} étapes au plus)`,
+        'Rédiger le compte rendu'
+      ],
+      mode: 'api',
+      sources: []
+    })
+    this.emit({ runId: run.id, type: 'step', index: 0, state: 'done' })
+    this.emit({ runId: run.id, type: 'step', index: 1, state: 'active' })
+
+    const driver = new PageDriver(this.workspace, request.spaceId)
+    const journal: AgentActionEntry[] = []
+    const transcript: string[] = []
+    const started = Date.now()
+    let answer = ''
+    let reason: 'budget' | 'unparsed' | null = null
+
+    for (let step = 1; step <= AGENT_BUDGET.steps; step += 1) {
+      if (!this.alive(run)) return
+      if (Date.now() - started > AGENT_BUDGET.ms) {
+        reason = 'budget'
+        break
+      }
+      const reply = await this.chatOnce(
+        run,
+        definition,
+        { baseUrl: state.baseUrl, model: state.model },
+        key,
+        buildStepPrompt({
+          prompt: request.prompt,
+          step,
+          steps: AGENT_BUDGET.steps,
+          page: driver.page(),
+          transcript: transcript.join('\n')
+        })
+      )
+      if (!this.alive(run)) return
+      const action = parseAgentAction(reply)
+      if (!action) {
+        // Le modèle a répondu autre chose qu'une action : on garde sa réponse
+        // comme conclusion plutôt que d'exécuter quelque chose d'inventé.
+        answer = reply.trim()
+        reason = 'unparsed'
+        break
+      }
+      if (action.tool === 'done') {
+        answer = (action.args.summary ?? '').trim()
+        break
+      }
+      const approvedPage = driver.page()
+      const confirm = async (phase: 'action' | 'submission'): Promise<boolean> => {
+        const win = this.getWindow()
+        if (!win || win.isDestroyed()) return false
+        const preview = (value: string): string => value.replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, '�')
+        const decision = await dialog.showMessageBox(win, {
+          type: 'question',
+          title: 'Valider l’action de l’agent',
+          message: phase === 'submission' ? 'Soumettre la saisie avec Entrée' : preview(describeAction(action)),
+          detail: [
+            approvedPage ? `Page actuelle : ${preview(approvedPage.url)}` : 'Aucune page de travail ouverte.',
+            action.tool === 'open' ? `Adresse à ouvrir : ${preview(action.args.url ?? '')}` : '',
+            action.tool === 'click' ? `Cible : ${preview(action.args.role ?? 'élément')} · ${preview(action.args.name ?? action.args.text ?? '')}` : '',
+            action.tool === 'type' ? `Champ : ${preview(action.args.name ?? 'champ actif')}\nTexte : ${preview(action.args.text ?? '')}` : '',
+            'Vérifiez cette action avant de continuer.'
+          ].filter(Boolean).join('\n\n'),
+          buttons: ['Refuser et arrêter', 'Autoriser cette action'],
+          defaultId: 0,
+          cancelId: 0,
+          noLink: true
+        })
+        const now = driver.page()
+        return this.alive(run) && decision.response === 1 && now?.url === approvedPage?.url
+      }
+      if (!(await confirm('action'))) {
+        if (this.alive(run)) this.cancel(run.id)
+        return
+      }
+      // Entrée est une seconde action, distincte de la saisie.
+      const execution = action.tool === 'type' && action.args.submit
+        ? { ...action, args: { ...action.args, submit: false } }
+        : action
+      const result = await driver.run(execution)
+      if (action.tool === 'type' && action.args.submit && result.ok) {
+        if (!(await confirm('submission'))) {
+          if (this.alive(run)) this.cancel(run.id)
+          return
+        }
+        const submitted = await driver.submit()
+        result.ok = submitted.ok
+        result.detail = `${result.detail} · ${submitted.detail}`
+        result.observation = `${result.observation}\n${submitted.observation}`
+      }
+      if (!this.alive(run)) return
+      const entry: AgentActionEntry = {
+        id: newId(),
+        index: step,
+        tool: action.tool,
+        label: describeAction(action),
+        detail: result.detail,
+        ok: result.ok,
+        at: Date.now()
+      }
+      journal.push(entry)
+      this.emit({ runId: run.id, type: 'action', entry })
+      transcript.push(
+        `${step}. ${entry.label} → ${result.ok ? 'fait' : 'échec'} : ${result.observation.slice(0, 600)}`
+      )
+    }
+
+    if (!this.alive(run)) return
+    this.emit({ runId: run.id, type: 'step', index: 1, state: 'done' })
+    this.emit({ runId: run.id, type: 'step', index: 2, state: 'active' })
+    const markdown = buildActReport({
+      prompt: request.prompt,
+      answer,
+      journal,
+      page: driver.page(),
+      reason
+    })
+    const streamed = await this.streamMarkdown(run, markdown)
+    if (!streamed || !this.alive(run)) return
+    this.emit({ runId: run.id, type: 'step', index: 2, state: 'done' })
+    this.emit({ runId: run.id, type: 'done' })
+    this.archive(run, 'done')
+    this.finish(run)
+  }
+
+  /** Agir sans modèle n'a pas de sens : on le dit, on ne simule rien. */
+  private async refuseAct(run: ActiveRun): Promise<void> {
+    this.emit({
+      runId: run.id,
+      type: 'error',
+      message:
+        'Agir sur les pages demande un modèle connecté : la démo locale ne sait pas cliquer. Ouvrez Réglages › Modèles pour en brancher un.'
+    })
+    this.finish(run)
+  }
+
+  /** Un tour de conversation : le modèle ne renvoie qu'une action. */
+  private async chatOnce(
+    run: ActiveRun,
+    definition: ReturnType<typeof providerById>,
+    config: { baseUrl: string; model: string },
+    key: string | null,
+    user: string
+  ): Promise<string> {
+    const chat = buildChatRequest(definition, config, key, [
+      { role: 'system', content: ACT_SYSTEM_PROMPT },
+      { role: 'user', content: user }
+    ])
+    const controller = new AbortController()
+    const relay = (): void => controller.abort()
+    run.controller.signal.addEventListener('abort', relay)
+    const timer = setTimeout(() => controller.abort(), 60_000)
+    try {
+      const response = await fetch(chat.url, {
+        method: 'POST',
+        headers: chat.headers,
+        body: chat.body,
+        signal: controller.signal
+      })
+      if (!response.ok || !response.body) {
+        const detail = await response.text().catch(() => '')
+        throw new Error(
+          `Modèle indisponible (${response.status}). ${detail.slice(0, 160) || 'Vérifiez l’URL et la clé.'}`
+        )
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let collected = ''
+      for (;;) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data:')) continue
+          const data = trimmed.slice(5).trim()
+          if (!data || data === '[DONE]') continue
+          collected += parseStreamPayload(definition.protocol, data)
+        }
+      }
+      if (!collected.trim()) throw new Error('Le modèle n’a renvoyé aucun texte.')
+      return collected.trim()
+    } catch (error) {
+      if (run.cancelled) throw error
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Le modèle n’a pas répondu dans la minute.')
+      }
+      throw error
+    } finally {
+      clearTimeout(timer)
+      run.controller.signal.removeEventListener('abort', relay)
+    }
+  }
+
+  /** Affiche le rapport au fil de l'eau, comme un texte rédigé. */
+  private async streamMarkdown(run: ActiveRun, text: string): Promise<boolean> {
+    const tokens = text.match(/\S+\s*/g) ?? []
+    let buffer = ''
+    for (const token of tokens) {
+      if (!this.alive(run)) return false
+      buffer += token
+      if (buffer.length >= 26) {
+        run.markdown += buffer
+        this.emit({ runId: run.id, type: 'delta', text: buffer })
+        buffer = ''
+        await wait(12)
+      }
+    }
+    if (buffer) {
+      run.markdown += buffer
+      this.emit({ runId: run.id, type: 'delta', text: buffer })
+    }
+    return true
   }
 
   private async runApi(run: ActiveRun, request: AgentRunRequest, settings: Settings): Promise<void> {

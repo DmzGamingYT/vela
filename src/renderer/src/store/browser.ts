@@ -11,6 +11,7 @@ import type {
   TabGroup,
   WorkSummary
 } from '@shared/types'
+import type { AgentActionEntry } from '@shared/agentLoop'
 import { HOME_URL } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import type { CreateSpaceInput, SaveNoteInput, SettingsPatch, UpdateSpaceInput } from '@shared/api'
@@ -81,6 +82,10 @@ export interface AgentUi {
   mode: AgentMode
   prompt: string
   sources: { title: string; url: string; anchor?: string }[]
+  /** Demande de départ : rédiger un rapport, ou agir sur les pages. */
+  requestMode: 'answer' | 'act'
+  /** Actions réellement exécutées, dans l'ordre. */
+  journal: AgentActionEntry[]
 }
 
 const EMPTY_AGENT: AgentUi = {
@@ -92,7 +97,9 @@ const EMPTY_AGENT: AgentUi = {
   error: null,
   mode: 'demo',
   prompt: '',
-  sources: []
+  sources: [],
+  requestMode: 'answer',
+  journal: []
 }
 
 interface BrowserState {
@@ -183,7 +190,7 @@ interface BrowserState {
   installUpdate(): Promise<void>
   openReleases(): Promise<void>
   openAgent(prompt?: string): void
-  startAgent(prompt: string, tabIds: string[]): Promise<void>
+  startAgent(prompt: string, tabIds: string[], mode?: 'answer' | 'act'): Promise<void>
   cancelAgent(): void
   resetAgent(): void
   saveAgentNote(): Promise<void>
@@ -814,13 +821,15 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     set({ agentOpen: true, overlay: null, agentDraft: prompt })
   },
 
-  async startAgent(prompt, tabIds) {
+  async startAgent(prompt, tabIds, mode = 'answer') {
     const view = get().view
     if (!view) return
     if (!prompt.trim()) {
-      get().toast('Dites à l’agent quoi chercher.', 'error')
+      get().toast('Dites à l’agent quoi faire.', 'error')
       return
     }
+    // En mode « agir », l'agent ouvre son propre onglet : joindre une page est
+    // un contexte utile, pas une condition de départ.
     const sources = view.tabs
       .filter((tab) => tabIds.includes(tab.id) && !isHomeUrl(tab.url))
       .map((tab) => ({ tabId: tab.id, title: tab.title, url: tab.url }))
@@ -833,11 +842,12 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         status: 'running',
         mode: view.settings.agent.mode,
         prompt,
-        sources: []
+        sources: [],
+        requestMode: mode
       }
     })
     const result = await get().call(
-      () => window.vela.agent.run({ prompt, sources, spaceId: view.activeSpaceId }),
+      () => window.vela.agent.run({ prompt, sources, spaceId: view.activeSpaceId, mode }),
       'L’agent n’a pas pu démarrer.'
     )
     if (result) {
@@ -887,7 +897,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         error: null,
         mode: full.mode,
         prompt: full.prompt,
-        sources: full.sources
+        sources: full.sources,
+        // Un rapport rouvert vient d'un travail archivé : son journal est dans
+        // le texte du rapport, pas dans une exécution en cours.
+        requestMode: 'answer',
+        journal: []
       }
     })
     return true
@@ -1070,7 +1084,17 @@ export const useBrowser = create<BrowserState>((set, get) => ({
               status: 'running',
               error: null,
               mode: event.mode,
-              sources: event.sources ?? []
+              sources: event.sources ?? [],
+              journal: []
+            }
+          }
+        case 'action':
+          return {
+            agent: {
+              ...agent,
+              journal: agent.journal.some((entry) => entry.id === event.entry.id)
+                ? agent.journal
+                : [...agent.journal, event.entry]
             }
           }
         case 'step':

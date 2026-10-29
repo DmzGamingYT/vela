@@ -190,18 +190,20 @@ export default function TunnelView() {
             <h1>Tunnel de recherche</h1>
             <p>Carte mentale de sources réelles</p>
           </div>
-          <span className="tunnel-badges">
-            <span className="tunnel-badge">
-              <Icon name="lock" size={12} /> carte locale
+          {active && nodes.length > 0 && (
+            <span className="tunnel-badges">
+              <span className="tunnel-badge">
+                <Icon name="lock" size={12} /> carte locale
+              </span>
+              <span
+                className="tunnel-badge"
+                title={sourceTotal > sourceCount ? `${sourceCount} affichées sur ${sourceTotal}` : undefined}
+              >
+                {sourceTotal} source{sourceTotal > 1 ? 's' : ''}
+              </span>
+              <span className="tunnel-badge">{nodeCount} nœuds</span>
             </span>
-            <span
-              className="tunnel-badge"
-              title={sourceTotal > sourceCount ? `${sourceCount} affichées sur ${sourceTotal}` : undefined}
-            >
-              {sourceTotal} source{sourceTotal > 1 ? 's' : ''}
-            </span>
-            <span className="tunnel-badge">{nodeCount} nœuds</span>
-          </span>
+          )}
           <div className="tunnel-tools">
             <button
               type="button"

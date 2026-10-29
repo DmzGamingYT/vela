@@ -62,17 +62,35 @@
   const navToggle = document.querySelector('.nav-toggle')
 
   if (nav && navToggle) {
+    const closeNav = () => {
+      if (!nav.classList.contains('is-open')) return
+      nav.classList.remove('is-open')
+      navToggle.setAttribute('aria-expanded', 'false')
+      navToggle.setAttribute('aria-label', 'Ouvrir le menu')
+    }
+
     navToggle.addEventListener('click', () => {
       const open = nav.classList.toggle('is-open')
       navToggle.setAttribute('aria-expanded', String(open))
       navToggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu')
+      if (open) nav.querySelector('a')?.focus()
     })
+
     nav.addEventListener('click', (event) => {
-      if (event.target.closest('a')) {
-        nav.classList.remove('is-open')
-        navToggle.setAttribute('aria-expanded', 'false')
-        navToggle.setAttribute('aria-label', 'Ouvrir le menu')
+      if (event.target.closest('a')) closeNav()
+    })
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && nav.classList.contains('is-open')) {
+        closeNav()
+        navToggle.focus()
       }
+    })
+
+    document.addEventListener('click', (event) => {
+      if (!nav.classList.contains('is-open')) return
+      if (event.target.closest('.nav, .nav-toggle')) return
+      closeNav()
     })
   }
 
@@ -87,31 +105,114 @@
     return 'other'
   })()
 
+  const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
+  const download = (file) => `${RELEASE}/download/v0.3.15/${file}`
+
   const FILES = {
+    // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      href: 'https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-universal.dmg'
+      size: 'Apple silicon et Intel · 226,9 Mo',
+      href: download('Vela-0.3.15-universal.dmg')
+    },
+    macArm: {
+      label: 'Télécharger pour macOS',
+      size: 'Apple silicon · 123,2 Mo',
+      href: download('Vela-0.3.15-arm64.dmg')
+    },
+    macIntel: {
+      label: 'Télécharger pour macOS',
+      size: 'Intel · 130,4 Mo',
+      href: download('Vela-0.3.15-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
-      href: 'https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-x64.exe'
+      size: 'x64 · 122,1 Mo',
+      href: download('Vela-0.3.15-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
-      href: 'https://github.com/DmzGamingYT/vela/releases/download/v0.3.13/Vela-0.3.13-x86_64.AppImage'
+      size: 'AppImage · 126,7 Mo',
+      href: download('Vela-0.3.15-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
-      href: 'https://github.com/DmzGamingYT/vela/releases/tag/v0.3.13'
+      size: 'macOS, Windows, Linux · un fichier par plateforme',
+      href: `${RELEASE}/tag/v0.3.15`
     }
   }
 
-  const choice = FILES[platform] || FILES.other
-  for (const label of document.querySelectorAll('[data-platform-label]')) {
-    label.textContent = choice.label
+  const applyChoice = (choice) => {
+    for (const label of document.querySelectorAll('[data-platform-label]')) {
+      label.textContent = choice.label
+    }
+    for (const link of document.querySelectorAll('[data-platform-href]')) {
+      link.setAttribute('href', choice.href)
+    }
+    for (const size of document.querySelectorAll('[data-platform-size]')) {
+      size.textContent = choice.size
+    }
   }
-  for (const link of document.querySelectorAll('[data-platform-href]')) {
-    link.setAttribute('href', choice.href)
+
+  applyChoice(FILES[platform] || FILES.other)
+
+  // Sur un Mac, distinguer Apple silicon d’Intel évite 100 Mo de téléchargement.
+  // L’API n’existe que dans les navigateurs Chromium : ailleurs, le DMG universel reste.
+  if (platform === 'mac' && navigator.userAgentData?.getHighEntropyValues) {
+    navigator.userAgentData
+      .getHighEntropyValues(['architecture'])
+      .then(({ architecture }) => {
+        if (architecture === 'arm') applyChoice(FILES.macArm)
+        else if (architecture === 'x86') applyChoice(FILES.macIntel)
+      })
+      .catch(() => {
+        /* architecture inconnue : le DMG universel convient */
+      })
+  }
+
+  /* --- Empreintes SHA-256 ------------------------------------------------ */
+
+  const copyStatus = document.querySelector('[data-copy-status]')
+
+  const copy = async (value) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(value)
+        return
+      } catch (error) {
+        /* fenêtre non focalisée ou permission refusée : on tente la sélection */
+      }
+    }
+    const field = document.createElement('textarea')
+    field.value = value
+    field.setAttribute('readonly', '')
+    field.style.position = 'fixed'
+    field.style.top = '0'
+    field.style.opacity = '0'
+    document.body.append(field)
+    field.select()
+    const ok = document.execCommand('copy')
+    field.remove()
+    if (!ok) throw new Error('copie refusée')
+  }
+
+  for (const button of document.querySelectorAll('[data-copy]')) {
+    const original = button.getAttribute('aria-label')
+    button.addEventListener('click', async () => {
+      try {
+        await copy(button.dataset.copy)
+      } catch (error) {
+        if (copyStatus) copyStatus.textContent = 'Copie impossible : sélectionnez l’empreinte à la main.'
+        return
+      }
+      button.classList.add('is-copied')
+      button.setAttribute('aria-label', 'Empreinte copiée')
+      if (copyStatus) copyStatus.textContent = 'Empreinte SHA-256 copiée dans le presse-papiers.'
+      setTimeout(() => {
+        button.classList.remove('is-copied')
+        if (original) button.setAttribute('aria-label', original)
+      }, 1800)
+    })
   }
 
   /* --- Sommaire qui suit la lecture -------------------------------------- */

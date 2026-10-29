@@ -51,6 +51,8 @@ export default function AgentCanvas({
   const [showWorks, setShowWorks] = useState(false)
 
   const [prompt, setPrompt] = useState(() => useBrowser.getState().agentDraft)
+  // « Répondre » lit et rédige ; « Agir » ouvre un onglet et exécute des actions.
+  const [mode, setMode] = useState<'answer' | 'act'>(() => useBrowser.getState().agent.requestMode)
   const [selected, setSelected] = useState<string[]>(() => {
     const initial = useBrowser.getState().view
     if (!initial) return []
@@ -96,16 +98,17 @@ export default function AgentCanvas({
   const run = (): void => {
     setApproved(false)
     if (running) return
-    if (selected.length === 0) {
+    // En mode « agir », l'agent ouvre son propre onglet : aucune page à joindre.
+    if (mode === 'answer' && selected.length === 0) {
       toast('Joignez au moins une page à lire.', 'error')
       return
     }
     if (!prompt.trim()) {
-      toast('Dites à l’agent quoi chercher.', 'error')
+      toast(mode === 'act' ? 'Dites à l’agent quoi faire.' : 'Dites à l’agent quoi chercher.', 'error')
       promptRef.current?.focus()
       return
     }
-    void startAgent(prompt, selected)
+    void startAgent(prompt, selected, mode)
   }
 
   const toggleSource = (id: string): void => {
@@ -205,8 +208,33 @@ export default function AgentCanvas({
               </div>
             )}
 
+            <div className="agent-mode-switch" role="group" aria-label="Ce que fait l’agent">
+              <button
+                type="button"
+                data-active={mode === 'answer'}
+                aria-pressed={mode === 'answer'}
+                onClick={() => setMode('answer')}
+                title="Lire les onglets joints et rédiger un rapport"
+                disabled={running}
+              >
+                <Icon name="notes" size={13} />
+                Répondre
+              </button>
+              <button
+                type="button"
+                data-active={mode === 'act'}
+                aria-pressed={mode === 'act'}
+                onClick={() => setMode('act')}
+                title="Ouvrir un onglet de travail et agir : cliquer, saisir, défiler, lire"
+                disabled={running}
+              >
+                <Icon name="globe" size={13} />
+                Agir
+              </button>
+            </div>
+
             <label className="field-label" htmlFor="agent-prompt">
-              Votre demande
+              {mode === 'act' ? 'Votre consigne' : 'Votre demande'}
             </label>
             <textarea
               id="agent-prompt"
@@ -268,8 +296,14 @@ export default function AgentCanvas({
               })}
             </div>
 
-            {!running && selected.length === 0 && (
+            {!running && mode === 'answer' && selected.length === 0 && (
               <p className="agent-hint">Joignez au moins une page : l’agent ne lit que ce que vous lui donnez.</p>
+            )}
+            {!running && mode === 'act' && (
+              <p className="agent-hint">
+                L’agent ouvrira son propre onglet dans cet espace et y agira avec vos sessions. Les
+                onglets joints restent un contexte.
+              </p>
             )}
 
             <div className="agent-run">
@@ -277,12 +311,16 @@ export default function AgentCanvas({
                 type="button"
                 className="action primary wide"
                 onClick={run}
-                disabled={running || selected.length === 0}
-                title={selected.length === 0 ? 'Joignez au moins une page pour lancer l’agent' : undefined}
+                disabled={running || (mode === 'answer' && selected.length === 0)}
+                title={
+                  mode === 'answer' && selected.length === 0
+                    ? 'Joignez au moins une page pour lancer l’agent'
+                    : undefined
+                }
               >
                 <Icon name="sparkles" size={15} />
-                {running ? 'L’agent travaille…' : 'Lancer l’agent'}
-                {!running && selected.length > 0 && <kbd>⌘↵</kbd>}
+                {running ? 'L’agent travaille…' : mode === 'act' ? 'Agir sur les pages' : 'Lancer l’agent'}
+                {!running && (mode === 'act' || selected.length > 0) && <kbd>⌘↵</kbd>}
               </button>
               {running && (
                 <button type="button" className="action wide" onClick={() => cancelAgent()}>
@@ -330,9 +368,13 @@ export default function AgentCanvas({
             </div>
 
             <p className="agent-note">
-              {modeLabel === 'api'
-                ? 'Le texte des onglets joints est envoyé au modèle configuré. Le contenu des pages est traité comme une donnée non fiable, jamais comme une instruction.'
-                : 'Mode démo : rapport simulé localement à partir des titres. Aucune page n’est envoyée.'}
+              {modeLabel !== 'api'
+                ? mode === 'act'
+                  ? 'Agir demande un modèle connecté : la démo locale ne sait pas cliquer.'
+                  : 'Mode démo : rapport simulé localement à partir des titres. Aucune page n’est envoyée.'
+                : mode === 'act'
+                  ? 'L’agent envoie au modèle ce qu’il lit dans son onglet. Chaque action demande votre validation : vérifiez-la, notamment avant toute saisie ou soumission.'
+                  : 'Le texte des onglets joints est envoyé au modèle configuré. Le contenu des pages est traité comme une donnée non fiable, jamais comme une instruction.'}
             </p>
           </aside>
 
@@ -412,6 +454,31 @@ export default function AgentCanvas({
                     </li>
                   )}
                 </ol>
+
+                {agent.journal.length > 0 && (
+                  <div className="agent-journal" role="region" aria-label="Journal des actions">
+                    <p className="journal-head">
+                      <Icon name="list" size={13} />
+                      Journal des actions
+                      <span className="journal-count">{agent.journal.length}</span>
+                    </p>
+                    <ol className="journal-list">
+                      {agent.journal.map((entry) => (
+                        <li key={entry.id} data-ok={entry.ok}>
+                          <span className="journal-index">{entry.index}</span>
+                          <span className="journal-copy">
+                            <span className="journal-label">{entry.label}</span>
+                            <span className="journal-detail">{entry.detail}</span>
+                          </span>
+                          <span className="journal-state">
+                            <Icon name={entry.ok ? 'check' : 'warning'} size={11} />
+                            <span className="sr-only">{entry.ok ? 'Fait' : 'Échec'}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
                 {agent.error && (
                   <div className="agent-error">

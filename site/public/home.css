@@ -161,6 +161,11 @@
 .window-shot {
   display: block;
   width: 100%;
+}
+
+.window-shot img {
+  display: block;
+  width: 100%;
   height: auto;
   aspect-ratio: 1440 / 900;
   object-fit: cover;
@@ -217,7 +222,16 @@ html[data-theme="dark"] .shot-dark {
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
+  position: relative;
   transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+/* 40 px de cible : le rayon déborde dans les 10 px de gouttière, sans chevauchement. */
+.swatch::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: inherit;
 }
 
 .swatch span {
@@ -460,6 +474,51 @@ html[data-theme="dark"] .shot-dark {
   font-size: 11.5px;
   color: var(--ink-3);
   white-space: nowrap;
+}
+
+.dl-table .sum code {
+  font-size: inherit;
+}
+
+.copy {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 4px;
+  border-radius: 8px;
+  color: var(--ink-3);
+  vertical-align: middle;
+  position: relative;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+}
+
+.copy::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
+.copy .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.copy:hover {
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.copy.is-copied {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+}
+
+.dl-note code {
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 12px;
 }
 
 .dl-note {
