@@ -12,6 +12,7 @@ import type {
   WorkSummary
 } from '@shared/types'
 import type { AgentActionEntry } from '@shared/agentLoop'
+import { RELEASES_URL } from '@shared/site'
 import { HOME_URL } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import type { CreateSpaceInput, SaveNoteInput, SettingsPatch, UpdateSpaceInput } from '@shared/api'
@@ -812,7 +813,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
             currentVersion: '',
             progress: 0,
             message: null,
-            releaseUrl: 'https://github.com/DmzGamingYT/vela/releases'
+            releaseUrl: RELEASES_URL
           }
     }))
     const info = await get().call(() => window.vela.updates.check(), 'Vérification impossible.')

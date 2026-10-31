@@ -7,6 +7,8 @@
  * requête, les données réellement envoyées, et le moyen de l'éviter.
  */
 
+import { SITE_HOST } from './site'
+
 export type FlowCategory =
   | 'meteo'
   | 'recherche'
@@ -241,7 +243,7 @@ export const USER_OPENED_HOSTS: readonly string[] = [
   'play.geforcenow.com',
   'scholar.google.com',
   'senscritique.com',
-  'site-cd854ef5da03437a8f42ade87147e33d.freebuff.page',
+  SITE_HOST,
   'stackoverflow.com',
   'store.steampowered.com',
   'www.figma.com',

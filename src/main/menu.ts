@@ -1,4 +1,5 @@
 import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron'
+import { ISSUES_URL, RELEASES_URL, SITE_FAQ_URL, SITE_URL } from '@shared/site'
 import type { ShortcutAction } from '@shared/types'
 
 const isMac = process.platform === 'darwin'
@@ -119,20 +120,19 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
       submenu: [
         {
           label: 'Site de Vela',
-          click: () => void shell.openExternal('https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/')
+          click: () => void shell.openExternal(SITE_URL)
         },
         {
           label: 'Versions et notes',
-          click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/releases')
+          click: () => void shell.openExternal(RELEASES_URL)
         },
         {
           label: 'Limites connues et signature',
-          click: () =>
-            void shell.openExternal('https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/#faq')
+          click: () => void shell.openExternal(SITE_FAQ_URL)
         },
         {
           label: 'Signaler un problème',
-          click: () => void shell.openExternal('https://github.com/DmzGamingYT/vela/issues')
+          click: () => void shell.openExternal(ISSUES_URL)
         }
       ]
     }
