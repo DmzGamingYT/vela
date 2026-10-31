@@ -38,4 +38,12 @@ describe('CSP du renderer', () => {
     expect(connect).not.toContain('wss:')
     expect(connect).not.toContain('*;')
   })
+
+  it('garde le WebSocket de développement hors du build', () => {
+    const connect = directive('connect-src')
+    // Le HTML source porte un jeton ; `electron.vite.config.ts` le remplace par
+    // `ws://localhost:*` en dev et le retire au build.
+    expect(connect).toContain('__DEV_WS__')
+    expect(connect).not.toContain('ws://')
+  })
 })
