@@ -310,7 +310,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
                   <span
                     key={`${word}-${index}`}
                     className="home-word"
-                    style={{ animationDelay: `${80 + index * 90}ms` }}
+                    style={{ animationDelay: calm ? '0ms' : `${80 + index * 90}ms` }}
                   >
                     {word}
                   </span>
@@ -427,7 +427,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
             </button>
             <button type="button" className="home-chip" onClick={() => setOverlay('brief')}>
               <Icon name="calendar" size={12} />
-              Brief du jour
+              Reprendre
             </button>
             <span className="home-engine">via {engine}</span>
           </div>

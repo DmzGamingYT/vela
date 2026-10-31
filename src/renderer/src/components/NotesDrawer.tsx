@@ -53,6 +53,9 @@ export default function NotesDrawer() {
   const saveNote = useBrowser((state) => state.saveNote)
   const deleteNote = useBrowser((state) => state.deleteNote)
   const captureSelection = useBrowser((state) => state.captureSelection)
+  const voiceNoteRequest = useBrowser((state) => state.voiceNoteRequest)
+  const voiceNoteSpaceId = useBrowser((state) => state.voiceNoteSpaceId)
+  const consumeVoiceNoteRequest = useBrowser((state) => state.consumeVoiceNoteRequest)
   const toast = useBrowser((state) => state.toast)
 
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -268,6 +271,29 @@ export default function NotesDrawer() {
     setGraph(null)
     loadedTitle.current = ''
   }
+
+  useEffect(() => {
+    if (!voiceNoteRequest || !view) return
+    setDraft({
+      title: 'Note vocale',
+      body: '',
+      spaceId: voiceNoteSpaceId ?? view.activeSpaceId,
+      url: undefined,
+      tags: ['vocal'],
+      pinned: false
+    })
+    setDirty(false)
+    setPreview(false)
+    setConfirming(false)
+    setSavedAt(null)
+    setAiMode(null)
+    setRenameUndo(null)
+    setLinkMenu(null)
+    setGraph(null)
+    loadedTitle.current = ''
+    setRecorderOpen(true)
+    consumeVoiceNoteRequest()
+  }, [voiceNoteRequest])
 
   const capturePage = (): void => {
     if (!activeTab || !activeUrl) {

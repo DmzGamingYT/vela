@@ -108,6 +108,8 @@ interface BrowserState {
   view: AppView | null
   overlay: Overlay
   notesOpen: boolean
+  voiceNoteRequest: number
+  voiceNoteSpaceId: string | null
   /** Panneau agent ancré à droite : la page reste visible à côté. */
   agentOpen: boolean
   spaceEditId: string | null
@@ -158,6 +160,8 @@ interface BrowserState {
   saveSpaceShortcuts(id: string, shortcuts: import('@shared/space').SpaceShortcut[]): Promise<void>
   removeSpace(id: string): Promise<void>
   toggleNotes(open?: boolean): void
+  requestVoiceNote(spaceId?: string): void
+  consumeVoiceNoteRequest(): void
   toggleAgent(open?: boolean): void
   saveNote(input: SaveNoteInput): Promise<Note | null>
   deleteNote(id: string): Promise<void>
@@ -256,6 +260,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   view: null,
   overlay: null,
   notesOpen: false,
+  voiceNoteRequest: 0,
+  voiceNoteSpaceId: null,
   agentOpen: false,
   spaceEditId: null,
   agent: EMPTY_AGENT,
@@ -506,6 +512,19 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   toggleNotes(open) {
     set({ notesOpen: open ?? !get().notesOpen })
+  },
+
+  requestVoiceNote(spaceId) {
+    set((state) => ({
+      notesOpen: true,
+      agentOpen: false,
+      voiceNoteRequest: state.voiceNoteRequest + 1,
+      voiceNoteSpaceId: spaceId ?? state.view?.activeSpaceId ?? null
+    }))
+  },
+
+  consumeVoiceNoteRequest() {
+    set({ voiceNoteRequest: 0, voiceNoteSpaceId: null })
   },
 
   toggleAgent(open) {

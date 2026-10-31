@@ -11,6 +11,7 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
   const notes = useBrowser((state) => state.view?.notes ?? [])
   const saveNote = useBrowser((state) => state.saveNote)
   const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const requestVoiceNote = useBrowser((state) => state.requestVoiceNote)
   const toast = useBrowser((state) => state.toast)
 
   const [text, setText] = useState('')
@@ -48,33 +49,43 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
   }
 
   return (
-    <section className="home-card home-quicknotes" aria-label="Notes rapides">
+    <section className="home-card home-quicknotes" aria-label="Mémoire de l’espace">
       <div className="home-card-head">
-        <h2>Notes rapides</h2>
-        <button
-          type="button"
-          className="home-card-action"
-          onClick={() => toggleNotes(true)}
-          title="Ouvrir le carnet de notes"
-        >
-          <span>Toutes les notes</span>
-          <Icon name="arrow-right" size={12} />
-        </button>
+        <div className="quicknotes-heading">
+          <h2>Mémoire de l’espace</h2>
+          <span className="quicknotes-scope">{spaceNotes.length} note{spaceNotes.length === 1 ? '' : 's'} · sur cet appareil</span>
+        </div>
+        <div className="home-card-tools">
+          <button
+            type="button"
+            className="home-card-action quicknotes-voice"
+            onClick={() => requestVoiceNote(spaceId)}
+            title="Enregistrer une note vocale"
+            aria-label="Enregistrer une note vocale"
+          >
+            <Icon name="mic" size={12} />
+            <span>Voix</span>
+          </button>
+          <button
+            type="button"
+            className="home-card-action"
+            onClick={() => toggleNotes(true)}
+            title="Ouvrir le carnet de notes"
+          >
+            <span>Toutes</span>
+            <Icon name="arrow-right" size={12} />
+          </button>
+        </div>
       </div>
 
       <div className="quicknotes-form">
         {!expanded ? (
-          <div className="quicknotes-collapsed" onClick={() => setExpanded(true)}>
+          <button type="button" className="quicknotes-collapsed" onClick={() => setExpanded(true)}>
             <span className="quicknotes-placeholder">Noter une idée, un lien ou une tâche…</span>
-            <button
-              type="button"
-              className="quicknotes-add-btn"
-              title="Nouvelle note"
-              aria-label="Nouvelle note"
-            >
+            <span className="quicknotes-add-btn" aria-hidden="true">
               <Icon name="plus" size={13} />
-            </button>
-          </div>
+            </span>
+          </button>
         ) : (
           <div className="quicknotes-editor">
             <textarea
@@ -119,17 +130,19 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
       {recentNotes.length > 0 ? (
         <ul className="quicknotes-list">
           {recentNotes.map((note) => (
-            <li
-              key={note.id}
-              className="quicknotes-item"
-              onClick={() => toggleNotes(true)}
-              title="Ouvrir dans le tiroir de notes"
-            >
-              <div className="quicknotes-item-header">
-                <span className="quicknotes-item-title">{note.title}</span>
-                <span className="quicknotes-item-date">{timeAgo(note.updatedAt)}</span>
-              </div>
-              {note.preview && <p className="quicknotes-item-preview">{note.preview}</p>}
+            <li key={note.id}>
+              <button
+                type="button"
+                className="quicknotes-item"
+                onClick={() => toggleNotes(true)}
+                title="Ouvrir dans le tiroir de notes"
+              >
+                <span className="quicknotes-item-header">
+                  <span className="quicknotes-item-title">{note.title}</span>
+                  <span className="quicknotes-item-date">{timeAgo(note.updatedAt)}</span>
+                </span>
+                {note.preview && <span className="quicknotes-item-preview">{note.preview}</span>}
+              </button>
             </li>
           ))}
         </ul>

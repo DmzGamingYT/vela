@@ -77,6 +77,8 @@ export default function Sidebar() {
   const [favDragId, setFavDragId] = useState<string | null>(null)
   const favDragRef = useRef<string | null>(null)
   const [favDrop, setFavDrop] = useState<{ id: string; edge: 'before' | 'after' } | null>(null)
+  const [favMode, setFavMode] = useState<'grid' | 'list'>('grid')
+  const [favExpanded, setFavExpanded] = useState(false)
 
   // Une feuille ouverte (réglages, protection, palette) passe devant : une
   // infobulle ou un menu resté ouvert flotterait par-dessus.
@@ -162,7 +164,11 @@ export default function Sidebar() {
   const loose = unpinned.filter((tab) => !tab.groupId || !groupIds.has(tab.groupId))
   const pinnedCount = pinned.length
   const visibleBookmarks =
-    view.bookmarks.length > FAVORITE_LIMIT ? view.bookmarks.slice(0, FAVORITE_LIMIT - 1) : view.bookmarks
+    favExpanded || favMode === 'list'
+      ? view.bookmarks
+      : view.bookmarks.length > FAVORITE_LIMIT
+        ? view.bookmarks.slice(0, FAVORITE_LIMIT - 1)
+        : view.bookmarks
   const hiddenBookmarks = view.bookmarks.length - visibleBookmarks.length
 
   const sourceTab = (): TabView | undefined =>
@@ -588,7 +594,7 @@ export default function Sidebar() {
       <button type="button" className="brief-card" onClick={() => setOverlay('brief')}>
         <span className="brief-kicker">
           <Icon name="calendar" size={13} />
-          Brief du jour
+          Reprendre le fil
         </span>
         <span className="brief-date">{view.brief.dateLabel}</span>
         <span className="brief-arrow">
@@ -685,6 +691,26 @@ export default function Sidebar() {
                   <button
                     type="button"
                     className="icon-btn subtle"
+                    title={favMode === 'grid' ? 'Afficher en liste fluide' : 'Afficher en grille'}
+                    aria-label={favMode === 'grid' ? 'Afficher en liste fluide' : 'Afficher en grille'}
+                    onClick={() => setFavMode((m) => (m === 'grid' ? 'list' : 'grid'))}
+                  >
+                    <Icon name={favMode === 'grid' ? 'list' : 'panel'} size={12} />
+                  </button>
+                  {view.bookmarks.length > FAVORITE_LIMIT && favMode === 'grid' && (
+                    <button
+                      type="button"
+                      className="icon-btn subtle"
+                      title={favExpanded ? 'Replier la grille' : 'Déplier tous les favoris'}
+                      aria-label={favExpanded ? 'Replier' : 'Déplier'}
+                      onClick={() => setFavExpanded((e) => !e)}
+                    >
+                      <Icon name={favExpanded ? 'chevron-down' : 'chevron-right'} size={12} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="icon-btn subtle"
                     title="Tous les favoris"
                     onClick={() => setOverlay('bookmarks')}
                   >
@@ -692,6 +718,42 @@ export default function Sidebar() {
                   </button>
                 </span>
               </div>
+              {favMode === 'list' ? (
+                <div className="fav-list" role="group" aria-label="Liste des favoris">
+                  {visibleBookmarks.map((bookmark) => (
+                    <div
+                      key={bookmark.id}
+                      className="fav-list-row"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => newTab(bookmark.url)}
+                      onContextMenu={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        openBookmarkMenu(bookmark, event.clientX, event.clientY)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          newTab(bookmark.url)
+                        }
+                      }}
+                    >
+                      <Favicon
+                        src={bookmark.favicon}
+                        url={bookmark.url}
+                        label={bookmark.title}
+                        size={15}
+                        spaceId={space.id}
+                      />
+                      <span className="fav-list-copy">
+                        <span className="fav-list-title">{displayTitle(bookmark.title)}</span>
+                        <span className="fav-list-host">{hostOf(bookmark.url)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div
                 className="mini-grid"
                 role="group"
@@ -749,14 +811,15 @@ export default function Sidebar() {
                   <button
                     type="button"
                     className="mini-tile mini-tile-more"
-                    aria-label={`Voir les ${hiddenBookmarks} autres favoris`}
-                    title={`${hiddenBookmarks} autres favoris`}
-                    onClick={() => setOverlay('bookmarks')}
+                    aria-label={`Déplier les ${hiddenBookmarks} autres favoris`}
+                    title={`Déplier les ${hiddenBookmarks} autres favoris`}
+                    onClick={() => setFavExpanded(true)}
                   >
                     <span aria-hidden="true">+{hiddenBookmarks}</span>
                   </button>
                 )}
               </div>
+              )}
             </>
           )}
 

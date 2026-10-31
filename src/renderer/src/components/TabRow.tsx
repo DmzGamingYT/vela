@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import type { DragEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { DragEvent, MouseEvent as ReactMouseEvent } from 'react'
 import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { initials, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import TabPreviewCard from './TabPreviewCard'
 
 interface TabRowProps {
   tab: TabView
@@ -33,11 +34,67 @@ export default function TabRow({
   const closeTab = useBrowser((state) => state.closeTab)
   const pin = useBrowser((state) => state.pin)
   const splitWith = useBrowser((state) => state.splitWith)
+  const toggleMute = useBrowser((state) => state.toggleMute)
   const [broken, setBroken] = useState(false)
+
+  // Aperçu flottant au survol
+  const [showPreview, setShowPreview] = useState(false)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearHoverTimers = (): void => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    hoverTimer.current = null
+    closeTimer.current = null
+  }
+
+  useEffect(() => clearHoverTimers, [])
 
   const host = hostOf(tab.url)
   const tint = tintFor(host || tab.title || tab.id)
   const home = isHomeUrl(tab.url)
+
+  const handleMouseEnter = (event: ReactMouseEvent<HTMLDivElement>): void => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+    if (showPreview || hoverTimer.current) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    hoverTimer.current = setTimeout(() => {
+      hoverTimer.current = null
+      setAnchorRect(rect)
+      setShowPreview(true)
+    }, 280)
+  }
+
+  const handleMouseLeave = (): void => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current)
+      hoverTimer.current = null
+    }
+    if (showPreview && !closeTimer.current) {
+      // Laisser le pointeur franchir le petit espace entre l'onglet et la carte.
+      closeTimer.current = setTimeout(() => {
+        closeTimer.current = null
+        setShowPreview(false)
+      }, 180)
+    }
+  }
+
+  const keepPreviewOpen = (): void => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }
+
+  const closePreview = (): void => {
+    clearHoverTimers()
+    setShowPreview(false)
+  }
 
   return (
     <div
@@ -46,6 +103,7 @@ export default function TabRow({
       data-active={active}
       data-secondary={secondary}
       data-home={home}
+      data-asleep={tab.asleep && !home ? 'true' : undefined}
       data-dragging={dragging}
       data-drop={dropEdge ?? undefined}
       role="tab"
@@ -54,13 +112,18 @@ export default function TabRow({
       draggable
       title={home ? 'Accueil' : tab.title}
       onClick={() => selectTab(tab.id)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           selectTab(tab.id)
         }
       }}
-      onDragStart={(event) => onDragStart(event, tab)}
+      onDragStart={(event) => {
+        closePreview()
+        onDragStart(event, tab)
+      }}
       onDragEnd={onDragEnd}
       onDragOver={(event) => onDragOver(event, tab)}
       onDrop={(event) => onDrop(event, tab)}
@@ -79,6 +142,24 @@ export default function TabRow({
       </span>
 
       {tab.loading && <span className="tab-loading" aria-label="Chargement" />}
+
+      {/* Indicateur audio interactif */}
+      {(tab.audible || tab.muted) && !home && (
+        <button
+          type="button"
+          className="tab-sound-btn"
+          data-muted={tab.muted ? 'true' : undefined}
+          title={tab.muted ? 'Rétablir le son' : 'Couper le son de cet onglet'}
+          aria-label={tab.muted ? 'Rétablir le son' : 'Couper le son'}
+          onClick={(event) => {
+            event.stopPropagation()
+            toggleMute(tab.id, !tab.muted)
+          }}
+        >
+          <Icon name={tab.muted ? 'volume-off' : 'volume'} size={12} />
+        </button>
+      )}
+
       {tab.asleep && !home && (
         <span className="tab-asleep" title="En veille : la page se recharge à l’ouverture">
           <Icon name="moon" size={11} />
@@ -125,6 +206,16 @@ export default function TabRow({
           <Icon name="close" size={12} />
         </button>
       </span>
+
+      {showPreview && anchorRect && (
+        <TabPreviewCard
+          tab={tab}
+          anchorRect={anchorRect}
+          onClose={closePreview}
+          onMouseEnter={keepPreviewOpen}
+          onMouseLeave={handleMouseLeave}
+        />
+      )}
     </div>
   )
 }

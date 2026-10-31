@@ -41,9 +41,9 @@ export default function BriefPanel() {
               <span className="eyebrow-dot" />
               {view.brief.dateLabel}
             </p>
-            <h1>Brief du jour</h1>
+            <h1>Reprendre le fil</h1>
             <p className="sheet-lede">
-              Trois choses qui méritent votre attention, calculées sur cet appareil à partir de vos onglets et de votre historique.
+              Vos onglets ouverts et votre historique local aident à retrouver ce qui mérite votre attention.
             </p>
           </div>
           <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
