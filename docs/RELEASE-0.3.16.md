@@ -10,8 +10,8 @@ site aligné sur la même version. La publication démarre à la poussée sur `m
 |---|---|
 | Version `package.json` | **0.3.16** |
 | Version `package-lock.json` | **0.3.16** (racine et `packages[""]`) |
-| Notes de version | rédigées ci-dessous, prêtes à coller dans la release |
-| Checklist plateformes | ci-dessous, à cocher au moment de la publication |
+| Notes de version | **publiées** dans la release, reprises ci-dessous |
+| Checklist plateformes | ci-dessous, cochée pour cette publication |
 | Release GitHub | **publiée** — [v0.3.16](https://github.com/DmzGamingYT/vela/releases/tag/v0.3.16) |
 | Site | **mis à jour** en 0.3.16, empreintes et liens de la release |
 | Signature / notarisation | **aucune** — pas de certificat dans ce dépôt, donc pas de mise à jour macOS automatique |
