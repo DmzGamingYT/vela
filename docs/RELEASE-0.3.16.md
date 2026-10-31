@@ -1,8 +1,8 @@
 # Vela 0.3.16 — notes de version et checklist
 
-Préparé le 29 octobre 2026. **Rien n'est publié** : ni push, ni tag, ni release, ni déploiement du site.
-La publication ne démarre qu'à la poussée sur `main` d'un commit dont `package.json` annonce une version
-encore sans release (`.github/workflows/release.yml`).
+Préparé le 29 octobre 2026, **publié le 31 octobre 2026** : release `v0.3.16`, six installateurs,
+site aligné sur la même version. La publication démarre à la poussée sur `main` d'un commit dont
+`package.json` annonce une version encore sans release (`.github/workflows/release.yml`).
 
 État de la préparation :
 
@@ -12,7 +12,8 @@ encore sans release (`.github/workflows/release.yml`).
 | Version `package-lock.json` | **0.3.16** (racine et `packages[""]`) |
 | Notes de version | rédigées ci-dessous, prêtes à coller dans la release |
 | Checklist plateformes | ci-dessous, à cocher au moment de la publication |
-| Site | **non modifié**, reste sur 0.3.15 jusqu'à ce que les installateurs existent |
+| Release GitHub | **publiée** — [v0.3.16](https://github.com/DmzGamingYT/vela/releases/tag/v0.3.16) |
+| Site | **mis à jour** en 0.3.16, empreintes et liens de la release |
 | Signature / notarisation | **aucune** — pas de certificat dans ce dépôt, donc pas de mise à jour macOS automatique |
 
 ## Notes de version (proposition de texte)
@@ -24,8 +25,8 @@ encore sans release (`.github/workflows/release.yml`).
 - La surface IPC est fermée : chaque canal est réservé à la coque, à la petite fenêtre (`mini:*`) ou aux
   quatre canaux dont les pages ont besoin. Un cadre imbriqué n'obtient rien.
 - La politique de sécurité du contenu n'autorise plus aucun script inline en dehors du script de thème,
-  dont l'empreinte est vérifiée par un test, et les connexions sortantes sont limitées à la météo et au
-  pont local.
+  dont l'empreinte est vérifiée par un test, et les connexions sortantes sont limitées à la météo ; le
+  WebSocket local n'existe plus que dans le serveur de développement.
 - Sur macOS, l'installateur `.dmg` téléchargé est comparé au manifeste de la release : taille et empreinte
   SHA-512, en temps constant. Sans manifeste, aucun installateur n'est proposé.
 - La clé Google voyage dans l'en-tête `x-goog-api-key`, plus jamais dans l'URL.
@@ -59,7 +60,7 @@ encore sans release (`.github/workflows/release.yml`).
 
 ### Sous le capot
 
-- 36 fichiers de tests, 380 tests, types et build verts.
+- 37 fichiers de tests, 384 tests, types et build verts.
 - Aucune nouvelle destination réseau : le manifeste de mise à jour est lu sur `github.com`, déjà déclaré.
 
 ## Checklist des plateformes
@@ -70,7 +71,7 @@ encore sans release (`.github/workflows/release.yml`).
 |---|---|---|---|
 | 1 | Dépendances | `npm ci` | code 0, lockfile inchangé |
 | 2 | Types | `npm run typecheck` | code 0 |
-| 3 | Tests | `npm test` | 36 fichiers, 380 tests |
+| 3 | Tests | `npm test` | 37 fichiers, 384 tests |
 | 4 | Build | `npm run build` | code 0, `out/` produit |
 | 5 | Dépendances | `npm audit` | 2 critiques + 1 modérée, **toutes dans la chaîne de test** (décision à prendre, cf. C1 de l'audit) |
 | 6 | Version | `node -p "require('./package.json').version"` | `0.3.16` |
@@ -114,10 +115,10 @@ encore sans release (`.github/workflows/release.yml`).
 
 | # | Étape | Commande | Attendu |
 |---|---|---|---|
-| 1 | Empreintes | `shasum -a 256` sur les six fichiers | six valeurs à reporter sur le site |
-| 2 | Liens | `curl -I` sur les six URL `releases/download/v0.3.16/…` | 200 |
-| 3 | Manifeste | `curl -sL releases/download/v0.3.16/latest-mac.yml` | version 0.3.16, trois entrées |
-| 4 | Page Releases | Ouvrir la release | notes, six installateurs, pas de brouillon |
+| 1 | Empreintes | `shasum -a 256` sur les six fichiers | ✅ reportées sur le site |
+| 2 | Liens | `curl -I` sur les six URL `releases/download/v0.3.16/…` | ✅ 200 |
+| 3 | Manifeste | `curl -sL releases/download/v0.3.16/latest-mac.yml` | ✅ version 0.3.16, trois entrées |
+| 4 | Page Releases | Ouvrir la release | ✅ notes, six installateurs, pas de brouillon |
 
 ### 5. Mise à jour du site (seulement après l'étape 4)
 
