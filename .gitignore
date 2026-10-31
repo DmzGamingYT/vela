@@ -30,3 +30,6 @@ build/icons-apercu.*
 build/mark-preview.png
 # Compétences fournies par le harnais de développement, pas par ce projet.
 skills/
+# Conversations importées et captures de travail : utiles localement, jamais au dépôt.
+.cloud-attachments/
+screenshots/
