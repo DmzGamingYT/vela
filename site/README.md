@@ -22,8 +22,15 @@ Le thème clair suit le système par défaut ; le bouton soleil/lune force un th
 - Preview : <https://site-68d82f56e26e4679ad55315fdbb685df.freebuff.page>
 
 Le canonical, `og:url` et `sitemap.xml` pointent vers le domaine de production. **Si le domaine
-change, ces trois endroits sont à mettre à jour** (`public/*/index.html`, `public/sitemap.xml`,
-`public/robots.txt`).
+change, une seule commande réécrit tout** :
+
+```bash
+node site/tools/site-url.mjs https://vela.app
+```
+
+Elle met à jour `public/**/*.html`, `sitemap.xml`, `robots.txt`, le README et `SITE_URL` dans
+`src/shared/site.ts` (menu de l’application, vérification de mise à jour). Sans argument, elle
+affiche l’adresse actuelle ; relancée à l’identique, elle ne produit aucun diff.
 
 ## Aperçu local
 
@@ -55,7 +62,8 @@ site/
 │   ├── robots.txt · sitemap.xml
 ├── tools/
 │   ├── captures.mjs            dérive les variantes d’image (sips + ffmpeg/SVT-AV1)
-│   └── privacy.mjs             génère la page Confidentialité depuis son gabarit
+│   ├── privacy.mjs             génère la page Confidentialité depuis son gabarit
+│   └── site-url.mjs            réécrit l’adresse publique partout
 ├── og/
 │   ├── og.html                 source du visuel 1200×630
 │   └── make-og.cjs             capture via le Chromium d’Electron
