@@ -1,8 +1,9 @@
 # Vela 0.3.17 — notes de version et checklist
 
-Préparé le 1er novembre 2026. La publication démarre à la poussée sur `main` d'un commit dont
-`package.json` annonce une version encore sans release (`.github/workflows/release.yml`) : le
-workflow construit les trois plateformes et crée `v0.3.17`.
+Préparé et **publié le 1er novembre 2026** : release `v0.3.17`, neuf installateurs, notes reprises dans
+la release. La publication démarre à la poussée sur `main` d'un commit dont `package.json` annonce une
+version encore sans release (`.github/workflows/release.yml`) : le workflow a construit les trois
+plateformes puis créé `v0.3.17`.
 
 État de la préparation :
 
@@ -12,7 +13,7 @@ workflow construit les trois plateformes et crée `v0.3.17`.
 | Version `package-lock.json` | **0.3.17** (racine et `packages[""]`) |
 | Notes de version | rédigées ci-dessous, publiées dans la release |
 | Checklist plateformes | ci-dessous ; builds assurés par le workflow, pas par cette machine |
-| Release GitHub | **à créer** par la poussée |
+| Release GitHub | **publiée** — [v0.3.17](https://github.com/DmzGamingYT/vela/releases/tag/v0.3.17), 19 fichiers dont 9 installateurs et 3 manifestes |
 | Site | **encore 0.3.16** — retard d'une version autorisé, alignement après les empreintes |
 | Signature / notarisation | **aucune** — pas de certificat dans ce dépôt, donc pas de mise à jour macOS automatique |
 
