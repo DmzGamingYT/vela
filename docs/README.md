@@ -7,7 +7,8 @@ l'application elle-même ; les pages publiées vivent dans `site/`.
 | Document | Contenu |
 |---|---|
 | [AUDIT.md](AUDIT.md) | Audit des phases 0 et 1 : inventaire, score de risque, constats numérotés (A à F) et suivi des correctifs des lots 1 à 3. Chaque constat renvoie à sa capture ou à son fichier. |
-| [RELEASE-0.3.16.md](RELEASE-0.3.16.md) | Notes de version proposées pour 0.3.16 et checklist de publication par plateforme. Rien n'est publié tant que la version n'est pas poussée sur `main`. |
+| [RELEASE-0.3.17.md](RELEASE-0.3.17.md) | Notes de version de 0.3.17 (audit ergonomie et performance : blocages, mouvement, mesures, découpage des styles, raccourcis multiplateforme) et checklist de publication par plateforme. |
+| [RELEASE-0.3.16.md](RELEASE-0.3.16.md) | Notes de version de 0.3.16, publiée le 31 octobre 2026 : sécurité IPC, données, tunnel de recherche, accueil. |
 | [captures/](captures/) | Preuves visuelles citées par l'audit : paires avant/après des lots, état de l'accueil et des réglages en phase 1, aperçus du Bento Grid. |
 
 ## Captures
