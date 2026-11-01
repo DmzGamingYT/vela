@@ -1,0 +1,423 @@
+/* --- Carte « À voir » de l'accueil ----------------------------- */
+.home-watch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.watch-score {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+
+.watch-account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.watch-account-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.watch-link {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--fill);
+  font-size: 9.5px;
+  color: var(--ink-soft);
+  transition: background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-link:hover {
+  background: var(--fill-2);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.watch-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Journal Letterboxd : import sur un clic, puis lecture locale. */
+.watch-log {
+  display: grid;
+  gap: 6px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.watch-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.watch-log-heading {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.watch-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--fill);
+  font-size: 9.5px;
+  color: var(--ink-soft);
+  transition: background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-import:hover:not(:disabled) {
+  background: var(--fill-2);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.watch-import:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.watch-import:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.watch-log-note {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.watch-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.watch-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  width: 100%;
+  padding: 4px 5px;
+  border-radius: 7px;
+  text-align: left;
+  transition: background var(--dur-2) var(--ease-standard);
+}
+
+.watch-log-row:hover {
+  background: var(--fill);
+}
+
+.watch-log-row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.watch-log-date {
+  flex: none;
+  width: 62px;
+  font-size: 9px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.watch-log-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-log-year {
+  color: var(--faint);
+}
+
+.watch-log-stars {
+  flex: none;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: var(--sage);
+}
+
+.watch-log-again {
+  flex: none;
+  font-size: 9px;
+  color: var(--faint);
+}
+
+.watch-log-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 9px;
+  color: var(--faint);
+}
+
+.watch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  max-height: 176px;
+  overflow-y: auto;
+}
+
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  border-radius: 8px;
+}
+
+.watch-row:hover {
+  background: var(--fill);
+}
+
+.watch-check {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: transparent;
+  transition: background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-check svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-standard);
+}
+
+.watch-check[aria-checked='true'] {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+
+.watch-check[aria-checked='true'] svg {
+  opacity: 1;
+}
+
+.watch-check:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.watch-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-row[data-watched='true'] .watch-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.watch-remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-row:hover .watch-remove,
+.watch-remove:focus-visible {
+  opacity: 1;
+}
+
+.watch-remove:hover {
+  color: var(--ink);
+}
+
+.watch-hint,
+.watch-foot {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.watch-draw {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--line-soft);
+  background: var(--fill);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  transition: background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-draw:hover:not(:disabled) {
+  background: var(--fill-2);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.watch-draw:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.watch-draw:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.watch-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.watch-pick-kicker {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.watch-pick strong {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.watch-pick-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.watch-add {
+  display: flex;
+  gap: 6px;
+}
+
+.watch-add input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: transparent;
+  font: inherit;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.watch-add input:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.watch-add button {
+  width: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.watch-add button:hover:not(:disabled) {
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+.watch-add button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.watch-add button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-check,
+  .watch-check svg,
+  .watch-link,
+  .watch-draw,
+  .watch-remove {
+    transition: none;
+  }
+}
+
+/* En clair, le cadre teinté du rail gagnait sur la règle des avatars et
+   dessinait un anneau autour de chaque pastille : l'avatar suffit. */
+:root[data-mode='light'] .space-chip[data-avatar='true'] {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+

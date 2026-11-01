@@ -1,0 +1,155 @@
+/* --- Page d’accueil -------------------------------------------- */
+
+.start {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--paper);
+  position: relative;
+}
+
+.start-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 46px 54px 34px;
+}
+
+/* Lueur d'espace (façon Zephium « ciel ») : un seul dégradé statique,
+   teinté par la couleur de l'espace actif. Zéro filtre, zéro repaint. */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--space-accent);
+  flex: 0 0 6px;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(40px, 4.4vw, 52px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.hero-lede {
+  margin: 0 auto;
+  max-width: 460px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Champ de commande du héro (façon Dia) : entrée unique
+   adresse / recherche / agent, qui ouvre la barre de commandes. */
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  transition: transform var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
+}
+
+.action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--muted);
+  color: var(--ink);
+}
+
+.action.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.action.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 86%, var(--clay));
+  border-color: transparent;
+  color: var(--paper);
+}
+
+.action.primary kbd {
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+  border-color: transparent;
+}
+
+.action.ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.action.ghost:hover {
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.action.wide {
+  width: 100%;
+}
+
+.action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.action[data-danger="true"] {
+  color: var(--clay);
+  border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  color: var(--muted);
+  transition: color var(--dur-2) var(--ease-standard);
+}
+
+.text-btn:hover {
+  color: var(--clay);
+}
+
+.brief-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+/* Colonne unique : le champ et l’historique, rien d’autre. Les tâches
+   vivent sous un dépliant discret, fermé par défaut. */
+/* Le dépliant porte déjà le titre et le compte. */

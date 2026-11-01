@@ -21,6 +21,7 @@ import {
   type SpaceShortcut
 } from '@shared/space'
 import { hostOf } from '@shared/url'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import GalleryAvatar from './GalleryAvatar'
@@ -77,6 +78,7 @@ export default function SpaceDialog() {
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const sheetRef = useModalFocus<HTMLDivElement>()
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -224,6 +226,7 @@ export default function SpaceDialog() {
   return (
     <div className="overlay space-overlay" onMouseDown={() => setOverlay(null)}>
       <div
+        ref={sheetRef}
         className="sheet space-sheet immersive"
         role="dialog"
         aria-modal="true"

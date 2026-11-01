@@ -1,4 +1,6 @@
 import { hostOf } from '@shared/url'
+import { shortcut } from '../lib/format'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import { Icon } from './Icon'
@@ -9,6 +11,7 @@ export default function BookmarksPanel() {
   const newTab = useBrowser((s) => s.newTab)
   const removeBookmark = useBrowser((s) => s.removeBookmark)
   const toggleBookmark = useBrowser((s) => s.toggleBookmark)
+  const sheetRef = useModalFocus<HTMLDivElement>()
 
   if (!view) return null
   const bookmarks = view.bookmarks
@@ -17,7 +20,14 @@ export default function BookmarksPanel() {
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet library-sheet" role="dialog" aria-label="Marque-pages" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet library-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Marque-pages"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <header className="settings-head">
           <div>
             <h1>Marque-pages</h1>
@@ -44,7 +54,7 @@ export default function BookmarksPanel() {
         <div className="settings-scroll library-scroll">
           {bookmarks.length === 0 && (
             <p className="setting-hint">
-              Aucun marque-page. Ouvrez une page puis ⌘D, ou l’étoile dans la barre d’adresse.
+              Aucun marque-page. Ouvrez une page puis {shortcut('D')}, ou l’étoile dans la barre d’adresse.
             </p>
           )}
           <ul className="library-list">

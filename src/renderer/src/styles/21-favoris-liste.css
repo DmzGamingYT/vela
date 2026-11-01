@@ -1,0 +1,208 @@
+/* --- Vue liste des favoris --- */
+.fav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 2px 0;
+}
+
+.fav-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-standard);
+}
+
+.fav-list-row:hover {
+  background: var(--surface-2);
+}
+
+.fav-list-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.fav-list-title {
+  font-size: 11.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fav-list-host {
+  font-size: 9.5px;
+  color: var(--faint);
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ergonomie : titres et actions de l’accueil restent lisibles à taille normale. */
+.home-card-head h2 {
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+.home-card-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.home-card-action {
+  min-height: 28px;
+  font-size: 11px;
+}
+
+.quicknotes-heading {
+  min-width: 0;
+}
+
+.quicknotes-heading h2 {
+  margin-bottom: 3px;
+}
+
+.quicknotes-scope {
+  display: block;
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.quicknotes-collapsed {
+  width: 100%;
+  min-height: 40px;
+  font: inherit;
+  text-align: left;
+}
+
+.quicknotes-add-btn {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.quicknotes-item {
+  width: 100%;
+  border: 1px solid var(--line-soft);
+  font: inherit;
+  text-align: left;
+}
+
+.quicknotes-item-date {
+  font-size: 11px;
+}
+
+.quicknotes-item-preview {
+  font-size: 11.5px;
+}
+
+.home-engine,
+.tile-badge {
+  font-size: 11px;
+}
+
+.sidebar .tabs-head {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 1120px) {
+  .quicknotes-voice span {
+    display: none;
+  }
+}
+
+/* Fenêtres étroites : les panneaux ancrés (notes, agent) se resserrent au lieu
+   de comprimer la page. Ils ne sont jamais ouverts ensemble — le store s'en
+   charge — mais un seul panneau de 420 px sur 1024 px laissait déjà 280 px. */
+@media (max-width: 1180px) {
+  .agent-dock {
+    flex-basis: 340px;
+    width: 340px;
+    min-width: 300px;
+  }
+
+  .notes-drawer {
+    max-width: 340px;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Sorties — une feuille ne s'évanouit plus entre deux images
+   --------------------------------------------------------------- */
+
+/* Le conteneur de présence ne prend aucune place dans la mise en page : la
+   feuille reste l'enfant direct de la coque, comme avant. */
+.presence {
+  display: contents;
+}
+
+.presence[data-closing='true'] .overlay,
+.presence[data-closing='true'] .notes-drawer,
+.presence[data-closing='true'] .agent {
+  pointer-events: none;
+}
+
+/* Le fond s'efface d'un bloc : une seule opacité composée pour toute la
+   couche, la feuille ne fait que se reposer de 4 px pendant ce temps. */
+.presence[data-closing='true'] .overlay {
+  animation: vela-overlay-out var(--dur-3) var(--ease-in) forwards;
+}
+
+.presence[data-closing='true'] .sheet,
+.presence[data-closing='true'] .command {
+  animation: vela-sheet-out var(--dur-3) var(--ease-in) forwards;
+}
+
+/* Les panneaux ancrés glissent d'un cheveu vers leur bord en s'effaçant. */
+.presence[data-closing='true'] .notes-drawer,
+.presence[data-closing='true'] .agent {
+  animation: vela-dock-out var(--dur-3) var(--ease-in) forwards;
+}
+
+/* Le toast s'efface sur place : il garde sa ligne, la pile ne saute pas. */
+.toast[data-leaving='true'] {
+  animation: vela-toast-out var(--dur-2) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+@keyframes vela-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vela-sheet-out {
+  to {
+    transform: translateY(4px) scale(0.99);
+  }
+}
+
+@keyframes vela-dock-out {
+  to {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes vela-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}

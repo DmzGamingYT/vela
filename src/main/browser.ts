@@ -61,6 +61,7 @@ import {
   type AppView,
   type DownloadItem,
   type LayoutRequest,
+  type PaneSnapshot,
   type NoteMeta,
   type PaneRect,
   type ProcessInfo,
@@ -1404,7 +1405,7 @@ export class Browser {
     handle('tab:zoom', (payload) => {
       const input = (payload ?? {}) as { id?: unknown; direction?: unknown }
       const direction = input.direction === 'in' || input.direction === 'out' ? input.direction : 'reset'
-      this.tabs.zoom(asId(input.id), direction)
+      return this.tabs.zoom(asId(input.id), direction)
     })
     handle('tab:stop', (payload) => {
       this.tabs.stop(asId(payload))
@@ -1955,6 +1956,36 @@ export class Browser {
       const panes = Array.isArray(payload?.panes) ? payload.panes.filter(isPane).slice(0, 4) : []
       this.overlay = Boolean(payload?.overlay)
       this.tabs.layout({ panes, overlay: this.overlay })
+    })
+    // Épreuves des volets pour le glissement du séparateur. Demandé avant que
+    // les vues natives ne quittent la scène : une fois cachées, une capture
+    // n’aurait plus de trame à rendre.
+    handle('views:snapshot', async (payload) => {
+      const ids = Array.isArray(payload)
+        ? payload.filter((id): id is string => typeof id === 'string').slice(0, 2)
+        : []
+      // Les deux captures partent ensemble : en séquence, l’épreuve arrivait
+      // après la fin d’un glissement court.
+      const shots = await Promise.all(
+        ids.map(async (tabId): Promise<PaneSnapshot | null> => {
+          const contents = this.tabs.captureSource(tabId)
+          if (!contents) return null
+          try {
+            const image = await Promise.race([
+              contents.capturePage(),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 240))
+            ])
+            if (!image || image.isEmpty()) return null
+            const size = image.getSize()
+            const trimmed = size.width > 720 ? image.resize({ width: 720, quality: 'good' }) : image
+            return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(66).toString('base64')}` }
+          } catch {
+            /* une capture ratée laisse le volet sans épreuve */
+            return null
+          }
+        })
+      )
+      return shots.filter((shot): shot is PaneSnapshot => shot !== null)
     })
 
     ipcMain.on('agent:cancel', (event, runId: unknown) => {

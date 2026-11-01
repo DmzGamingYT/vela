@@ -418,6 +418,8 @@ export type ShortcutAction =
   | 'mini'
   | 'close-tab'
   | 'reopen-tab'
+  | 'next-tab'
+  | 'prev-tab'
   | 'split'
   | 'notes'
   | 'agent'
@@ -461,4 +463,10 @@ export interface SelectionPayload {
 export interface LayoutRequest {
   panes: PaneRect[]
   overlay: boolean
+}
+
+/** Épreuve figée d’un volet, prise juste avant de le retirer de la scène. */
+export interface PaneSnapshot {
+  tabId: string
+  image: string
 }

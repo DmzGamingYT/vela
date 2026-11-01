@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MINI_CHROME_HEIGHT } from '@shared/mini'
 import type { MiniState } from '@shared/types'
+import { shortcut } from '../lib/format'
 import Favicon from './Favicon'
 import { Icon } from './Icon'
 
@@ -112,7 +113,7 @@ export default function MiniBar(): React.JSX.Element {
             onClick={() => void window.vela.mini.back()}
             disabled={!state.canGoBack}
             aria-label="Revenir en arrière"
-            title="Revenir en arrière (⌘[)"
+            title={`Revenir en arrière (${shortcut('[')})`}
           >
             <Icon name="back" size={15} />
           </button>
@@ -122,7 +123,7 @@ export default function MiniBar(): React.JSX.Element {
             onClick={() => void window.vela.mini.forward()}
             disabled={!state.canGoForward}
             aria-label="Avancer"
-            title="Avancer (⌘])"
+            title={`Avancer (${shortcut(']')})`}
           >
             <Icon name="forward" size={15} />
           </button>
@@ -131,7 +132,7 @@ export default function MiniBar(): React.JSX.Element {
             className="mini-btn"
             onClick={() => void (state.loading ? window.vela.mini.stop() : window.vela.mini.reload())}
             aria-label={state.loading ? 'Arrêter le chargement' : 'Recharger'}
-            title={state.loading ? 'Arrêter le chargement' : 'Recharger (⌘R)'}
+            title={state.loading ? 'Arrêter le chargement' : `Recharger (${shortcut('R')})`}
           >
             <Icon name={state.loading ? 'stop' : 'reload'} size={15} />
           </button>

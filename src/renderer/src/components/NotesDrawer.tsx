@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { NoteAiAction } from '@shared/api'
 import { parseDroppedExcerpt } from '@shared/noteDrop'
 import {
@@ -56,6 +56,8 @@ export default function NotesDrawer() {
   const voiceNoteRequest = useBrowser((state) => state.voiceNoteRequest)
   const voiceNoteSpaceId = useBrowser((state) => state.voiceNoteSpaceId)
   const consumeVoiceNoteRequest = useBrowser((state) => state.consumeVoiceNoteRequest)
+  const noteRequest = useBrowser((state) => state.noteRequest)
+  const consumeNoteRequest = useBrowser((state) => state.consumeNoteRequest)
   const toast = useBrowser((state) => state.toast)
 
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -84,6 +86,13 @@ export default function NotesDrawer() {
     return Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 400
   })
   const latest = useRef<{ draft: Draft | null; dirty: boolean }>({ draft: null, dirty: false })
+  // Identité de la note ouverte : une sauvegarde qui se termine après un
+  // changement de note ne doit ni horodater ni marquer propre le nouveau
+  // brouillon.
+  const draftVersion = useRef(0)
+  // Sauvegarde différée en attente : on garde le minuteur et l'instantané du
+  // brouillon pour pouvoir vider la file avant de changer de note.
+  const pendingSave = useRef<{ timer: ReturnType<typeof setTimeout>; draft: Draft } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const drawing = useRef<{ active: boolean; x: number; y: number } | null>(null)
@@ -117,46 +126,117 @@ export default function NotesDrawer() {
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt)
   }, [view?.notes, filter, tagFilter, onlyPinned])
 
+  /**
+   * Enregistre un brouillon. Le même chemin sert à la sauvegarde différée et
+   * au vidage avant changement de note : deux implémentations divergeraient.
+   */
+  const persistDraft = useCallback(
+    async (current: Draft): Promise<void> => {
+      if (!current.title.trim() && !current.body.trim()) return
+      const version = draftVersion.current
+      setSaving(true)
+      const note = await saveNote({
+        id: current.id,
+        title: current.title || 'Note sans titre',
+        body: current.body,
+        spaceId: current.spaceId,
+        url: current.url,
+        tags: current.tags,
+        pinned: current.pinned
+      })
+      setSaving(false)
+      if (!note) return
+      // La note affichée a changé pendant l'écriture : le résultat concerne
+      // l'ancienne, on ne touche à rien.
+      if (draftVersion.current !== version) return
+      // Un brouillon encore vierge d'identifiant reçoit celui de sa première
+      // sauvegarde, même si l'utilisateur a continué à taper entre-temps.
+      setDraft((active) => (active && !active.id && !current.id ? { ...active, id: note.id } : active))
+      // Des frappes sont arrivées pendant l'enregistrement : la version
+      // enregistrée n'est plus celle à l'écran, on laisse « Modifié ».
+      if (latest.current.draft !== current) return
+      setSavedAt(Date.now())
+      setDirty(false)
+      // Un titre changé réécrit les liens des autres notes : on propose de
+      // revenir en arrière tant que la trace est fraîche.
+      if (current.id && loadedTitle.current && loadedTitle.current !== note.title && note.linksUpdated) {
+        setRenameUndo({ id: note.id, from: loadedTitle.current, updated: note.linksUpdated })
+      }
+      // Un fichier refusé garde son ancien lien : le dire vaut mieux que le
+      // laisser croire que tout a suivi.
+      if (note.linksFailed) {
+        toast(
+          note.linksFailed === 1
+            ? 'Une note liée n’a pas pu être mise à jour.'
+            : `${note.linksFailed} notes liées n’ont pas pu être mises à jour.`,
+          'error'
+        )
+      }
+      loadedTitle.current = note.title
+      void window.vela.notes.graph(note.id).then(setGraph).catch(() => undefined)
+    },
+    [saveNote, toast]
+  )
+
+  /** Vide tout de suite la sauvegarde différée, avant de quitter la note. */
+  const flushPending = useCallback(async (): Promise<void> => {
+    const pending = pendingSave.current
+    if (!pending) return
+    pendingSave.current = null
+    clearTimeout(pending.timer)
+    await persistDraft(pending.draft)
+  }, [persistDraft])
+
+  /**
+   * Ouvre une note existante. Défini avant les effets : la palette peut
+   * demander une note précise dès le premier rendu du tiroir.
+   */
+  const openNote = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        // Rien ne doit rester dans le minuteur de la note qu'on quitte.
+        await flushPending()
+        const note = await window.vela.notes.get(id)
+        if (!note) return
+        draftVersion.current += 1
+        setDraft(draftFrom(note))
+        setDirty(false)
+        setPreview(false)
+        setConfirming(false)
+        setSavedAt(note.updatedAt)
+        setAiMode(null)
+        setRenameUndo(null)
+        setLinkMenu(null)
+        loadedTitle.current = note.title
+        setGraph(await window.vela.notes.graph(note.id).catch(() => null))
+      } catch {
+        toast('Cette note est introuvable.', 'error')
+      }
+    },
+    [flushPending, toast]
+  )
+
+  // Une commande de la palette a choisi une note : on l'ouvre vraiment.
+  useEffect(() => {
+    if (!noteRequest) return
+    consumeNoteRequest()
+    void openNote(noteRequest.id)
+  }, [noteRequest, consumeNoteRequest, openNote])
+
   useEffect(() => {
     if (!draft || !dirty) return
     if (!draft.title.trim() && !draft.body.trim()) return
+    const snapshot = draft
     const timer = setTimeout(() => {
-      setSaving(true)
-      void saveNote({
-        id: draft.id,
-        title: draft.title || 'Note sans titre',
-        body: draft.body,
-        spaceId: draft.spaceId,
-        url: draft.url,
-        tags: draft.tags,
-        pinned: draft.pinned
-      }).then((note) => {
-        setSaving(false)
-        if (!note) return
-        setSavedAt(Date.now())
-        setDirty(false)
-        // Un titre changé réécrit les liens des autres notes : on propose de
-        // revenir en arrière tant que la trace est fraîche.
-        if (draft.id && loadedTitle.current && loadedTitle.current !== note.title && note.linksUpdated) {
-          setRenameUndo({ id: note.id, from: loadedTitle.current, updated: note.linksUpdated })
-        }
-        // Un fichier refusé garde son ancien lien : le dire vaut mieux que le
-        // laisser croire que tout a suivi.
-        if (note.linksFailed) {
-          toast(
-            note.linksFailed === 1
-              ? 'Une note liée n’a pas pu être mise à jour.'
-              : `${note.linksFailed} notes liées n’ont pas pu être mises à jour.`,
-            'error'
-          )
-        }
-        loadedTitle.current = note.title
-        setDraft((current) => (current && !current.id ? { ...current, id: note.id } : current))
-        void window.vela.notes.graph(note.id).then(setGraph).catch(() => undefined)
-      })
+      if (pendingSave.current?.timer === timer) pendingSave.current = null
+      void persistDraft(snapshot)
     }, 600)
-    return () => clearTimeout(timer)
-  }, [draft?.title, draft?.body, draft?.tags, draft?.pinned, draft?.id, draft?.spaceId, draft?.url, dirty, saveNote])
+    pendingSave.current = { timer, draft: snapshot }
+    return () => {
+      clearTimeout(timer)
+      if (pendingSave.current?.timer === timer) pendingSave.current = null
+    }
+  }, [draft, dirty, persistDraft])
 
   useEffect(() => {
     return () => {
@@ -233,26 +313,9 @@ export default function NotesDrawer() {
 
   if (!view) return null
 
-  const openNote = async (id: string): Promise<void> => {
-    try {
-      const note = await window.vela.notes.get(id)
-      if (!note) return
-      setDraft(draftFrom(note))
-      setDirty(false)
-      setPreview(false)
-      setConfirming(false)
-      setSavedAt(note.updatedAt)
-      setAiMode(null)
-      setRenameUndo(null)
-      setLinkMenu(null)
-      loadedTitle.current = note.title
-      setGraph(await window.vela.notes.graph(note.id).catch(() => null))
-    } catch {
-      toast('Cette note est introuvable.', 'error')
-    }
-  }
-
-  const newNote = (): void => {
+  const newNote = async (): Promise<void> => {
+    await flushPending()
+    draftVersion.current += 1
     setDraft({
       title: '',
       body: '',
@@ -274,6 +337,7 @@ export default function NotesDrawer() {
 
   useEffect(() => {
     if (!voiceNoteRequest || !view) return
+    draftVersion.current += 1
     setDraft({
       title: 'Note vocale',
       body: '',
@@ -295,11 +359,13 @@ export default function NotesDrawer() {
     consumeVoiceNoteRequest()
   }, [voiceNoteRequest])
 
-  const capturePage = (): void => {
+  const capturePage = async (): Promise<void> => {
     if (!activeTab || !activeUrl) {
       toast('Ouvrez une page pour la capturer.', 'error')
       return
     }
+    await flushPending()
+    draftVersion.current += 1
     setDraft({
       title: activeTab.title || hostOf(activeUrl),
       body: `Source : [${activeTab.title || hostOf(activeUrl)}](${activeUrl})\n\n`,
@@ -316,6 +382,14 @@ export default function NotesDrawer() {
 
   const close = (): void => {
     toggleNotes(false)
+  }
+
+  /** Retour à la liste : la note en cours ne doit pas perdre ses frappes. */
+  const backToList = async (): Promise<void> => {
+    await flushPending()
+    setDraft(null)
+    setDirty(false)
+    setPreview(false)
   }
 
   const removeDraft = async (): Promise<void> => {
@@ -727,7 +801,7 @@ export default function NotesDrawer() {
       {draft ? (
         <div className="note-editor">
           <div className="note-editor-head">
-            <button type="button" className="icon-btn" onClick={() => setDraft(null)} title="Retour aux notes" aria-label="Retour aux notes">
+            <button type="button" className="icon-btn" onClick={() => void backToList()} title="Retour aux notes" aria-label="Retour aux notes">
               <Icon name="back" size={16} />
             </button>
             <input

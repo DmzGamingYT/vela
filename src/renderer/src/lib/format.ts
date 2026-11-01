@@ -59,9 +59,39 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-/** Raccourci affiché selon la plateforme. */
+/**
+ * Raccourci affiché selon la plateforme.
+ *
+ * Sur macOS les touches s'écrivent en glyphes (⌘⇧T) ; ailleurs en toutes
+ * lettres (Ctrl+Shift+T). Les deux formes sont construites à partir de la
+ * même clé, pour qu'une ligne de la liste des raccourcis ne puisse pas
+ * annoncer ⌘ sur un PC.
+ */
 export function shortcut(key: string): string {
-  return window.vela?.platform === 'darwin' ? `⌘${key}` : `Ctrl+${key}`
+  if (window.vela?.platform === 'darwin') return `⌘${key}`
+  return `Ctrl+${key.replace(/⇧/g, 'Shift+').replace(/⌥/g, 'Alt+')}`
+}
+
+/** Raccourci lu par un lecteur d'écran, dans les mots de la plateforme. */
+export function spokenShortcut(keys: string): string {
+  const mac = window.vela?.platform === 'darwin'
+  const words: [RegExp, string][] = mac
+    ? [
+        [/⌘/g, 'Commande '],
+        [/⇧/g, 'Maj '],
+        [/⌥/g, 'Option '],
+        [/⌫/g, 'Retour arrière '],
+        [/↵/g, 'Entrée']
+      ]
+    : [
+        [/Ctrl/g, 'Contrôle '],
+        [/Shift/g, 'Maj '],
+        [/Alt/g, 'Option '],
+        [/\+/g, ' '],
+        [/↵/g, 'Entrée']
+      ]
+  const spoken = words.reduce((text, [pattern, word]) => text.replace(pattern, word), keys)
+  return spoken.replace(/\s+/g, ' ').trim()
 }
 
 export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {

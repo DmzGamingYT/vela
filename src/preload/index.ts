@@ -73,7 +73,8 @@ const api: VelaApi = {
     remove: (id: string) => ipcRenderer.invoke('group:remove', id)
   },
   views: {
-    layout: (request: LayoutRequest) => ipcRenderer.send('views:layout', request)
+    layout: (request: LayoutRequest) => ipcRenderer.send('views:layout', request),
+    snapshot: (tabIds: string[]) => ipcRenderer.invoke('views:snapshot', tabIds)
   },
   mini: {
     open: (input) => ipcRenderer.invoke('mini:open', input ?? {}),

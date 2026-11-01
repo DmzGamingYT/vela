@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react'
 import Onboarding from './components/Onboarding'
+import Presence from './components/Presence'
 import Sidebar from './components/Sidebar'
 import SpaceRail from './components/SpaceRail'
 import Toasts from './components/Toasts'
@@ -88,11 +89,46 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
+      const state = useBrowser.getState()
+      // Parcours des onglets depuis la coque : les pages ont leur propre
+      // gestionnaire dans le processus principal, la barre d’onglets non.
+      if (event.ctrlKey && !event.metaKey && !event.altKey) {
+        if (event.key === 'Tab' || event.key === 'PageDown' || event.key === 'PageUp') {
+          event.preventDefault()
+          const backwards = event.shiftKey || event.key === 'PageUp'
+          state.handleShortcut({ action: backwards ? 'prev-tab' : 'next-tab' })
+          return
+        }
+      }
+      // ⌘⇧[ / ⌘⇧] : le code de touche reste le même sur tous les claviers.
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey) {
+        if (event.code === 'BracketRight' || event.code === 'BracketLeft') {
+          event.preventDefault()
+          state.handleShortcut({ action: event.code === 'BracketRight' ? 'next-tab' : 'prev-tab' })
+          return
+        }
+      }
+      // Zoom depuis la coque : la page a son propre gestionnaire, pas la barre
+      // latérale ni le tiroir de notes.
+      if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+        const zoomAction =
+          event.key === '+' || event.key === '=' || event.code === 'NumpadAdd'
+            ? 'zoom-in'
+            : event.key === '-' || event.key === '–' || event.code === 'NumpadSubtract'
+              ? 'zoom-out'
+              : event.key === '0' || event.code === 'Numpad0'
+                ? 'zoom-reset'
+                : null
+        if (zoomAction) {
+          event.preventDefault()
+          state.handleShortcut({ action: zoomAction })
+          return
+        }
+      }
       if (event.key !== 'Escape') return
       // Un champ ou un menu qui a déjà traité Échap garde la main : vider un
       // filtre ne doit pas refermer le panneau par-dessus.
       if (event.defaultPrevented) return
-      const state = useBrowser.getState()
       if (state.overlay) {
         event.preventDefault()
         state.setOverlay(null)
@@ -121,17 +157,39 @@ export default function App() {
       {!collapsed && <Sidebar />}
       <Workspace />
       <Suspense fallback={null}>
-        {agentOpen && <AgentCanvas docked />}
-        {notesOpen && <NotesDrawer />}
-        {overlay === 'command' && <CommandBar />}
-        {overlay === 'brief' && <BriefPanel />}
-        {overlay === 'settings' && <SettingsPanel />}
-        {overlay === 'space' && <SpaceDialog />}
-        {overlay === 'processes' && <ProcessManager />}
-        {overlay === 'downloads' && <DownloadsPanel />}
-        {overlay === 'history' && <HistoryPanel />}
-        {overlay === 'bookmarks' && <BookmarksPanel />}
-        {overlay === 'protection' && <ProtectionPanel />}
+        <Presence open={agentOpen} exit={!notesOpen}>
+          <AgentCanvas docked />
+        </Presence>
+        <Presence open={notesOpen} exit={!agentOpen}>
+          <NotesDrawer />
+        </Presence>
+        <Presence open={overlay === 'command'} exit={!overlay}>
+          <CommandBar />
+        </Presence>
+        <Presence open={overlay === 'brief'} exit={!overlay}>
+          <BriefPanel />
+        </Presence>
+        <Presence open={overlay === 'settings'} exit={!overlay}>
+          <SettingsPanel />
+        </Presence>
+        <Presence open={overlay === 'space'} exit={!overlay}>
+          <SpaceDialog />
+        </Presence>
+        <Presence open={overlay === 'processes'} exit={!overlay}>
+          <ProcessManager />
+        </Presence>
+        <Presence open={overlay === 'downloads'} exit={!overlay}>
+          <DownloadsPanel />
+        </Presence>
+        <Presence open={overlay === 'history'} exit={!overlay}>
+          <HistoryPanel />
+        </Presence>
+        <Presence open={overlay === 'bookmarks'} exit={!overlay}>
+          <BookmarksPanel />
+        </Presence>
+        <Presence open={overlay === 'protection'} exit={!overlay}>
+          <ProtectionPanel />
+        </Presence>
         {/* L’accueil se retire le temps d’un panneau : sans cela, il recouvrait
             les réglages ouverts depuis « Votre clé ou Ollama » et le bouton
             semblait ne rien faire. */}

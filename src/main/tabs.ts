@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import {
   app,
   BrowserWindow,
+  clipboard,
   Menu,
   nativeTheme,
   WebContentsView,
@@ -397,6 +398,11 @@ export class TabManager {
       if (!tab) return
       const selection = params.selectionText.trim().slice(0, 4000)
       const items: MenuItemConstructorOptions[] = []
+      const separator = (): void => {
+        if (items.length === 0) return
+        if (items[items.length - 1]?.type === 'separator') return
+        items.push({ type: 'separator' })
+      }
       if (selection) {
         const send = (action: SelectionPayload['action']): void =>
           this.host.selection({ action, text: selection, url: tab.url, title: tab.title, tabId })
@@ -423,7 +429,7 @@ export class TabManager {
         )
       }
       if (params.linkURL && /^https?:/i.test(params.linkURL)) {
-        if (items.length > 0) items.push({ type: 'separator' })
+        separator()
         items.push(
           {
             label: 'Ouvrir le lien dans un nouvel onglet',
@@ -432,10 +438,41 @@ export class TabManager {
           {
             label: 'Ouvrir le lien dans le mini navigateur',
             click: () => this.host.openMini?.(params.linkURL, tab.spaceId)
+          },
+          {
+            label: 'Copier l’adresse du lien',
+            click: () => clipboard.writeText(params.linkURL)
           }
         )
       }
-      if (items.length === 0) return
+      if (params.mediaType === 'image' && params.srcURL && /^https?:/i.test(params.srcURL)) {
+        separator()
+        items.push({
+          label: 'Enregistrer l’image…',
+          click: () => {
+            if (!wc.isDestroyed()) wc.downloadURL(params.srcURL)
+          }
+        })
+      }
+      // Actions de page : toujours présentes. Sans sélection ni lien, le menu
+      // ne s'ouvrait pas du tout (clic droit sur une image, par exemple).
+      separator()
+      items.push(
+        { label: 'Copier l’adresse de la page', click: () => clipboard.writeText(tab.url) },
+        { label: 'Ajouter aux favoris', click: () => this.host.shortcut({ action: 'bookmark' }) },
+        { label: 'Recharger', click: () => this.reload(tabId) },
+        {
+          label: 'Ouvrir dans le mini navigateur',
+          click: () => this.host.openMini?.(tab.url, tab.spaceId)
+        },
+        { type: 'separator' },
+        {
+          label: 'Inspecter',
+          click: () => {
+            if (!wc.isDestroyed()) wc.inspectElement(params.x, params.y)
+          }
+        }
+      )
       Menu.buildFromTemplate(items).popup({ window: this.getWindow() ?? undefined })
     })
 
@@ -530,13 +567,18 @@ export class TabManager {
     if (wc && wc.navigationHistory.canGoForward()) wc.navigationHistory.goForward()
   }
 
-  /** Zoom du texte de la page, par paliers, comme un navigateur classique. */
-  zoom(tabId: string, direction: 'in' | 'out' | 'reset'): void {
+  /**
+   * Zoom du texte de la page, par paliers, comme un navigateur classique.
+   * Rend le nouveau niveau (null si l'onglet n'a pas de page) pour que
+   * l'interface puisse afficher « 125 % » sans le deviner.
+   */
+  zoom(tabId: string, direction: 'in' | 'out' | 'reset'): number | null {
     const view = this.views.get(tabId)
-    if (!view || view.webContents.isDestroyed()) return
+    if (!view || view.webContents.isDestroyed()) return null
     const current = view.webContents.getZoomLevel()
     const next = direction === 'reset' ? 0 : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
     view.webContents.setZoomLevel(next)
+    return next
   }
 
   /**
@@ -1000,6 +1042,17 @@ export class TabManager {
   handleInput(event: ElectronEvent, input: Input): void {
     if (input.type !== 'keyDown') return
     const mod = process.platform === 'darwin' ? input.meta : input.control
+    // Parcours des onglets : ⌃Tab / ⌃⇧Tab et ⌃Page↑ / ⌃Page↓, y compris
+    // quand une page a le focus. Traité avant le garde `mod` : sur macOS la
+    // touche attendue est Contrôle, pas Commande.
+    if (input.control && !input.meta && !input.alt) {
+      if (input.key === 'Tab' || input.key === 'PageDown' || input.key === 'PageUp') {
+        event.preventDefault()
+        const backwards = input.shift || input.key === 'PageUp'
+        this.host.shortcut({ action: backwards ? 'prev-tab' : 'next-tab' })
+        return
+      }
+    }
     if (input.key === 'Escape' && !mod) {
       const current = this.panes[0]?.tabId
       if (current && this.runtimeOf(current).loading) this.stop(current)
@@ -1021,6 +1074,18 @@ export class TabManager {
     if (input.key === '0') {
       event.preventDefault()
       this.host.shortcut({ action: 'zoom-reset' })
+      return
+    }
+    // ⌘⇧[ / ⌘⇧] (Ctrl+Maj sur Windows et Linux) : onglet précédent / suivant.
+    // Le caractère arrive parfois déjà transformé ({ et }), d'où les deux.
+    if (input.shift && (input.key === ']' || input.key === '}')) {
+      event.preventDefault()
+      this.host.shortcut({ action: 'next-tab' })
+      return
+    }
+    if (input.shift && (input.key === '[' || input.key === '{')) {
+      event.preventDefault()
+      this.host.shortcut({ action: 'prev-tab' })
       return
     }
     if (key === 'f' && !input.shift) {

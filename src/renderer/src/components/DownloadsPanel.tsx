@@ -1,14 +1,23 @@
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
 export default function DownloadsPanel() {
   const view = useBrowser((s) => s.view)
   const setOverlay = useBrowser((s) => s.setOverlay)
+  const sheetRef = useModalFocus<HTMLDivElement>()
   const downloads = view?.downloads ?? []
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet" role="dialog" aria-label="Téléchargements" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Téléchargements"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <header className="settings-head">
           <div>
             <h1>Téléchargements</h1>

@@ -11,6 +11,7 @@ import type {
   MiniState,
   Note,
   PageHighlight,
+  PaneSnapshot,
   ProviderId,
   SelectionPayload,
   Settings,
@@ -263,7 +264,8 @@ export interface VelaApi {
     back(id: string): Promise<void>
     forward(id: string): Promise<void>
     reload(id: string): Promise<void>
-    zoom(id: string, direction: 'in' | 'out' | 'reset'): Promise<void>
+    /** Nouveau niveau de zoom (null si l'onglet n'a pas de page vivante). */
+    zoom(id: string, direction: 'in' | 'out' | 'reset'): Promise<number | null>
     stop(id: string): Promise<void>
     pin(id: string, pinned: boolean): Promise<void>
     mute(id: string, muted: boolean): Promise<void>
@@ -283,6 +285,13 @@ export interface VelaApi {
   }
   views: {
     layout(request: LayoutRequest): void
+    /**
+     * Épreuves figées de deux volets, prises avant que leurs vues natives
+     * quittent la scène. Sert de décor pendant le glissement du séparateur :
+     * les vues doivent disparaître pour que le pointeur continue d'arriver à la
+     * coque, mais un fond vide se lit comme un plantage.
+     */
+    snapshot(tabIds: string[]): Promise<PaneSnapshot[]>
   }
   mini: {
     /**

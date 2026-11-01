@@ -31,17 +31,17 @@ export default function WorkList({ onOpen }: Props) {
   }
 
   return (
-    <section className="agent-right work-list" aria-label="Travaux de l’atelier">
+    <section className="agent-right work-list" aria-label="Rapports de l’atelier">
       <header className="work-list-head">
         <div>
           <p className="eyebrow">
             <span className="eyebrow-dot" />
             Atelier
           </p>
-          <h2>Travaux</h2>
+          <h2>Rapports</h2>
         </div>
         <div className="work-list-actions">
-          <div className="work-filter" role="tablist" aria-label="Filtrer les travaux">
+          <div className="work-filter" role="tablist" aria-label="Filtrer les rapports">
             <button type="button" role="tab" aria-selected={!archived} data-active={!archived} onClick={() => setArchived(false)}>
               En cours<span className="work-filter-count">{openCount}</span>
             </button>
@@ -56,7 +56,7 @@ export default function WorkList({ onOpen }: Props) {
         {visible.length === 0 && (
           <div className="work-empty">
             <span className="work-empty-icon"><Icon name="inbox" size={22} /></span>
-            <strong>{archived ? 'Aucun travail archivé.' : 'Aucun travail pour l’instant.'}</strong>
+            <strong>{archived ? 'Aucun rapport archivé.' : 'Aucun rapport pour l’instant.'}</strong>
             <p>{archived ? 'Les rapports que vous archivez vivent ici.' : 'Lancez l’agent : chaque rapport rejoint cette liste.'}</p>
           </div>
         )}

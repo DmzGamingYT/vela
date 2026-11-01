@@ -1,0 +1,307 @@
+/* --- Bento Grid modulaire, Notes Rapides et animations de l'accueil --- */
+
+.home-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.home-meta-row .home-date {
+  margin: 0;
+}
+
+.home-customize-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-standard);
+}
+
+.home-customize-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--clay);
+}
+
+.home-customize-btn[data-active="true"] {
+  background: color-mix(in srgb, var(--space-accent) 15%, var(--surface));
+  color: var(--ink);
+  border-color: var(--space-accent);
+}
+
+.home-customize-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--space-accent) 30%, var(--edge));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)), var(--surface);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 12px 30px -15px rgba(0, 0, 0, 0.25);
+  animation: bentoEntrance var(--dur-4) var(--ease-out) both;
+}
+
+:root[data-mode='light'] .home-customize-bar {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)), var(--surface);
+}
+
+.customize-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.customize-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--faint);
+  min-width: 120px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.customize-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.customize-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--fill);
+  color: var(--muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-standard);
+}
+
+.customize-chip:hover {
+  background: var(--fill-2);
+  color: var(--ink);
+  border-color: var(--edge);
+}
+
+.customize-chip[data-active="true"] {
+  background: color-mix(in srgb, var(--space-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--space-accent) 55%, transparent);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.home-grid[data-no-side="true"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-quicknotes {
+  display: flex;
+  flex-direction: column;
+}
+
+.quicknotes-form {
+  margin-bottom: 12px;
+}
+
+.quicknotes-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-standard);
+}
+
+.quicknotes-collapsed:hover {
+  border-color: var(--space-accent);
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+.quicknotes-placeholder {
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quicknotes-add-btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.quicknotes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quicknotes-editor textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--space-accent) 40%, var(--line));
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--space-accent) 12%, transparent);
+}
+
+.quicknotes-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.quicknotes-cancel {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.quicknotes-cancel:hover {
+  color: var(--ink);
+}
+
+.quicknotes-save {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 11.5px;
+  border-radius: 8px;
+}
+
+.quicknotes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quicknotes-item {
+  padding: 9px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-standard);
+}
+
+.quicknotes-item:hover {
+  background: var(--surface);
+  border-color: var(--edge);
+  transform: translateY(-1px);
+}
+
+.quicknotes-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.quicknotes-item-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quicknotes-item-date {
+  font-size: 10px;
+  color: var(--faint);
+  flex-shrink: 0;
+}
+
+.quicknotes-item-preview {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes bentoEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-search {
+  animation: bentoEntrance var(--dur-5) var(--ease-out) var(--dur-1) both;
+}
+
+.home-recent {
+  animation: bentoEntrance var(--dur-5) var(--ease-out) var(--dur-2) both;
+}
+
+.home-side {
+  animation: bentoEntrance var(--dur-5) var(--ease-out) var(--dur-3) both;
+}
+
+.home-foot {
+  animation: bentoEntrance var(--dur-5) var(--ease-out) var(--dur-3) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-search,
+  .home-recent,
+  .home-side,
+  .home-foot,
+  .home-customize-bar {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+

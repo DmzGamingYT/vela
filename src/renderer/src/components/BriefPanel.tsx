@@ -1,4 +1,5 @@
 import type { BriefItem } from '@shared/types'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
@@ -9,6 +10,7 @@ export default function BriefPanel() {
   const navigate = useBrowser((state) => state.navigate)
   const openAgent = useBrowser((state) => state.openAgent)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
+  const sheetRef = useModalFocus<HTMLDivElement>()
 
   if (!view) return null
 
@@ -34,14 +36,21 @@ export default function BriefPanel() {
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet brief-sheet" role="dialog" aria-label="Brief du jour" onMouseDown={(event) => event.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet brief-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Brief"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <header className="sheet-head">
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" />
               {view.brief.dateLabel}
             </p>
-            <h1>Reprendre le fil</h1>
+            <h1>Brief</h1>
             <p className="sheet-lede">
               Vos onglets ouverts et votre historique local aident à retrouver ce qui mérite votre attention.
             </p>

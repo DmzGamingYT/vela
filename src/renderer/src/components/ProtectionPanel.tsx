@@ -1,4 +1,5 @@
 import { hostOf, isHomeUrl } from '@shared/url'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
@@ -17,13 +18,21 @@ export default function ProtectionPanel() {
   const setOverlay = useBrowser((s) => s.setOverlay)
   const toggleSiteProtection = useBrowser((s) => s.toggleSiteProtection)
   const updateSettings = useBrowser((s) => s.updateSettings)
+  const sheetRef = useModalFocus<HTMLDivElement>()
 
   if (!view) return null
   const tab = view.tabs.find((item) => item.id === view.activeTabId)
   if (!tab || isHomeUrl(tab.url)) {
     return (
       <div className="overlay" onMouseDown={() => setOverlay(null)}>
-        <div className="sheet protection-sheet" role="dialog" aria-label="Protection" onMouseDown={(e) => e.stopPropagation()}>
+        <div
+          ref={sheetRef}
+          className="sheet protection-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Protection"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <header className="settings-head">
             <div>
               <h1>Protection</h1>
@@ -64,7 +73,14 @@ export default function ProtectionPanel() {
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet protection-sheet" role="dialog" aria-label="Protection du site" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet protection-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Protection du site"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <header className="settings-head">
           <div>
             <p className="eyebrow">

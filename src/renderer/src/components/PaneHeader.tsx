@@ -166,7 +166,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             data-active={bookmarked}
             onClick={() => void toggleBookmark(tab.id)}
             aria-pressed={bookmarked}
-            title={bookmarked ? 'Retirer des marque-pages (⌘D)' : 'Garder cette page (⌘D)'}
+            title={`${bookmarked ? 'Retirer des marque-pages' : 'Garder cette page'} (${shortcut('D')})`}
           >
             <Icon name="star" size={16} filled={bookmarked} />
           </button>

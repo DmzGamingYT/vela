@@ -1,0 +1,342 @@
+/* ------------------------------------------------------------------ */
+/* 0.3.13 : accueil, tunnel, notes, agent, raccourcis, espace          */
+/* ------------------------------------------------------------------ */
+
+/* Accueil : la ville s'ouvre au clic, le détail météo tient dans une bulle. */
+.day-form {
+  flex-wrap: wrap;
+}
+
+.day-form input {
+  flex: 1 1 100%;
+}
+
+.day-cancel {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.day-cancel:hover {
+  color: var(--ink);
+  border-color: var(--edge);
+}
+
+.day-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--fill);
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.day-add:hover {
+  border-color: var(--edge);
+  color: var(--ink);
+}
+
+.day-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.day-info {
+  position: relative;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1;
+}
+
+.day-info:hover,
+.day-info:focus-visible {
+  color: var(--ink);
+  border-color: var(--edge);
+}
+
+.day-info:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.day-info::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 60;
+  right: -6px;
+  bottom: calc(100% + 8px);
+  width: 244px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+  opacity: 0;
+  transform: translateY(3px);
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-standard);
+}
+
+.day-info:hover::after,
+.day-info:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Tunnel : un seul contour au focus, niveaux inertes sans carte. */
+.tunnel-search:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 18%, transparent);
+}
+
+.tunnel-levels button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.tunnel-levels button:disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+
+/* Agent : raison du bouton inerte et derniers travaux dans l'espace libre. */
+.agent-hint {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.agent-recent {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.agent-recent ul {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.agent-recent-row:hover {
+  background: var(--fill-2, var(--fill));
+  color: var(--ink);
+}
+
+.agent-recent-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.agent-recent-meta {
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+/* Raccourcis : recherche, groupes, réinitialisation. */
+.shortcut-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shortcut-search {
+  flex: 1 1 220px;
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--fill);
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+}
+
+.shortcut-search:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.shortcut-group + .shortcut-group {
+  margin-top: 14px;
+}
+
+.shortcut-group-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.shortcut-group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  font-size: 9.5px;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.shortcut-count {
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.shortcut-empty {
+  padding: 10px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.shortcut-note {
+  margin: 14px 0 0;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Notes : boutons inertes mais bavards, grille alignée, tags lisibles. */
+button.action[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button.action[aria-disabled='true']:hover {
+  border-color: var(--line);
+  color: inherit;
+}
+
+.notes-actions > .action:first-child {
+  grid-column: 1 / -1;
+  font-weight: 500;
+}
+
+.note-tag {
+  padding: 2px 8px;
+  font-size: 10px;
+  max-width: 160px;
+}
+
+/* Espace : ambiances plus grandes et plus contrastées. */
+.background-card {
+  width: 74px;
+  font-size: 9px;
+}
+
+.background-swatch {
+  height: 46px;
+}
+
+.background-card[data-bg='aurora'] .background-swatch {
+  background: radial-gradient(
+      120% 100% at 8% 0%,
+      color-mix(in srgb, var(--space-color) 82%, transparent),
+      transparent 66%
+    ),
+    radial-gradient(120% 100% at 96% 100%, color-mix(in srgb, var(--space-color) 58%, transparent), transparent 70%),
+    var(--paper);
+}
+
+.background-card[data-bg='mist'] .background-swatch {
+  background: linear-gradient(175deg, color-mix(in srgb, var(--space-color) 70%, transparent), transparent 68%),
+    var(--paper);
+}
+
+.background-card[data-bg='ember'] .background-swatch {
+  background: radial-gradient(
+      130% 110% at 14% 104%,
+      color-mix(in srgb, var(--space-color) 86%, transparent),
+      transparent 72%
+    ),
+    var(--paper);
+}
+
+.background-card[data-bg='night'] .background-swatch {
+  background: linear-gradient(180deg, #26263a, #0b0b14 78%);
+}
+
+.space-stage[data-bg='aurora'] {
+  background-image: radial-gradient(
+      120% 90% at 6% 0%,
+      color-mix(in srgb, var(--space-color) 52%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(110% 90% at 96% 100%, color-mix(in srgb, var(--space-color) 38%, transparent), transparent 68%);
+}
+
+/* Les avatars de l'espace gardent tous la même tuile et la même épaisseur. */
+.avatar-choice {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--fill);
+  border: 1px solid var(--line-soft);
+}
+
+.avatar-choice[data-active='true'] {
+  border-color: var(--accent-label);
+  background: color-mix(in srgb, var(--space-color, var(--accent)) 12%, var(--fill));
+}
+
+.avatar-choice svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Agent : le contenu s'enchaîne sans coller le bouton au fond, sinon les
+   exemples passent sous la ligne de flottaison du panneau. */
+.agent-run {
+  margin-top: 8px;
+}
+

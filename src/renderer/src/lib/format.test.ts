@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { initials } from './format'
+import { describe, expect, it, vi } from 'vitest'
+import { initials, shortcut, spokenShortcut } from './format'
 
 describe('pastille de repli', () => {
   it('garde deux lettres pour un nom de site', () => {
@@ -20,5 +20,36 @@ describe('pastille de repli', () => {
     expect(initials('GitHub')).toBe('G')
     expect(initials('   ')).toBe('·')
     expect(initials('')).toBe('·')
+  })
+})
+
+describe('raccourcis selon la plateforme', () => {
+  const on = (platform: string): void => {
+    vi.stubGlobal('window', { vela: { platform } })
+  }
+
+  it('garde les glyphes sur macOS', () => {
+    on('darwin')
+    expect(shortcut('K')).toBe('⌘K')
+    expect(shortcut('⇧T')).toBe('⌘⇧T')
+    expect(shortcut('⇧[')).toBe('⌘⇧[')
+    expect(shortcut('↵')).toBe('⌘↵')
+    expect(spokenShortcut('⌘⇧T')).toBe('Commande Maj T')
+  })
+
+  it('écrit les mêmes raccourcis en toutes lettres ailleurs', () => {
+    for (const platform of ['win32', 'linux']) {
+      on(platform)
+      expect(shortcut('K')).toBe('Ctrl+K')
+      expect(shortcut('⇧T')).toBe('Ctrl+Shift+T')
+      expect(shortcut('⇧[')).toBe('Ctrl+Shift+[')
+      expect(shortcut(',')).toBe('Ctrl+,')
+      expect(shortcut('↵')).toBe('Ctrl+↵')
+      // Aucun glyphe de clavier Apple ne doit rester à l'écran.
+      for (const key of ['K', 'L', 'T', 'W', '⇧T', '⇧D', '⇧O', '⇧H', '⇧A', '⇧B', '[', ']', ',', '↵', '0', '+', '-']) {
+        expect(shortcut(key)).not.toMatch(/[⌘⇧⌥⌫]/)
+      }
+      expect(spokenShortcut('Ctrl+Shift+T')).toBe('Contrôle Maj T')
+    }
   })
 })

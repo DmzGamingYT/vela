@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { THEME_PRESETS, type ThemeId } from '@shared/theme'
 import { isHomeUrl, normalizeInput, prettyUrl } from '@shared/url'
 import { appearanceState, applyAppearance } from '../lib/appearance'
+import { normalize, rankItems } from '../lib/commandRank'
 import { shortcut } from '../lib/format'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
 import SpaceAvatar from './SpaceAvatar'
@@ -54,13 +56,6 @@ const SKILLS = [
   }
 ] as const
 
-function normalize(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-}
-
 export default function CommandBar() {
   const view = useBrowser((state) => state.view)
   const setOverlay = useBrowser((state) => state.setOverlay)
@@ -74,6 +69,7 @@ export default function CommandBar() {
   const activateSpace = useBrowser((state) => state.activateSpace)
   const openAgent = useBrowser((state) => state.openAgent)
   const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const requestNote = useBrowser((state) => state.requestNote)
   const toggleTask = useBrowser((state) => state.toggleTask)
   const reload = useBrowser((state) => state.reload)
   const toggleBookmark = useBrowser((state) => state.toggleBookmark)
@@ -90,6 +86,7 @@ export default function CommandBar() {
   const [index, setIndex] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useModalFocus<HTMLDivElement>()
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -216,7 +213,7 @@ export default function CommandBar() {
       {
         id: 'action-brief',
         group: 'Actions',
-        label: 'Brief du jour',
+        label: 'Brief',
         hint: shortcut('⇧B'),
         icon: 'calendar',
         run: run(() => setOverlay('brief'))
@@ -310,7 +307,7 @@ export default function CommandBar() {
       {
         id: 'action-work',
         group: 'Actions',
-        label: workMode === 'work' ? 'Revenir à la navigation' : 'Passer en Travail',
+        label: workMode === 'work' ? 'Revenir à la navigation' : 'Passer en Atelier',
         hint: shortcut('⇧A'),
         icon: 'sparkles',
         run: run(() => setWorkMode(workMode === 'work' ? 'browse' : 'work'))
@@ -411,13 +408,14 @@ export default function CommandBar() {
         run: run(() => navigate(view.activeTabId, entry.url))
       }))
 
+    // La ligne d'une note ouvre cette note, pas seulement le tiroir.
     const notes: CommandItem[] = view.notes.map((note) => ({
       id: `note-${note.id}`,
       group: 'Notes',
       label: note.title || 'Sans titre',
       hint: note.preview.slice(0, 60),
       icon: 'notes',
-      run: run(() => toggleNotes(true))
+      run: run(() => requestNote(note.id))
     }))
 
     const tasks: CommandItem[] = view.tasks.filter((task) => !task.done).map((task) => ({
@@ -450,9 +448,7 @@ export default function CommandBar() {
     if (!search) {
       return [...actions, ...tabs, ...spaces, ...notes.slice(0, 3), ...tasks.slice(0, 3)].filter(byFilter).slice(0, 24)
     }
-    return source
-      .filter((item) => normalize(`${item.label} ${item.hint ?? ''} ${item.group}`).includes(search))
-      .slice(0, 24)
+    return rankItems(source, search).slice(0, 24)
   }, [
     view,
     query,
@@ -468,6 +464,7 @@ export default function CommandBar() {
     activateSpace,
     openAgent,
     toggleNotes,
+    requestNote,
     toggleTask,
     reload,
     updateSettings,
@@ -527,7 +524,14 @@ export default function CommandBar() {
 
   return (
     <div className="overlay command-overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="command command-pop" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-label="Barre de commande">
+      <div
+        ref={dialogRef}
+        className="command command-pop"
+        onMouseDown={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Barre de commande"
+      >
         <div className="command-input-row">
           <Icon name="search" size={18} />
           <input

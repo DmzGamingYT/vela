@@ -7,7 +7,12 @@ export default function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className="toast" data-tone={toast.tone}>
+        <div
+          key={toast.id}
+          className="toast"
+          data-tone={toast.tone}
+          data-leaving={toast.leaving ? 'true' : undefined}
+        >
           <Icon name={toast.tone === 'error' ? 'warning' : 'check'} size={14} />
           <span>{toast.text}</span>
           {toast.action && (
@@ -16,9 +21,7 @@ export default function Toasts() {
               className="toast-action"
               onClick={() => {
                 toast.action?.run()
-                useBrowser.setState((state) => ({
-                  toasts: state.toasts.filter((item) => item.id !== toast.id)
-                }))
+                useBrowser.getState().dismissToast(toast.id)
               }}
             >
               {toast.action.label}

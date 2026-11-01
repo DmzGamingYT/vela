@@ -3,6 +3,7 @@ import { AGENT_EXAMPLES } from '@shared/agent'
 import { providerReady } from '@shared/providers'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { Markdown } from '../lib/markdown'
+import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import { Icon } from './Icon'
@@ -156,10 +157,10 @@ export default function AgentCanvas({
               className="work-toggle"
               data-active={showWorks}
               onClick={() => setShowWorks((value) => !value)}
-              title="Travaux de l’atelier"
+              title="Rapports de l’atelier"
             >
               <Icon name="inbox" size={14} />
-              Travaux
+              Rapports
               {activeWorks > 0 && <span className="work-toggle-count">{activeWorks}</span>}
             </button>
             <span className="mode-chip" data-mode={modeLabel}>
@@ -170,7 +171,7 @@ export default function AgentCanvas({
                 type="button"
                 className="icon-btn"
                 onClick={() => toggleAgent(false)}
-                title="Fermer l’agent (⌘J)"
+                title={`Fermer l’agent (${shortcut('J')})`}
                 aria-label="Fermer l’agent"
               >
                 <Icon name="close" size={18} />
@@ -320,7 +321,7 @@ export default function AgentCanvas({
               >
                 <Icon name="sparkles" size={15} />
                 {running ? 'L’agent travaille…' : mode === 'act' ? 'Agir sur les pages' : 'Lancer l’agent'}
-                {!running && (mode === 'act' || selected.length > 0) && <kbd>⌘↵</kbd>}
+                {!running && (mode === 'act' || selected.length > 0) && <kbd>{shortcut('↵')}</kbd>}
               </button>
               {running && (
                 <button type="button" className="action wide" onClick={() => cancelAgent()}>

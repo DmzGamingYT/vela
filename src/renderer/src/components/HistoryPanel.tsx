@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { HistoryEntry } from '@shared/types'
 import { hostOf } from '@shared/url'
 import { shortDate, timeAgo } from '../lib/format'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import { Icon } from './Icon'
@@ -22,6 +23,7 @@ export default function HistoryPanel() {
   const setOverlay = useBrowser((s) => s.setOverlay)
   const newTab = useBrowser((s) => s.newTab)
   const removeHistory = useBrowser((s) => s.removeHistory)
+  const sheetRef = useModalFocus<HTMLDivElement>()
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null)
 
   useEffect(() => {
@@ -55,7 +57,14 @@ export default function HistoryPanel() {
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet library-sheet" role="dialog" aria-label="Historique" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet library-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Historique"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <header className="settings-head">
           <div>
             <h1>Historique</h1>

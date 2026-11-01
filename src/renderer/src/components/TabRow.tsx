@@ -6,6 +6,7 @@ import { initials, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import TabPreviewCard from './TabPreviewCard'
+import TileMenu, { type TileMenuItem } from './TileMenu'
 
 interface TabRowProps {
   tab: TabView
@@ -35,7 +36,11 @@ export default function TabRow({
   const pin = useBrowser((state) => state.pin)
   const splitWith = useBrowser((state) => state.splitWith)
   const toggleMute = useBrowser((state) => state.toggleMute)
+  const newTab = useBrowser((state) => state.newTab)
+  const closeOthers = useBrowser((state) => state.closeOthers)
   const [broken, setBroken] = useState(false)
+  // Menu contextuel : clic droit sur la ligne, comme dans un navigateur.
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
 
   // Aperçu flottant au survol
   const [showPreview, setShowPreview] = useState(false)
@@ -76,11 +81,11 @@ export default function TabRow({
       hoverTimer.current = null
     }
     if (showPreview && !closeTimer.current) {
-      // Laisser le pointeur franchir le petit espace entre l'onglet et la carte.
+      // La carte vit sous la liste : laisser le temps de la rejoindre.
       closeTimer.current = setTimeout(() => {
         closeTimer.current = null
         setShowPreview(false)
-      }, 180)
+      }, 420)
     }
   }
 
@@ -96,6 +101,43 @@ export default function TabRow({
     setShowPreview(false)
   }
 
+  const copy = (value: string): void => {
+    void navigator.clipboard.writeText(value).catch(() => undefined)
+  }
+
+  const menuItems: TileMenuItem[] = [
+    {
+      id: 'pin',
+      label: tab.pinned ? 'Désépingler' : 'Épingler',
+      icon: 'pin',
+      onSelect: () => pin(tab.id, !tab.pinned)
+    }
+  ]
+  if (!home) {
+    menuItems.push(
+      { id: 'duplicate', label: 'Dupliquer l’onglet', icon: 'copy', onSelect: () => newTab(tab.url) },
+      { id: 'split', label: 'Ouvrir en vue scindée', icon: 'split', onSelect: () => splitWith(tab.id) },
+      {
+        id: 'mute',
+        label: tab.muted ? 'Rétablir le son' : 'Couper le son',
+        icon: tab.muted ? 'volume-off' : 'volume',
+        onSelect: () => toggleMute(tab.id, !tab.muted)
+      },
+      { id: 'copy-url', label: 'Copier l’adresse', icon: 'link', onSelect: () => copy(tab.url) },
+      { id: 'copy-title', label: 'Copier le titre', icon: 'notes', onSelect: () => copy(tab.title) }
+    )
+  }
+  menuItems.push(
+    { id: 'close', label: 'Fermer l’onglet', icon: 'close', onSelect: () => closeTab(tab.id) },
+    {
+      id: 'close-others',
+      label: 'Fermer les autres onglets',
+      icon: 'trash',
+      danger: true,
+      onSelect: () => void closeOthers(tab.id)
+    }
+  )
+
   return (
     <div
       className="tab-row"
@@ -110,14 +152,25 @@ export default function TabRow({
       aria-selected={active}
       tabIndex={0}
       draggable
-      title={home ? 'Accueil' : tab.title}
       onClick={() => selectTab(tab.id)}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        closePreview()
+        setMenu({ x: event.clientX, y: event.clientY })
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           selectTab(tab.id)
+        }
+        // Touche Menu ou ⇧F10 : même menu que le clic droit, au clavier.
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+          event.preventDefault()
+          const rect = event.currentTarget.getBoundingClientRect()
+          closePreview()
+          setMenu({ x: rect.left + 12, y: rect.bottom })
         }
       }}
       onDragStart={(event) => {
@@ -214,6 +267,16 @@ export default function TabRow({
           onClose={closePreview}
           onMouseEnter={keepPreviewOpen}
           onMouseLeave={handleMouseLeave}
+        />
+      )}
+
+      {menu && (
+        <TileMenu
+          x={menu.x}
+          y={menu.y}
+          label={home ? 'Onglet Accueil' : tab.title}
+          items={menuItems}
+          onClose={() => setMenu(null)}
         />
       )}
     </div>

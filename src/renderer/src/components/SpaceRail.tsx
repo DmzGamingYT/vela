@@ -25,7 +25,7 @@ export default function SpaceRail() {
     <aside className="rail" aria-label="Espaces">
       <div className="rail-drag drag" />
 
-      <div className="rail-modes" role="tablist" aria-label="Mode de travail">
+      <div className="rail-modes" role="tablist" aria-label="Mode">
         <button
           type="button"
           role="tab"
@@ -45,10 +45,10 @@ export default function SpaceRail() {
           aria-selected={workMode === 'work'}
           data-active={workMode === 'work'}
           onClick={() => setWorkMode('work')}
-          title={`Travail (${shortcut('⇧A')})`}
+          title={`Atelier (${shortcut('⇧A')})`}
         >
           <Icon name="sparkles" size={17} />
-          <span className="sr-only">Travail</span>
+          <span className="sr-only">Atelier</span>
         </button>
       </div>
 
@@ -87,7 +87,7 @@ export default function SpaceRail() {
           className="rail-ghost"
           data-active={notesOpen}
           onClick={() => toggleNotes()}
-          title="Notes (⌘E)"
+          title={`Notes (${shortcut('E')})`}
         >
           <Icon name="notes" size={18} />
         </button>
@@ -97,7 +97,7 @@ export default function SpaceRail() {
           data-active={agentOpen}
           aria-pressed={agentOpen}
           onClick={() => openAgent()}
-          title="Agent (⌘J)"
+          title={`Agent (${shortcut('J')})`}
         >
           <Icon name="sparkles" size={18} />
         </button>
@@ -105,7 +105,7 @@ export default function SpaceRail() {
           type="button"
           className="rail-ghost"
           onClick={() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })}
-          title="Replier la barre latérale (⌘S)"
+          title={`Replier la barre latérale (${shortcut('S')})`}
         >
           <Icon name="panel" size={18} />
         </button>
@@ -113,7 +113,7 @@ export default function SpaceRail() {
           type="button"
           className="rail-ghost"
           onClick={() => setOverlay('settings')}
-          title="Réglages (⌘,)"
+          title={`Réglages (${shortcut(',')})`}
         >
           <Icon name="settings" size={18} />
         </button>

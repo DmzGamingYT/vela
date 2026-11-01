@@ -16,6 +16,8 @@ export default function StatusBar() {
   const setOverlay = useBrowser((s) => s.setOverlay)
   const update = useBrowser((s) => s.update)
   const installUpdate = useBrowser((s) => s.installUpdate)
+  const zoomNotice = useBrowser((s) => s.zoomNotice)
+  const zoom = useBrowser((s) => s.zoom)
   const [dismissed, setDismissed] = useState<string>(() => {
     try {
       return localStorage.getItem(DISMISS_KEY) ?? ''
@@ -33,7 +35,7 @@ export default function StatusBar() {
   // Une version déjà masquée ne revient pas ; l'action reste dans les réglages.
   const showUpdate = Boolean(notice && update?.version && dismissed !== update.version)
 
-  if (blocked === 0 && downloads === 0 && !showUpdate) return null
+  if (blocked === 0 && downloads === 0 && !showUpdate && zoomNotice === null) return null
 
   const dismiss = (): void => {
     if (!update?.version) return
@@ -52,6 +54,19 @@ export default function StatusBar() {
           <Icon name="shield" size={13} />
           <strong>{blocked}</strong>
         </span>
+      )}
+
+      {zoomNotice !== null && (
+        <button
+          type="button"
+          className="status-item as-btn status-zoom"
+          onClick={() => void zoom('reset')}
+          title="Zoom de la page — cliquer pour revenir à 100 %"
+          aria-label={`Zoom ${zoomNotice} pour cent, revenir à 100 %`}
+        >
+          <Icon name="search" size={13} />
+          <strong>{zoomNotice} %</strong>
+        </button>
       )}
 
       {downloads > 0 && (

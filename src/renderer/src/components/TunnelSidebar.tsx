@@ -4,7 +4,7 @@ import { useBrowser } from '../store/browser'
 import { timeAgo } from '../lib/format'
 import { Icon } from './Icon'
 
-/** Liste des cartes dans la barre latérale, quand le mode Travail est actif. */
+/** Liste des cartes dans la barre latérale, quand le mode Atelier est actif. */
 export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
   const maps = useTunnel((s) => s.maps)
   const active = useTunnel((s) => s.active)

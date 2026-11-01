@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { canonicalUrl, hostOf, isHomeUrl, readableTitle, SEARCH_ENGINES } from '@shared/url'
 import { DRAGON_THEME, resolveThemeId } from '@shared/theme'
@@ -235,32 +235,96 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
 
 
+  // Le survol de l'accueil est le seul poste chaud mesuré de l'app : chaque
+  // `pointermove` écrivait cinq variables CSS sur `.start`, donc sur tout
+  // l'arbre qui les hérite. Ici la position attend la prochaine image, les
+  // variables de l'aurora vivent sur leur propre nappe (seule à les lire) et
+  // l'inclinaison ne touche que la tuile survolée.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const auroraRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef(0)
+  const pendingRef = useRef<{ tile: HTMLElement | null; x: number; y: number } | null>(null)
+  const tiltedRef = useRef<HTMLElement | null>(null)
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current)
+    if (idleRef.current) clearTimeout(idleRef.current)
+  }, [])
+
+  const paintHover = (): void => {
+    frameRef.current = 0
+    const pending = pendingRef.current
+    pendingRef.current = null
+    if (!pending) return
+    // Tout est lu avant la première écriture : une lecture après une écriture
+    // forcerait un calcul de mise en page par image.
+    const root = rootRef.current
+    const rootRect = root?.getBoundingClientRect()
+    const tile = pending.tile
+    const tileRect = tile?.getBoundingClientRect()
+    const previous = tiltedRef.current
+    if (previous && previous !== tile) {
+      previous.style.setProperty('--tilt-y', '0deg')
+      previous.style.setProperty('--tilt-x', '0deg')
+      tiltedRef.current = null
+    }
+    const aurora = auroraRef.current
+    if (aurora && rootRect && rootRect.width > 0 && rootRect.height > 0) {
+      aurora.style.setProperty('--aurora-x', ((pending.x - rootRect.left) / rootRect.width - 0.5).toFixed(3))
+      aurora.style.setProperty('--aurora-y', ((pending.y - rootRect.top) / rootRect.height - 0.5).toFixed(3))
+    }
+    if (tile && tileRect && tileRect.width > 0 && tileRect.height > 0) {
+      const x = (pending.x - tileRect.left) / tileRect.width - 0.5
+      const y = (pending.y - tileRect.top) / tileRect.height - 0.5
+      tile.style.setProperty('--tilt-y', `${(x * 7).toFixed(2)}deg`)
+      tile.style.setProperty('--tilt-x', `${(-y * 7).toFixed(2)}deg`)
+      tile.style.setProperty('--glow-x', `${((x + 0.5) * 100).toFixed(1)}%`)
+      tile.style.setProperty('--glow-y', `${((y + 0.5) * 100).toFixed(1)}%`)
+      tiltedRef.current = tile
+    }
+  }
+
   const parallax = (event: ReactPointerEvent<HTMLDivElement>): void => {
-    if (calm) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    event.currentTarget.style.setProperty('--aurora-x', ((event.clientX - rect.left) / rect.width - 0.5).toFixed(3))
-    event.currentTarget.style.setProperty('--aurora-y', ((event.clientY - rect.top) / rect.height - 0.5).toFixed(3))
+    if (calm || (event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return
+    const target = event.target as HTMLElement | null
+    pendingRef.current = {
+      tile: target?.closest<HTMLElement>('.recent-tile') ?? null,
+      x: event.clientX,
+      y: event.clientY
+    }
+    // Pendant le geste, les transitions de transform redémarreraient à chaque
+    // image : elles sont coupées par cet attribut.
+    const root = rootRef.current
+    if (root && root.dataset.pointing !== 'true') root.dataset.pointing = 'true'
+    if (idleRef.current) clearTimeout(idleRef.current)
+    idleRef.current = setTimeout(() => {
+      const node = rootRef.current
+      if (node) delete node.dataset.pointing
+    }, 180)
+    if (!frameRef.current) frameRef.current = requestAnimationFrame(paintHover)
   }
 
-  const resetParallax = (event: ReactPointerEvent<HTMLDivElement>): void => {
-    event.currentTarget.style.setProperty('--aurora-x', '0')
-    event.currentTarget.style.setProperty('--aurora-y', '0')
-  }
-
-  const tilt = (event: ReactPointerEvent<HTMLButtonElement>): void => {
-    if (calm || event.pointerType !== 'mouse') return
-    const rect = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX - rect.left) / rect.width - 0.5
-    const y = (event.clientY - rect.top) / rect.height - 0.5
-    event.currentTarget.style.setProperty('--tilt-y', `${(x * 7).toFixed(2)}deg`)
-    event.currentTarget.style.setProperty('--tilt-x', `${(-y * 7).toFixed(2)}deg`)
-    event.currentTarget.style.setProperty('--glow-x', `${((x + 0.5) * 100).toFixed(1)}%`)
-    event.currentTarget.style.setProperty('--glow-y', `${((y + 0.5) * 100).toFixed(1)}%`)
-  }
-
-  const untilt = (event: ReactPointerEvent<HTMLButtonElement>): void => {
-    event.currentTarget.style.setProperty('--tilt-y', '0deg')
-    event.currentTarget.style.setProperty('--tilt-x', '0deg')
+  const resetParallax = (): void => {
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current)
+      frameRef.current = 0
+    }
+    pendingRef.current = null
+    if (idleRef.current) clearTimeout(idleRef.current)
+    const root = rootRef.current
+    if (root) delete root.dataset.pointing
+    const tile = tiltedRef.current
+    tiltedRef.current = null
+    // Le retour profite de la transition qu'on vient de rétablir : la laisser
+    // prendre effet une image, sinon le fond se replace d'un coup.
+    requestAnimationFrame(() => {
+      auroraRef.current?.style.setProperty('--aurora-x', '0')
+      auroraRef.current?.style.setProperty('--aurora-y', '0')
+      if (!tile) return
+      tile.style.setProperty('--tilt-y', '0deg')
+      tile.style.setProperty('--tilt-x', '0deg')
+    })
   }
 
   const tileStyle = (tile: Tile): CSSProperties =>
@@ -268,12 +332,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   return (
     <div
+      ref={rootRef}
       className="start"
       data-calm={calm ? 'true' : undefined}
       onPointerMove={parallax}
       onPointerLeave={resetParallax}
     >
-      <div className="home-aurora" aria-hidden="true">
+      <div ref={auroraRef} className="home-aurora" aria-hidden="true">
         <span className="aurora-field">
           <span className="aurora-blob" data-i="1" />
           <span className="aurora-blob" data-i="2" />
@@ -425,10 +490,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
               <Icon name="sparkles" size={12} />
               Agent
             </button>
-            <button type="button" className="home-chip" onClick={() => setOverlay('brief')}>
-              <Icon name="calendar" size={12} />
-              Reprendre
-            </button>
             <span className="home-engine">via {engine}</span>
           </div>
         </section>
@@ -464,8 +525,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
                     data-kind={tile.kind}
                     data-thumb={thumbs[tile.url] ? 'true' : undefined}
                     style={tileStyle(tile)}
-                    onPointerMove={tilt}
-                    onPointerLeave={untilt}
                     onClick={() => navigate(tabId, tile.url)}
                     title={tile.title}
                   >
@@ -509,15 +568,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <Icon name="shield" size={12} />
             Aucune télémétrie. Vos recherches ne partent que vers le moteur choisi.
           </span>
-          <button
-            type="button"
-            className="home-customize-foot"
-            onClick={() => setCustomizing((c) => !c)}
-            title="Personnaliser les modules de l’accueil"
-          >
-            <Icon name="settings" size={12} />
-            <span>{customizing ? 'Fermer la personnalisation' : 'Personnaliser l’accueil'}</span>
-          </button>
           <span className="home-foot-key">
             <Icon name="command" size={12} />
             <kbd>{shortcut('K')}</kbd>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ProcessInfo } from '@shared/types'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
@@ -8,6 +9,7 @@ export default function ProcessManager() {
   const selectTab = useBrowser((s) => s.selectTab)
   const [rows, setRows] = useState<ProcessInfo[]>([])
   const [live, setLive] = useState(0)
+  const sheetRef = useModalFocus<HTMLDivElement>()
 
   const refresh = async () => {
     try {
@@ -33,7 +35,14 @@ export default function ProcessManager() {
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
-      <div className="sheet" role="dialog" aria-label="Processus" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        ref={sheetRef}
+        className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Processus"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <header className="settings-head">
           <div>
             <h1>Processus · {live} vifs</h1>

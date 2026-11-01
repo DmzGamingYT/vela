@@ -1,0 +1,846 @@
+/* --- Tiroir de notes ---------------------------------------- */
+
+.notes-drawer {
+  width: 384px;
+  flex: 0 0 384px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-left: 1px solid var(--line);
+  animation: fade var(--dur-2) var(--ease-standard);
+}
+
+.notes-head {
+  height: var(--top);
+  flex: 0 0 var(--top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--line-soft);
+  -webkit-app-region: drag;
+}
+
+.notes-head .icon-btn {
+  -webkit-app-region: no-drag;
+}
+
+.notes-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.notes-mark {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.notes-title h2 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.notes-title p {
+  margin: 1px 0 0;
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.notes-head-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.notes-list-wrap,
+.note-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 12px 14px 8px;
+}
+
+.notes-actions .action {
+  height: 31px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.notes-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 14px 8px;
+  padding: 0 9px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  color: var(--muted);
+}
+
+.notes-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 11.5px;
+}
+
+.notes-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 10px 8px;
+}
+
+.notes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.notes-empty-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  margin-bottom: 4px;
+}
+
+.notes-empty p {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.notes-empty span {
+  font-size: 10.5px;
+  line-height: 1.5;
+  max-width: 240px;
+}
+
+.note-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  text-align: left;
+  transition: background var(--dur-1) var(--ease-standard),
+    border-color var(--dur-1) var(--ease-standard);
+}
+
+.note-row:hover {
+  background: var(--surface);
+  border-color: var(--line-soft);
+}
+
+.note-row-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.note-space-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+}
+
+.note-row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-row-date {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.note-row-preview {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-left: 13px;
+}
+
+.note-editor {
+  padding: 10px 14px 0;
+}
+
+.note-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0 6px;
+}
+
+.note-title-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  padding: 2px 0;
+}
+
+.note-title-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.note-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.note-source span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-modes {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 0 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.seg {
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.seg[data-active="true"] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.note-saved {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.note-textarea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 12px 2px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.note-textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.note-preview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 2px;
+}
+
+.note-preview .markdown {
+  font-size: 12px;
+}
+
+.note-empty-preview {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 2px 11px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.note-foot .text-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* Le pied de la liste vit hors du padding de l’éditeur : il s’aligne donc
+   sur la recherche et les actions, et le libellé de gauche s’ellipse au
+   lieu de pousser « Ouvrir le dossier » hors du tiroir. */
+.note-foot-inset {
+  padding: 9px 14px 12px;
+}
+
+.note-foot-inset > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Réglages -------------------------------------------------- */
+
+.settings-sheet {
+  width: min(800px, 100%);
+}
+
+.setting-block {
+  padding: 20px 0 22px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.setting-block:last-child {
+  border-bottom: none;
+}
+
+.setting-head {
+  margin-bottom: 12px;
+}
+
+.setting-head h2 {
+  margin: 0 0 2px;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.setting-head p {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--paper-deep);
+  border: 1px solid var(--line-soft);
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  color: var(--muted);
+  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.segment[data-active="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(30, 22, 12, 0.08);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 9px 0;
+}
+
+.setting-row label,
+.setting-label,
+.field > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Réglage qui occupe toute la largeur : un libellé, puis son contrôle. */
+.setting-row-stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.setting-hint {
+  margin: 3px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.setting-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.update-progress {
+  height: 6px;
+  border-radius: 4px;
+  margin-top: 8px;
+  max-width: 280px;
+  background: var(--fill-2);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.update-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b) 60%, var(--accent-c));
+  transition: width var(--dur-2) var(--ease-out);
+}
+
+.select {
+  height: 32px;
+  padding: 0 28px 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 11.5px;
+  outline: none;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.switch {
+  width: 36px;
+  height: 21px;
+  flex: 0 0 36px;
+  border-radius: 20px;
+  background: var(--line);
+  position: relative;
+  transition: background var(--dur-2) var(--ease-standard);
+}
+
+.switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform var(--dur-2) var(--ease-standard);
+}
+
+.switch[data-on="true"] {
+  background: var(--sage);
+}
+
+.switch[data-on="true"] span {
+  transform: translateX(15px);
+}
+
+.switch:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tag {
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tag[data-accent="true"] {
+  color: var(--sage);
+  border-color: color-mix(in srgb, var(--sage) 35%, var(--line));
+  background: color-mix(in srgb, var(--sage) 8%, transparent);
+}
+
+.agent-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.agent-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--line-soft);
+  background: var(--paper);
+  text-align: left;
+  transition: border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard);
+}
+
+.agent-mode[data-active="true"] {
+  border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
+  background: color-mix(in srgb, var(--clay) 5%, var(--paper));
+}
+
+.agent-mode-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.agent-mode-top svg:last-child {
+  margin-left: auto;
+  color: var(--clay);
+}
+
+.agent-mode-detail {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.setting-warning {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  font-size: 10px;
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clay) 22%, transparent);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field.grow {
+  flex: 1;
+}
+
+.field > span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.field > span em {
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sage);
+  font-weight: 500;
+}
+
+.field input {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 11.5px;
+  outline: none;
+  user-select: text;
+}
+
+.field input:focus {
+  border-color: color-mix(in srgb, var(--clay) 50%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 9%, transparent);
+}
+
+.shortcut-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.shortcut-table-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line-soft);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.setting-block.about {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.setting-block.about strong {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* --- Dialogue espace ------------------------------------------ */
+
+.space-sheet {
+  width: min(440px, 100%);
+}
+
+.space-sheet .sheet-head {
+  padding: 24px 26px 18px;
+}
+
+.space-sheet .sheet-head h1 {
+  font-size: 28px;
+}
+
+.space-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 26px 8px;
+}
+
+.space-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+}
+
+.space-preview-chip {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-size: 19px;
+  color: #fff;
+  background: var(--space);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--space) 32%, transparent);
+}
+
+.space-preview-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.space-preview-copy strong {
+  font-size: 12.5px;
+}
+
+.space-preview-copy span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.space-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Pastille + nom : la teinte active porte une coche dans sa pastille. */
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  color: var(--ink-soft);
+  transition: border-color var(--dur-2) var(--ease-standard),
+    background-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.swatch:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.swatch[data-active="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+  color: var(--ink);
+}
+
+.swatch-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+
+/* Lisible sur les teintes claires comme sur les sombres. */
+.swatch-dot svg {
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.65));
+}
+
+.swatch-label {
+  white-space: nowrap;
+}
+
+.swatch:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.field input.space-name-input {
+  height: 38px;
+  font-family: var(--sans);
+  font-size: 15px;
+}
+
+.dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 26px 20px;
+}
+
+.dialog-foot .danger-btn {
+  font-size: 10.5px;
+  color: var(--clay);
+}
+
+.dialog-foot .danger-btn[data-confirming="true"] {
+  font-weight: 600;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* --- Notifications -------------------------------------------- */
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 440px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: var(--ink);
+  /* L'encre du texte suit le fond clair posé plus bas (`--glass-strong`) :
+     `--paper` sur du verre clair donnait un toast illisible, et `--paper`
+     sur le verre sombre l'était tout autant. */
+  color: var(--ink);
+  font-size: 11.5px;
+  line-height: 1.4;
+  box-shadow: 0 14px 34px rgba(20, 14, 6, 0.28);
+  animation: rise var(--dur-3) var(--ease-standard);
+}
+
+.toast[data-tone="error"] {
+  background: var(--clay);
+  color: #fff;
+}
+

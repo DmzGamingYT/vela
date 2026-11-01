@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { THEME_PRESETS } from '@shared/theme'
 import { searxBase } from '@shared/url'
 import type { BookmarkImportSource } from '@shared/types'
+import { shortcut } from '../lib/format'
 import { PROVIDERS } from '@shared/providers'
+import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
 import { BrandMark, PROVIDER_BRANDS, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
@@ -63,6 +65,7 @@ export default function Onboarding() {
   const setOverlay = useBrowser((s) => s.setOverlay)
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState<string[]>(DEFAULT_ESSENTIALS)
+  const sheetRef = useModalFocus<HTMLDivElement>()
   const [detected, setDetected] = useState<BookmarkImportSource[] | null>(null)
   const [instance, setInstance] = useState('')
 
@@ -106,8 +109,8 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="overlay onboarding-overlay" role="dialog" aria-label="Bienvenue dans Vela">
-      <div className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="overlay onboarding-overlay" role="dialog" aria-modal="true" aria-label="Bienvenue dans Vela">
+      <div ref={sheetRef} className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
         <aside className="onboarding-stage" aria-hidden="true">
           <span className="onboarding-glow" />
           <span className="onboarding-orb">
@@ -292,10 +295,10 @@ export default function Onboarding() {
               <>
                 <div className="shortcut-grid">
                   {[
-                    ['⌘K', 'Lanceur'],
-                    ['⌘J', 'Agent'],
-                    ['⌘E', 'Notes'],
-                    ['⌘F', 'Chercher dans la page']
+                    [shortcut('K'), 'Lanceur'],
+                    [shortcut('J'), 'Agent'],
+                    [shortcut('E'), 'Notes'],
+                    [shortcut('F'), 'Chercher dans la page']
                   ].map(([keys, label]) => (
                     <span key={keys} className="shortcut-tile">
                       <kbd>{keys}</kbd>
@@ -405,7 +408,7 @@ export default function Onboarding() {
                 </div>
                 <div className="ready-tile">
                   <Icon name="calendar" size={24} />
-                  <strong>Brief du jour sur cet appareil</strong>
+                  <strong>Brief sur cet appareil</strong>
                   <small>Calculé à partir de vos onglets et de votre historique.</small>
                 </div>
               </div>

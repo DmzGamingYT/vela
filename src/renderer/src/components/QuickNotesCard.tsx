@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { timeAgo } from '../lib/format'
+import { shortcut, timeAgo } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
@@ -92,7 +92,7 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Écrivez votre note en Markdown… (⌘+Entrée pour enregistrer)"
+              placeholder={`Écrivez votre note en Markdown… (${shortcut('↵')} pour enregistrer)`}
               rows={3}
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

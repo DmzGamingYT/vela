@@ -66,7 +66,12 @@ export interface Toast {
   text: string
   tone: 'info' | 'error'
   action?: { label: string; run: () => void }
+  /** La pastille s'efface : elle quitte la liste à la fin du fondu. */
+  leaving?: boolean
 }
+
+/** Sortie d'un toast : `--dur-2` dans la feuille, plus une image de marge. */
+const TOAST_EXIT_MS = 180
 
 export interface AgentStep {
   label: string
@@ -127,10 +132,15 @@ interface BrowserState {
   findQuery: string
   findResult: { matches: number; activeMatchOrdinal: number }
   toasts: Toast[]
+  /** Niveau de zoom à annoncer, en pourcentage ; s'efface seul. */
+  zoomNotice: number | null
+  /** Demande d'ouverture d'une note précise, depuis la palette. */
+  noteRequest: { id: string; nonce: number } | null
   splitRatioLive: number | null
   init(): Promise<void>
   call<T>(task: () => Promise<T>, fallback: string): Promise<T | null>
   toast(text: string, tone?: Toast['tone'], action?: Toast['action']): void
+  dismissToast(id: string): void
   setOverlay(overlay: Overlay): void
   openSpaceDialog(id?: string): void
   focusAddress(): void
@@ -202,6 +212,10 @@ interface BrowserState {
   openWork(work: WorkSummary): Promise<boolean>
   renameWork(id: string, title: string): Promise<void>
   archiveWork(id: string, archived: boolean): Promise<void>
+  zoom(direction: 'in' | 'out' | 'reset'): Promise<void>
+  requestNote(id: string): void
+  consumeNoteRequest(): void
+  closeOthers(id: string): Promise<void>
   findInPage(query: string, forward?: boolean): Promise<void>
   closeFind(): void
   handleShortcut(event: ShortcutEvent): void
@@ -218,6 +232,8 @@ const DELTA_FLUSH_MS = 70
 let deltaBuffer = ''
 let deltaRunId = ''
 let deltaTimer: ReturnType<typeof setTimeout> | null = null
+/** Effacement automatique du pourcentage de zoom. */
+let zoomTimer: ReturnType<typeof setTimeout> | null = null
 
 function flushAgentDelta(): void {
   if (deltaTimer) {
@@ -276,6 +292,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   findQuery: '',
   findResult: { matches: 0, activeMatchOrdinal: 0 },
   toasts: [],
+  zoomNotice: null,
+  noteRequest: null,
   splitRatioLive: null,
   update: null,
 
@@ -339,12 +357,19 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   toast(text, tone = 'info', action) {
     const id = crypto.randomUUID()
     set((state) => ({ toasts: [...state.toasts, { id, text, tone, action }].slice(-3) }))
-    setTimeout(
-      () => {
-        set((state) => ({ toasts: state.toasts.filter((item) => item.id !== id) }))
-      },
-      action ? 7000 : 4200
-    )
+    setTimeout(() => get().dismissToast(id), action ? 7000 : 4200)
+  },
+
+  dismissToast(id) {
+    // La pastille s'efface avant de quitter la liste : sinon un toast
+    // s'évanouissait entre deux images, sans qu'on sache si l'action avait
+    // bien été prise en compte.
+    set((state) => ({
+      toasts: state.toasts.map((item) => (item.id === id ? { ...item, leaving: true } : item))
+    }))
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((item) => item.id !== id) }))
+    }, TOAST_EXIT_MS)
   },
 
   setOverlay(overlay) {
@@ -512,7 +537,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   toggleNotes(open) {
-    set({ notesOpen: open ?? !get().notesOpen })
+    // Les notes et l'agent sont deux surfaces de travail ancrées à droite :
+    // ouvertes ensemble sur une fenêtre de 1280 px, elles ne laissaient plus
+    // que 116 px à la page. Une seule à la fois, donc.
+    const next = open ?? !get().notesOpen
+    set((state) => ({ notesOpen: next, agentOpen: next ? false : state.agentOpen }))
   },
 
   requestVoiceNote(spaceId) {
@@ -529,8 +558,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   toggleAgent(open) {
-    // Le panneau vit à côté de la page : ouvrir l’agent ne masque plus rien.
-    set({ agentOpen: open ?? !get().agentOpen, overlay: null })
+    // Le panneau vit à côté de la page : ouvrir l’agent ne masque plus rien —
+    // mais il prend la place des notes, jamais les deux à la fois.
+    const next = open ?? !get().agentOpen
+    set({ agentOpen: next, notesOpen: next ? false : get().notesOpen, overlay: null })
   },
 
   async saveNote(input) {
@@ -639,7 +670,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       return
     }
     get().toast('Extrait enregistré dans les notes.')
-    set({ notesOpen: true })
+    set({ notesOpen: true, agentOpen: false })
   },
 
   async toggleSiteProtection(host) {
@@ -668,7 +699,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
             return
           }
           get().toast('Passage surligné et ajouté à la note de la page.')
-          set({ notesOpen: true })
+          set({ notesOpen: true, agentOpen: false })
         })
       return
     }
@@ -686,6 +717,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     set({
       agentDraft: prompts[payload.action],
       agentOpen: true,
+      notesOpen: false,
       agentSourceTab: payload.tabId,
       workMode: 'browse',
       overlay: null
@@ -838,7 +870,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   openAgent(prompt = '') {
-    set({ agentOpen: true, overlay: null, agentDraft: prompt })
+    set({ agentOpen: true, notesOpen: false, overlay: null, agentDraft: prompt })
   },
 
   async startAgent(prompt, tabIds, mode = 'answer') {
@@ -937,6 +969,57 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     await get().call(() => window.vela.works.archive({ id, archived }), 'Archivage impossible.')
   },
 
+  /**
+   * Zoom de la page active, avec un retour visuel bref : sans lui, ⌘+ et ⌘-
+   * changeaient la page sans qu'aucun état ne le dise.
+   */
+  async zoom(direction) {
+    const id = get().view?.activeTabId
+    if (!id) return
+    const level = await get().call(() => window.vela.tabs.zoom(id, direction), 'Zoom impossible.')
+    if (level === null) return
+    const percent = Math.round(1.2 ** level * 100)
+    set({ zoomNotice: percent })
+    if (zoomTimer) clearTimeout(zoomTimer)
+    zoomTimer = setTimeout(() => set({ zoomNotice: null }), 1800)
+  },
+
+  /** La palette ouvre la note choisie, pas seulement le tiroir. */
+  requestNote(id) {
+    set((state) => ({
+      noteRequest: { id, nonce: (state.noteRequest?.nonce ?? 0) + 1 },
+      notesOpen: true,
+      agentOpen: false
+    }))
+  },
+
+  consumeNoteRequest() {
+    set({ noteRequest: null })
+  },
+
+  /** Ferme les autres pages de l'espace ; épingles et accueil restent. */
+  async closeOthers(id) {
+    const view = get().view
+    if (!view) return
+    const targets = view.tabs.filter(
+      (tab) =>
+        tab.spaceId === view.activeSpaceId &&
+        tab.id !== id &&
+        !tab.pinned &&
+        !isHomeUrl(tab.url)
+    )
+    if (targets.length === 0) {
+      get().toast('Aucun autre onglet à fermer.')
+      return
+    }
+    for (const tab of targets) {
+      await get().call(() => window.vela.tabs.close(tab.id), 'Onglet non fermé.')
+    }
+    get().toast(
+      `${targets.length} onglet${targets.length > 1 ? 's' : ''} fermé${targets.length > 1 ? 's' : ''}.`
+    )
+  },
+
   async findInPage(query, forward = true) {
     const view = get().view
     const tabId = view?.activeTabId
@@ -1024,13 +1107,13 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         if (active) state.reload(active.id)
         break
       case 'zoom-in':
-        if (active) void window.vela.tabs.zoom(active.id, 'in')
+        if (active) void state.zoom('in')
         break
       case 'zoom-out':
-        if (active) void window.vela.tabs.zoom(active.id, 'out')
+        if (active) void state.zoom('out')
         break
       case 'zoom-reset':
-        if (active) void window.vela.tabs.zoom(active.id, 'reset')
+        if (active) void state.zoom('reset')
         break
       case 'back':
         if (active) state.back(active.id)
@@ -1064,6 +1147,15 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         break
       case 'tab-select': {
         const target = spaceTabs[(event.digit ?? 1) - 1]
+        if (target) state.selectTab(target.id)
+        break
+      }
+      case 'next-tab':
+      case 'prev-tab': {
+        if (spaceTabs.length < 2) break
+        const index = spaceTabs.findIndex((tab) => tab.id === view.activeTabId)
+        const step = event.action === 'next-tab' ? 1 : -1
+        const target = spaceTabs[(index + step + spaceTabs.length) % spaceTabs.length]
         if (target) state.selectTab(target.id)
         break
       }

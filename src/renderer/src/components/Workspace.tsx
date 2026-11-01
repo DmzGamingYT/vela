@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
-import type { TabView } from '@shared/types'
+import type { PaneSnapshot, TabView } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { clamp } from '../lib/format'
 import { useBrowser } from '../store/browser'
@@ -9,7 +9,7 @@ import StatusBar from './StatusBar'
 import PaneHeader from './PaneHeader'
 import StartPage from './StartPage'
 
-// La carte de recherche n'est chargée qu'en mode Travail : elle pèse à elle
+// La carte de recherche n'est chargée qu'en mode Atelier : elle pèse à elle
 // seule une part notable du bundle d'une fenêtre de navigation classique.
 const TunnelView = lazy(() => import('./TunnelView'))
 
@@ -42,12 +42,14 @@ function Pane({
   tab,
   primary,
   secondary = false,
-  resizing
+  resizing,
+  shot
 }: {
   tab: TabView
   primary: boolean
   secondary?: boolean
   resizing: boolean
+  shot?: string
 }) {
   const home = isHomeUrl(tab.url)
 
@@ -69,6 +71,15 @@ function Pane({
               <span className="pane-ghost-host">{hostOf(tab.url)}</span>
               <span className="pane-ghost-title">{tab.title}</span>
             </div>
+            {/* La page elle-même, figée à la taille du volet au début du geste.
+                Les vues natives ne peuvent pas rester à l’écran pendant le
+                glissement (elles prendraient le pointeur), mais un fond
+                pointillé se lit comme un plantage. */}
+            {resizing && shot && (
+              <span className="pane-shot" aria-hidden="true">
+                <img src={shot} alt="" draggable={false} />
+              </span>
+            )}
             {tab.error && <ErrorPane tab={tab} />}
           </>
         )}
@@ -84,7 +95,6 @@ export default function Workspace() {
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
   const liveRatio = useBrowser((state) => state.splitRatioLive)
-  const setSplitRatio = useBrowser((state) => state.setSplitRatio)
   const commitSplitRatio = useBrowser((state) => state.commitSplitRatio)
   const findOpen = useBrowser((state) => state.findOpen)
   const findQuery = useBrowser((state) => state.findQuery)
@@ -108,6 +118,7 @@ export default function Workspace() {
   const panesRef = useRef<HTMLDivElement>(null)
   const resizingRef = useRef(false)
   const [resizing, setResizing] = useState(false)
+  const [shots, setShots] = useState<Record<string, string>>({})
 
   const ratio = liveRatio ?? view?.splitRatio ?? 0.5
   const errorKey = view?.tabs.map((tab) => (tab.error ? '1' : '0')).join('') ?? ''
@@ -188,29 +199,83 @@ export default function Workspace() {
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>): void => {
     event.preventDefault()
     const container = panesRef.current
-    if (!container) return
+    if (!container || !view) return
     const rect = container.getBoundingClientRect()
     const apply = (clientX: number): number => clamp((clientX - rect.left) / rect.width, 0.25, 0.75)
-    resizingRef.current = true
-    setResizing(true)
-    document.body.style.cursor = 'col-resize'
-    window.vela.views.layout({ panes: [], overlay: true })
 
-    const move = (moveEvent: PointerEvent): void => setSplitRatio(apply(moveEvent.clientX))
+    // Les deux pages restent sous les yeux, en épreuve figée. Leurs vues
+    // natives, elles, quittent la scène : posées au-dessus de la coque, elles
+    // prendraient le pointeur et le geste s’arrêterait à la première image.
+    // La capture part donc **avant** le retrait — une vue cachée n’a plus de
+    // trame à rendre — et les vues quittent la scène dès qu’elle est prise,
+    // au plus tard après 120 ms pour ne pas laisser le pointeur sur la page.
+    const ids = view.tabs
+      .filter((tab) => (tab.id === view.activeTabId || tab.id === view.secondTabId) && !isHomeUrl(tab.url))
+      .map((tab) => tab.id)
+    let begun = false
+    let finished = false
+    const begin = (list: PaneSnapshot[]): void => {
+      if (finished) return
+      // Une capture plus lente que le garde-fou arrive après le début du geste :
+      // elle remplace alors le fond de veille, sans retarder le glissement.
+      if (list.length) setShots(Object.fromEntries(list.map((shot) => [shot.tabId, shot.image])))
+      if (begun) return
+      begun = true
+      resizingRef.current = true
+      setResizing(true)
+      window.vela.views.layout({ panes: [], overlay: true })
+    }
+    const guard = setTimeout(() => begin([]), 120)
+    void (ids.length ? window.vela.views.snapshot(ids) : Promise.resolve<PaneSnapshot[]>([]))
+      .catch(() => [] as PaneSnapshot[])
+      .then((list) => {
+        clearTimeout(guard)
+        begin(list)
+      })
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    // Une seule écriture par image, directement sur la variable CSS : aucun
+    // rendu React, aucune disposition envoyée au processus principal pendant
+    // le geste. Le ratio n’est enregistré qu’au relâchement.
+    let pendingX = event.clientX
+    let frame = 0
+    const paint = (): void => {
+      frame = 0
+      const next = apply(pendingX)
+      container.style.setProperty('--ratio', `${next * 100}%`)
+      const hint = container.querySelector('.split-hint')
+      if (hint) {
+        const label = `${Math.round(next * 100)} / ${Math.round((1 - next) * 100)}`
+        if (hint.textContent !== label) hint.textContent = label
+      }
+    }
+
+    const move = (moveEvent: PointerEvent): void => {
+      pendingX = moveEvent.clientX
+      if (!frame) frame = requestAnimationFrame(paint)
+    }
     const up = (upEvent: PointerEvent): void => {
+      finished = true
+      clearTimeout(guard)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      if (frame) cancelAnimationFrame(frame)
       document.body.style.cursor = ''
+      document.body.style.userSelect = ''
       resizingRef.current = false
-      setResizing(false)
+      // Le ratio final part avant l’état : la coque ne réaffiche pas l’ancien
+      // partage le temps que le processus principal confirme.
       commitSplitRatio(apply(upEvent.clientX))
+      setResizing(false)
+      setShots({})
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
   }
 
   if (workMode === 'work') {
-    // Mode Travail : le tunnel de recherche occupe la scène ; l’agent reste
+    // Mode Atelier : le tunnel de recherche occupe la scène ; l’agent reste
     // accessible en panneau (⌘J) sans masquer la carte. Une source s’ouvre en
     // vue scindée à droite, la carte restant visible à gauche.
     return (
@@ -241,8 +306,9 @@ export default function Workspace() {
                 onDoubleClick={() => commitSplitRatio(0.5)}
               >
                 <span />
+                {resizing && <span className="split-hint" aria-hidden="true" />}
               </div>
-              <Pane tab={second} primary={false} secondary resizing={resizing} />
+              <Pane tab={second} primary={false} secondary resizing={resizing} shot={shots[second.id]} />
             </>
           )}
         </div>
@@ -286,19 +352,21 @@ export default function Workspace() {
         ref={panesRef}
         style={{ '--ratio': `${ratio * 100}%` } as CSSProperties}
       >
-        <Pane tab={active} primary resizing={resizing} />
+        <Pane tab={active} primary resizing={resizing} shot={shots[active.id]} />
         {split && second && (
-          <>              <div
-                className="split-handle"
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="Largeur de la vue scindée"
-                onPointerDown={startDrag}
+          <>
+            <div
+              className="split-handle"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Largeur de la vue scindée"
+              onPointerDown={startDrag}
               onDoubleClick={() => commitSplitRatio(0.5)}
             >
               <span />
+              {resizing && <span className="split-hint" aria-hidden="true" />}
             </div>
-            <Pane tab={second} primary={false} secondary resizing={resizing} />
+            <Pane tab={second} primary={false} secondary resizing={resizing} shot={shots[second.id]} />
           </>
         )}
       </div>

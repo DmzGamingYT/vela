@@ -1,8 +1,7 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { LOCAL_ONLY, NETWORK_FLOWS, type NetworkFlow } from '@shared/network'
 import { readWeatherPlace } from '@shared/place'
 import { SEARCH_ENGINES } from '@shared/url'
-import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
 import {
   PROVIDERS,
   endpointHost,
@@ -11,26 +10,14 @@ import {
   providerReady,
   providerState
 } from '@shared/providers'
+import { useModalFocus } from '../lib/useModalFocus'
+import AboutPage from './AboutPage'
+import AppearancePage from './AppearancePage'
 import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
-import {
-  DRAGON_THEME,
-  THEME_PRESETS,
-  adjustAccent,
-  parseHex,
-  resolveMode,
-  type GlassIntensity,
-  type HomeBackground
-} from '@shared/theme'
-import type {
-  AgentMode,
-  ProviderId,
-  ProviderSettings,
-  SkyVariant,
-  Theme
-} from '@shared/types'
-import { swatchColor } from '../lib/appearance'
-import { plural, shortcut } from '../lib/format'
+import { adjustAccent, parseHex, resolveMode, type HomeBackground } from '@shared/theme'
+import type { AgentMode, ProviderId, ProviderSettings } from '@shared/types'
+import { plural, shortcut, spokenShortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { clearFaviconMemo } from './Favicon'
 import { Icon, type IconName } from './Icon'
@@ -71,29 +58,6 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.' },
   about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
 }
-
-const SKY_OPTIONS: { value: SkyVariant; label: string; detail: string; icon: IconName }[] = [
-  { value: 'braise', label: 'Braises', detail: 'Un dragon traverse le ciel, des braises montent.', icon: 'sparkles' },
-  { value: 'westeros', label: 'Nuit de Westeros', detail: 'Un ciel étoilé, sa lune et le même dragon.', icon: 'moon' }
-]
-
-const GLASS_OPTIONS: { value: GlassIntensity; label: string }[] = [
-  { value: 'light', label: 'Léger' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'strong', label: 'Prononcé' }
-]
-
-const BACKGROUND_OPTIONS: { value: HomeBackground; label: string; icon: IconName }[] = [
-  { value: 'gradient', label: 'Dégradé du thème', icon: 'sparkles' },
-  { value: 'plain', label: 'Couleur unie', icon: 'circle' },
-  { value: 'image', label: 'Image locale', icon: 'image' }
-]
-
-const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] = [
-  { value: 'light', label: 'Clair', detail: 'Verre blanc sur ciel clair.', icon: 'sun' },
-  { value: 'dark', label: 'Sombre', detail: 'Verre fumé sur nuit profonde.', icon: 'moon' },
-  { value: 'system', label: 'Système', detail: 'Suit votre Mac ou Windows.', icon: 'monitor' }
-]
 
 type FlowTone = 'on' | 'off' | 'ask' | 'local'
 
@@ -232,8 +196,8 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
     items: [
       ['Notes', shortcut('E')],
       ['Agent', shortcut('J')],
-      ['Travail', shortcut('⇧A')],
-      ['Brief du jour', shortcut('⇧B')],
+      ['Atelier', shortcut('⇧A')],
+      ['Brief', shortcut('⇧B')],
       ['Replier la barre latérale', shortcut('S')],
       ['Petite fenêtre', shortcut('⇧N')],
       ['Réglages', shortcut(',')]
@@ -280,9 +244,7 @@ export default function SettingsPanel() {
   const hasReport = useBrowser((state) => Boolean(state.agent.markdown))
   const toast = useBrowser((state) => state.toast)
   const update = useBrowser((state) => state.update)
-  const checkUpdate = useBrowser((state) => state.checkUpdate)
-  const installUpdate = useBrowser((state) => state.installUpdate)
-  const openReleases = useBrowser((state) => state.openReleases)
+  const sheetRef = useModalFocus<HTMLDivElement>()
 
   const [page, setPage] = useState<Page>('appearance')
   const [editing, setEditing] = useState<ProviderId | null>(null)
@@ -616,291 +578,15 @@ export default function SettingsPanel() {
     switch (page) {
       case 'appearance':
         return (
-          <section className="setting-block">
-            <div className="setting-head">
-              <h2>Mode</h2>
-              <p>Clair, sombre, ou comme le système. Il se combine avec le thème de couleur.</p>
-            </div>
-            <div className="theme-cards">
-              {THEMES.map((theme) => (
-                <button
-                  type="button"
-                  key={theme.value}
-                  className="theme-card"
-                  data-active={settings.theme === theme.value}
-                  onClick={() => void updateSettings({ theme: theme.value })}
-                >
-                  <span className="theme-preview" data-theme-preview={theme.value}>
-                    <span className="theme-preview-rail" />
-                    <span className="theme-preview-side" />
-                    <span className="theme-preview-pane" />
-                  </span>
-                  <span className="theme-copy">
-                    <span className="theme-name">
-                      <Icon name={theme.icon} size={14} />
-                      {theme.label}
-                      {settings.theme === theme.value && <Icon name="check" size={13} />}
-                    </span>
-                    <span className="theme-detail">{theme.detail}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="setting-head accent-head">
-              <h2>Thème de couleur</h2>
-              <p>Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.</p>
-            </div>
-            <div className="theme-swatches" role="group" aria-label="Thème de couleur">
-              {THEME_PRESETS.map((preset) => {
-                const active = settings.themeId === preset.id
-                return (
-                  <button
-                    type="button"
-                    key={preset.id}
-                    aria-pressed={active}
-                    aria-label={preset.label}
-                    className="theme-tile"
-                    data-active={active}
-                    data-featured={preset.id === DRAGON_THEME}
-                    style={{ '--swatch': swatchColor(preset.id, settings.customAccent, mode) } as CSSProperties}
-                    onClick={() => void updateSettings({ themeId: preset.id })}
-                  >
-                    <span className="theme-tile-preview">
-                      <span className="theme-tile-rail" />
-                      <span className="theme-tile-side" />
-                      <span className="theme-tile-pane">
-                        <span className="theme-tile-dot" />
-                      </span>
-                    </span>
-                    <span className="theme-tile-name">
-                      {preset.label}
-                      {active && <span className="theme-tile-badge" />}
-                    </span>
-                  </button>
-                )
-              })}
-              {/* La teinte libre occupe sa propre rangée : les dix thèmes
-                  remplissent deux rangées pleines, sans tuile orpheline, et
-                  la couleur n'a qu'un seul endroit pour être réglée. */}
-              <div className="theme-custom" data-active={settings.themeId === 'custom'}>
-                <span
-                  className="theme-custom-swatch"
-                  style={{ '--swatch': settings.customAccent } as CSSProperties}
-                  aria-hidden="true"
-                />
-                <div className="theme-custom-copy">
-                  <span className="theme-custom-name">Personnalisé</span>
-                  <span className="theme-custom-hint">Teinte libre, saisie ci-contre</span>
-                </div>
-                <div className="custom-color">
-                  <input
-                    type="color"
-                    aria-label="Choisir une couleur personnalisée"
-                    value={settings.customAccent}
-                    onChange={(event) => applyCustom(event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    aria-label="Code hexadécimal"
-                    key={settings.customAccent}
-                    defaultValue={settings.customAccent.toUpperCase()}
-                    spellCheck={false}
-                    onBlur={(event) => applyCustom(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        applyCustom(event.currentTarget.value)
-                      }
-                    }}
-                  />
-                </div>
-                {settings.themeId === 'custom' ? (
-                  <span className="theme-custom-state">
-                    <Icon name="check" size={12} />
-                    Active
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="action"
-                    onClick={() => void updateSettings({ themeId: 'custom' })}
-                  >
-                    Utiliser
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {hexNote && (
-              <p className="custom-color-note" data-tone={hexNote.tone}>
-                {hexNote.text}
-              </p>
-            )}
-
-            <div className="setting-head">
-              <h2>Intensité du verre</h2>
-              <p>Teinte et transparence du fond des panneaux.</p>
-            </div>
-            <div className="appearance-grid" role="radiogroup" aria-label="Intensité du verre">
-              {GLASS_OPTIONS.map((option) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  role="radio"
-                  aria-checked={settings.glass === option.value}
-                  className="appearance-choice"
-                  data-active={settings.glass === option.value}
-                  onClick={() => void updateSettings({ glass: option.value })}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="setting-head">
-              <h2>Arrière-plan de l’accueil</h2>
-              <p>Le dégradé suit le thème. Une image reste sur cet appareil.</p>
-            </div>
-            <div className="appearance-grid" role="radiogroup" aria-label="Arrière-plan de l’accueil">
-              {BACKGROUND_OPTIONS.map((option) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  role="radio"
-                  aria-checked={settings.homeBackground === option.value}
-                  className="appearance-choice"
-                  data-active={settings.homeBackground === option.value}
-                  onClick={() => void chooseBackground(option.value)}
-                >
-                  <Icon name={option.icon} size={13} />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            {settings.homeBackground === 'image' && settings.homeImage && (
-              <div className="setting-row">
-                <div>
-                  <label>Flou de l’image</label>
-                  <p className="setting-hint">{settings.homeBlur} px · {settings.homeImage.split(/[\\/]/).pop()}</p>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={40}
-                  step={1}
-                  aria-label="Flou de l’image d’accueil"
-                  value={settings.homeBlur}
-                  onChange={(event) => void updateSettings({ homeBlur: Number(event.target.value) })}
-                />
-              </div>
-            )}
-
-            <div className="setting-head">
-              <h2>Options</h2>
-              <p>Accessibilité et variation automatique, sans changer de thème.</p>
-            </div>
-            <div className="setting-toggles">
-              <div className="setting-row">
-                <div>
-                  <label>Ambiance du ciel</label>
-                  <p className="setting-hint">
-                    Deux ciels pour l’accueil, avec le thème Braise : braises et dragon, ou nuit étoilée.
-                    « Réduire les animations » les fige.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="switch"
-                  role="switch"
-                  aria-checked={settings.dragonSky}
-                  data-on={settings.dragonSky}
-                  aria-label="Ambiance du ciel"
-                  onClick={() => void updateSettings({ dragonSky: !settings.dragonSky })}
-                >
-                  <span />
-                </button>
-              </div>
-              <div className="setting-row" data-disabled={!settings.dragonSky}>
-                <div>
-                  <label>Ciel de l’accueil</label>
-                  <p className="setting-hint">Le dragon passe dans les deux, plus haut que la carte météo.</p>
-                </div>
-                <div className="appearance-grid" role="radiogroup" aria-label="Ciel de l’accueil">
-                  {SKY_OPTIONS.map((option) => (
-                    <button
-                      type="button"
-                      key={option.value}
-                      role="radio"
-                      aria-checked={settings.skyVariant === option.value}
-                      aria-label={`${option.label}. ${option.detail}`}
-                      className="appearance-choice"
-                      data-active={settings.skyVariant === option.value}
-                      disabled={!settings.dragonSky}
-                      onClick={() => void updateSettings({ skyVariant: option.value })}
-                    >
-                      <Icon name={option.icon} size={13} />
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="setting-row">
-                <div>
-                  <label>Contraste élevé</label>
-                  <p className="setting-hint">Bordures renforcées, transparences supprimées.</p>
-                </div>
-                <button
-                  type="button"
-                  className="switch"
-                  role="switch"
-                  aria-checked={settings.highContrast}
-                  data-on={settings.highContrast}
-                  onClick={() => void updateSettings({ highContrast: !settings.highContrast })}
-                >
-                  <span />
-                </button>
-              </div>
-              <div className="setting-row">
-                <div>
-                  <label>Thème selon l’heure</label>
-                  <p className="setting-hint">Clair de 7 h à 19 h, sombre le soir, avec la même couleur.</p>
-                </div>
-                <button
-                  type="button"
-                  className="switch"
-                  role="switch"
-                  aria-checked={settings.hourTheme}
-                  data-on={settings.hourTheme}
-                  onClick={() => void updateSettings({ hourTheme: !settings.hourTheme })}
-                >
-                  <span />
-                </button>
-              </div>
-              <div className="setting-row">
-                <div>
-                  <label>Un thème par espace</label>
-                  <p className="setting-hint">
-                    Chaque espace garde son thème ; sinon le thème global s’applique. Voir Modifier un espace.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="switch"
-                  role="switch"
-                  aria-checked={settings.perSpaceThemes}
-                  data-on={settings.perSpaceThemes}
-                  onClick={() => void updateSettings({ perSpaceThemes: !settings.perSpaceThemes })}
-                >
-                  <span />
-                </button>
-              </div>
-            </div>
-
-            <button type="button" className="action wide" onClick={resetAppearance}>
-              <Icon name="refresh" size={13} />
-              Réinitialiser l’apparence
-            </button>
-          </section>
+          <AppearancePage
+            mode={mode}
+            settings={settings}
+            updateSettings={updateSettings}
+            applyCustom={applyCustom}
+            chooseBackground={chooseBackground}
+            resetAppearance={resetAppearance}
+            hexNote={hexNote}
+          />
         )
 
       case 'navigation':
@@ -952,7 +638,9 @@ export default function SettingsPanel() {
               <div className="setting-row">
                 <div>
                   <label>Vos pages gardées</label>
-                  <p className="setting-hint">⌘D garde la page affichée, ⇧⌘O ouvre la liste.</p>
+                  <p className="setting-hint">
+                    {shortcut('D')} garde la page affichée, {shortcut('⇧O')} ouvre la liste.
+                  </p>
                 </div>
                 <button type="button" className="action" onClick={() => setOverlay('bookmarks')}>
                   <Icon name="star" size={14} /> Gérer
@@ -977,7 +665,7 @@ export default function SettingsPanel() {
               <div className="setting-row">
                 <div>
                   <label>Effacer l’historique</label>
-                  <p className="setting-hint">Le brief du jour et les suggestions repartent à zéro.</p>
+                  <p className="setting-hint">Le Brief et les suggestions repartent à zéro.</p>
                 </div>
                 <button
                   type="button"
@@ -1301,7 +989,7 @@ export default function SettingsPanel() {
                   {group.items.map(([label, keys]) => (
                     <div className="shortcut-table-row" key={label}>
                       <span>{label}</span>
-                      <kbd aria-label={keys.replace('⌘', 'Commande ').replace('⇧', 'Maj ')}>{keys}</kbd>
+                      <kbd aria-label={spokenShortcut(keys)}>{keys}</kbd>
                     </div>
                   ))}
                 </div>
@@ -1314,82 +1002,8 @@ export default function SettingsPanel() {
         )
       }
 
-      case 'about': {
-        const isMac = window.vela.platform === 'darwin'
-        const updateLabel = updateDescription(update, isMac)
-        const notice = updateNotice(update, isMac)
-        return (
-          <section className="setting-block">
-            <div className="about-hero">
-              <VelaMark size={52} brand />
-              <div>
-                <strong className="about-name">
-                  Vela<span aria-hidden="true">.</span>
-                </strong>
-                <p className="about-tagline">Le web, votre atelier.</p>
-                <p className="about-meta">
-                  Navigateur de travail · macOS, Windows, Linux
-                  <br />
-                  Gratuit · Libre (MIT) · Sans compte
-                </p>
-              </div>
-            </div>
-            <div className="setting-row">
-              <div>
-                <strong>Mise à jour</strong>
-                <p className="setting-hint">{updateLabel}</p>
-                {update?.state === 'downloading' && (
-                  <div className="update-progress" role="progressbar" aria-valuenow={update.progress} aria-valuemin={0} aria-valuemax={100}>
-                    <span style={{ width: `${Math.min(100, Math.max(0, update.progress))}%` }} />
-                  </div>
-                )}
-              </div>
-              <div className="setting-actions">
-                {update?.state === 'downloaded' && notice?.action ? (
-                  <button type="button" className="action primary" onClick={() => void installUpdate()}>
-                    <Icon name={notice.action === 'install' ? 'download' : 'reload'} size={15} />
-                    {updateActionLabel(notice.action)}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="action"
-                    onClick={() => void checkUpdate()}
-                    disabled={update?.state === 'checking' || update?.state === 'downloading'}
-                  >
-                    <Icon name="reload" size={15} />
-                    Vérifier
-                  </button>
-                )}
-                <button type="button" className="action ghost" onClick={() => void openReleases()}>
-                  <Icon name="external" size={14} />
-                  Releases
-                </button>
-              </div>
-            </div>
-            <div className="about-grid">
-              <div>
-                <span>Agent</span>
-                <strong>{apiReady ? `${activeDefinition.label} · ${activeState.model}` : 'Démo locale'}</strong>
-              </div>
-              <div>
-                <span>Bloqueur</span>
-                <strong>
-                  {!settings.blockTrackers
-                    ? 'Désactivé'
-                    : settings.blockLevel === 'strict'
-                      ? 'Renforcé'
-                      : 'Traqueurs'}
-                </strong>
-              </div>
-              <div>
-                <span>Données</span>
-                <strong>Sur cet appareil</strong>
-              </div>
-            </div>
-          </section>
-        )
-      }
+      case 'about':
+        return <AboutPage />
 
       default:
         return null
@@ -1399,8 +1013,10 @@ export default function SettingsPanel() {
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
       <div
+        ref={sheetRef}
         className="sheet settings-sheet"
         role="dialog"
+        aria-modal="true"
         aria-label="Réglages"
         onMouseDown={(event) => event.stopPropagation()}
       >

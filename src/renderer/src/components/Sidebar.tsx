@@ -594,7 +594,7 @@ export default function Sidebar() {
       <button type="button" className="brief-card" onClick={() => setOverlay('brief')}>
         <span className="brief-kicker">
           <Icon name="calendar" size={13} />
-          Reprendre le fil
+          Brief
         </span>
         <span className="brief-date">{view.brief.dateLabel}</span>
         <span className="brief-arrow">

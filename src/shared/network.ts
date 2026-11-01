@@ -111,7 +111,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     target: 'DuckDuckGo, Wikipédia, Hacker News, arXiv, GDELT',
     hosts: ['html.duckduckgo.com', 'wikipedia.org', 'hn.algolia.com', 'export.arxiv.org', 'api.gdeltproject.org'],
     category: 'tunnel',
-    trigger: 'Quand vous lancez un tunnel de recherche en mode Travail.',
+    trigger: 'Quand vous lancez un tunnel de recherche en mode Atelier.',
     data: 'La requête et la langue. Chaque fournisseur ne reçoit que la requête.',
     off: 'Ne pas lancer de tunnel.'
   },
@@ -258,7 +258,7 @@ export const IGNORED_HOSTS: readonly string[] = ['www.w3.org', 'vela.local']
 
 /** Ce qui ne quitte jamais l'appareil, sans requête aucune. */
 export const LOCAL_ONLY = [
-  'Historique, onglets, espaces, réglages et brief du jour',
+  'Historique, onglets, espaces, réglages et brief',
   'Notes Markdown et surlignages, dans un dossier à vous',
   'Notes vocales, en fichiers audio dans le dossier de données de l’espace : lues sur place, jamais téléversées sans votre accord',
   'Clés d’API, chiffrées par le trousseau du système',

@@ -10,6 +10,7 @@ build/icon.iconset/
 .freebuff/
 *.blockmap
 .audit-build/
+.audit-lot5/
 .audit-npm-result.json
 # Rushes de la bande-annonce : la capture brute et les données de démonstration
 # ne se versionnent pas, seuls les fichiers montés dans site/public/media le sont.
@@ -33,3 +34,7 @@ skills/
 # Conversations importées et captures de travail : utiles localement, jamais au dépôt.
 .cloud-attachments/
 screenshots/
+
+# Preuves de l'audit ergonomie/performance (docs/AUDIT-UX.md).
+!docs/captures/audit-ux-*.png
+.audit-css/

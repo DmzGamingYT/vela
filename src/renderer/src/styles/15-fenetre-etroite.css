@@ -1,0 +1,455 @@
+/* ===============================================================
+   Finitions : marque, chrome, petites fenêtres, réglages, espace
+   =============================================================== */
+
+/* --- Marque à côté du nom ------------------------------------- */
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Verre liquide : nappe claire en haut, assise sombre en bas, reflet diagonal. */
+.vela-mark {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: #fff;
+  background:
+    radial-gradient(120% 82% at 26% 4%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 48%),
+    radial-gradient(90% 74% at 84% 104%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 64%),
+    linear-gradient(150deg, var(--accent-a), var(--accent-b) 58%, var(--accent-c));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(14, 10, 52, 0.32),
+    0 3px 9px -4px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.vela-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 54%);
+  pointer-events: none;
+}
+
+.vela-mark svg {
+  display: block;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0.5px 0.5px rgba(20, 14, 70, 0.35));
+}
+
+/* --- Nouvel onglet, en fin de liste --------------------------- */
+.tab-new {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  margin-top: 2px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px dashed transparent;
+  color: var(--muted);
+  text-align: left;
+  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard);
+}
+
+.tab-new:hover {
+  background: var(--fill);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.tab-new:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tab-new-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--fill-2);
+  color: inherit;
+}
+
+.tab-new-label {
+  font-size: 12px;
+}
+
+.tab-new-key {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--faint);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-standard);
+}
+
+.tab-new:hover .tab-new-key,
+.tab-new:focus-visible .tab-new-key {
+  opacity: 1;
+}
+
+/* --- Séparateur de la vue scindée ----------------------------- */
+/* Un simple cheveu, plus la bande de papier qui coupait les deux volets. */
+.split-handle {
+  background: transparent;
+}
+
+/* --- Fenêtre étroite : en-tête de volet ----------------------- */
+.pane {
+  container-type: inline-size;
+  container-name: pane;
+}
+
+@container pane (max-width: 470px) {
+  .pane-head {
+    gap: 5px;
+    padding: 0 6px 0 8px;
+  }
+
+  .workspace[data-collapsed='true'] .pane-head {
+    padding-left: 30px;
+  }
+
+  .pane-head .icon-btn {
+    width: 26px;
+    flex-basis: 26px;
+  }
+
+  .nav-group {
+    gap: 0;
+  }
+
+  .address {
+    height: 30px;
+    padding: 0 8px;
+    gap: 5px;
+  }
+
+  .address-host,
+  .address-hint,
+  .address-scheme {
+    display: none;
+  }
+
+  .address-input {
+    font-size: 11.5px;
+  }
+
+  .pane-actions {
+    padding: 1px;
+  }
+}
+
+/* --- Accueil dans un volet étroit ----------------------------- */
+/* La largeur du volet, jamais celle de la fenêtre : en vue scindée sur un
+   petit écran, l'accueil se range en une colonne au lieu de déborder. */
+.start {
+  container-type: inline-size;
+  container-name: start;
+}
+
+@container start (max-width: 700px) {
+  .start-inner.home {
+    max-width: none;
+    padding: 30px 24px 26px;
+    gap: 18px;
+  }
+
+  .home-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .home-hello {
+    padding-bottom: 0;
+  }
+
+  .home-title {
+    font-size: clamp(30px, 7.4cqi, 44px);
+  }
+
+  .home-day {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .home-field {
+    height: 48px;
+    padding: 0 8px 0 13px;
+  }
+
+  .home-field-hint,
+  .home-field kbd {
+    display: none;
+  }
+
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recent-grid {
+    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+  }
+
+  .home-foot {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@container start (max-width: 440px) {
+  .start-inner.home {
+    padding: 22px 16px 22px;
+    gap: 16px;
+  }
+
+  .home-title {
+    font-size: clamp(27px, 10cqi, 34px);
+  }
+
+  .home-chips {
+    gap: 6px;
+  }
+
+  .home-engine {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .recent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .recent-tile {
+    min-height: 104px;
+    padding: 10px;
+  }
+
+  .tile-badge {
+    display: none;
+  }
+
+  .home-card {
+    padding: 13px;
+  }
+}
+
+/* --- Réglages ------------------------------------------------- */
+.settings-sheet {
+  width: min(1000px, 100%);
+  height: min(770px, 89vh);
+  max-height: 89vh;
+}
+
+.settings-nav-brand {
+  gap: 10px;
+}
+
+.settings-nav-version {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.settings-nav-item {
+  position: relative;
+}
+
+.settings-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  border-radius: 2px;
+  background: var(--accent-label);
+  transform: translateY(-50%);
+  transition: height var(--dur-2) var(--ease-out);
+}
+
+.settings-nav-item[data-active='true']::before {
+  height: 14px;
+}
+
+.settings-nav-item:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.settings-scroll {
+  padding: 16px 28px 26px;
+  animation: settings-page-in var(--dur-3) var(--ease-out) both;
+}
+
+@keyframes settings-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.setting-block {
+  margin: 0 0 12px;
+  padding: 17px 18px 18px;
+  border: 1px solid var(--edge);
+  border-bottom: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--fill);
+  box-shadow: var(--inner-light-soft);
+  transition: border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard);
+}
+
+.setting-block:hover {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--edge));
+}
+
+.setting-block:last-child {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--edge);
+}
+
+/* --- Fenêtre d'espace ---------------------------------------- */
+.space-sheet.immersive {
+  width: min(940px, 100%);
+}
+
+.space-layout {
+  grid-template-columns: 296px minmax(0, 1fr);
+  gap: 22px;
+}
+
+.space-fields {
+  counter-reset: space-step;
+  padding-right: 8px;
+}
+
+.space-block {
+  counter-increment: space-step;
+  gap: 12px;
+  padding: 14px 15px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--fill);
+  box-shadow: var(--inner-light-soft);
+  transition: border-color var(--dur-2) var(--ease-standard);
+}
+
+.space-block:hover {
+  border-color: color-mix(in srgb, var(--space-color, var(--accent)) 24%, var(--edge));
+}
+
+.space-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.space-block-title::before {
+  content: counter(space-step);
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #fff;
+  background: color-mix(in srgb, var(--space-color, var(--accent)) 82%, #000 18%);
+}
+
+.space-stage {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.space-foot {
+  margin-top: 0;
+  padding: 14px 26px;
+  border-top: 1px solid var(--edge);
+  background: var(--glass-strong);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+.space-foot .dialog-actions {
+  gap: 8px;
+}
+
+@media (max-width: 780px) {
+  .space-stage {
+    position: static;
+  }
+
+  .space-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 18px 0;
+  }
+
+  .space-foot {
+    padding: 12px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-scroll {
+    animation: none;
+  }
+
+  .settings-nav-item::before,
+  .tab-new,
+  .tab-new-key,
+  .vela-mark {
+    transition: none;
+  }
+}
+
+/* Galerie d'avatars : toutes les vignettes visibles, plus de rangée coupée. */
+.avatar-gallery {
+  max-height: none;
+  overflow: visible;
+  grid-template-columns: repeat(8, 34px);
+}
+
+.avatar-gallery-choice {
+  width: 34px;
+  height: 34px;
+}
+
+/* L'aperçu laisse un peu plus de place à la page. */
+.stage-side {
+  width: 88px;
+  flex-basis: 88px;
+}
+
+/* Les pastilles et les contrôles du rail ne portent plus de trait blanc
+   intérieur : sur le verre clair, il coupait le bouton en deux. */
+:root[data-mode='light'] .space-avatar {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+:root[data-mode='light'] .space-chip[data-avatar='true'][data-active='true'] .space-avatar {
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--space) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+:root[data-mode='light'] .rail-mode[data-active='true'],
+:root[data-mode='light'] .space-add {
+  box-shadow: none;
+}
+

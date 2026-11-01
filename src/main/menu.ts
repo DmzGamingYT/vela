@@ -2,7 +2,20 @@ import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import { ISSUES_URL, RELEASES_URL, SITE_FAQ_URL, SITE_URL } from '@shared/site'
 import type { ShortcutAction } from '@shared/types'
 
-const isMac = process.platform === 'darwin'
+/**
+ * Menu natif minimal, décrit une fois pour les trois plateformes.
+ *
+ * Deux règles :
+ *
+ * - l'accélérateur s'écrit toujours `CmdOrCtrl+…` : macOS affiche ⌘, Windows
+ *   et Linux affichent Ctrl+Maj+, sans que le libellé soit à maintenir deux
+ *   fois ;
+ * - il est déclaré mais **jamais enregistré** (`registerAccelerator: false`).
+ *   La frappe est déjà interceptée dans `TabManager.handleInput`, qui la fait
+ *   passer dans les pages comme dans la coque ; un accélérateur enregistré
+ *   déclencherait la même action une seconde fois.
+ */
+export type MenuPlatform = 'darwin' | 'win32' | 'linux'
 
 function item(
   label: string,
@@ -12,17 +25,18 @@ function item(
 ): MenuItemConstructorOptions {
   return {
     label,
-    ...(accelerator && isMac ? { accelerator, registerAccelerator: false } : {}),
+    ...(accelerator ? { accelerator, registerAccelerator: false } : {}),
     click: () => send(action)
   }
 }
 
-/**
- * Menu natif minimal. Les raccourcis réels sont interceptés dans
- * `TabManager.handleInput` : le menu ne fait que les afficher.
- */
-export function installMenu(send: (action: ShortcutAction) => void): void {
-  const template: MenuItemConstructorOptions[] = [
+/** Gabarit du menu. Pur : la plateforme est un paramètre, pour être testable. */
+export function buildMenuTemplate(
+  platform: string,
+  send: (action: ShortcutAction) => void
+): MenuItemConstructorOptions[] {
+  const isMac = platform === 'darwin'
+  return [
     ...(isMac
       ? [
           {
@@ -30,7 +44,7 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
             submenu: [
               { role: 'about' as const, label: 'À propos de Vela' },
               { type: 'separator' as const },
-              item('Réglages…', 'settings', send, 'Cmd+,'),
+              item('Réglages…', 'settings', send, 'CmdOrCtrl+,'),
               { type: 'separator' as const },
               { role: 'services' as const },
               { type: 'separator' as const },
@@ -46,13 +60,21 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
     {
       label: 'Fichier',
       submenu: [
-        item('Nouvel onglet', 'new-tab', send, 'Cmd+T'),
-        item('Ouvrir dans le mini navigateur', 'mini', send, 'Cmd+Shift+N'),
-        item('Rouvrir l’onglet fermé', 'reopen-tab', send, 'Cmd+Shift+T'),
+        item('Nouvel onglet', 'new-tab', send, 'CmdOrCtrl+T'),
+        item('Ouvrir dans le mini navigateur', 'mini', send, 'CmdOrCtrl+Shift+N'),
+        item('Rouvrir l’onglet fermé', 'reopen-tab', send, 'CmdOrCtrl+Shift+T'),
         { type: 'separator' },
-        item('Fermer l’onglet', 'close-tab', send, 'Cmd+W'),
-        item('Imprimer…', 'print', send, 'Cmd+P'),
-        ...(isMac ? [] : [{ type: 'separator' as const }, { role: 'quit' as const, label: 'Quitter' }])
+        item('Fermer l’onglet', 'close-tab', send, 'CmdOrCtrl+W'),
+        item('Imprimer…', 'print', send, 'CmdOrCtrl+P'),
+        // Hors macOS, les réglages vivent dans Fichier : la barre de menus du
+        // système ne porte pas de menu d'application.
+        ...(isMac
+          ? []
+          : [
+              { type: 'separator' as const },
+              item('Réglages…', 'settings', send, 'CmdOrCtrl+,'),
+              { role: 'quit' as const, label: 'Quitter' }
+            ])
       ]
     },
     {
@@ -70,23 +92,26 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
     {
       label: 'Affichage',
       submenu: [
-        item('Barre de commande', 'command', send, 'Cmd+K'),
-        item('Barre d’adresse', 'address', send, 'Cmd+L'),
-        item('Rechercher dans la page', 'find', send, 'Cmd+F'),
+        item('Barre de commande', 'command', send, 'CmdOrCtrl+K'),
+        item('Barre d’adresse', 'address', send, 'CmdOrCtrl+L'),
+        item('Rechercher dans la page', 'find', send, 'CmdOrCtrl+F'),
         { type: 'separator' },
-        item('Vue scindée', 'split', send, 'Cmd+Shift+D'),
-        item('Notes', 'notes', send, 'Cmd+E'),
-        item('Agent', 'agent', send, 'Cmd+J'),
-        item('Atelier (Travail)', 'work', send, 'Cmd+Shift+A'),
-        item('Brief du jour', 'brief', send, 'Cmd+Shift+B'),
+        item('Onglet suivant', 'next-tab', send, 'CmdOrCtrl+Shift+]'),
+        item('Onglet précédent', 'prev-tab', send, 'CmdOrCtrl+Shift+['),
         { type: 'separator' },
-        item('Masquer la barre latérale', 'sidebar', send, 'Cmd+S'),
+        item('Vue scindée', 'split', send, 'CmdOrCtrl+Shift+D'),
+        item('Notes', 'notes', send, 'CmdOrCtrl+E'),
+        item('Agent', 'agent', send, 'CmdOrCtrl+J'),
+        item('Atelier', 'work', send, 'CmdOrCtrl+Shift+A'),
+        item('Brief', 'brief', send, 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
-        item('Agrandir le texte', 'zoom-in', send, 'Cmd+Plus'),
-        item('Réduire le texte', 'zoom-out', send, 'Cmd+-'),
-        item('Taille réelle du texte', 'zoom-reset', send, 'Cmd+0'),
+        item('Masquer la barre latérale', 'sidebar', send, 'CmdOrCtrl+S'),
         { type: 'separator' },
-        item('Recharger', 'reload', send, 'Cmd+R'),
+        item('Agrandir le texte', 'zoom-in', send, 'CmdOrCtrl+Plus'),
+        item('Réduire le texte', 'zoom-out', send, 'CmdOrCtrl+-'),
+        item('Taille réelle du texte', 'zoom-reset', send, 'CmdOrCtrl+0'),
+        { type: 'separator' },
+        item('Recharger', 'reload', send, 'CmdOrCtrl+R'),
         { role: 'toggleDevTools', label: 'Outils de développement' },
         { role: 'togglefullscreen', label: 'Plein écran' }
       ]
@@ -94,16 +119,16 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
     {
       label: 'Historique',
       submenu: [
-        item('Afficher l’historique', 'history', send, 'Cmd+Y'),
+        item('Afficher l’historique', 'history', send, 'CmdOrCtrl+Y'),
         { type: 'separator' },
-        item('Page d’accueil', 'home', send, 'Cmd+Shift+H')
+        item('Page d’accueil', 'home', send, 'CmdOrCtrl+Shift+H')
       ]
     },
     {
       label: 'Marque-pages',
       submenu: [
-        item('Ajouter cette page', 'bookmark', send, 'Cmd+D'),
-        item('Afficher les marque-pages', 'bookmarks', send, 'Cmd+Shift+O')
+        item('Ajouter cette page', 'bookmark', send, 'CmdOrCtrl+D'),
+        item('Afficher les marque-pages', 'bookmarks', send, 'CmdOrCtrl+Shift+O')
       ]
     },
     {
@@ -137,6 +162,8 @@ export function installMenu(send: (action: ShortcutAction) => void): void {
       ]
     }
   ]
+}
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+export function installMenu(send: (action: ShortcutAction) => void): void {
+  Menu.setApplicationMenu(Menu.buildFromTemplate(buildMenuTemplate(process.platform, send)))
 }
