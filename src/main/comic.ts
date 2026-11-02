@@ -1,6 +1,6 @@
 import { app, ipcMain, net, type IpcMainInvokeEvent, type Session } from 'electron'
 import { randomBytes } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { buildChatRequest, providerById } from '@shared/providers'
 import type { ProviderId, Settings } from '@shared/types'
@@ -39,6 +39,9 @@ interface ComicRequest {
   url?: string
   texts?: unknown
   contexte?: unknown
+  dataUrl?: unknown
+  key?: unknown
+  value?: unknown
 }
 
 function message(error: unknown): string {
@@ -64,6 +67,17 @@ export class ComicBridge {
       this.withGrant(event, payload, () =>
         this.translate((payload as ComicRequest).texts, (payload as ComicRequest).contexte)
       )
+    )
+    ipcMain.handle('comic:vision', (event, payload) =>
+      this.withGrant(event, payload, () => this.vision(String((payload as ComicRequest).dataUrl ?? '')))
+    )
+    ipcMain.handle('comic:edits', (event, payload) =>
+      this.withGrant(event, payload, async () =>
+        this.saveEdits(String((payload as ComicRequest).key ?? ''), (payload as ComicRequest).value)
+      )
+    )
+    ipcMain.handle('comic:load-edits', (event, payload) =>
+      this.withGrant(event, payload, async () => this.loadEdits(String((payload as ComicRequest).key ?? '')))
     )
   }
 
@@ -121,6 +135,7 @@ export class ComicBridge {
           document.querySelectorAll('.vt-layer, .vt-panel, .vt-launch').forEach((node) => node.remove())
           document.documentElement.classList.remove('vt-hidden')
           try { delete window.velaComic } catch {}
+          try { delete window.__velaComicVision; delete window.__velaComicEdits; delete window.__velaComicLoadEdits } catch {}
           window.__velaComicRunning = false
           return true
         })()`
@@ -137,6 +152,11 @@ export class ComicBridge {
         if (window.__velaComicRunning) return { ok: true, reason: 'déjà lancé' }
         window.__velaComicRunning = true
         const token = ${JSON.stringify(token)}
+        // Ces deux entrées gardent le jeton dans cette fermeture : la page ne
+        // peut pas lire d'image ni écrire de fichier d'elle-même.
+        window.__velaComicVision = (dataUrl) => bridge.vision(token, dataUrl)
+        window.__velaComicEdits = (key, value) => bridge.saveEdits(token, key, value)
+        window.__velaComicLoadEdits = (key) => bridge.loadEdits(token, key)
         const storeKey = (key) => 'vela-comic:' + key
         const GM_getValue = (key, fallback) => {
           try {
@@ -235,6 +255,81 @@ export class ComicBridge {
         base64: buffer.toString('base64'),
         type: response.headers.get('content-type') || 'image/png'
       }
+    } catch (error) {
+      return { ok: false, error: message(error) }
+    }
+  }
+
+  /**
+   * Lit un éclat que Tesseract n'a pas su déchiffrer. Restreint aux fournisseurs
+   * compatibles OpenAI : c'est le seul protocole dont on sait envoyer une image
+   * sans changer de forme de requête.
+   */
+  private async vision(dataUrl: string): Promise<{ ok: boolean; texte?: string; error?: string }> {
+    if (!/^data:image\/(png|jpeg|webp);base64,/.test(dataUrl)) return { ok: false, error: 'image illisible' }
+    const settings = this.getSettings()
+    const definition = providerById(settings.agent.provider)
+    const key = definition.local ? null : this.getSecret(definition.id)
+    if (!definition.local && !key) {
+      return { ok: false, error: `ajoutez une clé ${definition.label} dans Réglages › Modèles` }
+    }
+    if (definition.protocol !== 'openai') {
+      return { ok: false, error: 'lecture d’image : fournisseur compatible OpenAI requis' }
+    }
+    const provider = settings.agent.providers[definition.id]
+    const messages = [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.' },
+          { type: 'image_url', image_url: { url: dataUrl } }
+        ]
+      }
+    ] as unknown as Parameters<typeof buildChatRequest>[3]
+    try {
+      const request = buildChatRequest(definition, { baseUrl: provider.baseUrl, model: provider.model }, key, messages)
+      const payload = JSON.parse(request.body) as Record<string, unknown>
+      payload.stream = false
+      const response = await net.fetch(request.url, {
+        method: 'POST',
+        headers: request.headers,
+        body: JSON.stringify(payload)
+      })
+      if (!response.ok) return { ok: false, error: `vision HTTP ${response.status}` }
+      const body = (await response.json()) as Record<string, any>
+      const content = this.contentOf('openai', body)
+      const match = content.match(/\{[\s\S]*\}/)
+      if (!match) return { ok: false, error: 'réponse de vision illisible' }
+      const texte = String((JSON.parse(match[0]) as { texte?: unknown }).texte ?? '').trim()
+      return texte ? { ok: true, texte } : { ok: false, error: 'aucun texte lu' }
+    } catch (error) {
+      return { ok: false, error: message(error) }
+    }
+  }
+
+  /** Relit le fichier de corrections d'une planche, s'il existe. */
+  private loadEdits(key: string): { ok: boolean; value?: unknown; error?: string } {
+    if (!/^[a-z0-9]{1,32}$/.test(key)) return { ok: false, error: 'clé invalide' }
+    try {
+      const file = join(app.getPath('userData'), 'comic-edits', `${key}.json`)
+      if (!existsSync(file)) return { ok: false, error: 'aucune correction' }
+      return { ok: true, value: JSON.parse(readFileSync(file, 'utf8')) }
+    } catch (error) {
+      return { ok: false, error: message(error) }
+    }
+  }
+
+  /** Une correction manuelle par planche, dans son propre fichier JSON. */
+  private saveEdits(key: string, value: unknown): { ok: boolean; file?: string; error?: string } {
+    if (!/^[a-z0-9]{1,32}$/.test(key)) return { ok: false, error: 'clé invalide' }
+    try {
+      const body = JSON.stringify(value, null, 2)
+      if (body.length > 200_000) return { ok: false, error: 'corrections trop volumineuses' }
+      const dir = join(app.getPath('userData'), 'comic-edits')
+      mkdirSync(dir, { recursive: true })
+      const file = join(dir, `${key}.json`)
+      writeFileSync(file, body)
+      return { ok: true, file }
     } catch (error) {
       return { ok: false, error: message(error) }
     }

@@ -76,7 +76,13 @@ void webFrame.executeJavaScript(CHROME_OBJECT).catch(() => {
 contextBridge.exposeInMainWorld('__velaComicBridge', {
   image: (token: string, url: string) => ipcRenderer.invoke('comic:image', { token, url }),
   translate: (token: string, texts: string[], contexte?: string) =>
-    ipcRenderer.invoke('comic:translate', { token, texts, contexte })
+    ipcRenderer.invoke('comic:translate', { token, texts, contexte }),
+  // Lecture d'un éclat que l'OCR n'a pas su lire, et enregistrement des
+  // corrections manuelles dans un fichier par planche.
+  vision: (token: string, dataUrl: string) => ipcRenderer.invoke('comic:vision', { token, dataUrl }),
+  saveEdits: (token: string, key: string, value: unknown) =>
+    ipcRenderer.invoke('comic:edits', { token, key, value }),
+  loadEdits: (token: string, key: string) => ipcRenderer.invoke('comic:load-edits', { token, key })
 })
 
 /**
