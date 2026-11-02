@@ -75,7 +75,8 @@ void webFrame.executeJavaScript(CHROME_OBJECT).catch(() => {
 
 contextBridge.exposeInMainWorld('__velaComicBridge', {
   image: (token: string, url: string) => ipcRenderer.invoke('comic:image', { token, url }),
-  translate: (token: string, texts: string[]) => ipcRenderer.invoke('comic:translate', { token, texts })
+  translate: (token: string, texts: string[], contexte?: string) =>
+    ipcRenderer.invoke('comic:translate', { token, texts, contexte })
 })
 
 /**

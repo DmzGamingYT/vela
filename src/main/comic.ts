@@ -38,6 +38,7 @@ interface ComicRequest {
   token?: string
   url?: string
   texts?: unknown
+  contexte?: unknown
 }
 
 function message(error: unknown): string {
@@ -60,7 +61,9 @@ export class ComicBridge {
     ipcMain.handle('comic:clear', (_event, payload) => this.clear(String((payload as { tabId?: unknown })?.tabId ?? '')))
     ipcMain.handle('comic:image', (event, payload) => this.withGrant(event, payload, (grant) => this.image(grant, String((payload as ComicRequest).url ?? ''))))
     ipcMain.handle('comic:translate', (event, payload) =>
-      this.withGrant(event, payload, () => this.translate((payload as ComicRequest).texts))
+      this.withGrant(event, payload, () =>
+        this.translate((payload as ComicRequest).texts, (payload as ComicRequest).contexte)
+      )
     )
   }
 
@@ -239,7 +242,8 @@ export class ComicBridge {
 
   /** Traduit les répliques avec le fournisseur actif de Vela, sans streaming. */
   async translate(
-    texts: unknown
+    texts: unknown,
+    contexte?: unknown
   ): Promise<{ ok: boolean; translations?: { id: number; texte: string }[]; error?: string }> {
     if (!Array.isArray(texts) || !texts.length) return { ok: false, error: 'aucun texte à traduire' }
     const clean = texts
@@ -259,14 +263,20 @@ export class ComicBridge {
       {
         role: 'system' as const,
         content:
-          'Tu es traducteur de bande dessinée. On te donne un tableau JSON de répliques extraites par OCR. ' +
-          'Traduis chacune en français, registre parlé et naturel, phrases courtes, noms propres inchangés, ' +
-          'onomatopées rendues par un équivalent français, erreurs d’OCR évidentes corrigées sans rien inventer. ' +
+          'Tu es traducteur de bande dessinée. On te donne un JSON {"contexte":"…","repliques":[…]} : ' +
+          '« contexte » décrit l’œuvre (genre, personnages, registre) et vaut pour toute la planche. ' +
+          'Traduis chaque réplique en français, en cohérence avec les répliques voisines du même envoi ' +
+          '(mêmes personnes, mêmes tutoiements, mêmes noms), registre parlé et naturel, phrases courtes ' +
+          'qui tiennent dans une bulle, noms propres inchangés, onomatopées rendues par un équivalent ' +
+          'français, erreurs d’OCR évidentes corrigées sans rien inventer. ' +
           'Réponds uniquement par un JSON {"traductions":[{"id":0,"texte":"…"}]}.'
       },
       {
         role: 'user' as const,
-        content: JSON.stringify({ repliques: clean.map((texte, id) => ({ id, texte })) })
+        content: JSON.stringify({
+          contexte: typeof contexte === 'string' ? contexte.slice(0, 400) : '',
+          repliques: clean.map((texte, id) => ({ id, texte }))
+        })
       }
     ]
 

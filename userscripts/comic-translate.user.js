@@ -64,7 +64,8 @@
     source: 'eng', // langue des planches pour Tesseract : eng, ita, spa, fra, jpn…
     auto: false,
     mode: 'cover', // cover = masque la bulle d'origine · below = traduction sous la bulle
-    deep: true, // deux passes OCR : la seconde retrouve les cartouches avalés
+    deep: true, // relit les bandes sans texte : les cartouches s'y perdent
+    contexte: '', // genre, personnages, registre — transmis au traducteur
     minSize: 360, // côté minimum d'une image pour être considérée comme une planche
     maxPanels: 12,
     opacity: 0.95,
@@ -93,14 +94,14 @@
 
   const CSS = `
     .vt-layer { position: absolute; pointer-events: none; z-index: 2147483000; }
-    .vt-bubble {
-      position: absolute; box-sizing: border-box; display: flex; align-items: center;
-      justify-content: center; overflow: hidden; text-align: center; line-height: 1.18;
-      color: ${COLORS.ink}; border: 1px solid ${COLORS.line}; border-radius: 12px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.14); pointer-events: auto; user-select: text;
-      padding: 2px 5px; overflow-wrap: anywhere;
+    .vt-bubble { position: absolute; pointer-events: none; }
+    .vt-bubble[data-mode="below"] {
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      text-align: center; line-height: 1.18; color: ${COLORS.ink};
+      border: 1px solid ${COLORS.line}; border-radius: 8px; padding: 2px 5px;
+      background: rgba(${COLORS.paper},.97); box-shadow: 0 1px 2px rgba(0,0,0,.14);
+      pointer-events: auto; user-select: text; overflow-wrap: anywhere;
     }
-    .vt-bubble[data-mode="below"] { border-radius: 8px; }
     .vt-hidden .vt-layer { display: none !important; }
     .vt-launch {
       position: fixed; right: 16px; bottom: 16px; z-index: 2147483601;
@@ -458,13 +459,18 @@
     })
   }
 
+  // Le contexte (genre, personnages, registre) vient du panneau : sans lui, le
+  // modèle traduit chaque réplique hors situation et rate les tutoiements.
   const systemPrompt = (target) =>
     `Tu es traducteur de bande dessinée vers le ${target}. ` +
-    'On te donne un tableau JSON de répliques extraites par OCR : {"repliques":[{"id":0,"texte":"…"}]}. ' +
-    'Traduis chaque réplique en gardant son id. Registre parlé et naturel, phrases courtes, ' +
-    'ponctuation de BD, noms propres inchangés, onomatopées rendues par un équivalent français. ' +
-    'Corrige les erreurs d’OCR évidentes sans inventer de contenu. ' +
-    'Réponds uniquement par un JSON de la forme {"traductions":[{"id":0,"texte":"…"}]}, sans commentaire.'
+    'On te donne un JSON {"contexte":"…","repliques":[{"id":0,"texte":"…"}]} : « contexte » décrit ' +
+    'l’œuvre (genre, personnages, registre) et vaut pour toute la planche. ' +
+    'Traduis chaque réplique en gardant son id, en cohérence avec les répliques voisines du même ' +
+    'envoi : mêmes personnes, mêmes tutoiements, mêmes noms. Registre parlé et naturel, phrases ' +
+    'courtes qui tiennent dans une bulle, ponctuation de BD, noms propres inchangés, onomatopées ' +
+    'rendues par un équivalent français. Corrige les erreurs d’OCR évidentes sans inventer de ' +
+    'contenu. Réponds uniquement par un JSON de la forme {"traductions":[{"id":0,"texte":"…"}]}, ' +
+    'sans commentaire.'
 
   // Injecté par Vela, le script n'a pas de clé : le pont de l'application traduit
   // avec le fournisseur réglé dans Réglages › Modèles.
@@ -480,7 +486,13 @@
       temperature: 0.2,
       messages: [
         { role: 'system', content: systemPrompt(CFG.target) },
-        { role: 'user', content: JSON.stringify({ repliques: texts.map((texte, id) => ({ id, texte })) }) }
+        {
+          role: 'user',
+          content: JSON.stringify({
+            contexte: CFG.contexte || '',
+            repliques: texts.map((texte, id) => ({ id, texte }))
+          })
+        }
       ]
     }
     const response = await request({
@@ -553,86 +565,404 @@
 
   /* ----------------------------------------------------------------- dessin */
 
-  function fitText(node, lineHeight, maxHeight) {
-    // Le corps suit la hauteur d'UNE ligne lue, pas celle du bloc : une
-    // cartouche d'une ligne et une bulle de trois lignes n'ont pas le même
-    // repère, et c'est ce qui rendait la cartouche illisible.
-    let size = Math.min(22, Math.max(11, lineHeight * 0.95))
-    node.style.fontSize = `${size}px`
-    let guard = 24
-    while (guard-- > 0 && size > 10 && node.getBoundingClientRect().height > maxHeight) {
-      size -= 1
-      node.style.fontSize = `${size}px`
+  function report() {
+    if (!Array.isArray(window.__vtReport)) window.__vtReport = []
+    return window.__vtReport
+  }
+
+  const luminance = (data, offset) =>
+    0.299 * data[offset] + 0.587 * data[offset + 1] + 0.114 * data[offset + 2]
+
+  /**
+   * Intérieur de la bulle : la zone claire connexe qui contient le texte.
+   * Le seuil vient de la boîte de texte elle-même (quatre-vingtième centile), donc
+   * une bulle grise ou un fond en dégradé passent aussi. Si la tache déborde du
+   * cadre utile, on abandonne : un contour ouvert ferait fuir le remplissage
+   * dans toute la planche.
+   */
+  function interiorMask(image, box) {
+    const { data, width, height } = image
+    const samples = []
+    for (let y = Math.max(0, box.y0); y < Math.min(height, box.y1); y += 2) {
+      for (let x = Math.max(0, box.x0); x < Math.min(width, box.x1); x += 2) {
+        samples.push(luminance(data, (Math.round(y) * width + Math.round(x)) * 4))
+      }
+    }
+    if (samples.length < 8) return null
+    samples.sort((a, b) => a - b)
+    const background = samples[Math.floor(samples.length * 0.8)]
+    // Seuil serré : le fond de la planche (gris clair) ne doit pas rejoindre la
+    // bulle blanche. Un contour fermé suffit à contenir le remplissage.
+    const threshold = Math.max(110, background - 12)
+
+    let seed = -1
+    let best = -1
+    for (let y = Math.max(0, Math.floor(box.y0)); y < Math.min(height, Math.ceil(box.y1)); y += 1) {
+      for (let x = Math.max(0, Math.floor(box.x0)); x < Math.min(width, Math.ceil(box.x1)); x += 1) {
+        const value = luminance(data, (y * width + x) * 4)
+        if (value > best) {
+          best = value
+          seed = y * width + x
+        }
+      }
+    }
+    if (seed < 0) return null
+
+    // Une queue qui fusionne avec le corps laisse une ouverture dans le contour :
+    // le remplissage est donc confiné à une marge autour du texte, et une tache
+    // trop étendue est refusée plus bas.
+    const boxWidth = box.x1 - box.x0
+    const boxHeight = box.y1 - box.y0
+    // Le masque n'a pas besoin d'épouser toute la bulle : la plaque affiche
+    // l'image d'origine avec le texte effacé, donc le contour, la queue et le
+    // fond sont conservés tels quels. On borne la tache à la zone du texte.
+    const padX = Math.max(18, Math.round(boxWidth * 0.32))
+    const padY = Math.max(18, Math.round(boxHeight * 0.32))
+    const limX0 = Math.max(0, Math.floor(box.x0 - padX))
+    const limX1 = Math.min(width - 1, Math.ceil(box.x1 + padX))
+    const limY0 = Math.max(0, Math.floor(box.y0 - padY))
+    const limY1 = Math.min(height - 1, Math.ceil(box.y1 + padY))
+
+    const mask = new Uint8Array(width * height)
+    const stack = [seed]
+    let area = 0
+    while (stack.length) {
+      const index = stack.pop()
+      if (mask[index]) continue
+      if (luminance(data, index * 4) < threshold) continue
+      const x = index % width
+      const y = (index - x) / width
+      if (x < limX0 || x > limX1 || y < limY0 || y > limY1) continue
+      mask[index] = 1
+      area += 1
+      if (x > limX0) stack.push(index - 1)
+      if (x < limX1) stack.push(index + 1)
+      if (y > limY0) stack.push(index - width)
+      if (y < limY1) stack.push(index + width)
+    }
+    if (area < 400) return null
+
+    // Le texte n'est pas du « fond » : sans rebouchage, le masque est percé de
+    // trous et aucun rectangle n'y tient. On remplit les cavités en partant des
+    // bords de la zone bornée ; l'extérieur de la bulle, lui, reste exclu.
+    const solid = Uint8Array.from(mask)
+    const seen = new Uint8Array(mask.length)
+    const queue = []
+    for (let x = limX0; x <= limX1; x += 1) {
+      queue.push(limY0 * width + x, limY1 * width + x)
+    }
+    for (let y = limY0; y <= limY1; y += 1) {
+      queue.push(y * width + limX0, y * width + limX1)
+    }
+    while (queue.length) {
+      const index = queue.pop()
+      if (seen[index] || solid[index]) continue
+      seen[index] = 1
+      const x = index % width
+      const y = (index - x) / width
+      if (x > limX0) queue.push(index - 1)
+      if (x < limX1) queue.push(index + 1)
+      if (y > limY0) queue.push(index - width)
+      if (y < limY1) queue.push(index + width)
+    }
+    for (let y = limY0; y <= limY1; y += 1) {
+      for (let x = limX0; x <= limX1; x += 1) {
+        const index = y * width + x
+        if (!solid[index] && !seen[index]) solid[index] = 1
+      }
+    }
+
+    // Érosion d'un pixel : le contour d'origine (et la queue) restent intacts,
+    // on ne repeint jamais dessus.
+    const core = new Uint8Array(mask.length)
+    let kept = 0
+    let sumX = 0
+    let sumY = 0
+    let minX = width
+    let minY = height
+    let maxX = 0
+    let maxY = 0
+    for (let y = 1; y < height - 1; y += 1) {
+      for (let x = 1; x < width - 1; x += 1) {
+        const index = y * width + x
+        if (!solid[index]) continue
+        if (!solid[index - 1] || !solid[index + 1] || !solid[index - width] || !solid[index + width]) continue
+        core[index] = 1
+        kept += 1
+        sumX += x
+        sumY += y
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+    if (kept < 300) return null
+    // Une bulle tient autour de son texte ; une tache bien plus large est une
+    // fuite dans la planche, pas une bulle.
+    if (maxX - minX > boxWidth * 1.9 + 60 || maxY - minY > boxHeight * 2.2 + 60) return null
+    return {
+      mask: core,
+      width,
+      height,
+      area: kept,
+      cx: sumX / kept,
+      cy: sumY / kept,
+      minX,
+      minY,
+      maxX,
+      maxY
     }
   }
 
-  function drawBubble(layer, img, bubble, text, canvas) {
-    if (!text) return
-    // L'OCR lit un canvas (parfois agrandi) : on ramène ses boîtes à la taille affichée.
-    const sourceWidth = canvas?.width || img.naturalWidth || layer.clientWidth || 1
-    const sourceHeight = canvas?.height || img.naturalHeight || layer.clientHeight || 1
-    const scaleX = layer.clientWidth / sourceWidth
-    const scaleY = layer.clientHeight / sourceHeight
-    const x0 = bubble.bbox.x0 * scaleX
-    const y0 = bubble.bbox.y0 * scaleY
-    const width = (bubble.bbox.x1 - bubble.bbox.x0) * scaleX
-    const height = (bubble.bbox.y1 - bubble.bbox.y0) * scaleY
-    if (width < 8 || height < 8) return
+  /**
+   * Efface le texte et lui seul : par ligne, la teinte des pixels clairs de la
+   * bulle remplace les pixels d'encre. Le fond garde son dégradé horizontal,
+   * le contour, la queue et les éclats ne sont jamais touchés.
+   */
+  function inpaint(context, image, region) {
+    const { data, width } = image
+    for (let y = region.minY; y <= region.maxY; y += 1) {
+      const row = []
+      for (let x = region.minX; x <= region.maxX; x += 1) {
+        const index = y * width + x
+        if (!region.mask[index]) continue
+        row.push({ index, value: luminance(data, index * 4) })
+      }
+      if (row.length < 6) continue
+      const sorted = row.map((pixel) => pixel.value).sort((a, b) => a - b)
+      const light = sorted[Math.floor(sorted.length * 0.75)]
+      let red = 0
+      let green = 0
+      let blue = 0
+      let count = 0
+      for (const pixel of row) {
+        if (Math.abs(pixel.value - light) > 14) continue
+        const offset = pixel.index * 4
+        red += data[offset]
+        green += data[offset + 1]
+        blue += data[offset + 2]
+        count += 1
+      }
+      if (!count) continue
+      red /= count
+      green /= count
+      blue /= count
+      // -6 et non -28 : à -28 les bords antialiasés du texte restaient en place
+      // et l'anglais transparaissait sous le français.
+      for (const pixel of row) {
+        if (pixel.value > light - 6) continue
+        const offset = pixel.index * 4
+        data[offset] = red
+        data[offset + 1] = green
+        data[offset + 2] = blue
+      }
+    }
+    context.putImageData(image, 0, 0)
+  }
 
-    const pad = Math.max(3, Math.min(10, height * 0.16))
-    const below = CFG.mode === 'below'
-    const top = below ? y0 + height + 4 : y0 - pad
+  /**
+   * Plus grand rectangle entièrement contenu dans le masque, centré sur son
+   * centroïde. On pousse les bords un par un et on ne teste que le bord ajouté ;
+   * la marge de 8 % garde le texte à distance du contour.
+   */
+  function inscribedRect(region) {
+    const inside = (x, y) =>
+      x >= 0 && y >= 0 && x < region.width && y < region.height && region.mask[y * region.width + x] === 1
+    const cx = Math.round(region.cx)
+    const cy = Math.round(region.cy)
+    const maxHalfW = Math.max(4, Math.round((region.maxX - region.minX) * 0.35))
+    const maxHalfH = Math.max(4, Math.round((region.maxY - region.minY) * 0.35))
+
+    const columnFree = (x, y0, y1) => {
+      for (let y = y0; y <= y1; y += 1) if (!inside(x, y)) return false
+      return true
+    }
+    const rowFree = (y, x0, x1) => {
+      for (let x = x0; x <= x1; x += 1) if (!inside(x, y)) return false
+      return true
+    }
+
+    let halfW = 4
+    let halfH = 4
+    let grew = true
+    while (grew && (halfW < maxHalfW || halfH < maxHalfH)) {
+      grew = false
+      if (halfW < maxHalfW && columnFree(cx - halfW - 1, cy - halfH, cy + halfH) && columnFree(cx + halfW + 1, cy - halfH, cy + halfH)) {
+        halfW += 1
+        grew = true
+      }
+      if (halfH < maxHalfH && rowFree(cy - halfH - 1, cx - halfW, cx + halfW) && rowFree(cy + halfH + 1, cx - halfW, cx + halfW)) {
+        halfH += 1
+        grew = true
+      }
+    }
+
+    const margin = 0.08
+    const w = halfW * 2 * (1 - margin)
+    const h = halfH * 2 * (1 - margin)
+    return { x: cx - w / 2, y: cy - h / 2, w, h, cx, cy }
+  }
+
+  function wrapLines(context, text, maxWidth) {
+    const words = String(text).split(/\s+/).filter(Boolean)
+    const lines = []
+    let line = ''
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word
+      if (line && context.measureText(candidate).width > maxWidth) {
+        lines.push(line)
+        line = word
+      } else {
+        line = candidate
+      }
+    }
+    if (line) lines.push(line)
+    return lines
+  }
+
+  /** Écrit le texte dans `target`, centré sur le rectangle ; renvoie les lignes. */
+  function paintText(target, text, rect, size, color, font) {
+    const context = target.getContext('2d', { willReadFrequently: true })
+    context.font = `600 ${size}px ${font}`
+    context.fillStyle = color
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    const lines = wrapLines(context, text, rect.w)
+    const lineHeight = size * 1.18
+    const first = rect.cy - ((lines.length - 1) * lineHeight) / 2
+    lines.forEach((line, index) => context.fillText(line, rect.cx, first + index * lineHeight))
+    return { lines, lineHeight }
+  }
+
+  /** Pixels de texte hors du masque : la mesure exacte du débordement. */
+  function overflowPixels(probe, region) {
+    const { data } = probe.getContext('2d').getImageData(0, 0, probe.width, probe.height)
+    let outside = 0
+    for (let index = 0, alpha = 3; index < data.length; index += 4, alpha += 4) {
+      if (data[alpha] < 40) continue
+      if (region.mask[index / 4] === 1) continue
+      outside += 1
+    }
+    return outside
+  }
+
+  /** Recadre la bulle et rend l'image telle quelle dans un canvas de travail. */
+  function plateFor(canvas, bubble) {
+    const box = bubble.bbox
+    const lineHeight = (box.y1 - box.y0) / Math.max(1, bubble.count || 1)
+    const pad = Math.max(10, Math.round(lineHeight * 0.9))
+    const sx = Math.max(0, Math.floor(box.x0 - pad))
+    const sy = Math.max(0, Math.floor(box.y0 - pad))
+    const sw = Math.min(canvas.width - sx, Math.ceil(box.x1 - box.x0 + pad * 2))
+    const sh = Math.min(canvas.height - sy, Math.ceil(box.y1 - box.y0 + pad * 2))
+    if (sw < 20 || sh < 20) return null
+    const plate = document.createElement('canvas')
+    plate.width = sw
+    plate.height = sh
+    const context = plate.getContext('2d', { willReadFrequently: true })
+    context.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh)
+    const image = context.getImageData(0, 0, sw, sh)
+    const region = interiorMask(image, {
+      x0: box.x0 - sx,
+      y0: box.y0 - sy,
+      x1: box.x1 - sx,
+      y1: box.y1 - sy
+    })
+    if (!region) return { plate, context, region: null, sx, sy, sw, sh }
+    inpaint(context, image, region)
+    return { plate, context, region, sx, sy, sw, sh }
+  }
+
+  /** Repli quand la bulle n'est pas détectable : plaque arrondie, comme avant. */
+  function drawPlain(layer, bubble, text, scaleX, scaleY, width, height, pad) {
     const node = document.createElement('div')
     node.className = 'vt-bubble'
     node.dataset.mode = CFG.mode
     node.textContent = text
     node.title = bubble.text
-    node.setAttribute('lang', CFG.target)
+    node.style.left = `${bubble.bbox.x0 * scaleX - pad}px`
+    node.style.top = `${bubble.bbox.y0 * scaleY - pad}px`
+    node.style.width = `${width + pad * 2}px`
+    node.style.minHeight = `${height + pad * 2}px`
     node.style.fontFamily = CFG.font
-    // Plaque opaque en mode « cover » : une bulle masquée doit l'être vraiment,
-    // sinon le texte d'origine transparaît sous la traduction.
-    node.style.background = `rgba(${COLORS.paper},${below ? 0.97 : 1})`
-    const roomLeft = Math.max(2, x0 - pad)
-    const roomWidth = Math.max(width + pad * 2, layer.clientWidth - roomLeft - 8)
-    const baseWidth = Math.min(width + pad * 2, roomWidth)
-    node.style.left = `${roomLeft}px`
-    node.style.top = `${Math.max(2, top)}px`
-    // Le rayon suit la taille de la plaque : un coin de 12 px fixes déborde
-    // d'une bulle haute comme d'une cartouche d'une ligne.
-    node.style.borderRadius = `${Math.min(14, Math.max(8, Math.round(height * 0.2)))}px`
-    node.style.width = `${baseWidth}px`
-    node.style.minHeight = `${below ? height + pad : height + pad * 2}px`
-    node.style.height = 'auto'
+    node.style.fontSize = `${Math.min(22, Math.max(11, height * 0.5))}px`
+    layer.appendChild(node)
+    return node
+  }
+
+  function drawBubble(layer, img, bubble, text, canvas) {
+    if (!text || !canvas) return
+    const sourceWidth = canvas.width || img.naturalWidth || layer.clientWidth || 1
+    const sourceHeight = canvas.height || img.naturalHeight || layer.clientHeight || 1
+    const scaleX = layer.clientWidth / sourceWidth
+    const scaleY = layer.clientHeight / sourceHeight
+    const width = (bubble.bbox.x1 - bubble.bbox.x0) * scaleX
+    const height = (bubble.bbox.y1 - bubble.bbox.y0) * scaleY
+    if (width < 8 || height < 8) return
+    const pad = Math.max(3, Math.min(10, height * 0.16))
+
+    if (CFG.mode === 'below') {
+      drawPlain(layer, bubble, text, scaleX, scaleY, width, height, pad)
+      return
+    }
+
+    const work = plateFor(canvas, bubble)
+    if (!work) return
+    if (!work.region) {
+      drawPlain(layer, bubble, text, scaleX, scaleY, width, height, pad)
+      return
+    }
+
+    const rect = inscribedRect(work.region)
+    const lineHeight = (bubble.bbox.y1 - bubble.bbox.y0) / Math.max(1, bubble.count || 1)
+    let size = Math.min(24, Math.max(11, lineHeight * 0.95))
+    let overflow = 0
+    let fits = false
+    while (size >= 10) {
+      const probe = document.createElement('canvas')
+      probe.width = work.plate.width
+      probe.height = work.plate.height
+      paintText(probe, text, rect, size, '#111', CFG.font)
+      overflow = overflowPixels(probe, work.region)
+      if (!overflow) {
+        fits = true
+        break
+      }
+      size -= 1
+    }
+    if (!fits) {
+      paintText(work.plate, text, rect, 10, '#111', CFG.font)
+      size = 10
+    } else {
+      paintText(work.plate, text, rect, size, '#111', CFG.font)
+    }
+
+    const node = work.plate
+    node.className = 'vt-bubble'
+    node.title = bubble.text
+    node.setAttribute('role', 'img')
+    node.setAttribute('aria-label', text)
+    node.style.left = `${work.sx * scaleX}px`
+    node.style.top = `${work.sy * scaleY}px`
+    node.style.width = `${work.sw * scaleX}px`
+    node.style.height = `${work.sh * scaleY}px`
     layer.appendChild(node)
 
-    // La plaque garde la largeur de la bulle : c'est le corps du texte qui
-    // rétrécit pour tenir dedans. Si le français ne tient pas même petit, on
-    // l'élargit, borné à 1,6 fois la bulle pour ne pas mordre sur le dessin.
-    // Une cartouche d'une ligne n'a pas la place de respirer si on lui impose la
-    // hauteur de son texte : on lui laisse jusqu'à 2,4 fois sa boîte, borné par
-    // le bas de la planche.
-    const maxHeight = Math.max(
-      height + pad * 2,
-      Math.min(layer.clientHeight - Math.max(2, top) - 8, height * 2.4)
-    )
-    const lineHeight = height / Math.max(1, bubble.count || 1)
-    fitText(node, lineHeight, maxHeight)
-    if (node.getBoundingClientRect().height > maxHeight) {
-      node.style.width = `${Math.min(roomWidth, baseWidth * 1.6)}px`
-      fitText(node, lineHeight, maxHeight)
-    }
-
-    if (!below) {
-      // Recentrage sur la bulle d'origine, une fois la largeur connue.
-      const rect = node.getBoundingClientRect()
-      const center = x0 + width / 2
-      const left = Math.max(2, Math.min(center - rect.width / 2, layer.clientWidth - rect.width - 2))
-      node.style.left = `${left}px`
-    }
+    report().push({
+      texte: text.slice(0, 60),
+      plaque: { w: work.plate.width, h: work.plate.height },
+      taille: size,
+      fits,
+      overflow,
+      region: work.region.area,
+      rect: { w: Math.round(rect.w), h: Math.round(rect.h) }
+    })
   }
 
   function clearOverlays() {
     document.querySelectorAll('.vt-layer').forEach((layer) => layer.remove())
+    window.__vtReport = []
     done = new WeakMap()
     setStatus('calques effacés')
   }
@@ -664,6 +994,7 @@
   }
 
   function translatePage() {
+    window.__vtReport = []
     const panels = findPanels()
     if (!panels.length) {
       setStatus('aucune planche détectée')
@@ -721,6 +1052,8 @@
       <input id="vt-source" type="text" spellcheck="false" placeholder="eng, ita, spa, fra, jpn…">
       <label class="vt-check"><input id="vt-auto" type="checkbox"> Traduire au fil du chargement</label>
       <label class="vt-check"><input id="vt-deep" type="checkbox"> Relire les zones sans texte</label>
+      <label for="vt-context">Contexte (genre, personnages, registre)</label>
+      <input id="vt-context" type="text" spellcheck="false" placeholder="polar, deux frères, tutoiement">
       <div class="vt-row">
         <button type="button" class="vt-primary" id="vt-run">Traduire</button>
         <button type="button" id="vt-clear">Effacer</button>
@@ -736,6 +1069,7 @@
     const source = panel.querySelector('#vt-source')
     const auto = panel.querySelector('#vt-auto')
     const deep = panel.querySelector('#vt-deep')
+    const contextField = panel.querySelector('#vt-context')
     statusEl = panel.querySelector('#vt-status')
 
     // Dans Vela, le fournisseur et la clé vivent dans Réglages › Modèles.
@@ -754,6 +1088,7 @@
     source.value = CFG.source
     auto.checked = CFG.auto
     deep.checked = CFG.deep
+    contextField.value = CFG.contexte || ''
 
     const sync = () => {
       CFG.provider = provider.value
@@ -762,6 +1097,7 @@
       CFG.source = source.value.trim() || 'eng'
       CFG.auto = auto.checked
       CFG.deep = deep.checked
+      CFG.contexte = contextField.value.trim()
       saveConfig()
       if (CFG.auto) scheduleAuto()
     }
@@ -771,6 +1107,7 @@
     source.addEventListener('change', sync)
     auto.addEventListener('change', sync)
     deep.addEventListener('change', sync)
+    contextField.addEventListener('change', sync)
 
     panel.querySelector('#vt-run').addEventListener('click', () => {
       sync()
