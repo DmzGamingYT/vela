@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8">
+<style>html,body{margin:0;background:#f6f5f2}main{width:900px;margin:0 auto}</style>
+<main><img id="planche" alt="planche" style="display:block;width:900px"></main>
+<script>
+  fetch('panel.png').then((r) => r.blob()).then((blob) => {
+    document.getElementById('planche').src = URL.createObjectURL(blob)
+  })
+</script>
