@@ -32,6 +32,27 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
   const [editError, setEditError] = useState<string | null>(null)
   const [announce, setAnnounce] = useState('')
   const [transfer, setTransfer] = useState<Transfer>(null)
+  // Replié ou déplié, et retenu par espace : la rangée garde la place qu'on lui
+  // donne, sans imposer la même à tous les espaces.
+  const collapsedKey = `vela.pins.collapsed.${spaceId}`
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(collapsedKey) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleCollapsed = (): void => {
+    setCollapsed((previous) => {
+      const next = !previous
+      try {
+        localStorage.setItem(collapsedKey, next ? '1' : '0')
+      } catch {
+        /* stockage indisponible : le choix vaut pour la session */
+      }
+      return next
+    })
+  }
   const focusAfter = useRef<string | null>(null)
 
   const space = view?.spaces.find((item) => item.id === spaceId)
@@ -280,27 +301,34 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
             {shortcuts.length > 0 ? `${shortcuts.length} épinglé${shortcuts.length > 1 ? 's' : ''}` : 'aucun site'}
           </span>
         </h2>
-        {/* Rien à modifier tant qu'aucun site n'est épinglé : la ligne
-            pointillée en dessous est déjà le bouton d'ajout. */}
-        {shortcuts.length > 0 && (
+        <div className="home-pins-actions">
+          {/* Rien à modifier tant qu'aucun site n'est épinglé : la tuile
+              pointillée en fin de rangée est déjà le bouton d'ajout. */}
+          {shortcuts.length > 0 && (
+            <button
+              type="button"
+              className="home-card-action"
+              onClick={() => openSpaceDialog(space.id)}
+              title="Choisir les sites de cet espace"
+            >
+              <span>Modifier</span>
+              <Icon name="arrow-right" size={12} />
+            </button>
+          )}
           <button
             type="button"
-            className="home-card-action"
-            onClick={() => openSpaceDialog(space.id)}
-            title="Choisir les sites de cet espace"
+            className="pins-toggle"
+            data-collapsed={collapsed ? 'true' : undefined}
+            aria-expanded={!collapsed}
+            onClick={toggleCollapsed}
+            title={collapsed ? 'Déplier les sites épinglés' : 'Replier les sites épinglés'}
           >
-            <span>Modifier</span>
-            <Icon name="arrow-right" size={12} />
+            <Icon name="forward" size={13} />
           </button>
-        )}
+        </div>
       </div>
 
-      {shortcuts.length === 0 ? (
-        <button type="button" className="pins-empty" onClick={() => openSpaceDialog(space.id)}>
-          <Icon name="plus" size={13} />
-          Épingler des sites pour cet espace — ou glissez une adresse ici
-        </button>
-      ) : (
+      {!collapsed && (
         <div className="pin-grid" role="list" aria-label={`Sites épinglés · ${space.name} — Alt + flèches pour réordonner`}>
           {shortcuts.map((shortcut) => {
             const isEditingTitle = editing?.id === shortcut.id && editing.field === 'title'
@@ -312,6 +340,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                 draggable={!editing}
                 data-shortcut-id={shortcut.id}
                 data-drag={dragging === shortcut.id ? 'true' : undefined}
+                data-editing={editing?.id === shortcut.id ? 'true' : undefined}
                 onDragStart={(event) => {
                   draggingRef.current = shortcut.id
                   setDragging(shortcut.id)
@@ -391,7 +420,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                     title={`${shortcut.title} — ${hostOf(shortcut.url)}`}
                   >
                     <span className="pin-icon">
-                      <Favicon url={shortcut.url} label={shortcut.title} size={20} spaceId={space.id} />
+                      <Favicon url={shortcut.url} label={shortcut.title} size={30} spaceId={space.id} />
                     </span>
                     <span className="pin-copy">
                       <strong>{shortcut.title}</strong>
@@ -417,6 +446,17 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
               </div>
             )
           })}
+          {shortcuts.length < MAX_SHORTCUTS && (
+            <button
+              type="button"
+              className="pin-add"
+              onClick={() => openSpaceDialog(space.id)}
+              title="Épingler un site dans cet espace — ou glissez une adresse ici"
+            >
+              <Icon name="plus" size={18} />
+              <span className="sr-only">Épingler un site dans cet espace</span>
+            </button>
+          )}
         </div>
       )}
 
