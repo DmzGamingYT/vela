@@ -1,7 +1,7 @@
 # Vela 0.3.19 — notes de version
 
-Publiée par le workflow `release.yml` au moment du push : la 0.3.18 existe déjà,
-donc cette version déclenche un build et une release neuve.
+**Publiée le 2 novembre 2026** : le workflow `release.yml` a construit les trois plateformes
+après le push, et la release `v0.3.19` est en ligne.
 
 ## Ce qui change
 
@@ -23,7 +23,7 @@ donc cette version déclenche un build et une release neuve.
 | `npm run build` | 0 |
 | Captures | accueil recapturé, rangée vide = une seule tuile pointillée |
 
-## Après publication
+## Après publication (fait)
 
-Reporter les empreintes SHA-256 de la release dans `site/public/index.html` et
-`site/public/site.js`, passer le site en 0.3.19, puis commit.
+Le site est passé en 0.3.19 avec les empreintes SHA-256 lues sur la release, et la
+page Nouveautés reçoit son entrée.
