@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent
+} from 'react'
 import { canonicalUrl, hostOf, isHomeUrl, readableTitle, SEARCH_ENGINES } from '@shared/url'
 import { DRAGON_THEME, resolveThemeId } from '@shared/theme'
 import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
@@ -10,6 +14,7 @@ import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
 import SpaceShortcuts from './SpaceShortcuts'
 import TasksCard from './TasksCard'
+import TileMenu, { type TileMenuItem } from './TileMenu'
 import WatchlistCard from './WatchlistCard'
 import QuickNotesCard from './QuickNotesCard'
 
@@ -48,6 +53,32 @@ function readBentoModules(): BentoModules {
   }
 }
 
+/**
+ * Un titre de tuile lisible. Quand l'historique n'a pas de titre, il ne reste
+ * que l'URL : on en tire un libellé plutôt que d'afficher « watch?v=…&t=17s ».
+ */
+function tileLabel(raw: string | null | undefined, url: string, host: string): string {
+  const title = readableTitle(raw, url)
+  const hasTitle = Boolean(raw && raw.trim()) && title !== host
+  if (hasTitle) return title
+  try {
+    const parsed = new URL(url)
+    const segments = parsed.pathname.split('/').filter(Boolean)
+    if (/youtube\.com$/i.test(parsed.hostname) && (segments[0] === 'watch' || parsed.searchParams.has('v'))) {
+      return 'Vidéo YouTube'
+    }
+    const last = segments[segments.length - 1] ?? ''
+    const clean = decodeURIComponent(last)
+      .replace(/\.(html?|php|aspx?)$/i, '')
+      .replace(/[-_]+/g, ' ')
+      .trim()
+    if (clean.length > 1) return clean.slice(0, 70)
+  } catch {
+    /* URL illisible : on garde l'hôte */
+  }
+  return host
+}
+
 interface Tile {
   id: string
   url: string
@@ -61,12 +92,16 @@ interface Tile {
 export default function StartPage({ tabId }: { tabId: string }) {
   const view = useBrowser((state) => state.view)
   const navigate = useBrowser((state) => state.navigate)
-  const focusAddress = useBrowser((state) => state.focusAddress)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const openAgent = useBrowser((state) => state.openAgent)
+  const focusAddress = useBrowser((state) => state.focusAddress)
+  const newTab = useBrowser((state) => state.newTab)
+  const openSplit = useBrowser((state) => state.openSplit)
+  const toast = useBrowser((state) => state.toast)
   const updateSettings = useBrowser((state) => state.updateSettings)
   const [modules, setModules] = useState<BentoModules>(readBentoModules)
   const [customizing, setCustomizing] = useState(false)
+  const [menu, setMenu] = useState<{ tile: Tile; x: number; y: number } | null>(null)
 
   const toggleModule = (key: keyof BentoModules): void => {
     setModules((prev) => {
@@ -159,16 +194,22 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // « article/une-page » et « article/une-page?ref=home » ne font qu'une.
   const tiles: Tile[] = []
   const seen = new Set<string>()
+  // Deux tuiles par domaine au plus : une grille d'accueil ne doit pas être
+  // trois fois la même chaîne YouTube.
+  const perHost = new Map<string, number>()
   for (const entry of view.history) {
     if (!/^https?:/i.test(entry.url)) continue
     const key = canonicalUrl(entry.url)
     if (seen.has(key)) continue
+    const host = hostOf(entry.url)
+    if ((perHost.get(host) ?? 0) >= 2) continue
     seen.add(key)
+    perHost.set(host, (perHost.get(host) ?? 0) + 1)
     tiles.push({
       id: entry.id,
       url: entry.url,
-      title: readableTitle(entry.title, entry.url),
-      host: hostOf(entry.url),
+      title: tileLabel(entry.title, entry.url, host),
+      host,
       favicon: entry.favicon,
       meta: timeAgo(entry.visitedAt),
       kind: 'history'
@@ -327,6 +368,38 @@ export default function StartPage({ tabId }: { tabId: string }) {
     })
   }
 
+  // Un clic ouvre ici, ⌘-clic ailleurs, ⌥-clic à côté : la tuile propose les
+  // trois gestes que le reste de l'application connaît déjà.
+  const openTile = (event: ReactMouseEvent<HTMLButtonElement>, tile: Tile): void => {
+    if (event.metaKey || event.ctrlKey) {
+      event.preventDefault()
+      newTab(tile.url)
+      return
+    }
+    if (event.altKey) {
+      event.preventDefault()
+      openSplit(tile.url)
+      return
+    }
+    navigate(tabId, tile.url)
+  }
+
+  const tileMenuItems = (tile: Tile): TileMenuItem[] => [
+    { id: 'new-tab', label: 'Ouvrir dans un nouvel onglet', icon: 'external', onSelect: () => newTab(tile.url) },
+    { id: 'split', label: 'Ouvrir en vue scindée', icon: 'split', onSelect: () => openSplit(tile.url) },
+    {
+      id: 'copy',
+      label: 'Copier l’adresse',
+      icon: 'copy',
+      onSelect: () => {
+        void navigator.clipboard.writeText(tile.url).then(
+          () => toast('Adresse copiée.'),
+          () => toast('Copie impossible.', 'error')
+        )
+      }
+    }
+  ]
+
   const tileStyle = (tile: Tile): CSSProperties =>
     ({ '--tile-tint': tintFor(tile.host || tile.title) }) as CSSProperties
 
@@ -356,17 +429,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
                 <span className="eyebrow-dot" />
                 {view.brief.dateLabel}
               </p>
-              <button
-                type="button"
-                className="home-customize-btn"
-                data-active={customizing}
-                onClick={() => setCustomizing((c) => !c)}
-                title="Personnaliser les modules de l’accueil"
-                aria-expanded={customizing}
-              >
-                <Icon name="settings" size={13} />
-                <span>{customizing ? 'Terminer' : 'Personnaliser'}</span>
-              </button>
             </div>
             <h1 className="home-title" aria-label={greeting()}>
               {greeting()
@@ -461,36 +523,55 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </section>
         )}
 
-        {/* Un seul champ de saisie dans toute la fenêtre : celui de la barre
-            d'adresse. L'accueil n'en affiche pas un second, il y conduit. */}
+        {/* Le champ ne porte qu'un bouton, l'envoi. Les deux raccourcis vivent
+            sur la ligne du moteur, sous le champ : une seule rangée d'actions
+            de même poids, au lieu de trois contrôles collés au bord droit. */}
         <section className="home-search" aria-label="Recherche" hidden={cityEditing}>
-          <button
-            type="button"
-            className="home-field home-field-button"
-            title="Saisir dans la barre d’adresse"
-            aria-label={`Chercher, saisir une adresse ou demander à l’agent — ${shortcut('L')}`}
-            onClick={() => focusAddress()}
-          >
-            <span className="home-field-icon">
-              <Icon name="search" size={16} />
-            </span>
-            <span className="home-field-text">Chercher, saisir une adresse ou demander à l’agent</span>
-            <kbd>{shortcut('L')}</kbd>
-            <span className="home-go" aria-hidden="true">
-              <Icon name="arrow-right" size={15} />
-            </span>
-          </button>
+          <div className="home-field">
+            <button
+              type="button"
+              className="home-field-button home-field-open"
+              title="Saisir dans la barre d’adresse"
+              aria-label={`Chercher, saisir une adresse ou demander à l’agent — ${shortcut('L')}`}
+              onClick={() => focusAddress()}
+            >
+              <span className="home-field-icon">
+                <Icon name="search" size={16} />
+              </span>
+              <span className="home-field-text">Chercher, saisir une adresse ou demander à l’agent</span>
+            </button>
 
-          <div className="home-chips">
-            <button type="button" className="home-chip" onClick={() => setOverlay('command')}>
+            <button
+              type="button"
+              className="home-go"
+              onClick={() => focusAddress()}
+              aria-label={`Saisir dans la barre d’adresse — ${shortcut('L')}`}
+              title={`Saisir dans la barre d’adresse (${shortcut('L')})`}
+            >
+              <Icon name="arrow-right" size={15} />
+            </button>
+          </div>
+
+          <div className="home-chips home-chips-meta">
+            <span className="home-engine">via {engine}</span>
+            <button
+              type="button"
+              className="home-chip home-chip-flat"
+              onClick={() => setOverlay('command')}
+              title={`Palette (${shortcut('K')})`}
+            >
               <Icon name="command" size={12} />
               Palette
             </button>
-            <button type="button" className="home-chip" onClick={() => openAgent()}>
+            <button
+              type="button"
+              className="home-chip home-chip-flat"
+              onClick={() => openAgent()}
+              title="Demander à l’agent"
+            >
               <Icon name="sparkles" size={12} />
               Agent
             </button>
-            <span className="home-engine">via {engine}</span>
           </div>
         </section>
 
@@ -525,7 +606,22 @@ export default function StartPage({ tabId }: { tabId: string }) {
                     data-kind={tile.kind}
                     data-thumb={thumbs[tile.url] ? 'true' : undefined}
                     style={tileStyle(tile)}
-                    onClick={() => navigate(tabId, tile.url)}
+                    onClick={(event) => openTile(event, tile)}
+                    onAuxClick={(event) => {
+                      if (event.button !== 1) return
+                      event.preventDefault()
+                      newTab(tile.url)
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault()
+                      setMenu({ tile, x: event.clientX, y: event.clientY })
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
+                      event.preventDefault()
+                      const rect = event.currentTarget.getBoundingClientRect()
+                      setMenu({ tile, x: rect.left, y: rect.bottom })
+                    }}
                     title={tile.title}
                   >
                     {thumbs[tile.url] && (
@@ -568,13 +664,29 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <Icon name="shield" size={12} />
             Aucune télémétrie. Vos recherches ne partent que vers le moteur choisi.
           </span>
-          <span className="home-foot-key">
-            <Icon name="command" size={12} />
-            <kbd>{shortcut('K')}</kbd>
-            palette
-          </span>
+          <button
+            type="button"
+            className="home-customize-btn home-foot-customize"
+            data-active={customizing}
+            onClick={() => setCustomizing((c) => !c)}
+            title="Personnaliser les modules de l’accueil"
+            aria-expanded={customizing}
+          >
+            <Icon name="settings" size={12} />
+            <span>{customizing ? 'Terminer' : 'Personnaliser'}</span>
+          </button>
         </footer>
       </div>
+
+      {menu && (
+        <TileMenu
+          x={menu.x}
+          y={menu.y}
+          label={menu.tile.title}
+          items={tileMenuItems(menu.tile)}
+          onClose={() => setMenu(null)}
+        />
+      )}
     </div>
   )
 }

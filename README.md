@@ -357,7 +357,7 @@ existant se rouvre par double-clic sur sa pastille.
 
 Les sites épinglés vivent dans l’espace, pas dans un profil global : la barre de l’accueil ne montre que
 ceux de l’espace affiché, et changer d’espace change la barre. Les adresses sont validées (http et
-https seulement, doublons retirés, 24 sites au maximum), le favicon est demandé directement au site
+https seulement, doublons retirés, 200 sites au maximum), le favicon est demandé directement au site
 épinglé, et rien n’est envoyé ailleurs. Sur l’accueil, une carte s’ouvre dans un nouvel onglet, se
 réordonne ou se retire sans passer par la fenêtre d’espace ; glisser une adresse sur la barre l’y
 ajoute. Le nom saisi (« Études 2026 ») propose les sites du type correspondant, sans rien imposer.

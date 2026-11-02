@@ -25,6 +25,20 @@ export default function SpaceRail() {
     <aside className="rail" aria-label="Espaces">
       <div className="rail-drag drag" />
 
+      {/* Le repli commande le rail lui-même : il vit en haut, pas dans la
+          pile des outils. */}
+      <div className="rail-head">
+        <button
+          type="button"
+          className="rail-ghost"
+          aria-expanded={!view.settings.sidebarCollapsed}
+          onClick={() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })}
+          title={`${view.settings.sidebarCollapsed ? 'Afficher' : 'Replier'} la barre latérale (${shortcut('S')})`}
+        >
+          <Icon name="panel" size={17} />
+        </button>
+      </div>
+
       <div className="rail-modes" role="tablist" aria-label="Mode">
         <button
           type="button"
@@ -47,7 +61,7 @@ export default function SpaceRail() {
           onClick={() => setWorkMode('work')}
           title={`Atelier (${shortcut('⇧A')})`}
         >
-          <Icon name="sparkles" size={17} />
+          <Icon name="monitor" size={17} />
           <span className="sr-only">Atelier</span>
         </button>
       </div>
@@ -101,14 +115,7 @@ export default function SpaceRail() {
         >
           <Icon name="sparkles" size={18} />
         </button>
-        <button
-          type="button"
-          className="rail-ghost"
-          onClick={() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })}
-          title={`Replier la barre latérale (${shortcut('S')})`}
-        >
-          <Icon name="panel" size={18} />
-        </button>
+        <span className="rail-divider" aria-hidden="true" />
         <button
           type="button"
           className="rail-ghost"

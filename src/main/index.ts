@@ -224,7 +224,9 @@ function installStatusItem(): void {
       { label: 'Quitter Vela', accelerator: 'Cmd+Q', click: () => app.quit() }
     ])
   )
-  console.log('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela')
+  if (!app.isPackaged) {
+    console.log('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela')
+  }
 }
 
 function main(): void {

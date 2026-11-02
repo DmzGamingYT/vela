@@ -1825,8 +1825,7 @@
   color: var(--faint);
 }
 
-.home-foot-note,
-.home-foot-key {
+.home-foot-note {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1896,4 +1895,3 @@
 .start[data-calm='true'] .recent-tile {
   transform: none;
 }
-

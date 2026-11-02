@@ -29,27 +29,27 @@ export default function TasksCard() {
     <section className="home-card home-tasks" aria-label="Tâches du jour">
       <div className="home-card-head">
         <h2>Tâches du jour</h2>
-        <span className="tasks-score" aria-hidden="true">
-          {done.length}/{total}
-        </span>
+        {total > 0 && (
+          <span className="tasks-score" aria-hidden="true">
+            {done.length}/{total}
+          </span>
+        )}
       </div>
 
-      <div className="tasks-progress">
-        <span
-          className="tasks-bar"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-          aria-label={`${done.length} tâche${done.length > 1 ? 's' : ''} sur ${total}`}
-        >
-          <span style={{ width: `${percent}%` }} data-empty={total === 0 ? 'true' : undefined} />
-        </span>
-        <span className="tasks-pct">{percent} %</span>
-      </div>
-
-      {total === 0 && (
-        <p className="tasks-hint">Rien pour l’instant. La première étape du jour suffit pour commencer.</p>
+      {total > 0 && (
+        <div className="tasks-progress">
+          <span
+            className="tasks-bar"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label={`${done.length} tâche${done.length > 1 ? 's' : ''} sur ${total}`}
+          >
+            <span style={{ width: `${percent}%` }} />
+          </span>
+          <span className="tasks-pct">{percent} %</span>
+        </div>
       )}
 
       <ul className="tasks-list">

@@ -15,6 +15,8 @@ interface EnginePickerProps {
   label?: string
   /** Variante compacte des réglages : logo et libellé sur une ligne. */
   compact?: boolean
+  /** « list » : deux colonnes de lignes courtes, plus rapides à parcourir. */
+  variant?: 'tiles' | 'list'
 }
 
 const IDS = Object.keys(SEARCH_ENGINES) as SearchEngineId[]
@@ -31,10 +33,11 @@ export default function EnginePicker({
   onChange,
   labelledBy,
   label,
-  compact = false
+  compact = false,
+  variant = 'tiles'
 }: EnginePickerProps) {
   const refs = useRef(new Map<SearchEngineId, HTMLButtonElement | null>())
-  const columns = compact ? 4 : 3
+  const columns = variant === 'list' ? 2 : compact ? 4 : 3
   const current = IDS.includes(value) ? IDS.indexOf(value) : 0
 
   const key = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
@@ -62,6 +65,7 @@ export default function EnginePicker({
       aria-labelledby={labelledBy}
       aria-label={label}
       data-compact={compact}
+      data-variant={variant}
     >
       {IDS.map((id, index) => {
         const active = current === index

@@ -40,6 +40,22 @@
   height: 32px;
 }
 
+/* Le repli de la barre latérale, en haut du rail, juste sous la poignée. */
+.rail-head {
+  display: grid;
+  place-items: center;
+  padding: 2px 0 4px;
+}
+
+/* Un filet sépare les outils de travail des réglages de l'application. */
+.rail-divider {
+  display: block;
+  width: 20px;
+  height: 1px;
+  margin: 5px auto;
+  background: var(--line);
+}
+
 /* --- Panneau agent ancré ------------------------------------------- */
 
 .agent-dock {
@@ -413,6 +429,556 @@ html[data-mode="dark"] {
   line-height: 1.4;
 }
 
+/* --- Onboarding : progression, aperçu vivant, écran « rien ne sort » --- */
+
+.onboarding-sheet {
+  position: relative;
+  /* Feuillet opaque : posé sur le voile flouté, le verre translucide délavait
+     le texte de l'étape. L'identité vient de la teinte, pas de la transparence. */
+  background: var(--paper);
+  grid-template-columns: 316px minmax(0, 1fr);
+}
+
+.onboarding-next:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--space-accent) 70%, var(--ink));
+  outline-offset: 2px;
+}
+
+/* Le plancher de largeur doit gagner sur la colonne fixe, pas l'inverse. */
+@media (max-width: 900px) {
+  .onboarding-sheet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* La barre de progression de Dia : fine, continue, jamais un compteur. */
+.onboarding-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  z-index: 2;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.onboarding-progress i {
+  display: block;
+  width: var(--progress, 20%);
+  height: 100%;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--space-accent) 60%, var(--ink)), var(--space-accent));
+  transition: width var(--dur-3) var(--ease-standard);
+}
+
+.onboarding-stage {
+  padding: 22px;
+}
+
+/* Étapes : une frise verticale qui sert de repère et de navigation. */
+.onboarding-steps {
+  justify-content: center;
+  gap: 0;
+  padding: 30px 20px;
+}
+
+.step-list {
+  position: relative;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Le fil court derrière les pastilles, du premier au dernier. */
+.step-list::before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 22px;
+  bottom: 22px;
+  width: 1px;
+  background: var(--line);
+}
+
+.step-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 12px;
+  text-align: left;
+  transition: background var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+
+.step-item:hover {
+  background: color-mix(in srgb, var(--space-accent) 8%, transparent);
+}
+
+.step-item[data-active="true"] {
+  background: color-mix(in srgb, var(--space-accent) 12%, var(--paper));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--space-accent) 22%, transparent),
+    0 10px 24px -18px rgba(0, 0, 0, 0.45);
+}
+
+.step-marker {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-family: var(--serif);
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  transition: background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+}
+
+.step-item[data-active="true"] .step-marker {
+  color: #fff;
+  border-color: transparent;
+  background: var(--space-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--space-accent) 16%, transparent);
+}
+
+.step-item[data-done="true"] .step-marker {
+  color: var(--sage);
+  border-color: color-mix(in srgb, var(--sage) 40%, transparent);
+  background: color-mix(in srgb, var(--sage) 12%, var(--paper));
+}
+
+.step-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.step-kicker {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.step-title {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.step-item[data-active="true"] .step-title {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+/* Variante « liste » du choix du moteur : deux colonnes de lignes courtes,
+   comme les réglages de Dia — huit moteurs se lisent d'un coup d'œil. */
+.engine-grid[data-variant="list"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.engine-grid[data-variant="list"] .engine-tile {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+}
+
+.engine-grid[data-variant="list"] .engine-tile:hover {
+  transform: none;
+}
+
+.engine-grid[data-variant="list"] .engine-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+}
+
+.engine-grid[data-variant="list"] .engine-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.engine-grid[data-variant="list"] .engine-check {
+  position: static;
+  margin-left: auto;
+  flex: none;
+}
+
+/* Le contenu garde le haut : la ligne de lecture reste la même d'une étape à
+   l'autre, et le vide tombe sous le dernier contrôle. */
+.onboarding-body {
+  align-content: start;
+  padding-top: 2px;
+  animation: onboarding-step-in var(--dur-3) var(--ease-standard);
+}
+
+@keyframes onboarding-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.onboarding-main {
+  border-left: 1px solid var(--line-soft);
+}
+
+/* Les pastilles de la frise disent déjà où l'on en est. */
+@media (min-width: 901px) {
+  .onboarding-dots {
+    display: none;
+  }
+}
+
+/* Une seule action principale, large : c'est le geste de l'écran. */
+.onboarding-next {
+  flex: 1;
+  height: 44px;
+}
+
+/* Les actions d'étape restent secondaires : jamais deux boutons noirs. */
+.onboarding-cta {
+  justify-self: start;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  color: var(--ink);
+  font-size: 12.5px;
+}
+
+.onboarding-cta:hover:not(:disabled) {
+  background: var(--fill-2);
+}
+
+.essentials-tile {
+  transition: transform var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+
+.essentials-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--hairline-strong);
+}
+
+.essentials-tile[data-active="true"] {
+  border-color: color-mix(in srgb, var(--space-accent) 32%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--space-accent) 14%, transparent);
+}
+
+/* Marques des sites : tracés embarqués, donc présents même hors ligne. */
+.site-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent);
+}
+
+:root[data-mode="dark"] .site-mark {
+  color: var(--brand-dark, var(--brand));
+  background: color-mix(in srgb, var(--brand-dark, var(--brand)) 14%, transparent);
+  border-color: color-mix(in srgb, var(--brand-dark, var(--brand)) 26%, transparent);
+}
+
+.site-mark[data-fallback="true"] {
+  background: var(--fill-2);
+  border-color: var(--edge);
+}
+
+.site-mark[data-fallback="true"] .favicon {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.site-mark svg {
+  display: block;
+}
+
+/* Teinte : les pastilles d'abord, la conséquence juste en dessous. */
+.theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: min-content;
+  align-items: start;
+  gap: 12px 6px;
+}
+
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 2px 2px;
+  border-radius: 12px;
+}
+
+.theme-swatch-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--swatch);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 18px -10px var(--swatch);
+  transition: transform var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+
+.theme-swatch:hover .theme-swatch-dot {
+  transform: translateY(-1px) scale(1.05);
+}
+
+.theme-swatch[data-active="true"] .theme-swatch-dot {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--swatch), 0 10px 20px -10px var(--swatch);
+}
+
+.theme-swatch-name {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.theme-swatch[data-active="true"] .theme-swatch-name {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.theme-preview {
+  display: flex;
+  flex: none;
+  min-height: 96px;
+  border-radius: 14px;
+  border: 1px solid var(--edge);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--swatch) 5%, var(--paper));
+}
+
+.theme-preview-rail {
+  width: 44px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 0;
+  border-right: 1px solid var(--edge);
+  background: color-mix(in srgb, var(--swatch) 14%, var(--paper));
+}
+
+.theme-preview-rail i {
+  width: 14px;
+  height: 14px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--swatch) 35%, transparent);
+}
+
+.theme-preview-rail i[data-on="true"] {
+  background: var(--swatch);
+}
+
+.theme-preview-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 14px;
+}
+
+.theme-preview-kicker {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.theme-preview-line {
+  width: 78%;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--swatch) 20%, transparent);
+}
+
+.theme-preview-line.is-short {
+  width: 46%;
+}
+
+.theme-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.theme-preview-btn {
+  padding: 4px 11px;
+  border-radius: 7px;
+  background: var(--swatch);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.theme-preview-ghost {
+  font-size: 10px;
+  color: var(--swatch);
+}
+
+.onboarding-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.onboarding-note svg {
+  flex: none;
+  color: var(--sage);
+}
+
+.onboarding-local {
+  display: grid;
+  gap: 8px;
+}
+
+.local-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 13px;
+  border: 1px solid var(--edge);
+  background: var(--fill);
+}
+
+.local-row-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--sage);
+}
+
+.local-row strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.local-row small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.onboarding-flows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.onboarding-flow {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--edge);
+  background: var(--fill);
+  font-size: 10.5px;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onboarding-flow b {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.onboarding-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.onboarding-keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.onboarding-keys kbd {
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 10.5px;
+  color: var(--ink);
+}
+
+.onboarding-model-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 11.5px;
+  color: var(--clay);
+}
+
+.onboarding-model-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.onboarding-next kbd {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+
 /* Zones de clic des petites icônes : 26 px minimum, jamais 20. */
 .sidebar .tab-action {
   width: 24px;
@@ -645,3 +1211,95 @@ html[data-mode="dark"] {
   background: rgba(255, 255, 255, 0.12);
 }
 
+
+/* Densité de la barre latérale, alignée sur Dia : moins de largeur et des
+   lignes plus courtes, à contenu égal. */
+.sidebar {
+  width: 244px;
+  flex: 0 0 244px;
+}
+
+.sidebar .tab-row {
+  min-height: 34px;
+  padding: 5px 8px;
+  gap: 8px;
+}
+
+.sidebar .tab-title {
+  font-size: 11.5px;
+}
+
+/* Champ d'accueil compact : un seul geste, ses raccourcis à l'intérieur. */
+/* Le champ court d'un bord à l'autre des cartes : plus de décroché entre un
+   champ de 708 px et une grille de 1 020. */
+.home-search {
+  max-width: none;
+}
+
+.home-field {
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.home-field-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Les raccourcis vivent sur la ligne du moteur, sous le champ. */
+.home-chips-meta {
+  align-items: center;
+  gap: 6px;
+  padding-left: 2px;
+}
+
+.home-chips-meta .home-engine {
+  margin-right: 5px;
+}
+
+.home-chip-flat {
+  padding: 3px 7px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.home-chip-flat:hover {
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+.home-foot-customize {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.home-go {
+  flex: 0 0 34px;
+  border: 0;
+  cursor: pointer;
+}
+
+/* --- Plancher typographique et cibles de l'accueil ------------------- */
+/* Aucun texte porteur d'information sous 11 px, aucune cible sous 28 px.
+   Les étiquettes purement décoratives gardent leur taille. */
+.home .tile-host,
+.home .tile-badge,
+.home .home-engine,
+.home .home-hint,
+.home .home-foot,
+.home .home-card-head h2,
+.home .pin-count {
+  font-size: 11px;
+}
+
+.home .home-card-action,
+.home .home-chip {
+  min-height: 28px;
+}

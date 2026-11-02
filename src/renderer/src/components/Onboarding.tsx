@@ -1,43 +1,50 @@
 import { useEffect, useState } from 'react'
-import { THEME_PRESETS } from '@shared/theme'
+import type { CSSProperties } from 'react'
+import { presetById, THEME_PRESETS } from '@shared/theme'
+import { NETWORK_FLOWS } from '@shared/network'
 import { searxBase } from '@shared/url'
 import type { BookmarkImportSource } from '@shared/types'
 import { shortcut } from '../lib/format'
-import { PROVIDERS } from '@shared/providers'
 import { useModalFocus } from '../lib/useModalFocus'
 import { useBrowser } from '../store/browser'
-import { BrandMark, PROVIDER_BRANDS, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
-import { Icon, type IconName } from './Icon'
+import SiteMark, { type SiteBrand } from './SiteMark'
+import { Icon } from './Icon'
 
 interface Step {
   kicker: string
   title: string
   lede: string
-  icon: IconName
 }
 
+/**
+ * Cinq décisions, une par écran : le moteur, le bruit qu'on coupe, les habitués,
+ * la teinte, et ce qui ne sort pas. La colonne de gauche n'est pas une image :
+ * elle liste les étapes et permet d'y revenir.
+ */
 const STEPS: Step[] = [
-  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Vos recherches ne vont qu’au moteur que vous choisissez.', icon: 'search' },
-  { kicker: 'Essentiels', title: 'Vos habitués, en un clic.', lede: 'Épinglés dans l’espace, chargés seulement à l’ouverture.', icon: 'folder' },
-  { kicker: 'Raccourcis', title: 'Tout à une touche.', lede: 'Onglets, notes, agent : sans quitter la page.', icon: 'command' },
-  { kicker: 'Agent', title: 'Déléguez le fastidieux.', lede: 'Il lit les onglets que vous choisissez, vous relisez.', icon: 'sparkles' },
-  { kicker: 'Couleur', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.', icon: 'sun' },
-  { kicker: 'Prêt', title: 'Vous êtes chez vous.', lede: 'Ce qui est déjà en place sur cet appareil.', icon: 'shield' }
+  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Vos recherches ne vont qu’au moteur que vous choisissez.' },
+  { kicker: 'Bruit', title: 'Moins de bruit, tout de suite.', lede: 'Le filtre tourne en local, et vos favoris existants vous suivent.' },
+  { kicker: 'Habitués', title: 'Vos habitués, un clic plus loin.', lede: 'Épinglés dans l’espace, ouverts seulement quand vous cliquez.' },
+  { kicker: 'Teinte', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.' },
+  { kicker: 'Chez vous', title: 'Rien ne sort d’ici.', lede: 'Aucun compte, aucun serveur Vela. Voilà les seules sorties, et comment les couper.' }
 ]
 
-const ESSENTIALS: { name: string; mark: string; tint: string; url: string }[] = [
-  { name: 'GitHub', mark: 'GH', tint: '#24292f', url: 'https://github.com' },
-  { name: 'Notion', mark: 'N', tint: '#111111', url: 'https://www.notion.so' },
-  { name: 'Figma', mark: 'F', tint: '#a259ff', url: 'https://www.figma.com' },
-  { name: 'Linear', mark: 'L', tint: '#5e6ad2', url: 'https://linear.app' },
-  { name: 'YouTube', mark: 'YT', tint: '#ff0033', url: 'https://www.youtube.com' },
-  { name: 'Wikipédia', mark: 'W', tint: '#54595d', url: 'https://fr.wikipedia.org' },
-  { name: 'Le Monde', mark: 'LM', tint: '#1d4ed8', url: 'https://www.lemonde.fr' },
-  { name: 'Hacker News', mark: 'HN', tint: '#ff6600', url: 'https://news.ycombinator.com' }
+const ESSENTIALS: { name: string; url: string; brand?: SiteBrand }[] = [
+  { name: 'GitHub', url: 'https://github.com', brand: 'github' },
+  { name: 'Notion', url: 'https://www.notion.so', brand: 'notion' },
+  { name: 'Figma', url: 'https://www.figma.com', brand: 'figma' },
+  { name: 'Linear', url: 'https://linear.app', brand: 'linear' },
+  { name: 'YouTube', url: 'https://www.youtube.com', brand: 'youtube' },
+  { name: 'Wikipédia', url: 'https://fr.wikipedia.org', brand: 'wikipedia' },
+  { name: 'Le Monde', url: 'https://www.lemonde.fr' },
+  { name: 'Hacker News', url: 'https://news.ycombinator.com', brand: 'hackernews' }
 ]
 
 const DEFAULT_ESSENTIALS = ['https://github.com', 'https://www.notion.so']
+
+/** Les flux que l'écran final montre, avec leur propre mécanisme d'arrêt. */
+const FLOW_IDS = ['moteur-recherche', 'mises-a-jour', 'modeles'] as const
 
 function extractBookmarkEntries(html: string): { title: string; url: string }[] {
   const entries = new Map<string, string>()
@@ -89,13 +96,58 @@ export default function Onboarding() {
     setInstance(searxSetting)
   }, [searxSetting])
 
+  // Le focus part sur l'action principale, pas sur « Passer » : le premier
+  // anneau de focus ne doit pas désigner la sortie.
+  useEffect(() => {
+    sheetRef.current?.querySelector<HTMLButtonElement>('.onboarding-next')?.focus()
+  }, [sheetRef])
+
+  const finish = (): void => {
+    void completeOnboarding()
+  }
+
+  const last = STEPS.length - 1
+
+  // Clavier : Entrée avance (sauf sur un contrôle, qui garde son propre clic),
+  // les flèches naviguent, Échap passe. Un composant qui a déjà traité la
+  // touche (le choix du moteur, par exemple) garde la priorité.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        finish()
+        return
+      }
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target instanceof HTMLElement ? event.target : null
+      const onControl = Boolean(
+        target?.closest('button, a, input, textarea, select, [role="switch"]')
+      )
+      if (event.key === 'Enter') {
+        if (onControl) return
+        event.preventDefault()
+        setStep((current) => Math.min(last, current + 1))
+        return
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setStep((current) => Math.min(last, current + 1))
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setStep((current) => Math.max(0, current - 1))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   if (!view) return null
   const settings = view.settings
   const current = STEPS[step]
-
-  const finish = () => {
-    void completeOnboarding()
-  }
+  const spaceId = view.activeSpaceId
+  const preset = presetById(settings.themeId)
+  const dark = document.documentElement.dataset.mode === 'dark'
+  const accent = preset ? (dark ? preset.dark : preset.light) : settings.customAccent || '#5B5BD6'
 
   const toggleEssential = (url: string): void => {
     setSelected((list) => (list.includes(url) ? list.filter((item) => item !== url) : [...list, url]))
@@ -111,16 +163,42 @@ export default function Onboarding() {
   return (
     <div className="overlay onboarding-overlay" role="dialog" aria-modal="true" aria-label="Bienvenue dans Vela">
       <div ref={sheetRef} className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
-        <aside className="onboarding-stage" aria-hidden="true">
-          <span className="onboarding-glow" />
-          <span className="onboarding-orb">
-            <Icon name={current.icon} size={54} />
-          </span>
-          <span className="onboarding-stage-count">
-            <strong>{String(step + 1).padStart(2, '0')}</strong>
-            <span>/ {String(STEPS.length).padStart(2, '0')}</span>
-          </span>
-          <span className="onboarding-stage-kicker">{current.kicker}</span>
+        <span
+          className="onboarding-progress"
+          aria-hidden="true"
+          style={{ '--progress': `${((step + 1) / STEPS.length) * 100}%` } as CSSProperties}
+        >
+          <i />
+        </span>
+
+        <aside className="onboarding-stage onboarding-steps" aria-label="Étapes">
+          <span className="onboarding-glow" aria-hidden="true" />
+          <ol className="step-list">
+            {STEPS.map((item, index) => {
+              const active = index === step
+              const done = index < step
+              return (
+                <li key={item.kicker}>
+                  <button
+                    type="button"
+                    className="step-item"
+                    data-active={active}
+                    data-done={done}
+                    aria-current={active ? 'step' : undefined}
+                    onClick={() => setStep(index)}
+                  >
+                    <span className="step-marker">
+                      {done ? <Icon name="check" size={12} /> : String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span className="step-labels">
+                      <span className="step-kicker">{item.kicker}</span>
+                      <span className="step-title">{item.title}</span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
         </aside>
 
         <div className="onboarding-main">
@@ -134,13 +212,14 @@ export default function Onboarding() {
             <p className="onboarding-lede">{current.lede}</p>
           </div>
 
-          <div className="onboarding-body">
+          <div className="onboarding-body" key={step}>
             {step === 0 && (
               <>
                 <EnginePicker
                   value={settings.searchEngine}
                   onChange={(id) => void updateSettings({ searchEngine: id })}
                   label="Moteur de recherche"
+                  variant="list"
                 />
 
                 {settings.searchEngine === 'searxng' && (
@@ -164,14 +243,25 @@ export default function Onboarding() {
                   </label>
                 )}
 
+                <p className="onboarding-note">
+                  <Icon name="lock" size={13} />
+                  Une adresse s’ouvre, une question part vers ce moteur. Vela n’ajoute rien au milieu.
+                </p>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
                 <div className="onboarding-row" data-on={settings.blockTrackers}>
                   <span className="onboarding-row-icon"><Icon name="shield" size={22} /></span>
                   <span className="onboarding-row-copy">
                     <strong>Bloqueur local</strong>
                     <small>
-                      {view.blockedTotal > 0
-                        ? `${view.blockedTotal} requête${view.blockedTotal === 1 ? '' : 's'} arrêtée${view.blockedTotal === 1 ? '' : 's'} cette session — en local`
-                        : 'Publicités et traqueurs arrêtés sur cet appareil'}
+                      {!settings.blockTrackers
+                        ? 'Désactivé : la page charge tout ce qu’elle demande.'
+                        : view.blockedTotal > 0
+                          ? `${view.blockedTotal} requête${view.blockedTotal === 1 ? '' : 's'} arrêtée${view.blockedTotal === 1 ? '' : 's'} cette session, en local`
+                          : 'Liste embarquée : publicités et traqueurs arrêtés sur cet appareil'}
                     </small>
                   </span>
                   <button
@@ -237,7 +327,7 @@ export default function Onboarding() {
               </>
             )}
 
-            {step === 1 && (
+            {step === 2 && (
               <>
                 <div className="essentials-grid">
                   {ESSENTIALS.map((app) => {
@@ -251,13 +341,7 @@ export default function Onboarding() {
                         aria-pressed={active}
                         onClick={() => toggleEssential(app.url)}
                       >
-                        <span
-                          className="essentials-mark"
-                          aria-hidden="true"
-                          style={{ background: `${app.tint}22`, color: app.tint }}
-                        >
-                          {app.mark}
-                        </span>
+                        <SiteMark brand={app.brand} url={app.url} label={app.name} size={22} spaceId={spaceId} />
                         <span className="essentials-name">{app.name}</span>
                         <span className="essentials-check">
                           {active && <Icon name="check" size={12} />}
@@ -266,23 +350,9 @@ export default function Onboarding() {
                     )
                   })}
                 </div>
-                <div className="onboarding-preview" aria-hidden="true">
-                  <span className="onboarding-preview-title">Votre barre latérale</span>
-                  <span className="onboarding-preview-pins">
-                    {ESSENTIALS.filter((app) => selected.includes(app.url)).slice(0, 5).map((app) => (
-                      <span key={app.url} className="onboarding-preview-pin">
-                        <span className="essentials-mark" aria-hidden="true" style={{ background: `${app.tint}22`, color: app.tint }}>
-                          {app.mark}
-                        </span>
-                        {app.name}
-                      </span>
-                    ))}
-                    {selected.length === 0 && <span className="setting-hint">Rien de sélectionné.</span>}
-                  </span>
-                </div>
                 <button
                   type="button"
-                  className="action primary onboarding-cta"
+                  className="action onboarding-cta"
                   disabled={selected.length === 0}
                   onClick={() => void pinEssentials(selected)}
                 >
@@ -291,127 +361,112 @@ export default function Onboarding() {
               </>
             )}
 
-            {step === 2 && (
-              <>
-                <div className="shortcut-grid">
-                  {[
-                    [shortcut('K'), 'Lanceur'],
-                    [shortcut('J'), 'Agent'],
-                    [shortcut('E'), 'Notes'],
-                    [shortcut('F'), 'Chercher dans la page']
-                  ].map(([keys, label]) => (
-                    <span key={keys} className="shortcut-tile">
-                      <kbd>{keys}</kbd>
-                      <span>{label}</span>
-                    </span>
-                  ))}
-                </div>
-                <button type="button" className="action primary onboarding-cta" onClick={() => setOverlay('command')}>
-                  <Icon name="search" size={15} />
-                  Essayer le lanceur
-                </button>
-              </>
-            )}
-
             {step === 3 && (
-              <div className="agent-step">
-                <div className="agent-modes">
-                  <button
-                    type="button"
-                    className="agent-mode"
-                    data-active={settings.agent.mode === 'demo'}
-                    onClick={() => void updateSettings({ agent: { mode: 'demo' } })}
-                  >
-                    <span className="agent-mode-icon"><Icon name="sparkles" size={22} /></span>
-                    <span className="agent-mode-top">Démo locale</span>
-                    <span className="agent-mode-detail">Rapport simulé depuis les titres : aucun envoi.</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="agent-mode"
-                    data-active={settings.agent.mode === 'api'}
-                    onClick={() => { void updateSettings({ agent: { mode: 'api' } }); setOverlay('settings') }}
-                  >
-                    <span className="agent-mode-icon"><Icon name="key" size={22} /></span>
-                    <span className="agent-mode-top">Votre clé ou Ollama</span>
-                    <span className="agent-mode-detail">Le texte des onglets joints part alors vers le modèle choisi.</span>
-                  </button>
+              <div className="theme-picker">
+                <div className="theme-swatches" role="radiogroup" aria-label="Thème de couleur">
+                  {THEME_PRESETS.map((item) => {
+                    const active = settings.themeId === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        aria-label={item.label}
+                        className="theme-swatch"
+                        data-active={active}
+                        style={{ '--swatch': item.light } as CSSProperties}
+                        onClick={() => void updateSettings({ themeId: item.id })}
+                      >
+                        <span className="theme-swatch-dot">
+                          {active && <Icon name="check" size={15} />}
+                        </span>
+                        <span className="theme-swatch-name">{item.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {/* Les marques réelles des fournisseurs : on reconnaît sa boîte
-                    avant d’aller chercher une clé dans ses réglages. */}
-                <div className="agent-brands">
-                  <span className="agent-brand-list" aria-hidden="true">
-                    {PROVIDERS.map((provider) => (
-                      <span
-                        key={provider.id}
-                        className="agent-brand"
-                        style={{
-                          color: readableTint(provider.color),
-                          background: `color-mix(in srgb, ${readableTint(provider.color)} 14%, transparent)`,
-                          borderColor: `color-mix(in srgb, ${readableTint(provider.color)} 30%, transparent)`
-                        }}
-                      >
-                        {PROVIDER_BRANDS[provider.id] ? (
-                          <BrandMark brand={PROVIDER_BRANDS[provider.id]} size={16} />
-                        ) : (
-                          <span className="agent-brand-letter">{provider.mark}</span>
-                        )}
-                      </span>
-                    ))}
+                <div className="theme-preview" style={{ '--swatch': accent } as CSSProperties} aria-hidden="true">
+                  <span className="theme-preview-rail">
+                    <i data-on="true" /><i /><i />
                   </span>
-                  <span className="agent-brand-names">
-                    Clés acceptées :{' '}
-                    {PROVIDERS.filter((provider) => !provider.local)
-                      .map((provider) => provider.label)
-                      .join(', ')}
-                    , ou Ollama en local.
+                  <span className="theme-preview-page">
+                    <span className="theme-preview-kicker">
+                      Papier · accent · texte sur accent
+                    </span>
+                    <span className="theme-preview-line" />
+                    <span className="theme-preview-line is-short" />
+                    <span className="theme-preview-actions">
+                      <span className="theme-preview-btn">Bouton</span>
+                      <span className="theme-preview-ghost">Lien discret</span>
+                    </span>
                   </span>
                 </div>
               </div>
             )}
 
             {step === 4 && (
-              <div className="appearance-grid" role="radiogroup" aria-label="Thème de couleur">
-                {THEME_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={settings.themeId === preset.id}
-                    className="appearance-choice"
-                    data-active={settings.themeId === preset.id}
-                    onClick={() => void updateSettings({ themeId: preset.id })}
-                  >
-                    <span
-                      className="appearance-choice-dot"
-                      style={{ background: preset.light }}
-                      aria-hidden="true"
-                    />
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            )}
+              <>
+                <div className="onboarding-local">
+                  <div className="local-row">
+                    <span className="local-row-icon"><Icon name="shield" size={18} /></span>
+                    <span>
+                      <strong>Pas de compte, pas de serveur Vela</strong>
+                      <small>Espaces, onglets, favoris et réglages vivent dans un dossier sur cet appareil.</small>
+                    </span>
+                  </div>
+                  <div className="local-row">
+                    <span className="local-row-icon"><Icon name="notes" size={18} /></span>
+                    <span>
+                      <strong>Notes en fichiers Markdown</strong>
+                      <small>Un dossier à vous, lisible dans le Finder, sans Vela.</small>
+                    </span>
+                  </div>
+                </div>
 
-            {step === 5 && (
-              <div className="ready-grid">
-                <div className="ready-tile">
-                  <Icon name="shield" size={24} />
-                  <strong>{settings.blockTrackers ? 'Bloqueur local activé' : 'Bloqueur désactivé'}</strong>
-                  <small>Publicités et traqueurs arrêtés sur cet appareil.</small>
+                <div className="onboarding-flows">
+                  {FLOW_IDS.map((id) => {
+                    const flow = NETWORK_FLOWS.find((entry) => entry.id === id)
+                    if (!flow) return null
+                    return (
+                      <span key={id} className="onboarding-flow" title={flow.data}>
+                        <b>{flow.label}</b> · {flow.target}
+                      </span>
+                    )
+                  })}
                 </div>
-                <div className="ready-tile">
-                  <Icon name="notes" size={24} />
-                  <strong>Notes en fichiers Markdown</strong>
-                  <small>Un dossier à vous, lisible dans le Finder.</small>
+
+                <p className="onboarding-note">
+                  <Icon name="lock" size={13} />
+                  Le détail, flux par flux, est dans Réglages › Confidentialité.
+                </p>
+
+                <div className="onboarding-keys">
+                  {[
+                    [shortcut('K'), 'Lanceur'],
+                    [shortcut('J'), 'Agent'],
+                    [shortcut('E'), 'Notes'],
+                    [shortcut('F'), 'Chercher']
+                  ].map(([keys, label]) => (
+                    <span key={keys}>
+                      <kbd>{keys}</kbd>
+                      {label}
+                    </span>
+                  ))}
                 </div>
-                <div className="ready-tile">
-                  <Icon name="calendar" size={24} />
-                  <strong>Brief sur cet appareil</strong>
-                  <small>Calculé à partir de vos onglets et de votre historique.</small>
-                </div>
-              </div>
+
+                <button
+                  type="button"
+                  className="onboarding-model-link"
+                  onClick={() => {
+                    void completeOnboarding().then(() => setOverlay('settings'))
+                  }}
+                >
+                  Configurer un modèle pour l’agent
+                  <Icon name="arrow-right" size={14} />
+                </button>
+              </>
             )}
           </div>
 
@@ -422,13 +477,13 @@ export default function Onboarding() {
             <span className="onboarding-dots" aria-hidden="true">
               {STEPS.map((_, i) => <i key={i} data-active={i === step} data-done={i < step} />)}
             </span>
-            {step < STEPS.length - 1 ? (
+            {step < last ? (
               <button type="button" className="action primary onboarding-next" onClick={() => setStep((s) => s + 1)}>
-                Continuer <Icon name="arrow-right" size={15} />
+                Continuer <kbd>↵</kbd>
               </button>
             ) : (
               <button type="button" className="action primary onboarding-next" onClick={finish}>
-                Commencer <Icon name="arrow-right" size={15} />
+                Commencer <kbd>↵</kbd>
               </button>
             )}
           </footer>

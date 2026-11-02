@@ -146,11 +146,7 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="home-hint" style={{ margin: '8px 0 0' }}>
-          Aucune note dans cet espace pour le moment.
-        </p>
-      )}
+      ) : null}
     </section>
   )
 }

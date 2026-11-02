@@ -381,6 +381,30 @@ export function mainParagraphs(html: string): string {
   return paragraphs.slice(0, 3).join(' ').slice(0, 1200)
 }
 
+/**
+ * Lit au plus `limit` octets du corps. `response.text()` chargeait la page
+ * entière avant que le plafond ne s'applique : une réponse de 80 Mo passait.
+ */
+async function readLimited(
+  response: { body: ReadableStream<Uint8Array> | null; text(): Promise<string> },
+  limit: number
+): Promise<string> {
+  const reader = response.body?.getReader()
+  if (!reader) return (await response.text()).slice(0, limit)
+  const decoder = new TextDecoder()
+  let received = 0
+  let text = ''
+  while (received < limit) {
+    const { done, value } = await reader.read()
+    if (done) break
+    received += value.byteLength
+    text += decoder.decode(value, { stream: true })
+  }
+  text += decoder.decode()
+  await reader.cancel().catch(() => undefined)
+  return text.slice(0, limit)
+}
+
 async function snapshotPage(url: string, signal: AbortSignal): Promise<PageSnapshot> {
   try {
     const response = await net.fetch(url, {
@@ -393,7 +417,7 @@ async function snapshotPage(url: string, signal: AbortSignal): Promise<PageSnaps
     if (!/text\/html|application\/xhtml/i.test(type)) {
       return { ok: false, reachable: false }
     }
-    const html = (await response.text()).slice(0, 400_000)
+    const html = await readLimited(response, 400_000)
     const title = firstMatch(html, /<title[^>]*>([\s\S]*?)<\/title>/i)
     // og:description d’abord : c’est le résumé que la page destine au partage,
     // donc du texte rédigé, jamais un bout de script.

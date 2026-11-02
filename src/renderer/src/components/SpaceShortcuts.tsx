@@ -280,15 +280,19 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
             {shortcuts.length > 0 ? `${shortcuts.length} épinglé${shortcuts.length > 1 ? 's' : ''}` : 'aucun site'}
           </span>
         </h2>
-        <button
-          type="button"
-          className="home-card-action"
-          onClick={() => openSpaceDialog(space.id)}
-          title="Choisir les sites de cet espace"
-        >
-          <span>Modifier</span>
-          <Icon name="arrow-right" size={12} />
-        </button>
+        {/* Rien à modifier tant qu'aucun site n'est épinglé : la ligne
+            pointillée en dessous est déjà le bouton d'ajout. */}
+        {shortcuts.length > 0 && (
+          <button
+            type="button"
+            className="home-card-action"
+            onClick={() => openSpaceDialog(space.id)}
+            title="Choisir les sites de cet espace"
+          >
+            <span>Modifier</span>
+            <Icon name="arrow-right" size={12} />
+          </button>
+        )}
       </div>
 
       {shortcuts.length === 0 ? (
