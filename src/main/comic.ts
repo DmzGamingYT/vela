@@ -203,7 +203,29 @@ export class ComicBridge {
         headers: grant.pageUrl ? { Referer: grant.pageUrl } : {}
       })
       if (!response.ok) return { ok: false, error: `image HTTP ${response.status}` }
-      const buffer = Buffer.from(await response.arrayBuffer())
+      const declared = Number(response.headers.get('content-length') ?? 0)
+      if (declared > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
+      // Lecture bornée : arrayBuffer() chargeait la planche entière avant que le
+      // plafond ne s'applique, comme le tunnel avant sa correction.
+      const reader = response.body?.getReader()
+      let buffer: Buffer
+      if (!reader) {
+        buffer = Buffer.from(await response.arrayBuffer())
+      } else {
+        const chunks: Uint8Array[] = []
+        let total = 0
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          total += value.byteLength
+          if (total > MAX_IMAGE_BYTES) {
+            await reader.cancel().catch(() => undefined)
+            return { ok: false, error: 'image trop lourde' }
+          }
+          chunks.push(value)
+        }
+        buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
+      }
       if (buffer.byteLength > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
       return {
         ok: true,

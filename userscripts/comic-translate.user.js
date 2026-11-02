@@ -3,6 +3,8 @@
 // @namespace    https://vela.local/userscripts
 // @version      0.1.0
 // @description  Détecte les planches, lit les bulles (OCR local), traduit en français et superpose un calque lisible.
+// Injecté par Vela sur l'onglet actif (commande « Traduire la BD ») ; les lignes
+// @match ne servent qu'à l'usage du script hors application.
 // @match        *://globalcomix.com/*
 // @match        *://*.globalcomix.com/*
 // @grant        GM_xmlhttpRequest
@@ -62,6 +64,7 @@
     source: 'eng', // langue des planches pour Tesseract : eng, ita, spa, fra, jpn…
     auto: false,
     mode: 'cover', // cover = masque la bulle d'origine · below = traduction sous la bulle
+    deep: true, // deux passes OCR : la seconde retrouve les cartouches avalés
     minSize: 360, // côté minimum d'une image pour être considérée comme une planche
     maxPanels: 12,
     opacity: 0.95,
@@ -236,11 +239,16 @@
     workerLang = lang
     workerPromise = (async () => {
       const Tesseract = await loadTesseract()
-      return Tesseract.createWorker(lang, 1, {
+      const worker = await Tesseract.createWorker(lang, 1, {
         logger: (message) => {
           if (message?.status === 'recognizing text') setStatus('lecture de la planche…')
         }
       })
+      // Mode automatique (3) plutôt que « texte épars » (11) : mesuré sur une
+      // planche de test, le 11 perdait les cartouches d'une seule ligne
+      // (« THREE HOURS EARLIER ») sans mieux découper les bulles.
+      await worker.setParameters({ preserve_interword_spaces: '1' })
+      return worker
     })()
     return workerPromise
   }
@@ -267,7 +275,7 @@
   async function canvasFrom(url) {
     const blob = /^(blob:|data:)/i.test(url) ? await (await fetch(url)).blob() : await requestBinary(url)
     const bitmap = await createImageBitmap(blob)
-    const scale = bitmap.width < 1400 ? Math.min(2, 1400 / bitmap.width) : 1
+    const scale = bitmap.width < 1600 ? Math.min(2, 1600 / bitmap.width) : 1
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(bitmap.width * scale)
     canvas.height = Math.round(bitmap.height * scale)
@@ -302,19 +310,21 @@
       }
       if (target) {
         target.text += ` ${line.text}`
+        target.count += 1
         target.bbox.x0 = Math.min(target.bbox.x0, line.bbox.x0)
         target.bbox.y0 = Math.min(target.bbox.y0, line.bbox.y0)
         target.bbox.x1 = Math.max(target.bbox.x1, line.bbox.x1)
         target.bbox.y1 = Math.max(target.bbox.y1, line.bbox.y1)
       } else {
-        groups.push({ text: line.text, bbox: { ...line.bbox } })
+        groups.push({ text: line.text, bbox: { ...line.bbox }, count: 1 })
       }
     }
     return groups.filter((group) => group.text.replace(/[^\p{L}\p{N}]/gu, '').length >= 2)
   }
 
-  async function readBubbles(canvas) {
+  async function ocrPass(canvas, params) {
     const worker = await ocrWorker()
+    await worker.setParameters(params)
     const { data } = await worker.recognize(canvas, {}, { blocks: true, text: true })
     const lines = []
     for (const block of data.blocks || []) {
@@ -327,6 +337,67 @@
         }
       }
     }
+    return lines
+  }
+
+  /** Part de la boîte de `a` couverte par `b` : sert à ne pas compter deux fois. */
+  function covered(a, b) {
+    const x = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0))
+    const y = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0))
+    return (x * y) / Math.max(1, (a.x1 - a.x0) * (a.y1 - a.y0))
+  }
+
+  /** Bande de la planche où aucune ligne n'a été lue, assez haute pour du texte. */
+  function silentBands(canvas, lines) {
+    if (!lines.length) return []
+    const sorted = [...lines].sort((a, b) => a.bbox.y0 - b.bbox.y0)
+    const bands = []
+    let cursor = 0
+    for (const line of sorted) {
+      if (line.bbox.y0 - cursor > 90) bands.push({ y0: cursor, y1: line.bbox.y0 })
+      cursor = Math.max(cursor, line.bbox.y1)
+    }
+    if (canvas.height - cursor > 90) bands.push({ y0: cursor, y1: canvas.height })
+    return bands.slice(0, 3)
+  }
+
+  function crop(canvas, y0, y1) {
+    const part = document.createElement('canvas')
+    part.width = canvas.width
+    part.height = Math.max(1, y1 - y0)
+    const context = part.getContext('2d', { willReadFrequently: true })
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, part.width, part.height)
+    context.drawImage(canvas, 0, y0, canvas.width, part.height, 0, 0, canvas.width, part.height)
+    return part
+  }
+
+  async function readBubbles(canvas) {
+    const lines = await ocrPass(canvas, { preserve_interword_spaces: '1' })
+    if (CFG.deep) {
+      // Une cartouche seule dans une bande vide se perd dans la segmentation
+      // d'ensemble. On relit chaque bande muette entre deux lignes trouvées :
+      // c'est là qu'elle vit, et la relire isolée la fait remonter.
+      for (const band of silentBands(canvas, lines)) {
+        const extra = await ocrPass(crop(canvas, band.y0, band.y1), {
+          tessedit_pageseg_mode: '11',
+          preserve_interword_spaces: '1'
+        })
+        for (const line of extra) {
+          const shifted = {
+            ...line,
+            bbox: {
+              x0: line.bbox.x0,
+              y0: line.bbox.y0 + band.y0,
+              x1: line.bbox.x1,
+              y1: line.bbox.y1 + band.y0
+            }
+          }
+          if (!lines.some((seen) => covered(seen.bbox, shifted.bbox) > 0.5)) lines.push(shifted)
+        }
+      }
+    }
+    console.debug('[BD] OCR :', lines.length, 'ligne(s) ·', lines.map((line) => line.text).join(' | '))
     return groupLines(lines)
   }
 
@@ -482,15 +553,14 @@
 
   /* ----------------------------------------------------------------- dessin */
 
-  function fitText(node) {
-    let size = Math.min(26, Math.max(10, node.clientHeight * 0.58))
+  function fitText(node, lineHeight, maxHeight) {
+    // Le corps suit la hauteur d'UNE ligne lue, pas celle du bloc : une
+    // cartouche d'une ligne et une bulle de trois lignes n'ont pas le même
+    // repère, et c'est ce qui rendait la cartouche illisible.
+    let size = Math.min(22, Math.max(11, lineHeight * 0.95))
     node.style.fontSize = `${size}px`
-    let guard = 32
-    while (
-      guard-- > 0 &&
-      size > 8 &&
-      (node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1)
-    ) {
+    let guard = 24
+    while (guard-- > 0 && size > 10 && node.getBoundingClientRect().height > maxHeight) {
       size -= 1
       node.style.fontSize = `${size}px`
     }
@@ -503,33 +573,62 @@
     const sourceHeight = canvas?.height || img.naturalHeight || layer.clientHeight || 1
     const scaleX = layer.clientWidth / sourceWidth
     const scaleY = layer.clientHeight / sourceHeight
+    const x0 = bubble.bbox.x0 * scaleX
+    const y0 = bubble.bbox.y0 * scaleY
     const width = (bubble.bbox.x1 - bubble.bbox.x0) * scaleX
     const height = (bubble.bbox.y1 - bubble.bbox.y0) * scaleY
     if (width < 8 || height < 8) return
 
-    const pad = Math.max(2, Math.min(9, height * 0.18))
+    const pad = Math.max(3, Math.min(10, height * 0.16))
+    const below = CFG.mode === 'below'
+    const top = below ? y0 + height + 4 : y0 - pad
     const node = document.createElement('div')
     node.className = 'vt-bubble'
     node.dataset.mode = CFG.mode
     node.textContent = text
     node.title = bubble.text
     node.setAttribute('lang', CFG.target)
-    node.style.left = `${bubble.bbox.x0 * scaleX - pad}px`
-    node.style.top = `${bubble.bbox.y0 * scaleY - pad}px`
-    node.style.width = `${width + pad * 2}px`
-    node.style.height = `${height + pad * 2}px`
-    node.style.background =
-      CFG.mode === 'cover'
-        ? `rgba(${COLORS.paper},${CFG.opacity})`
-        : `rgba(${COLORS.paper},0.97)`
     node.style.fontFamily = CFG.font
-    if (CFG.mode === 'below') {
-      node.style.top = `${bubble.bbox.y1 * scaleY + 4}px`
-      node.style.height = 'auto'
-      node.style.minHeight = `${height + pad}px`
-    }
+    // Plaque opaque en mode « cover » : une bulle masquée doit l'être vraiment,
+    // sinon le texte d'origine transparaît sous la traduction.
+    node.style.background = `rgba(${COLORS.paper},${below ? 0.97 : 1})`
+    const roomLeft = Math.max(2, x0 - pad)
+    const roomWidth = Math.max(width + pad * 2, layer.clientWidth - roomLeft - 8)
+    const baseWidth = Math.min(width + pad * 2, roomWidth)
+    node.style.left = `${roomLeft}px`
+    node.style.top = `${Math.max(2, top)}px`
+    // Le rayon suit la taille de la plaque : un coin de 12 px fixes déborde
+    // d'une bulle haute comme d'une cartouche d'une ligne.
+    node.style.borderRadius = `${Math.min(14, Math.max(8, Math.round(height * 0.2)))}px`
+    node.style.width = `${baseWidth}px`
+    node.style.minHeight = `${below ? height + pad : height + pad * 2}px`
+    node.style.height = 'auto'
     layer.appendChild(node)
-    fitText(node)
+
+    // La plaque garde la largeur de la bulle : c'est le corps du texte qui
+    // rétrécit pour tenir dedans. Si le français ne tient pas même petit, on
+    // l'élargit, borné à 1,6 fois la bulle pour ne pas mordre sur le dessin.
+    // Une cartouche d'une ligne n'a pas la place de respirer si on lui impose la
+    // hauteur de son texte : on lui laisse jusqu'à 2,4 fois sa boîte, borné par
+    // le bas de la planche.
+    const maxHeight = Math.max(
+      height + pad * 2,
+      Math.min(layer.clientHeight - Math.max(2, top) - 8, height * 2.4)
+    )
+    const lineHeight = height / Math.max(1, bubble.count || 1)
+    fitText(node, lineHeight, maxHeight)
+    if (node.getBoundingClientRect().height > maxHeight) {
+      node.style.width = `${Math.min(roomWidth, baseWidth * 1.6)}px`
+      fitText(node, lineHeight, maxHeight)
+    }
+
+    if (!below) {
+      // Recentrage sur la bulle d'origine, une fois la largeur connue.
+      const rect = node.getBoundingClientRect()
+      const center = x0 + width / 2
+      const left = Math.max(2, Math.min(center - rect.width / 2, layer.clientWidth - rect.width - 2))
+      node.style.left = `${left}px`
+    }
   }
 
   function clearOverlays() {
@@ -621,6 +720,7 @@
       <label for="vt-source">Langue des planches (OCR)</label>
       <input id="vt-source" type="text" spellcheck="false" placeholder="eng, ita, spa, fra, jpn…">
       <label class="vt-check"><input id="vt-auto" type="checkbox"> Traduire au fil du chargement</label>
+      <label class="vt-check"><input id="vt-deep" type="checkbox"> Relire les zones sans texte</label>
       <div class="vt-row">
         <button type="button" class="vt-primary" id="vt-run">Traduire</button>
         <button type="button" id="vt-clear">Effacer</button>
@@ -635,6 +735,7 @@
     const model = panel.querySelector('#vt-model')
     const source = panel.querySelector('#vt-source')
     const auto = panel.querySelector('#vt-auto')
+    const deep = panel.querySelector('#vt-deep')
     statusEl = panel.querySelector('#vt-status')
 
     // Dans Vela, le fournisseur et la clé vivent dans Réglages › Modèles.
@@ -652,6 +753,7 @@
     model.value = CFG.model
     source.value = CFG.source
     auto.checked = CFG.auto
+    deep.checked = CFG.deep
 
     const sync = () => {
       CFG.provider = provider.value
@@ -659,6 +761,7 @@
       CFG.model = model.value.trim()
       CFG.source = source.value.trim() || 'eng'
       CFG.auto = auto.checked
+      CFG.deep = deep.checked
       saveConfig()
       if (CFG.auto) scheduleAuto()
     }
@@ -667,6 +770,7 @@
     model.addEventListener('change', sync)
     source.addEventListener('change', sync)
     auto.addEventListener('change', sync)
+    deep.addEventListener('change', sync)
 
     panel.querySelector('#vt-run').addEventListener('click', () => {
       sync()
@@ -709,8 +813,11 @@
 
     if (CFG.auto) scheduleAuto()
 
-    // Accès console pour déboguer sans passer par l'interface.
-    window.velaComic = { translate: translatePage, clear: clearOverlays, config: CFG }
+    // Hors Vela, l'accès console sert à déboguer. Sous Vela, il ouvrirait au JS
+    // de la page un moyen de lancer des traductions sur la clé de l'utilisateur.
+    if (!viaVela()) {
+      window.velaComic = { translate: translatePage, clear: clearOverlays, config: CFG }
+    }
   }
 
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', boot, { once: true })

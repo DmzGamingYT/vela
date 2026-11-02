@@ -45,6 +45,7 @@ export type IconName =
   | 'map'
   | 'list'
   | 'image'
+  | 'comic'
   | 'refresh'
   | 'link'
   | 'code'
@@ -245,6 +246,14 @@ const PATHS: Record<IconName, ReactNode> = {
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <circle cx="9" cy="10" r="1.6" />
       <path d="m4 18 5-5 4 3 3-3 4 5" />
+    </>
+  ),
+  // Bulle de dialogue avec un « A » : la traduction d'une planche, pas la
+  // lecture d'une image. La queue à gauche évite la ressemblance avec « notes ».
+  comic: (
+    <>
+      <path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9.8l-4.3 3.4V17H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+      <path d="M8.3 13.8 11 8.3l2.7 5.5M9.4 11.9h3.2" />
     </>
   ),
   refresh: (

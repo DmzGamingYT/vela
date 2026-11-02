@@ -24,6 +24,28 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
     Boolean(state.view?.bookmarks.some((bookmark) => bookmark.url === tab.url))
   )
 
+  const toast = useBrowser((state) => state.toast)
+  const [comicActive, setComicActive] = useState(false)
+
+  // Les calques vivent dans la page : une navigation les emporte avec elle.
+  useEffect(() => {
+    setComicActive(false)
+  }, [tab.id, tab.url])
+
+  const toggleComic = async (): Promise<void> => {
+    if (comicActive) {
+      await window.vela.comic.clear(tab.id)
+      setComicActive(false)
+      return
+    }
+    const result = await window.vela.comic.run(tab.id)
+    if (result.ok) {
+      setComicActive(true)
+      return
+    }
+    toast(result.reason ?? 'Traduction de BD impossible.', 'error')
+  }
+
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -159,6 +181,23 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       </form>
 
       <div className="pane-actions">
+        {!home && (
+          <button
+            type="button"
+            className="icon-btn"
+            data-active={comicActive}
+            aria-pressed={comicActive}
+            onClick={() => void toggleComic()}
+            aria-label={comicActive ? 'Masquer la traduction de BD' : 'Traduire la BD de cette page'}
+            title={
+              comicActive
+                ? 'Masquer la traduction (OCR local, fournisseur de Réglages › Modèles)'
+                : 'Traduire la BD — OCR local, calque français'
+            }
+          >
+            <Icon name="comic" size={16} />
+          </button>
+        )}
         {!home && (
           <button
             type="button"
