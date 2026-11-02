@@ -1,6 +1,6 @@
 # Vela 0.3.18 — notes de version
 
-Version **préparée**, non publiée. La 0.3.17 reste la version téléchargeable.
+Version **publiée le 2 novembre 2026** : release `v0.3.18`, installateurs macOS, Windows et Linux.
 
 ## Ce qui change
 
@@ -31,9 +31,9 @@ Version **préparée**, non publiée. La 0.3.17 reste la version téléchargeabl
 | `npm test` | 39 fichiers, 399 tests |
 | `npm run build` | 0 |
 
-## À faire à la publication
+## Journal de publication (fait)
 
-1. Construire les installateurs (`npm run dist:mac`, `dist:win`, `dist:linux`).
+1. ~~Construire les installateurs~~ — le workflow `release.yml` les a construits sur les trois OS.
 2. Créer la release `v0.3.18` et y déposer les neuf fichiers.
 3. Relever les empreintes SHA-256 des installateurs et les reporter dans
    `site/public/index.html` (tableau de téléchargement) et `site/public/site.js`.
