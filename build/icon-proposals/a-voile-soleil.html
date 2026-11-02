@@ -1,0 +1,85 @@
+<!doctype html><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;width:1024px;height:1024px;background:transparent;overflow:hidden}
+svg{display:block;width:1024px;height:1024px}
+</style><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Vela — Voile et soleil</title>
+  <defs>
+    <linearGradient id="a-base" x1="200" y1="94" x2="858" y2="946" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7D6CFF"/>
+      <stop offset="0.32" stop-color="#5B47E6"/>
+      <stop offset="0.7" stop-color="#33218F"/>
+      <stop offset="1" stop-color="#1C1154"/>
+    </linearGradient>
+    <radialGradient id="a-warm" cx="726" cy="520" r="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC08A" stop-opacity="0.6"/>
+      <stop offset="0.48" stop-color="#FF9E63" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#FF8F55" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="a-sail" x1="478" y1="236" x2="690" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.58" stop-color="#F6F3FF"/>
+      <stop offset="1" stop-color="#DCD6FC"/>
+    </linearGradient>
+    <linearGradient id="a-jib" x1="470" y1="300" x2="396" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#C9C0F6" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="a-horizon" x1="200" y1="762" x2="824" y2="762" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3C4" stop-opacity="0.08"/>
+      <stop offset="0.55" stop-color="#FFF1DE" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#FFC98C" stop-opacity="0.26"/>
+    </linearGradient>
+    <linearGradient id="a-sea" x1="512" y1="762" x2="512" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#140A42" stop-opacity="0.66"/>
+      <stop offset="1" stop-color="#0A0424" stop-opacity="0.88"/>
+    </linearGradient>
+    <linearGradient id="a-rim" x1="250" y1="104" x2="800" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.48"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#FFD6AA" stop-opacity="0.36"/>
+    </linearGradient>
+    <filter id="a-soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="a-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#120A45" flood-opacity="0.32"/>
+    </filter>
+    <clipPath id="a-tile">
+      <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#a-tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#a-base)"/>
+    <rect x="96" y="96" width="832" height="832" fill="url(#a-warm)" style="mix-blend-mode:screen"/>
+
+    <!-- Soleil : un disque net, posé derrière la voile. -->
+    <circle cx="722" cy="486" r="150" fill="#FFB877" opacity="0.4" filter="url(#a-soft)" style="mix-blend-mode:screen"/>
+    <circle cx="722" cy="486" r="96" fill="#FFC98C"/>
+    <circle cx="700" cy="462" r="30" fill="#FFF6E6" opacity="0.45" style="mix-blend-mode:screen"/>
+
+    <!-- La mer : une seule bande sombre, sans détail à petite taille. -->
+    <rect x="96" y="762" width="832" height="166" fill="url(#a-sea)" style="mix-blend-mode:multiply"/>
+    <path d="M206 763H818" stroke="url(#a-horizon)" stroke-width="5" stroke-linecap="round"/>
+    <g fill="#FFD9B4" style="mix-blend-mode:screen">
+      <rect x="654" y="790" width="120" height="9" rx="4.5" fill-opacity="0.42"/>
+      <rect x="672" y="822" width="84" height="7" rx="3.5" fill-opacity="0.26"/>
+      <rect x="690" y="850" width="50" height="5" rx="2.5" fill-opacity="0.15"/>
+    </g>
+
+    <ellipse cx="520" cy="764" rx="150" ry="18" fill="#07031F" opacity="0.46" filter="url(#a-soft)" style="mix-blend-mode:multiply"/>
+
+    <!-- Foc au vent, translucide : il donne la profondeur sans bruit. -->
+    <path d="M470 306C430 470 408 624 402 760H470Z" fill="url(#a-jib)"/>
+
+    <!-- Grand-voile : le seul objet clair de l'icône. -->
+    <path d="M470 236C470 420 470 610 470 760H706C660 612 570 386 470 236Z" fill="url(#a-sail)" filter="url(#a-shadow)"/>
+
+    <!-- Le mât est un pli de lumière, pas un trait. -->
+    <path d="M470 240V758" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
+    <path d="M477 246V754" stroke="#2B1B7C" stroke-opacity="0.2" stroke-width="4" stroke-linecap="round"/>
+    <path d="M706 758C660 612 570 386 476 244" fill="none" stroke="#FFE7CD" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#a-rim)" stroke-width="3.5"/>
+  </g>
+</svg>

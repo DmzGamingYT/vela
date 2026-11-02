@@ -1,0 +1,52 @@
+<!doctype html><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;width:1024px;height:1024px;background:transparent;overflow:hidden}
+svg{display:block;width:1024px;height:1024px}
+</style><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Vela — Le pli</title>
+  <defs>
+    <linearGradient id="c-base" x1="188" y1="88" x2="868" y2="952" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6A56EE"/>
+      <stop offset="0.45" stop-color="#40299F"/>
+      <stop offset="1" stop-color="#1A0F4E"/>
+    </linearGradient>
+    <linearGradient id="c-lit" x1="452" y1="196" x2="700" y2="768" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E4DEFD"/>
+    </linearGradient>
+    <linearGradient id="c-shade" x1="452" y1="196" x2="376" y2="768" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#CFC6FA" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="c-fold" x1="452" y1="210" x2="452" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFE9D2"/>
+      <stop offset="1" stop-color="#FFC98C"/>
+    </linearGradient>
+    <linearGradient id="c-rim" x1="250" y1="104" x2="800" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.4"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#FFD6AA" stop-opacity="0.22"/>
+    </linearGradient>
+    <filter id="c-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0C0630" flood-opacity="0.35"/>
+    </filter>
+    <clipPath id="c-tile">
+      <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#c-tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#c-base)"/>
+
+    <!-- Deux facettes, une seule arête : rien d'autre à comprendre. -->
+    <path d="M452 190C452 380 452 580 452 792H716C664 604 566 372 452 190Z" fill="url(#c-lit)" filter="url(#c-shadow)"/>
+    <path d="M452 190C410 380 386 604 372 792H452Z" fill="url(#c-shade)"/>
+    <path d="M452 196V790" stroke="url(#c-fold)" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- La base : une eau presque noire, trois pixels de lumière. -->
+    <rect x="96" y="792" width="832" height="136" fill="#0A0428" fill-opacity="0.72"/>
+    <path d="M300 792H724" stroke="#FFD9AE" stroke-opacity="0.28" stroke-width="3" stroke-linecap="round"/>
+
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#c-rim)" stroke-width="3"/>
+  </g>
+</svg>

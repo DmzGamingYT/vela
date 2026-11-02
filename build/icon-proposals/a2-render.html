@@ -1,0 +1,84 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;width:1024px;height:1024px;background:transparent;overflow:hidden}svg{display:block;width:1024px;height:1024px}</style><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Vela — Voile et soleil, raffiné</title>
+  <defs>
+    <linearGradient id="a2-base" x1="210" y1="100" x2="850" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A67FF"/>
+      <stop offset="0.26" stop-color="#5A45E8"/>
+      <stop offset="0.62" stop-color="#38239C"/>
+      <stop offset="1" stop-color="#1D1157"/>
+    </linearGradient>
+    <linearGradient id="a2-glass" x1="512" y1="96" x2="512" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.24"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="a2-warm" cx="712" cy="506" r="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC58F" stop-opacity="0.72"/>
+      <stop offset="0.42" stop-color="#FF9E63" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FF8F55" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="a2-sail" x1="474" y1="220" x2="690" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.56" stop-color="#F7F4FF"/>
+      <stop offset="1" stop-color="#DED8FD"/>
+    </linearGradient>
+    <linearGradient id="a2-jib" x1="468" y1="300" x2="402" y2="744" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#C7BEF6" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="a2-horizon" x1="230" y1="768" x2="800" y2="768" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3C4" stop-opacity="0.06"/>
+      <stop offset="0.5" stop-color="#FFF2E0" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#FFC98C" stop-opacity="0.24"/>
+    </linearGradient>
+    <linearGradient id="a2-sea" x1="512" y1="768" x2="512" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#150B45" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#0A0424" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="a2-rim" x1="250" y1="104" x2="800" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
+      <stop offset="0.46" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#FFD6AA" stop-opacity="0.34"/>
+    </linearGradient>
+    <filter id="a2-soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+    <filter id="a2-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#120A45" flood-opacity="0.3"/>
+    </filter>
+    <clipPath id="a2-tile">
+      <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#a2-tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#a2-base)"/>
+    <rect x="96" y="96" width="832" height="384" fill="url(#a2-glass)"/>
+    <rect x="96" y="96" width="832" height="832" fill="url(#a2-warm)" style="mix-blend-mode:screen"/>
+
+    <!-- Le soleil est plus petit et plus haut : à 16 px c'est une lumière,
+         pas une pièce de monnaie. -->
+    <circle cx="712" cy="506" r="78" fill="#FFC68E"/>
+    <circle cx="712" cy="506" r="128" fill="#FFB877" opacity="0.32" filter="url(#a2-soft)" style="mix-blend-mode:screen"/>
+    <circle cx="694" cy="486" r="24" fill="#FFF7E8" opacity="0.5" style="mix-blend-mode:screen"/>
+
+    <rect x="96" y="768" width="832" height="160" fill="url(#a2-sea)" style="mix-blend-mode:multiply"/>
+    <path d="M226 769H806" stroke="url(#a2-horizon)" stroke-width="4.5" stroke-linecap="round"/>
+    <g fill="#FFD9B4" style="mix-blend-mode:screen">
+      <rect x="666" y="796" width="104" height="8" rx="4" fill-opacity="0.4"/>
+      <rect x="686" y="826" width="66" height="6" rx="3" fill-opacity="0.22"/>
+    </g>
+
+    <!-- La voile s'arrête au-dessus de l'eau : un liseré d'ombre la sépare de
+         l'horizon, au lieu de l'y fondre. -->
+    <ellipse cx="520" cy="770" rx="146" ry="16" fill="#07031F" opacity="0.42" filter="url(#a2-soft)" style="mix-blend-mode:multiply"/>
+
+    <path d="M468 306C430 466 406 616 400 744H468Z" fill="url(#a2-jib)"/>
+    <path d="M468 220C468 400 468 590 468 744H700C656 600 568 372 468 220Z" fill="url(#a2-sail)" filter="url(#a2-shadow)"/>
+    <path d="M468 226V742" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
+    <path d="M475 232V738" stroke="#2B1B7C" stroke-opacity="0.2" stroke-width="4" stroke-linecap="round"/>
+    <path d="M700 744C656 600 568 372 474 228" fill="none" stroke="#FFE7CD" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#a2-rim)" stroke-width="3.5"/>
+  </g>
+</svg>
