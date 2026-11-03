@@ -4,6 +4,9 @@ out/
 rust/target/
 build/Vela.iconset/
 build/icon.iconset/
+# Moitié privée de la clé de signature des manifestes : elle ne quitte pas la
+# machine qui l'a générée, seule son empreinte publique est dans le code.
+build/update-signing.key
 .DS_Store
 *.log
 *.tsbuildinfo

@@ -99,6 +99,20 @@ notarisation) et l’installateur Windows n’a pas de certificat. Ce dépôt ne
 ne fabrique aucune signature : les deux tableaux ci-dessous disent seulement ce qu’il faudra
 renseigner, une fois les certificats obtenus.
 
+En attendant, la chaîne de mise à jour a un ancrage indépendant d’Apple et du compte GitHub :
+`latest-mac.yml` est signé en Ed25519 par la CI et Vela ne propose une mise à jour que si cette
+signature correspond à la moitié publique épinglée dans `src/main/integrity.ts`. Sans cela, pas de
+mise à jour proposée, et l’utilisateur est renvoyé vers la page Releases. Pour le mettre en place :
+
+```bash
+node scripts/make-update-key.cjs   # écrit build/update-signing.key (0600, ignoré par git)
+gh secret set VELA_UPDATE_SIGNING_KEY --repo DmzGamingYT/vela < build/update-signing.key
+```
+
+La moitié privée n’est jamais affichée ni versionnée ; le script pose lui-même la moitié publique
+dans le code, et `scripts/sign-update-manifest.cjs` refuse de signer si les deux ne correspondent
+pas. Tant que le secret manque, le job `build-mac` échoue au lieu de publier un manifeste invérifiable.
+
 La chaîne macOS est déjà automatisée dans `.github/workflows/release.yml`. Il faut une adhésion au
 [programme développeur Apple](https://developer.apple.com/programs/) (99 $/an) et un certificat
 **Developer ID Application** exporté en `.p12` depuis Trousseau d’accès.

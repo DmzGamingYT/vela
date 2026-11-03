@@ -11,7 +11,9 @@ Délais indicatifs : accusé de réception sous 7 jours, première évaluation s
 14 jours. Un correctif est publié après accord sur la divulgation ; en l'absence
 de réponse sous 90 jours, la divulgation publique est possible.
 
-Limites connues, documentées et non considérées comme des vulnérabilités :
-absence de signature Developer ID et de notarisation macOS (l'intégrité repose
-sur les empreintes SHA-512 publiées), absence de synchronisation, et extensions
-de navigateur non prises en charge.
+Limites connues, documentées et non considérées comme des vulnérabilités : absence de signature
+Developer ID et de notarisation macOS, absence de synchronisation, et extensions de navigateur non
+prises en charge. L'absence de notarisation n'expose plus la chaîne de mise à jour : `latest-mac.yml`
+est signé en Ed25519 par la CI et vérifié contre une clé épinglée dans le code, donc un compte GitHub
+compromis ne peut pas imposer une mise à jour. Les empreintes SHA-512 publiées restent vérifiées en
+plus de cette signature.

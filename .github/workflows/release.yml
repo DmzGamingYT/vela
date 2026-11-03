@@ -12,6 +12,12 @@ name: Release
 # (Squirrel.Mac) de remplacer le bundle tout seul, sans repasser par le .dmg.
 # Sans secrets, le build reste signé ad hoc et l'auto-update macOS est désactivé
 # de fait (Gatekeeper refuse l'installation silencieuse).
+#
+# Indépendamment d'Apple : VELA_UPDATE_SIGNING_KEY (semi-privée Ed25519, générée
+# par scripts/make-update-key.cjs) signe latest-mac.yml, et l'application ne
+# propose une mise à jour que si cette signature correspond à la moitié publique
+# épinglée dans src/main/integrity.ts. Sans ce secret, la CI échoue plutôt que
+# de publier un manifeste que Vela refuserait.
 on:
   push:
     branches: [main]
@@ -124,6 +130,18 @@ jobs:
             echo "::warning::Pas d'identifiants de notarisation (APPLE_ID / APPLE_TEAM_ID) : l'app sera signée mais non notarisée."
           fi
           npm run dist:mac -- --publish never
+      - name: Signer le manifeste macOS
+        env:
+          VELA_UPDATE_SIGNING_KEY: ${{ secrets.VELA_UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          # Un manifeste non signé est refusé par l'application : le publier
+          # quand même ferait croire à une mise à jour disponible pour personne.
+          if [ -z "${VELA_UPDATE_SIGNING_KEY:-}" ]; then
+            echo "::error::Secret VELA_UPDATE_SIGNING_KEY absent. Lancez node scripts/make-update-key.cjs puis gh secret set VELA_UPDATE_SIGNING_KEY --repo \$GITHUB_REPOSITORY < build/update-signing.key"
+            exit 1
+          fi
+          node scripts/sign-update-manifest.cjs release/mac/latest-mac.yml
       - name: Vérifier les trois bundles et la mise à jour par architecture
         env:
           NOTARY: ${{ steps.detect.outputs.notary }}
@@ -176,6 +194,7 @@ jobs:
             release/mac/*.zip
             release/mac/*.blockmap
             release/mac/latest-mac.yml
+            release/mac/latest-mac.yml.sig
 
   build-win:
     needs: [version, checks]

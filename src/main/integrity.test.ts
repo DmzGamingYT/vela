@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { digestEquals, sha512Base64, verifyDownload } from './integrity'
+import { generateKeyPairSync, sign as ed25519Sign } from 'node:crypto'
+import {
+  UPDATE_SIGNING_PUBLIC_KEY,
+  digestEquals,
+  manifestSignatureValid,
+  sha512Base64,
+  verifyDownload
+} from './integrity'
 import { manifestFile, parseMacManifest } from '@shared/update'
 
 const MANIFEST = `version: 0.3.15
@@ -49,5 +56,40 @@ describe('empreintes de téléchargement', () => {
     const other = sha512Base64(Buffer.from('autre'))
     expect(verifyDownload({ base64, bytes: data.length, expected: { sha512: other, size: data.length } })).toBe(false)
     expect(digestEquals('', '')).toBe(false)
+  })
+})
+
+describe('signature du manifeste de mise à jour', () => {
+  const pair = generateKeyPairSync('ed25519')
+  const pinned = pair.publicKey.export({ format: 'der', type: 'spki' }).subarray(-32).toString('base64')
+  const sign = (bytes: Buffer): string => ed25519Sign(null, bytes, pair.privateKey).toString('base64')
+  const manifest = Buffer.from(MANIFEST, 'utf8')
+
+  it('accepte la signature de la clé épinglée', () => {
+    expect(manifestSignatureValid(manifest, sign(manifest), pinned)).toBe(true)
+  })
+
+  it('refuse un manifeste réécrit, même avec ses propres empreintes', () => {
+    // C'est exactement l'attaque que la clé épinglée ferme : un compte GitHub
+    // compromis publie un manifeste cohérent, versions et SHA-512 compris.
+    const forged = Buffer.from(MANIFEST.replace('0.3.15', '0.9.9'), 'utf8')
+    expect(manifestSignatureValid(forged, sign(manifest), pinned)).toBe(false)
+  })
+
+  it('refuse une signature absente, tronquée ou une clé malformée', () => {
+    const good = sign(manifest)
+    expect(manifestSignatureValid(manifest, '', pinned)).toBe(false)
+    expect(manifestSignatureValid(manifest, good.slice(0, 60), pinned)).toBe(false)
+    expect(manifestSignatureValid(manifest, good, '')).toBe(false)
+    expect(manifestSignatureValid(manifest, good, Buffer.alloc(16).toString('base64'))).toBe(false)
+  })
+
+  it('ne laisse rien passer avec la clé épinglée dans le code', () => {
+    // Toute signature étrangère est refusée contre la clé du dépôt, et cette clé
+    // est bien une Ed25519 : une constante vide bloquerait les mises à jour, un
+    // fichier mal formé aussi — les deux dans le sens sûr.
+    expect(Buffer.from(UPDATE_SIGNING_PUBLIC_KEY, 'base64')).toHaveLength(32)
+    expect(manifestSignatureValid(manifest, sign(manifest), UPDATE_SIGNING_PUBLIC_KEY)).toBe(false)
+    expect(manifestSignatureValid(manifest, sign(manifest), '')).toBe(false)
   })
 })

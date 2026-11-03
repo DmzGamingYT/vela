@@ -12,7 +12,7 @@ import {
   releaseAssetUrl,
   type MacManifest
 } from '@shared/update'
-import { verifyDownload } from './integrity'
+import { manifestSignatureValid, verifyDownload } from './integrity'
 
 export type UpdateState =
   | 'idle'
@@ -61,6 +61,8 @@ let installerPath: string | null = null
 let installing = false
 /** Manifeste d'une version déjà lu : une seule requête par version. */
 const manifests = new Map<string, MacManifest | null>()
+/** Version dont le manifeste n'était pas signé : sert au message d'erreur. */
+let unsignedVersion = ''
 
 function set(patch: Partial<UpdateInfo>): void {
   snapshot = { ...snapshot, ...patch, currentVersion: app.getVersion() }
@@ -94,18 +96,30 @@ function installerDir(): string {
  * macOS refuse l'installation silencieuse d'un bundle non signé (Squirrel
  * vérifie la signature et échoue), donc on prépare le `.dmg` de la release :
  * le bouton Installer l'ouvre, il ne reste qu'à glisser Vela dans Applications.
- * Le fichier vient du dépôt des releases, comme la vérification elle-même.
+ *
+ * Le manifeste et sa signature Ed25519 arrivent du même canal que la charge
+ * utile : lire l'un sans contrôler l'autre laisserait un compte GitHub
+ * compromis choisir les empreintes SHA-512. Sans signature valable, la mise à
+ * jour n'est tout simplement pas proposée.
  */
 async function manifestFor(version: string): Promise<MacManifest | null> {
   if (manifests.has(version)) return manifests.get(version) ?? null
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), 30_000)
   try {
-    const response = await fetch(releaseAssetUrl(version, 'latest-mac.yml'), {
-      redirect: 'follow',
-      signal: abort.signal
-    })
-    const manifest = response.ok ? parseMacManifest(await response.text()) : null
+    const ymlUrl = releaseAssetUrl(version, 'latest-mac.yml')
+    const [yml, signature] = await Promise.all([
+      fetch(ymlUrl, { redirect: 'follow', signal: abort.signal }),
+      fetch(`${ymlUrl}.sig`, { redirect: 'follow', signal: abort.signal })
+    ])
+    if (!yml.ok) {
+      manifests.set(version, null)
+      return null
+    }
+    const bytes = Buffer.from(await yml.arrayBuffer())
+    const signed = signature.ok && manifestSignatureValid(bytes, await signature.text())
+    if (!signed) unsignedVersion = version
+    const manifest = signed ? parseMacManifest(bytes.toString('utf8')) : null
     manifests.set(version, manifest)
     return manifest
   } catch {
@@ -135,7 +149,10 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
   if (!manifest) {
     set({
       state: 'error',
-      message: 'Empreinte de l’installateur indisponible — téléchargez-la depuis la page Releases.'
+      message:
+        unsignedVersion === version
+          ? 'Le manifeste de cette version n’est pas signé : téléchargez l’installateur depuis la page Releases.'
+          : 'Empreinte de l’installateur indisponible — téléchargez-la depuis la page Releases.'
     })
     return
   }
