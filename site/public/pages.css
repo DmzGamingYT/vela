@@ -472,6 +472,14 @@
   align-items: start;
 }
 
+/* Sur un grand écran il reste de la place : le sommaire respire, et les titres
+   des versions cessent de se couper en deux. */
+@media (min-width: 1200px) {
+  .journal {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+}
+
 .journal-index {
   position: sticky;
   top: 104px;
@@ -482,13 +490,19 @@
 }
 
 .journal-index a {
+  /* Le numéro et sa date tiennent sur une ligne, le titre prend toute la
+     largeur en dessous. Avec la date dans une colonne à part, « 29 oct. 2026 »
+     débordait sur le titre dès que la police changeait de métriques, et un
+     titre sur deux lignes venait toucher la version suivante. */
   display: grid;
-  grid-template-columns: 66px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "numero titre"
-    "date titre";
+    "numero date"
+    "titre titre";
+  row-gap: 3px;
   column-gap: 10px;
-  padding: 6px 8px 6px 0;
+  align-items: start;
+  padding: 8px 10px 8px 0;
   border-left: 2px solid transparent;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
@@ -503,17 +517,20 @@
 
 .journal-index .date {
   grid-area: date;
+  justify-self: start;
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: 10px;
+  /* Chiffres de largeur fixe : les dates s’alignent au lieu de danser. */
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .journal-index .t {
   grid-area: titre;
-  align-self: center;
   color: var(--ink-2);
   font-size: 13.5px;
+  line-height: 1.35;
 }
 
 .journal-index a:hover .num,
@@ -816,10 +833,9 @@
   }
 
   .journal-index a {
-    grid-template-columns: auto;
-    grid-template-areas:
-      "numero"
-      "date";
+    grid-template-columns: auto auto;
+    grid-template-areas: "numero date";
+    gap: 0 8px;
     padding: 7px 12px;
     border: 1px solid var(--line);
     border-radius: 999px;
