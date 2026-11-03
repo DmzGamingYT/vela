@@ -30,10 +30,20 @@ const texts = PAGES.map((page) => ({ ...page, html: read(page.file) }))
 /** Résout une adresse interne vers le fichier qui la sert. */
 const resolveInternal = (path: string): string | null => {
   const clean = path.replace(/\/$/, '')
-  const candidates = clean === '' ? ['index.html'] : [`${clean.slice(1)}/index.html`, clean.slice(1)]
+  const candidates =
+    clean === '' ? ['index.html'] : [`${clean.slice(1)}/index.html`, clean.slice(1)]
   for (const candidate of candidates) {
     const full = join(siteDir, candidate)
     if (existsSync(full) && statSync(full).isFile()) return full
+  }
+  // Une page de version n’existe dans `site/public` qu’une fois le site
+  // construit : `site/tools/releases.mjs` la génère depuis site/releases, et le
+  // dossier généré est ignoré par git. En intégration, la page manque donc,
+  // mais la source qui la produit doit être là : c’est elle qu’on vérifie.
+  const versionPage = clean.match(/^\/nouveautes\/(0-3-\d+)$/)
+  if (versionPage) {
+    const source = join(root, 'site', 'releases', `${versionPage[1].replace(/-/g, '.')}.json`)
+    if (existsSync(source)) return source
   }
   return null
 }
@@ -80,7 +90,9 @@ describe('site — structure des cinq pages', () => {
         const target = resolveInternal(path)
         expect(target, `${page.file} : lien mort ${path}`).not.toBeNull()
         if (hash && target) {
-          expect(readFileSync(target, 'utf8'), `${page.file} : ancre morte ${link}`).toContain(`id="${hash}"`)
+          expect(readFileSync(target, 'utf8'), `${page.file} : ancre morte ${link}`).toContain(
+            `id="${hash}"`
+          )
         }
       }
     }
@@ -94,14 +106,19 @@ describe('site — structure des cinq pages', () => {
       ].map((match) => match[1])
       expect(assets.length, `${page.file} : aucune feuille`).toBeGreaterThanOrEqual(2)
       for (const asset of assets) {
-        expect(resolveInternal(asset.startsWith('/') ? asset : `/${asset}`), `${page.file} : ${asset}`).not.toBeNull()
+        expect(
+          resolveInternal(asset.startsWith('/') ? asset : `/${asset}`),
+          `${page.file} : ${asset}`
+        ).not.toBeNull()
       }
     }
   })
 
   it('déclare des icônes de site qui existent', () => {
     for (const page of texts) {
-      for (const [, href] of page.html.matchAll(/<link rel="(?:icon|apple-touch-icon)" href="([^"]+)"/g)) {
+      for (const [, href] of page.html.matchAll(
+        /<link rel="(?:icon|apple-touch-icon)" href="([^"]+)"/g
+      )) {
         expect(resolveInternal(href), `${page.file} : icône ${href}`).not.toBeNull()
       }
     }
@@ -176,7 +193,10 @@ describe('site — version et téléchargements', () => {
       }
       return 0
     }
-    expect(compare(announced, version), `site ${announced} en avance sur l’app ${version}`).toBeLessThanOrEqual(0)
+    expect(
+      compare(announced, version),
+      `site ${announced} en avance sur l’app ${version}`
+    ).toBeLessThanOrEqual(0)
     // Toutes les mentions du site disent la même version que le tableau.
     expect(home).toContain(`Vela ${announced}, pour les trois plateformes`)
     expect(home).toContain(`v0.${announced.split('.').slice(1).join('.')} · macOS, Windows, Linux`)
@@ -195,7 +215,10 @@ describe('site — version et téléchargements', () => {
     const rows = [...home.matchAll(/<td class="file">[\s\S]*?<\/tr>/g)].map((match) => match[0])
     expect(rows.length).toBe(files.length)
     const sums = rows.map((row) => {
-      const shown = ((row.match(/<code>([0-9a-f ]{8,})…<\/code>/) || [])[1] || '').replace(/\s/g, '')
+      const shown = ((row.match(/<code>([0-9a-f ]{8,})…<\/code>/) || [])[1] || '').replace(
+        /\s/g,
+        ''
+      )
       const full = (row.match(/data-copy="([0-9a-f]{64})"/) || [])[1] || ''
       expect(full, 'empreinte complète').toMatch(/^[0-9a-f]{64}$/)
       // L'aperçu affiché doit bien être le début de l'empreinte copiée.
@@ -208,7 +231,9 @@ describe('site — version et téléchargements', () => {
   it('n’annonce aucune version plus récente que la version courante', () => {
     const [major, minor, patch] = version.split('.').map(Number)
     const current = texts.find((page) => page.file === 'index.html') as (typeof texts)[number]
-    const found = [...current.html.matchAll(/\b(\d+)\.(\d+)\.(\d+)\b/g)].map((match) => match.slice(1).map(Number))
+    const found = [...current.html.matchAll(/\b(\d+)\.(\d+)\.(\d+)\b/g)].map((match) =>
+      match.slice(1).map(Number)
+    )
     for (const [maj, min, rev] of found) {
       if (maj !== major) continue
       expect(min, `version ${maj}.${min}.${rev} d’une autre branche`).toBe(minor)
@@ -224,13 +249,22 @@ describe('site — version et téléchargements', () => {
 })
 
 describe('site — confidentialité alignée sur l’application', () => {
-  const privacy = (texts.find((page) => page.file === 'confidentialite/index.html') || texts[0]).html
+  const privacy = (texts.find((page) => page.file === 'confidentialite/index.html') || texts[0])
+    .html
 
   it('décrit chaque flux de l’application, et rien de plus', () => {
-    const listed = [...privacy.matchAll(/<span class="name">([^<]+)<\/span>/g)].map((match) => match[1])
+    const listed = [...privacy.matchAll(/<span class="name">([^<]+)<\/span>/g)].map(
+      (match) => match[1]
+    )
     const expected = NETWORK_FLOWS.map((flow) => flow.label)
-    expect([...expected].filter((label) => !listed.includes(label)), 'flux absents du site').toEqual([])
-    expect([...listed].filter((label) => !expected.includes(label)), 'flux inconnus du site').toEqual([])
+    expect(
+      [...expected].filter((label) => !listed.includes(label)),
+      'flux absents du site'
+    ).toEqual([])
+    expect(
+      [...listed].filter((label) => !expected.includes(label)),
+      'flux inconnus du site'
+    ).toEqual([])
   })
 
   it('nomme les destinations que l’application contacte', () => {
@@ -244,7 +278,11 @@ describe('site — confidentialité alignée sur l’application', () => {
     // envoyées ; on vérifie au moins le domaine de tête de chacun.
     const hosts = NETWORK_FLOWS.flatMap((flow) => flow.hosts)
     for (const host of new Set(hosts)) {
-      const base = host.replace(/^www\./, '').split('.').slice(-2).join('.')
+      const base = host
+        .replace(/^www\./, '')
+        .split('.')
+        .slice(-2)
+        .join('.')
       expect(privacy.toLowerCase(), `hôte absent : ${host}`).toContain(base.toLowerCase())
     }
   })
