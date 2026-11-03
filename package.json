@@ -16,6 +16,8 @@
     "preview": "electron-vite preview",
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
     "test": "vitest run",
     "dist:mac": "npm run build && electron-builder --mac -c.directories.output=release/mac",
     "dist:win": "npm run build && electron-builder --win -c.directories.output=release/win",
@@ -26,6 +28,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
@@ -33,9 +36,14 @@
     "electron": "^45.0.0",
     "electron-builder": "^26.0.12",
     "electron-vite": "^6.0.0",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.9.0",
+    "typescript-eslint": "^8.72.1",
     "vite": "^8.0.0",
     "vitest": "^3.2.7"
   }

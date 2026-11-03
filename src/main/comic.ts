@@ -387,7 +387,7 @@ export class ComicBridge {
         body: JSON.stringify(payload)
       })
       if (!response.ok) return { ok: false, error: `vision HTTP ${response.status}` }
-      const body = (await response.json()) as Record<string, any>
+      const body = (await response.json()) as Record<string, unknown>
       const content = this.contentOf('openai', body)
       const match = content.match(/\{[\s\S]*\}/)
       if (!match) return { ok: false, error: 'réponse de vision illisible' }
@@ -484,7 +484,7 @@ export class ComicBridge {
         body: JSON.stringify(payload)
       })
       if (!response.ok) return { ok: false, error: `traducteur HTTP ${response.status}` }
-      const body = (await response.json()) as Record<string, any>
+      const body = (await response.json()) as Record<string, unknown>
       const content = this.contentOf(definition.protocol, body)
       const match = content.match(/\{[\s\S]*\}/)
       if (!match) return { ok: false, error: 'réponse du modèle illisible' }
@@ -500,14 +500,17 @@ export class ComicBridge {
     }
   }
 
-  private contentOf(protocol: 'openai' | 'anthropic' | 'google', body: Record<string, any>): string {
+  private contentOf(protocol: 'openai' | 'anthropic' | 'google', body: Record<string, unknown>): string {
     if (protocol === 'anthropic') {
-      return Array.isArray(body.content) ? body.content.map((part: { text?: string }) => part.text ?? '').join('') : ''
+      const parts = Array.isArray(body.content) ? (body.content as { text?: string }[]) : []
+      return parts.map((part) => part.text ?? '').join('')
     }
     if (protocol === 'google') {
-      const parts = body.candidates?.[0]?.content?.parts
-      return Array.isArray(parts) ? parts.map((part: { text?: string }) => part.text ?? '').join('') : ''
+      const candidates = body.candidates as { content?: { parts?: { text?: string }[] } }[] | undefined
+      const parts = candidates?.[0]?.content?.parts
+      return Array.isArray(parts) ? parts.map((part) => part.text ?? '').join('') : ''
     }
-    return body.choices?.[0]?.message?.content ?? ''
+    const choices = body.choices as { message?: { content?: string } }[] | undefined
+    return choices?.[0]?.message?.content ?? ''
   }
 }

@@ -33,6 +33,8 @@ Build de production et vérifications :
 
 ```bash
 npm run typecheck   # TypeScript (main, preload, renderer)
+npm run lint        # ESLint (types, hooks, globals du userscript et du site)
+npm run format      # Prettier, même style que le reste du dépôt
 npm test            # tests unitaires (URL, brief, agent, fournisseurs)
 npm run build       # build dans out/
 npm run dist:mac    # .dmg + .zip universel, arm64 et x64 → release/mac/

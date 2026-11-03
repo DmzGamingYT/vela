@@ -52,8 +52,8 @@ jobs:
             echo "Nouvelle version v$VERSION — build et publication."
           fi
 
-  # Vérifications systématiques : les types et les tests passent avant qu'un
-  # seul installateur soit construit. Ce travail tourne à chaque poussée sur
+  # Vérifications systématiques : les types, le lint et les tests passent avant
+  # qu'un seul installateur soit construit. Ce travail tourne à chaque poussée sur
   # `main`, même quand aucune release n'est à produire, pour que le site et
   # les flux réseau restent vérifiés en continu.
   checks:
@@ -67,6 +67,8 @@ jobs:
       - run: npm ci
       - name: Vérifier les types
         run: npm run typecheck
+      - name: Vérifier le style
+        run: npm run lint
       - name: Lancer les tests
         run: npm test
 
