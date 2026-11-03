@@ -5,38 +5,21 @@
   "headline": "La traduction de BD ne lit plus le bruit",
   "intro": "Une planche faisait relire jusqu’à cent vingt fausses bulles pour trois vraies, chacune payée d’une passe d’OCR. Le crible les écarte avant la lecture, et la vision est plafonnée.",
   "tags": ["BD", "OCR", "performance"],
-  "stats": { "commits": 1, "files": 11, "insertions": 334, "deletions": 92 },
+  "stats": {
+    "commits": 1,
+    "files": 11,
+    "insertions": 334,
+    "deletions": 92
+  },
   "sections": [
     {
-      "title": "Cent vingt bulles fantômes pour trois vraies",
+      "title": "Ce qui a changé",
       "body": [
         "Chaque région close de la planche était lue, y compris les cases, les visages et les motifs. Un crible d’aire et d’aspect les écarte avant l’OCR, puis les plus grandes zones passent en premier : c’est là que sont les répliques.",
-        "La relecture par le modèle de vision passe de 86 à 6 appels par planche, et le plafond de 24 zones garde les bulles utiles sans laisser la file grossir."
-      ],
-      "figure": {
-        "type": "capture",
-        "src": "/captures/releases/bd-planche.jpg",
-        "alt": "Planche de démonstration du banc BD : quatre bulles et un cartouche, avant traduction.",
-        "caption": "La planche du banc (scripts/comic-bench) : c’est sur ces bulles que le crible mesure l’aire et l’aspect avant de lancer l’OCR.",
-        "width": 623,
-        "height": 900
-      }
-    },
-    {
-      "title": "Le lettrage stylisé passe en gris agrandi",
-      "body": [
+        "La relecture par le modèle de vision passe de 86 à 6 appels par planche, et le plafond de 24 zones garde les bulles utiles sans laisser la file grossir.",
         "La binarisation par défaut perdait les lettres fines des lettrages dessinés. Quand la confiance de Tesseract est basse, la lecture se fait désormais sur un gris agrandi, choisi par cette confiance : le résultat gagne trois points de similarité sans coûter d’appel supplémentaire.",
         "Ce changement vit dans le userscript de traduction : l’application elle-même n’a pas bougé, seule la version affichée change."
-      ],
-      "figure": {
-        "type": "metrics",
-        "caption": "Mesures du commit perf(bd), sur les planches de test",
-        "items": [
-          { "before": "120", "after": "24", "label": "zones gardées après le crible" },
-          { "before": "86", "after": "6", "label": "appels au modèle de vision par planche" },
-          { "before": "0,844", "after": "0,893", "label": "similarité sur les bulles de test" }
-        ]
-      }
+      ]
     }
   ],
   "verify": [
