@@ -41,3 +41,9 @@ screenshots/
 # Preuves de l'audit ergonomie/performance (docs/AUDIT-UX.md).
 !docs/captures/audit-ux-*.png
 .audit-css/
+
+# Sorties du banc d'essai BD : captures, harnais Playwright et planches rendues
+# restent sur la machine qui les a produites. Les scripts qui les pilotent,
+# eux, sont versionnés dans scripts/.
+.bt-*
+planche-*-aperçu.png
