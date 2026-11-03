@@ -23,6 +23,11 @@ import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identit
 // cela, la barre de menus affiche « Electron » en développement (le paquet,
 // lui, prend CFBundleName = Vela grâce à electron-builder).
 app.setName('Vela')
+// Windows regroupe les fenêtres et épingle la barre des tâches par cette
+// identité. Sans elle, une version lancée hors du raccourci NSIS — après une
+// mise à jour, depuis le dossier d'installation — apparaît sous l'identité
+// Electron par défaut et se détache de son épinglage.
+if (process.platform === 'win32') app.setAppUserModelId('app.vela.browser')
 if (process.platform === 'darwin') {
   app.setAboutPanelOptions({
     applicationName: 'Vela',
@@ -50,7 +55,11 @@ if (process.env.VELA_USER_DATA) app.setPath('userData', process.env.VELA_USER_DA
  */
 function journalFault(kind: string, fault: unknown): void {
   const message =
-    fault instanceof Error ? `${fault.stack || fault.message}` : typeof fault === 'string' ? fault : JSON.stringify(fault)
+    fault instanceof Error
+      ? `${fault.stack || fault.message}`
+      : typeof fault === 'string'
+        ? fault
+        : JSON.stringify(fault)
   console.error(`[vela] ${kind} — ${message}`)
   try {
     const file = join(app.getPath('userData'), 'vela-errors.log')
@@ -102,7 +111,8 @@ function createWindow(): void {
   const store = browser!.store
   const settings = store.get().settings
   nativeTheme.themeSource = settings.theme
-  const dark = settings.theme === 'dark' || (settings.theme === 'system' && nativeTheme.shouldUseDarkColors)
+  const dark =
+    settings.theme === 'dark' || (settings.theme === 'system' && nativeTheme.shouldUseDarkColors)
 
   win = new BrowserWindow({
     width: 1380,
@@ -251,12 +261,16 @@ function main(): void {
       browser = new Browser(app.getPath('userData'))
     } catch (error) {
       journalFault('démarrage impossible', error)
-      dialog.showErrorBox('Impossible d’ouvrir Vela', error instanceof Error ? error.message : 'Les données n’ont pas pu être chargées.')
+      dialog.showErrorBox(
+        'Impossible d’ouvrir Vela',
+        error instanceof Error ? error.message : 'Les données n’ont pas pu être chargées.'
+      )
       app.quit()
       return
     }
     initUpdater((channel, payload) => {
-      if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, payload)
+      if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
+        win.webContents.send(channel, payload)
     })
     createWindow()
     installStatusItem()
@@ -268,18 +282,29 @@ function main(): void {
         applyBrowserIdentity(contents)
       }
     })
-    const accelerator = process.platform === 'darwin' ? 'Command+Shift+Space' : 'Ctrl+Shift+Space'
-    try {
-      globalShortcut.register(accelerator, () => {
-        if (!win || win.isDestroyed()) return
-        if (win.isMinimized()) win.restore()
-        win.show()
-        win.focus()
-        browser?.sendShortcut('command')
-      })
-    } catch {
-      /* raccourci global indisponible */
+    // `register` renvoie false quand le raccourci est déjà pris, sans lever
+    // d'exception : sous Linux, Ctrl+Maj+Espace bascule la méthode de saisie
+    // sur la plupart des distributions. On essaie donc le suivant, plutôt que
+    // de laisser la commande rapide muette sans que personne ne le sache.
+    const ouvrirCommande = (): void => {
+      if (!win || win.isDestroyed()) return
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+      browser?.sendShortcut('command')
     }
+    const accelerators =
+      process.platform === 'darwin'
+        ? ['Command+Shift+Space', 'Command+Alt+Space']
+        : ['Ctrl+Shift+Space', 'Ctrl+Alt+Space']
+    const libre = accelerators.find((accelerator) => {
+      try {
+        return globalShortcut.register(accelerator, ouvrirCommande)
+      } catch {
+        return false
+      }
+    })
+    if (!libre) journalFault('raccourci global indisponible', accelerators.join(' ou '))
 
     app.on('activate', () => {
       // La petite fenêtre compte dans `getAllWindows()` : on regarde la fenêtre

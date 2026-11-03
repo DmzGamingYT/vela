@@ -51,7 +51,10 @@ export interface MacManifest {
 export function parseMacManifest(text: string): MacManifest | null {
   const lines = text.split(/\r?\n/)
   const versionLine = lines.find((line) => /^version:\s*\S/.test(line))
-  const version = versionLine?.replace(/^version:\s*/, '').trim().replace(/^['"]|['"]$/g, '')
+  const version = versionLine
+    ?.replace(/^version:\s*/, '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
   if (!version) return null
 
   const files: MacManifestFile[] = []
@@ -103,12 +106,15 @@ export interface UpdateNotice {
  * Ce que la barre d'état affiche : rien pendant un simple contrôle silencieux,
  * quelque chose dès qu'un téléchargement avance ou qu'une version est prête.
  */
-export function updateNotice(info: UpdateInfo | null, isMac: boolean): UpdateNotice | null {
+export function updateNotice(info: UpdateInfo | null, platform: string): UpdateNotice | null {
   if (!info) return null
   const version = info.version ? ` ${info.version}` : ''
   switch (info.state) {
     case 'downloaded':
-      return { label: `Mise à jour${version} prête`, action: isMac ? 'install' : 'restart' }
+      return {
+        label: `Mise à jour${version} prête`,
+        action: platform === 'darwin' ? 'install' : 'restart'
+      }
     case 'downloading':
       return { label: `Mise à jour${version} · ${info.progress} %`, action: null }
     case 'available':
@@ -129,22 +135,29 @@ export function updateActionLabel(action: UpdateAction): string {
  * silencieuse — Gatekeeper refuse un bundle non signé — donc on dit
  * exactement ce qu'il reste à faire, sans promettre l'inverse.
  */
-export function updateDescription(info: UpdateInfo | null, isMac: boolean): string {
+export function updateDescription(info: UpdateInfo | null, platform: string): string {
   if (!info) return 'Mises à jour automatiques en arrière-plan'
+  const mac = platform === 'darwin'
   const version = info.version ?? 'La mise à jour'
   switch (info.state) {
     case 'checking':
       return 'Vérification…'
     case 'available':
-      return isMac
+      return mac
         ? `Vela ${info.version ?? ''} — préparation de l’installateur`.trim()
         : `Vela ${info.version ?? ''} — téléchargement en arrière-plan`.trim()
     case 'downloading':
       return `Téléchargement en arrière-plan ${info.progress} %`
     case 'downloaded':
-      return isMac
-        ? `${version} est téléchargée. Installer ouvre le .dmg : glissez Vela dans Applications, puis relancez.`
-        : `${version} s’installe à la fermeture de Vela.`
+      if (mac) {
+        return `${version} est téléchargée. Installer ouvre le .dmg : glissez Vela dans Applications, puis relancez.`
+      }
+      // Un .deb installé dans /opt ne peut pas être remplacé sans les droits
+      // d'administration : seule l'AppImage se met à jour toute seule.
+      if (platform === 'linux') {
+        return `${version} est téléchargée. Depuis l’AppImage, elle s’installe à la fermeture ; depuis un paquet .deb, réinstallez le fichier téléchargé.`
+      }
+      return `${version} s’installe à la fermeture de Vela.`
     case 'not-available':
       return 'Vela est à jour'
     case 'error':
@@ -152,4 +165,18 @@ export function updateDescription(info: UpdateInfo | null, isMac: boolean): stri
     default:
       return 'Mises à jour automatiques en arrière-plan'
   }
+}
+
+/**
+ * La notification brève affichée quand une version est prête. Elle dit ce qui
+ * va réellement se passer : un .dmg à glisser sur macOS, une installation à la
+ * fermeture sous Windows, et sous Linux seulement depuis l'AppImage.
+ */
+export function updateReadyMessage(info: UpdateInfo, platform: string): string {
+  const version = info.version ? `${info.version} ` : ''
+  if (platform === 'darwin') return `Mise à jour ${version}prête — « Installer » vous attend.`
+  if (platform === 'linux') {
+    return `Mise à jour ${version}prête — depuis l’AppImage, elle s’installe à la fermeture ; depuis un .deb, réinstallez le paquet.`
+  }
+  return `Mise à jour ${version}prête — elle s’installera quand vous quitterez Vela.`
 }

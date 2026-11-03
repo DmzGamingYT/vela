@@ -16,6 +16,7 @@ import { RELEASES_URL } from '@shared/site'
 import { HOME_URL } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import type { CreateSpaceInput, SaveNoteInput, SettingsPatch, UpdateSpaceInput } from '@shared/api'
+import { updateReadyMessage } from '@shared/update'
 
 /**
  * Références stables entre deux diffusions d'état.
@@ -32,7 +33,9 @@ let previousPrints = new Map<string, string>()
 function stableView(next: AppView): AppView {
   if (!previousView) {
     previousView = next
-    previousPrints = new Map(Object.keys(next).map((key) => [key, JSON.stringify(next[key as keyof AppView])]))
+    previousPrints = new Map(
+      Object.keys(next).map((key) => [key, JSON.stringify(next[key as keyof AppView])])
+    )
     return next
   }
   const merged: Record<string, unknown> = { ...next }
@@ -154,10 +157,18 @@ interface BrowserState {
   stop(id: string): void
   pin(id: string, pinned: boolean): void
   toggleMute(id: string, muted: boolean): void
-  reorderTab(id: string, targetId: string | null, position: 'before' | 'after', pinned?: boolean): void
+  reorderTab(
+    id: string,
+    targetId: string | null,
+    position: 'before' | 'after',
+    pinned?: boolean
+  ): void
   moveTabToGroup(id: string, groupId: string | null): void
   createGroup(tabId?: string): Promise<TabGroup | null>
-  updateGroup(id: string, patch: { name?: string; color?: string; collapsed?: boolean }): Promise<void>
+  updateGroup(
+    id: string,
+    patch: { name?: string; color?: string; collapsed?: boolean }
+  ): Promise<void>
   removeGroup(id: string): Promise<void>
   reopen(): void
   splitToggle(): void
@@ -333,12 +344,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       set({ update: info })
       // Silencieux pendant la préparation : la barre d'état suit la progression.
       if (info.state === 'downloaded') {
-        const version = info.version ? `${info.version} ` : ''
-        get().toast(
-          window.vela.platform === 'darwin'
-            ? `Mise à jour ${version}prête — « Installer » vous attend.`
-            : `Mise à jour ${version}prête — elle s’installera quand vous quitterez Vela.`
-        )
+        get().toast(updateReadyMessage(info, window.vela.platform))
       } else if (info.state === 'error' && info.message) {
         get().toast(info.message, 'error')
       }
@@ -385,15 +391,19 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       // Le premier champ est celui du panneau principal ; la classe
       // `.pane-primary` n'a jamais existé, donc ⌘L ne focalisait rien.
       const input =
-        document.querySelector<HTMLInputElement>('.pane-head[data-primary="true"] .address-input') ??
-        document.querySelector<HTMLInputElement>('.address-input')
+        document.querySelector<HTMLInputElement>(
+          '.pane-head[data-primary="true"] .address-input'
+        ) ?? document.querySelector<HTMLInputElement>('.address-input')
       input?.focus()
       input?.select()
     }, 20)
   },
 
   newTab(url = HOME_URL, groupId?: string) {
-    void get().call(() => window.vela.tabs.create({ url, groupId }), 'Impossible d’ouvrir un onglet.')
+    void get().call(
+      () => window.vela.tabs.create({ url, groupId }),
+      'Impossible d’ouvrir un onglet.'
+    )
     if (url === HOME_URL) {
       set({ overlay: null })
       get().focusAddress()
@@ -433,12 +443,21 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   toggleMute(id, muted) {
-    void get().call(() => window.vela.tabs.mute(id, muted), 'Impossible de changer le son de l’onglet.')
+    void get().call(
+      () => window.vela.tabs.mute(id, muted),
+      'Impossible de changer le son de l’onglet.'
+    )
   },
 
   reorderTab(id, targetId, position, pinned) {
     void get().call(
-      () => window.vela.tabs.reorder({ id, targetId, position, ...(pinned === undefined ? {} : { pinned }) }),
+      () =>
+        window.vela.tabs.reorder({
+          id,
+          targetId,
+          position,
+          ...(pinned === undefined ? {} : { pinned })
+        }),
       'Onglet non déplacé.'
     )
   },
@@ -489,7 +508,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   commitSplitRatio(ratio) {
     set({ splitRatioLive: ratio })
-    void get().call(() => window.vela.tabs.splitRatio(ratio), 'Impossible d’enregistrer la largeur.')
+    void get().call(
+      () => window.vela.tabs.splitRatio(ratio),
+      'Impossible d’enregistrer la largeur.'
+    )
   },
 
   activateSpace(id) {
@@ -503,7 +525,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async updateSpace(id, patch) {
-    await get().call(() => window.vela.spaces.update({ id, ...patch }), 'Impossible de modifier l’espace.')
+    await get().call(
+      () => window.vela.spaces.update({ id, ...patch }),
+      'Impossible de modifier l’espace.'
+    )
     set({ overlay: null })
   },
 
@@ -529,7 +554,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async removeSpace(id) {
-    const result = await get().call(() => window.vela.spaces.remove(id), 'Impossible de supprimer l’espace.')
+    const result = await get().call(
+      () => window.vela.spaces.remove(id),
+      'Impossible de supprimer l’espace.'
+    )
     if (result !== null) {
       set({ overlay: null })
       get().toast('Espace supprimé.')
@@ -594,7 +622,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async completeOnboarding() {
-    await get().call(() => window.vela.settings.update({ onboarded: true }), 'Onboarding non enregistré.')
+    await get().call(
+      () => window.vela.settings.update({ onboarded: true }),
+      'Onboarding non enregistré.'
+    )
   },
 
   setWorkMode(mode) {
@@ -610,7 +641,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     const view = get().view
     if (!view) return
     const existing = new Set(view.tabs.map((t) => t.url))
-    const essentials = selection && selection.length > 0 ? selection : ['https://github.com', 'https://www.notion.so']
+    const essentials =
+      selection && selection.length > 0
+        ? selection
+        : ['https://github.com', 'https://www.notion.so']
     let pinned = 0
     for (const url of essentials) {
       if (existing.has(url)) continue
@@ -620,7 +654,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       )
       if (created) pinned += 1
     }
-    get().toast(pinned > 0 ? `${pinned} page${pinned > 1 ? 's' : ''} épinglée${pinned > 1 ? 's' : ''}.` : 'Déjà épinglé.')
+    get().toast(
+      pinned > 0
+        ? `${pinned} page${pinned > 1 ? 's' : ''} épinglée${pinned > 1 ? 's' : ''}.`
+        : 'Déjà épinglé.'
+    )
   },
 
   async toggleBookmark(tabId) {
@@ -675,11 +713,12 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   async toggleSiteProtection(host) {
     if (!host) return
-    const exempted = await get().call(() => window.vela.privacy.toggleSite(host), 'Réglage non enregistré.')
-    if (exempted === null) return
-    get().toast(
-      exempted ? `Bloqueur désactivé pour ${host}.` : `Bloqueur réactivé pour ${host}.`
+    const exempted = await get().call(
+      () => window.vela.privacy.toggleSite(host),
+      'Réglage non enregistré.'
     )
+    if (exempted === null) return
+    get().toast(exempted ? `Bloqueur désactivé pour ${host}.` : `Bloqueur réactivé pour ${host}.`)
     const view = get().view
     const active = view?.tabs.find((tab) => tab.id === view.activeTabId)
     if (active && !isHomeUrl(active.url)) get().reload(active.id)
@@ -742,7 +781,9 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       if (bucket) bucket.push(tab)
       else byHost.set(host, [tab])
     }
-    const targets = Array.from(byHost).filter(([, list]) => list.length >= 2).slice(0, 6)
+    const targets = Array.from(byHost)
+      .filter(([, list]) => list.length >= 2)
+      .slice(0, 6)
     if (targets.length === 0) {
       get().toast('Aucun groupe de deux onglets ou plus à ranger.')
       return
@@ -756,11 +797,16 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       if (!group) continue
       groupIds.push(group.id)
       for (const tab of list.slice(1)) {
-        await get().call(() => window.vela.tabs.reorder({ id: tab.id, groupId: group.id }), 'Onglet non rangé.')
+        await get().call(
+          () => window.vela.tabs.reorder({ id: tab.id, groupId: group.id }),
+          'Onglet non rangé.'
+        )
       }
     }
     if (groupIds.length === 0) return
-    set({ lastGrouping: { groupIds, tabIds: targets.flatMap(([, list]) => list.map((tab) => tab.id)) } })
+    set({
+      lastGrouping: { groupIds, tabIds: targets.flatMap(([, list]) => list.map((tab) => tab.id)) }
+    })
     get().toast(
       `${groupIds.length} dossier${groupIds.length > 1 ? 's' : ''} créé${groupIds.length > 1 ? 's' : ''} par site.`,
       'info',
@@ -831,7 +877,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async refreshUpdate() {
-    const info = await get().call(() => window.vela.updates.status(), 'État de mise à jour indisponible.')
+    const info = await get().call(
+      () => window.vela.updates.status(),
+      'État de mise à jour indisponible.'
+    )
     if (info) set({ update: info })
   },
 
@@ -857,7 +906,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   },
 
   async downloadUpdate() {
-    const info = await get().call(() => window.vela.updates.download(), 'Téléchargement impossible.')
+    const info = await get().call(
+      () => window.vela.updates.download(),
+      'Téléchargement impossible.'
+    )
     if (info) set({ update: info })
   },
 
@@ -888,7 +940,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     set({
       agentOpen: get().workMode !== 'work',
       agentDraft: prompt,
-      agentSentTabIds: view.settings.agent.mode === 'api' ? sources.map((source) => source.tabId!).filter(Boolean) : [],
+      agentSentTabIds:
+        view.settings.agent.mode === 'api'
+          ? sources.map((source) => source.tabId!).filter(Boolean)
+          : [],
       agent: {
         ...EMPTY_AGENT,
         status: 'running',
@@ -1003,10 +1058,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     if (!view) return
     const targets = view.tabs.filter(
       (tab) =>
-        tab.spaceId === view.activeSpaceId &&
-        tab.id !== id &&
-        !tab.pinned &&
-        !isHomeUrl(tab.url)
+        tab.spaceId === view.activeSpaceId && tab.id !== id && !tab.pinned && !isHomeUrl(tab.url)
     )
     if (targets.length === 0) {
       get().toast('Aucun autre onglet à fermer.')
@@ -1029,7 +1081,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       () => window.vela.tabs.find(tabId, query, forward),
       'Recherche dans la page impossible.'
     )
-    if (result && get().view?.activeTabId === tabId && get().findQuery === query) set({ findResult: result })
+    if (result && get().view?.activeTabId === tabId && get().findQuery === query)
+      set({ findResult: result })
   },
 
   closeFind() {

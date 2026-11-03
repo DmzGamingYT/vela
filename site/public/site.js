@@ -202,7 +202,8 @@
       try {
         await copy(button.dataset.copy)
       } catch (error) {
-        if (copyStatus) copyStatus.textContent = 'Copie impossible : sélectionnez l’empreinte à la main.'
+        if (copyStatus)
+          copyStatus.textContent = 'Copie impossible : sélectionnez l’empreinte à la main.'
         return
       }
       button.classList.add('is-copied')
@@ -218,10 +219,16 @@
   /* --- Sommaire qui suit la lecture -------------------------------------- */
 
   const spy = document.querySelector('[data-scroll-spy]')
-  const chapters = spy ? [...spy.querySelectorAll('a')].map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean) : []
+  const chapters = spy
+    ? [...spy.querySelectorAll('a')]
+        .map((a) => document.querySelector(a.getAttribute('href')))
+        .filter(Boolean)
+    : []
 
   if (spy && chapters.length && 'IntersectionObserver' in window) {
-    const links = new Map(chapters.map((chapter) => [chapter.id, spy.querySelector(`a[href="#${chapter.id}"]`)]))
+    const links = new Map(
+      chapters.map((chapter) => [chapter.id, spy.querySelector(`a[href="#${chapter.id}"]`)])
+    )
     const setCurrent = (id) => {
       for (const [key, link] of links) {
         if (!link) continue
@@ -254,7 +261,10 @@
     const entries = [...journal.querySelectorAll('.timeline > li')]
     const counter = journal.querySelector('.filtres-compteur')
     const links = new Map(
-      entries.map((entry) => [entry, journal.querySelector(`.journal-index a[href="#${entry.id}"]`)])
+      entries.map((entry) => [
+        entry,
+        journal.querySelector(`.journal-index a[href="#${entry.id}"]`)
+      ])
     )
     // Les étiquettes déjà écrites sous chaque titre sont la source du filtre :
     // rien à entretenir deux fois quand une version parait.
@@ -350,5 +360,44 @@
     setTimeout(() => {
       for (const target of targets) if (target.classList.contains('is-armed')) show(target)
     }, 2600)
+  }
+
+  /* --- La fenêtre prend la lumière --------------------------------------- */
+
+  // Trois degrés au plus, seulement sur un vrai pointeur : au doigt il n’y a
+  // pas de survol, et sous « Réduire les animations » la capture reste droite.
+  const fenetre = document.querySelector('.window')
+  const immobile = matchMedia('(prefers-reduced-motion: reduce)')
+  const pointeurFin = matchMedia('(pointer: fine)')
+
+  if (fenetre && !immobile.matches && pointeurFin.matches) {
+    let x = 0
+    let y = 0
+    let cadre = 0
+
+    const poser = () => {
+      cadre = 0
+      fenetre.style.setProperty('--ty', `${(x * 5).toFixed(2)}deg`)
+      fenetre.style.setProperty('--tx', `${(-y * 3.4).toFixed(2)}deg`)
+    }
+
+    const suivre = (event) => {
+      if (event.pointerType !== 'mouse') return
+      const boite = fenetre.getBoundingClientRect()
+      x = (event.clientX - boite.left) / boite.width - 0.5
+      y = (event.clientY - boite.top) / boite.height - 0.5
+      fenetre.classList.add('is-tilting')
+      if (!cadre) cadre = requestAnimationFrame(poser)
+    }
+
+    const reposer = () => {
+      x = 0
+      y = 0
+      fenetre.classList.remove('is-tilting')
+      if (!cadre) cadre = requestAnimationFrame(poser)
+    }
+
+    fenetre.addEventListener('pointermove', suivre, { passive: true })
+    fenetre.addEventListener('pointerleave', reposer)
   }
 })()

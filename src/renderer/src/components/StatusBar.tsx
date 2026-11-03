@@ -30,8 +30,7 @@ export default function StatusBar() {
 
   const blocked = view.blockedTotal
   const downloads = view.downloads.length
-  const isMac = window.vela.platform === 'darwin'
-  const notice = updateNotice(update, isMac)
+  const notice = updateNotice(update, window.vela.platform)
   // Une version déjà masquée ne revient pas ; l'action reste dans les réglages.
   const showUpdate = Boolean(notice && update?.version && dismissed !== update.version)
 

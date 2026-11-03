@@ -20,9 +20,8 @@ export default function AboutPage() {
   const activeDefinition = providerById(settings.agent.provider)
   const activeState = providerState(settings)
   const apiReady = providerReady(settings)
-  const isMac = window.vela.platform === 'darwin'
-  const updateLabel = updateDescription(update, isMac)
-  const notice = updateNotice(update, isMac)
+  const updateLabel = updateDescription(update, window.vela.platform)
+  const notice = updateNotice(update, window.vela.platform)
 
   return (
     <section className="setting-block">
@@ -45,7 +44,13 @@ export default function AboutPage() {
           <strong>Mise à jour</strong>
           <p className="setting-hint">{updateLabel}</p>
           {update?.state === 'downloading' && (
-            <div className="update-progress" role="progressbar" aria-valuenow={update.progress} aria-valuemin={0} aria-valuemax={100}>
+            <div
+              className="update-progress"
+              role="progressbar"
+              aria-valuenow={update.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <span style={{ width: `${Math.min(100, Math.max(0, update.progress))}%` }} />
             </div>
           )}
@@ -76,7 +81,9 @@ export default function AboutPage() {
       <div className="about-grid">
         <div>
           <span>Agent</span>
-          <strong>{apiReady ? `${activeDefinition.label} · ${activeState.model}` : 'Démo locale'}</strong>
+          <strong>
+            {apiReady ? `${activeDefinition.label} · ${activeState.model}` : 'Démo locale'}
+          </strong>
         </div>
         <div>
           <span>Bloqueur</span>

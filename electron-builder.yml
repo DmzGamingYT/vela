@@ -37,8 +37,8 @@ mac:
     # rebranding ne puisse le perdre.
     CFBundleName: Vela
     CFBundleDisplayName: Vela
-    NSCameraUsageDescription: "Vela utilise la caméra pour les visioconférences et les appels lancés depuis vos pages web."
-    NSMicrophoneUsageDescription: "Vela utilise le microphone pour vos notes vocales et les appels lancés depuis vos pages web. L’enregistrement reste sur cet appareil."
+    NSCameraUsageDescription: 'Vela ne demande pas la caméra : aucune page web n’y a accès.'
+    NSMicrophoneUsageDescription: 'Vela utilise le microphone pour vos notes vocales. L’enregistrement reste sur cet appareil ; aucune page web n’y a accès.'
   # Trois architectures livrées ensemble : universel (un seul .dmg et un seul
   # .zip pour Apple silicon et Intel), plus arm64 et x64 séparés tant que
   # l'universel n'a pas été validé sur une vraie machine Intel. Le nom du
@@ -64,5 +64,5 @@ linux:
   target: [AppImage, deb]
   category: Network
   syncDesktopName: true
-  maintainer: Vela contributors <contact@example.com>
+  maintainer: Vela contributors <DmzGamingYT@users.noreply.github.com>
   description: Navigateur de travail — espaces, vue scindée, brief du jour, notes et agent local.

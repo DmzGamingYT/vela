@@ -216,7 +216,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run dist:win -- --publish never
+      - name: Construire l’installateur
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CSC_LINK:-}" ]; then
+            echo "::warning::Aucun certificat Windows (secret WIN_CSC_LINK) : l’installateur reste non signé, SmartScreen avertira."
+          fi
+          npm run dist:win -- --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: win

@@ -15,11 +15,16 @@
      dix accents, y compris les plus clairs (ambre, orange). */
   background-image:
     radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.12), transparent 62%),
-    linear-gradient(168deg, color-mix(in srgb, var(--accent) 48%, #0f0f16) 0%, color-mix(in srgb, var(--accent) 34%, #0a0a10) 60%, #08080c 100%);
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--accent) 48%, #0f0f16) 0%,
+      color-mix(in srgb, var(--accent) 34%, #0a0a10) 60%,
+      #08080c 100%
+    );
 }
 
 .hero::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: auto -6% -60px;
   z-index: 3;
@@ -104,7 +109,9 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 18px;
   background: var(--surface);
-  box-shadow: 0 60px 120px -50px rgba(0, 0, 0, 0.75), 0 2px 0 rgba(255, 255, 255, 0.25) inset;
+  box-shadow:
+    0 60px 120px -50px rgba(0, 0, 0, 0.75),
+    0 2px 0 rgba(255, 255, 255, 0.25) inset;
   overflow: hidden;
 }
 
@@ -176,11 +183,11 @@
   display: none;
 }
 
-html[data-theme="dark"] .shot-light {
+html[data-theme='dark'] .shot-light {
   display: none;
 }
 
-html[data-theme="dark"] .shot-dark {
+html[data-theme='dark'] .shot-dark {
   display: block;
 }
 
@@ -223,12 +230,14 @@ html[data-theme="dark"] .shot-dark {
   border: 1px solid var(--line);
   background: var(--surface);
   position: relative;
-  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
+  transition:
+    transform 0.18s var(--ease),
+    border-color 0.18s var(--ease);
 }
 
 /* 40 px de cible : le rayon déborde dans les 10 px de gouttière, sans chevauchement. */
 .swatch::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: -5px;
   border-radius: inherit;
@@ -245,9 +254,11 @@ html[data-theme="dark"] .shot-dark {
   transform: translateY(-2px);
 }
 
-.swatch[aria-pressed="true"] {
+.swatch[aria-pressed='true'] {
   border-color: var(--ink);
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ink);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 3px var(--ink);
 }
 
 /* --- Trois gestes -------------------------------------------------------- */
@@ -344,7 +355,7 @@ html[data-theme="dark"] .shot-dark {
 }
 
 .privacy-col li::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   top: 7px;
@@ -456,7 +467,9 @@ html[data-theme="dark"] .shot-dark {
 
 .dl-table .file a {
   border-bottom: 1px solid var(--line);
-  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
 }
 
 .dl-table .file a:hover {
@@ -490,11 +503,13 @@ html[data-theme="dark"] .shot-dark {
   color: var(--ink-3);
   vertical-align: middle;
   position: relative;
-  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+  transition:
+    color 0.18s var(--ease),
+    background 0.18s var(--ease);
 }
 
 .copy::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: -7px;
 }
@@ -655,5 +670,110 @@ html[data-theme="dark"] .shot-dark {
 
   .dl-note {
     padding-inline: 20px;
+  }
+}
+
+/* --- Le héros respire : une lueur lente, et rien d’autre ---------------- */
+
+.wordmark {
+  position: relative;
+}
+
+/* La lueur dérive derrière le mot : deux dégradés diffus pris dans la teinte
+   d’accent, sur dix-huit secondes. Rien n’est rasterisé, donc net à toute
+   densité et gratuit en poids. */
+.wordmark::before {
+  content: '';
+  position: absolute;
+  inset: -30% -22% -10%;
+  z-index: -1;
+  border-radius: 56% 44% 50% 50% / 60% 52% 48% 40%;
+  background:
+    radial-gradient(
+      48% 52% at 44% 50%,
+      color-mix(in oklab, var(--accent) 46%, white) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      46% 48% at 62% 58%,
+      color-mix(in oklab, var(--accent) 34%, transparent) 0%,
+      transparent 70%
+    );
+  filter: blur(58px);
+  opacity: 0.55;
+  animation: vela-lueur 18s var(--ease) infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes vela-lueur {
+  from {
+    transform: translate3d(-3.5%, 2%, 0) scale(0.92) rotate(-3deg);
+    opacity: 0.42;
+  }
+
+  to {
+    transform: translate3d(4%, -2.5%, 0) scale(1.22) rotate(3deg);
+    opacity: 0.9;
+  }
+}
+
+/* Une nappe de lumière traverse lentement le haut du héros : c’est elle qui
+   fait sentir que la page est vivante, sans bouger un seul mot. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -45% -25% auto;
+  z-index: 0;
+  height: 130%;
+  background: radial-gradient(44% 55% at 50% 45%, rgba(255, 255, 255, 0.2), transparent 72%);
+  filter: blur(34px);
+  animation: vela-nappe 18s var(--ease) infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes vela-nappe {
+  from {
+    transform: translate3d(-7%, 2%, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(7%, -4%, 0) scale(1.18);
+  }
+}
+
+/* La fenêtre prend la lumière : cinq degrés au plus, jamais plus. */
+.window {
+  --tx: 0deg;
+  --ty: 0deg;
+  transform: perspective(1500px) rotateX(var(--tx)) rotateY(var(--ty));
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.4s var(--ease),
+    box-shadow 0.4s var(--ease);
+}
+
+.window.is-tilting {
+  will-change: transform;
+}
+
+.window:hover {
+  box-shadow:
+    0 80px 150px -46px rgba(0, 0, 0, 0.85),
+    0 2px 0 rgba(255, 255, 255, 0.32) inset;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark::before,
+  .hero::before {
+    animation: none;
+    transform: none;
+  }
+
+  .wordmark::before {
+    opacity: 0.55;
+  }
+
+  .window {
+    transform: none;
   }
 }
