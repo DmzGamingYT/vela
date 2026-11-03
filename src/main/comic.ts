@@ -2,7 +2,7 @@ import { app, ipcMain, net, type IpcMainInvokeEvent, type Session } from 'electr
 import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { buildChatRequest, providerById } from '@shared/providers'
+import { buildChatRequest, endpointHost, isLoopbackEndpoint, providerById } from '@shared/providers'
 import type { ProviderId, Settings } from '@shared/types'
 import type { ComicRunResult } from '@shared/api'
 import type { TabManager } from './tabs'
@@ -17,8 +17,10 @@ import type { TabManager } from './tabs'
  *  - lire une image distante (mêmes cookies et même session que l'onglet) ;
  *  - traduire une liste de répliques avec le fournisseur configuré dans Vela.
  *
- * Le jeton vit dans la fermeture du script injecté : une page ne peut pas le
- * relire, et il expire au bout de trente minutes.
+ * Le jeton vit dans la fermeture du script injecté et sur rien d'autre : posé
+ * sur `window`, un script tiers pouvait appeler la vision et écrire dans les
+ * corrections pendant les trente minutes de validité. Il n'est donc jamais
+ * exposé globalement, et chaque canal repasse par la politique IPC.
  */
 
 const SCRIPT_FILE = join('userscripts', 'comic-translate.user.js')
@@ -50,33 +52,48 @@ function message(error: unknown): string {
 
 export class ComicBridge {
   private grants = new Map<string, Grant>()
+  /** Hôtes distants déjà approuvés par l'utilisateur pendant ce lancement. */
+  private remoteConsent = new Map<string, boolean>()
 
   constructor(
     private tabs: TabManager,
     private getSettings: () => Settings,
-    private getSecret: (provider: ProviderId) => string | null
+    private getSecret: (provider: ProviderId) => string | null,
+    /** Même barrière que les canaux du châssis : émetteur connu, cadre principal. */
+    private allow: (event: IpcMainInvokeEvent, channel: string) => boolean,
+    /** Accord explicite avant que le contenu d'une planche quitte l'appareil. */
+    private confirmRemote: (host: string) => Promise<boolean>
   ) {}
 
   registerIpc(): void {
-    ipcMain.handle('comic:run', (_event, payload) =>
+    const handle = (channel: string, run: (event: IpcMainInvokeEvent, payload: unknown) => unknown): void => {
+      ipcMain.handle(channel, (event, payload) => {
+        if (!this.allow(event, channel)) throw new Error(`Canal IPC refusé : ${channel}`)
+        return run(event, payload)
+      })
+    }
+
+    handle('comic:run', (_event, payload) =>
       this.run(String((payload as { tabId?: unknown })?.tabId ?? ''))
     )
-    ipcMain.handle('comic:clear', (_event, payload) => this.clear(String((payload as { tabId?: unknown })?.tabId ?? '')))
-    ipcMain.handle('comic:image', (event, payload) => this.withGrant(event, payload, (grant) => this.image(grant, String((payload as ComicRequest).url ?? ''))))
-    ipcMain.handle('comic:translate', (event, payload) =>
+    handle('comic:clear', (_event, payload) => this.clear(String((payload as { tabId?: unknown })?.tabId ?? '')))
+    handle('comic:image', (event, payload) =>
+      this.withGrant(event, payload, (grant) => this.image(grant, String((payload as ComicRequest).url ?? '')))
+    )
+    handle('comic:translate', (event, payload) =>
       this.withGrant(event, payload, () =>
         this.translate((payload as ComicRequest).texts, (payload as ComicRequest).contexte)
       )
     )
-    ipcMain.handle('comic:vision', (event, payload) =>
+    handle('comic:vision', (event, payload) =>
       this.withGrant(event, payload, () => this.vision(String((payload as ComicRequest).dataUrl ?? '')))
     )
-    ipcMain.handle('comic:edits', (event, payload) =>
+    handle('comic:edits', (event, payload) =>
       this.withGrant(event, payload, async () =>
         this.saveEdits(String((payload as ComicRequest).key ?? ''), (payload as ComicRequest).value)
       )
     )
-    ipcMain.handle('comic:load-edits', (event, payload) =>
+    handle('comic:load-edits', (event, payload) =>
       this.withGrant(event, payload, async () => this.loadEdits(String((payload as ComicRequest).key ?? '')))
     )
   }
@@ -135,7 +152,6 @@ export class ComicBridge {
           document.querySelectorAll('.vt-layer, .vt-panel, .vt-launch').forEach((node) => node.remove())
           document.documentElement.classList.remove('vt-hidden')
           try { delete window.velaComic } catch {}
-          try { delete window.__velaComicVision; delete window.__velaComicEdits; delete window.__velaComicLoadEdits } catch {}
           window.__velaComicRunning = false
           return true
         })()`
@@ -152,11 +168,12 @@ export class ComicBridge {
         if (window.__velaComicRunning) return { ok: true, reason: 'déjà lancé' }
         window.__velaComicRunning = true
         const token = ${JSON.stringify(token)}
-        // Ces deux entrées gardent le jeton dans cette fermeture : la page ne
-        // peut pas lire d'image ni écrire de fichier d'elle-même.
-        window.__velaComicVision = (dataUrl) => bridge.vision(token, dataUrl)
-        window.__velaComicEdits = (key, value) => bridge.saveEdits(token, key, value)
-        window.__velaComicLoadEdits = (key) => bridge.loadEdits(token, key)
+        // Le jeton reste dans cette fermeture et ne passe jamais par window :
+        // un script de page ne peut ni le lire ni appeler ces fonctions. Le script
+        // de traduction, inliné plus bas dans la même portée, les voit directement.
+        const velaComicVision = (dataUrl) => bridge.vision(token, dataUrl)
+        const velaComicEdits = (key, value) => bridge.saveEdits(token, key, value)
+        const velaComicLoadEdits = (key) => bridge.loadEdits(token, key)
         const storeKey = (key) => 'vela-comic:' + key
         const GM_getValue = (key, fallback) => {
           try {
@@ -182,8 +199,19 @@ export class ComicBridge {
           if (method === 'GET') {
             bridge.image(token, String(settings.url || '')).then((result) => {
               if (!result || !result.ok) return failMessage(result && result.error ? result.error : 'image refusée')
-              done(settings.onload, { status: 200, response: toBlob(result.base64, result.type), responseText: '' })
-            }).catch(() => failMessage('image inaccessible'))
+              try {
+                done(settings.onload, { status: 200, response: toBlob(result.base64, result.type), responseText: '' })
+              } catch (error) {
+                // Enveloppe illisible (base64 tronqué, type vide…) : on dit quoi,
+                // plutôt que de laisser un « image inaccessible » sans cause.
+                failMessage(\`image illisible — \${error && error.message ? error.message : 'octets refusés'}\`)
+              }
+            }).catch((error) => {
+              // La raison réelle de l'IPC (jeton expiré, canal refusé, page
+              // détruite…) disparaissait ici : on la transmet telle quelle.
+              const detail = error && error.message ? error.message : 'échec interne'
+              failMessage(\`image inaccessible — \${detail}\`)
+            })
             return
           }
           let texts = []
@@ -214,50 +242,111 @@ export class ComicBridge {
     return prelude
   }
 
+  /** Une ligne par planche dans le journal du processus principal. */
+  private diag(line: string): void {
+    console.log(`[BD][main] ${line}`)
+  }
+
   private async image(grant: Grant, url: string): Promise<{ ok: boolean; base64?: string; type?: string; error?: string }> {
     if (/^data:/i.test(url)) {
       const match = /^data:([^;,]+)?(?:;base64)?,(.*)$/i.exec(url)
       if (!match) return { ok: false, error: 'image illisible' }
+      this.diag(`url=data: type=${match[1] || 'image/png'} octets=${match[2].length}`)
       return { ok: true, base64: match[2], type: match[1] || 'image/png' }
     }
-    if (!/^https?:\/\//i.test(url)) return { ok: false, error: 'source refusée' }
+    if (!/^https?:\/\//i.test(url)) return { ok: false, error: 'source refusée — URL ni http ni data' }
+
+    // Essais de Referer, dans l'ordre : sans Referer, puis avec le « Referer
+    // racine » du site de la page. Mesuré sur Electron : dès que le Referer
+    // porte un chemin (page de lecture, /viewer?…), le réseau renvoie
+    // net::ERR_BLOCKED_BY_CLIENT et chaque planche échoue — c'était la cause
+    // des « image inaccessible » sur Webtoons. Le chemin complet de la page ne
+    // part donc jamais ; la racine du site suffit aux protections anti-lien
+    // direct, et l'agent fourni par Electron lève le doute sur le reste.
+    const essais: { label: string; referer?: string }[] = [{ label: 'sans Referer' }]
     try {
-      const response = await grant.session.fetch(url, {
-        headers: grant.pageUrl ? { Referer: grant.pageUrl } : {}
-      })
-      if (!response.ok) return { ok: false, error: `image HTTP ${response.status}` }
-      const declared = Number(response.headers.get('content-length') ?? 0)
-      if (declared > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
-      // Lecture bornée : arrayBuffer() chargeait la planche entière avant que le
-      // plafond ne s'applique, comme le tunnel avant sa correction.
-      const reader = response.body?.getReader()
-      let buffer: Buffer
-      if (!reader) {
-        buffer = Buffer.from(await response.arrayBuffer())
-      } else {
-        const chunks: Uint8Array[] = []
-        let total = 0
-        for (;;) {
-          const { done, value } = await reader.read()
-          if (done) break
-          total += value.byteLength
-          if (total > MAX_IMAGE_BYTES) {
-            await reader.cancel().catch(() => undefined)
-            return { ok: false, error: 'image trop lourde' }
-          }
-          chunks.push(value)
-        }
-        buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
-      }
-      if (buffer.byteLength > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
-      return {
-        ok: true,
-        base64: buffer.toString('base64'),
-        type: response.headers.get('content-type') || 'image/png'
-      }
-    } catch (error) {
-      return { ok: false, error: message(error) }
+      const racine = `${new URL(grant.pageUrl).origin}/`
+      essais.push({ label: racine, referer: racine })
+    } catch {
+      /* page sans URL lisible : l'essai sans Referer seul */
     }
+
+    const tentatives: string[] = []
+    for (const essai of essais) {
+      try {
+        const response = await grant.session.fetch(url, {
+          headers: essai.referer ? { Referer: essai.referer } : {}
+        })
+        const type = response.headers.get('content-type') ?? ''
+        const length = response.headers.get('content-length') ?? ''
+        this.diag(`url=${url} referer=${essai.label} statut=${response.status} content-type=${type || '(vide)'} content-length=${length || '?'}`)
+        if (!response.ok) {
+          tentatives.push(`${essai.label} → HTTP ${response.status}`)
+          continue
+        }
+        if (!/^image\//i.test(type) && !/octet-stream/i.test(type)) {
+          this.diag(`avertissement : content-type inattendu ${type || '(vide)'} pour ${url}`)
+        }
+        const declared = Number(length || 0)
+        if (declared > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
+        // Lecture bornée : arrayBuffer() chargeait la planche entière avant que le
+        // plafond ne s'applique, comme le tunnel avant sa correction.
+        const reader = response.body?.getReader()
+        let buffer: Buffer
+        if (!reader) {
+          buffer = Buffer.from(await response.arrayBuffer())
+        } else {
+          const chunks: Uint8Array[] = []
+          let total = 0
+          for (;;) {
+            const { done, value } = await reader.read()
+            if (done) break
+            total += value.byteLength
+            if (total > MAX_IMAGE_BYTES) {
+              await reader.cancel().catch(() => undefined)
+              return { ok: false, error: 'image trop lourde' }
+            }
+            chunks.push(value)
+          }
+          buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
+        }
+        if (buffer.byteLength > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
+        this.diag(`ok ${buffer.byteLength} octets base64=${Math.round((buffer.byteLength * 4) / 3)} pour ${url}`)
+        return {
+          ok: true,
+          base64: buffer.toString('base64'),
+          type: type || 'image/png'
+        }
+      } catch (error) {
+        // `tentatives` garde la chronologie, pour dire sur chaque essai ce qui
+        // a réellement tourné (fermeture réseau, jeton, CDN…).
+        tentatives.push(`${essai.label} → ${message(error)}`)
+        this.diag(`échec réseau : ${message(error)}`)
+      }
+    }
+    return {
+      ok: false,
+      error:
+        tentatives.some((line) => /HTTP \d+/.test(line))
+          ? `image HTTP ${tentatives.join(' · ')}`
+          : `image inaccessible — ${tentatives.join(' · ')}`
+    }
+  }
+
+  /**
+   * Le fournisseur actif peut viser une machine hors de l'appareil : répliques
+   * et images de bulles partent alors tels quels. Choisir OpenAI dans les réglages
+   * n'a jamais porté sur le contenu d'une planche — un seul accord par hôte et par
+   * lancement, demandé avant la première requête sortante. Retourne null quand on
+   * peut partir, sinon la raison de l'arrêt.
+   */
+  private async consentFor(baseUrl: string): Promise<string | null> {
+    if (!/^https?:\/\//i.test(baseUrl) || isLoopbackEndpoint(baseUrl)) return null
+    const host = endpointHost(baseUrl) ?? baseUrl
+    if (this.remoteConsent.get(host)) return null
+    const agreed = await this.confirmRemote(host).catch(() => false)
+    this.remoteConsent.set(host, agreed)
+    return agreed ? null : `traduction non envoyée — ${host} n’est pas approuvé`
   }
 
   /**
@@ -277,6 +366,8 @@ export class ComicBridge {
       return { ok: false, error: 'lecture d’image : fournisseur compatible OpenAI requis' }
     }
     const provider = settings.agent.providers[definition.id]
+    const refused = await this.consentFor(provider.baseUrl)
+    if (refused) return { ok: false, error: refused }
     const messages = [
       {
         role: 'user',
@@ -354,6 +445,8 @@ export class ComicBridge {
       return { ok: false, error: `ajoutez une clé ${definition.label} dans Réglages › Modèles` }
     }
     const provider = settings.agent.providers[definition.id]
+    const refused = await this.consentFor(provider.baseUrl)
+    if (refused) return { ok: false, error: refused }
     const messages = [
       {
         role: 'system' as const,

@@ -1051,7 +1051,7 @@
   async function readBurstVision(canvas, box) {
     // Branché par Vela (le jeton reste dans sa fermeture). Hors application, il
     // n'y a pas de modèle de vision : on ne prétend pas lire l'éclat.
-    if (typeof window.__velaComicVision !== 'function') {
+    if (typeof velaComicVision !== 'function') {
       VISION.erreur = VISION.erreur || 'modèle de vision non branché'
       return null
     }
@@ -1059,7 +1059,7 @@
     if (!part) return null
     VISION.appels += 1
     try {
-      const result = await window.__velaComicVision(part.canvas.toDataURL('image/png'))
+      const result = await velaComicVision(part.canvas.toDataURL('image/png'))
       const text = String((result && result.texte) || '').trim()
       if (!result || !result.ok || !text) {
         VISION.erreur = (result && result.error) || 'réponse vide'
@@ -1966,9 +1966,9 @@
     EDITS[key] = { ...(EDITS[key] || {}) }
     EDITS[key][id] = { ...(EDITS[key][id] || {}), ...patch, manuel: true }
     GM_setValue('edits', EDITS)
-    if (typeof window.__velaComicEdits === 'function') {
+    if (typeof velaComicEdits === 'function') {
       try {
-        window.__velaComicEdits(key, EDITS[key])
+        velaComicEdits(key, EDITS[key])
       } catch {
         /* disque indisponible : le stockage du script suffit */
       }
@@ -1980,9 +1980,9 @@
    *  Le stockage du script prime : une correction faite dans la page n'est pas
    *  écrasée par une version plus ancienne du fichier. */
   async function readEditsFile(source) {
-    if (!source || typeof window.__velaComicLoadEdits !== 'function') return null
+    if (!source || typeof velaComicLoadEdits !== 'function') return null
     try {
-      const result = await window.__velaComicLoadEdits(imageKeyOf(source))
+      const result = await velaComicLoadEdits(imageKeyOf(source))
       return result && result.ok && result.value ? result.value : null
     } catch {
       return null

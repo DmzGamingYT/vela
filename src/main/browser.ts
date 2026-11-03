@@ -249,7 +249,23 @@ export class Browser {
     this.comic = new ComicBridge(
       this.tabs,
       () => this.store.get().settings,
-      (provider: ProviderId) => this.store.getSecret(provider)
+      (provider: ProviderId) => this.store.getSecret(provider),
+      (event, channel) => this.allowIpc(event, channel),
+      async (host) => {
+        const win = this.win
+        if (!win || win.isDestroyed()) return false
+        const decision = await dialog.showMessageBox(win, {
+          type: 'warning',
+          title: 'Traduction vers un service distant',
+          message: 'Le texte de la planche va quitter cet appareil',
+          detail: `Vela enverra à ${host} les répliques repérées sur la planche, et l’image des bulles que la lecture locale n’a pas su déchiffrer. Vela ne contrôle pas ce que cet hôte en fait.`,
+          buttons: ['Annuler', 'Traduire via cet hôte'],
+          defaultId: 0,
+          cancelId: 0,
+          noLink: true
+        })
+        return decision.response === 1
+      }
     )
   }
 

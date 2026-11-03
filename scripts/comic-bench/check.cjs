@@ -129,7 +129,11 @@ function prelude(script) {
       if (window.__velaComicRunning) return { ok: true, reason: 'déjà lancé' }
       window.__velaComicRunning = true
       const token = 'test'
-      window.__velaComicLoadEdits = (key) => bridge.loadEdits(token, key)
+      // Comme dans src/main/comic.ts : les aides restent dans la fermeture, le
+      // script de page ne voit aucune entrée portant le jeton.
+      const velaComicVision = (dataUrl) => bridge.vision(token, dataUrl)
+      const velaComicEdits = (key, value) => bridge.saveEdits(token, key, value)
+      const velaComicLoadEdits = (key) => bridge.loadEdits(token, key)
       const storeKey = (key) => 'vela-comic:' + key
       const GM_getValue = (key, fallback) => {
         try { const raw = localStorage.getItem(storeKey(key)); return raw === null ? fallback : JSON.parse(raw) } catch { return fallback }
@@ -303,9 +307,6 @@ async function main() {
     loadEdits: async (token, key) => window.__vtLoadEdits(key),
     mode: 'test'
   };
-  window.__velaComicVision = (dataUrl) => window.__velaComicBridge.vision('test', dataUrl);
-  window.__velaComicEdits = (key, value) => window.__velaComicBridge.saveEdits('test', key, value);
-  window.__velaComicLoadEdits = (key) => window.__velaComicBridge.loadEdits('test', key);
   true`)
 
   const script = fs.readFileSync(path.join(ROOT, 'userscripts/comic-translate.user.js'), 'utf8')
@@ -363,6 +364,18 @@ async function main() {
     console.log(`IGNORE ${nom} — ${detail}`)
   }
   const found = (pattern) => report.filter((entry) => pattern.test(entry.texte || ''))
+
+  // Le jeton de traduction ne doit rien laisser d’appelable depuis la page :
+  // posées sur window, la vision et les corrections pouvaient être invoquées par
+  // un script tiers pendant les trente minutes de validité de la session.
+  const portes = await win.webContents.executeJavaScript(
+    `['__velaComicVision', '__velaComicEdits', '__velaComicLoadEdits'].filter((nom) => typeof window[nom] === 'function')`
+  )
+  check(
+    'le pont BD ne dépasse pas la fermeture injectée',
+    !Array.isArray(portes) || portes.length === 0,
+    Array.isArray(portes) && portes.length ? `window porte encore ${portes.join(', ')}` : 'window ne porte que le pont sans jeton'
+  )
 
   const burst = found(/RUN/i)[0]
   check('1 éclat lu et traduit', Boolean(burst && /COUREZ/i.test(burst.traduit) && burst.fits), burst ? `« ${burst.texte} » → « ${burst.traduit} » (${burst.taille} px)` : 'zone absente')

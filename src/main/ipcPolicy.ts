@@ -12,6 +12,9 @@ export type SenderKind = 'shell' | 'mini' | 'page' | 'unknown'
 export const PAGE_CHANNELS: readonly string[] = [
   'comic:image',
   'comic:translate',
+  'comic:vision',
+  'comic:edits',
+  'comic:load-edits',
   'notes:capture-selection',
   'notes:drag-selection'
 ]

@@ -38,6 +38,18 @@ describe('canaux autorisés', () => {
     expect(canUseChannel('page', 'update:install')).toBe(false)
   })
 
+  it('laisse le pilotage de la traduction BD à la seule coque', () => {
+    // Une page peut emprunter l'image et la traduction ; lancer ou arrêter le
+    // script sur un onglet reste une commande du châssis.
+    for (const channel of ['comic:run', 'comic:clear']) {
+      expect(canUseChannel('page', channel), channel).toBe(false)
+      expect(canUseChannel('shell', channel), channel).toBe(true)
+    }
+    for (const channel of ['comic:vision', 'comic:edits', 'comic:load-edits']) {
+      expect(canUseChannel('page', channel), channel).toBe(true)
+    }
+  })
+
   it('ne donne rien à un renderer inconnu', () => {
     expect(canUseChannel('unknown', 'settings:update')).toBe(false)
     expect(canUseChannel('unknown', 'mini:state')).toBe(false)
