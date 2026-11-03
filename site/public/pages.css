@@ -497,91 +497,12 @@
   font-size: 10.5px;
 }
 
-/* --- Journal des versions : dates, filtres, sommaire collant -------------- */
+/* --- Journal des versions : dates, filtres, étiquettes ------------------- */
 
 .journal {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
-  gap: 40px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-}
-
-/* Sur un grand écran il reste de la place : le sommaire respire, et les titres
-   des versions cessent de se couper en deux. */
-@media (min-width: 1200px) {
-  .journal {
-    grid-template-columns: 300px minmax(0, 1fr);
-  }
-}
-
-.journal-index {
-  position: sticky;
-  top: 104px;
-  display: grid;
-  max-height: calc(100vh - 148px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.journal-index a {
-  /* Le numéro et sa date tiennent sur une ligne, le titre prend toute la
-     largeur en dessous. Avec la date dans une colonne à part, « 29 oct. 2026 »
-     débordait sur le titre dès que la police changeait de métriques, et un
-     titre sur deux lignes venait toucher la version suivante. */
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas:
-    'numero date'
-    'titre titre';
-  row-gap: 3px;
-  column-gap: 10px;
-  align-items: start;
-  padding: 8px 10px 8px 0;
-  border-left: 2px solid transparent;
-  transition:
-    color 0.2s var(--ease),
-    border-color 0.2s var(--ease);
-}
-
-.journal-index .num {
-  grid-area: numero;
-  color: var(--ink-2);
-  font-family: var(--mono);
-  font-size: 11.5px;
-  white-space: nowrap;
-}
-
-.journal-index .date {
-  grid-area: date;
-  justify-self: start;
-  color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: 10px;
-  /* Chiffres de largeur fixe : les dates s’alignent au lieu de danser. */
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.journal-index .t {
-  grid-area: titre;
-  color: var(--ink-2);
-  font-size: 13.5px;
-  line-height: 1.35;
-}
-
-.journal-index a:hover .num,
-.journal-index a:hover .t {
-  color: var(--ink);
-}
-
-.journal-index a[aria-current='true'] {
-  border-left-color: var(--accent);
-  padding-left: 12px;
-}
-
-.journal-index a[aria-current='true'] .num,
-.journal-index a[aria-current='true'] .t {
-  color: var(--ink);
 }
 
 /* La display: grid de .timeline li, de .filtres ou des liens du sommaire
@@ -842,51 +763,6 @@
   .journal {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
-  }
-
-  .journal-index {
-    position: static;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    gap: 8px;
-    max-height: none;
-    overflow-x: auto;
-    overflow-y: hidden;
-    /* min-width: 0 : sinon la piste prend la largeur du contenu et
-       déborde de l’écran. */
-    min-width: 0;
-    max-width: 100%;
-    padding-bottom: 6px;
-    scrollbar-width: none;
-  }
-
-  /* Le sommaire défile horizontalement sans barre visible : un dégradé sur le
-     bord droit dit qu’il reste des versions, et s’éteint une fois au bout. */
-  .journal-index.is-scrollable {
-    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
-  }
-
-  .journal-index.is-scrollable.at-end {
-    mask-image: none;
-  }
-
-  .journal-index a {
-    grid-template-columns: auto auto;
-    grid-template-areas: 'numero date';
-    gap: 0 8px;
-    padding: 7px 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    font-size: 13px;
-  }
-
-  .journal-index .t {
-    display: none;
-  }
-
-  .journal-index a[aria-current='true'] {
-    border-color: var(--ink);
-    padding-left: 12px;
   }
 
   .timeline .meta-col {
