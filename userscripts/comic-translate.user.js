@@ -558,10 +558,16 @@
     return { canvas: part, sx, sy, sw, sh }
   }
 
+  /** Compteurs du banc : temps d'OCR, appels, cache et rejets. */
+  const OCR = { ms: 0, calls: 0, cache: 0, analyse: 0 }
+
   async function ocrPass(canvas, params) {
+    const started = performance.now()
     const worker = await ocrWorker()
     await worker.setParameters(params)
     const { data } = await worker.recognize(canvas, {}, { blocks: true, text: true })
+    OCR.ms += performance.now() - started
+    OCR.calls += 1
     const lines = []
     for (const block of data.blocks || []) {
       for (const paragraph of block.paragraphs || []) {
@@ -616,7 +622,164 @@
    * la zone, on l'agrandit, on la binarise (et on l'inverse si le texte est
    * clair sur fond sombre), puis on relit en mode « mot » et « mot seul ».
    */
-  async function readBurst(canvas, box, zoneMask) {
+  /** Empreinte d'un recadrage : le même éclat ne repasse pas deux fois à l'OCR. */
+  function burstSignature(canvas, box, zoneMask) {
+    const part = cropBox(canvas, box, 0)
+    if (!part) return ''
+    const grid = 16
+    const { data } = part.canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, part.sw, part.sh)
+    let hash = 2166136261
+    for (let gy = 0; gy < grid; gy += 1) {
+      for (let gx = 0; gx < grid; gx += 1) {
+        const x = Math.min(part.sw - 1, Math.floor(((gx + 0.5) * part.sw) / grid))
+        const y = Math.min(part.sh - 1, Math.floor(((gy + 0.5) * part.sh) / grid))
+        hash ^= data[(y * part.sw + x) * 4]
+        hash = Math.imul(hash, 16777619)
+      }
+    }
+    return `${part.sw}x${part.sh}:${hash >>> 0}:${zoneMask ? 'm' : '-'}`
+  }
+
+  const BURST_CACHE = new Map()
+
+  /** Luminance d'un recadrage et masque d'encre : base du crible et de l'angle. */
+  function burstProbe(canvas, box, zoneMask) {
+    const part = cropBox(canvas, box, 2)
+    if (!part) return null
+    const { data } = part.canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, part.sw, part.sh)
+    const lum = new Uint8Array(part.sw * part.sh)
+    let sum = 0
+    let min = 255
+    let max = 0
+    for (let index = 0; index < lum.length; index += 1) {
+      const value = (data[index * 4] * 299 + data[index * 4 + 1] * 587 + data[index * 4 + 2] * 114) / 1000
+      lum[index] = value
+      sum += value
+      if (value < min) min = value
+      if (value > max) max = value
+    }
+    const invert = sum / lum.length > 128
+    const cut = Math.round((min + max) / 2)
+    const ink = new Uint8Array(lum.length)
+    for (let index = 0; index < lum.length; index += 1) {
+      ink[index] = (invert ? lum[index] < cut : lum[index] > cut) ? 1 : 0
+    }
+    if (zoneMask) {
+      // Les pointes d'un éclat ne sont pas du texte : hors du masque, pas d'encre.
+      for (let y = 0; y < part.sh; y += 1) {
+        for (let x = 0; x < part.sw; x += 1) {
+          const mx = x + part.sx - zoneMask.x0
+          const my = y + part.sy - zoneMask.y0
+          const inside = mx >= 0 && my >= 0 && mx < zoneMask.w && my < zoneMask.h && zoneMask.mask[my * zoneMask.w + mx]
+          if (!inside) ink[y * part.sw + x] = 0
+        }
+      }
+    }
+    return { sw: part.sw, sh: part.sh, ink, part }
+  }
+
+  /**
+   * Un amas d'encre ressemble-t-il à du texte ? Rapport d'aspect, densité,
+   * passages de trait et effondrement à l'érosion : un aplat échoue sur les
+   * trois, un mot passe.
+   */
+  function burstVerdict(canvas, box) {
+    const probe = burstProbe(canvas, box)
+    if (!probe) return { ok: false, raison: 'recadrage impossible' }
+    const { sw, sh, ink } = probe
+    const aspect = (box.x1 - box.x0 + 1) / Math.max(1, box.y1 - box.y0 + 1)
+    if (aspect > 7 || aspect < 0.18) return { ok: false, raison: `rapport ${aspect.toFixed(1)}:1` }
+    let solid = 0
+    for (let index = 0; index < ink.length; index += 1) solid += ink[index]
+    const density = solid / ink.length
+    if (density > 0.62) return { ok: false, raison: `aplat d’encre ${Math.round(density * 100)} %` }
+    let rows = 0
+    let transitions = 0
+    for (let y = 0; y < sh; y += 1) {
+      let previous = 0
+      let count = 0
+      for (let x = 0; x < sw; x += 1) {
+        const on = ink[y * sw + x]
+        if (on && !previous) count += 1
+        previous = on
+      }
+      if (count) {
+        rows += 1
+        transitions += count
+      }
+    }
+    const perRow = transitions / Math.max(1, rows)
+    if (rows < sh * 0.2 || perRow < 2) return { ok: false, raison: `peu de traits (${perRow.toFixed(1)}/ligne)` }
+    let eroded = 0
+    for (let y = 1; y < sh - 1; y += 1) {
+      for (let x = 1; x < sw - 1; x += 1) {
+        const index = y * sw + x
+        if (!ink[index]) continue
+        if (ink[index - 1] && ink[index + 1] && ink[index - sw] && ink[index + sw]) eroded += 1
+      }
+    }
+    if (eroded / Math.max(1, solid) > 0.8) return { ok: false, raison: 'aplat sans glyphes' }
+    return { ok: true, raison: '' }
+  }
+
+  /** Inclinaison du texte : projection de profil, essayée de −45° à +45°. */
+  function estimateAngle(canvas, box, zoneMask) {
+    const width = box.x1 - box.x0
+    // Grande bulle : on réduit d'abord, sinon 91 projections coûtent trop cher.
+    if (width > 220) {
+      const factor = 220 / width
+      const scaled = document.createElement('canvas')
+      scaled.width = 220
+      scaled.height = Math.max(12, Math.round((box.y1 - box.y0) * factor))
+      const context = scaled.getContext('2d', { willReadFrequently: true })
+      context.drawImage(canvas, box.x0, box.y0, width, box.y1 - box.y0, 0, 0, scaled.width, scaled.height)
+      return estimateAngle(scaled, { x0: 0, y0: 0, x1: scaled.width, y1: scaled.height })
+    }
+    const probe = burstProbe(canvas, box, zoneMask)
+    if (!probe) return null
+    const { sw, sh, ink } = probe
+    const bins = new Float64Array(sh + 2)
+    const score = (deg) => {
+      bins.fill(0)
+      const angle = (deg * Math.PI) / 180
+      const cos = Math.cos(angle)
+      const sin = Math.sin(angle)
+      const cx = sw / 2
+      const cy = sh / 2
+      for (let y = 0; y < sh; y += 1) {
+        for (let x = 0; x < sw; x += 1) {
+          if (!ink[y * sw + x]) continue
+          // Normale à la ligne de base : (−sin, cos). Avec +sin, l'angle sortait
+          // avec le signe inversé (12° mesuré comme −12°).
+          const bin = Math.round(-(x - cx) * sin + (y - cy) * cos + cy)
+          if (bin >= 0 && bin < bins.length) bins[bin] += 1
+        }
+      }
+      let mean = 0
+      for (let index = 0; index < bins.length; index += 1) mean += bins[index]
+      mean /= bins.length
+      let variance = 0
+      for (let index = 0; index < bins.length; index += 1) variance += (bins[index] - mean) ** 2
+      return variance
+    }
+    const flat = score(0)
+    let best = 0
+    let bestScore = flat
+    for (let deg = -45; deg <= 45; deg += 1) {
+      if (deg === 0) continue
+      const value = score(deg)
+      if (value > bestScore) {
+        bestScore = value
+        best = deg
+      }
+    }
+    // Sans gain net sur l'horizontale, on ne tourne rien : un faux angle
+    // abîme le rendu plus qu'un texte droit.
+    if (!flat || bestScore < flat * 1.15) return { deg: 0, gain: 1 }
+    return { deg: best, gain: bestScore / flat }
+  }
+
+  async function readBurstRaw(canvas, box, zoneMask) {
     const part = cropBox(canvas, box, 6)
     if (!part) return null
     let source = part.canvas
@@ -675,7 +838,8 @@
       data[index + 3] = 255
     }
     context.putImageData(image, 0, 0)
-    for (const mode of ['7', '8']) {
+    // Budget : une seule passe OCR par éclat, puis la vision si elle existe.
+    for (const mode of ['7']) {
       const lines = await ocrPass(up, {
         tessedit_pageseg_mode: mode,
         preserve_interword_spaces: '1'
@@ -690,19 +854,42 @@
     return null
   }
 
+  /** Lecture d'un éclat, avec cache par empreinte du recadrage. */
+  async function readBurst(canvas, box, zoneMask) {
+    const signature = burstSignature(canvas, box, zoneMask)
+    if (signature && BURST_CACHE.has(signature)) {
+      OCR.cache += 1
+      return BURST_CACHE.get(signature)
+    }
+    const result = await readBurstRaw(canvas, box, zoneMask)
+    if (signature) BURST_CACHE.set(signature, result)
+    return result
+  }
+
   /** Dernier recours pour un éclat illisible : le modèle de vision lit l'image. */
+  const VISION = { appels: 0, ok: 0, erreur: '' }
+
   async function readBurstVision(canvas, box) {
     // Branché par Vela (le jeton reste dans sa fermeture). Hors application, il
     // n'y a pas de modèle de vision : on ne prétend pas lire l'éclat.
-    if (typeof window.__velaComicVision !== 'function') return null
+    if (typeof window.__velaComicVision !== 'function') {
+      VISION.erreur = VISION.erreur || 'modèle de vision non branché'
+      return null
+    }
     const part = cropBox(canvas, box, 6)
     if (!part) return null
+    VISION.appels += 1
     try {
       const result = await window.__velaComicVision(part.canvas.toDataURL('image/png'))
       const text = String((result && result.texte) || '').trim()
-      if (!result || !result.ok || !text) return null
+      if (!result || !result.ok || !text) {
+        VISION.erreur = (result && result.error) || 'réponse vide'
+        return null
+      }
+      VISION.ok += 1
       return { text, lineHeight: 0, via: 'vision' }
-    } catch {
+    } catch (error) {
+      VISION.erreur = (error && error.message) || 'vision injoignable'
       return null
     }
   }
@@ -883,12 +1070,23 @@
     // hors de tout texte connu. On tente l'OCR agrandi, puis la vision.
     const silent = bubbles.filter((bubble) => !bubble.text).map((bubble) => ({ bbox: bubble.bbox, mask: bubble.mask }))
     const clusters = inkClusters(pixels, cut, [...bubbles.map((bubble) => bubble.bbox), ...zones.map((zone) => zone.bbox)])
+    // Crible AVANT l'OCR : un amas d'encre qui n'a pas la forme de texte coûte
+    // une passe complète pour rien. Le motif du rejet est gardé pour la capture.
+    const filtered = !window.__vtNoFilter
+    const rejets = []
     let extra = 0
     for (const bbox of clusters) {
       if (extra >= 4) break
       const cx = (bbox.x0 + bbox.x1) / 2
       const cy = (bbox.y0 + bbox.y1) / 2
       if (bubbles.some((bubble) => cx >= bubble.bbox.x0 && cx <= bubble.bbox.x1 && cy >= bubble.bbox.y0 && cy <= bubble.bbox.y1)) continue
+      if (filtered) {
+        const verdict = burstVerdict(canvas, bbox)
+        if (!verdict.ok) {
+          rejets.push({ bbox, raison: verdict.raison })
+          continue
+        }
+      }
       silent.push({ bbox, mask: null })
       extra += 1
     }
@@ -909,11 +1107,25 @@
       })
     }
 
+    // Angle du texte, par zone et pas seulement pour les éclats : une bulle
+    // inclinée se rend inclinée elle aussi.
+    for (const zone of zones) {
+      if (!zone.text) continue
+      const angle = estimateAngle(canvas, zone.bbox, zone.mask)
+      // Un angle hésitant abîme le rendu : on ne tourne qu'au-delà de 6° et
+      // d'un gain net. En dessous, le texte reste droit.
+      const net = angle && Math.abs(angle.deg) >= 6 && angle.gain >= 1.3
+      zone.angle = net ? (angle.deg * Math.PI) / 180 : 0
+      zone.angleDeg = net ? angle.deg : 0
+      zone.angleGain = angle ? Number(angle.gain.toFixed(2)) : 1
+    }
+
     for (const zone of zones) {
       zone.id = stableId(zone.text, zone.bbox)
     }
     console.debug('[BD] zones :', zones.map((zone) => `${zone.kind}:${zone.text || '—'}`).join(' | '))
-    return { bubbles, zones, pixels }
+    if (rejets.length) console.debug('[BD] rejets :', rejets.map((entry) => entry.raison).join(' | '))
+    return { bubbles, zones, pixels, rejets }
   }
 
   /** Planches déjà analysées : une correction manuelle se réaffiche sans OCR. */
@@ -941,7 +1153,9 @@
         setStatus('préparation de la planche…')
         const { canvas } = await canvasFrom(source)
         setStatus('découpage des bulles…')
+        const started = performance.now()
         const analysis = await analyzePanel(canvas)
+        OCR.analyse = performance.now() - started
         const readable = analysis.zones.filter((zone) => zone.text)
         setStatus(`${analysis.zones.length} zone(s), ${readable.length} à traduire…`)
         if (readable.length) {
@@ -950,7 +1164,7 @@
             zone.traduit = translated[index]
           })
         }
-        state = { canvas, zones: analysis.zones, bubbles: analysis.bubbles }
+        state = { canvas, zones: analysis.zones, bubbles: analysis.bubbles, rejets: analysis.rejets || [] }
         analysed.set(source, state)
       }
       activeState = state
@@ -967,6 +1181,31 @@
   }
 
   /** Redessine la planche analysée, corrections manuelles comprises. */
+  /** Cadres gris des amas rejetés : visibles sur la capture, avec la raison. */
+  function drawRejected(layer, state) {
+    if (!state) return 0
+    const sourceWidth = state.canvas.width || 1
+    const sourceHeight = state.canvas.height || 1
+    const scaleX = (layer.clientWidth || 1) / sourceWidth
+    const scaleY = (layer.clientHeight || 1) / sourceHeight
+    let count = 0
+    for (const entry of state.rejets || []) {
+      const node = document.createElement('div')
+      node.className = 'vt-reject'
+      node.title = entry.raison
+      node.dataset.raison = entry.raison
+      node.textContent = entry.raison
+      node.style.cssText = `position:absolute;border:1px dashed rgba(120,118,110,.85);color:#77746c;font:9px/1.15 ${CFG.font};padding:1px 2px;overflow:hidden;pointer-events:none;box-sizing:border-box;background:rgba(120,118,110,.06)`
+      node.style.left = `${entry.bbox.x0 * scaleX}px`
+      node.style.top = `${entry.bbox.y0 * scaleY}px`
+      node.style.width = `${Math.max(10, (entry.bbox.x1 - entry.bbox.x0) * scaleX)}px`
+      node.style.height = `${Math.max(10, (entry.bbox.y1 - entry.bbox.y0) * scaleY)}px`
+      layer.appendChild(node)
+      count += 1
+    }
+    return count
+  }
+
   function repaint(reset = true) {
     if (!activeState || !activeLayer) return 0
     activeLayer.textContent = ''
@@ -976,6 +1215,17 @@
     for (const zone of activeState.zones) {
       if (!zone.traduit) continue
       if (drawZone(activeLayer, activeImg, zone, activeState.canvas, edits[zone.id], activeState.bubbles)) drawn += 1
+    }
+    drawRejected(activeLayer, activeState)
+    window.__vtStats = {
+      analyseMs: Math.round(OCR.analyse),
+      ocrMs: Math.round(OCR.ms),
+      ocrCalls: OCR.calls,
+      cacheHits: OCR.cache,
+      rejets: (activeState.rejets || []).length,
+      visionAppels: VISION.appels,
+      visionOk: VISION.ok,
+      visionErreur: VISION.erreur
     }
     return drawn
   }
@@ -1957,7 +2207,7 @@
       const probe = document.createElement('canvas')
       probe.width = work.plate.width
       probe.height = work.plate.height
-      paintText(probe, text, drawRect, size, '#111', CFG.font, { weight })
+      paintText(probe, text, drawRect, size, '#111', CFG.font, { weight, angle: zone.angle || 0 })
       return overflowPixels(probe, work.region)
     }
     let low = 9
@@ -2021,6 +2271,70 @@
   // Corrections manuelles : elles ne touchent qu'à l'affichage et aux textes,
   // jamais à la clé de traduction. L'éditeur local s'en sert pour relire et
   // corriger bulle par bulle, puis réimporter le fichier JSON.
+  /** Contrôle de l'estimation d'angle : même fonction que le rendu, image connue. */
+  window.__vtTestAngle = (deg) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 240
+    canvas.height = 120
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.save()
+    context.translate(canvas.width / 2, canvas.height / 2)
+    context.rotate((deg * Math.PI) / 180)
+    context.fillStyle = '#111'
+    context.font = '700 34px sans-serif'
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    context.fillText('HEY!', 0, 0)
+    context.restore()
+    return estimateAngle(canvas, { x0: 0, y0: 0, x1: canvas.width, y1: canvas.height })
+  }
+
+  /** Angles retenus par zone : le banc compare l'estimation au rendu. */
+  window.__vtAngles = () =>
+    (activeState ? activeState.zones : []).map((zone) => ({
+      id: zone.id,
+      texte: zone.text || '',
+      angleDeg: zone.angleDeg || 0,
+      gain: zone.angleGain || 1
+    }))
+
+  /** Mesure du crible : mêmes amas, avec et sans filtre, cache vidé entre les deux. */
+  window.__vtTimeBursts = async () => {
+    if (!activeState) return null
+    const canvas = activeState.canvas
+    // `pixels` n'est pas gardé dans l'état : on le relit depuis la planche.
+    const pixels = panelPixels(canvas)
+    const cut = inkThreshold(pixels.lum)
+    const excluded = [
+      ...(activeState.bubbles || []).map((bubble) => bubble.bbox),
+      ...activeState.zones.map((zone) => zone.bbox)
+    ]
+    const clusters = inkClusters(pixels, cut, excluded).slice(0, 6)
+    const run = async (filtered) => {
+      BURST_CACHE.clear()
+      const started = performance.now()
+      let lus = 0
+      let rejets = 0
+      for (const bbox of clusters) {
+        if (filtered) {
+          const verdict = burstVerdict(canvas, bbox)
+          if (!verdict.ok) {
+            rejets += 1
+            continue
+          }
+        }
+        const read = await readBurst(canvas, bbox, null)
+        if (read) lus += 1
+      }
+      return { ms: Math.round(performance.now() - started), lus, rejets, essais: clusters.length }
+    }
+    const sans = await run(false)
+    const avec = await run(true)
+    return { sans, avec }
+  }
+
   window.__vtEdits = {
     list: () => report(),
     set: (id, patch) => {

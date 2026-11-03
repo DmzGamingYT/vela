@@ -13,10 +13,11 @@ const OUT = path.join(ROOT, 'screenshots', 'comic-check')
 const EDITS_DIR = path.join(OUT, 'edits')
 const W = 1000
 const H = 1300
-const KEY = (process.env.TRANSLATOR_API_KEY || '').trim()
-const MOCK = !KEY || process.argv.includes('--mock')
-const URL_API = process.env.TRANSLATOR_URL || 'https://api.openai.com/v1/chat/completions'
-const MODEL = process.env.TRANSLATOR_MODEL || 'gpt-4o-mini'
+const translator = require('../translator.cjs')
+const CFG = translator.config()
+const MOCK = !CFG.configured || process.argv.includes('--mock')
+const MODEL = CFG.model || '(aucun)'
+const VISION = { appels: 0, ok: 0, erreur: '' }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 const CANNED = [
@@ -56,27 +57,26 @@ async function translate(texts, contexte) {
       translations: clean.map((t, id) => ({ id, texte: FRENCH[t.trim()] || CANNED[id % CANNED.length] }))
     }
   }
-  const response = await fetch(URL_API, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${KEY}` },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.2,
-      messages: [
-        { role: 'system', content: PROMPT },
-        {
-          role: 'user',
-          content: JSON.stringify({ contexte: contexte || '', repliques: clean.map((texte, id) => ({ id, texte })) })
-        }
-      ]
-    })
-  })
-  if (!response.ok) return { ok: false, mode: 'real', error: `traducteur HTTP ${response.status}` }
-  const body = await response.json()
-  const content = body.choices?.[0]?.message?.content || ''
-  const match = content.match(/\{[\s\S]*\}/)
+  const result = await translator.chat(
+    CFG,
+    [
+      { role: 'system', content: PROMPT },
+      {
+        role: 'user',
+        content: JSON.stringify({ contexte: contexte || '', repliques: clean.map((texte, id) => ({ id, texte })) })
+      }
+    ],
+    { temperature: 0.2, timeoutMs: 120_000 }
+  )
+  if (!result.ok) return { ok: false, mode: 'real', error: result.error }
+  const match = result.content.match(/\{[\s\S]*\}/)
   if (!match) return { ok: false, mode: 'real', error: 'réponse du modèle illisible' }
-  const list = JSON.parse(match[0]).traductions || []
+  let list = []
+  try {
+    list = JSON.parse(match[0]).traductions || []
+  } catch {
+    return { ok: false, mode: 'real', error: 'JSON de traduction invalide' }
+  }
   return {
     ok: true,
     mode: 'real',
@@ -86,32 +86,15 @@ async function translate(texts, contexte) {
 
 /** Dernier recours d'un éclat illisible : le modèle regarde le recadrage. */
 async function vision(dataUrl) {
-  if (MOCK) return { ok: false, error: 'vision indisponible avec le traducteur factice' }
-  if (!/^data:image\/png;base64,/.test(String(dataUrl || ''))) return { ok: false, error: 'image illisible' }
-  const response = await fetch(URL_API, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${KEY}` },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.' },
-            { type: 'image_url', image_url: { url: dataUrl } }
-          ]
-        }
-      ]
-    })
-  })
-  if (!response.ok) return { ok: false, error: `vision HTTP ${response.status}` }
-  const body = await response.json()
-  const content = body.choices?.[0]?.message?.content || ''
-  const match = content.match(/\{[\s\S]*\}/)
-  if (!match) return { ok: false, error: 'réponse de vision illisible' }
-  const texte = String(JSON.parse(match[0]).texte || '').trim()
-  return texte ? { ok: true, texte } : { ok: false, error: 'aucun texte lu' }
+  VISION.appels += 1
+  if (MOCK) {
+    VISION.erreur = 'aucun fournisseur de vision configuré (mode factice)'
+    return { ok: false, error: 'vision indisponible : aucun fournisseur configuré' }
+  }
+  const result = await translator.vision(CFG, dataUrl)
+  if (result.ok) VISION.ok += 1
+  else VISION.erreur = result.error
+  return result
 }
 
 app.disableHardwareAcceleration()
@@ -226,15 +209,24 @@ ${rows
   const file = path.join(OUT, 'comparaison.html')
   fs.writeFileSync(file, html)
   fs.writeFileSync(path.join(OUT, 'comparaison.size.json'), JSON.stringify({ width, height: height + 40 }))
-  console.log(`comparaison : screenshots/comic-check/comparaison.html (${width}×${height + 40}) — rendre avec scripts/shot.cjs`)
+  console.log(`comparaison : screenshots/comic-check/comparaison.html (${width}×${height + 40}) — capturée par le banc lui-même`)
 }
 
 async function main() {
-  console.log(
-    MOCK
-      ? 'TRADUCTEUR : FACTICE — TRANSLATOR_API_KEY absente ou --mock : la qualité des traductions N’EST PAS vérifiée.'
-      : `TRADUCTEUR : réel (${MODEL})`
-  )
+  if (MOCK) {
+    console.log(
+      `TRADUCTEUR : FACTICE — ${CFG.configured ? '--mock demandé' : CFG.reason} : la qualité des traductions N’EST PAS vérifiée.`
+    )
+  } else {
+    console.log(`TRADUCTEUR : ${translator.describe(CFG)}`)
+    const reachable = await translator.ping(CFG)
+    console.log(reachable.ok ? `CONNEXION : OK en ${reachable.ms} ms` : `CONNEXION : ÉCHEC — ${reachable.error}`)
+    if (!reachable.ok) {
+      console.log('ECHEC : fournisseur configuré mais injoignable — relancer avec --mock pour la démonstration locale.')
+      app.exit(2)
+      return
+    }
+  }
   fs.mkdirSync(OUT, { recursive: true })
   // Chaque passage part d'un disque vide : sans cela, les corrections du
   // passage précédent seraient relues et l'« après » montrerait déjà le texte.
@@ -280,6 +272,14 @@ async function main() {
     if (severity >= 2) errors.push(text.slice(0, 200))
     if (text.startsWith('[BD]')) console.log('  log :', text)
   })
+
+  // La planche elle-même, rendue par cette fenêtre : plus de second processus.
+  win.setContentSize(900, 1300)
+  await win.loadFile(path.join(DIR, 'panel.html'))
+  await sleep(500)
+  const panelShot = await win.webContents.capturePage({ x: 0, y: 0, width: 900, height: 1300 })
+  fs.writeFileSync(path.join(DIR, 'panel.png'), panelShot.toPNG())
+  win.setContentSize(W, H)
 
   await win.loadURL(url)
   await sleep(1200)
@@ -356,6 +356,11 @@ async function main() {
   const check = (nom, ok, detail) => {
     checks.push({ nom, ok })
     console.log(`${ok ? 'OK   ' : 'ECHEC'} ${nom} — ${detail}`)
+  }
+  const ignores = []
+  const skip = (nom, detail) => {
+    ignores.push(nom)
+    console.log(`IGNORE ${nom} — ${detail}`)
   }
   const found = (pattern) => report.filter((entry) => pattern.test(entry.texte || ''))
 
@@ -446,7 +451,58 @@ async function main() {
   }
   check('7 correction manuelle appliquée et conservée', editOk, editDetail)
 
+  // Angle : même fonction que le rendu, sur des images d'angle connu.
+  const angles = await win.webContents.executeJavaScript(
+    '[0, 12, -20].map((deg) => Object.assign({ attendu: deg }, window.__vtTestAngle(deg)))'
+  )
+  const zonesAngles = await win.webContents.executeJavaScript('window.__vtAngles ? window.__vtAngles() : []')
+  const tilted = (zonesAngles || []).find((zone) => /HEY/i.test(zone.texte || ''))
+  const angleOk =
+    Array.isArray(angles) && angles.length === 3 && angles.every((entry) => Math.abs(entry.deg - entry.attendu) <= 5)
+  check(
+    '8 angle estimé à ±5°',
+    angleOk,
+    `${(angles || []).map((entry) => `${entry.attendu}° → ${entry.deg}°`).join(' · ')}${
+      tilted ? ` · planche inclinée : ${tilted.angleDeg}° (gain ${tilted.gain})` : ' · éclat incliné non lu'
+    }`
+  )
+
+  // Crible des amas d'encre : rejets affichés et temps mesuré.
+  const stats = await win.webContents.executeJavaScript('window.__vtStats || {}')
+  const badges = await win.webContents.executeJavaScript(`document.querySelectorAll('.vt-reject').length`)
+  const timing = await win.webContents.executeJavaScript('window.__vtTimeBursts()')
+  if ((stats.rejets || 0) > 0) {
+    check(
+      '9 crible des éclats',
+      badges === stats.rejets,
+      `${stats.rejets} rejet(s), ${badges} cadre(s) gris · OCR ${stats.ocrMs} ms en ${stats.ocrCalls} appel(s) · cache ${stats.cacheHits}`
+    )
+  } else {
+    skip('9 crible des éclats', `aucun amas rejeté · OCR ${stats.ocrMs} ms en ${stats.ocrCalls} appel(s)`)
+  }
+  if (timing) {
+    console.log(
+      `TEMPS ÉCLATS — sans crible ${timing.sans.ms} ms (${timing.sans.lus}/${timing.sans.essais} lus) · avec crible ${timing.avec.ms} ms (${timing.avec.lus} lus, ${timing.avec.rejets} rejetés)`
+    )
+  }
+
+  // Vision : chemin page → pont → fournisseur. Sans fournisseur, on le dit.
+  if (MOCK) {
+    skip(
+      '2 repli vision',
+      `${VISION.appels} appel(s) tenté(s), 0 réussite — ${VISION.erreur || 'aucun fournisseur de vision configuré'}`
+    )
+  } else {
+    check(
+      '2 repli vision exercé',
+      VISION.appels > 0 && VISION.ok > 0,
+      `${VISION.appels} appel(s), ${VISION.ok} réussite(s)${VISION.erreur ? ` · ${VISION.erreur}` : ''}`
+    )
+  }
+
   if (errors.length) console.log('ERREURS CONSOLE:', errors.slice(0, 4))
+  if (ignores.length) console.log(`TESTS IGNORÉS (${ignores.length}) : ${ignores.join(' · ')}`)
+  if (!MOCK) console.log(`RAPPORT : modèle ${MODEL} · vision ${CFG.visionModel || MODEL} · ${new Date().toISOString()}`)
 
   const rows = []
   // Les boîtes du rapport sont en pixels du canvas agrandi (1600 de large) ;
@@ -474,6 +530,16 @@ async function main() {
   if (open) rows.push({ titre: 'contour ouvert (enveloppe)', box: boxOf(open) })
   if (plain) rows.push({ titre: 'dernier recours (plaque arrondie)', box: boxOf(plain) })
   if (rows.length) comparison(rows)
+
+  // La comparaison, rendue dans la même fenêtre puis capturée : un seul
+  // processus pour la planche, le résultat et la comparaison.
+  const size = JSON.parse(fs.readFileSync(path.join(OUT, 'comparaison.size.json'), 'utf8'))
+  win.setContentSize(size.width, size.height)
+  await win.loadFile(path.join(OUT, 'comparaison.html'))
+  await sleep(700)
+  const compareShot = await win.webContents.capturePage({ x: 0, y: 0, width: size.width, height: size.height })
+  fs.writeFileSync(path.join(OUT, 'comparaison.png'), compareShot.toPNG())
+  console.log(`comparaison : screenshots/comic-check/comparaison.png (${size.width}×${size.height})`)
 
   server.close()
   app.exit(checks.every((entry) => entry.ok) ? 0 : 1)
