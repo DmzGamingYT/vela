@@ -5,7 +5,7 @@ Site public de Vela, en HTML, CSS et JavaScript statiques, servi par un Worker C
 réseau, aucune police distante : le site fonctionne hors ligne.
 
 - **Palette** : neutre chaud — papier `#faf8f5` le jour, charbon `#151518` la nuit — et un seul
-  accent, indigo `#5b5bd6` par défaut, remplaçable par les dix pastilles de la page d’accueil
+  accent, indigo `#5b5bd6` par défaut, remplaçable par les onze pastilles de la page d’accueil
   (`localStorage` → `vela-site-accent`).
 - **Typographie** : Iowan Old Style / Georgia pour les titres, sans-serif système pour le reste,
   monospace pour les fichiers et les empreintes.
