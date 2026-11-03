@@ -23,5 +23,8 @@
       "@renderer/*": ["src/renderer/src/*"]
     }
   },
-  "include": ["src/renderer/src/**/*", "src/shared/**/*"]
+  "include": ["src/renderer/src/**/*", "src/shared/**/*"],
+  // Les tests tournent sous Node et importent `node:` : ils appartiennent au
+  // programme `tsconfig.node.json`, pas à celui du renderer.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
