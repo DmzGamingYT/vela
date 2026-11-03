@@ -1,0 +1,54 @@
+{
+  "version": "0.3.20",
+  "slug": "0-3-20",
+  "date": "2026-11-03",
+  "headline": "La traduction de BD passe par votre fournisseur",
+  "intro": "La commande « Traduire la BD » ne transporte plus de clé dans la page : le texte des planches part par le pont de l’application, vers le fournisseur réglé dans Réglages › Modèles. Et la bulle garde son contour.",
+  "tags": ["BD", "OCR", "fournisseur"],
+  "stats": { "commits": 7, "files": 27, "insertions": 3555, "deletions": 164 },
+  "sections": [
+    {
+      "title": "La clé ne circule plus dans la page",
+      "body": [
+        "Le userscript demandait la clé au pont puis appelait le fournisseur lui-même. Il n’envoie plus que du texte : l’application relaie la requête vers le fournisseur configuré, avec <code>TRANSLATOR_BASE_URL</code>, <code>TRANSLATOR_MODEL</code> et <code>TRANSLATOR_API_KEY</code> côté processus principal.",
+        "Le banc et l’évaluation lisent la même configuration et pingent le fournisseur au démarrage : sans clé, ils annoncent un traducteur factice au lieu de faire passer un rendu pour une traduction réelle."
+      ],
+      "figure": {
+        "type": "capture",
+        "src": "/captures/releases/bd-resultat.jpg",
+        "alt": "Planche de démonstration du banc BD, bulles traduites et texte contenu dans les bulles.",
+        "caption": "Banc BD (scripts/comic-bench) : sortie du rendu sur la planche de démonstration.",
+        "width": 1000,
+        "height": 1300
+      }
+    },
+    {
+      "title": "La bulle garde son contour",
+      "body": [
+        "La bulle n’est plus recouverte d’un rectangle : le texte est effacé dans le masque de la bulle — seuillage, composante connexe, cavités rebouchées — et la plaque affiche l’image d’origine. Le contour, la queue et le fond restent intacts.",
+        "Le texte est posé dans le plus grand rectangle inscrit du masque, centré sur son centroïde, et réduit jusqu’à ce qu’aucun pixel ne sorte. Le banc mesure ce débordement pixel par pixel et échoue s’il en reste un seul."
+      ],
+      "figure": {
+        "type": "capture",
+        "src": "/captures/releases/bd-comparaison.jpg",
+        "alt": "Comparaison avant et après traduction sur une planche du banc BD.",
+        "caption": "Avant et après, même cadrage : le banc capture les deux et refuse de chiffrer la qualité sans clé de traduction.",
+        "width": 692,
+        "height": 910
+      }
+    },
+    {
+      "title": "Deux bulles voisines ne fusionnent plus",
+      "body": [
+        "La découpe se fait sur les intérieurs clairs, avant l’OCR : deux bulles collées ne peuvent plus être lues comme une seule. L’angle du texte est estimé par projection de profil et appliqué au rendu, et les amas d’encre sans forme de texte sont écartés avec un cache par empreinte.",
+        "Les corrections manuelles vivent dans un JSON par planche, relu au chargement suivant."
+      ]
+    }
+  ],
+  "verify": [
+    "Réglages › Modèles : choisir un fournisseur, puis traduire une planche depuis la page.",
+    "Une planche dont le rendu déborde d’un pixel fait échouer le banc (`node scripts/comic-bench/check.cjs`).",
+    "Sans TRANSLATOR_API_KEY, le banc annonce un traducteur factice et refuse de mesurer la qualité."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.19...v0.3.20"
+}

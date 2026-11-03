@@ -1,0 +1,73 @@
+{
+  "version": "0.3.22",
+  "slug": "0-3-22",
+  "date": "2026-11-03",
+  "headline": "Deux failles fermées avant qu’elles ne servent",
+  "intro": "Le pont de traduction exposait son jeton à la page, et l’empreinte du .dmg vivait dans le fichier qu’elle devait authentifier. Les deux sont corrigés, et le dépôt gagne enfin un linter.",
+  "tags": ["sécurité", "mise à jour", "BD"],
+  "stats": { "commits": 7, "files": 29, "insertions": 2088, "deletions": 1513 },
+  "sections": [
+    {
+      "title": "Le jeton de traduction ne survit plus à la page",
+      "body": [
+        "Le jeton du pont vivait sur <code>window</code> pendant trente minutes : un script de la planche pouvait le relire, appeler la vision et écrire dans les corrections à votre place.",
+        "Il reste désormais dans la fermeture injectée, et rien d’autre. Les canaux <code>comic:*</code> repassent par la même barrière que ceux du châssis — émetteur connu, cadre principal — au lieu de répondre à qui les appelle."
+      ],
+      "figure": {
+        "type": "diff",
+        "caption": "src/main/comic.ts, v0.3.21…v0.3.22",
+        "lines": [
+          {
+            "kind": "plus",
+            "text": "/** Hôtes distants déjà approuvés par l’utilisateur pendant ce lancement. */"
+          },
+          { "kind": "plus", "text": "private remoteConsent = new Map<string, boolean>()" },
+          {
+            "kind": "plus",
+            "text": "/** Même barrière que les canaux du châssis : émetteur connu, cadre principal. */"
+          },
+          {
+            "kind": "plus",
+            "text": "private allow: (event: IpcMainInvokeEvent, channel: string) => boolean,"
+          },
+          {
+            "kind": "plus",
+            "text": "/** Accord explicite avant que le contenu d’une planche quitte l’appareil. */"
+          },
+          { "kind": "plus", "text": "private confirmRemote: (host: string) => Promise<boolean>" }
+        ]
+      }
+    },
+    {
+      "title": "Un manifeste non signé ne propose plus d’installateur",
+      "body": [
+        "L’empreinte SHA-512 du <code>.dmg</code> était publiée dans le même fichier que la charge utile : un dépôt compromis proposait un installateur falsifié avec une empreinte parfaitement cohérente.",
+        "<code>latest-mac.yml</code> est maintenant signé en Ed25519, la moitié publique de la clé est épinglée dans le code, et un manifeste non signé est refusé. L’installateur reste téléchargeable depuis la page Releases.",
+        "La CI produit <code>latest-mac.yml.sig</code> et échoue si le secret de signature manque : mieux vaut pas de version qu’une version que personne ne pourra installer."
+      ],
+      "figure": {
+        "type": "schema",
+        "caption": "La chaîne de confiance de la mise à jour macOS",
+        "steps": [
+          "latest-mac.yml",
+          "signature Ed25519 → latest-mac.yml.sig",
+          "clé publique épinglée dans src/main/integrity.ts",
+          "SHA-512 du .dmg comparé"
+        ]
+      }
+    },
+    {
+      "title": "L’outillage entre au dépôt",
+      "body": [
+        "Ni linter ni formateur : rien n’empêchait un <code>any</code> d’atterrir sur <code>main</code>. ESLint et Prettier reprennent le style existant — sans point-virgule, guillemets simples, 100 colonnes — et distinguent les globals du processus principal, de la page, du userscript et des scripts Node.",
+        "Le job <code>checks</code> lance le lint avant les tests. Vitest passe en 5.1 pour fermer un avis de sécurité sur <code>@vitest/mocker</code>, et les trois <code>any</code> du client de vision et du traducteur sont typés."
+      ]
+    }
+  ],
+  "verify": [
+    "Réglages › Modèles : un fournisseur distant demande un accord par hôte, une fois par lancement.",
+    "Traduire une planche vers une adresse locale : aucun accord n’est demandé.",
+    "Sur macOS, une mise à jour n’est proposée que si latest-mac.yml.sig correspond à la clé épinglée."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.21...v0.3.22"
+}

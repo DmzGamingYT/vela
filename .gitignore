@@ -51,3 +51,5 @@ planche-*-aperçu.png
 # Sortie de `npm run site:build` : le CSS/JS minifié et haché part chez
 # l’hébergeur, il n’a rien à faire au dépôt.
 site/dist/
+# Pages de release : générées depuis site/releases/*.json à chaque build.
+site/public/nouveautes/0-3-*/
