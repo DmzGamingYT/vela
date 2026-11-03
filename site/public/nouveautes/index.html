@@ -6,7 +6,7 @@
     <title>Nouveautés — Vela</title>
     <meta
       name="description"
-      content="Dix-sept versions de Vela, de la 0.3.4 à la 0.3.22 : espaces, notes liées, petite fenêtre, traduction de BD et sécurité."
+      content="Dix-huit versions de Vela, de la 0.3.4 à la 0.3.23 : espaces, notes liées, petite fenêtre, traduction de BD et sécurité."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
@@ -17,7 +17,7 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Nouveautés — Vela" />
-    <meta property="og:description" content="Dix-sept versions, une ligne chacune." />
+    <meta property="og:description" content="Dix-huit versions, une ligne chacune." />
     <meta property="og:site_name" content="Vela" />
     <meta property="og:locale" content="fr_FR" />
     <meta
@@ -128,7 +128,7 @@
       <section class="page-head">
         <div class="wrap">
           <p class="eyebrow">Nouveautés</p>
-          <h1>Dix-sept versions, dix-sept changements.</h1>
+          <h1>Dix-huit versions, dix-huit changements.</h1>
           <p class="lede">
             Vela se construit une version à la fois. Chaque ligne dit ce qui a réellement changé, et
             renvoie aux notes complètes de la version.
@@ -157,10 +157,37 @@
               <button class="filtre" type="button" data-filtre="accessibilité" aria-pressed="false">
                 accessibilité
               </button>
-              <p class="filtres-compteur" aria-live="polite">17 versions</p>
+              <p class="filtres-compteur" aria-live="polite">18 versions</p>
             </div>
 
             <ol class="timeline">
+              <li id="v0-3-23">
+                <div class="meta-col">
+                  <a class="version" href="/nouveautes/0-3-23/">0.3.23</a>
+                  <span class="date">3 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>
+                    <a href="/nouveautes/0-3-23/">Onze teintes dans une grille pleine</a>
+                  </h2>
+                  <p>
+                    La grille des couleurs avait cinq colonnes pour onze thèmes : la onzième
+                    restait seule sur sa rangée, étirée en carte pleine largeur. Elle passe à
+                    douze cases — onze teintes et la teinte libre — qui se remplissent sans trou à
+                    six comme à quatre colonnes, et la pastille montre la teinte elle-même plutôt
+                    qu’une miniature de fenêtre.
+                  </p>
+                  <p>
+                    Côté macOS, la signature ad hoc n’utilise plus <code>--deep</code>, qui
+                    réécrivait la signature des aides et des frameworks au risque de perdre les
+                    entitlements micro et caméra, et les <code>.dmg</code> téléchargés ne
+                    s’accumulent plus dans les données de l’application. L’icône de la traduction de
+                    BD est redessinée pour rester lisible à 16 px.
+                  </p>
+                  <p class="tags"><span>thèmes</span><span>macOS</span><span>BD</span></p>
+                </div>
+              </li>
+
               <li id="v0-3-22">
                 <div class="meta-col">
                   <a class="version" href="/nouveautes/0-3-22/">0.3.22</a>

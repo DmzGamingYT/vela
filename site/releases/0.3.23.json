@@ -1,0 +1,35 @@
+{
+  "version": "0.3.23",
+  "slug": "0-3-23",
+  "date": "2026-11-03",
+  "headline": "Onze teintes dans une grille pleine",
+  "intro": "La onzième teinte ne traîne plus seule sur sa rangée, l’icône de la traduction de BD reste lisible dans la barre d’onglet, et macOS arrête de signer ses aides à l’envers comme d’entasser les .dmg qu’il télécharge.",
+  "tags": ["thèmes", "macOS", "BD"],
+  "stats": {
+    "commits": 20,
+    "files": 64,
+    "insertions": 4446,
+    "deletions": 1701
+  },
+  "sections": [
+    {
+      "title": "Ce qui a changé",
+      "body": [
+        "La grille des teintes comptait cinq colonnes pour onze thèmes : la onzième restait seule sur sa rangée, étirée en carte pleine largeur. Elle passe à douze cases — onze teintes et la teinte libre — qui se remplissent sans trou à six comme à quatre colonnes.",
+        "Les cases montraient une miniature de fenêtre qui se lisait comme un drapeau. Une pastille montre la teinte elle-même, et la coche de la teinte active prend sa couleur sur son propre fond : elle reste lisible sur l’ambre comme sur l’indigo.",
+        "L’icône « Traduire la BD » est redessinée : bulle plus haute, « A » plus grand et plus gras, queue courte attachée au coin bas-gauche. À 16 px dans la barre d’onglet, l’ancienne se refermait en pâté.",
+        "macOS : la signature ad hoc n’utilise plus <code>--deep</code>, déprécié depuis macOS 13 et qui réécrivait la signature des aides et des frameworks — au risque de perdre leurs entitlements micro et caméra. Le bundle est signé du plus profond au plus haut, et l’ancien chemin reste en dernier recours.",
+        "macOS : chaque mise à jour laissait un <code>.dmg</code> de plus dans les données de l’application. Le fichier est effacé cinq secondes après son montage, et les restes d’une session précédente au démarrage. <code>autoInstallOnAppQuit</code> ne s’arme plus sur macOS, où rien ne se télécharge en arrière-plan.",
+        "Windows : l’application porte son identité (<code>app.vela.browser</code>) au lieu de celle d’Electron — les notifications et le regroupement dans la barre des tâches redeviennent les siens. La construction accepte <code>WIN_CSC_LINK</code> le jour où un certificat existera.",
+        "Le raccourci global ne peut plus échouer en silence : <code>register</code> ne lève pas d’exception quand la combinaison est déjà prise, et <kbd>Ctrl+Maj+Espace</kbd> bascule la méthode de saisie sous Linux. Le repli sur <kbd>Ctrl+Alt+Espace</kbd> est essayé, et l’échec complet s’inscrit au journal.",
+        "Les messages de mise à jour ne promettent plus une installation silencieuse là où elle n’existe pas : depuis un <code>.deb</code>, la notification renvoie au paquet téléchargé."
+      ]
+    }
+  ],
+  "verify": [
+    "Réglages › Apparence : les onze teintes et la teinte libre tiennent en deux rangées pleines, sans case vide.",
+    "Barre d’onglet, sur une page : l’icône de traduction de BD se distingue à 16 px.",
+    "macOS : après une mise à jour, le dossier <code>updates</code> ne garde pas de <code>.dmg</code>."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.22...v0.3.23"
+}
