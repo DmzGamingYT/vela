@@ -14,28 +14,15 @@
         "Il reste désormais dans la fermeture injectée, et rien d’autre. Les canaux <code>comic:*</code> repassent par la même barrière que ceux du châssis — émetteur connu, cadre principal — au lieu de répondre à qui les appelle."
       ],
       "figure": {
-        "type": "diff",
-        "caption": "src/main/comic.ts, v0.3.21…v0.3.22",
-        "lines": [
-          {
-            "kind": "plus",
-            "text": "/** Hôtes distants déjà approuvés par l’utilisateur pendant ce lancement. */"
-          },
-          { "kind": "plus", "text": "private remoteConsent = new Map<string, boolean>()" },
-          {
-            "kind": "plus",
-            "text": "/** Même barrière que les canaux du châssis : émetteur connu, cadre principal. */"
-          },
-          {
-            "kind": "plus",
-            "text": "private allow: (event: IpcMainInvokeEvent, channel: string) => boolean,"
-          },
-          {
-            "kind": "plus",
-            "text": "/** Accord explicite avant que le contenu d’une planche quitte l’appareil. */"
-          },
-          { "kind": "plus", "text": "private confirmRemote: (host: string) => Promise<boolean>" }
-        ]
+        "type": "specimen",
+        "titre": "Cette planche part vers un hôte distant ?",
+        "texte": "Les répliques vont être envoyées à <code>api.exemple.com</code>, l’hôte réglé dans Réglages › Modèles. Le jeton, lui, ne quitte pas l’application.",
+        "alt": "Schéma de la demande d’accord affichée avant qu’une planche parte vers un hôte distant",
+        "actions": [
+          { "label": "Garder en local" },
+          { "label": "Autoriser pour ce lancement", "poids": "plein" }
+        ],
+        "caption": "Schéma : l’accord est demandé une fois par hôte et par lancement, avant la première requête."
       }
     },
     {
