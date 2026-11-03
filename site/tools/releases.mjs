@@ -107,25 +107,6 @@ const rendreFigure = (figure) => {
             </figure>`
   }
 
-  if (figure.type === 'specimen') {
-    const actions = (figure.actions || [])
-      .map((action) => `<span class="specimen-bouton${action.poids === 'plein' ? ' specimen-bouton-plein' : ''}">${action.label}</span>`)
-      .join('\n                ')
-    return `<figure class="release-figure release-figure-specimen">
-              <div class="specimen-fenetre" role="img" aria-label="${echappe(figure.alt || figure.titre)}">
-                <div class="specimen-barre" aria-hidden="true"><span></span><span></span><span></span></div>
-                <div class="specimen-corps">
-                  <p class="specimen-titre">${figure.titre}</p>
-                  <p class="specimen-texte">${figure.texte}</p>
-                  <div class="specimen-actions">
-                ${actions}
-                  </div>
-                </div>
-              </div>
-              <figcaption>${figure.caption}</figcaption>
-            </figure>`
-  }
-
   if (figure.type === 'diff') {
     const lignes = figure.lines
       .map(

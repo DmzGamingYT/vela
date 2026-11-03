@@ -1,0 +1,16 @@
+{
+  "version": "0.3.7",
+  "slug": "0-3-7",
+  "date": "2026-10-27",
+  "headline": "Épinglés déplaçables au clavier",
+  "intro": "<kbd>Alt</kbd> + flèches range les cases sans lâcher le clavier, et la page Confidentialité dit la vérité sur la mise à jour macOS.",
+  "tags": ["clavier", "accessibilité"],
+  "stats": {
+    "commits": 2,
+    "files": 6,
+    "insertions": 46,
+    "deletions": 9
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.6...v0.3.7"
+}

@@ -1,0 +1,16 @@
+{
+  "version": "0.3.11",
+  "slug": "0-3-11",
+  "date": "2026-10-28",
+  "headline": "Démarrage plus court, mémoire sous contrôle",
+  "intro": "Les panneaux ne se chargent qu’à leur ouverture, l’onglet récent ne se recharge plus, et un défaut de veille qui faisait tomber l’app après quelques onglets est corrigé.",
+  "tags": ["performance", "fiabilité"],
+  "stats": {
+    "commits": 2,
+    "files": 22,
+    "insertions": 1215,
+    "deletions": 197
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.10...v0.3.11"
+}

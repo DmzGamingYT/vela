@@ -1,0 +1,16 @@
+{
+  "version": "0.3.6",
+  "slug": "0-3-6",
+  "date": "2026-10-26",
+  "headline": "Le rail en cases compactes",
+  "intro": "Épinglés et favoris se réduisent au favicon, avec une infobulle au survol ; les onglets normaux gardent leur ligne complète.",
+  "tags": ["barre latérale"],
+  "stats": {
+    "commits": 2,
+    "files": 5,
+    "insertions": 241,
+    "deletions": 6
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.5...v0.3.6"
+}

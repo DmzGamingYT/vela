@@ -14,15 +14,12 @@
         "Il reste désormais dans la fermeture injectée, et rien d’autre. Les canaux <code>comic:*</code> repassent par la même barrière que ceux du châssis — émetteur connu, cadre principal — au lieu de répondre à qui les appelle."
       ],
       "figure": {
-        "type": "specimen",
-        "titre": "Cette planche part vers un hôte distant ?",
-        "texte": "Les répliques vont être envoyées à <code>api.exemple.com</code>, l’hôte réglé dans Réglages › Modèles. Le jeton, lui, ne quitte pas l’application.",
-        "alt": "Schéma de la demande d’accord affichée avant qu’une planche parte vers un hôte distant",
-        "actions": [
-          { "label": "Garder en local" },
-          { "label": "Autoriser pour ce lancement", "poids": "plein" }
-        ],
-        "caption": "Schéma : l’accord est demandé une fois par hôte et par lancement, avant la première requête."
+        "type": "capture",
+        "src": "/captures/releases/endpoint-distant.jpg",
+        "alt": "Réglages › Modèles dans Vela : la liste des fournisseurs, et sous « Hôte personnalisé » le champ qui désigne un hôte distant.",
+        "caption": "Réglages › Modèles : c’est ce champ qui désigne un hôte distant — et c’est lui qui déclenche la demande d’accord, une fois par lancement, avant la première planche.",
+        "width": 900,
+        "height": 563
       }
     },
     {

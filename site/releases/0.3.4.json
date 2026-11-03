@@ -1,0 +1,16 @@
+{
+  "version": "0.3.4",
+  "slug": "0-3-4",
+  "date": "2026-10-26",
+  "headline": "La fenêtre d’espace",
+  "intro": "Avatar, teinte, ambiance de fond et six modèles — Travail, Vie personnelle, Gaming, Études, Développement, Cinéma — avec leurs cookies isolés.",
+  "tags": ["espaces"],
+  "stats": {
+    "commits": 2,
+    "files": 19,
+    "insertions": 1779,
+    "deletions": 85
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.3...v0.3.4"
+}

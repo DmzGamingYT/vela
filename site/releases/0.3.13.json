@@ -1,0 +1,16 @@
+{
+  "version": "0.3.13",
+  "slug": "0-3-13",
+  "date": "2026-10-28",
+  "headline": "Une marque, des réglages rangés, une confidentialité en tableau",
+  "intro": "L’icône devient la voile, le soleil et la vague, dans l’app comme sur le site. Les réglages se resserrent : dix thèmes en deux rangées pleines, raccourcis groupés et filtrables, « Comportement » fondu dans « Modèles ». Confidentialité passe en tableau dense avec l’état réel de chaque flux.",
+  "tags": ["marque", "réglages", "confidentialité"],
+  "stats": {
+    "commits": 2,
+    "files": 33,
+    "insertions": 2079,
+    "deletions": 799
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.12...v0.3.13"
+}

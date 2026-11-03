@@ -1,0 +1,16 @@
+{
+  "version": "0.3.5",
+  "slug": "0-3-5",
+  "date": "2026-10-26",
+  "headline": "Une barre de sites par espace",
+  "intro": "Chaque espace garde ses raccourcis, son ordre et ses transferts, sans jamais emporter les cookies d’un autre espace.",
+  "tags": ["espaces", "épinglés"],
+  "stats": {
+    "commits": 2,
+    "files": 14,
+    "insertions": 994,
+    "deletions": 13
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.4...v0.3.5"
+}

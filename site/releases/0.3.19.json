@@ -1,0 +1,16 @@
+{
+  "version": "0.3.19",
+  "slug": "0-3-19",
+  "date": "2026-11-02",
+  "headline": "Une nouvelle voile, et des épinglés qui tiennent dans la main",
+  "intro": "L’icône change : un soleil plus petit et plus haut, une voile détachée de l’horizon, une mer affinée, et un gabarit de barre de menus redessiné pour rester lisible à 16 points. Sur l’accueil, les sites épinglés deviennent une rangée de vignettes carrées — favicon centré, tuile « + » en pointillés pour ajouter — que l’on replie d’un chevron.",
+  "tags": ["icône", "accueil", "épinglés"],
+  "stats": {
+    "commits": 4,
+    "files": 68,
+    "insertions": 1370,
+    "deletions": 341
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.18...v0.3.19"
+}

@@ -1,0 +1,16 @@
+{
+  "version": "0.3.15",
+  "slug": "0-3-15",
+  "date": "2026-10-29",
+  "headline": "L’ambiance Braise, son dragon et sa nuit étoilée",
+  "intro": "Un onzième thème ouvre deux ciels sur l’accueil : un dragon traverse et des braises montent, ou la Nuit de Westeros apporte ses étoiles et sa lune. L’œuf de dragon rejoint la galerie d’avatars, les cases du rail s’éclairent au survol, et le chargement de l’accueil se fait en trois braises. Tout est dessiné dans le dépôt, sans requête de plus, et « Réduire les animations » fige l’ensemble.",
+  "tags": ["ambiance", "thème", "accessibilité"],
+  "stats": {
+    "commits": 2,
+    "files": 13,
+    "insertions": 695,
+    "deletions": 7
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.14...v0.3.15"
+}

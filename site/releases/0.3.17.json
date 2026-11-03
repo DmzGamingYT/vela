@@ -1,0 +1,16 @@
+{
+  "version": "0.3.17",
+  "slug": "0-3-17",
+  "date": "2026-11-01",
+  "headline": "Un navigateur qui ne perd rien, et des sources qui disent ce qu’elles valent",
+  "intro": "La surface IPC se ferme, la CSP n’autorise plus aucun script inline et le DMG est comparé au manifeste de la release. Côté données, une clé héritée n’est supprimée qu’après relecture, un index corrompu arrête l’écriture, et la vingt-et-unième carte du tunnel est refusée au lieu d’en évincer une. Le tunnel gagne des lentilles de lecture, une pertinence plafonnée et motivée, et des extraits venus des pages. L’accueil se réorganise en modules avec les notes rapides, et la reprise de session retrouve l’onglet et le défilement d’avant.",
+  "tags": ["sécurité", "données", "tunnel", "accueil"],
+  "stats": {
+    "commits": 6,
+    "files": 110,
+    "insertions": 18614,
+    "deletions": 17032
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.16...v0.3.17"
+}

@@ -1,0 +1,16 @@
+{
+  "version": "0.3.12",
+  "slug": "0-3-12",
+  "date": "2026-10-28",
+  "headline": "Le journal Letterboxd et un bouclier à trois niveaux",
+  "intro": "Un profil Letterboxd s’importe par son flux public, avec sa ligne dans Confidentialité et son entrée d’audit. Le blocage passe par aucun, traqueurs ou strict, avec ses compteurs par onglet.",
+  "tags": ["cinéma", "blocage"],
+  "stats": {
+    "commits": 4,
+    "files": 56,
+    "insertions": 4579,
+    "deletions": 229
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.11...v0.3.12"
+}

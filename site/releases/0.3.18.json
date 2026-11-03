@@ -1,0 +1,16 @@
+{
+  "version": "0.3.18",
+  "slug": "0-3-18",
+  "date": "2026-11-02",
+  "headline": "Un champ, un bouton, des gestes qui existent partout",
+  "intro": "L’accueil ne garde qu’un bouton dans son champ : les raccourcis passent sous la barre, la personnalisation rejoint le pied de page, et le champ prend la largeur des cartes. Les tuiles Récemment s’ouvrent dans l’onglet, dans un onglet neuf ou en vue scindée, avec un menu contextuel ; deux tuiles par domaine au plus, et un libellé lisible quand l’historique n’a pas de titre. Le rail sépare ses outils de ses réglages, et le tunnel borne ce qu’il lit.",
+  "tags": ["accueil", "rail", "tunnel", "lisibilité"],
+  "stats": {
+    "commits": 3,
+    "files": 28,
+    "insertions": 1534,
+    "deletions": 326
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.17...v0.3.18"
+}

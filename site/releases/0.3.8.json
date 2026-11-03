@@ -1,0 +1,16 @@
+{
+  "version": "0.3.8",
+  "slug": "0-3-8",
+  "date": "2026-10-27",
+  "headline": "Notes liées, note vocale, macOS universel",
+  "intro": "Les notes se citent avec <code>[[Titre]]</code>, une note vocale s’enregistre et se relit sur l’appareil, et un seul <code>.dmg</code> couvre Apple silicon et Intel.",
+  "tags": ["notes", "audio", "macOS"],
+  "stats": {
+    "commits": 7,
+    "files": 66,
+    "insertions": 7545,
+    "deletions": 497
+  },
+  "sections": [],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.7...v0.3.8"
+}
