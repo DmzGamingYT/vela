@@ -102,7 +102,7 @@
             celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
           </p>
           <p class="meta">
-            <span>Version 0.3.21</span>
+            <span>Version 0.3.22</span>
             <span>13 flux décrits</span>
             <span>Sources du code</span>
           </p>
@@ -115,7 +115,7 @@
         </div>
       </section>
 
-      <div class="wrap section" style="padding-top: 56px">
+      <div class="wrap section section-tete">
         <section class="chapter" id="appareil" style="border-bottom: 0">
           <h2>Sur votre appareil</h2>
           <p class="lede">
@@ -270,8 +270,8 @@
               <tbody>
                 <tr>
                   <td class="dest"><span class="name">Modèle choisi</span>Le fournisseur configuré dans Réglages › Modèles<span class="hosts">api.openai.com · api.anthropic.com · generativelanguage.googleapis.com · api.x.ai · api.mistral.ai · api.deepseek.com · api.groq.com · api.cerebras.ai · openrouter.ai · translation.googleapis.com</span></td>
-                  <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.</td>
-                  <td>Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
+                  <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche après votre accord pour cet hôte, ou la transcription d’une note vocale après votre accord.</td>
+                  <td>Votre demande, le texte des onglets joints, de la note ou des répliques de la planche, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
                   <td class="off">Rester en démo locale, ou brancher un serveur local.</td>
                 </tr>
                 <tr class="is-local">
@@ -319,7 +319,7 @@
                 <tr>
                   <td class="dest"><span class="name">Mises à jour</span>github.com — releases de Vela<span class="hosts">objects.githubusercontent.com · release-assets.githubusercontent.com</span></td>
                   <td>Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.</td>
-                  <td>La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.</td>
+                  <td>La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml et sa signature sont téléchargés : la signature Ed25519 est vérifiée contre la clé publique épinglée dans l’application, puis l’empreinte SHA-512 du .dmg est comparée avant de proposer le fichier. Un manifeste non signé est refusé. Aucun identifiant, aucun réglage.</td>
                   <td class="off">Aucun réglage : la requête a lieu.</td>
                 </tr>
               </tbody>
@@ -386,6 +386,7 @@
             <li>Un modèle local sur localhost (Ollama ou autre) ne fait sortir aucune donnée ; un endpoint distant configuré à la place envoie la demande à cet hôte.</li>
             <li>En mode démo, aucun modèle n’est appelé : le rapport de l’agent est simulé sur place.</li>
             <li>Une note vocale ne part vers un fournisseur distant qu’après votre confirmation explicite.</li>
+            <li>Une planche de BD ne part vers un hôte distant qu’après votre accord pour cet hôte, redemandé à chaque lancement ; une adresse locale n’a rien à demander.</li>
           </ul>
         </section>
 
@@ -431,7 +432,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.21 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.22 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

@@ -9,6 +9,12 @@
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, var(--bg)), var(--bg) 88%);
 }
 
+/* Première section après l’en-tête : le pas d’au-dessus vient d’ici, pas d’un
+   style inline, pour pouvoir le resserrer en mobile. */
+.section-tete {
+  padding-top: 56px;
+}
+
 .page-head h1 {
   max-width: 20ch;
   margin-top: 16px;
@@ -411,8 +417,8 @@
 
 .timeline li {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 26px;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 24px;
   padding: 24px 0;
   border-bottom: 1px solid var(--line);
 }
@@ -455,6 +461,134 @@
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: 10.5px;
+}
+
+/* --- Journal des versions : dates, filtres, sommaire collant -------------- */
+
+.journal {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.journal-index {
+  position: sticky;
+  top: 104px;
+  display: grid;
+  max-height: calc(100vh - 148px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.journal-index a {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  grid-template-areas:
+    "numero titre"
+    "date titre";
+  column-gap: 10px;
+  padding: 6px 8px 6px 0;
+  border-left: 2px solid transparent;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.journal-index .num {
+  grid-area: numero;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.journal-index .date {
+  grid-area: date;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.journal-index .t {
+  grid-area: titre;
+  align-self: center;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.journal-index a:hover .num,
+.journal-index a:hover .t {
+  color: var(--ink);
+}
+
+.journal-index a[aria-current="true"] {
+  border-left-color: var(--accent);
+  padding-left: 12px;
+}
+
+.journal-index a[aria-current="true"] .num,
+.journal-index a[aria-current="true"] .t {
+  color: var(--ink);
+}
+
+/* La display: grid de .timeline li, de .filtres ou des liens du sommaire
+   passerait avant l’attribut hidden : sans cette règle, ce que le script
+   filtre resterait à l’écran. */
+.journal [hidden] {
+  display: none;
+}
+
+.journal-flow .timeline {
+  margin-top: 20px;
+}
+
+.timeline .meta-col {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  align-content: start;
+}
+
+.timeline .date {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtre {
+  padding: 7px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.filtre:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+.filtre[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.filtres-compteur {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 11px;
 }
 
 /* --- Schéma de la petite fenêtre ----------------------------------------- */
@@ -569,6 +703,17 @@
 @media (max-width: 900px) {
   .page-head {
     padding-top: 112px;
+    padding-bottom: 36px;
+  }
+
+  .section-tete {
+    padding-top: 28px;
+  }
+
+  /* La bande 01–05 du navigateur dit déjà les chapitres, avec celui qui est
+     sous les yeux : deux sommaires en puces à 150 px d’écart n’aident pas. */
+  .sommaire-doublon {
+    display: none;
   }
 
   .split {
@@ -632,6 +777,54 @@
   .timeline li {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .journal {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .journal-index {
+    position: static;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 8px;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* min-width: 0 : sinon la piste prend la largeur du contenu et
+       déborde de l’écran. */
+    min-width: 0;
+    max-width: 100%;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+
+  .journal-index a {
+    grid-template-columns: auto;
+    grid-template-areas:
+      "numero"
+      "date";
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+  }
+
+  .journal-index .t {
+    display: none;
+  }
+
+  .journal-index a[aria-current="true"] {
+    border-color: var(--ink);
+    padding-left: 12px;
+  }
+
+  .timeline .meta-col {
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: baseline;
+    gap: 10px;
   }
 
   .specimen {

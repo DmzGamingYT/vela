@@ -106,39 +106,39 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.21/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.22/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon et Intel · 226,9 Mo',
-      href: download('Vela-0.3.21-universal.dmg')
+      size: 'Apple silicon et Intel · 225,9 Mo',
+      href: download('Vela-0.3.22-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon · 123,2 Mo',
-      href: download('Vela-0.3.21-arm64.dmg')
+      size: 'Apple silicon · 122,2 Mo',
+      href: download('Vela-0.3.22-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      size: 'Intel · 130,4 Mo',
-      href: download('Vela-0.3.21-x64.dmg')
+      size: 'Intel · 129,4 Mo',
+      href: download('Vela-0.3.22-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
       size: 'x64 · 122,1 Mo',
-      href: download('Vela-0.3.21-x64.exe')
+      href: download('Vela-0.3.22-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
       size: 'AppImage · 126,7 Mo',
-      href: download('Vela-0.3.21-x86_64.AppImage')
+      href: download('Vela-0.3.22-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.21`
+      href: `${RELEASE}/tag/v0.3.22`
     }
   }
 
@@ -229,14 +229,73 @@
         else link.removeAttribute('aria-current')
       }
     }
+    const onScreen = new Map()
     const watcher = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible.length) setCurrent(visible[0].target.id)
+      (received) => {
+        // Un callback ne livre que les sections qui viennent de changer :
+        // on garde donc l’écran en mémoire, sinon le sommaire s’accroche à la
+        // section qui a bougé en dernier plutôt qu’à la plus haute visible.
+        for (const entry of received) onScreen.set(entry.target, entry.isIntersecting)
+        const visible = chapters.filter((chapter) => onScreen.get(chapter))
+        if (visible.length) setCurrent(visible[0].id)
       },
       { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
     )
     for (const chapter of chapters) watcher.observe(chapter)
+  }
+
+  /* --- Filtres du journal des versions ----------------------------------- */
+
+  const journal = document.querySelector('.journal')
+
+  if (journal) {
+    const filtres = journal.querySelector('.filtres')
+    const chips = [...journal.querySelectorAll('[data-filtre]')]
+    const entries = [...journal.querySelectorAll('.timeline > li')]
+    const counter = journal.querySelector('.filtres-compteur')
+    const links = new Map(
+      entries.map((entry) => [entry, journal.querySelector(`.journal-index a[href="#${entry.id}"]`)])
+    )
+    // Les étiquettes déjà écrites sous chaque titre sont la source du filtre :
+    // rien à entretenir deux fois quand une version parait.
+    const tagsOf = (entry) =>
+      [...entry.querySelectorAll('.tags span')].map((tag) => tag.textContent.trim().toLowerCase())
+    const wanted = () =>
+      chips
+        .filter((chip) => chip.getAttribute('aria-pressed') === 'true')
+        .map((chip) => chip.dataset.filtre.toLowerCase())
+
+    const apply = () => {
+      const themes = wanted()
+      let shown = 0
+      for (const entry of entries) {
+        const match = !themes.length || themes.some((theme) => tagsOf(entry).includes(theme))
+        entry.hidden = !match
+        const link = links.get(entry)
+        if (link) link.hidden = !match
+        if (match) shown += 1
+      }
+      if (counter) {
+        if (!themes.length) counter.textContent = `${entries.length} versions`
+        else counter.textContent = `${shown} version${shown > 1 ? 's' : ''} sur ${entries.length}`
+      }
+      if (!themes.length) return
+      // Le sommaire ne doit pas rester braqué sur une version filtrée.
+      const first = entries.find((entry) => !entry.hidden)
+      for (const [, link] of links) if (link) link.removeAttribute('aria-current')
+      if (first && links.get(first)) links.get(first).setAttribute('aria-current', 'true')
+    }
+
+    // Sans script les puces restent cachées : mieux vaut aucune commande
+    // qu’une commande que rien n’exécute.
+    if (filtres) filtres.hidden = false
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        chip.setAttribute('aria-pressed', String(chip.getAttribute('aria-pressed') !== 'true'))
+        apply()
+      })
+    }
+    apply()
   }
 
   /* --- Apparitions ------------------------------------------------------- */

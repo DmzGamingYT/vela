@@ -125,11 +125,11 @@
         </div>
       </section>
 
-      <div class="wrap section" style="padding-top: 56px">
+      <div class="wrap section section-tete">
         <section class="help-block" id="macos">
           <h2>macOS — ouvrir un build non signé</h2>
           <p>
-            Le fichier <code>Vela-0.3.21-universal.dmg</code> est universel : il couvre Apple silicon
+            Le fichier <code>Vela-0.3.22-universal.dmg</code> est universel : il couvre Apple silicon
             et Intel dans un seul <code>.dmg</code>. Gatekeeper refuse la première ouverture parce que
             l’application n’est ni signée ni notarisée : aucun certificat Developer ID n’est acheté,
             et il n’existe pas de notarisation Apple. Le build universel est publié ; l’essai sur une
@@ -155,7 +155,7 @@
             affiche donc un avertissement au premier lancement.
           </p>
           <ol class="steps">
-            <li>Lancer <code>Vela-0.3.21-x64.exe</code>.</li>
+            <li>Lancer <code>Vela-0.3.22-x64.exe</code>.</li>
             <li>Dans la fenêtre bleue, cliquer « Informations complémentaires ».</li>
             <li>Cliquer « Exécuter quand même », puis suivre l’installation.</li>
           </ol>
@@ -169,7 +169,7 @@
           </p>
           <ol class="steps">
             <li>AppImage : rendre le fichier exécutable, puis le lancer.</li>
-            <li>Debian : <code>sudo apt install ./Vela-0.3.21-amd64.deb</code>.</li>
+            <li>Debian : <code>sudo apt install ./Vela-0.3.22-amd64.deb</code>.</li>
             <li>Les mises à jour automatiques concernent l’AppImage et les builds macOS et Windows ; un paquet <code>.deb</code> se remplace à la main.</li>
           </ol>
         </section>
@@ -204,6 +204,12 @@
             au retour de veille et au retour du focus. Sur macOS, l’installateur de la nouvelle
             version est téléchargé en arrière-plan. Rien ne s’installe sans que la version soit
             téléchargée en entier.
+          </p>
+          <p>
+            Depuis la 0.3.22, sur macOS, le manifeste qui annonce une version doit être signé :
+            Vela vérifie sa signature Ed25519 avec la clé publique épinglée dans son code, puis
+            compare l’empreinte SHA-512 du <code>.dmg</code> téléchargé. Un manifeste non signé est
+            refusé ; l’installateur reste disponible sur la page Releases.
           </p>
           <p class="notice">
             Depuis la 0.3.9, une installation existante reçoit les versions suivantes sans
@@ -286,7 +292,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.21 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.22 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

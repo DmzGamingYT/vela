@@ -6,7 +6,7 @@
     <title>Nouveautés — Vela</title>
     <meta
       name="description"
-      content="Ce que chaque version de Vela a apporté, de la 0.3.4 à la 0.3.21 : espaces, rail compact, petite fenêtre, notes liées, journal Letterboxd, marque, réglages, ambiance Braise et reprise de session."
+      content="Ce que chaque version de Vela a apporté, de la 0.3.4 à la 0.3.22 : espaces, rail compact, petite fenêtre, notes liées, journal Letterboxd, marque, réglages, ambiance Braise, traduction de BD et sécurité."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/nouveautes/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Nouveautés — Vela" />
-    <meta property="og:description" content="Dix versions, une ligne chacune." />
+    <meta property="og:description" content="Dix-sept versions, une ligne chacune." />
     <meta property="og:site_name" content="Vela" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/nouveautes/" />
@@ -108,236 +108,345 @@
       <section class="page-head">
         <div class="wrap">
           <p class="eyebrow">Nouveautés</p>
-          <h1>Quatorze versions, quatorze changements.</h1>
+          <h1>Dix-sept versions, dix-sept changements.</h1>
           <p class="lede">
             Vela se construit une version à la fois. Chaque ligne dit ce qui a réellement changé, et
             renvoie aux notes complètes de la version.
           </p>
-          <p class="meta"><span>Version courante 0.3.21</span><span>Depuis la 0.3.4</span></p>
+          <p class="meta"><span>Version courante 0.3.22</span><span>Depuis la 0.3.4</span></p>
         </div>
       </section>
 
-      <div class="wrap section" style="padding-top: 40px; padding-bottom: 40px">
-        <ol class="timeline">
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.21">0.3.21</a>
-            <div>
-              <h2>La traduction de BD ne lit plus le bruit</h2>
-              <p>
-                Une planche de comic faisait relire jusqu’à 120 fausses bulles pour trois
-                vraies. Un crible d’aire et d’aspect les écarte avant l’OCR, les plus
-                grandes bulles passent en premier, et la relecture par le modèle de vision
-                est plafonnée à six zones par planche. Le lettrage stylisé se lit aussi
-                mieux : la lecture en gris agrandi, choisie par la confiance, remplace la
-                binarisation par défaut.
-              </p>
-              <p class="tags"><span>BD</span><span>OCR</span><span>performance</span></p>
-            </div>
-          </li>
+      <div class="wrap section section-tete" style="padding-bottom: 40px">
+        <div class="journal">
+          <nav class="journal-index" aria-label="Versions publiées" data-scroll-spy>
+            <a href="#v0-3-22"><span class="num">0.3.22</span><span class="date">3 nov. 2026</span><span class="t">Deux failles closes</span></a>
+            <a href="#v0-3-21"><span class="num">0.3.21</span><span class="date">3 nov. 2026</span><span class="t">BD : moins de bruit</span></a>
+            <a href="#v0-3-20"><span class="num">0.3.20</span><span class="date">3 nov. 2026</span><span class="t">BD par votre fournisseur</span></a>
+            <a href="#v0-3-19"><span class="num">0.3.19</span><span class="date">2 nov. 2026</span><span class="t">Nouvelle voile, épinglés</span></a>
+            <a href="#v0-3-18"><span class="num">0.3.18</span><span class="date">2 nov. 2026</span><span class="t">Un champ, un bouton</span></a>
+            <a href="#v0-3-17"><span class="num">0.3.17</span><span class="date">1 nov. 2026</span><span class="t">IPC fermé, sources notées</span></a>
+            <a href="#v0-3-15"><span class="num">0.3.15</span><span class="date">29 oct. 2026</span><span class="t">Braise, dragon, nuit</span></a>
+            <a href="#v0-3-13"><span class="num">0.3.13</span><span class="date">28 oct. 2026</span><span class="t">Marque et réglages rangés</span></a>
+            <a href="#v0-3-12"><span class="num">0.3.12</span><span class="date">28 oct. 2026</span><span class="t">Letterboxd, trois blocages</span></a>
+            <a href="#v0-3-11"><span class="num">0.3.11</span><span class="date">28 oct. 2026</span><span class="t">Démarrage plus court</span></a>
+            <a href="#v0-3-10"><span class="num">0.3.10</span><span class="date">27 oct. 2026</span><span class="t">Petite fenêtre à l’échelle</span></a>
+            <a href="#v0-3-9"><span class="num">0.3.9</span><span class="date">27 oct. 2026</span><span class="t">Petite fenêtre ⌘⌥+clic</span></a>
+            <a href="#v0-3-8"><span class="num">0.3.8</span><span class="date">27 oct. 2026</span><span class="t">Notes liées et vocales</span></a>
+            <a href="#v0-3-7"><span class="num">0.3.7</span><span class="date">27 oct. 2026</span><span class="t">Épinglés au clavier</span></a>
+            <a href="#v0-3-6"><span class="num">0.3.6</span><span class="date">26 oct. 2026</span><span class="t">Rail en cases compactes</span></a>
+            <a href="#v0-3-5"><span class="num">0.3.5</span><span class="date">26 oct. 2026</span><span class="t">Barre de sites par espace</span></a>
+            <a href="#v0-3-4"><span class="num">0.3.4</span><span class="date">26 oct. 2026</span><span class="t">La fenêtre d’espace</span></a>
+          </nav>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.20">0.3.20</a>
-            <div>
-              <h2>La traduction de BD passe par votre fournisseur</h2>
-              <p>
-                La commande « Traduire la BD » ne transporte plus de clé dans la page : le
-                texte des planches part par le pont de l’application, vers le fournisseur
-                réglé dans Réglages › Modèles. Les éclats se redressent selon l’angle du
-                texte, un crible mesure la densité de trait avant de relire une zone, et la
-                planche ne se redessine qu’une fois.
-              </p>
-              <p class="tags"><span>BD</span><span>OCR</span><span>fournisseur</span></p>
+          <div class="journal-flow">
+            <div class="filtres" role="group" aria-label="Filtrer les versions par thème" hidden>
+              <button class="filtre" type="button" data-filtre="BD" aria-pressed="false">BD</button>
+              <button class="filtre" type="button" data-filtre="accueil" aria-pressed="false">accueil</button>
+              <button class="filtre" type="button" data-filtre="tunnel" aria-pressed="false">tunnel</button>
+              <button class="filtre" type="button" data-filtre="sécurité" aria-pressed="false">sécurité</button>
+              <button class="filtre" type="button" data-filtre="performance" aria-pressed="false">performance</button>
+              <button class="filtre" type="button" data-filtre="accessibilité" aria-pressed="false">accessibilité</button>
+              <p class="filtres-compteur" aria-live="polite">17 versions</p>
             </div>
-          </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.19">0.3.19</a>
-            <div>
-              <h2>Une nouvelle voile, et des épinglés qui tiennent dans la main</h2>
-              <p>
-                L’icône change : un soleil plus petit et plus haut, une voile détachée
-                de l’horizon, une mer affinée, et un gabarit de barre de menus
-                redessiné pour rester lisible à 16 points. Sur l’accueil, les sites
-                épinglés deviennent une rangée de vignettes carrées — favicon centré,
-                tuile « + » en pointillés pour ajouter — que l’on replie d’un chevron.
-              </p>
-              <p class="tags"><span>icône</span><span>accueil</span><span>épinglés</span></p>
-            </div>
-          </li>
+            <ol class="timeline">
+              <li id="v0-3-22">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.22">0.3.22</a>
+                  <span class="date">3 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>Deux failles fermées avant qu’elles ne servent</h2>
+                  <p>
+                    Le jeton du pont de traduction traînait sur <code>window</code> : une page
+                    pouvait le lire et appeler la vision ou les corrections à votre place. Il
+                    reste dans la fermeture injectée, et les canaux <code>comic:*</code> ne
+                    répondent plus qu’à un émetteur connu, dans le cadre principal. Une planche
+                    ne part plus vers un fournisseur hors de l’appareil sans accord : une demande
+                    par hôte et par lancement, avant la première requête.
+                  </p>
+                  <p>
+                    Côté mise à jour, l’empreinte du <code>.dmg</code> était publiée dans le même
+                    fichier que la charge utile — un dépôt compromis pouvait proposer un
+                    installateur falsifié avec une empreinte cohérente. <code>latest-mac.yml</code>
+                    est signé en Ed25519, la moitié publique de la clé est épinglée dans le code,
+                    et un manifeste non signé est refusé. La chaîne de build échoue si la clé de
+                    signature manque, plutôt que de publier une version impossible à installer.
+                  </p>
+                  <p class="tags"><span>sécurité</span><span>mise à jour</span><span>BD</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.18">0.3.18</a>
-            <div>
-              <h2>Un champ, un bouton, des gestes qui existent partout</h2>
-              <p>
-                L’accueil ne garde qu’un bouton dans son champ : les raccourcis passent
-                sous la barre, la personnalisation rejoint le pied de page, et le champ
-                prend la largeur des cartes. Les tuiles Récemment s’ouvrent dans
-                l’onglet, dans un onglet neuf ou en vue scindée, avec un menu
-                contextuel ; deux tuiles par domaine au plus, et un libellé lisible
-                quand l’historique n’a pas de titre. Le rail sépare ses outils de ses
-                réglages, et le tunnel borne ce qu’il lit.
-              </p>
-              <p class="tags"><span>accueil</span><span>rail</span><span>tunnel</span><span>lisibilité</span></p>
-            </div>
-          </li>
+              <li id="v0-3-21">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.21">0.3.21</a>
+                  <span class="date">3 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>La traduction de BD ne lit plus le bruit</h2>
+                  <p>
+                    Une planche de comic faisait relire jusqu’à 120 fausses bulles pour trois
+                    vraies. Un crible d’aire et d’aspect les écarte avant l’OCR, les plus
+                    grandes bulles passent en premier, et la relecture par le modèle de vision
+                    est plafonnée à six zones par planche. Le lettrage stylisé se lit aussi
+                    mieux : la lecture en gris agrandi, choisie par la confiance, remplace la
+                    binarisation par défaut.
+                  </p>
+                  <p class="tags"><span>BD</span><span>OCR</span><span>performance</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.17">0.3.17</a>
-            <div>
-              <h2>Un navigateur qui ne perd rien, et des sources qui disent ce qu’elles valent</h2>
-              <p>
-                La surface IPC se ferme, la CSP n’autorise plus aucun script inline et le DMG est
-                comparé au manifeste de la release. Côté données, une clé héritée n’est supprimée
-                qu’après relecture, un index corrompu arrête l’écriture, et la vingt-et-unième carte
-                du tunnel est refusée au lieu d’en évincer une. Le tunnel gagne des lentilles de
-                lecture, une pertinence plafonnée et motivée, et des extraits venus des pages.
-                L’accueil se réorganise en modules avec les notes rapides, et la reprise de session
-                retrouve l’onglet et le défilement d’avant.
-              </p>
-              <p class="tags"><span>sécurité</span><span>données</span><span>tunnel</span><span>accueil</span></p>
-            </div>
-          </li>
+              <li id="v0-3-20">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.20">0.3.20</a>
+                  <span class="date">3 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>La traduction de BD passe par votre fournisseur</h2>
+                  <p>
+                    La commande « Traduire la BD » ne transporte plus de clé dans la page : le
+                    texte des planches part par le pont de l’application, vers le fournisseur
+                    réglé dans Réglages › Modèles. Les éclats se redressent selon l’angle du
+                    texte, un crible mesure la densité de trait avant de relire une zone, et la
+                    planche ne se redessine qu’une fois.
+                  </p>
+                  <p class="tags"><span>BD</span><span>OCR</span><span>fournisseur</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.15">0.3.15</a>
-            <div>
-              <h2>L’ambiance Braise, son dragon et sa nuit étoilée</h2>
-              <p>
-                Un onzième thème ouvre deux ciels sur l’accueil : un dragon traverse et des braises
-                montent, ou la Nuit de Westeros apporte ses étoiles et sa lune. L’œuf de dragon rejoint
-                la galerie d’avatars, les cases du rail s’éclairent au survol, et le chargement de
-                l’accueil se fait en trois braises. Tout est dessiné dans le dépôt, sans requête de
-                plus, et « Réduire les animations » fige l’ensemble.
-              </p>
-              <p class="tags"><span>ambiance</span><span>thème</span><span>accessibilité</span></p>
-            </div>
-          </li>
+              <li id="v0-3-19">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.19">0.3.19</a>
+                  <span class="date">2 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>Une nouvelle voile, et des épinglés qui tiennent dans la main</h2>
+                  <p>
+                    L’icône change : un soleil plus petit et plus haut, une voile détachée
+                    de l’horizon, une mer affinée, et un gabarit de barre de menus
+                    redessiné pour rester lisible à 16 points. Sur l’accueil, les sites
+                    épinglés deviennent une rangée de vignettes carrées — favicon centré,
+                    tuile « + » en pointillés pour ajouter — que l’on replie d’un chevron.
+                  </p>
+                  <p class="tags"><span>icône</span><span>accueil</span><span>épinglés</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.13">0.3.13</a>
-            <div>
-              <h2>Une marque, des réglages rangés, une confidentialité en tableau</h2>
-              <p>
-                L’icône devient la voile, le soleil et la vague, dans l’app comme sur le site. Les
-                réglages se resserrent : dix thèmes en deux rangées pleines, raccourcis groupés et
-                filtrables, « Comportement » fondu dans « Modèles ». Confidentialité passe en tableau
-                dense avec l’état réel de chaque flux.
-              </p>
-              <p class="tags"><span>marque</span><span>réglages</span><span>confidentialité</span></p>
-            </div>
-          </li>
+              <li id="v0-3-18">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.18">0.3.18</a>
+                  <span class="date">2 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>Un champ, un bouton, des gestes qui existent partout</h2>
+                  <p>
+                    L’accueil ne garde qu’un bouton dans son champ : les raccourcis passent
+                    sous la barre, la personnalisation rejoint le pied de page, et le champ
+                    prend la largeur des cartes. Les tuiles Récemment s’ouvrent dans
+                    l’onglet, dans un onglet neuf ou en vue scindée, avec un menu
+                    contextuel ; deux tuiles par domaine au plus, et un libellé lisible
+                    quand l’historique n’a pas de titre. Le rail sépare ses outils de ses
+                    réglages, et le tunnel borne ce qu’il lit.
+                  </p>
+                  <p class="tags"><span>accueil</span><span>rail</span><span>tunnel</span><span>lisibilité</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.12">0.3.12</a>
-            <div>
-              <h2>Le journal Letterboxd et un bouclier à trois niveaux</h2>
-              <p>
-                Un profil Letterboxd s’importe par son flux public, avec sa ligne dans
-                Confidentialité et son entrée d’audit. Le blocage passe par aucun, traqueurs ou
-                strict, avec ses compteurs par onglet.
-              </p>
-              <p class="tags"><span>cinéma</span><span>blocage</span></p>
-            </div>
-          </li>
+              <li id="v0-3-17">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.17">0.3.17</a>
+                  <span class="date">1 nov. 2026</span>
+                </div>
+                <div>
+                  <h2>Un navigateur qui ne perd rien, et des sources qui disent ce qu’elles valent</h2>
+                  <p>
+                    La surface IPC se ferme, la CSP n’autorise plus aucun script inline et le DMG est
+                    comparé au manifeste de la release. Côté données, une clé héritée n’est supprimée
+                    qu’après relecture, un index corrompu arrête l’écriture, et la vingt-et-unième carte
+                    du tunnel est refusée au lieu d’en évincer une. Le tunnel gagne des lentilles de
+                    lecture, une pertinence plafonnée et motivée, et des extraits venus des pages.
+                    L’accueil se réorganise en modules avec les notes rapides, et la reprise de session
+                    retrouve l’onglet et le défilement d’avant.
+                  </p>
+                  <p class="tags"><span>sécurité</span><span>données</span><span>tunnel</span><span>accueil</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.11">0.3.11</a>
-            <div>
-              <h2>Démarrage plus court, mémoire sous contrôle</h2>
-              <p>
-                Les panneaux ne se chargent qu’à leur ouverture, l’onglet récent ne se recharge plus,
-                et un défaut de veille qui faisait tomber l’app après quelques onglets est corrigé.
-              </p>
-              <p class="tags"><span>performance</span><span>fiabilité</span></p>
-            </div>
-          </li>
+              <li id="v0-3-15">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.15">0.3.15</a>
+                  <span class="date">29 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>L’ambiance Braise, son dragon et sa nuit étoilée</h2>
+                  <p>
+                    Un onzième thème ouvre deux ciels sur l’accueil : un dragon traverse et des braises
+                    montent, ou la Nuit de Westeros apporte ses étoiles et sa lune. L’œuf de dragon rejoint
+                    la galerie d’avatars, les cases du rail s’éclairent au survol, et le chargement de
+                    l’accueil se fait en trois braises. Tout est dessiné dans le dépôt, sans requête de
+                    plus, et « Réduire les animations » fige l’ensemble.
+                  </p>
+                  <p class="tags"><span>ambiance</span><span>thème</span><span>accessibilité</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.10">0.3.10</a>
-            <div>
-              <h2>La petite fenêtre à l’échelle de Vela</h2>
-              <p>
-                La moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre, plus un filet
-                de chargement sous la barre : les sites servent enfin leur mise en page bureau.
-              </p>
-              <p class="tags"><span>petite fenêtre</span></p>
-            </div>
-          </li>
+              <li id="v0-3-13">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.13">0.3.13</a>
+                  <span class="date">28 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Une marque, des réglages rangés, une confidentialité en tableau</h2>
+                  <p>
+                    L’icône devient la voile, le soleil et la vague, dans l’app comme sur le site. Les
+                    réglages se resserrent : dix thèmes en deux rangées pleines, raccourcis groupés et
+                    filtrables, « Comportement » fondu dans « Modèles ». Confidentialité passe en tableau
+                    dense avec l’état réel de chaque flux.
+                  </p>
+                  <p class="tags"><span>marque</span><span>réglages</span><span>confidentialité</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.9">0.3.9</a>
-            <div>
-              <h2>La petite fenêtre, et des mises à jour qui ne demandent plus rien</h2>
-              <p>
-                <kbd>⌘⌥</kbd> + clic ouvre un lien au centre, sans nouvel onglet. Les mises à jour se
-                téléchargent en arrière-plan. Les onglets du tunnel se ferment et la vue scindée reste
-                dans le tunnel.
-              </p>
-              <p class="tags"><span>petite fenêtre</span><span>mises à jour</span></p>
-            </div>
-          </li>
+              <li id="v0-3-12">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.12">0.3.12</a>
+                  <span class="date">28 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Le journal Letterboxd et un bouclier à trois niveaux</h2>
+                  <p>
+                    Un profil Letterboxd s’importe par son flux public, avec sa ligne dans
+                    Confidentialité et son entrée d’audit. Le blocage passe par aucun, traqueurs ou
+                    strict, avec ses compteurs par onglet.
+                  </p>
+                  <p class="tags"><span>cinéma</span><span>blocage</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.8">0.3.8</a>
-            <div>
-              <h2>Notes liées, note vocale, macOS universel</h2>
-              <p>
-                Les notes se citent avec <code>[[Titre]]</code>, une note vocale s’enregistre et se
-                relit sur l’appareil, et un seul <code>.dmg</code> couvre Apple silicon et Intel.
-              </p>
-              <p class="tags"><span>notes</span><span>audio</span><span>macOS</span></p>
-            </div>
-          </li>
+              <li id="v0-3-11">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.11">0.3.11</a>
+                  <span class="date">28 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Démarrage plus court, mémoire sous contrôle</h2>
+                  <p>
+                    Les panneaux ne se chargent qu’à leur ouverture, l’onglet récent ne se recharge plus,
+                    et un défaut de veille qui faisait tomber l’app après quelques onglets est corrigé.
+                  </p>
+                  <p class="tags"><span>performance</span><span>fiabilité</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.7">0.3.7</a>
-            <div>
-              <h2>Épinglés déplaçables au clavier</h2>
-              <p>
-                <kbd>Alt</kbd> + flèches range les cases sans lâcher le clavier, et la page
-                Confidentialité dit la vérité sur la mise à jour macOS.
-              </p>
-              <p class="tags"><span>clavier</span><span>accessibilité</span></p>
-            </div>
-          </li>
+              <li id="v0-3-10">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.10">0.3.10</a>
+                  <span class="date">27 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>La petite fenêtre à l’échelle de Vela</h2>
+                  <p>
+                    La moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre, plus un filet
+                    de chargement sous la barre : les sites servent enfin leur mise en page bureau.
+                  </p>
+                  <p class="tags"><span>petite fenêtre</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.6">0.3.6</a>
-            <div>
-              <h2>Le rail en cases compactes</h2>
-              <p>
-                Épinglés et favoris se réduisent au favicon, avec une infobulle au survol ; les
-                onglets normaux gardent leur ligne complète.
-              </p>
-              <p class="tags"><span>barre latérale</span></p>
-            </div>
-          </li>
+              <li id="v0-3-9">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.9">0.3.9</a>
+                  <span class="date">27 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>La petite fenêtre, et des mises à jour qui ne demandent plus rien</h2>
+                  <p>
+                    <kbd>⌘⌥</kbd> + clic ouvre un lien au centre, sans nouvel onglet. Les mises à jour se
+                    téléchargent en arrière-plan. Les onglets du tunnel se ferment et la vue scindée reste
+                    dans le tunnel.
+                  </p>
+                  <p class="tags"><span>petite fenêtre</span><span>mises à jour</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.5">0.3.5</a>
-            <div>
-              <h2>Une barre de sites par espace</h2>
-              <p>
-                Chaque espace garde ses raccourcis, son ordre et ses transferts, sans jamais emporter
-                les cookies d’un autre espace.
-              </p>
-              <p class="tags"><span>espaces</span><span>épinglés</span></p>
-            </div>
-          </li>
+              <li id="v0-3-8">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.8">0.3.8</a>
+                  <span class="date">27 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Notes liées, note vocale, macOS universel</h2>
+                  <p>
+                    Les notes se citent avec <code>[[Titre]]</code>, une note vocale s’enregistre et se
+                    relit sur l’appareil, et un seul <code>.dmg</code> couvre Apple silicon et Intel.
+                  </p>
+                  <p class="tags"><span>notes</span><span>audio</span><span>macOS</span></p>
+                </div>
+              </li>
 
-          <li>
-            <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.4">0.3.4</a>
-            <div>
-              <h2>La fenêtre d’espace</h2>
-              <p>
-                Avatar, teinte, ambiance de fond et six modèles — Travail, Vie personnelle, Gaming,
-                Études, Développement, Cinéma — avec leurs cookies isolés.
-              </p>
-              <p class="tags"><span>espaces</span></p>
-            </div>
-          </li>
-        </ol>
+              <li id="v0-3-7">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.7">0.3.7</a>
+                  <span class="date">27 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Épinglés déplaçables au clavier</h2>
+                  <p>
+                    <kbd>Alt</kbd> + flèches range les cases sans lâcher le clavier, et la page
+                    Confidentialité dit la vérité sur la mise à jour macOS.
+                  </p>
+                  <p class="tags"><span>clavier</span><span>accessibilité</span></p>
+                </div>
+              </li>
+
+              <li id="v0-3-6">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.6">0.3.6</a>
+                  <span class="date">26 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Le rail en cases compactes</h2>
+                  <p>
+                    Épinglés et favoris se réduisent au favicon, avec une infobulle au survol ; les
+                    onglets normaux gardent leur ligne complète.
+                  </p>
+                  <p class="tags"><span>barre latérale</span></p>
+                </div>
+              </li>
+
+              <li id="v0-3-5">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.5">0.3.5</a>
+                  <span class="date">26 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>Une barre de sites par espace</h2>
+                  <p>
+                    Chaque espace garde ses raccourcis, son ordre et ses transferts, sans jamais emporter
+                    les cookies d’un autre espace.
+                  </p>
+                  <p class="tags"><span>espaces</span><span>épinglés</span></p>
+                </div>
+              </li>
+
+              <li id="v0-3-4">
+                <div class="meta-col">
+                  <a class="version" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.4">0.3.4</a>
+                  <span class="date">26 oct. 2026</span>
+                </div>
+                <div>
+                  <h2>La fenêtre d’espace</h2>
+                  <p>
+                    Avatar, teinte, ambiance de fond et six modèles — Travail, Vie personnelle, Gaming,
+                    Études, Développement, Cinéma — avec leurs cookies isolés.
+                  </p>
+                  <p class="tags"><span>espaces</span></p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
 
         <p class="lede" style="margin-top: 28px">
           L’accueil qui respire est arrivé dans la 0.3.3, le tunnel de recherche dans la 0.3.1, les dix
@@ -348,11 +457,11 @@
 
       <section class="page-cta">
         <div class="wrap">
-          <h2>La 0.3.21 est prête.</h2>
+          <h2>La 0.3.22 est prête.</h2>
           <p>Windows se met à jour seul ; sur macOS et Linux, réinstallez le fichier téléchargé.</p>
           <a class="btn btn-solid btn-big" href="/#telecharger">
             <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-            Télécharger Vela 0.3.21
+            Télécharger Vela 0.3.22
           </a>
         </div>
       </section>
@@ -373,7 +482,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.21 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.22 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 
