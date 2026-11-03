@@ -1,6 +1,7 @@
 const { execFileSync } = require('node:child_process')
 const { existsSync } = require('node:fs')
 const { join } = require('node:path')
+const { signingPlan } = require('./mac-signing.cjs')
 
 /**
  * electron-builder `afterPack` hook (macOS uniquement).
@@ -16,6 +17,10 @@ const { join } = require('node:path')
  *    affiche « Vela est endommagé ». On applique une signature ad hoc complète :
  *    l'app affiche le dialogue classique « développeur non vérifié »
  *    (clic droit → Ouvrir, ou `xattr -cr /Applications/Vela.app`).
+ *
+ * La signature ad hoc se fait du plus profond au plus haut, sans `--deep` :
+ * déprécié depuis macOS 13, il réécrit les signatures imbriquées au lieu de les
+ * préserver. En cas d'échec seulement, on retombe sur l'ancien chemin.
  */
 function hasDeveloperIdIdentity() {
   if (process.env.CSC_LINK || process.env.CSC_NAME) return true
@@ -44,18 +49,31 @@ exports.default = async function afterPack(context) {
   if (!existsSync(appPath)) return
 
   if (hasDeveloperIdIdentity()) {
-    console.log('[afterPack] identité Developer ID détectée : signature et notarisation par electron-builder')
+    console.log(
+      '[afterPack] identité Developer ID détectée : signature et notarisation par electron-builder'
+    )
     return
   }
 
   try {
-    execFileSync(
-      'codesign',
-      ['--force', '--deep', '--timestamp=none', '--sign', '-', appPath],
-      { stdio: 'inherit' }
-    )
-    execFileSync('codesign', ['--verify', '--deep', '--strict', appPath], { stdio: 'inherit' })
+    for (const cible of signingPlan(appPath)) {
+      execFileSync('codesign', ['--force', '--timestamp=none', '--sign', '-', cible], {
+        stdio: 'inherit'
+      })
+    }
+    execFileSync('codesign', ['--verify', '--strict', appPath], { stdio: 'inherit' })
     console.log(`[afterPack] signature ad hoc OK : ${appPath}`)
+    return
+  } catch (error) {
+    console.warn('[afterPack] signature explicite impossible, repli sur --deep :', error.message)
+  }
+
+  try {
+    execFileSync('codesign', ['--force', '--deep', '--timestamp=none', '--sign', '-', appPath], {
+      stdio: 'inherit'
+    })
+    execFileSync('codesign', ['--verify', '--deep', '--strict', appPath], { stdio: 'inherit' })
+    console.log(`[afterPack] signature ad hoc de secours OK : ${appPath}`)
   } catch (error) {
     console.warn('[afterPack] signature ad hoc impossible, on continue sans :', error.message)
   }

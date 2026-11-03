@@ -15,13 +15,7 @@ import {
 import { manifestSignatureValid, verifyDownload } from './integrity'
 
 export type UpdateState =
-  | 'idle'
-  | 'checking'
-  | 'available'
-  | 'downloading'
-  | 'downloaded'
-  | 'not-available'
-  | 'error'
+  'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'
 
 export interface UpdateInfo {
   state: UpdateState
@@ -88,6 +82,21 @@ export function updateStatus(): UpdateInfo {
 /** Dossier des installateurs téléchargés, dans les données de l'application. */
 function installerDir(): string {
   return join(app.getPath('userData'), 'updates')
+}
+
+/**
+ * Efface les installateurs téléchargés : un .dmg de 150 Mo ne sert qu'une fois,
+ * et Finder garde l'image montée même quand le fichier disparaît du disque.
+ */
+function clearInstallers(): void {
+  try {
+    for (const entry of readdirSync(installerDir())) {
+      rmSync(join(installerDir(), entry), { force: true, recursive: true })
+    }
+  } catch {
+    /* dossier absent ou protégé : rien à faire */
+  }
+  installerPath = null
 }
 
 /**
@@ -193,7 +202,8 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
     }
     set({
       state: 'error',
-      message: rejected || 'Installateur introuvable pour cette version — utilisez le bouton Releases.'
+      message:
+        rejected || 'Installateur introuvable pour cette version — utilisez le bouton Releases.'
     })
   } finally {
     installing = false
@@ -251,7 +261,9 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
   if (!app.isPackaged) {
     set({
       state: 'idle',
-      message: userInitiated ? 'Disponible uniquement dans la version installée (pas en dev).' : null
+      message: userInitiated
+        ? 'Disponible uniquement dans la version installée (pas en dev).'
+        : null
     })
     return updateStatus()
   }
@@ -312,7 +324,12 @@ export function installUpdate(): void {
     if (installerPath && existsSync(installerPath)) {
       void shell.openPath(installerPath).then((error) => {
         // Image refusée ou déplacée : on retombe sur la page des releases.
-        if (error) void shell.openExternal(snapshot.releaseUrl)
+        if (error) {
+          void shell.openExternal(snapshot.releaseUrl)
+          return
+        }
+        // L'image est montée : le fichier peut quitter le disque.
+        setTimeout(() => clearInstallers(), 5_000).unref?.()
       })
       return
     }
@@ -343,7 +360,8 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   // fermeture. macOS : `electron-updater` ne saurait installer qu'un bundle
   // signé, donc on garde la détection et on prépare nous-mêmes le .dmg.
   autoUpdater.autoDownload = process.platform !== 'darwin'
-  autoUpdater.autoInstallOnAppQuit = true
+  // macOS ne télécharge rien par electron-updater : l'option n'y servirait à rien.
+  autoUpdater.autoInstallOnAppQuit = process.platform !== 'darwin'
   autoUpdater.autoRunAppAfterInstall = true
   autoUpdater.allowDowngrade = false
   autoUpdater.allowPrerelease = false
@@ -355,7 +373,9 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
       version,
       progress: 0,
       message:
-        process.platform === 'darwin' ? 'Préparation de l’installateur…' : 'Téléchargement en arrière-plan…',
+        process.platform === 'darwin'
+          ? 'Préparation de l’installateur…'
+          : 'Téléchargement en arrière-plan…',
       releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${version ?? app.getVersion()}`
     })
     if (process.platform === 'darwin') void prepareMacInstaller(version)
@@ -393,6 +413,9 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
       set({ state: 'idle', message: null })
     }
   })
+
+  // Un installateur laissé par une session précédente encombre pour rien.
+  if (process.platform === 'darwin') clearInstallers()
 
   if (!app.isPackaged) return
 
