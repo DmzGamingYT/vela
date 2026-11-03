@@ -47,3 +47,7 @@ screenshots/
 # eux, sont versionnés dans scripts/.
 .bt-*
 planche-*-aperçu.png
+
+# Sortie de `npm run site:build` : le CSS/JS minifié et haché part chez
+# l’hébergeur, il n’a rien à faire au dépôt.
+site/dist/

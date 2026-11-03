@@ -57,7 +57,7 @@ site/
 │   ├── pages.css               pages intérieures et 404
 │   ├── site.js                 thème, accent, menu, CTA par plateforme, copie des empreintes
 │   ├── captures/               captures réelles + variantes 720/1080/1440 en JPEG et AVIF
-│   ├── og-vela.png             visuel de partage 1200×630
+│   ├── og-vela.jpg             visuel de partage 1200×630
 │   ├── favicon.svg · favicon-32x32.png · apple-touch-icon.png
 │   ├── robots.txt · sitemap.xml
 ├── tools/
@@ -97,7 +97,8 @@ réglage d’encodage.
 Le visuel de partage se régénère à part :
 
 ```bash
-./node_modules/.bin/electron site/og/make-og.cjs   # écrit site/public/og-vela.png
+./node_modules/.bin/electron site/og/make-og.cjs   # écrit un PNG 1200×630
+sips -s format jpeg -s formatOptions 82 site/public/og-vela.png --out site/public/og-vela.jpg
 ```
 
 ## En-têtes et cache
@@ -110,14 +111,22 @@ Le cache suit le type de fichier, faute d’empreinte dans les noms :
 
 | Chemin | Cache-Control |
 | --- | --- |
-| `/captures/*`, icônes, `og-vela.png` | `max-age=86400, stale-while-revalidate=604800` |
-| `.css`, `.js` | `max-age=600, stale-while-revalidate=86400` |
+| `/captures/*`, icônes, `og-vela.jpg` | `max-age=86400, stale-while-revalidate=604800` |
+| `.css`, `.js` (nom haché par le build) | `max-age=31536000, immutable` |
 | HTML | `max-age=0, must-revalidate` |
 
 ## Déploiement
 
-Le manifeste est prévu pour Freebuff Sites. Déployer d’abord en preview, vérifier, puis publier en
-production.
+Le build écrit dans `site/dist` : CSS et JS minifiés sous un nom qui porte
+l’empreinte de leur contenu, HTML réécrit vers ces noms, worker et manifeste
+Sites recopiés. Les sources de `site/public` restent lisibles ; c’est `dist` qui
+part chez l’hébergeur.
+
+```sh
+npm run site:build                      # écrit site/dist
+deployer site/dist/deploy.json en preview, vérifier, puis en production
+npm run site:check                      # compare version et empreintes à la release
+```
 
 ## Vérifié
 

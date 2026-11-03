@@ -71,6 +71,13 @@ jobs:
         run: npm run lint
       - name: Lancer les tests
         run: npm test
+      # Le site annonce une version et six empreintes : si elles ne
+      # correspondent plus à la release publiée, la vérification échoue ici
+      # plutôt que sur la page publique.
+      - name: Vérifier la cohérence du site avec la release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run site:check
 
   build-mac:
     needs: [version, checks]

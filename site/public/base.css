@@ -513,6 +513,13 @@ h2.sec-title {
   gap: 28px;
 }
 
+.foot-links a {
+  /* 21 px de haut, c’était trop court au pouce ; 40 px sans écarter la ligne. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+
 .foot-links a:hover {
   color: var(--ink);
 }

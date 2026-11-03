@@ -31,6 +31,7 @@ export default tseslint.config(
       'screenshots/**',
       '.bt-*.cjs',
       'site/trailer/take/**',
+      'site/dist/**',
       'site/trailer/probe/**',
       'site/trailer/.record-data/**',
       'docs/captures/**',

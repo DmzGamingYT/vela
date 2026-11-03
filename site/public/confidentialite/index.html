@@ -6,32 +6,31 @@
     <title>Confidentialité — Vela</title>
     <meta
       name="description"
-      content="Toutes les destinations que Vela contacte d’elle-même : météo, moteur de recherche, tunnel, modèles, mises à jour, icônes. Et tout ce qui reste sur l’appareil."
+      content="Les 13 flux que Vela ouvre d’elle-même — météo, tunnel, modèles, mises à jour — et tout ce qui reste sur l’appareil."
     />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151518" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vela" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
     <meta property="og:title" content="Confidentialité — Vela" />
     <meta property="og:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
+    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Les 13 flux que Vela ouvre, et tout ce qui reste sur l’appareil." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Confidentialité — Vela" />
+    <meta name="twitter:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
+    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      ;(() => {
-        let theme = 'light'
-        let accent = '#5b5bd6'
-        try {
-          const stored = localStorage.getItem('vela-theme')
-          if (stored === 'light' || stored === 'dark') theme = stored
-          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
-          const storedAccent = localStorage.getItem('vela-site-accent')
-          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-        } catch (error) {
-          /* stockage indisponible */
-        }
-        document.documentElement.dataset.theme = theme
-        document.documentElement.style.setProperty('--accent', accent)
-      })()
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
   </head>

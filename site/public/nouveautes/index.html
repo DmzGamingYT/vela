@@ -6,7 +6,7 @@
     <title>Nouveautés — Vela</title>
     <meta
       name="description"
-      content="Ce que chaque version de Vela a apporté, de la 0.3.4 à la 0.3.22 : espaces, rail compact, petite fenêtre, notes liées, journal Letterboxd, marque, réglages, ambiance Braise, traduction de BD et sécurité."
+      content="Dix-sept versions de Vela, de la 0.3.4 à la 0.3.22 : espaces, notes liées, petite fenêtre, traduction de BD et sécurité."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
@@ -18,33 +18,17 @@
     <meta property="og:site_name" content="Vela" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/nouveautes/" />
-    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Les versions de Vela, une ligne chacune." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
+    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      ;(() => {
-        let theme = 'light'
-        let accent = '#5b5bd6'
-        try {
-          const stored = localStorage.getItem('vela-theme')
-          if (stored === 'light' || stored === 'dark') theme = stored
-          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
-          const storedAccent = localStorage.getItem('vela-site-accent')
-          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-        } catch (error) {
-          /* stockage indisponible */
-        }
-        document.documentElement.dataset.theme = theme
-        document.documentElement.style.setProperty('--accent', accent)
-      })()
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
   </head>

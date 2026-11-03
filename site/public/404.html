@@ -12,23 +12,7 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      ;(() => {
-        let theme = 'light'
-        let accent = '#5b5bd6'
-        try {
-          const stored = localStorage.getItem('vela-theme')
-          if (stored === 'light' || stored === 'dark') theme = stored
-          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
-          const storedAccent = localStorage.getItem('vela-site-accent')
-          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-        } catch (error) {
-          /* stockage indisponible */
-        }
-        document.documentElement.dataset.theme = theme
-        document.documentElement.style.setProperty('--accent', accent)
-      })()
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
   </head>

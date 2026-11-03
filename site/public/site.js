@@ -286,6 +286,23 @@
       if (first && links.get(first)) links.get(first).setAttribute('aria-current', 'true')
     }
 
+    // Le sommaire défile horizontalement en mobile : un dégradé sur le bord
+    // droit annonce la suite et s’efface quand on a atteint la dernière version.
+    const sommaire = journal.querySelector('.journal-index')
+    if (sommaire) {
+      const majBord = () => {
+        const defile = sommaire.scrollWidth > sommaire.clientWidth + 1
+        sommaire.classList.toggle('is-scrollable', defile)
+        sommaire.classList.toggle(
+          'at-end',
+          defile && sommaire.scrollLeft + sommaire.clientWidth >= sommaire.scrollWidth - 2
+        )
+      }
+      sommaire.addEventListener('scroll', majBord, { passive: true })
+      window.addEventListener('resize', majBord)
+      majBord()
+    }
+
     // Sans script les puces restent cachées : mieux vaut aucune commande
     // qu’une commande que rien n’exécute.
     if (filtres) filtres.hidden = false

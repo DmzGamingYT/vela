@@ -563,6 +563,11 @@
 }
 
 .filtre {
+  /* 34 px de haut, les puces se rataient au pouce : on vise 40 px sans
+     épaissir la barre, la hauteur vient du rembourrage vertical. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
   padding: 7px 14px;
   border: 1px solid var(--line-strong);
   border-radius: 999px;
@@ -798,6 +803,16 @@
     max-width: 100%;
     padding-bottom: 6px;
     scrollbar-width: none;
+  }
+
+  /* Le sommaire défile horizontalement sans barre visible : un dégradé sur le
+     bord droit dit qu’il reste des versions, et s’éteint une fois au bout. */
+  .journal-index.is-scrollable {
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+  }
+
+  .journal-index.is-scrollable.at-end {
+    mask-image: none;
   }
 
   .journal-index a {

@@ -6,7 +6,7 @@
     <title>Vela — le web, votre atelier</title>
     <meta
       name="description"
-      content="Un navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, vue scindée, notes locales et tunnel de recherche. Sans compte Vela, sans télémétrie."
+      content="Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, notes locales et tunnel de recherche. Sans compte, sans télémétrie."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
@@ -21,8 +21,8 @@
       property="og:description"
       content="Onglets verticaux, espaces isolés, vue scindée, notes locales. L’agent lit seulement les onglets que vous joignez."
     />
-    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -35,28 +35,11 @@
       name="twitter:description"
       content="Onglets verticaux, espaces isolés, vue scindée, notes locales. Sans compte Vela, sans télémétrie."
     />
-    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.png" />
+    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      document.documentElement.classList.add('js')
-      ;(() => {
-        let theme = 'light'
-        let accent = '#5b5bd6'
-        try {
-          const stored = localStorage.getItem('vela-theme')
-          if (stored === 'light' || stored === 'dark') theme = stored
-          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
-          const storedAccent = localStorage.getItem('vela-site-accent')
-          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-        } catch (error) {
-          /* stockage indisponible : thème clair, indigo */
-        }
-        document.documentElement.dataset.theme = theme
-        document.documentElement.style.setProperty('--accent', accent)
-      })()
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/home.css" />
     <script type="application/ld+json">
