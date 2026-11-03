@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import {
-  DRAGON_THEME,
   THEME_PRESETS,
+  readableOn,
   type GlassIntensity,
   type HomeBackground,
   type ResolvedMode
@@ -90,85 +90,89 @@ export default function AppearancePage({
         <h2>Thème de couleur</h2>
         <p>Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.</p>
       </div>
-      <div className="theme-swatches" role="group" aria-label="Thème de couleur">
+      {/* Douze cases : onze teintes et la teinte libre. La grille se remplit
+          sans trou à six colonnes comme à quatre : aucune case vide, aucune
+          rangée orpheline, et la couleur n'a qu'un seul endroit pour être
+          réglée. */}
+      <div className="theme-grid" role="group" aria-label="Thème de couleur">
         {THEME_PRESETS.map((preset) => {
           const active = settings.themeId === preset.id
+          const teinte = swatchColor(preset.id, settings.customAccent, mode)
           return (
             <button
               type="button"
               key={preset.id}
               aria-pressed={active}
               aria-label={preset.label}
-              className="theme-tile"
+              className="theme-dot"
               data-active={active}
-              data-featured={preset.id === DRAGON_THEME}
-              style={{ '--swatch': swatchColor(preset.id, settings.customAccent, mode) } as CSSProperties}
+              style={{ '--swatch': teinte, '--swatch-ink': readableOn(teinte) } as CSSProperties}
               onClick={() => void updateSettings({ themeId: preset.id })}
             >
-              <span className="theme-tile-preview">
-                <span className="theme-tile-rail" />
-                <span className="theme-tile-side" />
-                <span className="theme-tile-pane">
-                  <span className="theme-tile-dot" />
-                </span>
-              </span>
-              <span className="theme-tile-name">
-                {preset.label}
-                {active && <span className="theme-tile-badge" />}
-              </span>
+              <span className="theme-dot-disc">{active && <Icon name="check" size={15} />}</span>
+              <span className="theme-dot-name">{preset.label}</span>
             </button>
           )
         })}
-        {/* La teinte libre occupe sa propre rangée : les dix thèmes
-            remplissent deux rangées pleines, sans tuile orpheline, et
-            la couleur n'a qu'un seul endroit pour être réglée. */}
-        <div className="theme-custom" data-active={settings.themeId === 'custom'}>
-          <span
-            className="theme-custom-swatch"
-            style={{ '--swatch': settings.customAccent } as CSSProperties}
-            aria-hidden="true"
-          />
-          <div className="theme-custom-copy">
-            <span className="theme-custom-name">Personnalisé</span>
-            <span className="theme-custom-hint">Teinte libre, saisie ci-contre</span>
-          </div>
-          <div className="custom-color">
-            <input
-              type="color"
-              aria-label="Choisir une couleur personnalisée"
-              value={settings.customAccent}
-              onChange={(event) => applyCustom(event.target.value)}
-            />
-            <input
-              type="text"
-              aria-label="Code hexadécimal"
-              key={settings.customAccent}
-              defaultValue={settings.customAccent.toUpperCase()}
-              spellCheck={false}
-              onBlur={(event) => applyCustom(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  applyCustom(event.currentTarget.value)
-                }
-              }}
-            />
-          </div>
-          {settings.themeId === 'custom' ? (
-            <span className="theme-custom-state">
-              <Icon name="check" size={12} />
-              Active
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="action"
-              onClick={() => void updateSettings({ themeId: 'custom' })}
-            >
-              Utiliser
-            </button>
-          )}
+        <button
+          type="button"
+          aria-pressed={settings.themeId === 'custom'}
+          aria-label="Teinte personnalisée"
+          className="theme-dot"
+          data-active={settings.themeId === 'custom'}
+          style={
+            {
+              '--swatch': settings.customAccent,
+              '--swatch-ink': readableOn(settings.customAccent)
+            } as CSSProperties
+          }
+          onClick={() => void updateSettings({ themeId: 'custom' })}
+        >
+          <span className="theme-dot-disc">
+            {settings.themeId === 'custom' && <Icon name="check" size={15} />}
+          </span>
+          <span className="theme-dot-name">Personnalisé</span>
+        </button>
+      </div>
+
+      <div className="theme-custom" data-active={settings.themeId === 'custom'}>
+        <span
+          className="theme-custom-swatch"
+          style={{ '--swatch': settings.customAccent } as CSSProperties}
+          aria-hidden="true"
+        />
+        <div className="theme-custom-copy">
+          <span className="theme-custom-name">Teinte libre</span>
+          <span className="theme-custom-hint">Saisie ici, elle prend la case « Personnalisé ».</span>
         </div>
+        <div className="custom-color">
+          <input
+            type="color"
+            aria-label="Choisir une couleur personnalisée"
+            value={settings.customAccent}
+            onChange={(event) => applyCustom(event.target.value)}
+          />
+          <input
+            type="text"
+            aria-label="Code hexadécimal"
+            key={settings.customAccent}
+            defaultValue={settings.customAccent.toUpperCase()}
+            spellCheck={false}
+            onBlur={(event) => applyCustom(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                applyCustom(event.currentTarget.value)
+              }
+            }}
+          />
+        </div>
+        {settings.themeId === 'custom' && (
+          <span className="theme-custom-state">
+            <Icon name="check" size={12} />
+            Active
+          </span>
+        )}
       </div>
 
       {hexNote && (

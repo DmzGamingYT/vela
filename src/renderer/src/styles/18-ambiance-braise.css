@@ -2,26 +2,6 @@
    Ambiance Braise — ciel de braise, cases du rail, chargement
    --------------------------------------------------------------- */
 
-/* Le thème vedette occupe la rangée entière : la grille des couleurs garde
-   sinon une tuile seule, et l'ambiance mérite d'être vue. */
-.theme-tile[data-featured='true'] {
-  grid-column: 1 / -1;
-  flex-direction: row;
-  align-items: center;
-  gap: 13px;
-  padding: 9px 13px;
-}
-
-.theme-tile[data-featured='true'] .theme-tile-preview {
-  flex: 0 0 104px;
-  width: 104px;
-}
-
-.theme-tile[data-featured='true'] .theme-tile-name {
-  flex: 1;
-  font-size: 12px;
-}
-
 .dragon-sky {
   position: absolute;
   inset: 0;

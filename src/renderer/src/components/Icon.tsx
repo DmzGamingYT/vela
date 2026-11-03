@@ -249,11 +249,13 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   // Bulle de dialogue avec un « A » : la traduction d'une planche, pas la
-  // lecture d'une image. La queue à gauche évite la ressemblance avec « notes ».
+  // lecture d'une image. Dessinée large, avec un « A » aux jambes plus grasses
+  // que la bulle : à 16 px, dans la barre d'onglet, un tracé plus fin se referme
+  // en pâté. La queue part du coin bas-gauche, ce qui la distingue de « notes ».
   comic: (
     <>
-      <path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9.8l-4.3 3.4V17H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-      <path d="M8.3 13.8 11 8.3l2.7 5.5M9.4 11.9h3.2" />
+      <path d="M6 4h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-6.2L7.4 20.4V17H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z" />
+      <path d="M9 13.6 12 7.4l3 6.2M10.1 11.4h3.8" strokeWidth={1.8} />
     </>
   ),
   refresh: (
