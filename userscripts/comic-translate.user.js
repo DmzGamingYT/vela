@@ -87,6 +87,10 @@
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const near = (img) => {
     const rect = img.getBoundingClientRect()
+    // Une image `display:none` (galerie cachée du lecteur, doublon desktop/mobile)
+    // a un rect nul qui passerait sinon le test de proximité : ce sont des
+    // planches que l'utilisateur ne voit pas, jamais à traduire.
+    if (!rect.width && !rect.height) return false
     return rect.bottom > -window.innerHeight && rect.top < window.innerHeight * 2
   }
 
@@ -161,6 +165,99 @@
 
   function panelSource(img) {
     return img.currentSrc || img.src || ''
+  }
+
+  /**
+   * État complet d'une image pour le journal de diagnostic : ce que la page a
+   * vraiment, pas seulement le `src` affiché. Les pages Webtoons diffèrent le
+   * chargement avec data-src / data-url.
+   */
+  function describeImage(img) {
+    const attr = (name) => img.getAttribute(name) || ''
+    const attrs = ['data-src', 'data-url', 'data-image', 'data-original', 'data-lazy-src', 'srcset']
+    const extra = {}
+    for (const name of attrs) {
+      const value = attr(name)
+      if (value) extra[name] = value.slice(0, 160)
+    }
+    return {
+      urlTestee: panelSource(img),
+      currentSrc: img.currentSrc || '',
+      src: img.src || '',
+      ...extra,
+      naturalWidth: img.naturalWidth || 0,
+      naturalHeight: img.naturalHeight || 0,
+      complete: Boolean(img.complete),
+      crossOrigin: img.crossOrigin === null || img.crossOrigin === undefined ? '(aucun)' : img.crossOrigin,
+      loading: attr('loading') || '(aucun)'
+    }
+  }
+
+  /**
+   * Raison précise d'un échec : le message générique « image inaccessible »
+   * ne disait pas si c'était le CORS, un 403 lié au Referer, un placeholder ou
+   * un délai. Les motifs proviennent du pont (processus principal).
+   */
+  function loadReason(error, img) {
+    const text = String((error && error.message) || error || '').trim()
+    const declared = describeImage(img)
+    if (/placeholder/i.test(text)) return `placeholder non chargé — ${text}`
+    if (/HTTP 403/i.test(text)) return `403 Referer — ${text}`
+    if (/HTTP 401|401 /i.test(text)) return `401 — ${text}`
+    if (/HTTP 40[0-9]|HTTP 5[0-9][0-9]/i.test(text)) return text
+    if (/d[ée]lai d[ée]pass[ée]|timeout/i.test(text)) return `timeout — ${text}`
+    if (/SecurityError|tainted|CORS/i.test(text)) return `CORS — ${text}`
+    if (/capture/i.test(text)) return `capture échouée — ${text}`
+    if (!declared.naturalWidth && declared.complete === false) return `image jamais chargée — ${text}`
+    return text || 'cause inconnue'
+  }
+
+  /** Journal : une ligne par planche, jamais la même deux fois. */
+  const journalSeen = new Set()
+  function journalPanels(prefix, payload, dedupe = true) {
+    const line = `[BD] ${prefix} ${JSON.stringify(payload)}`
+    if (!dedupe || !journalSeen.has(line)) {
+      journalSeen.add(line)
+      if (dedupe && journalSeen.size > 400) journalSeen.clear()
+      console.warn(line)
+    }
+    return line
+  }
+
+  /**
+   * Une image peut être `complete` (`decoding="async"`) sans jamais être
+   * décodée : Chromium retarde le décodage d'une image hors peinture (onglet
+   * en veille, mini-navigateur, page au chargement rapproché) : naturalWidth
+   * vaut alors 0 et la planche est rejetée comme trop petite. On force le
+   * décodage des candidates avant la détection.
+   */
+  function ensureDecoded(img) {
+    if (img.naturalWidth) return Promise.resolve(true)
+    const src = img.currentSrc || img.src || ''
+    if (!/^(https?:|blob:|data:image)/i.test(src)) return Promise.resolve(false)
+    return new Promise((resolve) => {
+      const finish = (value) => resolve(value > 0)
+      const timer = setTimeout(() => { img.onload = null; img.onerror = null; finish(img.naturalWidth) }, 4000)
+      img.onload = () => { clearTimeout(timer); img.onload = null; img.onerror = null; finish(img.naturalWidth) }
+      img.onerror = () => { clearTimeout(timer); img.onload = null; img.onerror = null; finish(img.naturalWidth) }
+      // Sans peinture, l'attribut `loading="lazy"` ne déclenche jamais le
+      // chargement : on relit la source que Tesseract utilisera de toute façon.
+      img.loading = 'eager'
+      img.src = src
+    })
+  }
+
+  async function decodeCandidates() {
+    const candidats = []
+    for (const img of document.images) {
+      if (candidats.length >= CFG.maxPanels) break
+      if (!near(img)) continue
+      if (img.closest('header, nav, footer, .vt-layer')) continue
+      if (img.dataset.vtDecode) continue
+      img.dataset.vtDecode = ''
+      candidats.push(img)
+    }
+    for (const img of candidats) await ensureDecoded(img)
   }
 
   function looksLikePanel(img) {
@@ -259,8 +356,11 @@
       })
       // Mode automatique (3) plutôt que « texte épars » (11) : mesuré sur une
       // planche de test, le 11 perdait les cartouches d'une seule ligne
-      // (« THREE HOURS EARLIER ») sans mieux découper les bulles.
-      await worker.setParameters({ preserve_interword_spaces: '1' })
+      // (« THREE HOURS EARLIER ») sans mieux découper les bulles. Sans dpi
+      // déclaré, Tesseract suppose ~70 dpi : les lettres d'un corps de 20 px
+      // passent pour minuscules, et la lecture s'effondre — 300 dpi est ce que
+      // vise l'agrandissement des lectures rapprochées.
+      await worker.setParameters({ preserve_interword_spaces: '1', user_defined_dpi: '300' })
       return worker
     })()
     return workerPromise
@@ -526,6 +626,12 @@
       const solid = solidMask(region, width)
       if (!solid) continue
       if (solid.area / (solid.w * solid.h) < 0.3) continue
+      // Un creux clair de l'encrage ressemble à une bulle mais ne porte pas de
+      // réplique : touche minuscule, ou bande très allongée. Mesuré sur une
+      // planche de comic : 120 fausses bulles pour 3 vraies, chacune payée
+      // d'une passe d'OCR entière avant d'être rejetée.
+      if (solid.w * solid.h < Math.max(1500, lum.length * 0.0015)) continue
+      if (solid.w / solid.h > 5 || solid.w / solid.h < 0.2) continue
       bubbles.push({
         bbox: { x0: solid.x0, y0: solid.y0, x1: solid.x0 + solid.w - 1, y1: solid.y0 + solid.h - 1 },
         mask: solid,
@@ -542,6 +648,28 @@
     let hash = 5381
     for (let index = 0; index < seed.length; index += 1) hash = ((hash << 5) + hash + seed.charCodeAt(index)) >>> 0
     return hash.toString(36)
+  }
+
+  /**
+   * Un texte lisible ressemble à une réplique : assez de lettres, pas plus de
+   * 35 % de symboles à l'intérieur des caractères non espacés. Les lectures de
+   * texture (« Zama {C », « - \\ te », « 0d He PRN ») tombent sous ce crible,
+   * les répliques réelles passent — mesuré sur les deux sites de test.
+   */
+  function textLike(value) {
+    const brut = String(value).trim()
+    if (brut.length < 2) return false
+    const letters = brut.replace(/[^\p{L}\p{N}]/gu, '').length
+    if (letters < 2) return false
+    // Trop de symboles par lettre : texture déchiffrée (« - \\ te », « Zama {C »).
+    if (letters / brut.replace(/\s+/gu, '').length < 0.65) return false
+    // Trop court pour une réplique et aucun mot réel (« V4 », « La », « hb »,
+    // « 0d He PRN ») : les lectures fantômes de la texture. Une vraie réplique
+    // d'un seul mot tient dans son mot (« LOCATED. » compte 8 lettres).
+    if (letters < 8 && !brut.split(/\s+/).some((mot) => mot.replace(/[^\p{L}\p{N}]/gu, '').length >= 5)) {
+      return false
+    }
+    return true
   }
 
   /** Découpe un rectangle dans la planche, avec une marge. */
@@ -603,18 +731,49 @@
    * Lit une bulle isolément. C'est ce qui empêche deux bulles voisines d'être
    * réunies : chacune est recadrée sur son propre masque, donc l'OCR ne voit
    * jamais la ligne de l'autre.
+   *
+   * La lecture passe par la même préparation qu'un éclat (agrandissement puis
+   * binarisation, hors du masque tout en blanc) : mesuré, le texte au naturel
+   * du canvas se lit mal — corps trop petit, antialias — et les bulles étaient
+   * la seule voie d'entrée à en être privée.
    */
   async function readBubble(canvas, bubble) {
     const part = cropBox(canvas, bubble.bbox, 8)
     if (!part) return null
-    let lines = await ocrPass(part.canvas, { tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' })
-    if (!lines.length) {
-      lines = await ocrPass(part.canvas, { tessedit_pageseg_mode: '11', preserve_interword_spaces: '1' })
+    // Même visée d'agrandissement qu'un éclat, bornée : une bulle pleine
+    // planche agrandie ×3 coûterait plus de mémoire que de gain de lecture.
+    let scale = Math.max(2, Math.min(3, Math.round(900 / Math.max(1, part.sh))))
+    while (scale > 1 && part.sw * part.sh * scale * scale > 2_500_000) scale -= 1
+    const prepared = prepareText(part, bubble.mask, scale)
+    const gray = prepareText(part, bubble.mask, scale, { binarize: false })
+    let best = null
+    // Le gris d'abord : sur un lettrage de comic, la binarisation transforme
+    // le D en P (« PON'T ») et le Y en U (« OU »). La binarisation reste
+    // essayée ensuite pour le texte noir sur blanc des bulles classiques,
+    // et la confiance de Tesseract choisit entre les deux lectures.
+    const variants = [
+      { canvas: gray.canvas, mode: '6' },
+      { canvas: prepared.canvas, mode: '6' },
+      { canvas: prepared.canvas, mode: '11' }
+    ]
+    for (const variant of variants) {
+      const lines = await ocrPass(variant.canvas, {
+        tessedit_pageseg_mode: variant.mode,
+        preserve_interword_spaces: '1'
+      })
+      const text = lines.map((line) => line.text).join(' ').replace(/\s+/g, ' ').trim()
+      const letters = text.replace(/[^\p{L}\p{N}]/gu, '').length
+      const confidence =
+        lines.reduce((total, line) => total + (line.confidence || 0), 0) / Math.max(1, lines.length)
+      if (letters >= 2 && (!best || confidence > best.confidence)) {
+        best = { text, lineHeight: lineHeightOf(lines) / prepared.scale, confidence }
+      }
+      // Une lecture nette met fin aux essais : au-delà de 70 % de confiance,
+      // changer de variante ne gagne plus rien et coûte une passe entière.
+      if (best && best.confidence >= 70) break
     }
-    if (!lines.length) return null
-    const text = lines.map((line) => line.text).join(' ').replace(/\s+/g, ' ').trim()
-    if (text.replace(/[^\p{L}\p{N}]/gu, '').length < 2) return null
-    return { text, lineHeight: lineHeightOf(lines), lines: lines.length }
+    if (!best) return null
+    return { text: best.text, lineHeight: best.lineHeight, confidence: Math.round(best.confidence) }
   }
 
   /**
@@ -779,25 +938,32 @@
     return { deg: best, gain: bestScore / flat }
   }
 
-  async function readBurstRaw(canvas, box, zoneMask) {
-    const part = cropBox(canvas, box, 6)
-    if (!part) return null
-    let source = part.canvas
+  /**
+   * Préparation commune des lectures rapprochées : hors du masque tout est mis
+   * en blanc, l'extrait est agrandi d'un facteur entier puis binarisé, avec
+   * inversion automatique si le texte est clair sur fond sombre. Tesseract lit
+   * mal une planche au naturel : petit corps, antialias, aplats graphiques.
+   * Retourne { canvas, scale } — scale sert à ramener les boîtes au canvas.
+   */
+  function prepareText(part, zoneMask, scale, options = {}) {
+    const binarize = options.binarize !== false
+    const { canvas: source, sx, sy, sw, sh } = part
+    let input = source
     if (zoneMask) {
       // Le recadrage d'un éclat contient ses pointes : elles se lisent comme
       // des lettres. On ne garde que l'intérieur de la bulle, le reste en blanc.
       const clean = document.createElement('canvas')
-      clean.width = part.sw
-      clean.height = part.sh
+      clean.width = sw
+      clean.height = sh
       const cleanContext = clean.getContext('2d', { willReadFrequently: true })
-      const inside = part.canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, part.sw, part.sh)
-      for (let y = 0; y < part.sh; y += 1) {
-        for (let x = 0; x < part.sw; x += 1) {
-          const mx = x + part.sx - zoneMask.x0
-          const my = y + part.sy - zoneMask.y0
+      const inside = source.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, sw, sh)
+      for (let y = 0; y < sh; y += 1) {
+        for (let x = 0; x < sw; x += 1) {
+          const mx = x + sx - zoneMask.x0
+          const my = y + sy - zoneMask.y0
           const kept = mx >= 0 && my >= 0 && mx < zoneMask.w && my < zoneMask.h && zoneMask.mask[my * zoneMask.w + mx]
           if (kept) continue
-          const offset = (y * part.sw + x) * 4
+          const offset = (y * sw + x) * 4
           inside.data[offset] = 255
           inside.data[offset + 1] = 255
           inside.data[offset + 2] = 255
@@ -805,18 +971,21 @@
         }
       }
       cleanContext.putImageData(inside, 0, 0)
-      source = clean
+      input = clean
     }
-    const scale = Math.max(2, Math.min(4, Math.round(720 / Math.max(1, part.sw))))
     const up = document.createElement('canvas')
-    up.width = part.sw * scale
-    up.height = part.sh * scale
+    up.width = sw * scale
+    up.height = sh * scale
     const context = up.getContext('2d', { willReadFrequently: true })
     context.imageSmoothingEnabled = true
     context.imageSmoothingQuality = 'high'
-    context.drawImage(source, 0, 0, up.width, up.height)
+    context.drawImage(input, 0, 0, up.width, up.height)
     const image = context.getImageData(0, 0, up.width, up.height)
     const { data } = image
+    // Lettrage stylisé (comics US) : le seuil mange les courbes du D et du Y,
+    // qui se lisent alors P et U. Le gris agrandi garde l'antialias, que le
+    // moteur LSTM exploite — mesuré meilleur sur les planches de test.
+    if (!binarize) return { canvas: up, scale }
     let sum = 0
     let min = 255
     let max = 0
@@ -838,9 +1007,19 @@
       data[index + 3] = 255
     }
     context.putImageData(image, 0, 0)
+    return { canvas: up, scale }
+  }
+
+  async function readBurstRaw(canvas, box, zoneMask) {
+    const part = cropBox(canvas, box, 6)
+    if (!part) return null
+    let scale = Math.max(2, Math.min(4, Math.round(720 / Math.max(1, part.sw))))
+    // Un éclat géant : l'agrandissement ne doit pas exploser la mémoire.
+    while (scale > 1 && part.sw * part.sh * scale * scale > 4_000_000) scale -= 1
+    const prepared = prepareText(part, zoneMask, scale)
     // Budget : une seule passe OCR par éclat, puis la vision si elle existe.
-    for (const mode of ['7']) {
-      const lines = await ocrPass(up, {
+    for (const mode of ['7', '6']) {
+      const lines = await ocrPass(prepared.canvas, {
         tessedit_pageseg_mode: mode,
         preserve_interword_spaces: '1'
       })
@@ -848,7 +1027,7 @@
       const letters = text.replace(/[^\p{L}\p{N}]/gu, '').length
       const confidence = lines.reduce((total, line) => total + (line.confidence || 0), 0) / Math.max(1, lines.length)
       if (letters >= 2 && confidence >= 55) {
-        return { text, lineHeight: lineHeightOf(lines) / scale, confidence: Math.round(confidence) }
+        return { text, lineHeight: lineHeightOf(lines) / prepared.scale, confidence: Math.round(confidence) }
       }
     }
     return null
@@ -1020,7 +1199,17 @@
    */
   async function analyzePanel(canvas) {
     const { bubbles, pixels, cut } = bubbleRegions(canvas)
+    // Les plus grandes d'abord, et un plafond : sur une planche de comic, les
+    // vraies bulles sont les plus grandes régions closes. Sans plafond, une page
+    // bruitée fait relire des dizaines de creux d'encrage avant la première
+    // réplique — c'est là que passait l'essentiel du temps d'analyse.
+    const parAire = (bubble) => (bubble.bbox.x1 - bubble.bbox.x0) * (bubble.bbox.y1 - bubble.bbox.y0)
+    const gardees = new Set([...bubbles].sort((a, b) => parAire(b) - parAire(a)).slice(0, 24))
     for (const bubble of bubbles) {
+      if (!gardees.has(bubble)) {
+        bubble.skipped = true
+        continue
+      }
       const read = await readBubble(canvas, bubble)
       if (read) {
         bubble.text = read.text
@@ -1068,7 +1257,7 @@
 
     // Zones muettes : une bulle close que l'OCR n'a pas lue, et les amas d'encre
     // hors de tout texte connu. On tente l'OCR agrandi, puis la vision.
-    const silent = bubbles.filter((bubble) => !bubble.text).map((bubble) => ({ bbox: bubble.bbox, mask: bubble.mask }))
+    const silent = bubbles.filter((bubble) => !bubble.text && !bubble.skipped).map((bubble) => ({ bbox: bubble.bbox, mask: bubble.mask }))
     const clusters = inkClusters(pixels, cut, [...bubbles.map((bubble) => bubble.bbox), ...zones.map((zone) => zone.bbox)])
     // Crible AVANT l'OCR : un amas d'encre qui n'a pas la forme de texte coûte
     // une passe complète pour rien. Le motif du rejet est gardé pour la capture.
@@ -1090,10 +1279,19 @@
       silent.push({ bbox, mask: null })
       extra += 1
     }
+    // Chaque éclat illisible coûte un appel au modèle : sur une planche
+    // bruitée (texture, hachures) c'était 86 appels mesurés sur une seule
+    // planche de readcomicsonline, donc un crédit API dépensé en bruit.
+    // Budget par planche, ensuite : rester muet.
+    const budgetVision = { restant: 6 }
     for (const candidate of silent) {
       let read = await readBurst(canvas, candidate.bbox, candidate.mask)
-      if (read) read = { ...read, via: 'ocr-agrandi' }
-      else read = await readBurstVision(canvas, candidate.bbox)
+      if (read) {
+        read = { ...read, via: 'ocr-agrandi' }
+      } else if (budgetVision.restant > 0) {
+        budgetVision.restant -= 1
+        read = await readBurstVision(canvas, candidate.bbox)
+      }
       const lineHeight = (read && read.lineHeight) || candidate.bbox.y1 - candidate.bbox.y0
       zones.push({
         bbox: candidate.bbox,
@@ -1105,6 +1303,13 @@
         unread: !read,
         source: read ? read.via : 'illisible'
       })
+    }
+
+    // Une lecture qui ne ressemble à rien (« Zama {C », « 0d He PRN ») est du
+    // bruit déchiffré dans la texture : muette avant la traduction, le calque
+    // n'existe que pour une réplique, jamais pour un amas de symboles.
+    for (const zone of zones) {
+      if (zone.text && !textLike(zone.text)) zone.text = ''
     }
 
     // Angle du texte, par zone et pas seulement pour les éclats : une bulle
@@ -1130,12 +1335,17 @@
 
   /** Planches déjà analysées : une correction manuelle se réaffiche sans OCR. */
   const analysed = new Map()
+  /** Bilan affiché dans le panneau : traduites / ignorées, avec les raisons. */
+  const STATS = { traduites: 0, ignorees: 0, raisons: new Map() }
   let activeSource = ''
   let activeLayer = null
   let activeState = null
   let activeImg = null
 
-  /** Lit une planche, traduit ses bulles et pose le calque. */
+  /**
+   * Lit une planche, traduit ses bulles et pose le calque. Chaque étape est
+   * journalisée : si la planche est ignorée, on sait où elle s'est arrêtée.
+   */
   async function translatePanel(img) {
     const source = panelSource(img)
     if (!source) return
@@ -1144,17 +1354,26 @@
     activeSource = source
     activeLayer = layer
     activeImg = img
+    let etape = 'source'
     try {
+      const declared = describeImage(img)
+      // Placeholder : 1×1 ou miniature de chargement, jamais la planche.
+      if (declared.naturalWidth > 0 && declared.naturalWidth < 50) {
+        throw new Error('placeholder non chargé — image de ' + declared.naturalWidth + ' px')
+      }
       let state = analysed.get(source)
       if (!state) {
         // Corrections enregistrées lors d'une session précédente : elles
         // reviennent avant l'analyse, sans être écrasées par la traduction.
         await restoreEdits(source)
+        etape = 'téléchargement'
         setStatus('préparation de la planche…')
         const { canvas } = await canvasFrom(source)
+        etape = 'analyse'
         setStatus('découpage des bulles…')
         const started = performance.now()
         const analysis = await analyzePanel(canvas)
+        etape = 'décodage'
         OCR.analyse = performance.now() - started
         const readable = analysis.zones.filter((zone) => zone.text)
         setStatus(`${analysis.zones.length} zone(s), ${readable.length} à traduire…`)
@@ -1170,13 +1389,18 @@
       activeState = state
       const drawn = repaint()
       done.set(img, source)
+      etape = 'traduction'
       setStatus(`${drawn} zone(s) traduite(s) · ${state.zones.length} détectée(s)`)
     } catch (error) {
-      console.warn('[BD] planche ignorée', error)
+      const declared = describeImage(img)
+      const raison = loadReason(error, img)
+      STATS.ignorees += 1
+      STATS.raisons.set(raison, (STATS.raisons.get(raison) || 0) + 1)
+      journalPanels('planche ignorée', { etape, url: declared.urlTestee, ...declared, raison })
       analysed.delete(source)
-      setStatus(`planche ignorée : ${error.message}`)
       layer.remove()
       layers.delete(img)
+      setStatus(`${STATS.traduites} planche(s) traduite(s) · ${STATS.ignorees} ignorée(s)`)
     }
   }
 
@@ -2383,8 +2607,9 @@
     }
   }
 
-  function translatePage() {
+  async function translatePage() {
     window.__vtReport = []
+    await decodeCandidates()
     // Une planche déjà lue est redessinée depuis son analyse : une relance
     // n'écrase pas les corrections et ne relance pas tout l'OCR.
     let redrawn = 0

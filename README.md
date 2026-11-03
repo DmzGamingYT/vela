@@ -399,7 +399,9 @@ Depuis le panneau de détail d’une source, **Ouvrir en vue scindée** garde la
 Sur une page de lecture, `⌘K` → **Traduire la BD** injecte le script de `userscripts/comic-translate.user.js`
 dans l’onglet actif. Les planches sont relues par Tesseract (OCR local, dans la page), les bulles regroupées,
 puis les répliques traduites par le fournisseur choisi dans Réglages › Modèles. Le calque est posé sur
-l’image : fond clair sur le texte d’origine, texte français ajusté à la boîte. Le script ne détient aucune
+l’image : fond clair sur le texte d’origine, texte français ajusté à la boîte. Les planches bruitées
+sont criblées avant l’OCR — les creux d’encrage pris pour des bulles ne coûtent plus de passe de
+lecture — et la relecture par le modèle de vision est plafonnée à six zones par planche. Le script ne détient aucune
 clé : deux appels seulement lui sont prêtés par le preload des pages, lire une image avec la session de
 l’onglet et traduire des répliques, derrière un jeton propre à l’onglet qui expire en trente minutes.
 
