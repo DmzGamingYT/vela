@@ -54,8 +54,33 @@ body {
 .rail,
 .sidebar {
   background: transparent;
-  border-right: 1px solid var(--edge);
   isolation: isolate;
+}
+
+.sidebar {
+  border-right: 1px solid var(--edge);
+}
+
+/* Le séparateur du rail commence sous la barre de titre : les feux macOS
+   ne doivent jamais le toucher. */
+.rail::after {
+  content: "";
+  position: absolute;
+  top: var(--top);
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--edge);
+  pointer-events: none;
+}
+
+/* Sur macOS, un pseudo-élément en z-index négatif portant un backdrop-filter
+   peut être composé au-dessus des enfants statiques : le rail apparaissait
+   alors vide, seuls les feux natifs restant visibles. On sort explicitement
+   son contenu de ce calque. */
+.rail > * {
+  position: relative;
+  z-index: 1;
 }
 
 .rail::before,
@@ -1511,7 +1536,10 @@ kbd {
   box-shadow: var(--inner-light-soft);
 }
 
-.theme-preview {
+/* Aperçu du mode : classes propres à cette page. Le préfixe `theme-preview`
+   appartient à l’onboarding ; le réutiliser ici imposait son rail de 44 px
+   et sa hauteur de 96 px aux cartes des réglages. */
+.mode-preview {
   height: 64px;
   border-radius: 10px;
   border: 1px solid var(--edge);
@@ -1527,45 +1555,46 @@ kbd {
   --mini-pane: rgba(20, 21, 27, 0.04);
 }
 
-.theme-preview[data-theme-preview="dark"] {
+.mode-preview[data-mode-preview="dark"] {
   background: linear-gradient(145deg, #14151b, #09090b 62%);
   --mini-rail: rgba(255, 255, 255, 0.24);
   --mini-side: rgba(255, 255, 255, 0.1);
   --mini-pane: rgba(255, 255, 255, 0.05);
 }
 
-.theme-preview[data-theme-preview="light"] {
-  background: linear-gradient(145deg, #f9fbff, #e2eaf7 68%);
+.mode-preview[data-mode-preview="light"] {
+  /* Le papier chaud du produit, pas un bleu d’écran qui jure avec le reste. */
+  background: linear-gradient(145deg, #fdfbf7, #efe9df 68%);
 }
 
-.theme-preview[data-theme-preview="system"] {
-  background: linear-gradient(90deg, #14151b 0 50%, #eef2f8 50%);
+.mode-preview[data-mode-preview="system"] {
+  background: linear-gradient(90deg, #14151b 0 50%, #f2ede5 50%);
 }
 
 /* Sur « Système », un squelette traverserait la frontière clair/sombre :
    la moitié sombre et la moitié claire suffisent à dire ce que fait l'option. */
-.theme-preview[data-theme-preview="system"] > span {
+.mode-preview[data-mode-preview="system"] > span {
   display: none;
 }
 
-.theme-preview-rail,
-.theme-preview-side,
-.theme-preview-pane {
+.mode-preview-rail,
+.mode-preview-side,
+.mode-preview-pane {
   height: 100%;
   border-radius: 4px;
 }
 
-.theme-preview-rail {
+.mode-preview-rail {
   width: 9px;
   background: var(--mini-rail);
 }
 
-.theme-preview-side {
+.mode-preview-side {
   width: 26px;
   background: var(--mini-side);
 }
 
-.theme-preview-pane {
+.mode-preview-pane {
   flex: 1;
   background: var(--mini-pane);
 }
@@ -1586,7 +1615,9 @@ kbd {
   color: var(--ink);
 }
 
-.theme-name svg:last-child {
+/* Le check part à droite ; sur une carte sans check, l’icône du mode est à la
+   fois la première et la dernière, et ne doit surtout pas être poussée à droite. */
+.theme-name svg:last-child:not(:first-child) {
   margin-left: auto;
   color: var(--clay);
 }

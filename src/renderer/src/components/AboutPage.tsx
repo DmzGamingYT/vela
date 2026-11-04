@@ -1,5 +1,5 @@
 import { providerById, providerReady, providerState } from '@shared/providers'
-import { updateActionLabel, updateDescription, updateNotice } from '@shared/update'
+import { updateDescription } from '@shared/update'
 import { useBrowser } from '../store/browser'
 import { VelaMark } from './BrandMark'
 import { Icon } from './Icon'
@@ -7,13 +7,11 @@ import { Icon } from './Icon'
 /**
  * Page « À propos » des réglages : identité, version, mise à jour.
  * Extraite de SettingsPanel ; elle lit l'état de mise à jour dans le store,
- * comme le reste du panneau.
+ * comme le reste du panneau. Le détail et les boutons vivent dans la page
+ * « Mises à jour », pour ne pas dupliquer les actions.
  */
-export default function AboutPage() {
+export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void }) {
   const update = useBrowser((state) => state.update)
-  const checkUpdate = useBrowser((state) => state.checkUpdate)
-  const installUpdate = useBrowser((state) => state.installUpdate)
-  const openReleases = useBrowser((state) => state.openReleases)
   const view = useBrowser((state) => state.view)
   const settings = view?.settings
   if (!settings) return null
@@ -21,7 +19,6 @@ export default function AboutPage() {
   const activeState = providerState(settings)
   const apiReady = providerReady(settings)
   const updateLabel = updateDescription(update, window.vela.platform)
-  const notice = updateNotice(update, window.vela.platform)
 
   return (
     <section className="setting-block">
@@ -56,25 +53,9 @@ export default function AboutPage() {
           )}
         </div>
         <div className="setting-actions">
-          {update?.state === 'downloaded' && notice?.action ? (
-            <button type="button" className="action primary" onClick={() => void installUpdate()}>
-              <Icon name={notice.action === 'install' ? 'download' : 'reload'} size={15} />
-              {updateActionLabel(notice.action)}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="action"
-              onClick={() => void checkUpdate()}
-              disabled={update?.state === 'checking' || update?.state === 'downloading'}
-            >
-              <Icon name="reload" size={15} />
-              Vérifier
-            </button>
-          )}
-          <button type="button" className="action ghost" onClick={() => void openReleases()}>
-            <Icon name="external" size={14} />
-            Releases
+          <button type="button" className="action primary" onClick={onOpenUpdates}>
+            <Icon name="reload" size={15} />
+            Gérer les mises à jour
           </button>
         </div>
       </div>

@@ -12,7 +12,11 @@ import {
 } from '@shared/providers'
 import { useModalFocus } from '../lib/useModalFocus'
 import AboutPage from './AboutPage'
+import AmbienceScene from './AmbienceScene'
 import AppearancePage from './AppearancePage'
+import ThemesPage from './ThemesPage'
+import TweaksPage from './TweaksPage'
+import UpdatesPage from './UpdatesPage'
 import { BrandMark, PROVIDER_BRANDS, VelaMark, readableTint } from './BrandMark'
 import EnginePicker from './EnginePicker'
 import { adjustAccent, parseHex, resolveMode, type HomeBackground } from '@shared/theme'
@@ -22,13 +26,25 @@ import { useBrowser } from '../store/browser'
 import { clearFaviconMemo } from './Favicon'
 import { Icon, type IconName } from './Icon'
 
-type Page = 'appearance' | 'navigation' | 'privacy' | 'models' | 'notes' | 'shortcuts' | 'about'
+type Page =
+  | 'appearance'
+  | 'themes'
+  | 'tweaks'
+  | 'navigation'
+  | 'privacy'
+  | 'models'
+  | 'notes'
+  | 'shortcuts'
+  | 'updates'
+  | 'about'
 
 const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[] }[] = [
   {
     group: 'Navigateur',
     items: [
       { id: 'appearance', label: 'Apparence', icon: 'sun' },
+      { id: 'themes', label: 'Thèmes', icon: 'sparkles' },
+      { id: 'tweaks', label: 'Tweaks', icon: 'palette' },
       { id: 'navigation', label: 'Navigation', icon: 'search' },
       { id: 'privacy', label: 'Confidentialité', icon: 'shield' }
     ]
@@ -44,18 +60,31 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
     group: 'Application',
     items: [
       { id: 'shortcuts', label: 'Raccourcis', icon: 'keyboard' },
+      { id: 'updates', label: 'Mises à jour', icon: 'download' },
       { id: 'about', label: 'À propos', icon: 'circle' }
     ]
   }
 ]
 
 const COPY: Record<Page, { title: string; lede: string }> = {
-  appearance: { title: 'Apparence', lede: 'Mode, thème de couleur et verre dépoli, réglés en direct.' },
+  appearance: { title: 'Apparence', lede: 'Mode, accueil et options : la structure du châssis, sans les effets.' },
+  themes: {
+    title: 'Thèmes',
+    lede: 'Huit ambiances animées pour le châssis. Les pages gardent leurs propres couleurs.'
+  },
+  tweaks: {
+    title: 'Tweaks',
+    lede: 'Palette d’accentuation pure, couleur libre en HEX ou RVB, intensité du verre.'
+  },
   navigation: { title: 'Navigation', lede: 'Le moteur utilisé quand vous tapez une question, et la mémoire locale.' },
   privacy: { title: 'Confidentialité', lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.' },
   models: { title: 'Modèles', lede: 'Le mode de l’agent, les fournisseurs et les clés associées.' },
   notes: { title: 'Notes', lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.' },
   shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.' },
+  updates: {
+    title: 'Mises à jour',
+    lede: 'La version installée, le mode de lancement et l’installateur vérifié de la dernière release.'
+  },
   about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
 }
 
@@ -372,6 +401,8 @@ export default function SettingsPanel() {
       themeId: 'indigo',
       customAccent: '#5B5BD6',
       glass: 'normal',
+      glassBlur: 18,
+      ambience: 'none',
       homeBackground: 'gradient',
       homeImage: null,
       homeBlur: 18,
@@ -579,11 +610,22 @@ export default function SettingsPanel() {
       case 'appearance':
         return (
           <AppearancePage
+            settings={settings}
+            updateSettings={updateSettings}
+            chooseBackground={chooseBackground}
+          />
+        )
+
+      case 'themes':
+        return <ThemesPage mode={mode} settings={settings} updateSettings={updateSettings} />
+
+      case 'tweaks':
+        return (
+          <TweaksPage
             mode={mode}
             settings={settings}
             updateSettings={updateSettings}
             applyCustom={applyCustom}
-            chooseBackground={chooseBackground}
             resetAppearance={resetAppearance}
             hexNote={hexNote}
           />
@@ -1002,8 +1044,11 @@ export default function SettingsPanel() {
         )
       }
 
+      case 'updates':
+        return <UpdatesPage />
+
       case 'about':
-        return <AboutPage />
+        return <AboutPage onOpenUpdates={() => setPage('updates')} />
 
       default:
         return null
@@ -1020,6 +1065,9 @@ export default function SettingsPanel() {
         aria-label="Réglages"
         onMouseDown={(event) => event.stopPropagation()}
       >
+        {/* L’ambiance choisie joue aussi dans le panneau, derrière le verre.
+            Elle est décorative et ne capte aucun clic. */}
+        <AmbienceScene ambience={settings.ambience} className="ambience-panel" />
         <div className="settings-layout">
           <aside className="settings-nav">
             <div className="settings-nav-brand">
@@ -1070,8 +1118,8 @@ export default function SettingsPanel() {
                 <Icon name="close" size={17} />
               </button>
             </header>
-            {/* La clé remonte le panneau à chaque section : l’animation d’entrée
-                signale le changement sans faire sauter le défilement du parent. */}
+            {/* La clé change la courbe d’entrée à chaque section : le panneau
+                glisse sans faire sauter le défilement du parent. */}
             <div className="settings-scroll" key={page}>
               {renderPage()}
             </div>

@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect } from 'react'
+import AmbienceScene from './components/AmbienceScene'
 import Onboarding from './components/Onboarding'
 import Presence from './components/Presence'
 import Sidebar from './components/Sidebar'
@@ -36,6 +37,7 @@ export default function App() {
     if (!view) return null
     return view.spaces.find((item) => item.id === view.activeSpaceId) ?? null
   })
+  const ambience = useBrowser((state) => state.view?.settings.ambience ?? 'none')
 
   useEffect(() => {
     void useBrowser.getState().init()
@@ -153,6 +155,9 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* L’ambiance habille le châssis : un calque fixe derrière le verre,
+          jamais au-dessus du contenu des pages (WebContentsView séparées). */}
+      <AmbienceScene ambience={ambience} className="ambience-chrome" />
       <SpaceRail />
       {!collapsed && <Sidebar />}
       <Workspace />

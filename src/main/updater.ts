@@ -1,14 +1,30 @@
 import { createHash } from 'node:crypto'
-import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import {
+  accessSync,
+  chmodSync,
+  constants,
+  copyFileSync,
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import type { UpdateChannel } from '@shared/api'
 import {
+  isNewerVersion,
+  latestAssetUrl,
+  linuxAppImageNames,
   macInstallerNames,
   manifestFile,
   parseMacManifest,
+  parseManifest,
   releaseAssetUrl,
   type MacManifest
 } from '@shared/update'
@@ -24,9 +40,40 @@ export interface UpdateInfo {
   progress: number
   message: string | null
   releaseUrl: string
+  channel: UpdateChannel
+  appImagePath: string | null
+  appImageWritable: boolean
 }
 
 const RELEASE_URL = 'https://github.com/DmzGamingYT/vela/releases/latest'
+
+/**
+ * Sur Linux, l'AppImage est le seul format que Vela peut remplacer lui-même.
+ * `APPIMAGE` n'existe pas quand l'app tourne depuis un .deb, un paquet natif
+ * ou un binaire extrait : c'est la première chose à diagnostiquer.
+ */
+function currentAppImage(): string | null {
+  if (process.platform !== 'linux') return null
+  const value = process.env.APPIMAGE?.trim()
+  return value ? value : null
+}
+
+function canWriteFile(path: string | null): boolean {
+  if (!path) return false
+  try {
+    accessSync(path, constants.W_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function updateChannel(): UpdateChannel {
+  if (process.platform === 'darwin') return 'mac'
+  if (process.platform === 'win32') return 'windows'
+  if (process.platform === 'linux') return currentAppImage() ? 'appimage' : 'linux-package'
+  return 'other'
+}
 
 /** Premier contrôle silencieux après le démarrage. */
 const FIRST_CHECK_DELAY = 12_000
@@ -43,7 +90,10 @@ let snapshot: UpdateInfo = {
   currentVersion: app.getVersion(),
   progress: 0,
   message: null,
-  releaseUrl: RELEASE_URL
+  releaseUrl: RELEASE_URL,
+  channel: updateChannel(),
+  appImagePath: currentAppImage(),
+  appImageWritable: canWriteFile(currentAppImage())
 }
 
 let emit: ((info: UpdateInfo) => void) | null = null
@@ -53,13 +103,23 @@ let lastCheck = 0
 /** Chemin du .dmg téléchargé (macOS), prêt pour le bouton Installer. */
 let installerPath: string | null = null
 let installing = false
+/** AppImage Linux proposée par la dernière release lue. */
+let linuxRelease: { version: string; file: { url: string; sha512: string; size: number } } | null = null
+let linuxDownloading = false
 /** Manifeste d'une version déjà lu : une seule requête par version. */
 const manifests = new Map<string, MacManifest | null>()
 /** Version dont le manifeste n'était pas signé : sert au message d'erreur. */
 let unsignedVersion = ''
 
 function set(patch: Partial<UpdateInfo>): void {
-  snapshot = { ...snapshot, ...patch, currentVersion: app.getVersion() }
+  snapshot = {
+    ...snapshot,
+    ...patch,
+    currentVersion: app.getVersion(),
+    channel: updateChannel(),
+    appImagePath: currentAppImage(),
+    appImageWritable: canWriteFile(currentAppImage())
+  }
   try {
     emit?.(snapshot)
   } catch {
@@ -251,11 +311,132 @@ async function downloadInstaller(
 }
 
 /**
+ * Lit `latest-linux.yml` (même format que macOS) pour la dernière release.
+ *
+ * On n'utilise pas electron-updater ici : son AppImageUpdater exige la variable
+ * `APPIMAGE`, échoue sans elle et, surtout, son erreur était avalée par le
+ * contrôle silencieux. Ce chemin fonctionne quel que soit le mode de lancement
+ * et le contrôle reste possible depuis les réglages.
+ */
+async function fetchLinuxRelease(): Promise<typeof linuxRelease> {
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), 30_000)
+  try {
+    const response = await fetch(latestAssetUrl('latest-linux.yml'), {
+      redirect: 'follow',
+      signal: abort.signal,
+      cache: 'no-store'
+    })
+    if (!response.ok) return null
+    const manifest = parseManifest(await response.text())
+    if (!manifest) return null
+    const names = linuxAppImageNames(manifest.version, process.arch)
+    const file =
+      manifest.files.find((entry) => names.includes(entry.url)) ??
+      manifest.files.find((entry) => /\.appimage$/i.test(entry.url))
+    return file ? { version: manifest.version, file } : null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function checkLinuxUpdate(): Promise<void> {
+  const release = await fetchLinuxRelease()
+  if (!release) {
+    throw new Error(
+      'Dernière release Linux illisible : GitHub est injoignable ou aucune AppImage n’est publiée.'
+    )
+  }
+  if (!isNewerVersion(release.version, app.getVersion())) {
+    set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
+    return
+  }
+  linuxRelease = release
+  const image = currentAppImage()
+  const writable = canWriteFile(image)
+  set({
+    state: 'available',
+    version: release.version,
+    progress: 0,
+    message: image
+      ? writable
+        ? 'Nouvelle version trouvée — téléchargement de l’AppImage vérifiée…'
+        : `Nouvelle version trouvée. L’AppImage${image ? ` (${image})` : ''} est en lecture seule : elle sera téléchargée pour un remplacement manuel.`
+      : 'Nouvelle version trouvée. Vela n’est pas lancé depuis une AppImage : téléchargez-la puis remplacez votre installation.',
+    releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${release.version}`
+  })
+  // Comme avant sur Linux, on télécharge sans attendre — mais uniquement si
+  // l'app est bien une AppImage. Un .deb doit laisser l'utilisateur choisir.
+  if (image) void downloadLinuxUpdate()
+}
+
+async function downloadLinuxUpdate(): Promise<void> {
+  const release = linuxRelease
+  if (!release) {
+    set({
+      state: 'error',
+      message: 'Aucune version Linux à télécharger : vérifiez d’abord les mises à jour.'
+    })
+    return
+  }
+  if (linuxDownloading) return
+  const dir = installerDir()
+  const target = join(dir, release.file.url)
+  // Le nom porte la version : une AppImage d'une release précédente ne doit
+  // jamais être proposée pour la nouvelle.
+  if (installerPath === target && existsSync(target)) {
+    set({ state: 'downloaded', version: release.version, progress: 100 })
+    return
+  }
+  try {
+    mkdirSync(dir, { recursive: true })
+    for (const entry of readdirSync(dir)) rmSync(join(dir, entry), { force: true, recursive: true })
+  } catch {
+    /* dossier inaccessible : le téléchargement échouera avec un message clair */
+  }
+  linuxDownloading = true
+  try {
+    const ok = await downloadInstaller(
+      releaseAssetUrl(release.version, release.file.url),
+      target,
+      release.version,
+      release.file
+    )
+    if (!ok) {
+      rmSync(target, { force: true })
+      set({
+        state: 'error',
+        message: 'AppImage rejetée : son empreinte ne correspond pas à celle publiée.'
+      })
+      return
+    }
+    installerPath = target
+    set({
+      state: 'downloaded',
+      version: release.version,
+      progress: 100,
+      message: `${release.file.url} est prête, empreinte vérifiée.`
+    })
+  } catch (error) {
+    rmSync(target, { force: true })
+    set({
+      state: 'error',
+      message:
+        error instanceof Error ? error.message.slice(0, 220) : 'Téléchargement impossible.'
+    })
+  } finally {
+    linuxDownloading = false
+  }
+}
+
+/**
  * Vérifie les mises à jour.
  *
- * Windows et Linux : `electron-updater` télécharge et installe à la fermeture,
- * sans rien demander. macOS : il détecte la version, puis nous téléchargeons le
- * `.dmg` en arrière-plan — l'installation reste un glisser, faute de signature.
+ * Windows : `electron-updater` télécharge et installe à la fermeture. macOS et
+ * Linux : on télécharge nous-mêmes un installateur vérifié, car Squirrel exige
+ * une signature sur macOS et electron-updater exige `APPIMAGE` sur Linux.
  */
 export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo> {
   if (!app.isPackaged) {
@@ -276,18 +457,23 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
   lastCheck = Date.now()
   set({ state: 'checking', progress: 0, message: null })
   try {
-    const result = await autoUpdater.checkForUpdates()
-    const version = result?.updateInfo ? versionOf(result.updateInfo) : null
-    if (!result || !version || version === app.getVersion()) {
-      set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
+    if (process.platform === 'linux') {
+      await checkLinuxUpdate()
+    } else {
+      const result = await autoUpdater.checkForUpdates()
+      const version = result?.updateInfo ? versionOf(result.updateInfo) : null
+      if (!result || !version || version === app.getVersion()) {
+        set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
+      }
     }
   } catch (error) {
-    // checkForUpdates rejette quand il n'y a pas de release (réseau, 404, pas de publish).
-    // On reste silencieux au démarrage auto, explicite sur demande manuelle.
-    if (userInitiated) {
+    // Une erreur réseau au démarrage reste discrète ailleurs. Sur Linux, elle
+    // est conservée : c'est exactement ce qui empêchait de comprendre pourquoi
+    // les mises à jour ne partaient jamais.
+    if (userInitiated || process.platform === 'linux') {
       set({
         state: 'error',
-        message: error instanceof Error ? error.message.slice(0, 220) : 'Vérification impossible.'
+        message: error instanceof Error ? error.message.slice(0, 240) : 'Vérification impossible.'
       })
     } else {
       set({ state: 'idle', message: null })
@@ -301,6 +487,10 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
 export async function downloadUpdate(): Promise<UpdateInfo> {
   if (process.platform === 'darwin') {
     await prepareMacInstaller(snapshot.version)
+    return updateStatus()
+  }
+  if (process.platform === 'linux') {
+    await downloadLinuxUpdate()
     return updateStatus()
   }
   try {
@@ -320,6 +510,45 @@ export async function downloadUpdate(): Promise<UpdateInfo> {
  * installation à la fermeture.
  */
 export function installUpdate(): void {
+  if (process.platform === 'linux') {
+    if (!installerPath || !existsSync(installerPath)) {
+      void shell.openExternal(snapshot.releaseUrl)
+      return
+    }
+    const image = currentAppImage()
+    if (image && canWriteFile(image)) {
+      try {
+        // Écrire à côté puis renommer : l'ancienne AppImage reste intacte si
+        // la copie échoue. Le processus en cours garde son inode, donc le
+        // remplacement d'un fichier « en cours d'exécution » est sans danger.
+        const staged = `${image}.new`
+        copyFileSync(installerPath, staged)
+        chmodSync(staged, 0o755)
+        renameSync(staged, image)
+        clearInstallers()
+        app.relaunch()
+        app.exit(0)
+        return
+      } catch (error) {
+        set({
+          state: 'error',
+          message: `Remplacement impossible : ${
+            error instanceof Error ? error.message.slice(0, 160) : 'écriture refusée'
+          }. Le fichier reste dans ${installerPath}.`
+        })
+        shell.showItemInFolder(installerPath)
+        return
+      }
+    }
+    // .deb, AppImage en lecture seule ou dossier protégé : on ne peut pas
+    // écrire à la place de l'utilisateur, on lui montre le fichier vérifié.
+    shell.showItemInFolder(installerPath)
+    set({
+      state: 'downloaded',
+      message: `AppImage téléchargée. Remplacez ${image ?? 'votre installation'} par ce fichier, puis relancez Vela.`
+    })
+    return
+  }
   if (process.platform === 'darwin') {
     if (installerPath && existsSync(installerPath)) {
       void shell.openPath(installerPath).then((error) => {
@@ -356,12 +585,11 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   started = true
   emit = (info) => send('update:event', info)
 
-  // Windows et Linux : tout est automatique, l'installation se fait à la
-  // fermeture. macOS : `electron-updater` ne saurait installer qu'un bundle
-  // signé, donc on garde la détection et on prépare nous-mêmes le .dmg.
-  autoUpdater.autoDownload = process.platform !== 'darwin'
-  // macOS ne télécharge rien par electron-updater : l'option n'y servirait à rien.
-  autoUpdater.autoInstallOnAppQuit = process.platform !== 'darwin'
+  // Seul Windows reste piloté par electron-updater (NSIS silencieux). macOS
+  // prépare un .dmg vérifié, Linux télécharge une AppImage vérifiée : les deux
+  // ont leur propre flux, donc ces options ne les concernent pas.
+  autoUpdater.autoDownload = process.platform === 'win32'
+  autoUpdater.autoInstallOnAppQuit = process.platform === 'win32'
   autoUpdater.autoRunAppAfterInstall = true
   autoUpdater.allowDowngrade = false
   autoUpdater.allowPrerelease = false

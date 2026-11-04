@@ -91,6 +91,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.agent-identity > div {
+  min-width: 0;
 }
 
 .agent-mark {
@@ -111,6 +116,9 @@
   font-size: 21px;
   font-weight: 400;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .agent-identity p {
@@ -123,6 +131,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .mode-chip {
@@ -227,30 +236,62 @@
   color: var(--muted);
 }
 
-.sources-count {
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--clay);
-  letter-spacing: 0;
+.sources-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
 }
 
-.sources-head .text-btn {
+.sources-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.sources-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .source-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 190px;
+  flex-shrink: 0;
+  padding: 4px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--surface);
+  max-height: 176px;
   overflow-y: auto;
+}
+
+/* Aucun onglet : le message vide porte déjà sa propre bordure. */
+.source-list[data-empty="true"] {
+  padding: 0;
+  border: 0;
+  background: none;
+  max-height: none;
 }
 
 .source-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 7px;
+  padding: 5px 6px;
   border-radius: 7px;
   border: 1px solid transparent;
   cursor: pointer;
@@ -327,8 +368,17 @@
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding-top: 6px;
+}
+
+/* Les exemples passent avant l'action : on les lit, puis on lance. */
+.agent-run .agent-recent {
+  order: -1;
+}
+
+.agent-prompt {
+  flex-shrink: 0;
 }
 
 .agent-note {

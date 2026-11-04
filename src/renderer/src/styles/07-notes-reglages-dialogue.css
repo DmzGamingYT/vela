@@ -72,22 +72,38 @@
 
 .notes-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 12px 14px 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 10px 14px 8px;
 }
 
 .notes-actions .action {
-  height: 31px;
-  padding: 0 8px;
-  font-size: 11px;
+  height: 28px;
+  gap: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+/* Une seule action principale ; les captures tiennent sur une rangée. */
+.notes-actions .action:first-child {
+  grid-column: 1 / -1;
+  height: 34px;
+  gap: 6px;
+  border-radius: 9px;
+  font-size: 11.5px;
+}
+
+.notes-actions .action[aria-disabled="true"] {
+  opacity: 0.45;
 }
 
 .notes-search {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 4px 14px 8px;
+  margin: 2px 14px 8px;
   padding: 0 9px;
   height: 30px;
   border-radius: 8px;
@@ -108,16 +124,26 @@
 .notes-scroll {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: 0 10px 8px;
 }
 
+.notes-scroll > .note-card {
+  flex: 0 0 auto;
+}
+
+/* L'état vide occupe la hauteur restante : il se centre entre les actions et
+   le pied du tiroir, au lieu de flotter en haut avec un vide sous lui. */
 .notes-empty {
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 40px 24px;
+  padding: 24px;
   text-align: center;
   color: var(--muted);
 }
@@ -459,6 +485,71 @@
   transition: width var(--dur-2) var(--ease-out);
 }
 
+.update-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 4px 0 8px;
+}
+
+.update-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--fill-1);
+}
+
+.update-meta span {
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.update-meta strong {
+  font-size: 11px;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.update-channel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--fill-1);
+}
+
+.update-channel-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.update-channel-head .tag {
+  margin-left: auto;
+}
+
+.update-channel code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+@media (max-width: 760px) {
+  .update-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
 .select {
   height: 32px;
   padding: 0 28px 0 10px;
@@ -487,13 +578,16 @@
 
 .switch span {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  /* Centré sur la piste, bordure comprise : `top: 2px` laissait le rond
+     plus bas que haut dans une piste de 21 px. */
+  top: 50%;
+  left: 1px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
   background: var(--surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transform: translateY(-50%);
   transition: transform var(--dur-2) var(--ease-standard);
 }
 
@@ -502,7 +596,8 @@
 }
 
 .switch[data-on="true"] span {
-  transform: translateX(15px);
+  /* 1 px de marge de chaque côté, bordure comprise (36 − 2 − 17 − 15 = 2). */
+  transform: translate(15px, -50%);
 }
 
 .switch:disabled {

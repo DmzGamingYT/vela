@@ -45,7 +45,7 @@ import {
   providerById
 } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
-import { isThemeId, parseHex } from '@shared/theme'
+import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur } from '@shared/theme'
 import {
   normalizeLetterboxd,
   partitionFor,
@@ -1019,6 +1019,10 @@ export class Browser {
       if (input.glass === 'light' || input.glass === 'normal' || input.glass === 'strong') {
         settings.glass = input.glass
       }
+      if (typeof input.glassBlur === 'number') {
+        settings.glassBlur = sanitizeGlassBlur(input.glassBlur, settings.glassBlur)
+      }
+      if (isAmbienceId(input.ambience)) settings.ambience = input.ambience
       if (
         input.homeBackground === 'gradient' ||
         input.homeBackground === 'plain' ||

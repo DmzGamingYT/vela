@@ -1,0 +1,1190 @@
+/* ===============================================================
+   Ambiances animées — calques, verre multi-couches, micro-interactions
+   ---------------------------------------------------------------
+   Passe finale : les huit ambiances du panneau « Thèmes », les tweaks
+   (accent, teinte libre, intensité du verre) et la bibliothèque de
+   micro-interactions (lueur magnétique, ondulation).
+
+   Règles de tenue :
+   — aucune animation hors `transform` et `opacity`, sur des calques déjà
+     composés (`will-change`, `translateZ(0)`) ;
+   — tout est confiné au châssis. Les pages vivent dans des
+     `WebContentsView` séparées : aucun sélecteur ci-dessous ne les atteint,
+     et les jetons posés sur `:root` ne leur sont jamais injectés ;
+   — le contenu des cartes reste au-dessus des calques (`z-index`), donc
+     jamais recoloré ni flouté.
+   =============================================================== */
+
+:root {
+  --ease-lux: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-glide: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-ambience: 720ms;
+}
+
+/* --- Scènes ---------------------------------------------------- */
+
+.ambience-scene {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  contain: paint;
+}
+
+.ambience-chrome {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.92;
+  transition: opacity var(--dur-ambience) var(--ease-lux);
+}
+
+.ambience-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  /* Dans le panneau, l’ambiance est une lueur de bord, pas un fond : à 55 %,
+     les scanlines du Cyber-Néon passaient sous les libellés. */
+  opacity: 0.28;
+  transition: opacity var(--dur-ambience) var(--ease-lux);
+}
+
+.ambience-panel[data-ambience] .amb-particles {
+  opacity: 0.12;
+}
+
+.ambience-panel[data-ambience] .amb-clouds {
+  opacity: 0.3;
+}
+
+.ambience-panel[data-ambience] .amb-sheen {
+  opacity: 0.08;
+}
+
+/* La feuille des réglages isole son ambiance ; le contenu vit sur un plan
+   au-dessus, donc jamais flouté ni teinté par un calque. */
+.settings-sheet {
+  position: relative;
+  isolation: isolate;
+}
+
+.settings-sheet > .settings-layout {
+  position: relative;
+  z-index: 1;
+}
+
+/* Le fond sobre ne peint rien : le panneau garde sa teinte d’origine. */
+.ambience-panel[data-ambience],
+.ambience-chrome[data-ambience] {
+  will-change: opacity;
+}
+
+.ambience-stage-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.amb-layer {
+  position: absolute;
+  inset: -22%;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Le socle occupe exactement la scène : il porte le lavis de couleur. */
+.amb-base {
+  inset: 0;
+  opacity: 0.72;
+  transition: opacity var(--dur-ambience) var(--ease-lux),
+    background-color var(--dur-ambience) var(--ease-lux);
+}
+
+.amb-sheen {
+  mix-blend-mode: screen;
+}
+
+:root[data-mode='light'] .amb-sheen {
+  mix-blend-mode: multiply;
+}
+
+/* --- Thème 1 · Glace & Feu ------------------------------------ */
+
+[data-ambience='glace-feu'] .amb-base {
+  background:
+    radial-gradient(58% 62% at 22% 34%, color-mix(in srgb, var(--amb-1) 44%, transparent), transparent 72%),
+    radial-gradient(52% 58% at 78% 66%, color-mix(in srgb, var(--amb-2) 40%, transparent), transparent 74%);
+  animation: amb-flux 19s var(--ease-glide) infinite alternate;
+}
+
+[data-ambience='glace-feu'] .amb-clouds {
+  opacity: 0.5;
+  background: radial-gradient(46% 46% at 50% 52%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 70%);
+  filter: blur(26px);
+  animation: amb-breathe 15s var(--ease-glide) infinite alternate;
+}
+
+[data-ambience='glace-feu'] .amb-particles {
+  opacity: 0.8;
+  background-image:
+    radial-gradient(1.6px 1.6px at 30% 80%, color-mix(in srgb, var(--amb-2) 92%, transparent), transparent 70%),
+    radial-gradient(1.2px 1.2px at 68% 62%, color-mix(in srgb, var(--amb-1) 85%, transparent), transparent 70%),
+    radial-gradient(1.8px 1.8px at 82% 88%, color-mix(in srgb, var(--amb-2) 68%, transparent), transparent 70%),
+    radial-gradient(1px 1px at 48% 44%, color-mix(in srgb, var(--amb-1) 80%, transparent), transparent 70%);
+  background-size: 230px 270px;
+  animation: amb-rise 32s linear infinite;
+}
+
+@keyframes amb-flux {
+  0% {
+    opacity: 0.55;
+    transform: translateZ(0) scale(1);
+  }
+  50% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0.66;
+    transform: translateZ(0) scale(1.06);
+  }
+}
+
+@keyframes amb-breathe {
+  from {
+    opacity: 0.28;
+    transform: translateZ(0) scale(0.94);
+  }
+  to {
+    opacity: 0.62;
+    transform: translateZ(0) scale(1.05);
+  }
+}
+
+@keyframes amb-rise {
+  from {
+    transform: translate3d(0, 8%, 0);
+  }
+  to {
+    transform: translate3d(0, -26%, 0);
+  }
+}
+
+/* --- Thème 2 · Multivers -------------------------------------- */
+
+[data-ambience='multivers'] .amb-base {
+  opacity: 0.78;
+  background:
+    radial-gradient(42% 48% at 24% 26%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
+    radial-gradient(44% 50% at 76% 74%, color-mix(in srgb, var(--amb-2) 33%, transparent), transparent 74%);
+}
+
+[data-ambience='multivers'] .amb-particles {
+  opacity: 0.5;
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--amb-1) 66%, transparent) 1.15px,
+    transparent 1.7px
+  );
+  background-size: 10px 10px;
+  transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0);
+  transition: transform 300ms var(--ease-out);
+}
+
+[data-ambience='multivers'] .amb-clouds {
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    42deg,
+    transparent 0 26px,
+    color-mix(in srgb, var(--amb-2) 16%, transparent) 26px 27px
+  );
+  transform: translate3d(calc(var(--parallax-x, 0px) * -0.6), calc(var(--parallax-y, 0px) * -0.6), 0);
+  transition: transform 420ms var(--ease-out);
+}
+
+[data-ambience='multivers'] .amb-sheen {
+  opacity: 0.4;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 120px,
+    color-mix(in srgb, var(--amb-2) 10%, transparent) 120px 121px
+  );
+}
+
+/* --- Thème 3 · Rêve Étoilé ------------------------------------ */
+
+[data-ambience='reve-etolie'] .amb-base {
+  opacity: 0.7;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 64%),
+    radial-gradient(52% 46% at 72% 16%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 70%),
+    radial-gradient(60% 60% at 20% 76%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 74%);
+}
+
+[data-ambience='reve-etolie'] .amb-clouds {
+  opacity: 0.55;
+  background: radial-gradient(40% 34% at 62% 30%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 70%);
+  filter: blur(22px);
+  animation: amb-glow 13s var(--ease-glide) infinite alternate;
+}
+
+[data-ambience='reve-etolie'] .amb-particles {
+  opacity: 0.85;
+  background-image:
+    radial-gradient(1.4px 1.4px at 26% 32%, color-mix(in srgb, var(--amb-2) 95%, transparent), transparent 70%),
+    radial-gradient(1px 1px at 58% 72%, #ffffff, transparent 70%),
+    radial-gradient(1.6px 1.6px at 78% 24%, color-mix(in srgb, var(--amb-2) 88%, transparent), transparent 70%),
+    radial-gradient(1px 1px at 44% 54%, color-mix(in srgb, var(--amb-2) 70%, transparent), transparent 70%);
+  background-size: 190px 210px;
+  animation: amb-twinkle 9s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes amb-glow {
+  from {
+    opacity: 0.3;
+    transform: translateZ(0) scale(0.96);
+  }
+  to {
+    opacity: 0.6;
+    transform: translateZ(0) scale(1.04);
+  }
+}
+
+@keyframes amb-twinkle {
+  0% {
+    opacity: 0.4;
+    transform: translate3d(0, 2%, 0);
+  }
+  55% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.62;
+    transform: translate3d(0, -2%, 0);
+  }
+}
+
+/* --- Thème 4 · Voie Lactée ------------------------------------ */
+
+[data-ambience='voie-lactee'] .amb-base {
+  opacity: 0.82;
+  background:
+    conic-gradient(
+      from 210deg at 62% 42%,
+      color-mix(in srgb, var(--amb-1) 34%, transparent),
+      transparent 38%,
+      color-mix(in srgb, var(--amb-2) 30%, transparent) 62%,
+      transparent 82%
+    ),
+    radial-gradient(70% 60% at 30% 80%, color-mix(in srgb, var(--amb-1) 32%, transparent), transparent 76%);
+  transform: translateZ(0) scale(1.18);
+  animation: amb-pan 72s var(--ease-glide) infinite alternate;
+}
+
+[data-ambience='voie-lactee'] .amb-clouds {
+  opacity: 0.55;
+  background:
+    radial-gradient(38% 44% at 54% 46%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 72%),
+    radial-gradient(30% 36% at 66% 54%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%);
+  filter: blur(20px);
+  animation: amb-pan 96s var(--ease-glide) infinite alternate-reverse;
+}
+
+[data-ambience='voie-lactee'] .amb-particles {
+  opacity: 0.4;
+  background-image:
+    radial-gradient(1.2px 1.2px at 22% 44%, #ffffff, transparent 70%),
+    radial-gradient(1px 1px at 64% 26%, color-mix(in srgb, var(--amb-2) 90%, transparent), transparent 70%),
+    radial-gradient(1.4px 1.4px at 48% 78%, #ffffff, transparent 70%);
+  background-size: 240px 240px;
+  animation: amb-twinkle 12s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes amb-pan {
+  from {
+    transform: translate3d(-4%, 2%, 0) scale(1.18);
+  }
+  to {
+    transform: translate3d(4%, -2%, 0) scale(1.26);
+  }
+}
+
+/* --- Thème 5 · Horizon Martien -------------------------------- */
+
+[data-ambience='horizon-martien'] .amb-base {
+  opacity: 0.76;
+  background:
+    radial-gradient(58% 44% at 50% 88%, color-mix(in srgb, var(--amb-2) 38%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 24%, transparent), transparent 58%);
+}
+
+[data-ambience='horizon-martien'] .amb-clouds {
+  opacity: 0.5;
+  background: linear-gradient(
+    92deg,
+    transparent 0 18%,
+    color-mix(in srgb, var(--amb-2) 22%, transparent) 38%,
+    transparent 62%
+  );
+  filter: blur(10px);
+  animation: amb-mirage 11s var(--ease-in-out) infinite alternate;
+}
+
+[data-ambience='horizon-martien'] .amb-sheen {
+  opacity: 0.32;
+  background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--amb-2) 14%, transparent) 100%);
+  animation: amb-haze 7s var(--ease-glide) infinite alternate;
+}
+
+@keyframes amb-mirage {
+  from {
+    transform: translate3d(-1%, 0, 0) skewY(0deg) scaleY(1);
+  }
+  to {
+    transform: translate3d(1%, -1.2%, 0) skewY(0.7deg) scaleY(1.03);
+  }
+}
+
+@keyframes amb-haze {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.44;
+  }
+}
+
+/* --- Thème 6 · Aura Tech -------------------------------------- */
+
+[data-ambience='aura-tech'] .amb-base {
+  opacity: 0.44;
+  background:
+    radial-gradient(58% 48% at 50% 8%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 72%),
+    radial-gradient(44% 40% at 84% 86%, color-mix(in srgb, var(--amb-2) 20%, transparent), transparent 76%);
+  animation: amb-halo 20s var(--ease-glide) infinite alternate;
+}
+
+[data-ambience='aura-tech'] .amb-clouds {
+  opacity: 0.3;
+  background: radial-gradient(50% 44% at 34% 42%, color-mix(in srgb, var(--amb-1) 22%, transparent), transparent 72%);
+  filter: blur(30px);
+}
+
+[data-ambience='aura-tech'] .amb-sheen {
+  opacity: 0.4;
+  background: linear-gradient(
+    112deg,
+    transparent 26%,
+    color-mix(in srgb, var(--amb-1) 14%, transparent) 46%,
+    transparent 66%
+  );
+  animation: amb-sweep 24s var(--ease-glide) infinite;
+}
+
+@keyframes amb-halo {
+  from {
+    opacity: 0.3;
+    transform: translateZ(0) scale(1);
+  }
+  to {
+    opacity: 0.52;
+    transform: translateZ(0) scale(1.05);
+  }
+}
+
+@keyframes amb-sweep {
+  0% {
+    transform: translate3d(-14%, 0, 0);
+  }
+  60%,
+  100% {
+    transform: translate3d(14%, 0, 0);
+  }
+}
+
+/* --- Thème 7 · Cyber-Néon ------------------------------------- */
+
+[data-ambience='cyber-neon'] .amb-base {
+  opacity: 0.8;
+  background:
+    radial-gradient(46% 54% at 12% 18%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
+    radial-gradient(46% 54% at 88% 82%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 72%);
+  animation: amb-neon 10s var(--ease-in-out) infinite alternate;
+}
+
+[data-ambience='cyber-neon'] .amb-clouds {
+  opacity: 0.4;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--amb-2) 18%, transparent),
+    transparent 38%,
+    color-mix(in srgb, var(--amb-1) 16%, transparent)
+  );
+  filter: blur(24px);
+}
+
+[data-ambience='cyber-neon'] .amb-particles {
+  opacity: 0.34;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--amb-2) 40%, transparent) 0 1px,
+    transparent 1px 4px
+  );
+  animation: amb-scan 18s linear infinite;
+}
+
+[data-ambience='cyber-neon'] .amb-sheen {
+  opacity: 0.35;
+  background: linear-gradient(
+    76deg,
+    transparent 0 44%,
+    color-mix(in srgb, var(--amb-1) 18%, transparent) 50%,
+    transparent 56%
+  );
+  animation: amb-sweep 16s linear infinite;
+}
+
+@keyframes amb-neon {
+  from {
+    opacity: 0.62;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+@keyframes amb-scan {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 12%, 0);
+  }
+}
+
+/* --- Thème 8 · Sanctuaire Zen --------------------------------- */
+
+[data-ambience='sanctuaire-zen'] .amb-base {
+  opacity: 0.56;
+  background:
+    radial-gradient(56% 54% at 24% 30%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%),
+    radial-gradient(48% 50% at 78% 72%, color-mix(in srgb, var(--amb-2) 24%, transparent), transparent 76%);
+  animation: amb-drift 58s var(--ease-in-out) infinite alternate;
+}
+
+[data-ambience='sanctuaire-zen'] .amb-clouds {
+  opacity: 0.24;
+  /* Grain de papier : des anneaux très serrés, sans image ni filtre. */
+  background-image: repeating-radial-gradient(
+    circle at 32% 24%,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+[data-ambience='sanctuaire-zen'] .amb-particles {
+  opacity: 0.22;
+  background-image:
+    radial-gradient(1.4px 1.4px at 30% 62%, color-mix(in srgb, var(--amb-2) 80%, transparent), transparent 70%),
+    radial-gradient(1px 1px at 72% 34%, color-mix(in srgb, var(--amb-1) 70%, transparent), transparent 70%);
+  background-size: 260px 260px;
+  animation: amb-drift 74s var(--ease-in-out) infinite alternate-reverse;
+}
+
+@keyframes amb-drift {
+  from {
+    transform: translate3d(-1.5%, 1%, 0) scale(1.02);
+  }
+  to {
+    transform: translate3d(1.5%, -1%, 0) scale(1.06);
+  }
+}
+
+/* --- Panneau des thèmes --------------------------------------- */
+
+.ambience-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 20px;
+  min-height: 208px;
+  margin-bottom: 12px;
+  border: 1px solid var(--glass-border, var(--line));
+  background: color-mix(in srgb, var(--paper-deep) 82%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 28px 60px -42px rgb(var(--amb-rgb, var(--glow)));
+  transition: border-color var(--dur-ambience) var(--ease-lux),
+    box-shadow var(--dur-ambience) var(--ease-lux);
+}
+
+.ambience-stage[data-live='false'] {
+  border-color: var(--line);
+}
+
+.ambience-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 40%),
+    rgba(255, 255, 255, 0.09),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-3) var(--ease-lux);
+}
+
+.ambience-stage:hover::after {
+  opacity: 1;
+}
+
+.ambience-stage-glass {
+  position: relative;
+  z-index: 1;
+  margin: 16px;
+  padding: 16px 18px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border, var(--line));
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 52%),
+    var(--surface);
+  backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 140%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 140%));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 40px -30px rgba(0, 0, 0, 0.55);
+}
+
+.ambience-stage-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ambience-stage-glass p {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.ambience-stage-stack {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ambience-stage-slab {
+  flex: 1;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid var(--glass-border, var(--line));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ambience-stage-slab.is-raised {
+  margin-top: 6px;
+  background: var(--accent-soft);
+}
+
+.ambience-stage-slab.is-top {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ambience-off {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--line-soft);
+  background: var(--fill);
+  transition: border-color var(--dur-3) var(--ease-lux), background var(--dur-3) var(--ease-lux);
+}
+
+.ambience-off:hover {
+  border-color: var(--line);
+}
+
+.ambience-off[data-active='true'] {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: var(--accent-soft);
+}
+
+.ambience-off-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 8px;
+  border: 1px solid var(--edge);
+  color: var(--muted);
+}
+
+.ambience-off-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ambience-off-name {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.ambience-off-hint {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.ambience-off-copy,
+.ambience-off-mark {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lueur magnétique des boutons d’action du panneau. */
+.ambience-off::before,
+.tweak-reset::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    170px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--amb-2, var(--accent)) 24%, transparent),
+    transparent 70%
+  );
+  transition: opacity var(--dur-3) var(--ease-lux);
+}
+
+.ambience-off:hover::before,
+.tweak-reset:hover::before {
+  opacity: 1;
+}
+
+.ambience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .ambience-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Carte de thème : verre à trois épaisseurs (fond, reflet, liseré de 1 px),
+   lueur magnétique et ondulation. Le contenu reste au-dessus de tout. */
+.ambience-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px;
+  overflow: hidden;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--amb-line, var(--line)) 62%, var(--line));
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 46%),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 20px 44px -34px rgba(0, 0, 0, 0.6);
+  transition: transform var(--dur-3) var(--ease-lux), border-color var(--dur-3) var(--ease-lux),
+    box-shadow var(--dur-3) var(--ease-lux);
+  will-change: transform;
+}
+
+/* Liseré lumineux d’un pixel, séparé du fond : la bordure reste nette même
+   sur verre clair. */
+.ambience-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  border: 1px solid var(--amb-line, transparent);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity var(--dur-3) var(--ease-lux);
+}
+
+/* Lueur magnétique : un seul dégradé dont on déplace le centre. */
+.ambience-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--amb-2, var(--accent)) 28%, transparent),
+    transparent 68%
+  );
+  transition: opacity var(--dur-3) var(--ease-lux);
+}
+
+.ambience-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--amb-line, var(--line));
+}
+
+.ambience-card:hover::before,
+.ambience-card:focus-visible::before {
+  opacity: 1;
+}
+
+.ambience-card[data-active='true'] {
+  border-color: color-mix(in srgb, var(--amb-1, var(--accent)) 55%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px var(--amb-line, var(--accent-soft)),
+    0 26px 54px -34px rgb(var(--amb-rgb, var(--glow)));
+}
+
+.ambience-card[data-active='true']::after {
+  opacity: 1;
+}
+
+/* Multivers : contour franc, sans flou. */
+.ambience-card[data-ambience-card='multivers'] {
+  border-radius: 10px;
+}
+
+.ambience-card[data-ambience-card='multivers']::after {
+  opacity: 0.85;
+}
+
+/* Cyber-Néon : le liseré respire, en opacité seulement. */
+.ambience-card[data-ambience-card='cyber-neon'][data-active='true']::after {
+  animation: amb-neon-rim 4.6s var(--ease-in-out) infinite;
+}
+
+@keyframes amb-neon-rim {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.ambience-thumb {
+  position: relative;
+  display: block;
+  height: 86px;
+  border-radius: 12px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--paper-deep);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.ambience-thumb .amb-layer {
+  inset: -30%;
+}
+
+.ambience-card-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px 2px;
+}
+
+.ambience-card-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ambience-card-name svg {
+  color: var(--amb-1, var(--accent-label));
+}
+
+.ambience-card-tagline {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.ambience-card-motion {
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.ambience-note {
+  margin-top: 12px;
+}
+
+/* --- Tweaks : teinte libre, RVB, verre ------------------------ */
+
+.tweak-head {
+  margin-top: 26px;
+}
+
+.rgb-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.rgb-field-label {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rgb-channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--fill);
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.rgb-channel input {
+  width: 42px;
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.rgb-channel input::-webkit-outer-spin-button,
+.rgb-channel input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.rgb-channel:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.rgb-preview {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 2px var(--surface), 0 6px 14px -10px var(--swatch);
+}
+
+.tweak-slider {
+  margin-top: 4px;
+}
+
+.tweak-slider-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tweak-slider-value {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tweak-range {
+  width: 100%;
+  margin: 10px 0 4px;
+  height: 22px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tweak-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent) 70%, var(--amb-2, transparent)) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.tweak-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform var(--dur-2) var(--ease-lux), box-shadow var(--dur-2) var(--ease-lux);
+}
+
+.tweak-range:hover::-webkit-slider-thumb {
+  transform: scale(1.08);
+}
+
+.tweak-range:active::-webkit-slider-thumb {
+  transform: scale(0.96);
+}
+
+.tweak-range:focus-visible {
+  outline: none;
+}
+
+.tweak-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--focus-ring);
+}
+
+.tweak-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+/* Trois plaques de verre superposées : la profondeur se voit, sans filtre
+   sur le conteneur (chaque plaque porte son propre backdrop-filter). */
+.glass-demo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border, var(--line));
+  background: linear-gradient(150deg, var(--amb-halo, var(--accent-soft)), transparent 62%),
+    var(--paper-deep);
+}
+
+.glass-demo-orb {
+  position: absolute;
+  z-index: 0;
+  right: -30px;
+  top: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 140deg,
+    var(--amb-1, var(--accent-a)),
+    var(--amb-2, var(--accent-c)),
+    var(--amb-1, var(--accent-a))
+  );
+  filter: blur(10px);
+  opacity: 0.55;
+  transform: translateZ(0);
+  will-change: transform;
+  animation: amb-orb 22s var(--ease-glide) infinite alternate;
+}
+
+@keyframes amb-orb {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-26px, 20px, 0) scale(1.12);
+  }
+}
+
+.glass-demo-stack {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-slab {
+  display: block;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--glass-border, var(--line));
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: saturate(var(--glass-sat, 140%));
+  backdrop-filter: saturate(var(--glass-sat, 140%));
+}
+
+.glass-slab.is-raised {
+  margin-top: 8px;
+  margin-left: 14px;
+  background: var(--surface);
+}
+
+.glass-slab.is-top {
+  margin-top: 8px;
+  margin-left: 28px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0)), var(--surface);
+}
+
+.tweak-reset {
+  position: relative;
+  overflow: hidden;
+  margin-top: 22px;
+}
+
+/* --- Micro-interactions --------------------------------------- */
+
+.motion-ripple {
+  position: absolute;
+  z-index: 3;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--amb-2, #ffffff) 55%, transparent),
+    transparent 64%
+  );
+  opacity: 0.75;
+  transform: translateZ(0) scale(0);
+  animation: motion-ripple 640ms var(--ease-lux) forwards;
+}
+
+@keyframes motion-ripple {
+  to {
+    transform: translateZ(0) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Les boutons d’action du panneau suivent aussi le curseur. */
+.tweak-reset,
+.ambience-off {
+  will-change: transform;
+  transition: transform var(--dur-2) var(--ease-lux), border-color var(--dur-3) var(--ease-lux),
+    background var(--dur-3) var(--ease-lux), box-shadow var(--dur-3) var(--ease-lux);
+}
+
+.tweak-reset:hover {
+  border-color: var(--amb-line, var(--hairline-strong));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 14px 30px -24px rgb(var(--amb-rgb, var(--glow)));
+}
+
+/* --- Ergonomie du panneau de réglages -------------------------
+   Les groupes d’une même section respiraient mal : les titres touchaient les
+   contrôles précédents. Un filet et 26 px de recul suffisent à lire la page
+   comme trois blocs, sans ajouter de conteneurs. */
+
+.setting-block > .setting-head:not(:first-child) {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* Les cartes de mode tiennent sur trois colonnes égales : l’aperçu garde sa
+   hauteur, le libellé s’aligne à gauche dans toutes les cartes, et le check
+   reste le seul élément poussé à droite. */
+.theme-card {
+  align-items: stretch;
+}
+
+.theme-card .mode-preview {
+  flex: none;
+}
+
+.theme-copy,
+.theme-name,
+.theme-detail {
+  min-width: 0;
+  text-align: left;
+}
+
+/* Entrée de section : une courbe élastique, translation et fondu seulement. */
+.settings-scroll {
+  animation: settings-in 420ms var(--ease-lux);
+}
+
+@keyframes settings-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Contraste élevé et mouvement réduit ----------------------- */
+
+:root[data-contrast='high'] .ambience-chrome,
+:root[data-contrast='high'] .ambience-panel {
+  opacity: 0.3;
+}
+
+:root[data-contrast='high'] .ambience-stage-glass,
+:root[data-contrast='high'] .ambience-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amb-layer,
+  .ambience-card,
+  .ambience-card::after,
+  .ambience-card::before,
+  .ambience-stage::after,
+  .glass-demo-orb,
+  .motion-ripple,
+  .settings-scroll {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .amb-layer {
+    will-change: auto;
+  }
+
+  /* Les particules restent visibles mais figées : la texture du thème
+     survit à l’arrêt du mouvement. */
+  .amb-particles,
+  .amb-clouds {
+    opacity: 0.45 !important;
+    transform: none !important;
+  }
+
+  .amb-base {
+    animation: none !important;
+    transform: none !important;
+  }
+}

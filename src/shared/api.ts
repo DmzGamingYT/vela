@@ -114,6 +114,8 @@ export interface SettingsPatch {
   themeId?: Settings['themeId']
   customAccent?: string
   glass?: Settings['glass']
+  glassBlur?: Settings['glassBlur']
+  ambience?: Settings['ambience']
   homeBackground?: Settings['homeBackground']
   homeImage?: string | null
   homeBlur?: number
@@ -181,6 +183,9 @@ export type UpdateState =
   | 'not-available'
   | 'error'
 
+/** Mode d'installation qui porte la mise à jour. */
+export type UpdateChannel = 'mac' | 'windows' | 'appimage' | 'linux-package' | 'other'
+
 export interface UpdateInfo {
   state: UpdateState
   version: string | null
@@ -188,6 +193,12 @@ export interface UpdateInfo {
   progress: number
   message: string | null
   releaseUrl: string
+  /** Détecté au démarrage : AppImage, paquet Linux, macOS, Windows. */
+  channel?: UpdateChannel
+  /** Chemin de l'AppImage courante, quand l'app en est une. */
+  appImagePath?: string | null
+  /** false quand l'AppImage est dans un dossier en lecture seule. */
+  appImageWritable?: boolean
 }
 
 /** API exposée à la fenêtre par le preload. Aucun accès Node dans le renderer. */

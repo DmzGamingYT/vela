@@ -1,25 +1,11 @@
-import type { CSSProperties } from 'react'
-import {
-  THEME_PRESETS,
-  readableOn,
-  type GlassIntensity,
-  type HomeBackground,
-  type ResolvedMode
-} from '@shared/theme'
 import type { SettingsPatch } from '@shared/api'
+import type { HomeBackground } from '@shared/theme'
 import type { Settings, SkyVariant, Theme } from '@shared/types'
-import { swatchColor } from '../lib/appearance'
 import { Icon, type IconName } from './Icon'
 
-const SKY_OPTIONS: { value: SkyVariant; label: string; detail: string; icon: IconName }[] = [
+const SKY_OPTIONS: { value: SkyVariant; label: string; detail: string; icon: 'sparkles' | 'moon' }[] = [
   { value: 'braise', label: 'Braises', detail: 'Un dragon traverse le ciel, des braises montent.', icon: 'sparkles' },
   { value: 'westeros', label: 'Nuit de Westeros', detail: 'Un ciel étoilé, sa lune et le même dragon.', icon: 'moon' }
-]
-
-const GLASS_OPTIONS: { value: GlassIntensity; label: string }[] = [
-  { value: 'light', label: 'Léger' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'strong', label: 'Prononcé' }
 ]
 
 const BACKGROUND_OPTIONS: { value: HomeBackground; label: string; icon: IconName }[] = [
@@ -35,31 +21,26 @@ const THEMES: { value: Theme; label: string; detail: string; icon: IconName }[] 
 ]
 
 /**
- * Page « Apparence » des réglages : mode, couleur, ciel, transparence, fond.
- * Extraite de SettingsPanel pour que chaque page tienne dans un fichier.
+ * Page « Apparence » des réglages : le mode, l'accueil et les options.
+ *
+ * Les réglages fins (accents, teinte libre, verre) vivent dans « Tweaks » et
+ * les ambiances animées dans « Thèmes » : cette page ne garde que ce qui
+ * structure le châssis au quotidien.
  */
 export default function AppearancePage({
-  mode,
   settings,
   updateSettings,
-  applyCustom,
-  chooseBackground,
-  resetAppearance,
-  hexNote
+  chooseBackground
 }: {
-  mode: ResolvedMode
   settings: Settings
   updateSettings: (patch: SettingsPatch) => Promise<void>
-  applyCustom: (value: string) => void
   chooseBackground: (value: HomeBackground) => Promise<void>
-  resetAppearance: () => void
-  hexNote: { text: string; tone: 'info' | 'error' } | null
 }) {
   return (
     <section className="setting-block">
       <div className="setting-head">
         <h2>Mode</h2>
-        <p>Clair, sombre, ou comme le système. Il se combine avec le thème de couleur.</p>
+        <p>Clair, sombre, ou comme le système. Il se combine avec la teinte d’accent et l’ambiance.</p>
       </div>
       <div className="theme-cards">
         {THEMES.map((theme) => (
@@ -70,10 +51,10 @@ export default function AppearancePage({
             data-active={settings.theme === theme.value}
             onClick={() => void updateSettings({ theme: theme.value })}
           >
-            <span className="theme-preview" data-theme-preview={theme.value}>
-              <span className="theme-preview-rail" />
-              <span className="theme-preview-side" />
-              <span className="theme-preview-pane" />
+            <span className="mode-preview" data-mode-preview={theme.value} aria-hidden="true">
+              <span className="mode-preview-rail" />
+              <span className="mode-preview-side" />
+              <span className="mode-preview-pane" />
             </span>
             <span className="theme-copy">
               <span className="theme-name">
@@ -83,120 +64,6 @@ export default function AppearancePage({
               </span>
               <span className="theme-detail">{theme.detail}</span>
             </span>
-          </button>
-        ))}
-      </div>
-      <div className="setting-head accent-head">
-        <h2>Thème de couleur</h2>
-        <p>Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.</p>
-      </div>
-      {/* Douze cases : onze teintes et la teinte libre. La grille se remplit
-          sans trou à six colonnes comme à quatre : aucune case vide, aucune
-          rangée orpheline, et la couleur n'a qu'un seul endroit pour être
-          réglée. */}
-      <div className="theme-grid" role="group" aria-label="Thème de couleur">
-        {THEME_PRESETS.map((preset) => {
-          const active = settings.themeId === preset.id
-          const teinte = swatchColor(preset.id, settings.customAccent, mode)
-          return (
-            <button
-              type="button"
-              key={preset.id}
-              aria-pressed={active}
-              aria-label={preset.label}
-              className="theme-dot"
-              data-active={active}
-              style={{ '--swatch': teinte, '--swatch-ink': readableOn(teinte) } as CSSProperties}
-              onClick={() => void updateSettings({ themeId: preset.id })}
-            >
-              <span className="theme-dot-disc">{active && <Icon name="check" size={15} />}</span>
-              <span className="theme-dot-name">{preset.label}</span>
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          aria-pressed={settings.themeId === 'custom'}
-          aria-label="Teinte personnalisée"
-          className="theme-dot"
-          data-active={settings.themeId === 'custom'}
-          style={
-            {
-              '--swatch': settings.customAccent,
-              '--swatch-ink': readableOn(settings.customAccent)
-            } as CSSProperties
-          }
-          onClick={() => void updateSettings({ themeId: 'custom' })}
-        >
-          <span className="theme-dot-disc">
-            {settings.themeId === 'custom' && <Icon name="check" size={15} />}
-          </span>
-          <span className="theme-dot-name">Personnalisé</span>
-        </button>
-      </div>
-
-      <div className="theme-custom" data-active={settings.themeId === 'custom'}>
-        <span
-          className="theme-custom-swatch"
-          style={{ '--swatch': settings.customAccent } as CSSProperties}
-          aria-hidden="true"
-        />
-        <div className="theme-custom-copy">
-          <span className="theme-custom-name">Teinte libre</span>
-          <span className="theme-custom-hint">Saisie ici, elle prend la case « Personnalisé ».</span>
-        </div>
-        <div className="custom-color">
-          <input
-            type="color"
-            aria-label="Choisir une couleur personnalisée"
-            value={settings.customAccent}
-            onChange={(event) => applyCustom(event.target.value)}
-          />
-          <input
-            type="text"
-            aria-label="Code hexadécimal"
-            key={settings.customAccent}
-            defaultValue={settings.customAccent.toUpperCase()}
-            spellCheck={false}
-            onBlur={(event) => applyCustom(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                applyCustom(event.currentTarget.value)
-              }
-            }}
-          />
-        </div>
-        {settings.themeId === 'custom' && (
-          <span className="theme-custom-state">
-            <Icon name="check" size={12} />
-            Active
-          </span>
-        )}
-      </div>
-
-      {hexNote && (
-        <p className="custom-color-note" data-tone={hexNote.tone}>
-          {hexNote.text}
-        </p>
-      )}
-
-      <div className="setting-head">
-        <h2>Intensité du verre</h2>
-        <p>Teinte et transparence du fond des panneaux.</p>
-      </div>
-      <div className="appearance-grid" role="radiogroup" aria-label="Intensité du verre">
-        {GLASS_OPTIONS.map((option) => (
-          <button
-            type="button"
-            key={option.value}
-            role="radio"
-            aria-checked={settings.glass === option.value}
-            className="appearance-choice"
-            data-active={settings.glass === option.value}
-            onClick={() => void updateSettings({ glass: option.value })}
-          >
-            {option.label}
           </button>
         ))}
       </div>
@@ -225,7 +92,9 @@ export default function AppearancePage({
         <div className="setting-row">
           <div>
             <label>Flou de l’image</label>
-            <p className="setting-hint">{settings.homeBlur} px · {settings.homeImage.split(/[\\/]/).pop()}</p>
+            <p className="setting-hint">
+              {settings.homeBlur} px · {settings.homeImage.split(/[\\/]/).pop()}
+            </p>
           </div>
           <input
             type="range"
@@ -339,11 +208,6 @@ export default function AppearancePage({
           </button>
         </div>
       </div>
-
-      <button type="button" className="action wide" onClick={resetAppearance}>
-        <Icon name="refresh" size={13} />
-        Réinitialiser l’apparence
-      </button>
     </section>
   )
 }

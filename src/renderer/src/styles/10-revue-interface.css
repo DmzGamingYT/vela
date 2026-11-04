@@ -83,15 +83,49 @@
 }
 
 .agent[data-docked="true"] .agent-head {
-  padding: 12px 14px;
+  padding: 9px 12px;
+  gap: 8px;
+}
+
+.agent[data-docked="true"] .agent-identity {
+  gap: 8px;
+}
+
+.agent[data-docked="true"] .agent-mark {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+  border-radius: 9px;
+}
+
+.agent[data-docked="true"] .agent-mark svg {
+  width: 16px;
+  height: 16px;
 }
 
 .agent[data-docked="true"] .agent-identity h1 {
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .agent[data-docked="true"] .agent-identity p {
   display: none;
+}
+
+.agent[data-docked="true"] .agent-head-actions {
+  gap: 5px;
+}
+
+.agent[data-docked="true"] .work-toggle {
+  height: 28px;
+  padding: 0 8px;
+  gap: 5px;
+}
+
+/* Dans le panneau étroit, le statut suffit : « API » ou « Démo ». */
+.agent[data-docked="true"] .mode-chip {
+  padding: 3px 7px;
+  font-size: 8px;
+  letter-spacing: 0.08em;
 }
 
 .agent[data-docked="true"] .agent-body {
@@ -100,11 +134,60 @@
   overflow-y: auto;
 }
 
+/* Sans rapport ouvert, la colonne de droite serait un grand vide : le
+   formulaire occupe alors toute la hauteur du panneau. */
+.agent[data-docked="true"] .agent-body[data-idle="true"] {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.agent[data-docked="true"] .agent-body[data-idle="true"] .agent-right {
+  display: none;
+}
+
+.agent[data-docked="true"] .agent-body[data-idle="true"] .agent-left {
+  max-height: none;
+  border-bottom: 0;
+}
+
 .agent[data-docked="true"] .agent-left {
   border-right: 0;
   border-bottom: 1px solid var(--edge);
-  padding: 14px;
+  padding: 12px;
+  gap: 8px;
   max-height: 52vh;
+}
+
+.agent[data-docked="true"] .agent-mode-switch {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.agent[data-docked="true"] .agent-mode-switch button {
+  flex: 1;
+  justify-content: center;
+  padding: 5px 8px;
+}
+
+.agent[data-docked="true"] .agent-prompt {
+  min-height: 76px;
+}
+
+.agent[data-docked="true"] .source-list {
+  max-height: 148px;
+}
+
+.agent[data-docked="true"] .agent-recent {
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+.agent[data-docked="true"] .agent-recent ul {
+  gap: 3px;
+}
+
+.agent[data-docked="true"] .agent-recent-row {
+  padding: 5px 7px;
 }
 
 .agent[data-docked="true"] .agent-right {
@@ -116,7 +199,7 @@
   display: none;
 }
 
-.agent[data-docked="true"] .agent-head-actions .work-toggle span {
+.agent[data-docked="true"] .work-toggle-label {
   display: none;
 }
 

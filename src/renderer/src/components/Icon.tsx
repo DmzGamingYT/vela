@@ -33,7 +33,9 @@ export type IconName =
   | 'stop'
   | 'edit'
   | 'clock'
+  | 'home'
   | 'circle'
+  | 'palette'
   | 'key'
   | 'keyboard'
   | 'download'
@@ -186,6 +188,21 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   circle: <circle cx="12" cy="12" r="8" />,
+  home: (
+    <>
+      <path d="M3.5 10.5 12 3.5l8.5 7" />
+      <path d="M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" />
+      <path d="M9.5 21v-6h5v6" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 1 0 0 18c1.4 0 2.2-.9 2.2-2 0-1.4-1.1-2.1-1.1-3.2 0-1 .8-1.8 1.9-1.8H17a4 4 0 0 0 4-4c0-3.9-4-7-9-7Z" />
+      <circle cx="7.6" cy="10.4" r=".9" />
+      <circle cx="10.4" cy="7.1" r=".9" />
+      <circle cx="14.8" cy="7.6" r=".9" />
+    </>
+  ),
   // Anneau percé, tige longue et deux dents de même longueur : sans le trou
   // ni les dents égales, la clé se lit comme le symbole masculin ♂.
   key: (

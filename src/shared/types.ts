@@ -2,7 +2,7 @@
  * Types partagés entre le processus principal, le preload et le renderer.
  * Une seule source de vérité pour l'état persisté et l'état exposé à l'interface.
  */import type { AgentActionEntry } from './agentLoop'
-import type { GlassIntensity, HomeBackground, ThemeId } from './theme'
+import type { AmbienceId, GlassIntensity, HomeBackground, ThemeId } from './theme'
 
 export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
@@ -158,8 +158,12 @@ export interface Settings {
   themeId: ThemeId
   /** Teinte utilisée quand themeId vaut « custom ». */
   customAccent: string
-  /** Teinte et transparence du verre dépoli. */
+  /** Cran historique du verre dépoli (migration, compatibilité). */
   glass: GlassIntensity
+  /** Intensité continue du verre dépoli, en pixels de flou (0 à 40). */
+  glassBlur: number
+  /** Ambiance animée du châssis ; `none` garde le fond sobre. */
+  ambience: AmbienceId
   /** Arrière-plan de la page d'accueil. */
   homeBackground: HomeBackground
   /** Image locale de l'accueil (chemin disque, jamais transmis aux sites). */

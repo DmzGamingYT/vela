@@ -1194,7 +1194,7 @@ export default function NotesDrawer() {
           </div>
 
           <div className="notes-actions">
-            <button type="button" className="action wide" onClick={newNote}>
+            <button type="button" className="action primary wide" onClick={newNote}>
               <Icon name="plus" size={14} />
               Nouvelle note
             </button>
@@ -1216,8 +1216,8 @@ export default function NotesDrawer() {
                     : 'Lire la page et rédiger une note structurée'
               }
             >
-              <Icon name="sparkles" size={14} />
-              {aiBusy === 'generate' ? 'Génération…' : 'Générer une note IA'}
+              <Icon name="sparkles" size={13} />
+              {aiBusy === 'generate' ? 'Génération…' : 'Note IA'}
             </button>
             <button
               type="button"
@@ -1229,8 +1229,8 @@ export default function NotesDrawer() {
               aria-disabled={!activeUrl}
               title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
             >
-              <Icon name="globe" size={14} />
-              Capturer la page
+              <Icon name="globe" size={13} />
+              Page
             </button>
             <button
               type="button"
@@ -1242,8 +1242,8 @@ export default function NotesDrawer() {
               aria-disabled={!activeUrl}
               title={activeUrl ? 'Garder le passage sélectionné, avec sa source et sa date' : 'Ouvrez une page, sélectionnez un passage'}
             >
-              <Icon name="copy" size={14} />
-              Capturer la sélection
+              <Icon name="copy" size={13} />
+              Sélection
             </button>
             <button
               type="button"
@@ -1255,8 +1255,8 @@ export default function NotesDrawer() {
               aria-disabled={!activeUrl}
               title={activeUrl ? 'Surligner le passage sélectionné et l’ajouter à la note de la page' : 'Ouvrez une page, sélectionnez un passage'}
             >
-              <Icon name="edit" size={14} />
-              Surligner la sélection
+              <Icon name="edit" size={13} />
+              Surligner
             </button>
           </div>
 

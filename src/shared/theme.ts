@@ -28,6 +28,108 @@ export type GlassIntensity = 'light' | 'normal' | 'strong'
 export type HomeBackground = 'gradient' | 'plain' | 'image'
 export type ResolvedMode = 'light' | 'dark'
 
+/**
+ * Ambiances animées du châssis. Elles sont indépendantes du thème d'accent :
+ * un tweak règle la couleur des contrôles, une ambiance règle l'atmosphère
+ * derrière le verre. `none` laisse le fond sobre du produit.
+ */
+export type AmbienceId =
+  | 'none'
+  | 'glace-feu'
+  | 'multivers'
+  | 'reve-etolie'
+  | 'voie-lactee'
+  | 'horizon-martien'
+  | 'aura-tech'
+  | 'cyber-neon'
+  | 'sanctuaire-zen'
+
+export type AmbiencePresetId = Exclude<AmbienceId, 'none'>
+
+export interface AmbiencePreset {
+  id: AmbiencePresetId
+  label: string
+  tagline: string
+  /** Ce qui bouge, en une ligne : promesse et garde-fou de performance. */
+  motion: string
+  /** Deux teintes pures, indépendantes de l'accent des tweaks. */
+  light: [string, string]
+  dark: [string, string]
+}
+
+/** Les huit ambiances, dans l'ordre de la grille des réglages. */
+export const AMBIENCE_PRESETS: AmbiencePreset[] = [
+  {
+    id: 'glace-feu',
+    label: 'Glace & Feu',
+    tagline: 'Deux règnes, une seule lueur.',
+    motion: 'Pulsation lente · braises et givre',
+    light: ['#2d6fa8', '#c0392b'],
+    dark: ['#7fb6e8', '#ff6b4a']
+  },
+  {
+    id: 'multivers',
+    label: 'Multivers',
+    tagline: 'Pop art, cases nettes.',
+    motion: 'Trame en parallaxe · contours francs',
+    light: ['#f0357e', '#f5b700'],
+    dark: ['#ff5c9e', '#ffd23f']
+  },
+  {
+    id: 'reve-etolie',
+    label: 'Rêve Étoilé',
+    tagline: 'Poussière d’étoiles dorée.',
+    motion: 'Scintillement organique · flou gaussien',
+    light: ['#7b61c9', '#e0a93b'],
+    dark: ['#b49bff', '#f7d98b']
+  },
+  {
+    id: 'voie-lactee',
+    label: 'Voie Lactée',
+    tagline: 'Nébuleuse en dérive.',
+    motion: 'Pan lent · profondeur infinie',
+    light: ['#6e52c9', '#2c6fd6'],
+    dark: ['#9d7bff', '#5c8dff']
+  },
+  {
+    id: 'horizon-martien',
+    label: 'Horizon Martien',
+    tagline: 'Cuivre et air chaud.',
+    motion: 'Mirage atmosphérique · teintes cuivrées',
+    light: ['#b4632f', '#d9915a'],
+    dark: ['#ff9a5c', '#ffd3a8']
+  },
+  {
+    id: 'aura-tech',
+    label: 'Aura Tech',
+    tagline: 'Ivoire, silence, précision.',
+    motion: 'Lumière ultra-douce · ondulation au clic',
+    light: ['#8c8474', '#c7bea9'],
+    dark: ['#f4efe4', '#cfc4ae']
+  },
+  {
+    id: 'cyber-neon',
+    label: 'Cyber-Néon',
+    tagline: 'Balayages magenta et cyan.',
+    motion: 'Scanlines · bordures néon pulsantes',
+    light: ['#d3007c', '#00939c'],
+    dark: ['#ff2fb5', '#2be6f0']
+  },
+  {
+    id: 'sanctuaire-zen',
+    label: 'Sanctuaire Zen',
+    tagline: 'Soie mate, minéral.',
+    motion: 'Dérive très lente · matière papier',
+    light: ['#7c8c6d', '#b7a992'],
+    dark: ['#a9c09a', '#d6c8ae']
+  }
+]
+
+/** Le flou appliqué au verre, par cran historique (avant le curseur). */
+export const GLASS_BLUR: Record<GlassIntensity, number> = { light: 8, normal: 18, strong: 30 }
+export const DEFAULT_GLASS_BLUR = GLASS_BLUR.normal
+export const MAX_GLASS_BLUR = 40
+
 export interface ThemePreset {
   id: ThemePresetId
   label: string
@@ -75,6 +177,25 @@ export function presetById(id: string): ThemePreset | undefined {
 
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && (value === 'custom' || Boolean(presetById(value)))
+}
+
+export function ambiencePreset(id: string): AmbiencePreset | undefined {
+  return AMBIENCE_PRESETS.find((preset) => preset.id === id)
+}
+
+export function isAmbienceId(value: unknown): value is AmbienceId {
+  return typeof value === 'string' && (value === 'none' || Boolean(ambiencePreset(value)))
+}
+
+/** Les deux teintes d'une ambiance pour le mode courant. */
+export function ambienceColors(preset: AmbiencePreset, mode: ResolvedMode): [string, string] {
+  return mode === 'dark' ? preset.dark : preset.light
+}
+
+/** Ramène une intensité de verre lue sur disque dans la plage du curseur. */
+export function sanitizeGlassBlur(value: unknown, fallback: number = DEFAULT_GLASS_BLUR): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  return Math.max(0, Math.min(MAX_GLASS_BLUR, Math.round(value)))
 }
 
 /* ------------------------------------------------------------------ */
@@ -265,6 +386,10 @@ export interface AppearanceInput extends ThemeChoice {
   mode: ResolvedMode
   glass: GlassIntensity
   highContrast: boolean
+  /** Optionnel : les appels historiques retombent sur le fond sobre. */
+  ambience?: AmbienceId
+  /** Intensité du verre en pixels ; `glass` sert de repli. */
+  glassBlur?: number
 }
 
 export type Tokens = Record<string, string>
@@ -297,6 +422,18 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   const tint = alpha(accent, dark ? 0.13 : 0.1)
   const glassOpacity = highContrast ? 1 : glass === 'light' ? 0.58 : glass === 'strong' ? 0.92 : 0.76
   const tintMix = highContrast ? 0.04 : glass === 'strong' ? 0.14 : glass === 'light' ? 0.07 : 0.1
+  const blur = sanitizeGlassBlur(input.glassBlur, GLASS_BLUR[glass])
+  // L'ambiance ne repeint jamais l'accent : elle ne fournit que les teintes
+  // de ses calques. Sans ambiance, ce sont les teintes du thème qui servent
+  // de repli pour que les feuilles de style n'aient jamais de valeur vide.
+  const ambience = ambiencePreset(input.ambience ?? 'none')
+  const ambA = ambience ? (dark ? ambience.dark[0] : ambience.light[0]) : accent
+  const ambB = ambience ? (dark ? ambience.dark[1] : ambience.light[1]) : hover
+  const ambMix = mix(ambA, ambB, 0.5)
+  const rgb = (color: string): string => {
+    const { r, g, b } = hexToRgb(color)
+    return `${r}, ${g}, ${b}`
+  }
 
   return {
     '--accent': accent,
@@ -323,6 +460,19 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
     // Surfaces : le verre prend la teinte du thème et l'intensité choisie.
     '--surface': alpha(mix(paper, accent, tintMix), glassOpacity),
     '--glass': alpha(mix(paper, accent, tintMix), Math.min(1, glassOpacity + 0.04)),
+    // Intensité du verre dépoli, lue par les calques qui portent
+    // `backdrop-filter` (le flou seul est animé par le navigateur).
+    '--glass-blur': `${blur}px`,
+    '--glass-sat': `${Math.round(100 + blur * 2.2)}%`,
+    '--glass-border': alpha(ambMix, dark ? 0.34 : 0.26),
+    // Teintes des calques d'ambiance (voir 22-ambiances.css).
+    '--amb-1': ambA,
+    '--amb-2': ambB,
+    '--amb-mix': ambMix,
+    '--amb-rgb': rgb(ambA),
+    '--amb-rgb-2': rgb(ambB),
+    '--amb-line': alpha(ambMix, dark ? 0.42 : 0.3),
+    '--amb-halo': alpha(ambMix, dark ? 0.22 : 0.16),
     '--ink-strong': ink
   }
 }
@@ -358,6 +508,10 @@ export interface AppearancePrefs {
   themeId: ThemeId
   customAccent: string
   glass: GlassIntensity
+  /** Intensité continue du verre dépoli, en pixels de flou. */
+  glassBlur: number
+  /** Ambiance animée du châssis ; `none` garde le fond sobre. */
+  ambience: AmbienceId
   homeBackground: HomeBackground
   homeImage: string | null
   homeBlur: number
@@ -376,6 +530,12 @@ export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefi
     themeId: isThemeId(input.themeId) ? input.themeId : DEFAULT_THEME,
     customAccent: parseHex(input.customAccent ?? '') ?? DEFAULT_CUSTOM_ACCENT,
     glass: input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal',
+    // Un fichier d'avant le curseur n'a que le cran : on en dérive le flou.
+    glassBlur: sanitizeGlassBlur(
+      input.glassBlur,
+      GLASS_BLUR[input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal']
+    ),
+    ambience: isAmbienceId(input.ambience) ? input.ambience : 'none',
     homeBackground:
       input.homeBackground === 'plain' || input.homeBackground === 'image' ? input.homeBackground : 'gradient',
     homeImage:

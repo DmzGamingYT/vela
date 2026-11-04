@@ -160,11 +160,17 @@ export default function AgentCanvas({
               title="Rapports de l’atelier"
             >
               <Icon name="inbox" size={14} />
-              Rapports
+              <span className="work-toggle-label">Rapports</span>
               {activeWorks > 0 && <span className="work-toggle-count">{activeWorks}</span>}
             </button>
             <span className="mode-chip" data-mode={modeLabel}>
-              {modeLabel === 'api' ? 'Modèle connecté' : 'Démo locale'}
+              {modeLabel === 'api'
+                ? docked
+                  ? 'API'
+                  : 'Modèle connecté'
+                : docked
+                  ? 'Démo'
+                  : 'Démo locale'}
             </span>
             {!embedded && (
               <button
@@ -188,7 +194,7 @@ export default function AgentCanvas({
           />
         )}
 
-        <div className="agent-body" data-hidden={showWorks}>
+        <div className="agent-body" data-hidden={showWorks} data-idle={agent.status === 'idle'}>
           <aside className="agent-left">
             {!configured && (
               <div className="agent-setup">
@@ -254,28 +260,32 @@ export default function AgentCanvas({
             />
 
             <div className="sources-head">
-              <span>Onglets joints</span>
-              <span className="sources-count">{selected.length}</span>
-              {canAttachCurrent && currentTab && !selected.includes(currentTab.id) && (
+              <span className="sources-label">
+                Onglets joints
+                <span className="sources-count">{selected.length}</span>
+              </span>
+              <div className="sources-actions">
+                {canAttachCurrent && currentTab && !selected.includes(currentTab.id) && (
+                  <button
+                    type="button"
+                    className="text-btn"
+                    onClick={() => setSelected((current) => [...current, currentTab.id])}
+                  >
+                    Joindre l’actuel
+                  </button>
+                )}
                 <button
                   type="button"
                   className="text-btn"
-                  onClick={() => setSelected((current) => [...current, currentTab.id])}
+                  title="Joindre toutes les pages de cet espace"
+                  onClick={() => setSelected(sources.length ? sources.map((tab) => tab.id) : [])}
                 >
-                  Joindre l’onglet actuel
+                  Tout joindre
                 </button>
-              )}
-              <button
-                type="button"
-                className="text-btn"
-                title="Joindre toutes les pages de cet espace"
-                onClick={() => setSelected(sources.length ? sources.map((tab) => tab.id) : [])}
-              >
-                Tout joindre
-              </button>
+              </div>
             </div>
 
-            <div className="source-list">
+            <div className="source-list" data-empty={sources.length === 0}>
               {sources.length === 0 && (
                 <p className="sources-empty">Ouvrez une page dans cet espace pour la donner à lire à l’agent.</p>
               )}

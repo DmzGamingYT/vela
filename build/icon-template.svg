@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <!-- Vela — gabarit monochrome de barre de menus.
        macOS inverse lui-même les images « template » : noir plein sur fond
-       transparent, sans dégradé ni ombre. Une voile pleine — pas de pli creusé,
-       qui devient un trou à 16 pt — et le soleil, détaché pour rester lisible. -->
+       transparent, sans dégradé ni ombre. Le V et son point restent lisibles
+       à 16 pt. -->
   <g fill="#000000">
-    <path d="M13.2 3.1C13.2 10.9 13.2 19.2 13.2 26.4H24.2C21.2 18 17.4 9.4 13.2 3.1Z"/>
-    <circle cx="26.3" cy="7.1" r="3.1"/>
+    <path d="M4.8 6.2H9.9L16 17.2 22.1 6.2H27.2L16 26.2Z"/>
+    <circle cx="26.4" cy="23.4" r="2.7"/>
   </g>
 </svg>

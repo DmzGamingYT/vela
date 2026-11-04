@@ -1,6 +1,6 @@
 import { HOME_URL, type PersistedState, type ProviderId, type ProviderSettings, type Settings, type Space, type TabGroup, type TabState } from './types'
 import { PROVIDERS, providerDefaults } from './providers'
-import { THEME_PRESETS } from './theme'
+import { DEFAULT_GLASS_BLUR, THEME_PRESETS } from './theme'
 
 export interface SpaceTint {
   id: string
@@ -34,6 +34,8 @@ export const DEFAULT_SETTINGS: Settings = {
   themeId: 'indigo',
   customAccent: '#5B5BD6',
   glass: 'normal',
+  glassBlur: DEFAULT_GLASS_BLUR,
+  ambience: 'none',
   homeBackground: 'gradient',
   homeImage: null,
   homeBlur: 18,

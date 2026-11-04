@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { UpdateInfo } from './api'
 import {
+  compareVersions,
+  isNewerVersion,
+  latestAssetUrl,
+  linuxAppImageNames,
   macInstallerNames,
+  parseManifest,
   releaseAssetUrl,
   safeVersion,
   updateActionLabel,
@@ -57,6 +62,61 @@ describe('releaseAssetUrl', () => {
     expect(releaseAssetUrl('1.0.0/../..', 'Vela-x.dmg')).toBe(
       'https://github.com/DmzGamingYT/vela/releases/download/v1.0.0..../Vela-x.dmg'
     )
+  })
+})
+
+describe('latestAssetUrl', () => {
+  it('lit la dernière release stable, sans jeton GitHub', () => {
+    expect(latestAssetUrl('latest-linux.yml')).toBe(
+      'https://github.com/DmzGamingYT/vela/releases/latest/download/latest-linux.yml'
+    )
+  })
+})
+
+describe('linuxAppImageNames', () => {
+  it('emploie le nom d’architecture produit par electron-builder', () => {
+    expect(linuxAppImageNames('0.3.23', 'x64')).toEqual(['Vela-0.3.23-x86_64.AppImage'])
+    expect(linuxAppImageNames('v0.3.23', 'arm64')).toEqual(['Vela-0.3.23-arm64.AppImage'])
+  })
+
+  it('ne propose rien pour une architecture inconnue ou une version vide', () => {
+    expect(linuxAppImageNames('0.3.23', 'ia32')).toEqual([])
+    expect(linuxAppImageNames('  ', 'x64')).toEqual([])
+  })
+})
+
+describe('compareVersions', () => {
+  it('compare numériquement, pas alphabétiquement', () => {
+    expect(compareVersions('0.3.23', '0.3.9')).toBeGreaterThan(0)
+    expect(compareVersions('0.4', '0.3.23')).toBeGreaterThan(0)
+    expect(compareVersions('v0.3.23', '0.3.23')).toBe(0)
+    expect(compareVersions('0.3.22', '0.3.23')).toBeLessThan(0)
+    expect(isNewerVersion('0.3.23', '0.3.23')).toBe(false)
+  })
+})
+
+describe('parseManifest', () => {
+  it('lit latest-linux.yml comme latest-mac.yml', () => {
+    const manifest = parseManifest(`version: 0.3.23
+files:
+  - url: Vela-0.3.23-x86_64.AppImage
+    sha512: 8CSOPTx267IbKww6ahaymub6N9zv46s0oztfmku4z6xcaZuath1+dpGOaC8exDa2RY14QXAW9srMw01obMs4nA==
+    size: 126719285
+    blockMapSize: 132425
+  - url: Vela-0.3.23-amd64.deb
+    sha512: pNQKSk4jqYnew14CX+KDS2yVkwB9uwdWxY4WRpBx9ORdSG9GzVlhCTXHu1vtVAGKKvWKabDHl5STMnwLuOWIcA==
+    size: 101489932
+path: Vela-0.3.23-x86_64.AppImage
+sha512: 8CSOPTx267IbKww6ahaymub6N9zv46s0oztfmku4z6xcaZuath1+dpGOaC8exDa2RY14QXAW9srMw01obMs4nA==
+releaseDate: '2026-11-03T17:44:02.002Z'
+`)
+    expect(manifest?.version).toBe('0.3.23')
+    expect(manifest?.files).toHaveLength(2)
+    expect(manifest?.files[0]).toMatchObject({
+      url: 'Vela-0.3.23-x86_64.AppImage',
+      size: 126719285
+    })
+    expect(manifest?.files[1].url).toBe('Vela-0.3.23-amd64.deb')
   })
 })
 

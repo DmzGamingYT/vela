@@ -185,7 +185,7 @@ export default function TabRow({
         {tab.favicon && !broken ? (
           <img src={tab.favicon} alt="" onError={() => setBroken(true)} draggable={false} />
         ) : (
-          <span aria-hidden="true">{home ? <Icon name="circle" size={12} /> : initials(tab.title || host)}</span>
+          <span aria-hidden="true">{home ? <Icon name="home" size={13} /> : initials(tab.title || host)}</span>
         )}
       </span>
 

@@ -1,87 +1,111 @@
-<!-- Vela — icône de l'app : « Voile au soleil » (0.3.19).
+<!-- Vela — icône de l'app : « Le monogramme » (0.3.24).
+     Un V d'encre sur papier crème, ponctué d'un point d'argile : la signature
+     « Vela. ». Une calotte de verre liquide, un reflet et un liseré prismatique
+     donnent l'épaisseur d'une lentille sans toucher à la lisibilité.
      Maître 1024, fond transparent. Rendu par scripts/shot.cjs,
      puis build/make-icons.py produit icon.icns, icon.ico et icon-512.png. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <title>Vela — Voile et soleil</title>
+  <title>Vela — monogramme en verre liquide</title>
   <defs>
-    <linearGradient id="a2-base" x1="210" y1="100" x2="850" y2="940" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7A67FF"/>
-      <stop offset="0.26" stop-color="#5A45E8"/>
-      <stop offset="0.62" stop-color="#38239C"/>
-      <stop offset="1" stop-color="#1D1157"/>
+    <linearGradient id="paper" x1="190" y1="96" x2="850" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FCF7EE"/>
+      <stop offset="0.52" stop-color="#F1E5D4"/>
+      <stop offset="1" stop-color="#E3D1B8"/>
     </linearGradient>
-    <linearGradient id="a2-glass" x1="512" y1="96" x2="512" y2="480" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.24"/>
-      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <radialGradient id="light" cx="300" cy="180" r="650" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="0.62" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="512" y1="600" x2="512" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4A3B2B" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4A3B2B" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="inkLeft" x1="300" y1="292" x2="512" y2="752" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A342C"/>
+      <stop offset="1" stop-color="#211D18"/>
+    </linearGradient>
+    <linearGradient id="inkRight" x1="512" y1="524" x2="744" y2="292" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#211D18"/>
+      <stop offset="1" stop-color="#15120F"/>
+    </linearGradient>
+    <linearGradient id="glassTop" x1="512" y1="96" x2="512" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.62"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="glassEdge" x1="180" y1="110" x2="860" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.82"/>
+      <stop offset="0.28" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="0.62" stop-color="#2A2520" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#2A2520" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="prism" x1="180" y1="120" x2="850" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A9DCEB" stop-opacity="0.55"/>
+      <stop offset="0.35" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="0.68" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#E7A07B" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="120" y1="220" x2="760" y2="780" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.06"/>
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
-    <radialGradient id="a2-warm" cx="712" cy="506" r="290" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFC58F" stop-opacity="0.72"/>
-      <stop offset="0.42" stop-color="#FF9E63" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#FF8F55" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="a2-sail" x1="474" y1="220" x2="690" y2="750" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="0.56" stop-color="#F7F4FF"/>
-      <stop offset="1" stop-color="#DED8FD"/>
-    </linearGradient>
-    <linearGradient id="a2-jib" x1="468" y1="300" x2="402" y2="744" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#C7BEF6" stop-opacity="0.2"/>
-    </linearGradient>
-    <linearGradient id="a2-horizon" x1="230" y1="768" x2="800" y2="768" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFE3C4" stop-opacity="0.06"/>
-      <stop offset="0.5" stop-color="#FFF2E0" stop-opacity="0.72"/>
-      <stop offset="1" stop-color="#FFC98C" stop-opacity="0.24"/>
-    </linearGradient>
-    <linearGradient id="a2-sea" x1="512" y1="768" x2="512" y2="928" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#150B45" stop-opacity="0.72"/>
-      <stop offset="1" stop-color="#0A0424" stop-opacity="0.9"/>
-    </linearGradient>
-    <linearGradient id="a2-rim" x1="250" y1="104" x2="800" y2="930" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
-      <stop offset="0.46" stop-color="#FFFFFF" stop-opacity="0.06"/>
-      <stop offset="1" stop-color="#FFD6AA" stop-opacity="0.34"/>
-    </linearGradient>
-    <filter id="a2-soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="24"/>
+    <filter id="grain" filterUnits="userSpaceOnUse" x="96" y="96" width="832" height="832">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="2" seed="11" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer>
     </filter>
-    <filter id="a2-shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#120A45" flood-opacity="0.3"/>
+    <filter id="liquid" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.018" numOctaves="2" seed="5" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="10"/>
     </filter>
-    <clipPath id="a2-tile">
+    <filter id="blur12" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <filter id="blur2" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.6"/>
+    </filter>
+    <filter id="blur6" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <clipPath id="tile">
       <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z"/>
     </clipPath>
   </defs>
 
-  <g clip-path="url(#a2-tile)">
-    <rect x="96" y="96" width="832" height="832" fill="url(#a2-base)"/>
-    <rect x="96" y="96" width="832" height="384" fill="url(#a2-glass)"/>
-    <rect x="96" y="96" width="832" height="832" fill="url(#a2-warm)" style="mix-blend-mode:screen"/>
+  <g clip-path="url(#tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#paper)"/>
+    <rect x="96" y="96" width="832" height="832" fill="url(#light)"/>
+    <rect x="96" y="96" width="832" height="832" fill="url(#shade)"/>
+    <rect x="96" y="96" width="832" height="832" filter="url(#grain)" opacity="0.55" style="mix-blend-mode:multiply"/>
 
-    <!-- Le soleil est plus petit et plus haut : à 16 px c'est une lumière,
-         pas une pièce de monnaie. -->
-    <circle cx="712" cy="506" r="78" fill="#FFC68E"/>
-    <circle cx="712" cy="506" r="128" fill="#FFB877" opacity="0.32" filter="url(#a2-soft)" style="mix-blend-mode:screen"/>
-    <circle cx="694" cy="486" r="24" fill="#FFF7E8" opacity="0.5" style="mix-blend-mode:screen"/>
+    <!-- La calotte de verre : un bord ondulé, comme une surface liquide vue
+         de trois quarts. Elle reste au-dessus du V pour ne pas l'effacer. -->
+    <path d="M96 208C220 136 350 236 500 186C650 138 770 162 928 244V96H96Z" fill="url(#glassTop)" filter="url(#liquid)" opacity="0.9"/>
+    <path d="M96 216C220 144 350 244 500 194C650 146 770 170 928 252" fill="none" stroke="#5F4734" stroke-opacity="0.12" stroke-width="10" filter="url(#blur6)"/>
+    <path d="M96 208C220 136 350 236 500 186C650 138 770 162 928 244" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="3" filter="url(#blur2)"/>
+    <ellipse cx="258" cy="160" rx="150" ry="72" transform="rotate(-20 258 160)" fill="#FFFFFF" opacity="0.32" filter="url(#blur12)"/>
+    <rect x="120" y="260" width="760" height="150" rx="75" transform="rotate(-32 512 512)" fill="url(#sheen)" opacity="0.5" filter="url(#blur12)"/>
+    <path d="M590 902C670 862 760 862 848 898" fill="none" stroke="#E8F7F8" stroke-opacity="0.35" stroke-width="7" stroke-linecap="round" filter="url(#blur12)"/>
 
-    <rect x="96" y="768" width="832" height="160" fill="url(#a2-sea)" style="mix-blend-mode:multiply"/>
-    <path d="M226 769H806" stroke="url(#a2-horizon)" stroke-width="4.5" stroke-linecap="round"/>
-    <g fill="#FFD9B4" style="mix-blend-mode:screen">
-      <rect x="666" y="796" width="104" height="8" rx="4" fill-opacity="0.4"/>
-      <rect x="686" y="826" width="66" height="6" rx="3" fill-opacity="0.22"/>
-    </g>
+    <!-- Le V est en deux faces : la lumière vient de la gauche, le pli reste
+         lisible à grande taille sans devenir une ombre à 16 px. -->
+    <path d="M280 292H430L512 524V752Z" fill="url(#inkLeft)"/>
+    <path d="M512 752V524L594 292H744Z" fill="url(#inkRight)"/>
 
-    <!-- La voile s'arrête au-dessus de l'eau : un liseré d'ombre la sépare de
-         l'horizon, au lieu de l'y fondre. -->
-    <ellipse cx="520" cy="770" rx="146" ry="16" fill="#07031F" opacity="0.42" filter="url(#a2-soft)" style="mix-blend-mode:multiply"/>
+    <!-- Le point d'argile ferme le mot, comme le point de « Vela. ». -->
+    <circle cx="744" cy="702" r="50" fill="#C46F4C"/>
+    <circle cx="730" cy="687" r="14" fill="#E8A181" opacity="0.32"/>
 
-    <path d="M468 306C430 466 406 616 400 744H468Z" fill="url(#a2-jib)"/>
-    <path d="M468 220C468 400 468 590 468 744H700C656 600 568 372 468 220Z" fill="url(#a2-sail)" filter="url(#a2-shadow)"/>
-    <path d="M468 226V742" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
-    <path d="M475 232V738" stroke="#2B1B7C" stroke-opacity="0.2" stroke-width="4" stroke-linecap="round"/>
-    <path d="M700 744C656 600 568 372 474 228" fill="none" stroke="#FFE7CD" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+    <!-- Un second reflet, très faible, passe au-dessus du V : la lumière
+         traverse la dalle au lieu de s'arrêter devant le monogramme. -->
+    <rect x="140" y="380" width="740" height="250" rx="125" transform="rotate(-32 512 512)" fill="url(#sheen)" opacity="0.12" filter="url(#blur12)"/>
 
-    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#a2-rim)" stroke-width="3.5"/>
+    <!-- Épaisseur de la lentille : arête claire en haut à gauche, ombre en bas
+         à droite, et une frange prismatique à peine perceptible. -->
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#glassEdge)" stroke-width="6"/>
+    <path d="M286 96H738C842.5 96 928 181.5 928 286V738C928 842.5 842.5 928 738 928H286C181.5 928 96 842.5 96 738V286C96 181.5 181.5 96 286 96Z" fill="none" stroke="url(#prism)" stroke-width="2.5" opacity="0.65"/>
   </g>
 </svg>

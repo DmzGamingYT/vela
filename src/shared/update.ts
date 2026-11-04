@@ -31,6 +31,51 @@ export function releaseAssetUrl(version: string, asset: string): string {
   return `https://github.com/${OWNER}/${REPO}/releases/download/v${safeVersion(version)}/${asset}`
 }
 
+/**
+ * Manifeste de la dernière release publiée. GitHub redirige `latest` vers la
+ * release stable courante : c'est ce que lit le contrôle Linux, sans passer
+ * par l'API (donc sans jeton ni quota).
+ */
+export function latestAssetUrl(asset: string): string {
+  return `https://github.com/${OWNER}/${REPO}/releases/latest/download/${asset}`
+}
+
+/**
+ * Nom de l'AppImage produit par electron-builder : sur Linux, `${arch}` vaut
+ * `x86_64` (et non `x64`), et `arm64` sur ARM.
+ */
+export function linuxAppImageName(version: string, arch: string): string | null {
+  const clean = safeVersion(version)
+  if (!clean) return null
+  const suffix = arch === 'x64' ? 'x86_64' : arch === 'arm64' ? 'arm64' : null
+  return suffix ? `Vela-${clean}-${suffix}.AppImage` : null
+}
+
+export function linuxAppImageNames(version: string, arch: string): string[] {
+  const name = linuxAppImageName(version, arch)
+  return name ? [name] : []
+}
+
+/** Compare deux versions numériques (`0.3.23` > `0.3.9`). */
+export function compareVersions(a: string, b: string): number {
+  const parts = (value: string): number[] =>
+    safeVersion(value)
+      .split('.')
+      .map((part) => Number.parseInt(part, 10) || 0)
+  const left = parts(a)
+  const right = parts(b)
+  const length = Math.max(left.length, right.length)
+  for (let index = 0; index < length; index += 1) {
+    const diff = (left[index] ?? 0) - (right[index] ?? 0)
+    if (diff !== 0) return diff
+  }
+  return 0
+}
+
+export function isNewerVersion(candidate: string, current: string): boolean {
+  return compareVersions(candidate, current) > 0
+}
+
 export interface MacManifestFile {
   url: string
   sha512: string
@@ -95,6 +140,9 @@ export function manifestFile(manifest: MacManifest | null, name: string): MacMan
   return manifest.files.find((file) => file.url === name) ?? null
 }
 
+/** `latest-mac.yml` et `latest-linux.yml` partagent exactement ce format. */
+export const parseManifest = parseMacManifest
+
 export type UpdateAction = 'install' | 'restart'
 
 export interface UpdateNotice {
@@ -153,9 +201,9 @@ export function updateDescription(info: UpdateInfo | null, platform: string): st
         return `${version} est téléchargée. Installer ouvre le .dmg : glissez Vela dans Applications, puis relancez.`
       }
       // Un .deb installé dans /opt ne peut pas être remplacé sans les droits
-      // d'administration : seule l'AppImage se met à jour toute seule.
+      // d'administration : seule l'AppImage se remplace elle-même.
       if (platform === 'linux') {
-        return `${version} est téléchargée. Depuis l’AppImage, elle s’installe à la fermeture ; depuis un paquet .deb, réinstallez le fichier téléchargé.`
+        return `${version} est téléchargée et vérifiée. Depuis l’AppImage, Vela la remplace et redémarre ; depuis un paquet .deb, réinstallez le fichier téléchargé.`
       }
       return `${version} s’installe à la fermeture de Vela.`
     case 'not-available':
@@ -176,7 +224,7 @@ export function updateReadyMessage(info: UpdateInfo, platform: string): string {
   const version = info.version ? `${info.version} ` : ''
   if (platform === 'darwin') return `Mise à jour ${version}prête — « Installer » vous attend.`
   if (platform === 'linux') {
-    return `Mise à jour ${version}prête — depuis l’AppImage, elle s’installe à la fermeture ; depuis un .deb, réinstallez le paquet.`
+    return `Mise à jour ${version}prête — depuis l’AppImage, Vela la remplace et redémarre ; depuis un .deb, réinstallez le paquet.`
   }
   return `Mise à jour ${version}prête — elle s’installera quand vous quitterez Vela.`
 }

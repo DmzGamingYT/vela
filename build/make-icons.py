@@ -1,7 +1,7 @@
 """Génère le kit d'icônes de l'app depuis le maître `build/icon-1024.png`.
 
-Le maître est le rendu du SVG `build/icon-glass.svg` (voile au soleil),
-produit par `scripts/shot.cjs`. Aucun fichier distant : tout est local.
+Le maître est le rendu du SVG `build/icon-glass.svg` (monogramme V sur
+papier), produit par `scripts/shot.cjs`. Aucun fichier distant : tout est local.
 """
 import subprocess
 from pathlib import Path

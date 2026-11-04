@@ -1,16 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
+  AMBIENCE_PRESETS,
   DEFAULT_CUSTOM_ACCENT,
+  DEFAULT_GLASS_BLUR,
+  GLASS_BLUR,
   PAPER,
   THEME_PRESETS,
   adjustAccent,
+  ambienceColors,
   appearanceTokens,
   contrast,
+  isAmbienceId,
   parseHex,
   presetById,
   resolveMode,
   resolveThemeId,
   sanitizeAppearance,
+  sanitizeGlassBlur,
   type ResolvedMode,
   type ThemeId
 } from './theme'
@@ -162,6 +168,72 @@ describe('persistance des réglages', () => {
 
   it('refuse un chemin d’image démesuré', () => {
     expect(sanitizeAppearance({ homeImage: `data:image/png;base64,${'a'.repeat(4000)}` }).homeImage).toBeNull()
+  })
+})
+
+describe('ambiances animées', () => {
+  it('propose huit ambiances aux identifiants uniques et aux teintes valides', () => {
+    expect(AMBIENCE_PRESETS).toHaveLength(8)
+    expect(new Set(AMBIENCE_PRESETS.map((preset) => preset.id)).size).toBe(8)
+    for (const preset of AMBIENCE_PRESETS) {
+      expect(isAmbienceId(preset.id)).toBe(true)
+      for (const color of [...preset.light, ...preset.dark]) {
+        expect(parseHex(color)).not.toBeNull()
+      }
+    }
+  })
+
+  it('donne deux teintes par mode, sans jamais vider le repli', () => {
+    const preset = AMBIENCE_PRESETS[0]
+    expect(ambienceColors(preset, 'light')).toEqual(preset.light)
+    expect(ambienceColors(preset, 'dark')).toEqual(preset.dark)
+  })
+
+  it('assainit une ambiance inconnue et borne le verre', () => {
+    expect(sanitizeAppearance({ ambience: 'aurore' as never }).ambience).toBe('none')
+    expect(sanitizeAppearance({ ambience: 'voie-lactee' }).ambience).toBe('voie-lactee')
+    expect(sanitizeAppearance({ glassBlur: 96 }).glassBlur).toBe(40)
+    expect(sanitizeAppearance({ glassBlur: -4 }).glassBlur).toBe(0)
+    expect(sanitizeGlassBlur(Number.NaN, 12)).toBe(12)
+    // Un fichier d’avant le curseur retrouve le flou de son cran.
+    expect(sanitizeAppearance({ glass: 'strong' }).glassBlur).toBe(GLASS_BLUR.strong)
+    expect(sanitizeAppearance({}).glassBlur).toBe(DEFAULT_GLASS_BLUR)
+  })
+
+  it('pose les teintes de l’ambiance et le flou du verre dans les jetons', () => {
+    const tokens = appearanceTokens({
+      themeId: 'indigo',
+      customAccent: DEFAULT_CUSTOM_ACCENT,
+      mode: 'dark',
+      glass: 'normal',
+      highContrast: false,
+      ambience: 'cyber-neon',
+      glassBlur: 26
+    })
+    expect(tokens['--amb-1']).toBe(AMBIENCE_PRESETS[6].dark[0])
+    expect(tokens['--amb-2']).toBe(AMBIENCE_PRESETS[6].dark[1])
+    expect(tokens['--glass-blur']).toBe('26px')
+    expect(tokens['--amb-rgb']).toMatch(/^\d+, \d+, \d+$/)
+  })
+
+  it('garde l’accent intact quand une ambiance est choisie', () => {
+    const plain = appearanceTokens({
+      themeId: 'vert',
+      customAccent: DEFAULT_CUSTOM_ACCENT,
+      mode: 'light',
+      glass: 'normal',
+      highContrast: false
+    })
+    const themed = appearanceTokens({
+      themeId: 'vert',
+      customAccent: DEFAULT_CUSTOM_ACCENT,
+      mode: 'light',
+      glass: 'normal',
+      highContrast: false,
+      ambience: 'reve-etolie'
+    })
+    expect(themed['--accent']).toBe(plain['--accent'])
+    expect(themed['--amb-1']).not.toBe(plain['--amb-1'])
   })
 })
 

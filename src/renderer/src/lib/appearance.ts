@@ -16,6 +16,8 @@ export interface AppearanceState {
   customAccent: string
   mode: ResolvedMode
   glass: Settings['glass']
+  glassBlur: number
+  ambience: Settings['ambience']
   highContrast: boolean
 }
 
@@ -41,6 +43,8 @@ export function appearanceState(settings: Settings, space?: Space | null): Appea
     customAccent: settings.customAccent,
     mode: resolveMode(settings.theme, { hourTheme: settings.hourTheme, systemDark: systemDark() }),
     glass: settings.glass,
+    glassBlur: settings.glassBlur,
+    ambience: settings.ambience,
     highContrast: settings.highContrast
   }
 }
@@ -55,6 +59,7 @@ export function applyAppearance(state: AppearanceState, options: { cache?: boole
   root.dataset.mode = state.mode
   root.dataset.theme = state.themeId
   root.dataset.glass = state.glass
+  root.dataset.ambience = state.ambience
   root.dataset.contrast = state.highContrast ? 'high' : 'normal'
   root.style.colorScheme = state.mode
   for (const [name, value] of Object.entries(tokens)) root.style.setProperty(name, value)
@@ -83,6 +88,7 @@ export function applyCachedAppearance(): void {
     root.dataset.mode = cached.mode
     root.dataset.theme = cached.themeId ?? 'indigo'
     root.dataset.glass = cached.glass ?? 'normal'
+    root.dataset.ambience = cached.ambience ?? 'none'
     root.dataset.contrast = cached.highContrast ? 'high' : 'normal'
     root.style.colorScheme = cached.mode
     for (const [name, value] of Object.entries(cached.tokens)) {
