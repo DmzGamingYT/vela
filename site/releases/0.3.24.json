@@ -1,0 +1,36 @@
+{
+  "version": "0.3.24",
+  "slug": "0-3-24",
+  "date": "2026-11-04",
+  "headline": "Le V de verre, et des réglages qui respirent",
+  "intro": "L’icône de Vela devient un monogramme V en verre liquide, lisible à 16 px. Les réglages se séparent en Apparence, Tweaks et Thèmes, et les mises à jour ont enfin leur propre page. Le favicon, l’icône iOS et l’en-tête du site portent le même signe.",
+  "tags": ["identité", "réglages", "mises à jour"],
+  "stats": {
+    "commits": 1,
+    "files": 55,
+    "insertions": 3213,
+    "deletions": 413
+  },
+  "sections": [
+    {
+      "title": "Une icône, un seul signe",
+      "body": [
+        "Le voilier laisse place à un V d’encre sur papier crème, ponctué d’un point d’argile. Une calotte de verre ondulée, un reflet diagonal qui traverse le monogramme et un liseré prismatique donnent l’épaisseur d’une lentille sans sacrifier le contraste.",
+        "Le même signe est décliné en <code>.icns</code>, <code>.ico</code>, PNG 512 et gabarit de barre de menus. À 16 px, le V reste net ; à 1024, la matière et la caustique se lisent. Le favicon, l’icône iOS et le bandeau du site reprennent ce monogramme."
+      ]
+    },
+    {
+      "title": "Des réglages qui respirent",
+      "body": [
+        "Les réglages se répartissent en trois pages : <strong>Apparence</strong> pour le mode et l’accueil, <strong>Tweaks</strong> pour la teinte d’accent et l’intensité du verre, <strong>Thèmes</strong> pour les huit ambiances animées. Une ambiance ne change plus l’accent : elle ne fournit que ses deux teintes de calques.",
+        "Les mises à jour ont leur page dédiée : version installée, état de la vérification, téléchargement et redémarrage. Le rail, les notes et les feuilles retrouvent leur largeur et leurs séparations au passage."
+      ]
+    }
+  ],
+  "verify": [
+    "Dock, Finder et barre de menus : le V se lit à 16 px et garde ses détails à 512 px.",
+    "Réglages : Apparence, Tweaks et Thèmes s’ouvrent séparément ; choisir une ambiance ne change pas la teinte d’accent.",
+    "Site : le favicon, l’icône iOS et l’en-tête affichent le même monogramme, en clair comme en sombre."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.23...v0.3.24"
+}
