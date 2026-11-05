@@ -112,27 +112,27 @@
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon et Intel · 216,0 Mo',
+      size: 'Apple silicon et Intel · 226,5 Mo',
       href: download('Vela-0.3.26-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon · 117,0 Mo',
+      size: 'Apple silicon · 122,7 Mo',
       href: download('Vela-0.3.26-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      size: 'Intel · 124,0 Mo',
+      size: 'Intel · 130,0 Mo',
       href: download('Vela-0.3.26-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
-      size: 'x64 · 116,5 Mo',
+      size: 'x64 · 122,2 Mo',
       href: download('Vela-0.3.26-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
-      size: 'AppImage · 121,0 Mo',
+      size: 'AppImage · 126,9 Mo',
       href: download('Vela-0.3.26-x86_64.AppImage')
     },
     other: {
