@@ -106,39 +106,39 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.24/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.25/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
       size: 'Apple silicon et Intel · 225,9 Mo',
-      href: download('Vela-0.3.24-universal.dmg')
+      href: download('Vela-0.3.25-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
       size: 'Apple silicon · 122,2 Mo',
-      href: download('Vela-0.3.24-arm64.dmg')
+      href: download('Vela-0.3.25-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
       size: 'Intel · 129,4 Mo',
-      href: download('Vela-0.3.24-x64.dmg')
+      href: download('Vela-0.3.25-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
       size: 'x64 · 122,1 Mo',
-      href: download('Vela-0.3.24-x64.exe')
+      href: download('Vela-0.3.25-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
       size: 'AppImage · 126,7 Mo',
-      href: download('Vela-0.3.24-x86_64.AppImage')
+      href: download('Vela-0.3.25-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.24`
+      href: `${RELEASE}/tag/v0.3.25`
     }
   }
 
