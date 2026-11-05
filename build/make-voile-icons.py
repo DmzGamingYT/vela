@@ -29,10 +29,10 @@ HULL = (217, 119, 79, 255)      # #D9774F
 TILE = (96, 96, 928, 928)
 RADIUS = 184                    # 22 % de 832
 BORDER = 6
-LEFT_SAIL = [(480, 268), (312, 644), (496, 644)]
-RIGHT_SAIL = [(630, 368), (552, 644), (712, 644)]
-HULL_SHAPE = [(286, 636), (738, 636), (694, 704), (330, 704)]
-MARK = (286, 268, 738, 704)     # boîte du bateau, pour le monochrome
+LEFT_SAIL = [(478, 260), (282, 694), (494, 694)]
+RIGHT_SAIL = [(648, 374), (558, 694), (742, 694)]
+HULL_SHAPE = [(252, 684), (772, 684), (722, 762), (302, 762)]
+MARK = (252, 260, 772, 762)     # boîte du bateau, pour le monochrome
 
 S = 4  # suréchantillonnage : contours nets à toutes les tailles
 
@@ -96,22 +96,22 @@ def write_svg():
     .hull { fill: var(--vela-hull); }
   </style>
   <rect class="tile" x="99" y="99" width="826" height="826" rx="181" />
-  <path class="sail" d="M480 268 L312 644 L496 644 Z" />
-  <path class="sail--small" d="M630 368 L552 644 L712 644 Z" />
-  <path class="hull" d="M286 636 H738 L694 704 H330 Z" />
+  <path class="sail" d="M478 260 L282 694 L494 694 Z" />
+  <path class="sail--small" d="M648 374 L558 694 L742 694 Z" />
+  <path class="hull" d="M252 684 H772 L722 762 H302 Z" />
 </svg>
 """,
         encoding="utf-8",
     )
     (OUT / "icon-mono.svg").write_text(
-        """<svg xmlns="http://www.w3.org/2000/svg" viewBox="278 260 468 452" width="16" height="16"
+        """<svg xmlns="http://www.w3.org/2000/svg" viewBox="244 252 536 518" width="16" height="16"
      style="color:#000" role="img" aria-label="Vela">
   <!-- Gabarit monochrome pour la barre de menus : noir plein, fond transparent.
        macOS inverse lui-même les images « template ». -->
   <style>.mark { fill: currentColor; }</style>
-  <path class="mark" d="M480 268 L312 644 L496 644 Z" />
-  <path class="mark" d="M630 368 L552 644 L712 644 Z" />
-  <path class="mark" d="M286 636 H738 L694 704 H330 Z" />
+  <path class="mark" d="M478 260 L282 694 L494 694 Z" />
+  <path class="mark" d="M648 374 L558 694 L742 694 Z" />
+  <path class="mark" d="M252 684 H772 L722 762 H302 Z" />
 </svg>
 """,
         encoding="utf-8",

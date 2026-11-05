@@ -763,10 +763,6 @@ kbd {
   accent-color: var(--accent-b);
 }
 
-.source-row[data-selected='true'] .source-check {
-  color: var(--clay);
-}
-
 .agent-result {
   background: transparent;
 }
@@ -1004,25 +1000,6 @@ kbd {
 
 .settings-nav-item[data-active='true'] svg {
   color: var(--clay);
-}
-
-.settings-nav-foot {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 10px;
-  padding: 10px 10px 2px;
-  border-top: 1px solid var(--edge);
-  font-size: 9.5px;
-  color: var(--faint);
-}
-
-.privacy-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--sage);
-  box-shadow: 0 0 8px var(--sage);
 }
 
 .settings-pane {

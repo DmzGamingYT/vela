@@ -11,7 +11,7 @@
     .hull { fill: var(--vela-hull); }
   </style>
   <rect class="tile" x="99" y="99" width="826" height="826" rx="181" />
-  <path class="sail" d="M480 268 L312 644 L496 644 Z" />
-  <path class="sail--small" d="M630 368 L552 644 L712 644 Z" />
-  <path class="hull" d="M286 636 H738 L694 704 H330 Z" />
+  <path class="sail" d="M478 260 L282 694 L494 694 Z" />
+  <path class="sail--small" d="M648 374 L558 694 L742 694 Z" />
+  <path class="hull" d="M252 684 H772 L722 762 H302 Z" />
 </svg>

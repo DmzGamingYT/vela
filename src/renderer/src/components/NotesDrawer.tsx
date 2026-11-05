@@ -722,6 +722,78 @@ export default function NotesDrawer() {
   }
 
   const pageNote = activeUrl ? view.notes.find((note) => note.url === activeUrl) : undefined
+  const noNotes = view.notes.length === 0
+
+  // Une seule définition des cinq actions : dans la barre compacte quand il y a
+  // des notes, dans la surface de départ quand le tiroir est encore vierge.
+  const renderActions = (inEmpty = false) => (
+    <div className={inEmpty ? 'notes-actions is-empty' : 'notes-actions'}>
+      <button type="button" className="action primary" onClick={newNote}>
+        <Icon name="plus" size={14} />
+        Nouvelle note
+      </button>
+      <button
+        type="button"
+        className="action"
+        onClick={() => {
+          if (!activeUrl || aiBusy !== null) return
+          void generateNote()
+        }}
+        // `aria-disabled` plutôt que `disabled` : un bouton réellement
+        // désactivé ne montre pas son info-bulle et sort du clavier.
+        aria-disabled={aiBusy !== null || !activeUrl}
+        title={
+          !activeUrl
+            ? 'Ouvrez une page pour la synthèse'
+            : aiBusy !== null
+              ? 'Une rédaction est déjà en cours'
+              : 'Lire la page et rédiger une note structurée'
+        }
+      >
+        <Icon name="sparkles" size={13} />
+        {aiBusy === 'generate' ? 'Génération…' : 'Note IA'}
+      </button>
+      <button
+        type="button"
+        className="action"
+        onClick={() => {
+          if (!activeUrl) return
+          capturePage()
+        }}
+        aria-disabled={!activeUrl}
+        title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
+      >
+        <Icon name="globe" size={13} />
+        Page
+      </button>
+      <button
+        type="button"
+        className="action"
+        onClick={() => {
+          if (!activeUrl) return
+          void handleSelect()
+        }}
+        aria-disabled={!activeUrl}
+        title={activeUrl ? 'Garder le passage sélectionné, avec sa source et sa date' : 'Ouvrez une page, sélectionnez un passage'}
+      >
+        <Icon name="copy" size={13} />
+        Sélection
+      </button>
+      <button
+        type="button"
+        className="action"
+        onClick={() => {
+          if (!activeUrl) return
+          void highlightSelection()
+        }}
+        aria-disabled={!activeUrl}
+        title={activeUrl ? 'Surligner le passage sélectionné et l’ajouter à la note de la page' : 'Ouvrez une page, sélectionnez un passage'}
+      >
+        <Icon name="edit" size={13} />
+        Surligner
+      </button>
+    </div>
+  )
 
   return (
     <aside
@@ -1156,7 +1228,7 @@ export default function NotesDrawer() {
           </footer>
         </div>
       ) : (
-        <div className="notes-list-wrap">
+        <div className="notes-list-wrap" data-empty={noNotes}>
           <div className="notes-search">
             <Icon name="search" size={14} />
             <input
@@ -1193,72 +1265,7 @@ export default function NotesDrawer() {
             ))}
           </div>
 
-          <div className="notes-actions">
-            <button type="button" className="action primary wide" onClick={newNote}>
-              <Icon name="plus" size={14} />
-              Nouvelle note
-            </button>
-            <button
-              type="button"
-              className="action wide"
-              onClick={() => {
-                if (!activeUrl || aiBusy !== null) return
-                void generateNote()
-              }}
-              // `aria-disabled` plutôt que `disabled` : un bouton réellement
-              // désactivé ne montre pas son info-bulle et sort du clavier.
-              aria-disabled={aiBusy !== null || !activeUrl}
-              title={
-                !activeUrl
-                  ? 'Ouvrez une page pour la synthèse'
-                  : aiBusy !== null
-                    ? 'Une rédaction est déjà en cours'
-                    : 'Lire la page et rédiger une note structurée'
-              }
-            >
-              <Icon name="sparkles" size={13} />
-              {aiBusy === 'generate' ? 'Génération…' : 'Note IA'}
-            </button>
-            <button
-              type="button"
-              className="action wide"
-              onClick={() => {
-                if (!activeUrl) return
-                capturePage()
-              }}
-              aria-disabled={!activeUrl}
-              title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
-            >
-              <Icon name="globe" size={13} />
-              Page
-            </button>
-            <button
-              type="button"
-              className="action wide"
-              onClick={() => {
-                if (!activeUrl) return
-                void handleSelect()
-              }}
-              aria-disabled={!activeUrl}
-              title={activeUrl ? 'Garder le passage sélectionné, avec sa source et sa date' : 'Ouvrez une page, sélectionnez un passage'}
-            >
-              <Icon name="copy" size={13} />
-              Sélection
-            </button>
-            <button
-              type="button"
-              className="action wide"
-              onClick={() => {
-                if (!activeUrl) return
-                void highlightSelection()
-              }}
-              aria-disabled={!activeUrl}
-              title={activeUrl ? 'Surligner le passage sélectionné et l’ajouter à la note de la page' : 'Ouvrez une page, sélectionnez un passage'}
-            >
-              <Icon name="edit" size={13} />
-              Surligner
-            </button>
-          </div>
+          {!noNotes && renderActions()}
 
           {highlights.length > 0 && (
             <div className="notes-highlight-strip">
@@ -1275,7 +1282,7 @@ export default function NotesDrawer() {
 
           <div className="notes-scroll">
             {notes.length === 0 && (
-              <div className="notes-empty">
+              <div className="notes-empty" data-start={noNotes}>
                 <span className="notes-empty-mark">
                   <Icon name="notes" size={20} />
                 </span>
@@ -1284,7 +1291,26 @@ export default function NotesDrawer() {
                     ? 'Aucune note ne correspond.'
                     : 'Aucune note pour l’instant.'}
                 </p>
-                <span>Glissez un passage depuis la page, ou écrivez à côté d’elle.</span>
+                <span>
+                  {filter || tagFilter || onlyPinned
+                    ? 'Videz la recherche ou revenez à toutes les notes.'
+                    : 'Glissez un passage depuis la page, ou écrivez à côté d’elle.'}
+                </span>
+                {noNotes
+                  ? renderActions(true)
+                  : (filter || tagFilter || onlyPinned) && (
+                      <button
+                        type="button"
+                        className="action"
+                        onClick={() => {
+                          setFilter('')
+                          setTagFilter(null)
+                          setOnlyPinned(false)
+                        }}
+                      >
+                        Tout afficher
+                      </button>
+                    )}
               </div>
             )}
 

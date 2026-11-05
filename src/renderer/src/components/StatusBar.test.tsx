@@ -27,7 +27,7 @@ const releases = vi.fn(async () => undefined)
 
 function setUpdate(update: UpdateInfo): void {
   useBrowser.setState({
-    view: { blockedTotal: 3, downloads: [] } as unknown as AppView,
+    view: { downloads: [] } as unknown as AppView,
     update,
     overlay: null,
     zoomNotice: null
@@ -57,14 +57,9 @@ afterEach(() => {
 })
 
 describe('barre de statut', () => {
-  it('nomme le compteur de blocages et ouvre son détail', () => {
+  it('ne double pas le compteur de blocages du volet', () => {
     render(<StatusBar />)
-    const blocked = screen.getByRole('button', {
-      name: '3 requêtes bloquées, voir le détail'
-    })
-    expect(blocked.textContent).toContain('3 bloquées')
-    fireEvent.click(blocked)
-    expect(useBrowser.getState().overlay).toBe('protection')
+    expect(screen.queryByText(/bloquée/)).toBeNull()
   })
 
   it('affiche l’annonce prête et l’action principale', () => {
@@ -126,10 +121,9 @@ describe('barre de statut', () => {
   it('donne un ordre de tabulation naturel', () => {
     render(<StatusBar />)
     const names = screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent)
-    expect(names[0]).toBe('3 requêtes bloquées, voir le détail')
-    expect(names[1]).toBe('Mise à jour 0.3.26 prête')
-    expect(names[2]).toBe('Ouvrir le DMG')
-    expect(names[3]).toBe('Plus tard')
+    expect(names[0]).toBe('Mise à jour 0.3.26 prête')
+    expect(names[1]).toBe('Ouvrir le DMG')
+    expect(names[2]).toBe('Plus tard')
     for (const button of screen.getAllByRole('button')) expect(button.tabIndex).toBe(0)
   })
 })

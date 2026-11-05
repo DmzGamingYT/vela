@@ -91,6 +91,7 @@ function Pane({
 export default function Workspace() {
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
+  const menuOpen = useBrowser((state) => state.menuOpen)
   const workMode = useBrowser((state) => state.workMode)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
@@ -136,7 +137,12 @@ export default function Workspace() {
     // En mode Work, l’atelier couvre la scène : aucune page native visible —
     // sauf lorsqu’une vue scindée y installe une source à côté de la carte.
     const workSplit = Boolean(state.workMode === 'work' && state.view.split && state.view.secondTabId)
-    if ((state.workMode === 'work' && !workSplit) || state.overlay || resizingRef.current) {
+    if (
+      (state.workMode === 'work' && !workSplit) ||
+      state.overlay ||
+      state.menuOpen > 0 ||
+      resizingRef.current
+    ) {
       window.vela.views.layout({ panes: [], overlay: true })
       return
     }
@@ -182,6 +188,7 @@ export default function Workspace() {
     notesOpen,
     agentOpen,
     overlay,
+    menuOpen,
     workMode,
     resizing,
     view?.settings.sidebarCollapsed,

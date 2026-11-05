@@ -203,13 +203,10 @@ export default function AgentCanvas({
                 </span>
                 <div className="agent-setup-copy">
                   <strong>Aucun modèle connecté</strong>
-                  <p>
-                    La démo locale écrit un rapport simulé à partir des titres. Pour un vrai rapport :
-                    une clé, ou un modèle local comme Ollama.
-                  </p>
+                  <p>Rapport simulé en local. Une clé ou Ollama donne un vrai rapport.</p>
                   <button type="button" className="action" onClick={() => setOverlay('settings')}>
                     <Icon name="settings" size={14} />
-                    Ajouter une clé ou Ollama
+                    Connecter un modèle
                   </button>
                 </div>
               </div>
@@ -274,14 +271,22 @@ export default function AgentCanvas({
                     Joindre l’actuel
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="text-btn"
-                  title="Joindre toutes les pages de cet espace"
-                  onClick={() => setSelected(sources.length ? sources.map((tab) => tab.id) : [])}
-                >
-                  Tout joindre
-                </button>
+                {sources.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-btn"
+                    title={
+                      selected.length === sources.length
+                        ? 'Détacher toutes les pages de cet espace'
+                        : 'Joindre toutes les pages de cet espace'
+                    }
+                    onClick={() =>
+                      setSelected(selected.length === sources.length ? [] : sources.map((tab) => tab.id))
+                    }
+                  >
+                    {selected.length === sources.length ? 'Tout détacher' : 'Tout joindre'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -298,9 +303,6 @@ export default function AgentCanvas({
                     <span className="source-copy">
                       <span className="source-title">{tab.title}</span>
                       <span className="source-host">{hostOf(tab.url)}</span>
-                    </span>
-                    <span className="source-check">
-                      <Icon name="check" size={12} />
                     </span>
                   </label>
                 )
@@ -330,7 +332,13 @@ export default function AgentCanvas({
                 }
               >
                 <Icon name="sparkles" size={15} />
-                {running ? 'L’agent travaille…' : mode === 'act' ? 'Agir sur les pages' : 'Lancer l’agent'}
+                {running
+                  ? 'L’agent travaille…'
+                  : mode === 'act'
+                    ? 'Agir sur les pages'
+                    : modeLabel === 'api'
+                      ? 'Lancer l’agent'
+                      : 'Lancer la démo'}
                 {!running && (mode === 'act' || selected.length > 0) && <kbd>{shortcut('↵')}</kbd>}
               </button>
               {running && (

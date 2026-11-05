@@ -116,6 +116,12 @@ interface BrowserState {
   ready: boolean
   view: AppView | null
   overlay: Overlay
+  /**
+   * Menus flottants ouverts (clic droit, touche Menu). Les vues natives des
+   * pages passent au-dessus du HTML : elles quittent la scène tant qu'un menu
+   * est affiché, sinon elles en recouvrent la moitié droite.
+   */
+  menuOpen: number
   notesOpen: boolean
   voiceNoteRequest: number
   voiceNoteSpaceId: string | null
@@ -145,6 +151,8 @@ interface BrowserState {
   toast(text: string, tone?: Toast['tone'], action?: Toast['action'], duration?: number): void
   dismissToast(id: string): void
   setOverlay(overlay: Overlay): void
+  beginMenu(): void
+  endMenu(): void
   openSpaceDialog(id?: string): void
   focusAddress(): void
   newTab(url?: string, groupId?: string): void
@@ -294,6 +302,7 @@ export const useBrowser = create<BrowserState>((set, get) => ({
   ready: false,
   view: null,
   overlay: null,
+  menuOpen: 0,
   notesOpen: false,
   voiceNoteRequest: 0,
   voiceNoteSpaceId: null,
@@ -387,6 +396,16 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   setOverlay(overlay) {
     set({ overlay, spaceEditId: overlay === 'space' ? get().spaceEditId : null })
+  },
+
+  // Un compteur : un sous-menu peut s'ouvrir par-dessus le menu principal sans
+  // que l'on rende la page avant la fermeture du dernier.
+  beginMenu() {
+    set((state) => ({ menuOpen: state.menuOpen + 1 }))
+  },
+
+  endMenu() {
+    set((state) => ({ menuOpen: Math.max(0, state.menuOpen - 1) }))
   },
 
   openSpaceDialog(id) {

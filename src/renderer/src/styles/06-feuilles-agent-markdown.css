@@ -307,10 +307,10 @@
 }
 
 .source-row input {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   accent-color: var(--clay);
-  flex: 0 0 13px;
+  flex: 0 0 15px;
   margin: 0;
 }
 
@@ -343,15 +343,6 @@
 .source-host {
   font-size: 9px;
   color: var(--muted);
-}
-
-.source-check {
-  color: var(--clay);
-  opacity: 0;
-}
-
-.source-row[data-selected="true"] .source-check {
-  opacity: 1;
 }
 
 .sources-empty {

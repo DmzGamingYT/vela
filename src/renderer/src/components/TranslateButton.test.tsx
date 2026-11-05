@@ -1,101 +1,92 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Icon } from './Icon'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import TranslateButton from './TranslateButton'
 
-beforeEach(() => {
-  document.documentElement.dataset.mode = 'light'
-})
+afterEach(cleanup)
 
-afterEach(() => {
-  cleanup()
-  delete document.documentElement.dataset.mode
-})
+const styles = readFileSync(path.join(__dirname, '../styles/29-traduction.css'), 'utf8')
 
-function tile(): HTMLButtonElement {
-  return screen.getByRole('button', { name: 'Traduire cette page' })
-}
-
-function expectSynced(button: HTMLButtonElement): void {
-  expect(button.style.getPropertyValue('--halo')).toBe(
-    button.style.getPropertyValue('--translate-background')
+function renderButton(overrides: Partial<Parameters<typeof TranslateButton>[0]> = {}) {
+  const onTranslate = vi.fn()
+  const onOpen = vi.fn()
+  const view = render(
+    <TranslateButton
+      status="proposed"
+      source="en"
+      target="fr"
+      onTranslate={onTranslate}
+      onOpen={onOpen}
+      {...overrides}
+    />
   )
+  return { ...view, onTranslate, onOpen }
 }
 
-describe('bouton de traduction', () => {
-  it('rend le repos dans une tuile de 56 px', () => {
-    render(<TranslateButton />)
-    const button = tile()
-    expect(button.dataset.state).toBe('rest')
-    expect(button.style.getPropertyValue('--halo')).toBe('#ffffff')
-    expect(button.style.getPropertyValue('--translate-background')).toBe('#ffffff')
-    expect(button.style.getPropertyValue('--translate-color')).toBe('#1c1b1a')
-    expectSynced(button)
+describe('pastille de traduction', () => {
+  it('propose la traduction avec un nom accessible', () => {
+    renderButton()
+    const button = screen.getByRole('button', { name: 'Traduire en français' })
+    expect(button.dataset.state).toBe('proposed')
+    expect(button.textContent).toContain('Traduire')
+    expect(button.hasAttribute('aria-expanded')).toBe(false)
   })
 
-  it('synchronise le halo au survol', () => {
-    render(<TranslateButton />)
-    const button = tile()
-    fireEvent.mouseEnter(button)
-    expect(button.dataset.state).toBe('hover')
-    expect(button.style.getPropertyValue('--translate-color')).toBe('var(--clay)')
-    expectSynced(button)
+  it('appelle la traduction au clic', () => {
+    const { onTranslate } = renderButton()
+    fireEvent.click(screen.getByRole('button', { name: 'Traduire en français' }))
+    expect(onTranslate).toHaveBeenCalledTimes(1)
   })
 
-  it('synchronise le halo au focus clavier', () => {
-    render(<TranslateButton />)
-    const button = tile()
-    fireEvent.focusIn(button)
-    expect(button.dataset.state).toBe('focus')
-    expectSynced(button)
-  })
-
-  it('passe à l’accent plein quand la traduction est active', () => {
-    render(<TranslateButton active />)
-    const button = tile()
-    expect(button.dataset.state).toBe('active')
-    expect(button.getAttribute('aria-pressed')).toBe('true')
-    expect(button.style.getPropertyValue('--translate-background')).toBe('var(--clay)')
-    expect(button.style.getPropertyValue('--translate-color')).toBe('#ffffff')
-    expectSynced(button)
-  })
-
-  it('atténue l’encre sans changer le halo quand le bouton est désactivé', () => {
-    render(<TranslateButton disabled />)
-    const button = tile()
-    expect(button.dataset.state).toBe('disabled')
-    expect(button.disabled).toBe(true)
-    expect(button.style.getPropertyValue('--translate-color')).toContain('40%')
-    expectSynced(button)
-  })
-
-  it('suit le fond sombre et garde un halo de la même couleur', () => {
-    document.documentElement.dataset.mode = 'dark'
-    render(<TranslateButton />)
-    const button = tile()
-    expect(button.style.getPropertyValue('--translate-background')).toBe('#211f1d')
-    expect(button.style.getPropertyValue('--translate-color')).toBe('#f4f1ec')
-    expectSynced(button)
-  })
-
-  it('garde l’icône décorative et le bouton natif au clavier', () => {
-    const onClick = vi.fn()
-    const { container } = render(<TranslateButton onClick={onClick} />)
-    const button = tile()
-    const svg = container.querySelector('svg')
-    expect(button.tabIndex).toBe(0)
-    expect(svg?.getAttribute('aria-hidden')).toBe('true')
-    expect(svg?.getAttribute('role')).toBeNull()
-    expect(svg?.getAttribute('aria-label')).toBeNull()
-    expect(svg?.getAttribute('width')).toBe('24')
-    expect(svg?.getAttribute('stroke-width')).toBe('1.7')
+  it('affiche les codes réels à l’état traduit et ouvre la fenêtre', () => {
+    const { onOpen } = renderButton({ status: 'translated', source: 'de', expanded: false })
+    const button = screen.getByRole('button', { name: /Traduite en français/ })
+    expect(button.dataset.state).toBe('translated')
+    expect(button.textContent).toContain('DE → FR')
+    expect(button.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(button)
-    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(onOpen).toHaveBeenCalledTimes(1)
   })
 
-  it('épaissit le trait quand l’icône descend sous 20 px', () => {
-    const { container } = render(<Icon name="translate" size={15} />)
-    expect(container.querySelector('svg')?.getAttribute('stroke-width')).toBe('1.9')
+  it('reflète l’ouverture de la fenêtre dans aria-expanded', () => {
+    renderButton({ status: 'translated', expanded: true })
+    expect(screen.getByRole('button', { name: /Traduite en français/ }).getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('reste active pendant la traduction et annule au clic', () => {
+    const { onTranslate } = renderButton({ status: 'running' })
+    const button = screen.getByRole('button', { name: /Traduction en cours/ })
+    expect(button.dataset.state).toBe('running')
+    expect(button.disabled).toBe(false)
+    expect(button.querySelector('.translate-spinner')).not.toBeNull()
+    fireEvent.click(button)
+    expect(onTranslate).toHaveBeenCalledTimes(1)
+  })
+
+  it('propose de réessayer après un échec', () => {
+    renderButton({ status: 'error' })
+    const button = screen.getByRole('button', { name: /échoué/ })
+    expect(button.dataset.state).toBe('error')
+    expect(button.textContent).toContain('Échec, réessayer')
+  })
+
+  it('garde --halo synchronisé avec le fond de chaque état', () => {
+    for (const state of ['proposed', 'translated', 'running', 'error'] as const) {
+      const block = new RegExp(`\\.translate-pill\\[data-state='${state}'\\]\\s*\\{([^}]*)\\}`).exec(styles)
+      expect(block, `état ${state}`).not.toBeNull()
+      expect(block?.[1]).toMatch(/background:/)
+      expect(block?.[1]).toMatch(/--halo:\s*var\(--bar-/)
+      expect(block?.[1]).toMatch(/color:/)
+    }
+  })
+
+  it('dessine l’icône en SVG inline qui lit currentColor et --halo', () => {
+    const { container } = renderButton()
+    const svg = container.querySelector('svg')
+    expect(svg).not.toBeNull()
+    expect(svg?.getAttribute('stroke')).toBe('currentColor')
+    expect(container.innerHTML).toContain('var(--halo')
   })
 })

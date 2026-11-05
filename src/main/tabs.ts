@@ -12,6 +12,7 @@ import {
   type Session
 } from 'electron'
 import { HOME_URL } from '@shared/types'
+import { detectLanguage } from '@shared/language'
 import type {
   LayoutRequest,
   PaneRect,
@@ -380,6 +381,7 @@ export class TabManager {
       const tab = this.host.tab(tabId)
       const saved = tab ? (this.host.highlightsFor?.(tab.url) ?? []) : []
       if (saved.length > 0) void this.paintHighlights(tabId, saved)
+      void this.readPageLanguage(tabId, wc)
     })
 
     wc.on('did-navigate-in-page', (_event, url, isMainFrame) => {
@@ -505,9 +507,33 @@ export class TabManager {
     const tab = this.host.tab(tabId)
     if (!tab || !/^https?:/i.test(url)) return
     const title = this.views.get(tabId)?.webContents.getTitle() || titleFromUrl(url)
-    this.host.patchTab(tabId, { url, title: title || tab.title })
+    // Nouvelle page : la langue lue sur la précédente ne vaut plus rien.
+    this.host.patchTab(tabId, { url, title: title || tab.title, lang: null })
     const space = this.host.space(tab.spaceId)
     if (space) this.host.visited(tab.spaceId, url, title)
+  }
+
+  /**
+   * Langue de la page, lue une fois le document chargé : attribut `lang`, puis
+   * un extrait de texte. Sert au bouton de traduction, qui ne s'affiche que
+   * pour une page écrite dans une autre langue que l'interface.
+   */
+  private async readPageLanguage(
+    tabId: string,
+    wc: { executeJavaScript: (code: string) => Promise<unknown> }
+  ): Promise<void> {
+    try {
+      const sample = (await wc.executeJavaScript(
+        `({ lang: document.documentElement.lang || '', text: (document.body ? document.body.innerText : '').slice(0, 1200) })`
+      )) as { lang?: string; text?: string }
+      const lang = detectLanguage(sample?.lang, sample?.text ?? '')
+      const tab = this.host.tab(tabId)
+      if (!tab || tab.lang === lang) return
+      this.host.patchTab(tabId, { lang })
+      this.host.changed()
+    } catch {
+      /* document illisible : la langue reste inconnue, aucun bouton affiché */
+    }
   }
 
   navigate(tabId: string, input: string): void {

@@ -228,7 +228,9 @@ export default function PrivacyPage({
   return (
     <div className="privacy-page">
       <header className="privacy-head">
-        <p className="privacy-lede">Ce qui est bloqué, ce qui reste sur votre appareil et ce qui en sort</p>
+        <p className="privacy-lede">
+          Ce qui reste local, ce qui sort — et ce qui est arrêté avant de partir.
+        </p>
         <div className="privacy-chips">
           <span>
             <Icon name="check" size={11} /> Aucun compte

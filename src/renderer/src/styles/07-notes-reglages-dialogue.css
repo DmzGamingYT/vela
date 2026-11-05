@@ -70,27 +70,63 @@
   flex-direction: column;
 }
 
+/* Aucune note : la recherche et les filtres n'ont rien à parcourir, la
+   surface de départ prend toute la place. */
+.notes-list-wrap[data-empty="true"] .notes-search,
+.notes-list-wrap[data-empty="true"] .notes-filters {
+  display: none;
+}
+
+/* Barre d'actions : une seule rangée compacte. L'action principale garde
+   l'encre pleine, les captures restent des puces discrètes à côté. */
 .notes-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
   gap: 4px;
   padding: 10px 14px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notes-actions::-webkit-scrollbar {
+  display: none;
 }
 
 .notes-actions .action {
-  height: 28px;
-  gap: 4px;
-  padding: 0 5px;
+  flex: 0 0 auto;
+  height: 30px;
+  gap: 5px;
+  padding: 0 10px;
   border-radius: 8px;
-  font-size: 9.5px;
+  font-size: 10.5px;
   white-space: nowrap;
 }
 
-/* Une seule action principale ; les captures tiennent sur une rangée. */
 .notes-actions .action:first-child {
+  padding: 0 12px;
+  font-weight: 500;
+}
+
+/* Tiroir vierge : les actions quittent le haut du panneau et viennent dans la
+   surface de départ, juste sous le texte qui explique quoi faire. */
+.notes-actions.is-empty {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 268px;
+  margin-top: 10px;
+  padding: 0;
+  overflow: visible;
+}
+
+.notes-actions.is-empty .action {
+  justify-content: center;
+  height: 30px;
+}
+
+.notes-actions.is-empty .action:first-child {
   grid-column: 1 / -1;
   height: 34px;
-  gap: 6px;
   border-radius: 9px;
   font-size: 11.5px;
 }
@@ -146,6 +182,20 @@
   padding: 24px;
   text-align: center;
   color: var(--muted);
+}
+
+/* État de départ : le tiroir n'a aucune note, la surface porte aussi les
+   actions de création pour éviter un vide entre la barre et le message. */
+.notes-empty[data-start="true"] {
+  gap: 7px;
+  padding: 20px 22px 30px;
+}
+
+.notes-empty > .action {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 10.5px;
 }
 
 .notes-empty-mark {
@@ -911,7 +961,7 @@
   left: 50%;
   bottom: 22px;
   transform: translateX(-50%);
-  z-index: 90;
+  z-index: 130;
   display: flex;
   flex-direction: column;
   align-items: center;

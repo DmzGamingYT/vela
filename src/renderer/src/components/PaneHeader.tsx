@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TabView } from '@shared/types'
-import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
+import { isHomeUrl, prettyUrl } from '@shared/url'
+import { WEB_LANGUAGES } from '@shared/navigation'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import { usePageTranslation } from '../lib/usePageTranslation'
 import { Icon } from './Icon'
+import BarButton from './BarButton'
+import PrivacyPill from './PrivacyPill'
 import TranslateButton from './TranslateButton'
+import TranslatePopover from './TranslatePopover'
 
 interface PaneHeaderProps {
   tab: TabView
@@ -21,11 +26,18 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const splitToggle = useBrowser((state) => state.splitToggle)
   const toggleBookmark = useBrowser((state) => state.toggleBookmark)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const toast = useBrowser((state) => state.toast)
+  const beginMenu = useBrowser((state) => state.beginMenu)
+  const endMenu = useBrowser((state) => state.endMenu)
   const bookmarked = useBrowser((state) =>
     Boolean(state.view?.bookmarks.some((bookmark) => bookmark.url === tab.url))
   )
+  const uiLanguage = useBrowser((state) => state.view?.settings.webLanguage ?? 'fr')
 
-  const toast = useBrowser((state) => state.toast)
+  const translation = usePageTranslation(tab, uiLanguage)
+  const [translationOpen, setTranslationOpen] = useState(false)
+  const translateButton = useRef<HTMLButtonElement>(null)
+
   const [comicActive, setComicActive] = useState(false)
   const [comicBusy, setComicBusy] = useState(false)
 
@@ -33,7 +45,29 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   useEffect(() => {
     setComicActive(false)
     setComicBusy(false)
+    setTranslationOpen(false)
   }, [tab.id, tab.url])
+
+  // La fenêtre de traduction flotte au-dessus de la page : la vue native
+  // quitterait la scène, comme pour un menu contextuel.
+  useEffect(() => {
+    if (!translationOpen) return
+    beginMenu()
+    return () => endMenu()
+  }, [translationOpen, beginMenu, endMenu])
+
+  useEffect(() => {
+    if (translation.status !== 'translated') setTranslationOpen(false)
+  }, [translation.status])
+
+  useEffect(() => {
+    if (translation.status === 'error' && translation.error) toast(translation.error, 'error')
+  }, [translation.status, translation.error, toast])
+
+  const closeTranslation = (): void => {
+    setTranslationOpen(false)
+    translateButton.current?.focus()
+  }
 
   const toggleComic = async (): Promise<void> => {
     if (comicBusy) return
@@ -72,6 +106,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const pageName = (tab.title || '').trim() || prettyUrl(tab.url)
   const resting = hovered ? prettyUrl(tab.url) : pageName
   const display = focused ? draft : home ? '' : resting
+  const canClear = focused && draft.trim().length > 0
 
   return (
     <div
@@ -125,12 +160,8 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           inputRef.current?.blur()
         }}
       >
-        <span className="address-icon">
-          <Icon name={home ? 'search' : 'lock'} size={13} />
-        </span>
-        {!home && !focused && !hovered && tab.url.startsWith('https:') && (
-          <span className="address-scheme">https</span>
-        )}
+        {!home && <PrivacyPill count={tab.blocked} onOpen={() => setOverlay('protection')} />}
+
         <input
           ref={inputRef}
           className="address-input"
@@ -157,11 +188,22 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             }
           }}
         />
-        {!home && !focused && !hovered && (
-          <span className="address-host" title={tab.url}>
-            {hostOf(tab.url)}
-          </span>
+
+        {canClear && (
+          <button
+            type="button"
+            className="address-clear"
+            aria-label="Effacer"
+            title="Effacer"
+            onClick={() => {
+              setDraft('')
+              inputRef.current?.focus()
+            }}
+          >
+            <Icon name="close" size={16} />
+          </button>
         )}
+
         {tab.agentSent && (
           <span
             className="address-agent-sent"
@@ -170,87 +212,69 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             <Icon name="sparkles" size={12} /> Envoyée au modèle
           </span>
         )}
+
+        {!home && translation.status !== 'hidden' && (
+          <TranslateButton
+            status={translation.status}
+            source={translation.source}
+            target={translation.target}
+            expanded={translationOpen}
+            buttonRef={translateButton}
+            onTranslate={translation.activate}
+            onOpen={() => setTranslationOpen((open) => !open)}
+          />
+        )}
+
         {!home && (
-          <span
-            className="address-hint"
-            role="note"
-            aria-label={`Raccourci ${shortcut('L')} — barre d’adresse`}
+          <button
+            type="button"
+            className="bar-btn"
+            data-active={bookmarked}
+            aria-pressed={bookmarked}
+            aria-label={bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={`${bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'} (${shortcut('D')})`}
+            onClick={() => void toggleBookmark(tab.id)}
           >
-            {shortcut('L')}
-          </span>
+            <Icon name="star" size={20} filled={bookmarked} />
+          </button>
+        )}
+
+        {!home && translationOpen && translation.status === 'translated' && (
+          <TranslatePopover
+            source={translation.source}
+            target={translation.target}
+            always={translation.always}
+            languages={WEB_LANGUAGES}
+            error={translation.error}
+            onTarget={translation.setTarget}
+            onAlways={translation.setAlways}
+            onOriginal={() => {
+              translation.restore()
+              closeTranslation()
+            }}
+            onClose={closeTranslation}
+          />
         )}
       </form>
 
-      <div className="pane-actions" data-has-translate={!home ? 'true' : undefined}>
+      <div className="pane-tools">
         {!home && (
-          <button
-            type="button"
-            className="protection-pill"
-            data-empty={tab.blocked === 0}
-            onClick={() => setOverlay('protection')}
-            // Le compteur seul ne dit rien à voix haute : le nom accessible
-            // reprend la phrase du survol.
-            aria-label={
-              tab.blocked > 0
-                ? `${tab.blocked} requête${tab.blocked > 1 ? 's' : ''} bloquée${tab.blocked > 1 ? 's' : ''} — voir la protection de ce site`
-                : 'Protection de ce site'
+          <BarButton
+            icon="translate"
+            label={
+              comicActive || comicBusy
+                ? 'Traduire la BD — traduction active'
+                : 'Traduire la BD (OCR local, calque français)'
             }
-            title={
-              tab.blocked > 0
-                ? `${tab.blocked} requête${tab.blocked > 1 ? 's' : ''} bloquée${tab.blocked > 1 ? 's' : ''} — voir la protection de ce site`
-                : 'Protection de ce site'
-            }
-          >
-            <Icon name="shield" size={18} />
-            {tab.blocked > 0 ? (
-              <span className="protection-pill-count" aria-hidden="true">
-                {tab.blocked}
-              </span>
-            ) : null}
-          </button>
-        )}
-        {!home && (
-          <TranslateButton
             active={comicActive || comicBusy}
             onClick={() => void toggleComic()}
-            title={
-              comicActive || comicBusy
-                ? 'Traduire cette page — traduction active'
-                : 'Traduire cette page — OCR local, calque français'
-            }
           />
         )}
-        {!home && (
-          <button
-            type="button"
-            className="icon-btn"
-            data-active={bookmarked}
-            onClick={() => void toggleBookmark(tab.id)}
-            aria-pressed={bookmarked}
-            title={`${bookmarked ? 'Retirer des marque-pages' : 'Garder cette page'} (${shortcut('D')})`}
-          >
-            <Icon name="star" size={16} filled={bookmarked} />
-          </button>
-        )}
-        {secondary ? (
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={() => splitToggle()}
-            title="Fermer la vue scindée"
-          >
-            <Icon name="close" size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={() => splitToggle()}
-            title={`Vue scindée (${shortcut('⇧D')})`}
-          >
-            <Icon name="split" size={16} />
-          </button>
-        )}
+        <BarButton
+          icon={secondary ? 'close' : 'split'}
+          label={secondary ? 'Fermer la vue scindée' : `Vue scindée (${shortcut('⇧D')})`}
+          onClick={() => splitToggle()}
+        />
       </div>
     </div>
   )

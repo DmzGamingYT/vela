@@ -49,7 +49,6 @@
   padding: 4px 8px;
 }
 
-.statusbar-blocked,
 .statusbar-utility,
 .statusbar-primary,
 .statusbar-icon-btn,
@@ -60,24 +59,6 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
-}
-
-.statusbar-blocked {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: var(--sb-pill);
-  color: var(--sb-ink);
-  font-weight: 500;
-}
-
-.statusbar-blocked:hover {
-  border-color: var(--sb-line);
 }
 
 .statusbar-utility {
@@ -95,14 +76,6 @@
 .statusbar-utility:hover {
   background: var(--sb-pill);
   color: var(--sb-ink);
-}
-
-.statusbar-sep {
-  flex: none;
-  width: 1px;
-  height: 28px;
-  background: var(--sb-line);
-  margin: 0 2px;
 }
 
 .statusbar-update {
@@ -312,7 +285,6 @@
   text-underline-offset: 3px;
 }
 
-.statusbar-blocked:focus-visible,
 .statusbar-utility:focus-visible,
 .statusbar-primary:focus-visible,
 .statusbar-icon-btn:focus-visible,

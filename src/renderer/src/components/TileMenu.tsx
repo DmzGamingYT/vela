@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { spokenShortcut } from '../lib/format'
+import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
 
 export interface TileMenuItem {
@@ -89,10 +90,33 @@ export default function TileMenu({
   }, [onClose])
 
   useEffect(() => {
+    // Le menu flotte au-dessus de la page : les vues natives quittent la scène
+    // le temps qu'il est ouvert, sinon elles en recouvrent la partie droite.
+    const { beginMenu, endMenu, view } = useBrowser.getState()
+    beginMenu()
+    // La page est une couche native posée au-dessus du HTML : elle doit
+    // disparaître avant la première image du menu, sans attendre le calcul de
+    // disposition du workspace (une image plus tard, le menu est déjà coupé).
+    if (view) window.vela?.views?.layout({ panes: [], overlay: true })
     return () => {
+      endMenu()
       if (typedTimer.current) clearTimeout(typedTimer.current)
     }
   }, [])
+
+  // Un calque qui s'ouvre (modale de réglages, palette, notes, agent) prend le
+  // dessus : le menu se retire au lieu de flotter par-dessus. Le clic hors du
+  // menu ferme déjà les cas souris ; ceci couvre les raccourcis clavier.
+  useEffect(() => {
+    return useBrowser.subscribe((state, previous) => {
+      if (!previous) return
+      const openedElsewhere =
+        (!previous.overlay && state.overlay !== null) ||
+        (!previous.notesOpen && state.notesOpen) ||
+        (!previous.agentOpen && state.agentOpen)
+      if (openedElsewhere) onClose()
+    })
+  }, [onClose])
 
   // À l'ouverture d'un sous-menu, le focus passe à sa première entrée.
   useEffect(() => {

@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import type { DragEvent, MouseEvent as ReactMouseEvent } from 'react'
+import { useState } from 'react'
+import type { DragEvent } from 'react'
 import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { initials, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import TabContextMenu from './TabContextMenu'
-import TabPreviewCard from './TabPreviewCard'
 
 interface TabRowProps {
   tab: TabView
@@ -40,64 +39,9 @@ export default function TabRow({
   // Menu contextuel : clic droit sur la ligne, comme dans un navigateur.
   const [menu, setMenu] = useState<{ x: number; y: number; keyboard: boolean } | null>(null)
 
-  // Aperçu flottant au survol
-  const [showPreview, setShowPreview] = useState(false)
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const clearHoverTimers = (): void => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    if (closeTimer.current) clearTimeout(closeTimer.current)
-    hoverTimer.current = null
-    closeTimer.current = null
-  }
-
-  useEffect(() => clearHoverTimers, [])
-
   const host = hostOf(tab.url)
   const tint = tintFor(host || tab.title || tab.id)
   const home = isHomeUrl(tab.url)
-
-  const handleMouseEnter = (event: ReactMouseEvent<HTMLDivElement>): void => {
-    if (closeTimer.current) {
-      clearTimeout(closeTimer.current)
-      closeTimer.current = null
-    }
-    if (showPreview || hoverTimer.current) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    hoverTimer.current = setTimeout(() => {
-      hoverTimer.current = null
-      setAnchorRect(rect)
-      setShowPreview(true)
-    }, 280)
-  }
-
-  const handleMouseLeave = (): void => {
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current)
-      hoverTimer.current = null
-    }
-    if (showPreview && !closeTimer.current) {
-      // La carte vit sous la liste : laisser le temps de la rejoindre.
-      closeTimer.current = setTimeout(() => {
-        closeTimer.current = null
-        setShowPreview(false)
-      }, 420)
-    }
-  }
-
-  const keepPreviewOpen = (): void => {
-    if (closeTimer.current) {
-      clearTimeout(closeTimer.current)
-      closeTimer.current = null
-    }
-  }
-
-  const closePreview = (): void => {
-    clearHoverTimers()
-    setShowPreview(false)
-  }
 
   return (
     <div
@@ -117,11 +61,8 @@ export default function TabRow({
       onContextMenu={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        closePreview()
         setMenu({ x: event.clientX, y: event.clientY, keyboard: false })
       }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
@@ -131,14 +72,10 @@ export default function TabRow({
         if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
           event.preventDefault()
           const rect = event.currentTarget.getBoundingClientRect()
-          closePreview()
           setMenu({ x: rect.left + 12, y: rect.bottom, keyboard: true })
         }
       }}
-      onDragStart={(event) => {
-        closePreview()
-        onDragStart(event, tab)
-      }}
+      onDragStart={(event) => onDragStart(event, tab)}
       onDragEnd={onDragEnd}
       onDragOver={(event) => onDragOver(event, tab)}
       onDrop={(event) => onDrop(event, tab)}
@@ -226,15 +163,6 @@ export default function TabRow({
         </button>
       </span>
 
-      {showPreview && anchorRect && (
-        <TabPreviewCard
-          tab={tab}
-          anchorRect={anchorRect}
-          onClose={closePreview}
-          onMouseEnter={keepPreviewOpen}
-          onMouseLeave={handleMouseLeave}
-        />
-      )}
 
       {menu && (
         <TabContextMenu

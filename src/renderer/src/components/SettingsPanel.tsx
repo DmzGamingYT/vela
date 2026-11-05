@@ -728,16 +728,6 @@ export default function SettingsPanel() {
                 </div>
               ))}
             </nav>
-            <div className="settings-nav-foot">
-              <span className="privacy-dot" />
-              <button
-                type="button"
-                className="settings-nav-foot-link"
-                onClick={() => setPage('privacy')}
-              >
-                Ce qui reste local, ce qui sort
-              </button>
-            </div>
           </aside>
 
           <div className="settings-pane">

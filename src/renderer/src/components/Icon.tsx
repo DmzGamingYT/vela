@@ -265,23 +265,14 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m4 18 5-5 4 3 3-3 4 5" />
     </>
   ),
-  // Deux bulles : la première pleine avec un « A », la seconde en contour
-  // avec le « A » en négatif. Le halo est fourni par --halo, synchronisé avec
-  // le fond de la tuile ; l’icône reste décorative dans le bouton.
+  // Un « A » puis la flèche : deux lettres qui vont d’une langue à l’autre,
+  // en traits seuls pour rester nettes à 16 px comme à 24 px.
   translate: (
     <>
-      <rect x="2.5" y="2.5" width="13" height="11" rx="3.5" />
-      <path d="M4.8 13.5v3.2l3-3.2" />
-      <path d="M5.6 5h4.8M8 3.9V5M6.9 5.8c.3 1.3 1.1 2.3 2.4 3M9.8 5.8c-.4 1.3-1.2 2.3-2.6 3" />
-      <g fill="var(--halo,#fff)" stroke="var(--halo,#fff)" strokeWidth={4}>
-        <rect x="9.5" y="9.5" width="12" height="10.5" rx="3.5" />
-        <path d="M17.5 20v2.7l-3.2-2.7z" />
-      </g>
-      <g fill="currentColor">
-        <rect x="9.5" y="9.5" width="12" height="10.5" rx="3.5" />
-        <path d="M17.5 20v2.7l-3.2-2.7z" />
-      </g>
-      <path d="M13.4 16.6l2.1-4.6 2.1 4.6M14.2 15h2.6" stroke="var(--halo,#fff)" strokeWidth={1.6} />
+      <path d="M3.6 18 7.6 8l4 10" />
+      <path d="M5.1 14.4h5" />
+      <path d="M14.6 13h5.8" />
+      <path d="m18 10.6 2.4 2.4-2.4 2.4" />
     </>
   ),
   refresh: (

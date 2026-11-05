@@ -106,6 +106,8 @@ export interface TabState {
   groupId?: string | null
   createdAt: number
   lastActiveAt: number
+  /** Langue de la page (attribut `lang`, sinon devinée) ; null si inconnue. */
+  lang?: string | null
 }
 
 export interface HistoryEntry {

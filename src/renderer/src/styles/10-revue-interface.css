@@ -156,7 +156,11 @@
   border-bottom: 1px solid var(--edge);
   padding: 12px;
   gap: 8px;
-  max-height: 52vh;
+  /* Le panneau a toute la hauteur : le plafond de 52 vh arrêtait le contenu
+     à mi-chemin et laissait une bande vide sous l'action. */
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .agent[data-docked='true'] .agent-mode-switch {
@@ -173,6 +177,13 @@
 
 .agent[data-docked='true'] .agent-prompt {
   min-height: 76px;
+}
+
+/* Sans rapport ouvert, la demande prend la place libre : le champ grandit et
+   l'action reste au bas du panneau au lieu de flotter au milieu. */
+.agent[data-docked='true'] .agent-body[data-idle='true'] .agent-prompt {
+  flex: 1 1 auto;
+  min-height: 132px;
 }
 
 .agent[data-docked='true'] .source-list {
@@ -387,17 +398,6 @@ html[data-mode='dark'] {
   height: 26px;
   flex: 0 0 26px;
   border-radius: 7px;
-}
-
-.settings-nav-foot-link {
-  color: var(--faint);
-  font-size: 9.5px;
-  text-align: left;
-  line-height: 1.35;
-}
-
-.settings-nav-foot-link:hover {
-  color: var(--ink);
 }
 
 /* --- Onboarding : moteurs, essentiels, import ------------------ */

@@ -30,9 +30,12 @@ function rememberLater(version: string): void {
 }
 
 /**
- * Barre d’état : confidentialité à gauche, mise à jour à droite, séparées.
- * Rien à signaler → aucune barre. Le détail est une carte ancrée au-dessus,
- * jamais un écran qui masque la page.
+ * Barre d’état : la mise à jour à droite, le zoom et les téléchargements
+ * quand ils ont quelque chose à dire. Rien à signaler → aucune barre.
+ *
+ * Le compteur de requêtes bloquées n’est pas ici : le bouclier du volet le
+ * porte déjà, page par page, et un second compteur global en bas faisait
+ * doublon sans rien apprendre de plus.
  */
 export default function StatusBar() {
   const view = useBrowser((s) => s.view)
@@ -76,13 +79,7 @@ export default function StatusBar() {
   if (!view) return null
 
   const model = statusBarView(update, window.vela.platform, ui)
-  const blocked = view.blockedTotal
   const downloads = view.downloads.length
-  const blockedLabel = blocked === 1 ? '1 bloquée' : `${blocked} bloquées`
-  const blockedAria =
-    blocked === 1
-      ? '1 requête bloquée, voir le détail'
-      : `${blocked} requêtes bloquées, voir le détail`
 
   const later = (): void => {
     const version = update?.version ?? ''
@@ -91,27 +88,15 @@ export default function StatusBar() {
   }
 
   if (!model) {
-    // « Plus tard » et « Annuler » retirent toute la barre, y compris la zone
-    // confidentialité : elle revient au prochain lancement.
+    // « Plus tard » et « Annuler » retirent toute la barre : elle revient au
+    // prochain lancement.
     const deferred =
       update?.state === 'cancelled' ||
       (update?.state === 'downloaded' && ui.laterVersion === (update.version ?? ''))
     if (deferred) return null
-    if (blocked === 0 && downloads === 0 && zoomNotice === null) return null
+    if (downloads === 0 && zoomNotice === null) return null
     return (
       <div className="statusbar statusbar-compact" role="status" aria-label="Barre de statut">
-        {blocked > 0 && (
-          <button
-            type="button"
-            className="statusbar-blocked"
-            onClick={() => setOverlay('protection')}
-            title="Requêtes bloquées depuis le lancement"
-            aria-label={blockedAria}
-          >
-            <Icon name="shield" size={16} />
-            <span>{blockedLabel}</span>
-          </button>
-        )}
         {zoomNotice !== null && (
           <button
             type="button"
@@ -141,22 +126,6 @@ export default function StatusBar() {
 
   return (
     <div className="statusbar" role="status" aria-label="Barre de statut">
-      {blocked > 0 && (
-        <>
-          <button
-            type="button"
-            className="statusbar-blocked"
-            onClick={() => setOverlay('protection')}
-            title="Requêtes bloquées depuis le lancement"
-            aria-label={blockedAria}
-          >
-            <Icon name="shield" size={16} />
-            <span>{blockedLabel}</span>
-          </button>
-          <span className="statusbar-sep" aria-hidden="true" />
-        </>
-      )}
-
       {(model.phase === 'ready' || model.phase === 'detail') && (
         <div className="statusbar-update">
           <button

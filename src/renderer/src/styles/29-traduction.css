@@ -1,63 +1,515 @@
-/* Tuile de traduction : le fond et --halo sont posés ensemble par le composant. */
-.translate-btn {
-  width: 56px;
-  height: 56px;
-  flex: 0 0 56px;
-  display: grid;
-  place-items: center;
+/* ================================================================
+   Barre d’adresse : pastille de confidentialité, traduction, favori
+   ================================================================
+   Un seul gabarit de bouton (40 px visibles, 44 px de zone cliquable), une
+   pastille de confidentialité à gauche du champ, la traduction et l’étoile à
+   droite. La croix permanente disparaît : « Effacer » n’existe que pendant la
+   saisie, à droite du texte. */
+
+:root {
+  --bar-field: #ffffff;
+  --bar-line: #ddd8d1;
+  --bar-ink: #1c1b1a;
+  --bar-soft: #5f5b57;
+  --bar-hover: #f1eee9;
+  --bar-accent: #5b58c9;
+  --bar-accent-ink: #3f3c9e;
+  --bar-proposed: #ecebfa;
+  --bar-error-bg: #fbe9e7;
+  --bar-error-ink: #9a2f23;
+  --bar-popover-line: #e4e0db;
+}
+
+/* Mode sombre : mêmes rôles, valeurs recalculées, contrastes conservés. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bar-field: #1e1d24;
+    --bar-line: #35323c;
+    --bar-ink: #f3f1f7;
+    --bar-soft: #b1aca6;
+    --bar-hover: #2a2833;
+    --bar-accent: #8b88e8;
+    --bar-accent-ink: #cfccff;
+    --bar-proposed: #2a2840;
+    --bar-error-bg: #3a2320;
+    --bar-error-ink: #ffb4a8;
+    --bar-popover-line: #35323c;
+  }
+}
+
+:root[data-mode='dark'] {
+  --bar-field: #1e1d24;
+  --bar-line: #35323c;
+  --bar-ink: #f3f1f7;
+  --bar-soft: #b1aca6;
+  --bar-hover: #2a2833;
+  --bar-accent: #8b88e8;
+  --bar-accent-ink: #cfccff;
+  --bar-proposed: #2a2840;
+  --bar-error-bg: #3a2320;
+  --bar-error-ink: #ffb4a8;
+  --bar-popover-line: #35323c;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
   padding: 0;
-  border: 1px solid;
-  border-color: var(--translate-border);
-  border-radius: 14px;
-  background: var(--translate-background);
-  color: var(--translate-color);
-  cursor: pointer;
-  -webkit-app-region: no-drag;
-  transition: background-color var(--dur-2) var(--ease-standard),
-    color var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard),
-    box-shadow var(--dur-2) var(--ease-standard);
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.translate-btn:disabled {
-  cursor: default;
+/* --- Le champ d’adresse, pilule de 48 px ------------------------ */
+
+.address {
+  position: relative;
+  height: 48px;
+  gap: 8px;
+  padding: 0 4px;
+  border-radius: 24px;
+  border: 1px solid var(--bar-line);
+  background: var(--bar-field);
 }
 
-.translate-btn:focus-visible {
-  outline: 2px solid var(--translate-accent, var(--clay));
-  outline-offset: 2px;
+.address[data-focused='true'] {
+  border-color: var(--bar-line);
   box-shadow: none;
 }
 
-.translate-btn svg {
+.address[data-home='true']:not([data-focused='true']) {
+  background: var(--bar-field);
+  border-color: var(--bar-line);
+}
+
+.address[data-home='true']:not([data-focused='true']) .address-input {
+  color: var(--bar-soft);
+}
+
+.address-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 2px;
+  font-size: 14px;
+  color: var(--bar-ink);
+}
+
+.address-input::placeholder {
+  color: var(--bar-soft);
+  opacity: 0.9;
+}
+
+.address-agent-sent {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* --- Bouton de barre commun ------------------------------------- */
+
+.bar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--bar-soft);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+/* 44 × 44 px de zone cliquable sans déborder sur le bouton voisin : la marge
+   entre deux boutons fait 8 px, le pseudo-élément n’en prend que 2. */
+.bar-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+}
+
+.bar-btn:hover:not(:disabled) {
+  background: var(--bar-hover);
+  color: var(--bar-ink);
+}
+
+.bar-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--bar-hover) 78%, var(--bar-ink) 8%);
+}
+
+.bar-btn:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+.bar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bar-btn[data-active='true'] {
+  color: var(--bar-accent);
+}
+
+.bar-btn svg {
   display: block;
   flex: none;
 }
 
-/* La palette montre le même dessin à 15 px : son halo reprend le fond de la
-   pastille, qui change avec la sélection. */
-.command-icon {
-  --command-icon-bg: color-mix(in srgb, var(--ink) 5%, transparent);
-  --halo: var(--command-icon-bg);
-  background: var(--command-icon-bg);
+/* --- Pastille de confidentialité -------------------------------- */
+
+.privacy-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--bar-hover);
+  color: var(--bar-ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 150ms ease;
 }
 
-.command-item[data-active='true'] .command-icon {
-  --command-icon-bg: color-mix(in srgb, var(--clay) 12%, transparent);
-  --halo: var(--command-icon-bg);
+.privacy-pill::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
 }
 
-/* La tuile de 56 px a besoin de la hauteur de la barre, pas de la pastille de 34 px. */
-.pane-actions[data-has-translate='true'] {
-  height: 56px;
+.privacy-pill:hover {
+  background: color-mix(in srgb, var(--bar-hover) 82%, var(--bar-ink) 7%);
+}
+
+.privacy-pill:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+/* Rien de bloqué : le bouclier seul, sans chiffre ni fond appuyé. */
+.privacy-pill[data-empty='true'] {
+  width: 40px;
+  min-width: 40px;
   padding: 0;
-  gap: 2px;
-  border-radius: 0;
   background: transparent;
+  color: var(--bar-soft);
+}
+
+.privacy-pill svg {
+  display: block;
+  flex: none;
+}
+
+/* --- Pastille de traduction, quatre états ----------------------- */
+
+.translate-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--bar-soft);
+  /* Le halo de l’icône doit valoir exactement le fond de la pastille. */
+  --halo: var(--bar-field);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.translate-pill::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+}
+
+.translate-pill[data-state='proposed'] {
+  background: var(--bar-proposed);
+  color: var(--bar-accent-ink);
+  --halo: var(--bar-proposed);
+}
+
+.translate-pill[data-state='translated'] {
+  background: var(--bar-accent);
+  color: #ffffff;
+  --halo: var(--bar-accent);
+}
+
+.translate-pill[data-state='running'] {
+  background: var(--bar-accent);
+  color: #ffffff;
+  --halo: var(--bar-accent);
+}
+
+.translate-pill[data-state='error'] {
+  background: var(--bar-error-bg);
+  color: var(--bar-error-ink);
+  --halo: var(--bar-error-bg);
+}
+
+.translate-pill:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+.translate-pill svg {
+  display: block;
+  flex: none;
+}
+
+.translate-caret {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.translate-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, #ffffff 32%, transparent);
+  border-top-color: #ffffff;
+  animation: translate-spin 800ms linear infinite;
+}
+
+@keyframes translate-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* --- Fenêtre de traduction -------------------------------------- */
+
+.translate-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -4px;
+  z-index: 60;
+  width: 320px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--bar-popover-line);
+  background: var(--bar-field);
+  color: var(--bar-ink);
+  box-shadow: 0 24px 60px -34px rgba(0, 0, 0, 0.45);
+  -webkit-app-region: no-drag;
+}
+
+.translate-popover-title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.translate-popover-sub {
+  margin: 2px 0 12px;
+  font-size: 12.5px;
+  color: var(--bar-soft);
+  text-transform: capitalize;
+}
+
+.translate-popover-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.translate-popover-field select {
+  height: 44px;
+  min-width: 150px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--bar-line);
+  background: var(--bar-field);
+  color: var(--bar-ink);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+.translate-popover-field select:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+.translate-popover-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.translate-popover-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bar-accent);
+}
+
+.translate-popover-check input:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+.translate-popover-error {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--bar-error-ink);
+}
+
+.translate-popover-original {
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--bar-line);
+  background: transparent;
+  color: var(--bar-ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.translate-popover-original:hover {
+  background: var(--bar-hover);
+}
+
+.translate-popover-original:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+/* --- Effacer : seulement pendant la saisie ---------------------- */
+
+.address-clear {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  color: var(--bar-soft);
+  cursor: pointer;
+  animation: address-reveal 150ms ease-out;
+}
+
+.address-clear:hover {
+  background: var(--bar-hover);
+  color: var(--bar-ink);
+}
+
+.address-clear:focus-visible {
+  outline: 2px solid var(--bar-ink);
+  outline-offset: 2px;
+}
+
+@keyframes address-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Commandes hors pastille ------------------------------------ */
+
+.pane-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+/* --- Fenêtre étroite -------------------------------------------- */
+
+@container pane (max-width: 480px) {
+  .translate-pill {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .translate-pill .translate-pill-label,
+  .translate-pill .translate-caret {
+    display: none;
+  }
+
+  .privacy-pill svg {
+    display: none;
+  }
+
+  .privacy-pill {
+    min-width: 36px;
+    padding: 0 10px;
+  }
+
+  /* Bouclier seul quand rien n’a été bloqué : il n’y a pas de chiffre. */
+  .privacy-pill[data-empty='true'] svg {
+    display: block;
+  }
+
+  .pane-tools {
+    gap: 4px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .translate-btn {
+  .address-clear {
+    animation: none;
+  }
+
+  .translate-spinner {
+    animation-duration: 2.4s;
+  }
+
+  .bar-btn,
+  .privacy-pill,
+  .translate-pill {
     transition: none;
   }
 }

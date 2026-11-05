@@ -1,0 +1,57 @@
+{
+  "version": "0.3.27",
+  "slug": "0-3-27",
+  "date": "2026-11-05",
+  "headline": "La barre d’adresse prend le volant",
+  "intro": "Le bouclier de confidentialité, la traduction et les actions de la page se rassemblent dans la barre d’adresse. Les pages se traduisent en entier, les notes s’ouvrent dans un tiroir repensé, et les menus ne se superposent plus à la page ni aux fenêtres.",
+  "tags": ["barre d’adresse", "traduction", "notes", "confidentialité", "menus"],
+  "stats": {
+    "commits": 1,
+    "files": 56,
+    "insertions": 1327,
+    "deletions": 1286
+  },
+  "sections": [
+    {
+      "title": "Un bouclier dans la barre d’adresse",
+      "body": [
+        "La barre d’adresse réunit désormais ce qui concerne la page : un bouclier qui porte le nombre de requêtes arrêtées pour l’onglet et ouvre le volet Protection, le bouton de traduction, l’épingle et les actions du site. Chaque bouton a la même forme, le même anneau de focus et la même bulle d’explication.",
+        "La pastille flottante « N bloquées » qui se posait en bas de la fenêtre disparaît : elle faisait doublon avec le bouclier et recouvrait la fin du pied de page de l’accueil, comme la barre de zoom du Tunnel. Les compteurs de session restent dans Réglages › Confidentialité, avec les domaines concernés et les onglets filtrés."
+      ]
+    },
+    {
+      "title": "Traduire la page entière",
+      "body": [
+        "Vela lit la langue du document — attribut lang, puis un extrait de texte — et ne propose la traduction que si la page est écrite dans une autre langue que l’interface. Le bouton ouvre un popover : langue cible, traduction à la demande ou à chaque visite, restauration de l’original.",
+        "La traduction de tuile de bande dessinée laisse place à cette traduction de page : la même promesse, aucun texte envoyé sans un clic, et un seul chemin de code à maintenir."
+      ]
+    },
+    {
+      "title": "Des notes en tiroir",
+      "body": [
+        "Le tiroir Notes part de son état vide comme d’une surface de travail : une note neuve, une note depuis la page, une sélection ou un surlignage, avec des actions compactes et le focus qui suit l’ouverture.",
+        "Le dessin, la voix et les liens entre notes ne changent pas ; seule la mise en page respire, y compris fenêtre étroite."
+      ]
+    },
+    {
+      "title": "Un seul calque à la fois",
+      "body": [
+        "Les menus contextuels passent devant les panneaux mais jamais devant une modale : l’échelle est explicite — widgets jusqu’à 90, menus 100, modales 120, notifications 130. Un menu encore ouvert se ferme dès qu’un autre calque s’ouvre, y compris au clavier.",
+        "Les pages sont des vues natives posées au-dessus du HTML : elles quittent la scène dès l’ouverture d’un menu, sans attendre une image. Le menu n’est plus coupé par la page, et plus rien ne flotte au-dessus d’une fenêtre de réglages."
+      ]
+    },
+    {
+      "title": "Le blocage tient aussi les publicités",
+      "body": [
+        "La liste locale s’étend aux places de marché et réseaux publicitaires : sans eux, le niveau « Traqueurs » arrêtait les compteurs de mesure en laissant passer les bannières. Mêmes hôtes sur les trois plateformes, mêmes niveaux Aucun, Traqueurs, Renforcé.",
+        "Le compteur par onglet et les totaux de session continuent d’être alimentés par le filtre, avant toute connexion : rien ne part sur le réseau."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir une page, survoler le bouclier de la barre d’adresse : le compteur de l’onglet s’affiche, le clic ouvre Protection, et Réglages › Confidentialité donne les mêmes totaux.",
+    "Charger une page dans une autre langue, cliquer sur le bouton de traduction : la page se traduit, puis revient à l’original ; une page déjà dans la langue de l’interface ne propose rien.",
+    "Clic droit sur un onglet, puis ⌘, : le menu se referme et la modale s’affiche seule. Rouvrir le menu au-dessus d’une page : il reste entier."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.26...v0.3.27"
+}

@@ -1006,6 +1006,7 @@
 
 .start-inner.home {
   max-width: 1040px;
+  min-height: 100%;
   padding: 44px 48px 34px;
   display: flex;
   flex-direction: column;
@@ -1817,8 +1818,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--line-soft);
   font-size: 9.5px;
@@ -1829,6 +1831,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  line-height: 1.45;
 }
 
 .home-foot-note svg {

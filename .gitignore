@@ -26,7 +26,7 @@ docs/captures/*
 !docs/captures/lot[1-9]-*.png
 !docs/captures/audit-phase1-*.png
 !docs/captures/bento-*.png
-# Explorations d'icônes : le maître reste build/icon-1024.png, rendu de icon-glass.svg.
+# Explorations d'icônes : le maître reste build/icon-1024.png, rendu de icon-voile/icon.svg.
 build/proposals/
 build/icon-square-*
 build/icon-template-*

@@ -21,6 +21,14 @@ describe('isTracker', () => {
     expect(isTracker('https://stats.doubleclick.net/x')).toBe(true)
   })
 
+  it('arrête aussi les reseaux publicitaires, pas seulement la mesure', () => {
+    expect(isTracker('https://ib.adnxs.com/getuid?cb=1')).toBe(true)
+    expect(isTracker('https://static.adsafeprotected.com/jsv')).toBe(true)
+    expect(isTracker('https://cdn.richaudience.com/script.js')).toBe(true)
+    expect(isTracker('https://sync.sirdata.fr/pixel')).toBe(true)
+    expect(isTracker('https://delivery.mgid.com/feed')).toBe(true)
+  })
+
   it('ne bloque jamais les hôtes de connexion', () => {
     expect(isTracker('https://accounts.google.com/ServiceLogin')).toBe(false)
     expect(isTracker('https://ssl.gstatic.com/accounts/x')).toBe(false)

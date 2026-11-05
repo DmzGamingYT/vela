@@ -153,7 +153,7 @@ export default function PinnedTabTile({
           }}
         >
           <span className="pin-sound-dot" aria-hidden="true">
-            <Icon name={tab.muted ? 'volume-off' : 'volume'} size={14} />
+            <Icon name={tab.muted ? 'volume-off' : 'volume'} size={11} />
           </span>
         </button>
       )}

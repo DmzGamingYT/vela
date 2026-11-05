@@ -857,9 +857,11 @@
   font-size: 9.5px;
 }
 
+/* Échelle des calques : panneaux et widgets ≤ 90, menus 100, modales 120,
+   notifications 130. Un menu ne doit jamais passer devant une modale. */
 .tile-menu {
   position: fixed;
-  z-index: 90;
+  z-index: 100;
   display: grid;
   gap: 1px;
   padding: 5px;
@@ -895,7 +897,7 @@
 /* Sous-menu : collé au bord droit du menu, ou à gauche faute de place. */
 .tile-submenu {
   position: absolute;
-  z-index: 91;
+  z-index: 101;
   display: grid;
   gap: 1px;
   padding: 5px;

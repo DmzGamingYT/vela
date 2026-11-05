@@ -20,7 +20,7 @@
   .icon-btn,
   .tab-row,
   .drop-tail,
-  .pane-actions,
+  .pane-tools,
   .tab-actions,
   .tab-action,
   .home-customize-bar,
@@ -53,10 +53,11 @@
   }
 }
 
+/* Modale : au-dessus des menus (100), sous les notifications (130). */
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 120;
   display: flex;
   align-items: flex-start;
   justify-content: center;
