@@ -10,14 +10,7 @@
 import { SITE_HOST } from './site'
 
 export type FlowCategory =
-  | 'meteo'
-  | 'recherche'
-  | 'tunnel'
-  | 'journal'
-  | 'modeles'
-  | 'mises-a-jour'
-  | 'pages'
-  | 'extensions'
+  'meteo' | 'recherche' | 'tunnel' | 'journal' | 'modeles' | 'mises-a-jour' | 'pages' | 'extensions'
 
 export interface NetworkFlow {
   id: string
@@ -81,7 +74,8 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     target: 'api.open-meteo.com',
     hosts: ['api.open-meteo.com'],
     category: 'meteo',
-    trigger: 'À l’ouverture de l’accueil, une fois une ville choisie, puis au plus une fois par demi-heure (relevé gardé sur l’appareil).',
+    trigger:
+      'À l’ouverture de l’accueil, une fois une ville choisie, puis au plus une fois par demi-heure (relevé gardé sur l’appareil).',
     data: 'La latitude et la longitude de la ville. Aucun identifiant, aucune adresse.',
     off: 'Le bouton Retirer, à côté de la ville.'
   },
@@ -109,7 +103,13 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     id: 'tunnel-fournisseurs',
     label: 'Tunnel de recherche',
     target: 'DuckDuckGo, Wikipédia, Hacker News, arXiv, GDELT',
-    hosts: ['html.duckduckgo.com', 'wikipedia.org', 'hn.algolia.com', 'export.arxiv.org', 'api.gdeltproject.org'],
+    hosts: [
+      'html.duckduckgo.com',
+      'wikipedia.org',
+      'hn.algolia.com',
+      'export.arxiv.org',
+      'api.gdeltproject.org'
+    ],
     category: 'tunnel',
     trigger: 'Quand vous lancez un tunnel de recherche en mode Atelier.',
     data: 'La requête et la langue. Chaque fournisseur ne reçoit que la requête.',
@@ -133,8 +133,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     category: 'modeles',
     trigger:
       'Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.',
-    data:
-      'Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
+    data: 'Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
     off: 'Rester en démo locale, ou brancher un serveur local.'
   },
   {
@@ -144,8 +143,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: ['localhost'],
     category: 'modeles',
     trigger: 'Même actions, avec le fournisseur Local, transcription des notes vocales comprise.',
-    data:
-      'Sur une adresse de boucle locale, rien ne quitte la machine. Si vous configurez un autre hôte, la demande et l’audio partent vers cet hôte, avec les mêmes métadonnées réseau.',
+    data: 'Sur une adresse de boucle locale, rien ne quitte la machine. Si vous configurez un autre hôte, la demande et l’audio partent vers cet hôte, avec les mêmes métadonnées réseau.',
     off: 'Choisir une adresse de boucle locale, ou ne pas utiliser ce fournisseur.',
     local: true
   },
@@ -153,16 +151,11 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     id: 'mises-a-jour',
     label: 'Mises à jour',
     target: 'github.com — releases de Vela',
-    hosts: [
-      'github.com',
-      'objects.githubusercontent.com',
-      'release-assets.githubusercontent.com'
-    ],
+    hosts: ['github.com', 'objects.githubusercontent.com', 'release-assets.githubusercontent.com'],
     category: 'mises-a-jour',
     trigger:
       'Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.',
-    data:
-      'La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.',
+    data: 'La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.',
     off: null
   },
   {
@@ -172,8 +165,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: ['cdn.jsdelivr.net'],
     category: 'extensions',
     trigger: 'Quand vous lancez la traduction d’une planche de BD.',
-    data:
-      'Aucune donnée applicative : téléchargement du moteur de reconnaissance de texte, une fois. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.',
+    data: 'Aucune donnée applicative : téléchargement du moteur de reconnaissance de texte, une fois. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.',
     off: 'Ne pas lancer la traduction de BD.'
   },
   {
@@ -184,8 +176,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     category: 'journal',
     trigger:
       'Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.',
-    data:
-      'Le nom du profil public et la demande du flux. Aucun cookie, aucune session d’espace. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.',
+    data: 'Le nom du profil public et la demande du flux. Aucun cookie, aucune session d’espace. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.',
     off: 'Ne pas importer, ou retirer le compte Letterboxd de l’espace.'
   },
   {
@@ -258,7 +249,7 @@ export const IGNORED_HOSTS: readonly string[] = ['www.w3.org', 'vela.local']
 
 /** Ce qui ne quitte jamais l'appareil, sans requête aucune. */
 export const LOCAL_ONLY = [
-  'Historique, onglets, espaces, réglages et brief',
+  'Historique, onglets, espaces, réglages et sessions',
   'Notes Markdown et surlignages, dans un dossier à vous',
   'Notes vocales, en fichiers audio dans le dossier de données de l’espace : lues sur place, jamais téléversées sans votre accord',
   'Clés d’API, chiffrées par le trousseau du système',

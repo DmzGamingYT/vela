@@ -47,7 +47,7 @@ export type IconName =
   | 'map'
   | 'list'
   | 'image'
-  | 'comic'
+  | 'translate'
   | 'refresh'
   | 'link'
   | 'code'
@@ -265,14 +265,23 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m4 18 5-5 4 3 3-3 4 5" />
     </>
   ),
-  // Bulle de dialogue avec un « A » : la traduction d'une planche, pas la
-  // lecture d'une image. Dessinée large, avec un « A » aux jambes plus grasses
-  // que la bulle : à 16 px, dans la barre d'onglet, un tracé plus fin se referme
-  // en pâté. La queue part du coin bas-gauche, ce qui la distingue de « notes ».
-  comic: (
+  // Deux bulles : la première pleine avec un « A », la seconde en contour
+  // avec le « A » en négatif. Le halo est fourni par --halo, synchronisé avec
+  // le fond de la tuile ; l’icône reste décorative dans le bouton.
+  translate: (
     <>
-      <path d="M6 4h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-6.2L7.4 20.4V17H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z" />
-      <path d="M9 13.6 12 7.4l3 6.2M10.1 11.4h3.8" strokeWidth={1.8} />
+      <rect x="2.5" y="2.5" width="13" height="11" rx="3.5" />
+      <path d="M4.8 13.5v3.2l3-3.2" />
+      <path d="M5.6 5h4.8M8 3.9V5M6.9 5.8c.3 1.3 1.1 2.3 2.4 3M9.8 5.8c-.4 1.3-1.2 2.3-2.6 3" />
+      <g fill="var(--halo,#fff)" stroke="var(--halo,#fff)" strokeWidth={4}>
+        <rect x="9.5" y="9.5" width="12" height="10.5" rx="3.5" />
+        <path d="M17.5 20v2.7l-3.2-2.7z" />
+      </g>
+      <g fill="currentColor">
+        <rect x="9.5" y="9.5" width="12" height="10.5" rx="3.5" />
+        <path d="M17.5 20v2.7l-3.2-2.7z" />
+      </g>
+      <path d="M13.4 16.6l2.1-4.6 2.1 4.6M14.2 15h2.6" stroke="var(--halo,#fff)" strokeWidth={1.6} />
     </>
   ),
   refresh: (
@@ -338,9 +347,10 @@ interface IconProps {
   className?: string
   style?: CSSProperties
   filled?: boolean
+  strokeWidth?: number
 }
 
-export function Icon({ name, size = 16, className, style, filled = false }: IconProps) {
+export function Icon({ name, size = 16, className, style, filled = false, strokeWidth }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -348,7 +358,7 @@ export function Icon({ name, size = 16, className, style, filled = false }: Icon
       height={size}
       fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth={1.7}
+      strokeWidth={strokeWidth ?? (name === 'translate' && size < 20 ? 1.9 : 1.7)}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}

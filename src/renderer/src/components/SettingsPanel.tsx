@@ -4,7 +4,7 @@ import {
   endpointHost,
   isLoopbackEndpoint,
   providerById,
-  providerReady,
+  providerReady
 } from '@shared/providers'
 import { useModalFocus } from '../lib/useModalFocus'
 import AboutPage from './AboutPage'
@@ -21,14 +21,7 @@ import { useBrowser } from '../store/browser'
 import { Icon, type IconName } from './Icon'
 
 type Page =
-  | 'appearance'
-  | 'navigation'
-  | 'privacy'
-  | 'models'
-  | 'notes'
-  | 'shortcuts'
-  | 'updates'
-  | 'about'
+  'appearance' | 'navigation' | 'privacy' | 'models' | 'notes' | 'shortcuts' | 'updates' | 'about'
 
 const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[] }[] = [
   {
@@ -62,10 +55,19 @@ const COPY: Record<Page, { title: string; lede: string }> = {
     title: 'Navigation',
     lede: 'Recherche, démarrage, marque-pages, historique et téléchargements.'
   },
-  privacy: { title: 'Confidentialité', lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.' },
+  privacy: {
+    title: 'Confidentialité',
+    lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.'
+  },
   models: { title: 'Modèles', lede: 'Le mode de l’agent, les fournisseurs et les clés associées.' },
-  notes: { title: 'Notes', lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.' },
-  shortcuts: { title: 'Raccourcis', lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.' },
+  notes: {
+    title: 'Notes',
+    lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.'
+  },
+  shortcuts: {
+    title: 'Raccourcis',
+    lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.'
+  },
   updates: {
     title: 'Mises à jour',
     lede: 'La version installée, le mode de lancement et l’installateur vérifié de la dernière release.'
@@ -123,7 +125,7 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
       ['Notes', shortcut('E')],
       ['Agent', shortcut('J')],
       ['Atelier', shortcut('⇧A')],
-      ['Brief', shortcut('⇧B')],
+      ['Sessions', shortcut('⇧B')],
       ['Replier la barre latérale', shortcut('S')],
       ['Petite fenêtre', shortcut('⇧N')],
       ['Réglages', shortcut(',')]
@@ -315,7 +317,8 @@ export default function SettingsPanel() {
                     Démo locale <em className="model-chip">Sans clé</em>
                   </span>
                   <span className="model-detail" data-tone="none">
-                    Rapports simulés à partir des titres de vos onglets. Aucune page ne quitte l’appareil.
+                    Rapports simulés à partir des titres de vos onglets. Aucune page ne quitte
+                    l’appareil.
                   </span>
                 </span>
               </button>
@@ -338,7 +341,12 @@ export default function SettingsPanel() {
             const status = statusOf(state, definition.id)
             const isActive = agent.mode === 'api' && agent.provider === definition.id
             return (
-              <div className="model-item" key={definition.id} role="group" aria-label={`Fournisseur ${definition.label}`}>
+              <div
+                className="model-item"
+                key={definition.id}
+                role="group"
+                aria-label={`Fournisseur ${definition.label}`}
+              >
                 <div className="model-row" data-active={isActive} data-tone={status.tone}>
                   <button
                     type="button"
@@ -367,7 +375,11 @@ export default function SettingsPanel() {
                     <span className="model-copy">
                       <span className="model-name">
                         {definition.label}
-                        {isActive && <em className="model-chip" data-accent="true">Actif</em>}
+                        {isActive && (
+                          <em className="model-chip" data-accent="true">
+                            Actif
+                          </em>
+                        )}
                       </span>
                       <span className="model-detail" data-tone={status.tone}>
                         {status.tone !== 'none' && <i className="model-dot" />}
@@ -377,7 +389,12 @@ export default function SettingsPanel() {
                   </button>
                   <div className="model-actions">
                     {!state.hasKey && !definition.local && (
-                      <a className="ghost-btn" href={definition.keyUrl} target="_blank" rel="noreferrer">
+                      <a
+                        className="ghost-btn"
+                        href={definition.keyUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Obtenir
                       </a>
                     )}
@@ -391,8 +408,16 @@ export default function SettingsPanel() {
                         {testing === definition.id ? 'Test…' : 'Tester'}
                       </button>
                     )}
-                    <button type="button" className="ghost-btn" onClick={() => openEditor(definition.id)}>
-                      {state.hasKey ? 'Modifier' : definition.local ? 'Configurer l’endpoint' : 'Ajouter une clé'}
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => openEditor(definition.id)}
+                    >
+                      {state.hasKey
+                        ? 'Modifier'
+                        : definition.local
+                          ? 'Configurer l’endpoint'
+                          : 'Ajouter une clé'}
                     </button>
                     {state.hasKey && (
                       <button
@@ -419,7 +444,11 @@ export default function SettingsPanel() {
                           type="password"
                           value={keyDraft}
                           onChange={(event) => setKeyDraft(event.target.value)}
-                          placeholder={state.hasKey ? 'Nouvelle clé (laisser vide pour conserver)' : definition.keyLabel}
+                          placeholder={
+                            state.hasKey
+                              ? 'Nouvelle clé (laisser vide pour conserver)'
+                              : definition.keyLabel
+                          }
                           spellCheck={false}
                           autoFocus
                         />
@@ -446,8 +475,8 @@ export default function SettingsPanel() {
                     {definition.local && urlDraft.trim() && !isLoopbackEndpoint(urlDraft) && (
                       <p className="setting-hint space-error" role="status">
                         <Icon name="warning" size={12} /> Cet endpoint n’est pas sur votre machine :{' '}
-                        {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent et l’audio
-                        transcrit y seront envoyés.
+                        {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent et
+                        l’audio transcrit y seront envoyés.
                       </p>
                     )}
                     <div className="model-editor-foot">
@@ -455,10 +484,18 @@ export default function SettingsPanel() {
                         Chiffrée par le trousseau du système, jamais exposée à l’interface.
                       </p>
                       <div className="model-editor-actions">
-                        <button type="button" className="action ghost" onClick={() => setEditing(null)}>
+                        <button
+                          type="button"
+                          className="action ghost"
+                          onClick={() => setEditing(null)}
+                        >
                           Annuler
                         </button>
-                        <button type="button" className="action primary" onClick={() => void saveProvider(definition.id)}>
+                        <button
+                          type="button"
+                          className="action primary"
+                          onClick={() => void saveProvider(definition.id)}
+                        >
                           Enregistrer
                         </button>
                       </div>
@@ -476,8 +513,9 @@ export default function SettingsPanel() {
           </div>
         )}
         <p className="setting-hint model-foot">
-          Le comportement de l’agent suit toujours le modèle actif : il n’y a rien d’autre à régler ici.
-          Aucune télémétrie, et une clé n’est utilisée que par l’agent, vers l’endpoint que vous voyez ci-dessus.
+          Le comportement de l’agent suit toujours le modèle actif : il n’y a rien d’autre à régler
+          ici. Aucune télémétrie, et une clé n’est utilisée que par l’agent, vers l’endpoint que
+          vous voyez ci-dessus.
         </p>
       </section>
     </>
@@ -527,12 +565,21 @@ export default function SettingsPanel() {
                 <label>Dossier des notes</label>
                 <p className="setting-hint">Du Markdown lisible par n’importe quelle autre app.</p>
               </div>
-              <button type="button" className="action" onClick={() => void window.vela.notes.openFolder()}>
+              <button
+                type="button"
+                className="action"
+                onClick={() => void window.vela.notes.openFolder()}
+              >
                 <Icon name="folder" size={13} />
                 Ouvrir
               </button>
             </div>
-            <button type="button" className="action wide" onClick={() => void saveAgentNote()} disabled={!hasReport}>
+            <button
+              type="button"
+              className="action wide"
+              onClick={() => void saveAgentNote()}
+              disabled={!hasReport}
+            >
               <Icon name="notes" size={13} />
               Enregistrer le dernier rapport de l’agent
             </button>
@@ -545,7 +592,9 @@ export default function SettingsPanel() {
           normalize(`${label} ${keys} ${spokenKeys(keys)}`)
         const groups = SHORTCUT_GROUPS.map((group) => ({
           title: group.title,
-          items: group.items.filter(([label, keys]) => !search || query(label, keys).includes(search))
+          items: group.items.filter(
+            ([label, keys]) => !search || query(label, keys).includes(search)
+          )
         })).filter((group) => group.items.length > 0)
         const total = groups.reduce((count, group) => count + group.items.length, 0)
         const all = SHORTCUT_GROUPS.reduce((count, group) => count + group.items.length, 0)
@@ -600,7 +649,8 @@ export default function SettingsPanel() {
               </div>
             ))}
             <p className="shortcut-note">
-              Les combinaisons viennent du menu de l’application : cette version ne les remappe pas encore.
+              Les combinaisons viennent du menu de l’application : cette version ne les remappe pas
+              encore.
             </p>
           </section>
         )
@@ -680,7 +730,11 @@ export default function SettingsPanel() {
             </nav>
             <div className="settings-nav-foot">
               <span className="privacy-dot" />
-              <button type="button" className="settings-nav-foot-link" onClick={() => setPage('privacy')}>
+              <button
+                type="button"
+                className="settings-nav-foot-link"
+                onClick={() => setPage('privacy')}
+              >
                 Ce qui reste local, ce qui sort
               </button>
             </div>
@@ -692,7 +746,12 @@ export default function SettingsPanel() {
                 <h1>{COPY[page].title}</h1>
                 <p>{COPY[page].lede}</p>
               </div>
-              <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setOverlay(null)}
+                title="Fermer"
+              >
                 <Icon name="close" size={17} />
               </button>
             </header>

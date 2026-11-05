@@ -1,0 +1,248 @@
+/* Sessions : carte du rail et panneau de sauvegarde des onglets. */
+
+.sessions-card {
+  margin: 2px 16px 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  text-align: left;
+  border: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--paper) 74%, var(--surface));
+  box-shadow: var(--inner-light-soft);
+  transition:
+    transform var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard);
+}
+
+.sessions-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--edge);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.sessions-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sessions-date {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.sessions-arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--muted);
+}
+
+.sessions-sheet {
+  width: min(760px, 100%);
+}
+
+.sessions-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sessions-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 28px;
+  border-right: 1px solid var(--line-soft);
+}
+
+.sessions-stats > div:last-child {
+  border-right: none;
+}
+
+.sessions-stats strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.sessions-stats span {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sessions-save {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sessions-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.sessions-name input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--fill);
+  color: var(--ink);
+  font-size: 12.5px;
+}
+
+.sessions-name input::placeholder {
+  color: var(--faint);
+}
+
+.sessions-list {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 6px 24px 14px;
+}
+
+.sessions-empty {
+  max-width: 470px;
+  margin: 22px 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.sessions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sessions-row:last-child {
+  border-bottom: none;
+}
+
+.sessions-icons {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.sessions-icon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  margin-left: -5px;
+  border: 2px solid var(--surface);
+  border-radius: 8px;
+  background: var(--fill);
+}
+
+.sessions-icon:first-child {
+  margin-left: 0;
+}
+
+.sessions-more {
+  margin-left: 5px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.sessions-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessions-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.sessions-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.sessions-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.sessions-actions .action {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+.sessions-notice {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+@media (max-width: 620px) {
+  .sessions-stats > div {
+    padding: 12px 16px;
+  }
+
+  .sessions-save {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 16px;
+  }
+
+  .sessions-list {
+    padding-inline: 16px;
+  }
+
+  .sessions-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .sessions-icons {
+    order: 1;
+  }
+
+  .sessions-copy {
+    order: 2;
+    flex-basis: calc(100% - 64px);
+  }
+
+  .sessions-actions {
+    order: 3;
+    margin-left: 38px;
+  }
+}

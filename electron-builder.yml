@@ -65,4 +65,4 @@ linux:
   category: Network
   syncDesktopName: true
   maintainer: Vela contributors <DmzGamingYT@users.noreply.github.com>
-  description: Navigateur de travail — espaces, vue scindée, brief du jour, notes et agent local.
+  description: Navigateur de travail — espaces, vue scindée, sessions gardées, notes et agent local.

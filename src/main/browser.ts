@@ -28,7 +28,6 @@ import type {
 } from '@shared/api'
 import { detectBookmarks } from './bookmarks'
 import { TunnelService } from './tunnel'
-import { buildBrief } from '@shared/brief'
 import {
   createGroup as createGroupState,
   createSpace as createSpaceState,
@@ -97,7 +96,14 @@ import { pruneAvatars, readAvatarDataUrl, saveAvatarDataUrl } from './avatars'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
-import { checkForUpdates, downloadUpdate, installUpdate, openReleases, updateStatus } from './updater'
+import {
+  cancelUpdate as cancelUpdateDownload,
+  checkForUpdates,
+  downloadUpdate,
+  installUpdate,
+  openReleases,
+  updateStatus
+} from './updater'
 import { MiniWindow } from './mini'
 import { Store } from './store'
 import { canUseChannel, senderKindOf } from './ipcPolicy'
@@ -139,11 +145,11 @@ function isPane(value: unknown): value is PaneRect {
   const pane = value as PaneRect
   return Boolean(
     pane &&
-      typeof pane.tabId === 'string' &&
-      Number.isFinite(pane.x) &&
-      Number.isFinite(pane.y) &&
-      Number.isFinite(pane.width) &&
-      Number.isFinite(pane.height)
+    typeof pane.tabId === 'string' &&
+    Number.isFinite(pane.x) &&
+    Number.isFinite(pane.y) &&
+    Number.isFinite(pane.width) &&
+    Number.isFinite(pane.height)
   )
 }
 
@@ -154,7 +160,7 @@ const UI_SHORTCUTS: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
   'settings',
   'history',
   'bookmarks',
-  'brief'
+  'sessions'
 ])
 
 export class Browser {
@@ -177,8 +183,6 @@ export class Browser {
   private agentSentTimer: NodeJS.Timeout | null = null
   private broadcastTimer: NodeJS.Timeout | null = null
   private sweepTimer: NodeJS.Timeout | null = null
-  private briefCacheKey = ''
-  private briefCache: ReturnType<typeof buildBrief> | null = null
   private workPreviews = new Map<string, { updatedAt: number; preview: string }>()
   private overlay = false
   private registered = false
@@ -194,7 +198,8 @@ export class Browser {
       this.store.schedule()
     },
     changed: () => this.broadcast(),
-    createTab: (spaceId, url, background) => this.createTab({ spaceId, url, activate: background !== true }).id,
+    createTab: (spaceId, url, background) =>
+      this.createTab({ spaceId, url, activate: background !== true }).id,
     tabsOfSpace: (spaceId) => this.store.get().tabs.filter((tab) => tab.spaceId === spaceId),
     shortcut: (event) => this.send('shortcut', event),
     settings: () => this.store.get().settings,
@@ -217,7 +222,9 @@ export class Browser {
     this.notes.prune()
     // Un index illisible ne permet pas de déterminer les références audio.
     if (!this.notes.canReadIndex) {
-      throw new Error('Index ou fichier de note illisible : notes et enregistrements conservés. Restaurez les fichiers avant de relancer Vela.')
+      throw new Error(
+        'Index ou fichier de note illisible : notes et enregistrements conservés. Restaurez les fichiers avant de relancer Vela.'
+      )
     }
     this.noteAudio.prune(this.notes.audioNames())
     this.noteCache = this.notes.list()
@@ -316,7 +323,12 @@ export class Browser {
     const now = Date.now()
     const stamp = `${work.prompt}\u0000${work.spaceId}`
     this.store.update((state) => {
-      const previous = state.works.find((item) => !item.archived && `${item.prompt}\u0000${item.spaceId}` === stamp && now - item.createdAt < 60_000)
+      const previous = state.works.find(
+        (item) =>
+          !item.archived &&
+          `${item.prompt}\u0000${item.spaceId}` === stamp &&
+          now - item.createdAt < 60_000
+      )
       if (previous) {
         previous.title = work.title || previous.title
         previous.markdown = work.markdown
@@ -484,7 +496,9 @@ export class Browser {
     // Langue des pages : un en-tête, aucune requête de plus. Le bloqueur écoute
     // `onBeforeRequest`, un autre événement : les deux coexistent.
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
-      details.requestHeaders['Accept-Language'] = acceptLanguage(this.store.get().settings.webLanguage)
+      details.requestHeaders['Accept-Language'] = acceptLanguage(
+        this.store.get().settings.webLanguage
+      )
       callback({ requestHeaders: details.requestHeaders })
     })
     ses.on('will-download', (_event, item) => {
@@ -506,7 +520,10 @@ export class Browser {
       const settings = this.store.get().settings
       const folder = settings.downloadDir ?? app.getPath('downloads')
       if (settings.askDownloadLocation) {
-        item.setSaveDialogOptions({ title: 'Enregistrer le fichier', defaultPath: join(folder, name) })
+        item.setSaveDialogOptions({
+          title: 'Enregistrer le fichier',
+          defaultPath: join(folder, name)
+        })
       } else {
         item.setSavePath(join(folder, name))
       }
@@ -550,7 +567,8 @@ export class Browser {
       )
       for (const space of state.spaces) {
         const partition = partitionFor(space)
-        if (partition === activePartition || !known.has(partition) || busySpaces.has(space.id)) continue
+        if (partition === activePartition || !known.has(partition) || busySpaces.has(space.id))
+          continue
         try {
           await session.fromPartition(partition).clearCache()
         } catch {
@@ -596,20 +614,14 @@ export class Browser {
     const state = this.store.get()
     const activeTabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
     const candidate = state.split ? (state.secondTabBySpace[state.activeSpaceId] ?? null) : null
-    const secondTabId = candidate && state.tabs.some((tab) => tab.id === candidate) ? candidate : null
+    const secondTabId =
+      candidate && state.tabs.some((tab) => tab.id === candidate) ? candidate : null
     const tabs: TabView[] = state.tabs.map((tab) => ({
       ...tab,
       ...this.tabs.runtimeOf(tab.id),
       agentSent: this.agentSentTabIds.has(tab.id)
     }))
     const blockedTotal = this.tabs.blockedTotal()
-    const briefKey = `${state.history.length}:${state.history[0]?.visitedAt ?? 0}:${state.tabs.length}:${state.tabs.map((tab) => tab.lastActiveAt).join(',')}:${blockedTotal}`
-    let brief = this.briefCache
-    if (!brief || this.briefCacheKey !== briefKey) {
-      brief = buildBrief({ tabs: state.tabs, history: state.history, now: Date.now(), blocked: blockedTotal })
-      this.briefCache = brief
-      this.briefCacheKey = briefKey
-    }
 
     return {
       spaces: state.spaces,
@@ -650,7 +662,6 @@ export class Browser {
         }
       }),
       downloads: this.downloads.slice(0, 30),
-      brief,
       blockedTotal
     }
   }
@@ -700,7 +711,9 @@ export class Browser {
     // Le « + » d'un dossier la réclame ailleurs : elle le rejoint plutôt que
     // d'en créer une seconde, sinon le bouton semblerait sans effet.
     if (isHomeUrl(url) && !pinned) {
-      const home = state.tabs.find((tab) => tab.spaceId === spaceId && !tab.pinned && isHomeUrl(tab.url))
+      const home = state.tabs.find(
+        (tab) => tab.spaceId === spaceId && !tab.pinned && isHomeUrl(tab.url)
+      )
       if (home) {
         const target =
           typeof input.groupId === 'string'
@@ -719,7 +732,9 @@ export class Browser {
     }
     let groupId: string | null = null
     if (!pinned && typeof input.groupId === 'string') {
-      const group = state.groups.find((item) => item.id === input.groupId && item.spaceId === spaceId)
+      const group = state.groups.find(
+        (item) => item.id === input.groupId && item.spaceId === spaceId
+      )
       if (group) {
         groupId = group.id
         if (group.collapsed) group.collapsed = false
@@ -737,7 +752,8 @@ export class Browser {
       const previous = state.activeTabBySpace[spaceId]
       state.activeSpaceId = spaceId
       state.activeTabBySpace[spaceId] = tab.id
-      if (state.split && state.secondTabBySpace[spaceId] === tab.id) state.secondTabBySpace[spaceId] = previous ?? null
+      if (state.split && state.secondTabBySpace[spaceId] === tab.id)
+        state.secondTabBySpace[spaceId] = previous ?? null
       tab.lastActiveAt = Date.now()
       this.focusActive()
     }
@@ -824,7 +840,9 @@ export class Browser {
     const state = this.store.get()
     const entry = state.closed.shift()
     if (!entry) return
-    const spaceId = state.spaces.some((space) => space.id === entry.spaceId) ? entry.spaceId : state.activeSpaceId
+    const spaceId = state.spaces.some((space) => space.id === entry.spaceId)
+      ? entry.spaceId
+      : state.activeSpaceId
     const group = entry.groupId
       ? state.groups.find((item) => item.id === entry.groupId && item.spaceId === spaceId)
       : undefined
@@ -871,7 +889,9 @@ export class Browser {
     if (!tab) return
     const activeId = state.activeTabBySpace[tab.spaceId]
     if (tab.id === activeId) {
-      const fallback = state.tabs.find((item) => item.spaceId === tab.spaceId && item.id !== activeId)
+      const fallback = state.tabs.find(
+        (item) => item.spaceId === tab.spaceId && item.id !== activeId
+      )
       state.secondTabBySpace[tab.spaceId] = fallback?.id ?? null
       state.split = Boolean(fallback)
     } else {
@@ -919,8 +939,10 @@ export class Browser {
     const state = this.store.get()
     const space = state.spaces.find((item) => item.id === id)
     if (!space) return
-    if (typeof payload.name === 'string' && payload.name.trim()) space.name = payload.name.trim().slice(0, 40)
-    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color)) space.color = payload.color
+    if (typeof payload.name === 'string' && payload.name.trim())
+      space.name = payload.name.trim().slice(0, 40)
+    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
+      space.color = payload.color
     if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
     if ('avatar' in payload) space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
     if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
@@ -1123,8 +1145,10 @@ export class Browser {
     const state = this.store.get()
     const group = state.groups.find((item) => item.id === id)
     if (!group) return
-    if (typeof payload.name === 'string' && payload.name.trim()) group.name = payload.name.trim().slice(0, 40)
-    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color)) group.color = payload.color
+    if (typeof payload.name === 'string' && payload.name.trim())
+      group.name = payload.name.trim().slice(0, 40)
+    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
+      group.color = payload.color
     if (typeof payload.collapsed === 'boolean') group.collapsed = payload.collapsed
     this.store.schedule()
     this.broadcast()
@@ -1146,8 +1170,12 @@ export class Browser {
     const beforeEngine = this.store.get().settings.searchEngine
     this.store.update((state) => {
       const settings: Settings = state.settings
-      if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system') settings.theme = input.theme
-      if (input.searchEngine === 'custom' || (input.searchEngine && input.searchEngine in SEARCH_ENGINES)) {
+      if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system')
+        settings.theme = input.theme
+      if (
+        input.searchEngine === 'custom' ||
+        (input.searchEngine && input.searchEngine in SEARCH_ENGINES)
+      ) {
         settings.searchEngine = input.searchEngine
       }
       if (Array.isArray(input.customEngines)) {
@@ -1168,8 +1196,10 @@ export class Browser {
       if (Array.isArray(input.searchKeywords)) {
         settings.searchKeywords = sanitizeKeywords(input.searchKeywords, settings.customEngines)
       }
-      if (typeof input.searxInstance === 'string') settings.searxInstance = input.searxInstance.trim().slice(0, 200)
-      if (typeof input.startupUrl === 'string') settings.startupUrl = sanitizeStartupUrl(input.startupUrl)
+      if (typeof input.searxInstance === 'string')
+        settings.searxInstance = input.searxInstance.trim().slice(0, 200)
+      if (typeof input.startupUrl === 'string')
+        settings.startupUrl = sanitizeStartupUrl(input.startupUrl)
       if (
         input.startupBehavior === 'restore' ||
         input.startupBehavior === 'home' ||
@@ -1191,12 +1221,15 @@ export class Browser {
       else if (typeof input.downloadDir === 'string' && input.downloadDir.trim()) {
         settings.downloadDir = input.downloadDir.trim().slice(0, 1000)
       }
-      if (typeof input.askDownloadLocation === 'boolean') settings.askDownloadLocation = input.askDownloadLocation
-      if (typeof input.openAfterDownload === 'boolean') settings.openAfterDownload = input.openAfterDownload
+      if (typeof input.askDownloadLocation === 'boolean')
+        settings.askDownloadLocation = input.askDownloadLocation
+      if (typeof input.openAfterDownload === 'boolean')
+        settings.openAfterDownload = input.openAfterDownload
       if (typeof input.webLanguage === 'string' && isWebLanguage(input.webLanguage)) {
         settings.webLanguage = input.webLanguage
       }
-      if (typeof input.defaultZoom === 'number') settings.defaultZoom = sanitizeDefaultZoom(input.defaultZoom)
+      if (typeof input.defaultZoom === 'number')
+        settings.defaultZoom = sanitizeDefaultZoom(input.defaultZoom)
       if (isThemeId(input.themeId)) settings.themeId = input.themeId
       if (typeof input.customAccent === 'string') {
         settings.customAccent = parseHex(input.customAccent) ?? settings.customAccent
@@ -1258,12 +1291,14 @@ export class Browser {
         settings.blockLevel = input.blockLevel
       }
       if (typeof input.thumbnails === 'boolean') settings.thumbnails = input.thumbnails
-      if (typeof input.sidebarCollapsed === 'boolean') settings.sidebarCollapsed = input.sidebarCollapsed
+      if (typeof input.sidebarCollapsed === 'boolean')
+        settings.sidebarCollapsed = input.sidebarCollapsed
       if (typeof (input as { onboarded?: unknown }).onboarded === 'boolean') {
         settings.onboarded = (input as { onboarded: boolean }).onboarded
       }
       if (input.agent) {
-        if (input.agent.mode === 'demo' || input.agent.mode === 'api') settings.agent.mode = input.agent.mode
+        if (input.agent.mode === 'demo' || input.agent.mode === 'api')
+          settings.agent.mode = input.agent.mode
         if (isProviderId(input.agent.provider)) settings.agent.provider = input.agent.provider
       }
       for (const [id, patch] of Object.entries(input.providers ?? {})) {
@@ -1307,7 +1342,11 @@ export class Browser {
       return { ok: false, message: 'Ajoutez d’abord une clé.' }
     }
 
-    const request = buildTestRequest(definition, { baseUrl: state.baseUrl, model: state.model }, key)
+    const request = buildTestRequest(
+      definition,
+      { baseUrl: state.baseUrl, model: state.model },
+      key
+    )
     try {
       const response = await fetch(request.url, {
         headers: request.headers,
@@ -1344,7 +1383,10 @@ export class Browser {
    * sélectionné ; l'URL et le titre viennent de l'onglet réel.
    */
   private startSelectionDrag(sender: WebContents, selected: string): void {
-    const text = selected.replace(/\u0000/g, '').trim().slice(0, 8000)
+    const text = selected
+      .replace(/\u0000/g, '')
+      .trim()
+      .slice(0, 8000)
     if (!text) return
     const tabId = this.tabs.tabIdForWebContents(sender.id)
     if (!tabId) return
@@ -1388,7 +1430,8 @@ export class Browser {
       title: asString(payload.title).slice(0, 160),
       body: asString(payload.body).slice(0, 200_000),
       spaceId:
-        typeof payload.spaceId === 'string' && state.spaces.some((space) => space.id === payload.spaceId)
+        typeof payload.spaceId === 'string' &&
+        state.spaces.some((space) => space.id === payload.spaceId)
           ? payload.spaceId
           : state.activeSpaceId,
       url: typeof payload.url === 'string' ? payload.url : undefined,
@@ -1401,16 +1444,20 @@ export class Browser {
   }
 
   private runAgent(input: unknown): { runId: string } {
-    const payload = (input ?? {}) as { prompt?: unknown; sources?: unknown; spaceId?: unknown; mode?: unknown }
+    const payload = (input ?? {}) as {
+      prompt?: unknown
+      sources?: unknown
+      spaceId?: unknown
+      mode?: unknown
+    }
     const prompt = asString(payload.prompt).slice(0, 8000)
     this.tabs.markAgentSent(this.agentSentTabIds, false)
     this.agentSentTabIds.clear()
     if (this.agentSentTimer) clearTimeout(this.agentSentTimer)
     const sources = Array.isArray(payload.sources)
       ? payload.sources
-          .filter(
-            (source): source is { tabId?: string; title: string; url: string } =>
-              Boolean(source && typeof source.title === 'string' && typeof source.url === 'string')
+          .filter((source): source is { tabId?: string; title: string; url: string } =>
+            Boolean(source && typeof source.title === 'string' && typeof source.url === 'string')
           )
           .slice(0, 8)
           .map((source) => ({
@@ -1423,7 +1470,8 @@ export class Browser {
     const provider = providerById(settings.provider)
     const endpoint = this.store.get().settings.agent.providers[provider.id].baseUrl
     const localEndpoint = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(endpoint)
-    const usesRemoteProvider = settings.mode === 'api' && Boolean(this.store.getSecret(provider.id) || !localEndpoint)
+    const usesRemoteProvider =
+      settings.mode === 'api' && Boolean(this.store.getSecret(provider.id) || !localEndpoint)
     if (usesRemoteProvider) {
       for (const source of sources) if (source.tabId) this.agentSentTabIds.add(source.tabId)
       this.tabs.markAgentSent(this.agentSentTabIds, true)
@@ -1483,7 +1531,10 @@ export class Browser {
       return false
     }
     const shellId = this.win && !this.win.isDestroyed() ? this.win.webContents.id : null
-    const kind = senderKindOf(event.sender.id, { shell: shellId, mini: this.mini.chromeContentsId() })
+    const kind = senderKindOf(event.sender.id, {
+      shell: shellId,
+      mini: this.mini.chromeContentsId()
+    })
     return canUseChannel(kind, channel)
   }
 
@@ -1531,13 +1582,19 @@ export class Browser {
     handle('favicons:get', (input) => {
       const payload = (input ?? {}) as { host?: unknown; spaceId?: unknown }
       if (typeof payload.host !== 'string') return null
-      return faviconDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
+      return faviconDataUrl(
+        payload.host,
+        typeof payload.spaceId === 'string' ? payload.spaceId : ''
+      )
     })
     handle('favicons:purge', () => purgeFavicons())
     handle('favicons:peek', (input) => {
       const payload = (input ?? {}) as { host?: unknown; spaceId?: unknown }
       if (typeof payload.host !== 'string') return null
-      return faviconCachedDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
+      return faviconCachedDataUrl(
+        payload.host,
+        typeof payload.spaceId === 'string' ? payload.spaceId : ''
+      )
     })
     handle('app:platform', () => process.platform)
 
@@ -1565,7 +1622,9 @@ export class Browser {
       const name = typeof payload === 'string' ? payload : ''
       return readAvatarDataUrl(this.store.dir, name)
     })
-    handle('thumbs:get', (payload) => this.thumbs.dataUrl(typeof payload === 'string' ? payload : ''))
+    handle('thumbs:get', (payload) =>
+      this.thumbs.dataUrl(typeof payload === 'string' ? payload : '')
+    )
     handle('thumbs:count', () => this.thumbs.count())
     handle('thumbs:purge', () => {
       const removed = this.thumbs.purge()
@@ -1646,7 +1705,8 @@ export class Browser {
     })
     handle('tab:zoom', (payload) => {
       const input = (payload ?? {}) as { id?: unknown; direction?: unknown }
-      const direction = input.direction === 'in' || input.direction === 'out' ? input.direction : 'reset'
+      const direction =
+        input.direction === 'in' || input.direction === 'out' ? input.direction : 'reset'
       return this.tabs.zoom(asId(input.id), direction)
     })
     handle('tab:stop', (payload) => {
@@ -1760,7 +1820,9 @@ export class Browser {
       return moved
     })
     handle('bookmark:reorder', (payload) => {
-      const ids = Array.isArray(payload) ? payload.filter((id): id is string => typeof id === 'string') : []
+      const ids = Array.isArray(payload)
+        ? payload.filter((id): id is string => typeof id === 'string')
+        : []
       const applied = this.store.reorderBookmarks(ids)
       if (applied) this.broadcast()
       return applied
@@ -1776,7 +1838,8 @@ export class Browser {
       const input = (payload ?? {}) as TunnelRunInput
       const state = this.store.get()
       const spaceId =
-        typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
+        typeof input.spaceId === 'string' &&
+        state.spaces.some((space) => space.id === input.spaceId)
           ? input.spaceId
           : state.activeSpaceId
       const query = asString(input.query).slice(0, 300)
@@ -1888,9 +1951,11 @@ export class Browser {
           return tab.url
         }
       })()
-      const date = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-        new Date()
-      )
+      const date = new Intl.DateTimeFormat('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(new Date())
       const quote = text
         .split(/\n+/)
         .map((line) => `> ${line.trim()}`)
@@ -1920,9 +1985,11 @@ export class Browser {
         }
       })()
       const existing = this.notes.findByUrl(tab.url)
-      const date = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-        new Date(highlight.createdAt)
-      )
+      const date = new Intl.DateTimeFormat('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(new Date(highlight.createdAt))
       const line = `\n- « ${text.replace(/\s+/g, ' ').slice(0, 400)} » — surligné le ${date}\n`
       const body = existing
         ? `${existing.body.trimEnd()}\n${line}`
@@ -1943,7 +2010,12 @@ export class Browser {
       return tab && !isHomeUrl(tab.url) ? this.highlights.list(tab.url) : []
     })
     handle('notes:ai', async (payload) => {
-      const input = (payload ?? {}) as { action?: unknown; body?: unknown; title?: unknown; url?: unknown }
+      const input = (payload ?? {}) as {
+        action?: unknown
+        body?: unknown
+        title?: unknown
+        url?: unknown
+      }
       const action = typeof input.action === 'string' ? input.action : 'generate'
       const body = typeof input.body === 'string' ? input.body.slice(0, 20_000) : ''
       const requestedTitle = typeof input.title === 'string' ? input.title.slice(0, 160) : ''
@@ -1951,13 +2023,19 @@ export class Browser {
       const tabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
       const tab = state.tabs.find((item) => item.id === tabId)
       const onPage = Boolean(tab && !isHomeUrl(tab.url))
-      const page = action === 'generate' && tab && onPage ? await this.tabs.excerpt(tabId) : { text: '', anchor: '' }
+      const page =
+        action === 'generate' && tab && onPage
+          ? await this.tabs.excerpt(tabId)
+          : { text: '', anchor: '' }
       const sourceTitle = tab && onPage ? tab.title || titleFromUrl(tab.url) : requestedTitle
       const instructions: Record<string, string> = {
-        reformulate: 'Reformule proprement cette note : phrases claires, ton neutre, aucun contenu inventé.',
+        reformulate:
+          'Reformule proprement cette note : phrases claires, ton neutre, aucun contenu inventé.',
         summarize: 'Résume cette note en cinq points maximum, puis une phrase de synthèse.',
-        translate: 'Traduis cette note en français naturel, en gardant la structure Markdown et les liens.',
-        correct: 'Corrige uniquement l’orthographe, la grammaire et la ponctuation de cette note, sans changer le sens.',
+        translate:
+          'Traduis cette note en français naturel, en gardant la structure Markdown et les liens.',
+        correct:
+          'Corrige uniquement l’orthographe, la grammaire et la ponctuation de cette note, sans changer le sens.',
         beautify:
           'Réorganise cette note en Markdown soigné : titres courts, listes, tableaux pertinents, liens conservés. N’ajoute aucune information nouvelle.'
       }
@@ -1991,7 +2069,8 @@ export class Browser {
       const input = (payload ?? {}) as { spaceId?: unknown; dataUrl?: unknown }
       const state = this.store.get()
       const spaceId =
-        typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
+        typeof input.spaceId === 'string' &&
+        state.spaces.some((space) => space.id === input.spaceId)
           ? input.spaceId
           : state.activeSpaceId
       const saved = this.noteAudio.save(spaceId, input.dataUrl)
@@ -2027,9 +2106,8 @@ export class Browser {
     handle('bookmark:add-many', (payload) => {
       const entries = Array.isArray(payload) ? payload : []
       const clean = entries
-        .filter(
-          (entry): entry is { url: string; title?: unknown; favicon?: unknown } =>
-            Boolean(entry && typeof (entry as { url?: unknown }).url === 'string')
+        .filter((entry): entry is { url: string; title?: unknown; favicon?: unknown } =>
+          Boolean(entry && typeof (entry as { url?: unknown }).url === 'string')
         )
         .slice(0, 500)
         .map((entry) => ({
@@ -2074,7 +2152,8 @@ export class Browser {
       const item = this.downloads.find((download) => download.id === asId(payload))
       if (!item?.path || item.state !== 'done') return false
       const extension = item.name.split('.').pop()?.toLowerCase() ?? ''
-      if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'json'].includes(extension)) return false
+      if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'json'].includes(extension))
+        return false
       try {
         const opened = await shell.openPath(item.path)
         return !opened
@@ -2103,7 +2182,12 @@ export class Browser {
     handle('notes:get', (payload) => this.notes.get(asId(payload)))
     handle('notes:save', (payload) => this.saveNote(payload))
     handle('notes:patch', (payload) => {
-      const input = (payload ?? {}) as { id?: unknown; title?: unknown; pinned?: unknown; tags?: unknown }
+      const input = (payload ?? {}) as {
+        id?: unknown
+        title?: unknown
+        pinned?: unknown
+        tags?: unknown
+      }
       const id = typeof input.id === 'string' ? input.id : ''
       if (!id) return null
       const existing = this.notes.get(id)
@@ -2201,7 +2285,10 @@ export class Browser {
     handle('settings:set-key', (payload) => {
       const input = (payload ?? {}) as { provider?: unknown; key?: unknown }
       if (!isProviderId(input.provider)) return false
-      const ok = this.store.setSecret(input.provider, typeof input.key === 'string' ? input.key : null)
+      const ok = this.store.setSecret(
+        input.provider,
+        typeof input.key === 'string' ? input.key : null
+      )
       if (ok) this.broadcast()
       return ok
     })
@@ -2241,6 +2328,7 @@ export class Browser {
     handle('update:status', () => updateStatus())
     handle('update:check', () => checkForUpdates(true))
     handle('update:download', () => downloadUpdate())
+    handle('update:cancel', () => cancelUpdateDownload())
     handle('update:install', () => {
       installUpdate()
     })
@@ -2279,7 +2367,10 @@ export class Browser {
             if (!image || image.isEmpty()) return null
             const size = image.getSize()
             const trimmed = size.width > 720 ? image.resize({ width: 720, quality: 'good' }) : image
-            return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(66).toString('base64')}` }
+            return {
+              tabId,
+              image: `data:image/jpeg;base64,${trimmed.toJPEG(66).toString('base64')}`
+            }
           } catch {
             /* une capture ratée laisse le volet sans épreuve */
             return null

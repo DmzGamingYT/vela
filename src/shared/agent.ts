@@ -79,7 +79,9 @@ export function planDemoRun(prompt: string, sources: AgentSource[]): DemoPlan {
       const name = cleanTitle(source.title) || hostOf(source.url) || `Source ${index + 1}`
       lines.push(
         `| ${name.replace(/\|/g, '/')} | ${ANGLES[index % ANGLES.length]} | ${
-          index === 0 ? 'Référence principale à confronter' : 'Complète ou nuance la première lecture'
+          index === 0
+            ? 'Référence principale à confronter'
+            : 'Complète ou nuance la première lecture'
         } |`
       )
     })
@@ -88,7 +90,9 @@ export function planDemoRun(prompt: string, sources: AgentSource[]): DemoPlan {
     lines.push('')
     lines.push(
       `Les ${list.length} sources ouvertes ne répondent pas au même niveau : ${
-        usable ? 'elles se complètent plus qu’elles ne se contredisent' : 'il manque des pages à joindre'
+        usable
+          ? 'elles se complètent plus qu’elles ne se contredisent'
+          : 'il manque des pages à joindre'
       }. La première pose le cadre, les suivantes apportent le détail ou le contrepoint.`
     )
   } else {
@@ -130,14 +134,16 @@ export function planDemoRun(prompt: string, sources: AgentSource[]): DemoPlan {
         : '1. Ouvrir la source la plus dense en vue scindée.\n2. Noter les deux ou trois points à retenir.\n3. Relancer l’agent avec une question plus précise.'
   )
   lines.push('')
-  lines.push('_Rapport de démonstration : branchez un modèle compatible OpenAI dans Réglages pour une lecture réelle des pages._')
+  lines.push(
+    '_Rapport de démonstration : branchez un modèle compatible OpenAI dans Réglages pour une lecture réelle des pages._'
+  )
 
   return { title, steps, markdown: lines.join('\n') }
 }
 
 export const AGENT_EXAMPLES = [
   'Compare les onglets ouverts et dis-moi lequel garder',
-  'Fais le brief de ce que je dois retenir aujourd’hui',
+  'Résume ce que je dois retenir aujourd’hui',
   'Transforme ces pages en plan d’action en trois étapes',
   'Résume les sources jointes pour un collègue pressé'
 ]

@@ -76,15 +76,52 @@
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 12px 24px;
   margin-top: 30px;
 }
 
+/* Un seul bouton plein : « Voir le navigateur » reste un lien de lecture. */
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.45);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s var(--ease);
+}
+
+.hero-link:hover {
+  text-decoration-color: #ffffff;
+}
+
+.hero-link .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.hero-alt {
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+}
+
+.hero-alt a,
+.hero-fine a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .hero-fine {
-  margin-top: 18px;
+  margin-top: 14px;
   color: rgba(255, 255, 255, 0.94);
   font-size: 13px;
+  line-height: 1.6;
 }
 
 /* Mot-symbole démesuré, derrière la fenêtre. */
@@ -104,7 +141,7 @@
 .window {
   position: relative;
   z-index: 4;
-  width: min(100% - 40px, 1000px);
+  width: min(100% - 40px, 1120px);
   margin: -14px auto 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 18px;
@@ -593,7 +630,7 @@ html[data-theme='dark'] .shot-dark {
   }
 
   .window {
-    width: min(100% - 28px, 1000px);
+    width: min(100% - 28px, 1120px);
     margin-top: 0;
     border-radius: 14px;
   }

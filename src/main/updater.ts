@@ -15,7 +15,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
-import { autoUpdater } from 'electron-updater'
+import { autoUpdater, CancellationToken } from 'electron-updater'
 import type { UpdateChannel } from '@shared/api'
 import {
   isNewerVersion,
@@ -31,7 +31,14 @@ import {
 import { manifestSignatureValid, verifyDownload } from './integrity'
 
 export type UpdateState =
-  'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'cancelled'
+  | 'not-available'
+  | 'error'
 
 export interface UpdateInfo {
   state: UpdateState
@@ -103,6 +110,10 @@ let lastCheck = 0
 /** Chemin du .dmg téléchargé (macOS), prêt pour le bouton Installer. */
 let installerPath: string | null = null
 let installing = false
+/** Téléchargement macOS/Linux en cours, annulable par l’utilisateur. */
+let activeDownload: AbortController | null = null
+/** Téléchargement electron-updater sous Windows, annulable par jeton. */
+let windowsCancellation: CancellationToken | null = null
 /** AppImage Linux proposée par la dernière release lue. */
 let linuxRelease: { version: string; file: { url: string; sha512: string; size: number } } | null = null
 let linuxDownloading = false
@@ -137,6 +148,11 @@ function versionOf(info: unknown): string | null {
 
 export function updateStatus(): UpdateInfo {
   return { ...snapshot }
+}
+
+/** Passe par une fonction : le narrowing de TypeScript ne voit pas les set() imbriqués. */
+function downloadCancelled(): boolean {
+  return snapshot.state === 'cancelled'
 }
 
 /** Dossier des installateurs téléchargés, dans les données de l'application. */
@@ -212,9 +228,16 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
   }
   const names = macInstallerNames(version, process.arch)
   if (names.length === 0) return
+  set({
+    state: 'downloading',
+    version,
+    progress: 0,
+    message: 'Préparation de l’installateur…'
+  })
   // Sans manifeste, aucune empreinte : on refuse de proposer un installateur
   // qui n'a pas été vérifié, plutôt que d'ouvrir un fichier inconnu.
   const manifest = await manifestFor(version)
+  if (downloadCancelled()) return
   if (!manifest) {
     set({
       state: 'error',
@@ -244,6 +267,7 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
       if (!expected) continue
       try {
         if (!(await downloadInstaller(releaseAssetUrl(version, name), target, version, expected))) {
+          if (downloadCancelled()) return
           rejected = 'Installateur rejeté : son empreinte ne correspond pas à celle publiée.'
           continue
         }
@@ -257,9 +281,11 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
         return
       } catch {
         rmSync(target, { force: true })
+        if (downloadCancelled()) return
         rejected = 'Installateur rejeté : son empreinte ne correspond pas à celle publiée.'
       }
     }
+    if (downloadCancelled()) return
     set({
       state: 'error',
       message:
@@ -278,6 +304,7 @@ async function downloadInstaller(
   expected: { sha512: string; size: number }
 ): Promise<boolean> {
   const abort = new AbortController()
+  activeDownload = abort
   const timer = setTimeout(() => abort.abort(), DOWNLOAD_TIMEOUT)
   try {
     const response = await fetch(url, { redirect: 'follow', signal: abort.signal })
@@ -289,6 +316,7 @@ async function downloadInstaller(
     let received = 0
     let lastPercent = -1
     source.on('data', (chunk: Buffer) => {
+      if (downloadCancelled()) return
       hash.update(chunk)
       received += chunk.length
       const percent = Math.min(99, Math.round((received / expected.size) * 100))
@@ -307,6 +335,7 @@ async function downloadInstaller(
     return verified
   } finally {
     clearTimeout(timer)
+    if (activeDownload === abort) activeDownload = null
   }
 }
 
@@ -397,6 +426,12 @@ async function downloadLinuxUpdate(): Promise<void> {
     /* dossier inaccessible : le téléchargement échouera avec un message clair */
   }
   linuxDownloading = true
+  set({
+    state: 'downloading',
+    version: release.version,
+    progress: 0,
+    message: 'Téléchargement de l’AppImage…'
+  })
   try {
     const ok = await downloadInstaller(
       releaseAssetUrl(release.version, release.file.url),
@@ -406,6 +441,7 @@ async function downloadLinuxUpdate(): Promise<void> {
     )
     if (!ok) {
       rmSync(target, { force: true })
+      if (downloadCancelled()) return
       set({
         state: 'error',
         message: 'AppImage rejetée : son empreinte ne correspond pas à celle publiée.'
@@ -421,6 +457,7 @@ async function downloadLinuxUpdate(): Promise<void> {
     })
   } catch (error) {
     rmSync(target, { force: true })
+    if (downloadCancelled()) return
     set({
       state: 'error',
       message:
@@ -493,13 +530,34 @@ export async function downloadUpdate(): Promise<UpdateInfo> {
     await downloadLinuxUpdate()
     return updateStatus()
   }
+  windowsCancellation = new CancellationToken()
+  set({
+    state: 'downloading',
+    progress: 0,
+    message: 'Téléchargement en arrière-plan…'
+  })
   try {
-    await autoUpdater.downloadUpdate()
+    await autoUpdater.downloadUpdate(windowsCancellation)
   } catch (error) {
+    if (downloadCancelled()) return updateStatus()
     set({
       state: 'error',
       message: error instanceof Error ? error.message.slice(0, 220) : 'Téléchargement impossible.'
     })
+  } finally {
+    windowsCancellation = null
+  }
+  return updateStatus()
+}
+
+/** Annule le téléchargement en cours, sans supprimer la version proposée. */
+export function cancelUpdate(): UpdateInfo {
+  activeDownload?.abort()
+  activeDownload = null
+  windowsCancellation?.cancel()
+  windowsCancellation = null
+  if (snapshot.state === 'downloading' || snapshot.state === 'available') {
+    set({ state: 'cancelled', progress: 0, message: 'Téléchargement annulé.' })
   }
   return updateStatus()
 }
@@ -609,6 +667,7 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
     if (process.platform === 'darwin') void prepareMacInstaller(version)
   })
   autoUpdater.on('update-downloaded', (info) => {
+    if (downloadCancelled()) return
     set({
       state: 'downloaded',
       version: versionOf(info),
@@ -620,6 +679,7 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
     })
   })
   autoUpdater.on('download-progress', (progress) => {
+    if (downloadCancelled()) return
     set({
       state: 'downloading',
       progress: Math.round(progress?.percent ?? 0),
@@ -631,6 +691,7 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
     if (snapshot.state === 'checking') set({ state: 'not-available', message: 'Vela est à jour.' })
   })
   autoUpdater.on('error', (error) => {
+    if (downloadCancelled()) return
     // Les erreurs réseau/404 du contrôle automatique restent silencieuses.
     if (snapshot.state === 'downloading') {
       set({

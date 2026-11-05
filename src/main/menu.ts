@@ -103,7 +103,7 @@ export function buildMenuTemplate(
         item('Notes', 'notes', send, 'CmdOrCtrl+E'),
         item('Agent', 'agent', send, 'CmdOrCtrl+J'),
         item('Atelier', 'work', send, 'CmdOrCtrl+Shift+A'),
-        item('Brief', 'brief', send, 'CmdOrCtrl+Shift+B'),
+        item('Sessions', 'sessions', send, 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
         item('Masquer la barre latérale', 'sidebar', send, 'CmdOrCtrl+S'),
         { type: 'separator' },
@@ -136,7 +136,12 @@ export function buildMenuTemplate(
       submenu: [
         { role: 'minimize', label: 'Réduire' },
         { role: 'zoom', label: 'Agrandir la fenêtre' },
-        ...(isMac ? [{ type: 'separator' as const }, { role: 'front' as const, label: 'Tout ramener au premier plan' }] : [])
+        ...(isMac
+          ? [
+              { type: 'separator' as const },
+              { role: 'front' as const, label: 'Tout ramener au premier plan' }
+            ]
+          : [])
       ]
     },
     {

@@ -128,7 +128,11 @@ function EngineGrid({
             onKeyDown={(event) => move(event, index)}
           >
             <span className="engine-mark" aria-hidden="true">
-              {tile.brand ? <BrandMark brand={tile.brand} size={20} /> : <span>{tile.name.slice(0, 1)}</span>}
+              {tile.brand ? (
+                <BrandMark brand={tile.brand} size={20} />
+              ) : (
+                <span>{tile.name.slice(0, 1)}</span>
+              )}
             </span>
             <span className="engine-copy">
               <span className="engine-label">{tile.name}</span>
@@ -162,7 +166,9 @@ export default function NavigationPage({
   const [draftTemplate, setDraftTemplate] = useState('')
   const [draftError, setDraftError] = useState('')
   const [showImporter, setShowImporter] = useState(false)
-  const [detected, setDetected] = useState<{ id: string; label: string; count: number; urls: { title: string; url: string }[] }[] | null>(null)
+  const [detected, setDetected] = useState<
+    { id: string; label: string; count: number; urls: { title: string; url: string }[] }[] | null
+  >(null)
   const [confirming, setConfirming] = useState(false)
   const [range, setRange] = useState<HistoryRange>('hour')
   const [undo, setUndo] = useState<number | null>(null)
@@ -181,10 +187,15 @@ export default function NavigationPage({
       return
     }
     if (!template) {
-      setDraftError('L’adresse doit commencer par https:// et contenir un seul %s à la place de la recherche.')
+      setDraftError(
+        'L’adresse doit commencer par https:// et contenir un seul %s à la place de la recherche.'
+      )
       return
     }
-    const id = customEngineId(name, settings.customEngines.map((engine) => engine.id))
+    const id = customEngineId(
+      name,
+      settings.customEngines.map((engine) => engine.id)
+    )
     const customEngines: CustomSearchEngine[] = [...settings.customEngines, { id, name, template }]
     save({ customEngines, searchEngine: 'custom', customEngineId: id })
     setDraftName('')
@@ -211,7 +222,11 @@ export default function NavigationPage({
     save({
       searchKeywords: [
         ...settings.searchKeywords,
-        { keyword: '', engineId: settings.searchEngine === 'custom' ? settings.customEngineId : settings.searchEngine }
+        {
+          keyword: '',
+          engineId:
+            settings.searchEngine === 'custom' ? settings.customEngineId : settings.searchEngine
+        }
       ]
     })
   }
@@ -223,16 +238,29 @@ export default function NavigationPage({
     setDetected(sources)
   }
 
-  const importFrom = async (source: { label: string; urls: { title: string; url: string }[] }): Promise<void> => {
+  const importFrom = async (source: {
+    label: string
+    urls: { title: string; url: string }[]
+  }): Promise<void> => {
     const added = await window.vela.bookmarks.addMany(source.urls)
-    toast(added > 0 ? plural(added, 'marque-page importé', 'marque-pages importés') : 'Aucun nouveau marque-page.')
+    toast(
+      added > 0
+        ? plural(added, 'marque-page importé', 'marque-pages importés')
+        : 'Aucun nouveau marque-page.'
+    )
     setShowImporter(false)
   }
 
   const importFile = async (): Promise<void> => {
-    const result = await window.vela.bookmarks.importHtml().catch(() => ({ added: 0, cancelled: true }))
+    const result = await window.vela.bookmarks
+      .importHtml()
+      .catch(() => ({ added: 0, cancelled: true }))
     if (result.cancelled) return
-    toast(result.added > 0 ? plural(result.added, 'marque-page importé', 'marque-pages importés') : 'Aucun nouveau marque-page.')
+    toast(
+      result.added > 0
+        ? plural(result.added, 'marque-page importé', 'marque-pages importés')
+        : 'Aucun nouveau marque-page.'
+    )
     setShowImporter(false)
   }
 
@@ -259,7 +287,9 @@ export default function NavigationPage({
     undoTimer.current = null
     const restored = await window.vela.history.undo().catch(() => 0)
     setUndo(null)
-    toast(restored > 0 ? plural(restored, 'entrée rétablie', 'entrées rétablies') : 'Rien à rétablir.')
+    toast(
+      restored > 0 ? plural(restored, 'entrée rétablie', 'entrées rétablies') : 'Rien à rétablir.'
+    )
   }
 
   const pickDownloadDir = async (): Promise<void> => {
@@ -267,7 +297,10 @@ export default function NavigationPage({
     if (dir) save({ downloadDir: dir })
   }
 
-  const startupValue = settings.startupBehavior === 'url' && !sanitizeStartupUrl(startupDraft) ? 'restore' : settings.startupBehavior
+  const startupValue =
+    settings.startupBehavior === 'url' && !sanitizeStartupUrl(startupDraft)
+      ? 'restore'
+      : settings.startupBehavior
 
   return (
     <>
@@ -278,7 +311,9 @@ export default function NavigationPage({
         </div>
         <EngineGrid
           settings={settings}
-          onPick={(engine, customId) => save({ searchEngine: engine, customEngineId: customId || settings.customEngineId })}
+          onPick={(engine, customId) =>
+            save({ searchEngine: engine, customEngineId: customId || settings.customEngineId })
+          }
         />
 
         {settings.searchEngine === 'searxng' && (
@@ -301,7 +336,9 @@ export default function NavigationPage({
                 event.currentTarget.blur()
               }}
             />
-            <small className="setting-hint">L’instance qui reçoit vos recherches. Vide : searx.be.</small>
+            <small className="setting-hint">
+              L’instance qui reçoit vos recherches. Vide : searx.be.
+            </small>
           </label>
         )}
 
@@ -321,7 +358,9 @@ export default function NavigationPage({
                   <strong>{engine.name}</strong>
                   <span>{templateHost(engine.template)}</span>
                 </span>
-                <span className="nav-list-preview">{searchUrl('verre', 'custom', '', engine.template)}</span>
+                <span className="nav-list-preview">
+                  {searchUrl('verre', 'custom', '', engine.template)}
+                </span>
                 <button
                   type="button"
                   className="tab-action"
@@ -369,8 +408,8 @@ export default function NavigationPage({
         <div className="nav-subhead">
           <h3>Mots-clés rapides</h3>
           <p>
-            Un mot puis un espace dans la barre d’adresse : « {settings.searchKeywords[0]?.keyword ?? 'g'} verre »
-            cherche sur ce moteur.
+            Un mot puis un espace dans la barre d’adresse : «{' '}
+            {settings.searchKeywords[0]?.keyword ?? 'g'} verre » cherche sur ce moteur.
           </p>
         </div>
         <ul className="nav-list">
@@ -382,7 +421,11 @@ export default function NavigationPage({
                 aria-label={`Mot-clé ${index + 1}`}
                 maxLength={12}
                 spellCheck={false}
-                onChange={(event) => setKeyword(index, { keyword: event.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })}
+                onChange={(event) =>
+                  setKeyword(index, {
+                    keyword: event.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+                  })
+                }
               />
               <span className="nav-keyword-arrow" aria-hidden="true">
                 →
@@ -414,7 +457,13 @@ export default function NavigationPage({
                 type="button"
                 className="tab-action"
                 title="Retirer ce mot-clé"
-                onClick={() => save({ searchKeywords: settings.searchKeywords.filter((_, position) => position !== index) })}
+                onClick={() =>
+                  save({
+                    searchKeywords: settings.searchKeywords.filter(
+                      (_, position) => position !== index
+                    )
+                  })
+                }
               >
                 <Icon name="close" size={12} />
               </button>
@@ -485,7 +534,9 @@ export default function NavigationPage({
               spellCheck={false}
               inputMode="url"
             />
-            <small className="setting-hint">Adresse https uniquement ; la page s’ouvre au lancement.</small>
+            <small className="setting-hint">
+              Adresse https uniquement ; la page s’ouvre au lancement.
+            </small>
           </label>
         )}
 
@@ -508,7 +559,9 @@ export default function NavigationPage({
         <div className="setting-row">
           <div>
             <label>Liens externes</label>
-            <p className="setting-hint">Un lien cliqué s’ouvre dans un nouvel onglet de l’espace actif.</p>
+            <p className="setting-hint">
+              Un lien cliqué s’ouvre dans un nouvel onglet de l’espace actif.
+            </p>
           </div>
           <span className="tag">Nouvel onglet</span>
         </div>
@@ -517,7 +570,10 @@ export default function NavigationPage({
       <section className="setting-block" aria-labelledby="nav-bookmarks">
         <div className="setting-head">
           <h2 id="nav-bookmarks">Marque-pages</h2>
-          <p>{plural(bookmarkCount, 'page gardée', 'pages gardées')} sur cet appareil, jamais synchronisée.</p>
+          <p>
+            {plural(bookmarkCount, 'page gardée', 'pages gardées')} sur cet appareil, jamais
+            synchronisée.
+          </p>
         </div>
         <div className="setting-row">
           <div>
@@ -542,7 +598,9 @@ export default function NavigationPage({
 
         {showImporter && (
           <div className="nav-importer">
-            <p className="setting-hint">Reprenez les favoris d’un navigateur installé, ou un fichier HTML.</p>
+            <p className="setting-hint">
+              Reprenez les favoris d’un navigateur installé, ou un fichier HTML.
+            </p>
             {detected === null && <p className="setting-hint">Lecture locale…</p>}
             {detected !== null && detected.length === 0 && (
               <p className="setting-hint">Aucun navigateur détecté sur cet appareil.</p>
@@ -608,7 +666,9 @@ export default function NavigationPage({
         <div className="setting-row setting-row-top">
           <div>
             <label>Effacer</label>
-            <p className="setting-hint">Le Brief et les suggestions repartent à zéro. Annulation possible huit secondes.</p>
+            <p className="setting-hint">
+              Les suggestions repartent à zéro. Annulation possible huit secondes.
+            </p>
           </div>
           {!confirming ? (
             <button type="button" className="action danger" onClick={() => setConfirming(true)}>
@@ -654,22 +714,30 @@ export default function NavigationPage({
         <div className="setting-head">
           <h2 id="nav-downloads">Téléchargements</h2>
           <p>
-            {downloadCount > 0 ? plural(downloadCount, 'fichier cette session', 'fichiers cette session') : 'Aucun fichier cette session'} ·
-            rien n’est envoyé ailleurs.
+            {downloadCount > 0
+              ? plural(downloadCount, 'fichier cette session', 'fichiers cette session')
+              : 'Aucun fichier cette session'}{' '}
+            · rien n’est envoyé ailleurs.
           </p>
         </div>
 
         <div className="setting-row">
           <div>
             <label>Dossier de destination</label>
-            <p className="setting-hint">{settings.downloadDir ?? 'Dossier Téléchargements du système'}</p>
+            <p className="setting-hint">
+              {settings.downloadDir ?? 'Dossier Téléchargements du système'}
+            </p>
           </div>
           <div className="setting-actions">
             <button type="button" className="action" onClick={() => void pickDownloadDir()}>
               <Icon name="folder" size={13} /> Choisir
             </button>
             {settings.downloadDir && (
-              <button type="button" className="action ghost" onClick={() => save({ downloadDir: null })}>
+              <button
+                type="button"
+                className="action ghost"
+                onClick={() => save({ downloadDir: null })}
+              >
                 Par défaut
               </button>
             )}
@@ -698,7 +766,9 @@ export default function NavigationPage({
         <div className="setting-row">
           <div>
             <label htmlFor="open-download">Ouvrir après le téléchargement</label>
-            <p className="setting-hint">Le fichier s’ouvre dans l’app associée, une fois complet.</p>
+            <p className="setting-hint">
+              Le fichier s’ouvre dans l’app associée, une fois complet.
+            </p>
           </div>
           <button
             id="open-download"

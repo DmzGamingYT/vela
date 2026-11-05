@@ -7,15 +7,20 @@
   padding: 12px 14px 13px;
   border-radius: 18px;
   border: 1px solid var(--edge);
-  background: linear-gradient(158deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
-    var(--fill);
-  box-shadow: var(--inner-light-soft), 0 22px 50px -38px rgba(2, 4, 12, 0.7);
-  transition: border-color var(--dur-2) var(--ease-standard),
-    box-shadow var(--dur-2) var(--ease-standard), background var(--dur-2) var(--ease-standard);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)), var(--fill);
+  box-shadow:
+    var(--inner-light-soft),
+    0 22px 50px -38px rgba(2, 4, 12, 0.7);
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard);
 }
 
 :root[data-mode='light'] .home-pins {
-  background: linear-gradient(158deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)), var(--fill);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)), var(--fill);
 }
 
 .home-pins[data-over='true'] {
@@ -50,6 +55,14 @@
   text-transform: none;
   color: var(--faint);
   opacity: 0.75;
+}
+
+.home-favorites-empty {
+  max-width: 560px;
+  margin: 2px 0 4px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .pin-grid {
@@ -140,8 +153,11 @@
   border-radius: 12px;
   border: 1px solid var(--line-soft);
   background: var(--fill);
-  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-standard),
-    background var(--dur-2) var(--ease-standard), box-shadow var(--dur-2) var(--ease-standard);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
 }
 
 .pin-card:hover {
@@ -211,7 +227,9 @@
   border-radius: 6px;
   color: var(--faint);
   opacity: 0;
-  transition: opacity var(--dur-2) var(--ease-standard), background var(--dur-2) var(--ease-standard),
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
     color var(--dur-2) var(--ease-standard);
 }
 
@@ -236,7 +254,9 @@
   color: var(--muted);
   font-size: 11.5px;
   text-align: left;
-  transition: border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard),
     background var(--dur-2) var(--ease-standard);
 }
 
@@ -281,7 +301,8 @@
   color: var(--accent-label);
   font-size: 10.5px;
   text-align: left;
-  transition: background var(--dur-2) var(--ease-standard),
+  transition:
+    background var(--dur-2) var(--ease-standard),
     border-color var(--dur-2) var(--ease-standard);
 }
 
@@ -306,7 +327,9 @@
   border-radius: 10px;
   border: 1px solid var(--line-soft);
   background: var(--fill);
-  transition: border-color var(--dur-2) var(--ease-standard), opacity var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    opacity var(--dur-2) var(--ease-standard),
     box-shadow var(--dur-2) var(--ease-standard);
 }
 
@@ -368,7 +391,9 @@
   border-radius: 6px;
   color: var(--muted);
   font-size: 10px;
-  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .pin-edit-move button:hover:not(:disabled),
@@ -442,23 +467,29 @@
   place-items: center;
   border-radius: 10px;
   border: 1px solid var(--line-soft);
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
-    var(--fill);
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)), var(--fill);
   box-shadow: var(--inner-light-soft);
-  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-standard),
-    background var(--dur-2) var(--ease-standard), box-shadow var(--dur-2) var(--ease-standard);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
 }
 
 .mini-tile:hover {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--space, var(--accent)) 55%, transparent);
   background: color-mix(in srgb, var(--space, var(--accent)) 12%, var(--fill));
-  box-shadow: var(--inner-light-soft), 0 8px 18px -14px rgba(var(--glow), 0.9);
+  box-shadow:
+    var(--inner-light-soft),
+    0 8px 18px -14px rgba(var(--glow), 0.9);
 }
 
 .mini-tile[data-active='true'] {
   border-color: color-mix(in srgb, var(--space, var(--accent)) 75%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--space, var(--accent)) 60%, transparent),
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--space, var(--accent)) 60%, transparent),
     var(--inner-light-soft);
 }
 
@@ -836,7 +867,9 @@
   border-radius: 12px;
   background: var(--glass-strong);
   backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 20px 44px -26px rgba(2, 4, 12, 0.85), var(--inner-light-soft);
+  box-shadow:
+    0 20px 44px -26px rgba(2, 4, 12, 0.85),
+    var(--inner-light-soft);
   animation: tile-menu-in var(--dur-2) var(--ease-out) both;
 }
 
@@ -870,7 +903,9 @@
   border-radius: 12px;
   background: var(--glass-strong);
   backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 20px 44px -26px rgba(2, 4, 12, 0.85), var(--inner-light-soft);
+  box-shadow:
+    0 20px 44px -26px rgba(2, 4, 12, 0.85),
+    var(--inner-light-soft);
   animation: tile-menu-in var(--dur-2) var(--ease-out) both;
 }
 
@@ -1076,7 +1111,7 @@
 }
 
 /* macOS : les feux de circulation gardent leur place à gauche. */
-.mini-root[data-platform="darwin"] .mini-bar {
+.mini-root[data-platform='darwin'] .mini-bar {
   padding-left: 78px;
 }
 
@@ -1125,7 +1160,9 @@
   height: 26px;
   border-radius: 8px;
   color: var(--ink-soft);
-  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .mini-btn:hover:not(:disabled) {
@@ -1158,7 +1195,8 @@
   border-radius: 9px;
   border: 1px solid var(--line-soft);
   background: var(--surface-2);
-  transition: border-color var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
     box-shadow var(--dur-2) var(--ease-standard);
 }
 
@@ -1216,7 +1254,6 @@
     transition: none;
   }
 }
-
 
 /* --- Sites épinglés : rangée de vignettes (0.3.19) ------------------- */
 /* Une vignette fait la taille d'un favicon confortable, pas d'une carte : la
@@ -1280,8 +1317,10 @@
   border-radius: 20px;
   border: 1.5px dashed var(--line);
   color: var(--faint);
-  transition: border-color var(--dur-2) var(--ease-standard),
-    background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .pin-add:hover {
@@ -1303,7 +1342,9 @@
   place-items: center;
   border-radius: 6px;
   color: var(--faint);
-  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .pins-toggle:hover {

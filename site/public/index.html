@@ -50,9 +50,9 @@
         "applicationCategory": "BrowserApplication",
         "applicationSubCategory": "Web browser",
         "operatingSystem": "macOS, Windows, Linux",
-        "softwareVersion": "0.3.25",
+        "softwareVersion": "0.3.26",
         "url": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/",
-        "downloadUrl": "https://github.com/DmzGamingYT/vela/releases/tag/v0.3.25",
+        "downloadUrl": "https://github.com/DmzGamingYT/vela/releases/tag/v0.3.26",
         "screenshot": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/captures/accueil-clair.jpg",
         "description": "Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, vue scindée, notes locales et tunnel de recherche. Sans compte Vela, sans télémétrie.",
         "isAccessibleForFree": true,
@@ -152,23 +152,30 @@
     <main id="contenu">
       <section class="hero">
         <div class="wrap hero-inner">
-          <p class="hero-eyebrow">v0.3.25 · macOS, Windows, Linux</p>
+          <p class="hero-eyebrow">v0.3.26 · macOS, Windows, Linux</p>
           <h1 class="hero-title">Le web, votre atelier.</h1>
           <p class="hero-lede">
-            Un navigateur qui reste un navigateur : onglets verticaux, espaces isolés, vue scindée,
-            notes locales. L’atelier s’ouvre quand vous en avez besoin.
+            Onglets verticaux, espaces isolés, vue scindée, notes locales : tout ce qu’il faut,
+            rien de plus.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-hero btn-big" href="#telecharger" data-platform-cta>
+            <a class="btn btn-hero btn-big" href="#telecharger" data-platform-cta data-platform-href>
               <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
               <span data-platform-label>Télécharger</span>
             </a>
-            <a class="btn btn-hero-ghost btn-big" href="/navigateur/">
+            <a class="hero-link" href="/navigateur/">
               Voir le navigateur
               <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
             </a>
           </div>
-          <p class="hero-fine">Gratuit · MIT · sans compte Vela · sans télémétrie</p>
+          <p class="hero-alt">
+            <span data-platform-size>macOS, Windows, Linux · un fichier par plateforme</span>
+            · <a href="#telecharger">Autres plateformes</a>
+          </p>
+          <p class="hero-fine">
+            Gratuit · MIT · sans compte Vela · sans télémétrie ·
+            <a href="/aide/#macos">macOS : autoriser Vela au premier lancement</a>
+          </p>
           <p class="wordmark" aria-hidden="true">Vela</p>
         </div>
 
@@ -181,29 +188,29 @@
             <source
               type="image/avif"
               srcset="/captures/accueil-clair-720.avif 720w, /captures/accueil-clair-1080.avif 1080w, /captures/accueil-clair.avif 1440w"
-              sizes="(max-width: 1040px) calc(100vw - 40px), 1000px"
+              sizes="(max-width: 1160px) calc(100vw - 40px), 1120px"
             />
             <img
               src="/captures/accueil-clair-1080.jpg"
               srcset="/captures/accueil-clair-720.jpg 720w, /captures/accueil-clair-1080.jpg 1080w, /captures/accueil-clair.jpg 1440w"
-              sizes="(max-width: 1040px) calc(100vw - 40px), 1000px"
+              sizes="(max-width: 1160px) calc(100vw - 40px), 1120px"
               width="1440"
               height="900"
               fetchpriority="high"
               decoding="async"
-              alt="Accueil de Vela : barre latérale des onglets et des espaces, brief du jour, champ de commande et raccourcis."
+              alt="Accueil de Vela : barre latérale des onglets et des espaces, sessions gardées, champ de commande et raccourcis."
             />
           </picture>
           <picture class="window-shot shot-dark">
             <source
               type="image/avif"
               srcset="/captures/accueil-sombre-720.avif 720w, /captures/accueil-sombre-1080.avif 1080w, /captures/accueil-sombre.avif 1440w"
-              sizes="(max-width: 1040px) calc(100vw - 40px), 1000px"
+              sizes="(max-width: 1160px) calc(100vw - 40px), 1120px"
             />
             <img
               src="/captures/accueil-sombre-1080.jpg"
               srcset="/captures/accueil-sombre-720.jpg 720w, /captures/accueil-sombre-1080.jpg 1080w, /captures/accueil-sombre.jpg 1440w"
-              sizes="(max-width: 1040px) calc(100vw - 40px), 1000px"
+              sizes="(max-width: 1160px) calc(100vw - 40px), 1120px"
               width="1440"
               height="900"
               loading="lazy"
@@ -315,7 +322,7 @@
         <div class="wrap">
           <div class="sec-head reveal">
             <p class="eyebrow">Télécharger</p>
-            <h2 class="sec-title" id="dl-title">Vela 0.3.25, pour les trois plateformes.</h2>
+            <h2 class="sec-title" id="dl-title">Vela 0.3.26, pour les trois plateformes.</h2>
             <p class="sec-lede">
               Un seul fichier par plateforme. Sur Windows, Vela se met à jour tout seul ; sur
               macOS non signé, ouvrez le nouveau DMG ; sur Linux, remplacez le paquet. Les
@@ -325,19 +332,19 @@
 
           <div class="download reveal">
             <div class="download-top">
-              <a class="btn btn-solid btn-big" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.25" data-platform-cta data-platform-href>
+              <a class="btn btn-solid btn-big" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.26" data-platform-cta data-platform-href>
                 <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
                 <span data-platform-label>Télécharger</span>
               </a>
               <p class="lead" data-platform-size>macOS, Windows, Linux · un fichier par plateforme</p>
-              <a class="btn btn-ghost spacer" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.25">
+              <a class="btn btn-ghost spacer" href="https://github.com/DmzGamingYT/vela/releases/tag/v0.3.26">
                 Notes de version
                 <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
               </a>
             </div>
 
             <table class="dl-table">
-              <caption>Fichiers de la version 0.3.25</caption>
+              <caption>Fichiers de la version 0.3.26</caption>
               <thead>
                 <tr>
                   <th scope="col">Plateforme</th>
@@ -349,66 +356,66 @@
               <tbody>
                 <tr>
                   <td class="plat"><strong>macOS</strong><span>Apple silicon et Intel</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-universal.dmg">Vela-0.3.25-universal.dmg</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-universal.dmg">Vela-0.3.26-universal.dmg</a></td>
                   <td class="size">216,0 Mo</td>
                   <td class="sum">
                     <code>077badbc 2a29fd3d…</code>
-                    <button class="copy" type="button" data-copy="077badbc2a29fd3d2af6184cbe939cdf6f493239104d4b4e222a692310615736" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-universal.dmg">
+                    <button class="copy" type="button" data-copy="077badbc2a29fd3d2af6184cbe939cdf6f493239104d4b4e222a692310615736" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-universal.dmg">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td class="plat"><strong>macOS</strong><span>Apple silicon</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-arm64.dmg">Vela-0.3.25-arm64.dmg</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-arm64.dmg">Vela-0.3.26-arm64.dmg</a></td>
                   <td class="size">117,0 Mo</td>
                   <td class="sum">
                     <code>49956d0a c3f148d8…</code>
-                    <button class="copy" type="button" data-copy="49956d0ac3f148d813dac7fcd70632311e1b273defffa4eee64c2e00f8ae7c40" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-arm64.dmg">
+                    <button class="copy" type="button" data-copy="49956d0ac3f148d813dac7fcd70632311e1b273defffa4eee64c2e00f8ae7c40" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-arm64.dmg">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td class="plat"><strong>macOS</strong><span>Intel</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-x64.dmg">Vela-0.3.25-x64.dmg</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-x64.dmg">Vela-0.3.26-x64.dmg</a></td>
                   <td class="size">124,0 Mo</td>
                   <td class="sum">
                     <code>0c074578 9a0f6cff…</code>
-                    <button class="copy" type="button" data-copy="0c0745789a0f6cffc45826087c43b4abf6fc014b51fb8aed1ca05992dd0a7bb1" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-x64.dmg">
+                    <button class="copy" type="button" data-copy="0c0745789a0f6cffc45826087c43b4abf6fc014b51fb8aed1ca05992dd0a7bb1" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-x64.dmg">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td class="plat"><strong>Windows</strong><span>x64</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-x64.exe">Vela-0.3.25-x64.exe</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-x64.exe">Vela-0.3.26-x64.exe</a></td>
                   <td class="size">116,5 Mo</td>
                   <td class="sum">
                     <code>03197a37 b435d09c…</code>
-                    <button class="copy" type="button" data-copy="03197a37b435d09c20938ee3eb099e5acdb410bf8e988ce29ca555e24042ba0c" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-x64.exe">
+                    <button class="copy" type="button" data-copy="03197a37b435d09c20938ee3eb099e5acdb410bf8e988ce29ca555e24042ba0c" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-x64.exe">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td class="plat"><strong>Linux</strong><span>AppImage</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-x86_64.AppImage">Vela-0.3.25-x86_64.AppImage</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-x86_64.AppImage">Vela-0.3.26-x86_64.AppImage</a></td>
                   <td class="size">121,0 Mo</td>
                   <td class="sum">
                     <code>77febd28 e6aeab36…</code>
-                    <button class="copy" type="button" data-copy="77febd28e6aeab363ac0fc3f13dfd8761666d8736deb88f6cf0d10cdb0684b24" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-x86_64.AppImage">
+                    <button class="copy" type="button" data-copy="77febd28e6aeab363ac0fc3f13dfd8761666d8736deb88f6cf0d10cdb0684b24" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-x86_64.AppImage">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td class="plat"><strong>Linux</strong><span>Debian, Ubuntu</span></td>
-                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.25/Vela-0.3.25-amd64.deb">Vela-0.3.25-amd64.deb</a></td>
+                  <td class="file"><a href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.26/Vela-0.3.26-amd64.deb">Vela-0.3.26-amd64.deb</a></td>
                   <td class="size">96,9 Mo</td>
                   <td class="sum">
                     <code>e8ba555b 7684aab6…</code>
-                    <button class="copy" type="button" data-copy="e8ba555b7684aab63ac19febc63c74d83f131cc95c4bb8da31b6cd9093666e33" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.25-amd64.deb">
+                    <button class="copy" type="button" data-copy="e8ba555b7684aab63ac19febc63c74d83f131cc95c4bb8da31b6cd9093666e33" aria-label="Copier l’empreinte SHA-256 de Vela-0.3.26-amd64.deb">
                       <svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>
                     </button>
                   </td>
@@ -454,7 +461,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.25 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.26 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

@@ -65,7 +65,7 @@ export default function AppearancePreview({
             <i /> Lecture
           </span>
           <span className="pv-side-foot">
-            <i /> Brief
+            <i /> Sessions
           </span>
         </div>
         <div className="pv-home">
@@ -96,7 +96,11 @@ export default function AppearancePreview({
               ? 'Fond uni'
               : 'Dégradé du thème'}
         {' · '}
-        {settings.density === 'compact' ? 'compacte' : settings.density === 'airy' ? 'aérée' : 'normale'}
+        {settings.density === 'compact'
+          ? 'compacte'
+          : settings.density === 'airy'
+            ? 'aérée'
+            : 'normale'}
       </p>
     </div>
   )

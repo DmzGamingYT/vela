@@ -1,0 +1,36 @@
+/* --- Repli de la barre latérale -------------------------------- */
+
+/* Le panneau reste monté : c'est sa largeur qui se replie. Avant, React
+   retirait la barre entière du châssis, le contenu se recalait sur la même
+   image et le clic paraissait saccadé. */
+.app > .sidebar {
+  overflow-x: clip;
+  transition:
+    flex-basis var(--dur-3) var(--ease-out),
+    width var(--dur-3) var(--ease-out),
+    opacity var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    visibility 0s linear;
+}
+
+.app > .sidebar[data-collapsed='true'] {
+  width: 0;
+  flex-basis: 0;
+  border-right-width: 0;
+  border-left-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    flex-basis var(--dur-3) var(--ease-out),
+    width var(--dur-3) var(--ease-out),
+    opacity var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    visibility 0s linear var(--dur-3);
+}
+
+/* Sans barre, l'en-tête se décale sous les feux macOS. On accompagne ce
+   recul de la même courbe pour que les commandes ne sautent pas. */
+.pane-head {
+  transition: padding-left var(--dur-3) var(--ease-out);
+}

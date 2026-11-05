@@ -1,7 +1,13 @@
 import { app, net } from 'electron'
 import { readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createIconCache, type IconStore } from '@shared/favicons'
+import {
+  createIconCache,
+  iconCandidatesFromHtml,
+  iconCandidatesFromManifest,
+  rankIconCandidates,
+  type IconStore
+} from '@shared/favicons'
 
 /**
  * Icônes de sites : une requête vers le site lui-même, puis le cache local
@@ -12,7 +18,9 @@ import { createIconCache, type IconStore } from '@shared/favicons'
  * domaine dans les fichiers de « Personnel ».
  */
 
-const MAX_BYTES = 64 * 1024
+const MAX_BYTES = 256 * 1024
+const MAX_PAGE_BYTES = 256 * 1024
+const MAX_MANIFEST_BYTES = 128 * 1024
 const FILE = 'favicons.json'
 
 /** Nom de fichier sûr : l'identifiant vient du renderer, jamais du réseau. */
@@ -38,27 +46,78 @@ function save(spaceId: string, store: IconStore): void {
   }
 }
 
-async function fetchIcon(host: string): Promise<{ data: string; type: string } | null> {
-  // Seul un nom d'hôte simple est accepté : pas de port, de chemin ni d'IP.
-  if (!/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(host) || host.includes('..')) return null
-  let url: URL
+/** Nom d'hôte simple : pas de port, de chemin ni d'IP. */
+function validHost(host: string): boolean {
+  return /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(host) && !host.includes('..')
+}
+
+/** Texte du site (page ou manifeste), sur le même hôte et en HTTPS seulement. */
+async function fetchText(url: string, host: string, max: number): Promise<string | null> {
   try {
-    url = new URL(`https://${host}/favicon.ico`)
+    const target = new URL(url)
+    if (target.protocol !== 'https:' || target.hostname !== host) return null
+    const response = await net.fetch(target.toString(), {
+      headers: { accept: 'text/html,application/manifest+json,application/json;q=0.9,*/*;q=0.5' },
+      signal: AbortSignal.timeout(4000)
+    })
+    if (!response.ok || new URL(response.url).hostname !== host) return null
+    const text = await response.text()
+    if (!text || text.length > max) return null
+    return text
   } catch {
     return null
   }
-  if (url.protocol !== 'https:' || url.hostname !== host) return null
+}
 
-  const response = await net.fetch(url.toString(), {
-    headers: { accept: 'image/*' },
-    signal: AbortSignal.timeout(4000)
-  })
-  if (!response.ok) return null
-  const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
-  if (!type.startsWith('image/')) return null
-  const buffer = Buffer.from(await response.arrayBuffer())
-  if (buffer.byteLength === 0 || buffer.byteLength > MAX_BYTES) return null
-  return { data: buffer.toString('base64'), type }
+async function fetchImage(url: string, host: string): Promise<{ data: string; type: string } | null> {
+  try {
+    const target = new URL(url)
+    if (target.protocol !== 'https:' || target.hostname !== host) return null
+    const response = await net.fetch(target.toString(), {
+      headers: { accept: 'image/*' },
+      signal: AbortSignal.timeout(4000)
+    })
+    // Un site ne doit pas nous envoyer vers un autre domaine pour son icône.
+    if (!response.ok || new URL(response.url).hostname !== host) return null
+    const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
+    if (!type.startsWith('image/')) return null
+    const buffer = Buffer.from(await response.arrayBuffer())
+    if (buffer.byteLength === 0 || buffer.byteLength > MAX_BYTES) return null
+    return { data: buffer.toString('base64'), type }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Meilleure icône du site : Apple Touch ou icône du manifeste, puis favicon.ico.
+ * La page est lue une fois, et seules les adresses de son propre hôte sont
+ * retenues : le cache ne devient pas un client HTTP généraliste.
+ */
+async function fetchIcon(host: string): Promise<{ data: string; type: string } | null> {
+  if (!validHost(host)) return null
+  const base = `https://${host}/`
+  const page = await fetchText(base, host, MAX_PAGE_BYTES)
+  const declared = page ? iconCandidatesFromHtml(page, base) : { icons: [], manifest: null }
+  let candidates = declared.icons
+
+  if (declared.manifest) {
+    const raw = await fetchText(declared.manifest, host, MAX_MANIFEST_BYTES)
+    if (raw) {
+      try {
+        candidates = candidates.concat(iconCandidatesFromManifest(JSON.parse(raw), declared.manifest))
+      } catch {
+        /* manifeste illisible : les icônes de la page suffisent */
+      }
+    }
+  }
+
+  const fallback = { url: `${base}favicon.ico`, size: 0, apple: false }
+  for (const candidate of [...rankIconCandidates(candidates).slice(0, 2), fallback]) {
+    const icon = await fetchImage(candidate.url, host)
+    if (icon) return icon
+  }
+  return null
 }
 
 const caches = new Map<string, ReturnType<typeof createIconCache>>()

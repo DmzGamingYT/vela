@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { SyntheticEvent } from 'react'
 import { hostOf } from '@shared/url'
+import { domainLetter, needsUpgrade } from '../lib/favicon'
 import { initials, tintFor } from '../lib/format'
 
 /**
@@ -7,6 +9,10 @@ import { initials, tintFor } from '../lib/format'
  * local du domaine (`favicons.get`), qui ne contacte que le site lui-même.
  * Aucune requête tierce, et dix montages ne font qu'une demande. Le cache est
  * celui de l'espace : un domaine vu dans « Travail » ne s'invite pas ailleurs.
+ *
+ * `upgrade` demande la meilleure icône du site quand celle de la page est plus
+ * petite que le cadre (16 ou 32 px) : le cache lit alors l'Apple Touch ou le
+ * manifeste. Une petite icône n'est jamais agrandie au-delà de sa taille native.
  */
 
 const memo = new Map<string, Promise<string | null>>()
@@ -38,7 +44,9 @@ export default function Favicon({
   label,
   size = 16,
   spaceId,
-  cacheOnly = false
+  cacheOnly = false,
+  upgrade = false,
+  letter = 'initials'
 }: {
   src?: string | null
   url?: string
@@ -47,15 +55,22 @@ export default function Favicon({
   spaceId?: string
   /** Aucune requête : seulement l'icône déjà mémorisée sur l'appareil. */
   cacheOnly?: boolean
+  /** Demande la meilleure icône si celle de la page est plus petite que `size`. */
+  upgrade?: boolean
+  /** Lettre de secours : initiales du titre ou première lettre du domaine. */
+  letter?: 'initials' | 'domain'
 }) {
-  const [broken, setBroken] = useState(false)
+  const [failed, setFailed] = useState<string[]>([])
+  const [better, setBetter] = useState<string | null>(null)
   const [cached, setCached] = useState<string | null>(null)
-  const tint = tintFor(label || 'vela')
+  const upgraded = useRef(false)
+  const tint = tintFor(label || hostOf(url ?? '') || 'vela')
 
   useEffect(() => {
     if (src || !url) return
+    const address = url
     let alive = true
-    void iconRequest(url, spaceId, cacheOnly).then((data) => {
+    void iconRequest(address, spaceId, cacheOnly).then((data) => {
       if (alive) setCached(data)
     })
     return () => {
@@ -63,10 +78,31 @@ export default function Favicon({
     }
   }, [src, url, spaceId, cacheOnly])
 
-  const image = src && !broken ? src : cached
+  // La page fournit souvent un 16 ou 32 px. On ne l'agrandit pas : on demande
+  // une fois la meilleure icône du site, qui remplacera celle de la page.
+  const onLoad = (event: SyntheticEvent<HTMLImageElement>): void => {
+    if (!upgrade || !url || cacheOnly || upgraded.current) return
+    const natural = event.currentTarget.naturalWidth
+    if (!needsUpgrade(natural, size)) return
+    upgraded.current = true
+    void iconRequest(url, spaceId).then((data) => {
+      if (data) setBetter(data)
+    })
+  }
+
+  const usable = (value: string | null | undefined): value is string =>
+    Boolean(value && !failed.includes(value))
+  const image = usable(better) ? better : usable(src) ? src : usable(cached) ? cached : null
+  const fallback = letter === 'domain' ? domainLetter(url ?? '') : initials(label || '·')
 
   return (
-    <span className="favicon" style={{ color: tint, background: `${tint}1c` }} aria-hidden="true">
+    <span
+      className="favicon"
+      style={{ color: tint, background: `${tint}1c` }}
+      data-fallback={image ? undefined : 'true'}
+      data-native={upgrade ? 'true' : undefined}
+      aria-hidden="true"
+    >
       {image ? (
         <img
           src={image}
@@ -76,10 +112,11 @@ export default function Favicon({
           loading="lazy"
           referrerPolicy="no-referrer"
           draggable={false}
-          onError={() => setBroken(true)}
+          onLoad={onLoad}
+          onError={() => setFailed((current) => (image ? [...current, image] : current))}
         />
       ) : (
-        <span>{initials(label || '·')}</span>
+        <span>{fallback}</span>
       )}
     </span>
   )

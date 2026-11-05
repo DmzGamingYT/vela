@@ -6,13 +6,13 @@ import type {
 } from 'react'
 import { canonicalUrl, engineLabel, hostOf, isHomeUrl, readableTitle } from '@shared/url'
 import { SKY_THEME, resolveThemeId } from '@shared/theme'
-import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
+import { greeting, shortcut, timeAgo, tintFor, weekdayLabel } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import HomeFavorites from './HomeFavorites'
 import HomeSky from './HomeSky'
 import Favicon from './Favicon'
 import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
-import SpaceShortcuts from './SpaceShortcuts'
 import TasksCard from './TasksCard'
 import TileMenu, { type TileMenuItem } from './TileMenu'
 import WatchlistCard from './WatchlistCard'
@@ -64,7 +64,10 @@ function tileLabel(raw: string | null | undefined, url: string, host: string): s
   try {
     const parsed = new URL(url)
     const segments = parsed.pathname.split('/').filter(Boolean)
-    if (/youtube\.com$/i.test(parsed.hostname) && (segments[0] === 'watch' || parsed.searchParams.has('v'))) {
+    if (
+      /youtube\.com$/i.test(parsed.hostname) &&
+      (segments[0] === 'watch' || parsed.searchParams.has('v'))
+    ) {
       return 'Vidéo YouTube'
     }
     const last = segments[segments.length - 1] ?? ''
@@ -99,6 +102,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const openSplit = useBrowser((state) => state.openSplit)
   const toast = useBrowser((state) => state.toast)
   const updateSettings = useBrowser((state) => state.updateSettings)
+  const [today] = useState(() => Date.now())
   const [modules, setModules] = useState<BentoModules>(readBentoModules)
   const [customizing, setCustomizing] = useState(false)
   const [menu, setMenu] = useState<{ tile: Tile; x: number; y: number } | null>(null)
@@ -118,7 +122,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // qu'un seul champ à la fois soit en jeu.
   const [cityEditing, setCityEditing] = useState(false)
   const [systemCalm, setSystemCalm] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    () =>
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   )
 
   // Le fond et les inclinaisons se taisent avec « Réduire les animations »,
@@ -134,7 +139,12 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // et seulement pour les adresses de l'historique affiché.
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
   const thumbsEnabled = view?.settings.thumbnails === true
-  const historyKey = view ? view.history.slice(0, 12).map((entry) => entry.url).join('\n') : ''
+  const historyKey = view
+    ? view.history
+        .slice(0, 12)
+        .map((entry) => entry.url)
+        .join('\n')
+    : ''
 
   useEffect(() => {
     if (!thumbsEnabled || !historyKey) {
@@ -274,14 +284,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
   // latérale, où ce même accueil figure comme un onglet.
   const openPages = view.tabs.filter((tab) => tab.spaceId === spaceId && !isHomeUrl(tab.url)).length
-  const pages = view.brief.pages
+  const weekStart = today - 7 * 86_400_000
+  const pages = view.history.filter((entry) => entry.visitedAt >= weekStart).length
   const pagesLabel = `${pages} page${pages > 1 ? 's' : ''} cette semaine`
   const lede =
     openPages === 0
       ? `Aucune page ouverte · ${pagesLabel}`
       : `${openPages} page${openPages > 1 ? 's' : ''} ouverte${openPages > 1 ? 's' : ''} · ${pagesLabel}`
-
-
 
   // Le survol de l'accueil est le seul poste chaud mesuré de l'app : chaque
   // `pointermove` écrivait cinq variables CSS sur `.start`, donc sur tout
@@ -295,10 +304,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const tiltedRef = useRef<HTMLElement | null>(null)
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => () => {
-    if (frameRef.current) cancelAnimationFrame(frameRef.current)
-    if (idleRef.current) clearTimeout(idleRef.current)
-  }, [])
+  useEffect(
+    () => () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      if (idleRef.current) clearTimeout(idleRef.current)
+    },
+    []
+  )
 
   const paintHover = (): void => {
     frameRef.current = 0
@@ -319,8 +331,14 @@ export default function StartPage({ tabId }: { tabId: string }) {
     }
     const aurora = auroraRef.current
     if (aurora && rootRect && rootRect.width > 0 && rootRect.height > 0) {
-      aurora.style.setProperty('--aurora-x', ((pending.x - rootRect.left) / rootRect.width - 0.5).toFixed(3))
-      aurora.style.setProperty('--aurora-y', ((pending.y - rootRect.top) / rootRect.height - 0.5).toFixed(3))
+      aurora.style.setProperty(
+        '--aurora-x',
+        ((pending.x - rootRect.left) / rootRect.width - 0.5).toFixed(3)
+      )
+      aurora.style.setProperty(
+        '--aurora-y',
+        ((pending.y - rootRect.top) / rootRect.height - 0.5).toFixed(3)
+      )
     }
     if (tile && tileRect && tileRect.width > 0 && tileRect.height > 0) {
       const x = (pending.x - tileRect.left) / tileRect.width - 0.5
@@ -392,8 +410,18 @@ export default function StartPage({ tabId }: { tabId: string }) {
   }
 
   const tileMenuItems = (tile: Tile): TileMenuItem[] => [
-    { id: 'new-tab', label: 'Ouvrir dans un nouvel onglet', icon: 'external', onSelect: () => newTab(tile.url) },
-    { id: 'split', label: 'Ouvrir en vue scindée', icon: 'split', onSelect: () => openSplit(tile.url) },
+    {
+      id: 'new-tab',
+      label: 'Ouvrir dans un nouvel onglet',
+      icon: 'external',
+      onSelect: () => newTab(tile.url)
+    },
+    {
+      id: 'split',
+      label: 'Ouvrir en vue scindée',
+      icon: 'split',
+      onSelect: () => openSplit(tile.url)
+    },
     {
       id: 'copy',
       label: 'Copier l’adresse',
@@ -434,7 +462,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <div className="home-meta-row">
               <p className="home-date">
                 <span className="eyebrow-dot" />
-                {view.brief.dateLabel}
+                {weekdayLabel(today)}
               </p>
             </div>
             <h1 className="home-title" aria-label={greeting()}>
@@ -478,8 +506,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
                   data-active={modules.shortcuts}
                   onClick={() => toggleModule('shortcuts')}
                 >
-                  <Icon name="pin" size={12} />
-                  Sites épinglés
+                  <Icon name="star" size={12} />
+                  Favoris
                 </button>
                 <button
                   type="button"
@@ -545,7 +573,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
               <span className="home-field-icon">
                 <Icon name="search" size={16} />
               </span>
-              <span className="home-field-text">Chercher, saisir une adresse ou demander à l’agent</span>
+              <span className="home-field-text">
+                Chercher, saisir une adresse ou demander à l’agent
+              </span>
             </button>
 
             <button
@@ -582,9 +612,14 @@ export default function StartPage({ tabId }: { tabId: string }) {
           </div>
         </section>
 
-        {modules.shortcuts && <SpaceShortcuts spaceId={spaceId} />}
+        {modules.shortcuts && <HomeFavorites spaceId={spaceId} />}
 
-        <div className="home-grid" data-no-side={!modules.tasks && !modules.quickNotes && !space?.watchlist ? 'true' : undefined}>
+        <div
+          className="home-grid"
+          data-no-side={
+            !modules.tasks && !modules.quickNotes && !space?.watchlist ? 'true' : undefined
+          }
+        >
           {modules.recent && (
             <section className="home-card home-recent" aria-label="Récemment">
               <div className="home-card-head">
@@ -601,7 +636,10 @@ export default function StartPage({ tabId }: { tabId: string }) {
               </div>
 
               {onlyStarters ? (
-                <p className="home-hint">Quelques pages pour commencer. Vos recherches ne partent que vers le moteur choisi.</p>
+                <p className="home-hint">
+                  Quelques pages pour commencer. Vos recherches ne partent que vers le moteur
+                  choisi.
+                </p>
               ) : null}
 
               <div className="recent-grid">
@@ -624,7 +662,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
                       setMenu({ tile, x: event.clientX, y: event.clientY })
                     }}
                     onKeyDown={(event) => {
-                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
+                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
+                        return
                       event.preventDefault()
                       const rect = event.currentTarget.getBoundingClientRect()
                       setMenu({ tile, x: rect.left, y: rect.bottom })

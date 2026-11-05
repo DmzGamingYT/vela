@@ -2,7 +2,7 @@
 
 **Le web, votre atelier.**
 
-Vela est un navigateur de bureau pour macOS, Windows et Linux : des espaces isolés, une vue scindée, un brief du jour calculé sur l’appareil, des notes Markdown et un agent qui lit vos onglets.
+Vela est un navigateur de bureau pour macOS, Windows et Linux : des espaces isolés, une vue scindée, des sessions gardées sur l’appareil, des notes Markdown et un agent qui lit vos onglets.
 
 Le site vitrine public se trouve dans [site/](site/).
 
@@ -17,7 +17,7 @@ L’interface suit l’identité du site vitrine : papier chaud `#faf8f5` le jou
 Trois gestes ont guidé cette v0.1 :
 
 - **Les espaces** — un contexte par projet, avec ses cookies, ses sessions et ses onglets (façon Arc).
-- **La journée** — un brief local, des profils de travail et une lecture croisée des onglets (façon Dia).
+- **Les sessions** — un ensemble d’onglets gardé localement, rouvert dans son espace d’origine (façon Dia).
 - **L’atelier** — un agent sur un canvas, des notes à côté de la page, des fichiers que vous possédez (façon Zephium).
 
 ## Démarrer
@@ -35,7 +35,7 @@ Build de production et vérifications :
 npm run typecheck   # TypeScript (main, preload, renderer)
 npm run lint        # ESLint (types, hooks, globals du userscript et du site)
 npm run format      # Prettier, même style que le reste du dépôt
-npm test            # tests unitaires (URL, brief, agent, fournisseurs)
+npm test            # tests unitaires (URL, historique, agent, fournisseurs)
 npm run build       # build dans out/
 npm run dist:mac    # .dmg + .zip universel, arm64 et x64 → release/mac/
 npm run dist:win    # installateur NSIS → release/win/
@@ -253,7 +253,7 @@ site manque ou invente un flux.
 | **Gestes de lien** | `⌘` + clic ouvre en arrière-plan (le focus reste où il est), `⇧` + clic et `⌘⌥` + clic ouvrent dans la petite fenêtre, `⌥` + clic télécharge, et les popups de site gardent leur vraie fenêtre. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Thèmes de couleur** | Dix teintes (indigo, rouge, orange, ambre, vert, turquoise, bleu, violet, rose, graphite) et une couleur personnalisée : tout le châssis suit, jamais le contenu des sites. Mode clair/sombre, verre réglable, thème par espace, contraste élevé. |
-| **Brief du jour** | Trois cartes calculées localement : reprendre, finir, focus. Aucune requête réseau. |
+| **Sessions** | Un ensemble d’onglets se garde sous un nom et se rouvre dans son espace d’origine. Stockage local, aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
 | **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
@@ -294,7 +294,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘E` | Notes |
 | `⌘J` | Agent |
 | `⌘⇧A` | Basculer Navigation / Travail |
-| `⌘⇧B` | Brief du jour |
+| `⌘⇧B` | Sessions |
 | `⌘S` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |
 | `⌘,` | Réglages |
@@ -307,7 +307,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 src/
 ├── main/                 processus principal Electron
 │   ├── index.ts          fenêtre, cycle de vie, sécurité de la coque
-│   ├── browser.ts        état, espaces, IPC, brief, notes
+│   ├── browser.ts        état, espaces, IPC, sessions, notes
 │   ├── tabs.ts           un WebContentsView natif par onglet, layout et raccourcis
 │   ├── mini.ts           petite fenêtre jetable (façon Little Arc) et sa page
 │   ├── privacy.ts        filtre local par partition, permissions, user-agent
@@ -317,13 +317,13 @@ src/
 │   ├── store.ts          vela.json, clés chiffrées par fournisseur, normalisation
 │   └── menu.ts           menu natif français
 ├── preload/              pont typé `window.vela`, aucune API Node côté page
-├── shared/               types, URL, brief, agent, fournisseurs, thèmes (testés avec Vitest)
+├── shared/               types, URL, historique, agent, fournisseurs, thèmes (testés avec Vitest)
 └── renderer/             interface React + zustand
 ```
 
 **Apparence** — les réglages sont séparés en trois pages : *Apparence* (mode, accueil, options), *Tweaks* (palette d’accent pure, teinte libre en HEX ou RVB, curseur d’intensité du verre dépoli) et *Thèmes* (huit ambiances animées, indépendantes de l’accent). `shared/theme.ts` ne contient que des couleurs de départ : chaque thème est une teinte d’accent dont on dérive le survol, le fond doux, le texte sur accent, le verre, le focus et les liens ; une couleur personnalisée passe par le même calcul. Les ambiances ne fournissent que leurs deux teintes de calques (`--amb-1`, `--amb-2`) : choisir « Cyber-Néon » ne change aucun accent. Le renderer pose tous ces jetons sur `:root` (`data-mode`, `data-theme`, `data-glass`, `data-ambience`, `data-contrast`) et les met en cache dans `localStorage` pour être rejoués avant le premier pixel. Les animations vivent dans `22-ambiances.css` et ne touchent que `transform` et `opacity` sur des calques composés ; elles restent confinées au châssis, jamais au-dessus du contenu. Le contenu des onglets vit dans des `WebContentsView` séparées : aucun jeton ni calque ne l’atteint.
 
-**Chaque onglet est un `WebContentsView` natif**, pas une `<webview>`. Le renderer mesure les zones `.pane-body` et envoie leurs rectangles au processus principal ; les vues sont placées au-dessus du DOM. Les surcouches (palette, brief, réglages, agent) masquent les vues natives le temps de l’interaction ; le tiroir de notes, lui, réduit la largeur de la page.
+**Chaque onglet est un `WebContentsView` natif**, pas une `<webview>`. Le renderer mesure les zones `.pane-body` et envoie leurs rectangles au processus principal ; les vues sont placées au-dessus du DOM. Les surcouches (palette, sessions, réglages, agent) masquent les vues natives le temps de l’interaction ; le tiroir de notes, lui, réduit la largeur de la page.
 
 - `sandbox: true`, `contextIsolation: true`, aucun Node dans les pages.
 - Les pages ne reçoivent jamais de preload.

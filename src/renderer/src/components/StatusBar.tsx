@@ -1,104 +1,262 @@
-import { useState } from 'react'
-import { updateActionLabel, updateNotice } from '@shared/update'
+import { useEffect, useReducer, useRef } from 'react'
+import {
+  RELEASE_NOTES_PLACEHOLDER,
+  reduceStatusBar,
+  statusBarView,
+  type StatusBarUi
+} from '@shared/statusBar'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 
-/** Version dont l'annonce a été masquée ; les réglages restent la porte d'entrée. */
-const DISMISS_KEY = 'vela.update.dismissed'
+/** « Plus tard » ne vaut que pour la session : la barre revient au lancement suivant. */
+const LATER_KEY = 'vela.update.later'
+/** Ancienne clé persistante : elle masquait une version pour toujours. */
+const LEGACY_KEY = 'vela.update.dismissed'
+
+function readLater(): string | null {
+  try {
+    return sessionStorage.getItem(LATER_KEY)
+  } catch {
+    return null
+  }
+}
+
+function rememberLater(version: string): void {
+  try {
+    sessionStorage.setItem(LATER_KEY, version)
+  } catch {
+    /* stockage indisponible : l’annonce revient simplement au prochain rendu */
+  }
+}
 
 /**
- * Barre d’état contextuelle : elle ne montre que ce qui a une valeur ou une
- * action. Le mode et la barre de commande vivent respectivement dans le rail et
- * au clavier — plus de doublon ici. Rien à signaler → la barre disparaît.
+ * Barre d’état : confidentialité à gauche, mise à jour à droite, séparées.
+ * Rien à signaler → aucune barre. Le détail est une carte ancrée au-dessus,
+ * jamais un écran qui masque la page.
  */
 export default function StatusBar() {
   const view = useBrowser((s) => s.view)
   const setOverlay = useBrowser((s) => s.setOverlay)
   const update = useBrowser((s) => s.update)
   const installUpdate = useBrowser((s) => s.installUpdate)
+  const downloadUpdate = useBrowser((s) => s.downloadUpdate)
+  const cancelUpdate = useBrowser((s) => s.cancelUpdate)
+  const openReleases = useBrowser((s) => s.openReleases)
   const zoomNotice = useBrowser((s) => s.zoomNotice)
   const zoom = useBrowser((s) => s.zoom)
-  const [dismissed, setDismissed] = useState<string>(() => {
+
+  const [ui, dispatch] = useReducer(reduceStatusBar, {
+    detailOpen: false,
+    laterVersion: readLater()
+  } satisfies StatusBarUi)
+  const zoneRef = useRef<HTMLButtonElement>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
     try {
-      return localStorage.getItem(DISMISS_KEY) ?? ''
+      localStorage.removeItem(LEGACY_KEY)
     } catch {
-      return ''
+      /* stockage indisponible */
     }
-  })
+  }, [])
+
+  useEffect(() => {
+    if (!ui.detailOpen) return
+    detailRef.current?.focus()
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      dispatch({ type: 'close' })
+      zoneRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [ui.detailOpen])
 
   if (!view) return null
 
+  const model = statusBarView(update, window.vela.platform, ui)
   const blocked = view.blockedTotal
   const downloads = view.downloads.length
-  const notice = updateNotice(update, window.vela.platform)
-  // Une version déjà masquée ne revient pas ; l'action reste dans les réglages.
-  const showUpdate = Boolean(notice && update?.version && dismissed !== update.version)
+  const blockedLabel = blocked === 1 ? '1 bloquée' : `${blocked} bloquées`
+  const blockedAria =
+    blocked === 1
+      ? '1 requête bloquée, voir le détail'
+      : `${blocked} requêtes bloquées, voir le détail`
 
-  if (blocked === 0 && downloads === 0 && !showUpdate && zoomNotice === null) return null
+  const later = (): void => {
+    const version = update?.version ?? ''
+    rememberLater(version)
+    dispatch({ type: 'later', version })
+  }
 
-  const dismiss = (): void => {
-    if (!update?.version) return
-    setDismissed(update.version)
-    try {
-      localStorage.setItem(DISMISS_KEY, update.version)
-    } catch {
-      /* stockage indisponible : l'annonce reviendra au prochain lancement */
-    }
+  if (!model) {
+    // « Plus tard » et « Annuler » retirent toute la barre, y compris la zone
+    // confidentialité : elle revient au prochain lancement.
+    const deferred =
+      update?.state === 'cancelled' ||
+      (update?.state === 'downloaded' && ui.laterVersion === (update.version ?? ''))
+    if (deferred) return null
+    if (blocked === 0 && downloads === 0 && zoomNotice === null) return null
+    return (
+      <div className="statusbar statusbar-compact" role="status" aria-label="Barre de statut">
+        {blocked > 0 && (
+          <button
+            type="button"
+            className="statusbar-blocked"
+            onClick={() => setOverlay('protection')}
+            title="Requêtes bloquées depuis le lancement"
+            aria-label={blockedAria}
+          >
+            <Icon name="shield" size={16} />
+            <span>{blockedLabel}</span>
+          </button>
+        )}
+        {zoomNotice !== null && (
+          <button
+            type="button"
+            className="statusbar-utility"
+            onClick={() => void zoom('reset')}
+            title="Zoom de la page — cliquer pour revenir à 100 %"
+            aria-label={`Zoom ${zoomNotice} pour cent, revenir à 100 %`}
+          >
+            <Icon name="search" size={15} />
+            <span>{zoomNotice} %</span>
+          </button>
+        )}
+        {downloads > 0 && (
+          <button
+            type="button"
+            className="statusbar-utility"
+            onClick={() => setOverlay('downloads')}
+            aria-label={`${downloads} téléchargement${downloads > 1 ? 's' : ''}, voir la liste`}
+          >
+            <Icon name="download" size={15} />
+            <span>{downloads}</span>
+          </button>
+        )}
+      </div>
+    )
   }
 
   return (
-    <div className="status-bar" role="status" aria-label="État">
+    <div className="statusbar" role="status" aria-label="Barre de statut">
       {blocked > 0 && (
-        <span className="status-item" title="Requêtes publicitaires bloquées cette session">
-          <Icon name="shield" size={13} />
-          <strong>{blocked}</strong>
-        </span>
-      )}
-
-      {zoomNotice !== null && (
-        <button
-          type="button"
-          className="status-item as-btn status-zoom"
-          onClick={() => void zoom('reset')}
-          title="Zoom de la page — cliquer pour revenir à 100 %"
-          aria-label={`Zoom ${zoomNotice} pour cent, revenir à 100 %`}
-        >
-          <Icon name="search" size={13} />
-          <strong>{zoomNotice} %</strong>
-        </button>
-      )}
-
-      {downloads > 0 && (
-        <button
-          type="button"
-          className="status-item as-btn"
-          onClick={() => setOverlay('downloads')}
-          title="Téléchargements"
-        >
-          <Icon name="download" size={13} />
-          <strong>{downloads}</strong>
-        </button>
-      )}
-
-      {showUpdate && notice && (
-        <span className="status-item status-update">
-          <Icon name={notice.action === 'install' ? 'download' : 'reload'} size={13} />
-          <span className="status-update-label">{notice.label}</span>
-          {notice.action && (
-            <button type="button" className="status-action" onClick={() => void installUpdate()}>
-              {updateActionLabel(notice.action)}
-            </button>
-          )}
+        <>
           <button
             type="button"
-            className="status-dismiss"
-            onClick={dismiss}
-            aria-label="Masquer l’annonce de mise à jour"
-            title="Masquer"
+            className="statusbar-blocked"
+            onClick={() => setOverlay('protection')}
+            title="Requêtes bloquées depuis le lancement"
+            aria-label={blockedAria}
           >
-            <Icon name="close" size={11} />
+            <Icon name="shield" size={16} />
+            <span>{blockedLabel}</span>
           </button>
-        </span>
+          <span className="statusbar-sep" aria-hidden="true" />
+        </>
+      )}
+
+      {(model.phase === 'ready' || model.phase === 'detail') && (
+        <div className="statusbar-update">
+          <button
+            ref={zoneRef}
+            type="button"
+            className="statusbar-update-zone"
+            onClick={() => dispatch({ type: ui.detailOpen ? 'close' : 'open' })}
+            aria-expanded={ui.detailOpen}
+            aria-controls="statusbar-update-detail"
+          >
+            <Icon name="download" size={18} />
+            <span className="statusbar-update-label">{model.readyLabel}</span>
+          </button>
+          <button
+            type="button"
+            className="statusbar-primary"
+            onClick={() => void installUpdate()}
+          >
+            {model.installLabel}
+          </button>
+          <button
+            type="button"
+            className="statusbar-icon-btn"
+            onClick={later}
+            aria-label="Plus tard"
+            title="Plus tard"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
+
+      {model.phase === 'downloading' && (
+        <div className="statusbar-update">
+          <span className="statusbar-download-label">
+            <Icon name="download" size={17} />
+            <span>{model.downloadingLabel}</span>
+          </span>
+          <div
+            className="statusbar-progress"
+            role="progressbar"
+            aria-label="Progression du téléchargement"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={model.progress}
+            title={`${model.progress} %`}
+          >
+            <span style={{ width: `${model.progress}%` }} />
+          </div>
+          <button type="button" className="statusbar-text-btn" onClick={() => void cancelUpdate()}>
+            Annuler
+          </button>
+        </div>
+      )}
+
+      {model.phase === 'error' && (
+        <div className="statusbar-update statusbar-error" role="alert">
+          <Icon name="warning" size={18} />
+          <span className="statusbar-error-message" title={model.error}>
+            {model.error}
+          </span>
+          <button type="button" className="statusbar-text-btn" onClick={() => void downloadUpdate()}>
+            Réessayer
+          </button>
+        </div>
+      )}
+
+      {model.phase === 'detail' && (
+        <div
+          ref={detailRef}
+          id="statusbar-update-detail"
+          className="statusbar-detail"
+          role="dialog"
+          aria-labelledby="statusbar-detail-title"
+          tabIndex={-1}
+        >
+          <p className="statusbar-eyebrow">MISE À JOUR</p>
+          <h2 id="statusbar-detail-title">{model.detailTitle}</h2>
+          <p className="statusbar-summary">{RELEASE_NOTES_PLACEHOLDER}</p>
+          <button
+            type="button"
+            className="statusbar-primary statusbar-primary-wide"
+            onClick={() => void installUpdate()}
+          >
+            {model.installLabel}
+          </button>
+          <button type="button" className="statusbar-secondary" onClick={later}>
+            Plus tard
+          </button>
+          <a
+            className="statusbar-link"
+            href={update?.releaseUrl ?? ''}
+            onClick={(event) => {
+              event.preventDefault()
+              void openReleases()
+            }}
+          >
+            Notes de version <span aria-hidden="true">→</span>
+          </a>
+        </div>
       )}
     </div>
   )

@@ -43,12 +43,14 @@ const SKILLS = [
   {
     command: '/comparer',
     label: 'Comparer les onglets joints',
-    prompt: 'Compare les onglets joints : un tableau des différences, puis une recommandation nette.'
+    prompt:
+      'Compare les onglets joints : un tableau des différences, puis une recommandation nette.'
   },
   {
     command: '/extraire',
     label: 'Extraire le tableau ou la liste principale',
-    prompt: 'Extrais le tableau ou la liste principale des onglets joints, en tableau Markdown copiable.'
+    prompt:
+      'Extrais le tableau ou la liste principale des onglets joints, en tableau Markdown copiable.'
   },
   {
     command: '/citer',
@@ -118,16 +120,16 @@ export default function CommandBar() {
     const typed = query.trim()
     if (typed.startsWith('/')) {
       const token = normalize(typed.slice(1))
-      return SKILLS.filter((skill) => !token || normalize(`${skill.command} ${skill.label}`).includes(token)).map(
-        (skill) => ({
-          id: `skill-${skill.command}`,
-          group: 'Skills' as const,
-          label: skill.command,
-          hint: skill.label,
-          icon: 'command' as const,
-          run: run(() => openAgent(skill.prompt))
-        })
-      )
+      return SKILLS.filter(
+        (skill) => !token || normalize(`${skill.command} ${skill.label}`).includes(token)
+      ).map((skill) => ({
+        id: `skill-${skill.command}`,
+        group: 'Skills' as const,
+        label: skill.command,
+        hint: skill.label,
+        icon: 'command' as const,
+        run: run(() => openAgent(skill.prompt))
+      }))
     }
 
     const all: CommandItem[] = []
@@ -156,7 +158,7 @@ export default function CommandBar() {
         id: 'agent-query',
         group: 'Agent',
         label: `Demander à l’agent : ${query.trim()}`,
-        hint: 'Brief, comparaison, synthèse',
+        hint: 'Résumé, comparaison, synthèse',
         icon: 'sparkles',
         run: run(() => openAgent(query.trim()))
       })
@@ -212,12 +214,12 @@ export default function CommandBar() {
         run: run(() => openAgent())
       },
       {
-        id: 'action-brief',
+        id: 'action-sessions',
         group: 'Actions',
-        label: 'Brief',
+        label: 'Sessions',
         hint: shortcut('⇧B'),
-        icon: 'calendar',
-        run: run(() => setOverlay('brief'))
+        icon: 'clock',
+        run: run(() => setOverlay('sessions'))
       },
       {
         id: 'action-group-site',
@@ -258,9 +260,10 @@ export default function CommandBar() {
       {
         id: 'action-bookmark',
         group: 'Actions',
-        label: active && view.bookmarks.some((entry) => entry.url === active.url)
-          ? 'Retirer la page des marque-pages'
-          : 'Garder cette page en marque-page',
+        label:
+          active && view.bookmarks.some((entry) => entry.url === active.url)
+            ? 'Retirer la page des marque-pages'
+            : 'Garder cette page en marque-page',
         hint: shortcut('D'),
         icon: 'star',
         run: run(() => void toggleBookmark(active?.id))
@@ -292,7 +295,9 @@ export default function CommandBar() {
       {
         id: 'action-sidebar',
         group: 'Actions',
-        label: view.settings.sidebarCollapsed ? 'Afficher la barre latérale' : 'Replier la barre latérale',
+        label: view.settings.sidebarCollapsed
+          ? 'Afficher la barre latérale'
+          : 'Replier la barre latérale',
         hint: shortcut('S'),
         icon: 'panel',
         run: run(() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed }))
@@ -318,7 +323,7 @@ export default function CommandBar() {
         group: 'Actions',
         label: 'Traduire la BD',
         hint: 'OCR local, calque français',
-        icon: 'image',
+        icon: 'translate',
         run: run(() => {
           const state = useBrowser.getState()
           const tabId = state.view?.activeTabId
@@ -365,7 +370,9 @@ export default function CommandBar() {
         label: view.settings.theme === 'dark' ? 'Passer en clair' : 'Passer en sombre',
         hint: 'Basculer clair / sombre',
         icon: view.settings.theme === 'dark' ? 'sun' : 'moon',
-        run: run(() => void updateSettings({ theme: view.settings.theme === 'dark' ? 'light' : 'dark' }))
+        run: run(
+          () => void updateSettings({ theme: view.settings.theme === 'dark' ? 'light' : 'dark' })
+        )
       },
       ...THEME_PRESETS.map((preset) => ({
         id: `theme-${preset.id}`,
@@ -419,14 +426,16 @@ export default function CommandBar() {
       run: run(() => requestNote(note.id))
     }))
 
-    const tasks: CommandItem[] = view.tasks.filter((task) => !task.done).map((task) => ({
-      id: `task-${task.id}`,
-      group: 'Tâches',
-      label: task.title,
-      hint: 'Basculer faite / non faite',
-      icon: 'check',
-      run: run(() => toggleTask(task.id))
-    }))
+    const tasks: CommandItem[] = view.tasks
+      .filter((task) => !task.done)
+      .map((task) => ({
+        id: `task-${task.id}`,
+        group: 'Tâches',
+        label: task.title,
+        hint: 'Basculer faite / non faite',
+        icon: 'check',
+        run: run(() => toggleTask(task.id))
+      }))
 
     const downloads: CommandItem[] = (view.downloads ?? []).map((d) => ({
       id: `dl-${d.id}`,
@@ -434,7 +443,9 @@ export default function CommandBar() {
       label: d.name,
       hint: d.state === 'done' ? 'Ouvrir le dossier' : 'Téléchargement en cours',
       icon: 'external',
-      run: run(() => { setOverlay('downloads') })
+      run: run(() => {
+        setOverlay('downloads')
+      })
     }))
 
     const byFilter = (item: CommandItem): boolean => {
@@ -442,12 +453,24 @@ export default function CommandBar() {
       if (filter === 'notes') return item.group === 'Notes'
       if (filter === 'tasks') return item.group === 'Tâches'
       if (filter === 'history') return item.group === 'Historique'
-      if (filter === 'downloads') return item.group === 'Aller' && /Télécharg|Ouvrir le dossier/.test(item.hint ?? '')
+      if (filter === 'downloads')
+        return item.group === 'Aller' && /Télécharg|Ouvrir le dossier/.test(item.hint ?? '')
       return true
     }
-    const source = [...all, ...actions, ...tabs, ...spaces, ...history, ...notes, ...tasks, ...downloads].filter(byFilter)
+    const source = [
+      ...all,
+      ...actions,
+      ...tabs,
+      ...spaces,
+      ...history,
+      ...notes,
+      ...tasks,
+      ...downloads
+    ].filter(byFilter)
     if (!search) {
-      return [...actions, ...tabs, ...spaces, ...notes.slice(0, 3), ...tasks.slice(0, 3)].filter(byFilter).slice(0, 24)
+      return [...actions, ...tabs, ...spaces, ...notes.slice(0, 3), ...tasks.slice(0, 3)]
+        .filter(byFilter)
+        .slice(0, 24)
     }
     return rankItems(source, search).slice(0, 24)
   }, [
@@ -548,7 +571,9 @@ export default function CommandBar() {
                 setIndex((current) => (items.length ? (current + 1) % items.length : 0))
               } else if (event.key === 'ArrowUp') {
                 event.preventDefault()
-                setIndex((current) => (items.length ? (current - 1 + items.length) % items.length : 0))
+                setIndex((current) =>
+                  items.length ? (current - 1 + items.length) % items.length : 0
+                )
               } else if (event.key === 'Enter') {
                 event.preventDefault()
                 trigger(items[index])
@@ -564,8 +589,16 @@ export default function CommandBar() {
           </span>
         </div>
 
-        <div className="command-list" role="group" aria-label="Résultats" ref={listRef} onMouseLeave={restoreAppearance}>
-          {items.length === 0 && <p className="command-empty">Rien ne correspond. Essayez une adresse ou une action.</p>}
+        <div
+          className="command-list"
+          role="group"
+          aria-label="Résultats"
+          ref={listRef}
+          onMouseLeave={restoreAppearance}
+        >
+          {items.length === 0 && (
+            <p className="command-empty">Rien ne correspond. Essayez une adresse ou une action.</p>
+          )}
           {groups.map((group, groupIndex) => (
             <div className="command-group" key={group.name} role="group" aria-label={group.name}>
               <div className="command-group-title" aria-hidden="true">
@@ -599,8 +632,27 @@ export default function CommandBar() {
         </div>
 
         <div className="command-filters" role="tablist" aria-label="Filtres">
-          {([['all', 'Tout'], ['tabs', 'Onglets'], ['notes', 'Notes'], ['tasks', 'Tâches'], ['history', 'Historique'], ['downloads', 'Téléchargements']] as [Filter, string][]).map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={filter === id} className="command-filter" data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>
+          {(
+            [
+              ['all', 'Tout'],
+              ['tabs', 'Onglets'],
+              ['notes', 'Notes'],
+              ['tasks', 'Tâches'],
+              ['history', 'Historique'],
+              ['downloads', 'Téléchargements']
+            ] as [Filter, string][]
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={filter === id}
+              className="command-filter"
+              data-active={filter === id}
+              onClick={() => setFilter(id)}
+            >
+              {label}
+            </button>
           ))}
         </div>
 

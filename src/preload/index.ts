@@ -131,6 +131,7 @@ const api: VelaApi = {
     status: () => ipcRenderer.invoke('update:status'),
     check: () => ipcRenderer.invoke('update:check'),
     download: () => ipcRenderer.invoke('update:download'),
+    cancel: () => ipcRenderer.invoke('update:cancel'),
     install: () => ipcRenderer.invoke('update:install'),
     releases: () => ipcRenderer.invoke('update:releases'),
     onEvent: (callback: (info: import('@shared/api').UpdateInfo) => void) =>

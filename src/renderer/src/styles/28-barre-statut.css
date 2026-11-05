@@ -1,0 +1,353 @@
+/* Barre de statut : confidentialité et mise à jour, deux zones distinctes. */
+.statusbar {
+  --sb-surface: #211f1d;
+  --sb-ink: #f4f1ec;
+  --sb-muted: #bdb6ad;
+  --sb-line: #3b3733;
+  --sb-pill: #2b2825;
+  --sb-track: #3b3733;
+  --sb-accent: #9bcdbb;
+  --sb-primary: #f4f1ec;
+  --sb-primary-ink: #1c1b1a;
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 60px;
+  max-width: calc(100vw - 24px);
+  padding: 7px 10px;
+  border: 1px solid var(--sb-line);
+  border-radius: 18px;
+  background: var(--sb-surface);
+  color: var(--sb-ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-family: Inter, "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  z-index: 6;
+}
+
+:root[data-mode="light"] .statusbar {
+  --sb-surface: #ffffff;
+  --sb-ink: #1c1b1a;
+  --sb-muted: #5f5b57;
+  --sb-line: #ddd8d1;
+  --sb-pill: #f1eee9;
+  --sb-track: #e4e0db;
+  --sb-accent: #2f5d50;
+  --sb-primary: #1c1b1a;
+  --sb-primary-ink: #ffffff;
+  box-shadow: 0 2px 8px rgba(28, 27, 26, 0.06);
+}
+
+.statusbar-compact {
+  height: 52px;
+  padding: 4px 8px;
+}
+
+.statusbar-blocked,
+.statusbar-utility,
+.statusbar-primary,
+.statusbar-icon-btn,
+.statusbar-text-btn,
+.statusbar-secondary,
+.statusbar-update-zone {
+  min-height: 44px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.statusbar-blocked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--sb-pill);
+  color: var(--sb-ink);
+  font-weight: 500;
+}
+
+.statusbar-blocked:hover {
+  border-color: var(--sb-line);
+}
+
+.statusbar-utility {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-muted);
+}
+
+.statusbar-utility:hover {
+  background: var(--sb-pill);
+  color: var(--sb-ink);
+}
+
+.statusbar-sep {
+  flex: none;
+  width: 1px;
+  height: 28px;
+  background: var(--sb-line);
+  margin: 0 2px;
+}
+
+.statusbar-update {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.statusbar-update-zone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 34vw;
+  height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-ink);
+  text-align: left;
+}
+
+.statusbar-update-zone:hover {
+  background: var(--sb-pill);
+}
+
+.statusbar-update-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusbar-primary {
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sb-primary);
+  color: var(--sb-primary-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusbar-primary:hover {
+  opacity: 0.88;
+}
+
+.statusbar-primary-wide {
+  width: 100%;
+  height: 48px;
+}
+
+.statusbar-icon-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-muted);
+}
+
+.statusbar-icon-btn:hover {
+  background: var(--sb-pill);
+  color: var(--sb-ink);
+}
+
+.statusbar-download-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 30vw;
+  overflow: hidden;
+}
+
+.statusbar-download-label > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusbar-progress {
+  flex: none;
+  width: 96px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sb-track);
+}
+
+.statusbar-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sb-accent);
+  transition: width 0.18s ease;
+}
+
+.statusbar-text-btn {
+  height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-accent);
+  font-weight: 600;
+}
+
+.statusbar-text-btn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.statusbar-error {
+  max-width: min(620px, calc(100vw - 220px));
+}
+
+.statusbar-error-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sb-muted);
+  font-size: 14px;
+}
+
+.statusbar-detail {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--sb-line);
+  border-radius: 16px;
+  background: var(--sb-surface);
+  color: var(--sb-ink);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  white-space: normal;
+  outline: none;
+  z-index: 7;
+}
+
+.statusbar-detail:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 3px;
+}
+
+.statusbar-eyebrow {
+  margin: 0;
+  color: var(--sb-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.statusbar-detail h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.statusbar-summary {
+  margin: 0;
+  color: var(--sb-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.statusbar-secondary {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-ink);
+  font-weight: 500;
+}
+
+.statusbar-secondary:hover {
+  background: var(--sb-pill);
+}
+
+.statusbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  min-height: 44px;
+  color: var(--sb-accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.statusbar-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.statusbar-blocked:focus-visible,
+.statusbar-utility:focus-visible,
+.statusbar-primary:focus-visible,
+.statusbar-icon-btn:focus-visible,
+.statusbar-text-btn:focus-visible,
+.statusbar-secondary:focus-visible,
+.statusbar-update-zone:focus-visible,
+.statusbar-link:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .statusbar {
+    max-width: calc(100vw - 16px);
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .statusbar-update-zone {
+    max-width: 28vw;
+  }
+
+  .statusbar-download-label {
+    max-width: 24vw;
+  }
+
+  .statusbar-error {
+    max-width: calc(100vw - 180px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusbar,
+  .statusbar * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

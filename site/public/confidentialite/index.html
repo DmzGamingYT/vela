@@ -6,31 +6,32 @@
     <title>Confidentialité — Vela</title>
     <meta
       name="description"
-      content="Les 13 flux que Vela ouvre d’elle-même — météo, tunnel, modèles, mises à jour — et tout ce qui reste sur l’appareil."
+      content="Toutes les destinations que Vela contacte d’elle-même : météo, moteur de recherche, tunnel, modèles, mises à jour, icônes. Et tout ce qui reste sur l’appareil."
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151518" media="(prefers-color-scheme: dark)" />
-    <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Vela" />
-    <meta property="og:locale" content="fr_FR" />
-    <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
     <meta property="og:title" content="Confidentialité — Vela" />
     <meta property="og:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
-    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Les 13 flux que Vela ouvre, et tout ce qui reste sur l’appareil." />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Confidentialité — Vela" />
-    <meta name="twitter:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
-    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script src="/theme.js"></script>
+    <script>
+      ;(() => {
+        let theme = 'light'
+        let accent = '#5b5bd6'
+        try {
+          const stored = localStorage.getItem('vela-theme')
+          if (stored === 'light' || stored === 'dark') theme = stored
+          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
+          const storedAccent = localStorage.getItem('vela-site-accent')
+          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
+        } catch (error) {
+          /* stockage indisponible */
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.setProperty('--accent', accent)
+      })()
+    </script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
   </head>
@@ -58,7 +59,11 @@
       <header class="head">
         <a class="brand" href="/" aria-label="Vela, accueil">
           <span class="brand-mark" aria-hidden="true">
-            <img src="/favicon.svg" width="26" height="26" alt="Vela" />
+            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+              <circle cx="16.5" cy="6.7" r="1.75" fill="#F3C593" />
+              <path d="M11.4 4.1c-.8 3.4-2.1 8.7-3.5 13.6 2.6.5 4.5.4 6.2-.1-.7-3.6-1.5-7.7-2.7-13.5Z" fill="#fff" />
+              <path d="M5.6 19.7c1.4-.5 2.3.1 3.6 0 1.4-.1 2.1-.6 3.7-.2" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width=".9" stroke-linecap="round" />
+            </svg>
           </span>
           <span class="brand-name">Vela</span>
         </a>
@@ -97,7 +102,7 @@
             celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
           </p>
           <p class="meta">
-            <span>Version 0.3.22</span>
+            <span>Version 0.3.26</span>
             <span>13 flux décrits</span>
             <span>Sources du code</span>
           </p>
@@ -110,7 +115,7 @@
         </div>
       </section>
 
-      <div class="wrap section section-tete">
+      <div class="wrap section" style="padding-top: 56px">
         <section class="chapter" id="appareil" style="border-bottom: 0">
           <h2>Sur votre appareil</h2>
           <p class="lede">
@@ -265,8 +270,8 @@
               <tbody>
                 <tr>
                   <td class="dest"><span class="name">Modèle choisi</span>Le fournisseur configuré dans Réglages › Modèles<span class="hosts">api.openai.com · api.anthropic.com · generativelanguage.googleapis.com · api.x.ai · api.mistral.ai · api.deepseek.com · api.groq.com · api.cerebras.ai · openrouter.ai · translation.googleapis.com</span></td>
-                  <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche après votre accord pour cet hôte, ou la transcription d’une note vocale après votre accord.</td>
-                  <td>Votre demande, le texte des onglets joints, de la note ou des répliques de la planche, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
+                  <td>Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.</td>
+                  <td>Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.</td>
                   <td class="off">Rester en démo locale, ou brancher un serveur local.</td>
                 </tr>
                 <tr class="is-local">
@@ -314,7 +319,7 @@
                 <tr>
                   <td class="dest"><span class="name">Mises à jour</span>github.com — releases de Vela<span class="hosts">objects.githubusercontent.com · release-assets.githubusercontent.com</span></td>
                   <td>Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.</td>
-                  <td>La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml et sa signature sont téléchargés : la signature Ed25519 est vérifiée contre la clé publique épinglée dans l’application, puis l’empreinte SHA-512 du .dmg est comparée avant de proposer le fichier. Un manifeste non signé est refusé. Aucun identifiant, aucun réglage.</td>
+                  <td>La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.</td>
                   <td class="off">Aucun réglage : la requête a lieu.</td>
                 </tr>
               </tbody>
@@ -381,7 +386,6 @@
             <li>Un modèle local sur localhost (Ollama ou autre) ne fait sortir aucune donnée ; un endpoint distant configuré à la place envoie la demande à cet hôte.</li>
             <li>En mode démo, aucun modèle n’est appelé : le rapport de l’agent est simulé sur place.</li>
             <li>Une note vocale ne part vers un fournisseur distant qu’après votre confirmation explicite.</li>
-            <li>Une planche de BD ne part vers un hôte distant qu’après votre accord pour cet hôte, redemandé à chaque lancement ; une adresse locale n’a rien à demander.</li>
           </ul>
         </section>
 
@@ -427,7 +431,7 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.22 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
+        <p class="foot-note">Version 0.3.26 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

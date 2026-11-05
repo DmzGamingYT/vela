@@ -1,0 +1,63 @@
+/* Tuile de traduction : le fond et --halo sont posés ensemble par le composant. */
+.translate-btn {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid;
+  border-color: var(--translate-border);
+  border-radius: 14px;
+  background: var(--translate-background);
+  color: var(--translate-color);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+
+.translate-btn:disabled {
+  cursor: default;
+}
+
+.translate-btn:focus-visible {
+  outline: 2px solid var(--translate-accent, var(--clay));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.translate-btn svg {
+  display: block;
+  flex: none;
+}
+
+/* La palette montre le même dessin à 15 px : son halo reprend le fond de la
+   pastille, qui change avec la sélection. */
+.command-icon {
+  --command-icon-bg: color-mix(in srgb, var(--ink) 5%, transparent);
+  --halo: var(--command-icon-bg);
+  background: var(--command-icon-bg);
+}
+
+.command-item[data-active='true'] .command-icon {
+  --command-icon-bg: color-mix(in srgb, var(--clay) 12%, transparent);
+  --halo: var(--command-icon-bg);
+}
+
+/* La tuile de 56 px a besoin de la hauteur de la barre, pas de la pastille de 34 px. */
+.pane-actions[data-has-translate='true'] {
+  height: 56px;
+  padding: 0;
+  gap: 2px;
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .translate-btn {
+    transition: none;
+  }
+}

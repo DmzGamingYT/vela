@@ -121,36 +121,153 @@
     .vt-hidden .vt-layer { display: none !important; }
     .vt-launch {
       position: fixed; right: 16px; bottom: 16px; z-index: 2147483601;
-      width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.14);
-      background: rgba(21,21,24,.92); color: #f3f1ee; font: 600 11px/1 system-ui, sans-serif;
-      cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.3);
-    }
-    .vt-panel {
-      position: fixed; right: 16px; bottom: 64px; z-index: 2147483602; width: 268px;
-      padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.12);
-      background: rgba(21,21,24,.96); color: #f3f1ee; box-shadow: 0 18px 48px rgba(0,0,0,.4);
-      font: 12px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+      display: grid; place-items: center; width: 46px; height: 46px; border-radius: 15px;
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,0)),
+        rgba(21,21,24,.94);
+      color: #f3f1ee; font: 700 11px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+      letter-spacing: .08em; cursor: pointer;
+      box-shadow: 0 12px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.12);
       backdrop-filter: blur(14px);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
     }
-    .vt-panel h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .01em; }
-    .vt-panel label { display: block; margin: 8px 0 3px; color: rgba(243,241,238,.62); font-size: 11px; }
-    .vt-panel select, .vt-panel input {
-      width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06);
-      color: inherit; font: inherit;
+    .vt-launch:hover {
+      transform: translateY(-1px);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0)),
+        rgba(28,28,34,.96);
+      box-shadow: 0 16px 36px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.16);
     }
-    .vt-panel .vt-row { display: flex; gap: 6px; margin-top: 10px; }
-    .vt-panel button {
-      flex: 1; padding: 6px 8px; border-radius: 8px; cursor: pointer;
-      border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08);
-      color: inherit; font: inherit;
+    .vt-launch:focus-visible { outline: 2px solid #8b85ff; outline-offset: 3px; }
+    .vt-launch[hidden] { display: none; }
+    .vt-panel {
+      position: fixed; right: 16px; bottom: 72px; z-index: 2147483602;
+      width: min(348px, calc(100vw - 32px)); max-height: calc(100vh - 96px);
+      overflow-y: auto; box-sizing: border-box; padding: 18px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,.13);
+      background:
+        radial-gradient(120% 90% at 100% 0%, rgba(91,91,214,.18), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015)),
+        rgba(18,18,22,.97);
+      color: #f3f1ee;
+      box-shadow: 0 28px 70px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);
+      font: 12px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+      backdrop-filter: blur(22px) saturate(140%);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.18) transparent;
+      animation: vt-panel-in .2s ease both;
     }
-    .vt-panel button.vt-primary { background: #5b5bd6; border-color: #5b5bd6; color: #fff; }
-    .vt-panel .vt-status { margin-top: 9px; min-height: 15px; color: rgba(243,241,238,.62); font-size: 11px; }
-    .vt-panel .vt-note { margin: 0 0 8px; color: rgba(243,241,238,.62); font-size: 11px; line-height: 1.4; }
-    .vt-panel .vt-check { display: flex; align-items: center; gap: 6px; margin-top: 9px; color: rgba(243,241,238,.8); }
-    .vt-panel .vt-check input { width: auto; }
-    @media (prefers-reduced-motion: reduce) { .vt-panel, .vt-bubble { transition: none !important; } }
+    .vt-panel[hidden] { display: none; }
+    .vt-panel::before {
+      content: ''; position: absolute; top: 0; left: 18px; right: 18px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(139,133,255,.65), transparent);
+      pointer-events: none;
+    }
+    @keyframes vt-panel-in { from { opacity: 0; transform: translateY(6px) scale(.99); } }
+    .vt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .vt-eyebrow {
+      display: block; margin-bottom: 5px; color: rgba(243,241,238,.45);
+      font-size: 8px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+    }
+    .vt-panel h2 {
+      margin: 0; font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px; font-weight: 400; line-height: 1.05; letter-spacing: -.02em;
+    }
+    .vt-close {
+      display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px;
+      padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05); color: rgba(243,241,238,.7);
+      font: 400 18px/1 system-ui, sans-serif; cursor: pointer;
+      transition: background .18s ease, color .18s ease;
+    }
+    .vt-close:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .vt-close:focus-visible { outline: 2px solid #8b85ff; outline-offset: 2px; }
+    .vt-panel .vt-note {
+      margin: 12px 0 0; padding: 9px 10px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04);
+      color: rgba(243,241,238,.62); font-size: 10.5px; line-height: 1.45;
+    }
+    .vt-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+    .vt-section-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-bottom: 8px; color: rgba(243,241,238,.42);
+      font-size: 8px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+    }
+    .vt-section-head .vt-optional { color: rgba(243,241,238,.28); letter-spacing: .08em; }
+    .vt-panel label { display: block; margin: 0 0 5px; color: rgba(243,241,238,.64); font-size: 10px; }
+    .vt-panel select + label,
+    .vt-panel input[type="text"] + label,
+    .vt-panel input[type="password"] + label { margin-top: 10px; }
+    .vt-panel select, .vt-panel input[type="text"], .vt-panel input[type="password"] {
+      width: 100%; box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 9px;
+      border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.055);
+      color: #f3f1ee; font: inherit;
+      transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .vt-panel select:focus, .vt-panel input[type="text"]:focus, .vt-panel input[type="password"]:focus {
+      outline: none; border-color: rgba(139,133,255,.72);
+      background: rgba(255,255,255,.075); box-shadow: 0 0 0 3px rgba(91,91,214,.18);
+    }
+    .vt-panel select {
+      appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 30px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(243,241,238,.5) 50%),
+        linear-gradient(135deg, rgba(243,241,238,.5) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 15px, calc(100% - 9px) 15px;
+      background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+    }
+    .vt-panel select option { background: #1a1a20; color: #f3f1ee; }
+    .vt-hint { margin: 6px 0 0; color: rgba(243,241,238,.35); font-size: 9.5px; }
+    .vt-checks { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+    .vt-panel .vt-check {
+      position: relative; display: flex; align-items: flex-start; gap: 9px;
+      margin: 0; padding: 7px 2px; color: rgba(243,241,238,.82);
+      font-size: 11px; cursor: pointer;
+    }
+    .vt-panel .vt-check input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .vt-switch {
+      position: relative; width: 30px; height: 18px; flex: 0 0 30px; margin-top: 1px;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .vt-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px;
+      border-radius: 50%; background: rgba(243,241,238,.72);
+      box-shadow: 0 1px 2px rgba(0,0,0,.3);
+      transition: transform .18s ease, background .18s ease;
+    }
+    .vt-check input:checked + .vt-switch { background: #5b5bd6; border-color: #7a76ff; }
+    .vt-check input:checked + .vt-switch::after { transform: translateX(12px); background: #fff; }
+    .vt-check input:focus-visible + .vt-switch { outline: 2px solid #8b85ff; outline-offset: 2px; }
+    .vt-check-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .vt-check-copy small { color: rgba(243,241,238,.38); font-size: 9.5px; line-height: 1.35; }
+    .vt-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .vt-actions button {
+      flex: 1; height: 36px; padding: 0 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07);
+      color: #f3f1ee; font: 600 11.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+      transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .vt-actions button:hover { background: rgba(255,255,255,.12); }
+    .vt-actions button.vt-primary {
+      flex: 1.4; background: #5b5bd6; border-color: #6e6aee; color: #fff;
+      box-shadow: 0 6px 18px rgba(91,91,214,.28);
+    }
+    .vt-actions button.vt-primary:hover { background: #6965e8; }
+    .vt-actions button:focus-visible { outline: 2px solid #8b85ff; outline-offset: 2px; }
+    .vt-status {
+      display: flex; align-items: center; gap: 7px; margin-top: 12px;
+      min-height: 15px; color: rgba(243,241,238,.45); font-size: 9.5px;
+    }
+    .vt-status-dot {
+      width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%;
+      background: #6fcf97; box-shadow: 0 0 8px rgba(111,207,151,.55);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .vt-panel, .vt-bubble, .vt-launch { transition: none !important; animation: none !important; }
+    }
   `
 
   function injectStyle() {
@@ -2654,6 +2771,7 @@
     launcher.className = 'vt-launch'
     launcher.textContent = 'BD'
     launcher.title = 'Traduire les planches (Alt+T)'
+    launcher.setAttribute('aria-label', 'Ouvrir la traduction de BD')
     launcher.addEventListener('click', () => {
       panel.hidden = false
       launcher.hidden = true
@@ -2664,9 +2782,17 @@
     panel.className = 'vt-panel'
     panel.hidden = true
     panel.innerHTML = `
-      <h2>Traduction de BD</h2>
-      <div data-provider-fields>
-        <label for="vt-provider">Traducteur</label>
+      <div class="vt-head">
+        <div>
+          <span class="vt-eyebrow">Vela · lecture locale</span>
+          <h2>Traduction de BD</h2>
+        </div>
+        <button type="button" class="vt-close" id="vt-close" title="Fermer" aria-label="Fermer">×</button>
+      </div>
+      <p class="vt-note" data-vt-note></p>
+      <div data-provider-fields class="vt-section">
+        <div class="vt-section-head"><span>Traducteur</span><span class="vt-optional">API</span></div>
+        <label for="vt-provider">Fournisseur</label>
         <select id="vt-provider">
           <option value="openai">OpenAI</option>
           <option value="openrouter">OpenRouter</option>
@@ -2678,18 +2804,43 @@
         <label for="vt-model">Modèle</label>
         <input id="vt-model" type="text" spellcheck="false" placeholder="gpt-4o-mini">
       </div>
-      <label for="vt-source">Langue des planches (OCR)</label>
-      <input id="vt-source" type="text" spellcheck="false" placeholder="eng, ita, spa, fra, jpn…">
-      <label class="vt-check"><input id="vt-auto" type="checkbox"> Traduire au fil du chargement</label>
-      <label class="vt-check"><input id="vt-deep" type="checkbox"> Relire les zones sans texte</label>
-      <label for="vt-context">Contexte (genre, personnages, registre)</label>
-      <input id="vt-context" type="text" spellcheck="false" placeholder="polar, deux frères, tutoiement">
-      <div class="vt-row">
+      <div class="vt-section">
+        <div class="vt-section-head"><span>Lecture</span><span class="vt-optional">OCR local</span></div>
+        <label for="vt-source">Langue des planches</label>
+        <input id="vt-source" type="text" spellcheck="false" placeholder="eng, ita, spa, fra, jpn…">
+        <p class="vt-hint">Codes Tesseract : eng, ita, spa, fra, jpn.</p>
+        <div class="vt-checks">
+          <label class="vt-check" for="vt-auto">
+            <input id="vt-auto" type="checkbox">
+            <span class="vt-switch" aria-hidden="true"></span>
+            <span class="vt-check-copy">
+              <span>Traduire au fil du chargement</span>
+              <small>Chaque planche visible part dès qu’elle arrive.</small>
+            </span>
+          </label>
+          <label class="vt-check" for="vt-deep">
+            <input id="vt-deep" type="checkbox">
+            <span class="vt-switch" aria-hidden="true"></span>
+            <span class="vt-check-copy">
+              <span>Relire les zones sans texte</span>
+              <small>Repère aussi les cartouches et les éclats.</small>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="vt-section">
+        <div class="vt-section-head"><span>Contexte</span><span class="vt-optional">Optionnel</span></div>
+        <label for="vt-context">Genre, personnages, registre</label>
+        <input id="vt-context" type="text" spellcheck="false" placeholder="polar, deux frères, tutoiement">
+      </div>
+      <div class="vt-actions">
         <button type="button" class="vt-primary" id="vt-run">Traduire</button>
         <button type="button" id="vt-clear">Effacer</button>
-        <button type="button" id="vt-close">Fermer</button>
       </div>
-      <div class="vt-status" id="vt-status">prêt</div>
+      <div class="vt-status" role="status" aria-live="polite">
+        <span class="vt-status-dot" aria-hidden="true"></span>
+        <span id="vt-status">prêt</span>
+      </div>
     `
     document.documentElement.appendChild(panel)
 
@@ -2702,14 +2853,13 @@
     const contextField = panel.querySelector('#vt-context')
     statusEl = panel.querySelector('#vt-status')
 
+    const note = panel.querySelector('[data-vt-note]')
     // Dans Vela, le fournisseur et la clé vivent dans Réglages › Modèles.
     if (viaVela()) {
-      const fields = panel.querySelector('[data-provider-fields]')
-      fields?.remove()
-      const note = document.createElement('p')
-      note.className = 'vt-note'
-      note.textContent = 'Traduction via Vela : le modèle se choisit dans Réglages › Modèles.'
-      panel.querySelector('h2')?.after(note)
+      panel.querySelector('[data-provider-fields]')?.remove()
+      if (note) note.textContent = 'Traduction via Vela : le modèle se choisit dans Réglages › Modèles.'
+    } else if (note) {
+      note.textContent = 'La clé et le modèle restent dans ce navigateur, jamais dans la page.'
     }
 
     provider.value = CFG.provider

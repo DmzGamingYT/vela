@@ -14,7 +14,7 @@ import { appearanceState, applyAppearance } from './lib/appearance'
 // (plus de la moitié du bundle) et la mémoire du renderer reste plus basse.
 const AgentCanvas = lazy(() => import('./components/AgentCanvas'))
 const BookmarksPanel = lazy(() => import('./components/BookmarksPanel'))
-const BriefPanel = lazy(() => import('./components/BriefPanel'))
+const SessionsPanel = lazy(() => import('./components/SessionsPanel'))
 const HistoryPanel = lazy(() => import('./components/HistoryPanel'))
 const CommandBar = lazy(() => import('./components/CommandBar'))
 const DownloadsPanel = lazy(() => import('./components/DownloadsPanel'))
@@ -159,7 +159,7 @@ export default function App() {
           jamais au-dessus du contenu des pages (WebContentsView séparées). */}
       <AmbienceScene ambience={ambience} className="ambience-chrome" />
       <SpaceRail />
-      {!collapsed && <Sidebar />}
+      <Sidebar collapsed={collapsed} />
       <Workspace />
       <Suspense fallback={null}>
         <Presence open={agentOpen} exit={!notesOpen}>
@@ -171,8 +171,8 @@ export default function App() {
         <Presence open={overlay === 'command'} exit={!overlay}>
           <CommandBar />
         </Presence>
-        <Presence open={overlay === 'brief'} exit={!overlay}>
-          <BriefPanel />
+        <Presence open={overlay === 'sessions'} exit={!overlay}>
+          <SessionsPanel />
         </Presence>
         <Presence open={overlay === 'settings'} exit={!overlay}>
           <SettingsPanel />

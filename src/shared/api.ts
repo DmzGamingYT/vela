@@ -197,6 +197,7 @@ export type UpdateState =
   | 'available'
   | 'downloading'
   | 'downloaded'
+  | 'cancelled'
   | 'not-available'
   | 'error'
 
@@ -476,6 +477,7 @@ export interface VelaApi {
     status(): Promise<UpdateInfo>
     check(): Promise<UpdateInfo>
     download(): Promise<UpdateInfo>
+    cancel(): Promise<UpdateInfo>
     install(): Promise<void>
     releases(): Promise<void>
     onEvent(callback: (info: UpdateInfo) => void): () => void

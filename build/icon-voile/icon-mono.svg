@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="278 260 468 452" width="16" height="16"
+     style="color:#000" role="img" aria-label="Vela">
+  <!-- Gabarit monochrome pour la barre de menus : noir plein, fond transparent.
+       macOS inverse lui-même les images « template ». -->
+  <style>.mark { fill: currentColor; }</style>
+  <path class="mark" d="M480 268 L312 644 L496 644 Z" />
+  <path class="mark" d="M630 368 L552 644 L712 644 Z" />
+  <path class="mark" d="M286 636 H738 L694 704 H330 Z" />
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
+     style="--vela-night:#1F1E45;--vela-edge:#34336B;--vela-sail:#F4EEE3;--vela-hull:#D9774F"
+     role="img" aria-labelledby="vela-title vela-desc">
+  <title id="vela-title">Vela</title>
+  <desc id="vela-desc">Deux voiles crème sur une coque terracotta, dans un carré bleu nuit.</desc>
+  <!-- Icône plate : aucun dégradé, aucune ombre, aucun texte. -->
+  <style>
+    .tile { fill: var(--vela-night); stroke: var(--vela-edge); stroke-width: 6; }
+    .sail { fill: var(--vela-sail); }
+    .sail--small { fill: var(--vela-sail); opacity: .72; }
+    .hull { fill: var(--vela-hull); }
+  </style>
+  <rect class="tile" x="99" y="99" width="826" height="826" rx="181" />
+  <path class="sail" d="M480 268 L312 644 L496 644 Z" />
+  <path class="sail--small" d="M630 368 L552 644 L712 644 Z" />
+  <path class="hull" d="M286 636 H738 L694 704 H330 Z" />
+</svg>

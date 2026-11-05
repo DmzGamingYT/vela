@@ -106,15 +106,7 @@ function countLabel(count: number): string {
 }
 
 /** Pastille numérotée neutre : le chrome ne prend jamais la teinte de l’espace. */
-function SectionTitle({
-  index,
-  title,
-  hint
-}: {
-  index: number
-  title: string
-  hint?: string
-}) {
+function SectionTitle({ index, title, hint }: { index: number; title: string; hint?: string }) {
   return (
     <div className="space-section-head">
       <span className="space-section-index" aria-hidden="true">
@@ -149,7 +141,9 @@ export default function SpaceDialog() {
   const [background, setBackground] = useState<SpaceBackground>(existing?.background ?? 'none')
   const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
-  const [shortcuts, setShortcuts] = useState<SpaceShortcut[]>(() => [...(existing?.shortcuts ?? [])])
+  const [shortcuts, setShortcuts] = useState<SpaceShortcut[]>(() => [
+    ...(existing?.shortcuts ?? [])
+  ])
   const [watchlist, setWatchlist] = useState(existing?.watchlist === true)
   const [letterboxd, setLetterboxd] = useState(existing?.letterboxd ?? '')
 
@@ -186,7 +180,9 @@ export default function SpaceDialog() {
   const fileRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const sheetRef = useModalFocus<HTMLDivElement>()
-  const templateSnapshot = useRef<{ draft: SpaceTemplateDraft; starter: string | null } | null>(null)
+  const templateSnapshot = useRef<{ draft: SpaceTemplateDraft; starter: string | null } | null>(
+    null
+  )
   const templateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const initialRef = useRef<DraftState>({
@@ -220,7 +216,9 @@ export default function SpaceDialog() {
   const suggestedName = suggestSpaceName(otherNames)
   const normalizedLetterboxd = normalizeLetterboxd(letterboxd)
   const letterboxdError =
-    letterboxd.trim() && !normalizedLetterboxd ? 'Nom de compte invalide — par exemple « votre-nom ».' : null
+    letterboxd.trim() && !normalizedLetterboxd
+      ? 'Nom de compte invalide — par exemple « votre-nom ».'
+      : null
   const tint = tintForColor(color)
   const tintLabel = tint?.label ?? 'Personnalisée'
   const ambienceLabel = SPACE_BACKGROUNDS.find((item) => item.id === background)?.label ?? 'Aucune'
@@ -349,7 +347,9 @@ export default function SpaceDialog() {
     setSiteError(null)
     setNameTouched(false)
     markApplied(preset.label)
-    announce(`Modèle ${preset.label} appliqué : ${countLabel(next.shortcuts.length)}, ${SPACE_BACKGROUNDS.find((item) => item.id === preset.background)?.label ?? 'aucune ambiance'}.`)
+    announce(
+      `Modèle ${preset.label} appliqué : ${countLabel(next.shortcuts.length)}, ${SPACE_BACKGROUNDS.find((item) => item.id === preset.background)?.label ?? 'aucune ambiance'}.`
+    )
   }
 
   const applyBlank = (): void => {
@@ -552,167 +552,22 @@ export default function SpaceDialog() {
             </p>
             <h1>{existing ? existing.name : 'Un espace à part'}</h1>
             <p className="sheet-lede">
-              Un espace garde ses propres cookies et sessions : deux comptes sur le même site, sans conflit.
+              Un espace garde ses propres cookies et sessions : deux comptes sur le même site, sans
+              conflit.
             </p>
           </div>
-          <button type="button" className="icon-btn" onClick={requestClose} title="Fermer" aria-label="Fermer">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={requestClose}
+            title="Fermer"
+            aria-label="Fermer"
+          >
             <Icon name="close" size={18} />
           </button>
         </header>
 
         <form ref={formRef} className="space-body" onSubmit={submit}>
-          <aside
-            className="space-preview"
-            data-mode={previewMode}
-            data-bg={background}
-            data-editing={photo ? 'true' : undefined}
-            style={{ '--space-color': color } as CSSProperties}
-            aria-label="Aperçu en direct de l’espace"
-          >
-            <div className="space-preview-top">
-              <span className="space-preview-label">Aperçu en direct</span>
-              <div className="space-mode" role="radiogroup" aria-label="Aperçu clair ou sombre">
-                {(['light', 'dark'] as PreviewMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={previewMode === mode}
-                    className="space-mode-btn"
-                    data-active={previewMode === mode ? 'true' : undefined}
-                    onClick={() => setPreviewMode(mode)}
-                  >
-                    <Icon name={mode === 'light' ? 'sun' : 'moon'} size={12} />
-                    {mode === 'light' ? 'Clair' : 'Sombre'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {photo ? (
-              <div className="space-preview-editor">
-                <SpaceAvatarEditor
-                  src={photo}
-                  color={color}
-                  onAccept={(next) => {
-                    setAvatar(next)
-                    setAvatarSource('photo')
-                    setPhoto(null)
-                    setStarter(null)
-                  }}
-                  onCancel={() => {
-                    setPhoto(null)
-                    setPhotoError(null)
-                  }}
-                />
-              </div>
-            ) : (
-              <>
-                <div className="preview-window">
-                  <div className="preview-rail">
-                    <span className="preview-chip" data-active="true">
-                      <SpaceAvatar space={{ name: previewName, color, avatar }} size={24} />
-                    </span>
-                    {otherSpaces.slice(0, 3).map((space) => (
-                      <span key={space.id} className="preview-chip">
-                        <SpaceAvatar space={space} size={24} />
-                      </span>
-                    ))}
-                    <span className="preview-chip preview-chip-add">
-                      <Icon name="plus" size={11} />
-                    </span>
-                  </div>
-
-                  <div className="preview-app">
-                    <div className="preview-bar">
-                      <span className="preview-wordmark">
-                        Vela<span>.</span>
-                      </span>
-                      <span className="preview-address" />
-                    </div>
-                    <div className="preview-body">
-                      <div className="preview-side">
-                        <div className="preview-space">
-                          <SpaceAvatar space={{ name: previewName, color, avatar }} size={18} />
-                          <span>{previewName}</span>
-                        </div>
-                        <span className="preview-brief" />
-                        <span className="preview-tab" data-active="true">
-                          Aujourd’hui
-                        </span>
-                        <span className="preview-tab">Notes</span>
-                        <span className="preview-side-label">Sites épinglés</span>
-                        <div className="preview-pins">
-                          {shortcuts.slice(0, 5).map((shortcut) => (
-                            <Favicon
-                              key={shortcut.id}
-                              url={shortcut.url}
-                              label={shortcut.title}
-                              size={13}
-                              spaceId={iconSpaceId}
-                              cacheOnly
-                            />
-                          ))}
-                          {shortcuts.length > 5 ? (
-                            <span className="preview-more">+{shortcuts.length - 5}</span>
-                          ) : null}
-                          {shortcuts.length === 0 ? <span className="preview-empty">Aucun site</span> : null}
-                        </div>
-                      </div>
-                      <div className="preview-page">
-                        <span className="preview-hello">
-                          Bonsoir<span>.</span>
-                        </span>
-                        <span className="preview-search">
-                          <Icon name="search" size={9} />
-                          Rechercher
-                        </span>
-                        <div className="preview-tiles">
-                          {shortcuts.slice(0, 4).map((shortcut) => (
-                            <span className="preview-tile" key={shortcut.id}>
-                              <Favicon
-                                url={shortcut.url}
-                                label={shortcut.title}
-                                size={14}
-                                spaceId={iconSpaceId}
-                                cacheOnly
-                              />
-                              <span>{shortcut.title}</span>
-                            </span>
-                          ))}
-                          {shortcuts.length === 0 ? (
-                            <>
-                              <span className="preview-tile preview-tile-empty" />
-                              <span className="preview-tile preview-tile-empty" />
-                              <span className="preview-tile preview-tile-empty" />
-                            </>
-                          ) : null}
-                        </div>
-                        <span className="preview-lines">
-                          <i />
-                          <i />
-                          <i />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-preview-chips">
-                  <span className="space-preview-chip">
-                    <i style={{ background: color }} aria-hidden="true" />
-                    {tintLabel}
-                  </span>
-                  <span className="space-preview-chip">{ambienceLabel}</span>
-                  <span className="space-preview-chip">{countLabel(shortcuts.length)}</span>
-                </div>
-                <p className="space-preview-note">
-                  Aperçu en direct — seule cette fenêtre prend la teinte et l’ambiance.
-                </p>
-              </>
-            )}
-          </aside>
-
           <div className="space-fields-v2">
             <section className="space-section">
               <SectionTitle index={1} title="Nom" />
@@ -793,7 +648,7 @@ export default function SpaceDialog() {
                   role="radio"
                   aria-checked={starter === 'blank'}
                   tabIndex={starter === 'blank' ? 0 : -1}
-                  className="space-template"
+                  className="space-template space-template-wide"
                   data-active={starter === 'blank' ? 'true' : undefined}
                   onClick={applyBlank}
                 >
@@ -816,7 +671,8 @@ export default function SpaceDialog() {
                 {SPACE_PRESETS.map((preset) => {
                   const sites = shortcutsForSet(preset.id)
                   const ambience =
-                    SPACE_BACKGROUNDS.find((item) => item.id === preset.background)?.label ?? 'Aucune'
+                    SPACE_BACKGROUNDS.find((item) => item.id === preset.background)?.label ??
+                    'Aucune'
                   const active = starter === preset.id
                   return (
                     <button
@@ -901,7 +757,9 @@ export default function SpaceDialog() {
                       const step = event.key === 'ArrowRight' ? 1 : -1
                       const next = (index + step + AVATAR_SOURCES.length) % AVATAR_SOURCES.length
                       setAvatarSource(AVATAR_SOURCES[next].id)
-                      document.getElementById(`space-avatar-tab-${AVATAR_SOURCES[next].id}`)?.focus()
+                      document
+                        .getElementById(`space-avatar-tab-${AVATAR_SOURCES[next].id}`)
+                        ?.focus()
                     }}
                   >
                     {source.label}
@@ -1032,7 +890,10 @@ export default function SpaceDialog() {
                         importPhoto(event.dataTransfer.files?.[0])
                       }}
                     >
-                      <span className="space-photo-preview" data-empty={storedImage ? undefined : 'true'}>
+                      <span
+                        className="space-photo-preview"
+                        data-empty={storedImage ? undefined : 'true'}
+                      >
                         {storedImage ? (
                           <img src={storedImage} alt="Photo de profil de l’espace" />
                         ) : (
@@ -1043,14 +904,22 @@ export default function SpaceDialog() {
                         <strong>{storedImage ? 'Photo importée' : 'Déposez une photo'}</strong>
                         <small>PNG, JPEG ou WebP, 8 Mo au plus — recadrée en carré</small>
                       </span>
-                      <button type="button" className="space-small-btn" onClick={() => fileRef.current?.click()}>
+                      <button
+                        type="button"
+                        className="space-small-btn"
+                        onClick={() => fileRef.current?.click()}
+                      >
                         <Icon name="image" size={12} />
                         {storedImage ? 'Remplacer' : 'Importer'}
                       </button>
                     </div>
                     {storedImage && !photo ? (
                       <div className="space-photo-actions">
-                        <button type="button" className="space-inline-link" onClick={() => setPhoto(storedImage)}>
+                        <button
+                          type="button"
+                          className="space-inline-link"
+                          onClick={() => setPhoto(storedImage)}
+                        >
                           <Icon name="edit" size={11} />
                           Recadrer
                         </button>
@@ -1115,7 +984,11 @@ export default function SpaceDialog() {
                         data-active={active ? 'true' : undefined}
                         onClick={() => setTint(entry.color)}
                       >
-                        <span className="space-tint-dot" style={{ background: entry.color }} aria-hidden="true">
+                        <span
+                          className="space-tint-dot"
+                          style={{ background: entry.color }}
+                          aria-hidden="true"
+                        >
                           {active ? <Icon name="check" size={11} /> : null}
                         </span>
                         <span className="space-tint-name">{entry.label}</span>
@@ -1258,13 +1131,16 @@ export default function SpaceDialog() {
                     }}
                   >
                     <Icon name="sparkles" size={12} />
-                    Ajouter les {countLabel(SPACE_SHORTCUT_SETS[suggestedSet]?.length ?? 0)} conseillés pour{' '}
-                    {suggestedLabel}
+                    Ajouter les {countLabel(SPACE_SHORTCUT_SETS[suggestedSet]?.length ?? 0)}{' '}
+                    conseillés pour {suggestedLabel}
                   </button>
                 ) : null}
 
                 {shortcuts.length > 0 ? (
-                  <ul className="space-pins" aria-label="Sites épinglés, réordonnables avec Alt et les flèches">
+                  <ul
+                    className="space-pins"
+                    aria-label="Sites épinglés, réordonnables avec Alt et les flèches"
+                  >
                     {shortcuts.map((shortcut, index) => (
                       <li
                         key={shortcut.id}
@@ -1279,7 +1155,10 @@ export default function SpaceDialog() {
                         data-over={dropTarget === shortcut.id ? 'true' : undefined}
                         aria-label={`${shortcut.title}, position ${index + 1} sur ${shortcuts.length}. Alt plus flèche pour déplacer.`}
                         onKeyDown={(event) => {
-                          if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+                          if (
+                            event.altKey &&
+                            (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+                          ) {
                             event.preventDefault()
                             movePin(shortcut.id, event.key === 'ArrowUp' ? -1 : 1)
                           }
@@ -1348,7 +1227,9 @@ export default function SpaceDialog() {
                           aria-label={`Retirer ${shortcut.title}`}
                           title={`Retirer ${shortcut.title}`}
                           onClick={() => {
-                            setShortcuts((current) => current.filter((item) => item.id !== shortcut.id))
+                            setShortcuts((current) =>
+                              current.filter((item) => item.id !== shortcut.id)
+                            )
                             setStarter(null)
                           }}
                         >
@@ -1380,7 +1261,11 @@ export default function SpaceDialog() {
                       addSite(siteInput)
                     }}
                   />
-                  <button type="button" className="space-small-btn" onClick={() => addSite(siteInput)}>
+                  <button
+                    type="button"
+                    className="space-small-btn"
+                    onClick={() => addSite(siteInput)}
+                  >
                     <Icon name="plus" size={12} />
                     Épingler
                   </button>
@@ -1391,8 +1276,8 @@ export default function SpaceDialog() {
                   </p>
                 ) : null}
                 <p className="space-help">
-                  Glissez une ligne pour changer l’ordre, ou une adresse depuis la page. Au clavier :
-                  Alt + flèches.
+                  Glissez une ligne pour changer l’ordre, ou une adresse depuis la page. Au clavier
+                  : Alt + flèches.
                 </p>
               </div>
             </details>
@@ -1453,7 +1338,9 @@ export default function SpaceDialog() {
                 <div className="space-toggle-row">
                   <div>
                     <span>Liste à voir</span>
-                    <small>Une carte sur l’accueil de cet espace : titres à voir et tirage « Ce soir ».</small>
+                    <small>
+                      Une carte sur l’accueil de cet espace : titres à voir et tirage « Ce soir ».
+                    </small>
                   </div>
                   <button
                     type="button"
@@ -1481,8 +1368,8 @@ export default function SpaceDialog() {
                   />
                 </label>
                 <p className="space-help">
-                  Facultatif. Ouvre vos pages Letterboxd dans votre session. L’import du journal lit une fois le
-                  flux RSS public du profil, à votre clic.
+                  Facultatif. Ouvre vos pages Letterboxd dans votre session. L’import du journal lit
+                  une fois le flux RSS public du profil, à votre clic.
                 </p>
                 {letterboxdError ? (
                   <p className="space-error" role="alert">
@@ -1490,8 +1377,8 @@ export default function SpaceDialog() {
                   </p>
                 ) : null}
                 <p className="space-help">
-                  Niveau de blocage, moteur de recherche, page de démarrage et historique restent des réglages
-                  globaux : ils sont dans Réglages, pas ici.
+                  Niveau de blocage, moteur de recherche, page de démarrage et historique restent
+                  des réglages globaux : ils sont dans Réglages, pas ici.
                 </p>
               </div>
             </details>
@@ -1544,7 +1431,11 @@ export default function SpaceDialog() {
                         : 'Cookies, stockage, cache et historique de cet espace seront effacés. Ses réglages et sites épinglés restent. Action définitive.'}
                     </p>
                     <div className="space-confirm-actions">
-                      <button type="button" className="space-small-btn" onClick={() => setManageAction(null)}>
+                      <button
+                        type="button"
+                        className="space-small-btn"
+                        onClick={() => setManageAction(null)}
+                      >
                         Annuler
                       </button>
                       <button
@@ -1555,7 +1446,9 @@ export default function SpaceDialog() {
                           else void clearSpaceData(existing.id)
                         }}
                       >
-                        {manageAction === 'delete' ? 'Supprimer définitivement' : 'Vider définitivement'}
+                        {manageAction === 'delete'
+                          ? 'Supprimer définitivement'
+                          : 'Vider définitivement'}
                       </button>
                     </div>
                   </div>
@@ -1564,12 +1457,174 @@ export default function SpaceDialog() {
             ) : null}
           </div>
 
+          <aside
+            className="space-preview"
+            data-mode={previewMode}
+            data-bg={background}
+            data-editing={photo ? 'true' : undefined}
+            style={{ '--space-color': color } as CSSProperties}
+            aria-label="Aperçu en direct de l’espace"
+          >
+            <div className="space-preview-top">
+              <span className="space-preview-label">Aperçu en direct</span>
+              <div className="space-mode" role="radiogroup" aria-label="Aperçu clair ou sombre">
+                {(['light', 'dark'] as PreviewMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={previewMode === mode}
+                    className="space-mode-btn"
+                    data-active={previewMode === mode ? 'true' : undefined}
+                    onClick={() => setPreviewMode(mode)}
+                  >
+                    <Icon name={mode === 'light' ? 'sun' : 'moon'} size={12} />
+                    {mode === 'light' ? 'Clair' : 'Sombre'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {photo ? (
+              <div className="space-preview-editor">
+                <SpaceAvatarEditor
+                  src={photo}
+                  color={color}
+                  onAccept={(next) => {
+                    setAvatar(next)
+                    setAvatarSource('photo')
+                    setPhoto(null)
+                    setStarter(null)
+                  }}
+                  onCancel={() => {
+                    setPhoto(null)
+                    setPhotoError(null)
+                  }}
+                />
+              </div>
+            ) : (
+              <>
+                <div className="preview-window">
+                  <div className="preview-rail">
+                    <span className="preview-chip" data-active="true">
+                      <SpaceAvatar space={{ name: previewName, color, avatar }} size={24} />
+                    </span>
+                    {otherSpaces.slice(0, 3).map((space) => (
+                      <span key={space.id} className="preview-chip">
+                        <SpaceAvatar space={space} size={24} />
+                      </span>
+                    ))}
+                    <span className="preview-chip preview-chip-add">
+                      <Icon name="plus" size={11} />
+                    </span>
+                  </div>
+
+                  <div className="preview-app">
+                    <div className="preview-bar">
+                      <span className="preview-wordmark">
+                        Vela<span>.</span>
+                      </span>
+                      <span className="preview-address" />
+                    </div>
+                    <div className="preview-body">
+                      <div className="preview-side">
+                        <div className="preview-space">
+                          <SpaceAvatar space={{ name: previewName, color, avatar }} size={18} />
+                          <span>{previewName}</span>
+                        </div>
+                        <span className="preview-brief" />
+                        <span className="preview-tab" data-active="true">
+                          Aujourd’hui
+                        </span>
+                        <span className="preview-tab">Notes</span>
+                        <span className="preview-side-label">Sites épinglés</span>
+                        <div className="preview-pins">
+                          {shortcuts.slice(0, 5).map((shortcut) => (
+                            <Favicon
+                              key={shortcut.id}
+                              url={shortcut.url}
+                              label={shortcut.title}
+                              size={13}
+                              spaceId={iconSpaceId}
+                              cacheOnly
+                            />
+                          ))}
+                          {shortcuts.length > 5 ? (
+                            <span className="preview-more">+{shortcuts.length - 5}</span>
+                          ) : null}
+                          {shortcuts.length === 0 ? (
+                            <span className="preview-empty">Aucun site</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="preview-page">
+                        <span className="preview-hello">
+                          Bonsoir<span>.</span>
+                        </span>
+                        <span className="preview-search">
+                          <Icon name="search" size={9} />
+                          Rechercher
+                        </span>
+                        <div className="preview-tiles">
+                          {shortcuts.slice(0, 4).map((shortcut) => (
+                            <span className="preview-tile" key={shortcut.id}>
+                              <Favicon
+                                url={shortcut.url}
+                                label={shortcut.title}
+                                size={14}
+                                spaceId={iconSpaceId}
+                                cacheOnly
+                              />
+                              <span>{shortcut.title}</span>
+                            </span>
+                          ))}
+                          {shortcuts.length === 0 ? (
+                            <>
+                              <span className="preview-tile preview-tile-empty" />
+                              <span className="preview-tile preview-tile-empty" />
+                              <span className="preview-tile preview-tile-empty" />
+                            </>
+                          ) : null}
+                        </div>
+                        <span className="preview-lines">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-preview-chips">
+                  <span className="space-preview-chip">
+                    <i style={{ background: color }} aria-hidden="true" />
+                    {tintLabel}
+                  </span>
+                  <span className="space-preview-chip">{ambienceLabel}</span>
+                  <span className="space-preview-chip">{countLabel(shortcuts.length)}</span>
+                </div>
+                <p className="space-preview-note">
+                  Aperçu en direct — seule cette fenêtre prend la teinte et l’ambiance.
+                </p>
+              </>
+            )}
+          </aside>
+
           <div className="space-foot-wrap">
             {dirtyClose ? (
-              <div className="space-discard" role="alertdialog" aria-label="Abandonner les modifications ?">
+              <div
+                className="space-discard"
+                role="alertdialog"
+                aria-label="Abandonner les modifications ?"
+              >
                 <span>Des modifications ne sont pas enregistrées.</span>
                 <div className="space-discard-actions">
-                  <button type="button" className="space-small-btn" onClick={() => setDirtyClose(false)}>
+                  <button
+                    type="button"
+                    className="space-small-btn"
+                    onClick={() => setDirtyClose(false)}
+                  >
                     Continuer l’édition
                   </button>
                   <button
@@ -1591,7 +1646,11 @@ export default function SpaceDialog() {
                 <button type="button" className="action" onClick={requestClose}>
                   Annuler
                 </button>
-                <button type="submit" className="action primary" disabled={saving || Boolean(letterboxdError)}>
+                <button
+                  type="submit"
+                  className="action primary"
+                  disabled={saving || Boolean(letterboxdError)}
+                >
                   <Icon name={existing ? 'check' : 'plus'} size={14} />
                   {existing ? 'Enregistrer' : 'Créer l’espace'}
                   <kbd className="space-kbd">⌘↵</kbd>

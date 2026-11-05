@@ -1,0 +1,57 @@
+{
+  "version": "0.3.26",
+  "slug": "0-3-26",
+  "date": "2026-11-05",
+  "headline": "Sessions gardées, historique retrouvé",
+  "intro": "Le Brief laisse place aux Sessions : un ensemble d’onglets se garde et se rouvre en un geste. L’historique devient un grand panneau filtrable, les épinglés prennent la forme de tuiles, et la barre latérale se replie sans à-coup.",
+  "tags": ["sessions", "historique", "barre latérale", "traduction"],
+  "stats": {
+    "commits": 1,
+    "files": 84,
+    "insertions": 7017,
+    "deletions": 1780
+  },
+  "sections": [
+    {
+      "title": "Les Sessions remplacent le Brief",
+      "body": [
+        "Un ensemble d’onglets se garde désormais sous un nom, avec son espace d’origine, puis se rouvre d’un clic. Le panneau affiche les onglets ouverts, les sessions gardées et le nombre de pages ; la carte de la barre latérale rappelle combien sont conservées.",
+        "Tout reste dans le stockage local de Vela : aucune session ne part sur le réseau, aucun compte n’est créé. Le raccourci ⌘⇧B ouvre le panneau, et une session rouverte retrouve son espace même si l’on travaillait ailleurs."
+      ]
+    },
+    {
+      "title": "Un historique qui se cherche",
+      "body": [
+        "L’historique devient un grand panneau : une synthèse des pages et des sites visibles, quatre périodes — tout, aujourd’hui, 7 jours, 30 jours — et une recherche par titre, adresse ou domaine. Les résultats restent groupés par jour, avec « Aujourd’hui » et « Hier » en tête.",
+        "Chaque ligne retrouve son favicon à partir de son adresse et de son espace, sans requête supplémentaire depuis le panneau. Une page se supprime seule, et « Effacer tout » vide le journal après confirmation."
+      ]
+    },
+    {
+      "title": "Des épinglés en tuiles, une barre qui respire",
+      "body": [
+        "Les sites épinglés passent à de vraies tuiles : favicon plus grand, compteur de site, infobulle complète et bouton de son séparé — couper le son n’active plus l’onglet. L’ordre, le glisser et les menus restent inchangés.",
+        "La barre latérale reste montée pendant son repli : sa largeur, son opacité et le décalage de l’en-tête s’animent ensemble au lieu de disparaître d’un coup. Les menus et infobulles de la barre se ferment avec elle."
+      ]
+    },
+    {
+      "title": "La barre d’état et les icônes",
+      "body": [
+        "La barre d’état réunit à gauche les requêtes bloquées, les téléchargements et le zoom, à droite la mise à jour disponible. Le téléchargement d’une mise à jour peut être annulé, sur macOS, Windows et Linux, sans perdre la version proposée.",
+        "La recherche de favicon lit désormais l’icône Apple Touch et le manifeste du site, puis retombe sur favicon.ico. Les redirections et les adresses restent limitées au même hôte HTTPS : le cache d’icônes ne devient pas un client HTTP généraliste."
+      ]
+    },
+    {
+      "title": "La traduction de BD, remise à plat",
+      "body": [
+        "Le panneau de traduction de BD est redessiné : une carte de 348 px, un en-tête qui porte le nom et la fermeture, des sections courtes et des interrupteurs lisibles. Le statut de la planche reste visible pendant le travail.",
+        "Le pont OCR et traduction ne change pas : mêmes canaux, mêmes contrôles d’émetteur, et aucune planche n’est envoyée hors de l’appareil sans accord."
+      ]
+    }
+  ],
+  "verify": [
+    "Replier et déplier la barre latérale au clic et avec ⌘S, avec une page native ouverte : la largeur suit sans saut et la vue se redimensionne.",
+    "Enregistrer une session nommée depuis un espace, la rouvrir : ses pages reviennent dans le bon espace, et le compteur de la barre latérale suit.",
+    "Chercher un domaine dans l’historique, changer de période : les groupes par jour et les favicons restent cohérents."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.25...v0.3.26"
+}

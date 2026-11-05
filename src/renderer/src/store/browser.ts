@@ -52,7 +52,7 @@ function stableView(next: AppView): AppView {
 
 export type Overlay =
   | 'command'
-  | 'brief'
+  | 'sessions'
   | 'settings'
   | 'space'
   | 'processes'
@@ -219,6 +219,7 @@ interface BrowserState {
   refreshUpdate(): Promise<void>
   checkUpdate(): Promise<void>
   downloadUpdate(): Promise<void>
+  cancelUpdate(): Promise<void>
   installUpdate(): Promise<void>
   openReleases(): Promise<void>
   openAgent(prompt?: string): void
@@ -435,7 +436,12 @@ export const useBrowser = create<BrowserState>((set, get) => ({
         'Mise en veille impossible.'
       )
       if (result !== null) {
-        get().toast('Onglet en veille : il se rechargera au prochain clic.', 'info', undefined, 4200)
+        get().toast(
+          'Onglet en veille : il se rechargera au prochain clic.',
+          'info',
+          undefined,
+          4200
+        )
       }
     })()
   },
@@ -961,6 +967,11 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     if (info) set({ update: info })
   },
 
+  async cancelUpdate() {
+    const info = await get().call(() => window.vela.updates.cancel(), 'Annulation impossible.')
+    if (info) set({ update: info })
+  },
+
   async installUpdate() {
     await get().call(() => window.vela.updates.install(), 'Redémarrage impossible.')
   },
@@ -1195,8 +1206,8 @@ export const useBrowser = create<BrowserState>((set, get) => ({
       case 'work':
         state.setWorkMode(state.workMode === 'work' ? 'browse' : 'work')
         break
-      case 'brief':
-        state.setOverlay(state.overlay === 'brief' ? null : 'brief')
+      case 'sessions':
+        state.setOverlay(state.overlay === 'sessions' ? null : 'sessions')
         break
       case 'settings':
         state.setOverlay(state.overlay === 'settings' ? null : 'settings')

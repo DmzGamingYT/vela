@@ -4,6 +4,7 @@ import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import TranslateButton from './TranslateButton'
 
 interface PaneHeaderProps {
   tab: TabView
@@ -26,24 +27,34 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
 
   const toast = useBrowser((state) => state.toast)
   const [comicActive, setComicActive] = useState(false)
+  const [comicBusy, setComicBusy] = useState(false)
 
   // Les calques vivent dans la page : une navigation les emporte avec elle.
   useEffect(() => {
     setComicActive(false)
+    setComicBusy(false)
   }, [tab.id, tab.url])
 
   const toggleComic = async (): Promise<void> => {
-    if (comicActive) {
-      await window.vela.comic.clear(tab.id)
-      setComicActive(false)
-      return
+    if (comicBusy) return
+    setComicBusy(true)
+    try {
+      if (comicActive) {
+        await window.vela.comic.clear(tab.id)
+        setComicActive(false)
+        return
+      }
+      const result = await window.vela.comic.run(tab.id)
+      if (result.ok) {
+        setComicActive(true)
+        return
+      }
+      toast(result.reason ?? 'Traduction de BD impossible.', 'error')
+    } catch {
+      toast('Traduction de BD impossible.', 'error')
+    } finally {
+      setComicBusy(false)
     }
-    const result = await window.vela.comic.run(tab.id)
-    if (result.ok) {
-      setComicActive(true)
-      return
-    }
-    toast(result.reason ?? 'Traduction de BD impossible.', 'error')
   }
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -70,7 +81,13 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       data-primary={primary}
     >
       <div className="nav-group">
-        <button type="button" className="icon-btn" disabled={!tab.canGoBack} onClick={() => back(tab.id)} title="Précédent">
+        <button
+          type="button"
+          className="icon-btn"
+          disabled={!tab.canGoBack}
+          onClick={() => back(tab.id)}
+          title="Précédent"
+        >
           <Icon name="back" size={16} />
         </button>
         <button
@@ -118,7 +135,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           ref={inputRef}
           className="address-input"
           value={display}
-          placeholder={home ? "Vela — Accueil" : "Rechercher ou saisir une adresse"}
+          placeholder={home ? 'Vela — Accueil' : 'Rechercher ou saisir une adresse'}
           spellCheck={false}
           autoComplete="off"
           aria-label="Adresse"
@@ -145,10 +162,30 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             {hostOf(tab.url)}
           </span>
         )}
+        {tab.agentSent && (
+          <span
+            className="address-agent-sent"
+            title="Cette page a été envoyée au fournisseur de modèle pour l’agent"
+          >
+            <Icon name="sparkles" size={12} /> Envoyée au modèle
+          </span>
+        )}
+        {!home && (
+          <span
+            className="address-hint"
+            role="note"
+            aria-label={`Raccourci ${shortcut('L')} — barre d’adresse`}
+          >
+            {shortcut('L')}
+          </span>
+        )}
+      </form>
+
+      <div className="pane-actions" data-has-translate={!home ? 'true' : undefined}>
         {!home && (
           <button
             type="button"
-            className="address-shield"
+            className="protection-pill"
             data-empty={tab.blocked === 0}
             onClick={() => setOverlay('protection')}
             // Le compteur seul ne dit rien à voix haute : le nom accessible
@@ -164,39 +201,24 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
                 : 'Protection de ce site'
             }
           >
-            <Icon name="shield" size={12} />
-            {tab.blocked > 0 ? tab.blocked : null}
+            <Icon name="shield" size={18} />
+            {tab.blocked > 0 ? (
+              <span className="protection-pill-count" aria-hidden="true">
+                {tab.blocked}
+              </span>
+            ) : null}
           </button>
         )}
-        {tab.agentSent && (
-          <span className="address-agent-sent" title="Cette page a été envoyée au fournisseur de modèle pour l’agent">
-            <Icon name="sparkles" size={12} /> Envoyée au modèle
-          </span>
-        )}
         {!home && (
-          <span className="address-hint" role="note" aria-label={`Raccourci ${shortcut('L')} — barre d’adresse`}>
-            {shortcut('L')}
-          </span>
-        )}
-      </form>
-
-      <div className="pane-actions">
-        {!home && (
-          <button
-            type="button"
-            className="icon-btn"
-            data-active={comicActive}
-            aria-pressed={comicActive}
+          <TranslateButton
+            active={comicActive || comicBusy}
             onClick={() => void toggleComic()}
-            aria-label={comicActive ? 'Masquer la traduction de BD' : 'Traduire la BD de cette page'}
             title={
-              comicActive
-                ? 'Masquer la traduction (OCR local, fournisseur de Réglages › Modèles)'
-                : 'Traduire la BD — OCR local, calque français'
+              comicActive || comicBusy
+                ? 'Traduire cette page — traduction active'
+                : 'Traduire cette page — OCR local, calque français'
             }
-          >
-            <Icon name="comic" size={16} />
-          </button>
+          />
         )}
         {!home && (
           <button
@@ -211,7 +233,12 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           </button>
         )}
         {secondary ? (
-          <button type="button" className="icon-btn" onClick={() => splitToggle()} title="Fermer la vue scindée">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => splitToggle()}
+            title="Fermer la vue scindée"
+          >
             <Icon name="close" size={16} />
           </button>
         ) : (

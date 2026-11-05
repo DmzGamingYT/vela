@@ -3,14 +3,16 @@ import { createPortal } from 'react-dom'
 import type { CSSProperties, DragEvent, KeyboardEvent } from 'react'
 import { pinnedNeighbour } from '@shared/pinnedTabMenu'
 import type { Bookmark, TabGroup, TabView } from '@shared/types'
-import { displayTitle, hostOf, titleBadge } from '@shared/url'
-import { shortcut } from '../lib/format'
+import { displayTitle, hostOf } from '@shared/url'
+import { shortcut, weekdayLabel } from '../lib/format'
+import { useSessionCount } from '../lib/sessions'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
 import SidebarHeader from './SidebarHeader'
 import { Icon } from './Icon'
 import TabContextMenu from './TabContextMenu'
 import TabRow from './TabRow'
+import PinnedTabTile from './PinnedTabTile'
 import TileMenu, { type TileMenuItem } from './TileMenu'
 import TunnelSidebar from './TunnelSidebar'
 import SpaceAvatar from './SpaceAvatar'
@@ -28,11 +30,14 @@ type MenuState = { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
 /** Au-delà, une tuile « +N » ouvre la liste complète plutôt que de tronquer. */
 const FAVORITE_LIMIT = 12
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const sessionCount = useSessionCount()
+  const [today] = useState(() => Date.now())
   const selectTab = useBrowser((state) => state.selectTab)
+  const toggleMute = useBrowser((state) => state.toggleMute)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const workMode = useBrowser((state) => state.workMode)
   const newTab = useBrowser((state) => state.newTab)
@@ -88,26 +93,30 @@ export default function Sidebar() {
   const [favExpanded, setFavExpanded] = useState(false)
 
   // Une feuille ouverte (réglages, protection, palette) passe devant : une
-  // infobulle ou un menu resté ouvert flotterait par-dessus.
+  // infobulle ou un menu resté ouvert flotterait par-dessus. Le repli garde la
+  // barre montée : ses surcouches doivent disparaître avec elle.
   useEffect(() => {
-    if (!overlay) return
+    if (!overlay && !collapsed) return
     setTip(null)
     setMenu(null)
     setTabMenu(null)
     setEmptyMenu(null)
-  }, [overlay])
+  }, [overlay, collapsed])
 
   useEffect(() => {
     const id = focusAfterMove.current
     if (!id) return
     focusAfterMove.current = null
     const selector = [
+      `.pin-tile-main[data-tab-id="${CSS.escape(id)}"]`,
       `.mini-tile[data-tab-id="${CSS.escape(id)}"]`,
       `.tab-row[data-tab-id="${CSS.escape(id)}"]`,
       `.mini-tile[data-bookmark-id="${CSS.escape(id)}"]`
     ].join(', ')
     // Un favori déplacé au-delà des cases visibles laisse le focus sur « +N ».
-    const node = document.querySelector<HTMLElement>(selector) ?? document.querySelector<HTMLElement>('.mini-tile-more')
+    const node =
+      document.querySelector<HTMLElement>(selector) ??
+      document.querySelector<HTMLElement>('.mini-tile-more')
     node?.focus()
   }, [view])
 
@@ -124,7 +133,9 @@ export default function Sidebar() {
 
     const tab = view.tabs.find((item) => item.id === pending.id)
     if (!tab) return
-    const list = view.tabs.filter((item) => item.spaceId === tab.spaceId && item.pinned === tab.pinned)
+    const list = view.tabs.filter(
+      (item) => item.spaceId === tab.spaceId && item.pinned === tab.pinned
+    )
     const index = list.findIndex((item) => item.id === tab.id) + 1
     setAnnounce(
       tab.pinned !== pending.from
@@ -153,13 +164,21 @@ export default function Sidebar() {
     requestAnimationFrame(() => {
       document
         .querySelector<HTMLElement>(
-          `.mini-tile[data-tab-id="${CSS.escape(focusId)}"], [data-bookmark-id="${CSS.escape(focusId)}"]`
+          `.pin-tile-main[data-tab-id="${CSS.escape(focusId)}"], .mini-tile[data-tab-id="${CSS.escape(focusId)}"], [data-bookmark-id="${CSS.escape(focusId)}"]`
         )
         ?.focus()
     })
   }, [])
 
-  if (!view) return <aside className="sidebar" />
+  if (!view) {
+    return (
+      <aside
+        className="sidebar"
+        data-collapsed={collapsed ? 'true' : undefined}
+        aria-hidden={collapsed || undefined}
+      />
+    )
+  }
 
   const space = view.spaces.find((item) => item.id === view.activeSpaceId) ?? view.spaces[0]
   const spaceTabs = view.tabs.filter((tab) => tab.spaceId === space.id)
@@ -266,7 +285,12 @@ export default function Sidebar() {
       return
     }
     const rect = event.currentTarget.getBoundingClientRect()
-    reorderTab(source.id, tab.id, event.clientY < rect.top + rect.height / 2 ? 'before' : 'after', tab.pinned)
+    reorderTab(
+      source.id,
+      tab.id,
+      event.clientY < rect.top + rect.height / 2 ? 'before' : 'after',
+      tab.pinned
+    )
     commitMove(source.id, source.pinned)
     endDrag()
   }
@@ -373,7 +397,10 @@ export default function Sidebar() {
     event.stopPropagation()
     event.dataTransfer.dropEffect = 'move'
     const rect = event.currentTarget.getBoundingClientRect()
-    setFavDrop({ id: bookmark.id, edge: event.clientX < rect.left + rect.width / 2 ? 'before' : 'after' })
+    setFavDrop({
+      id: bookmark.id,
+      edge: event.clientX < rect.left + rect.width / 2 ? 'before' : 'after'
+    })
   }
 
   const dropOnFav = (event: DragEvent<HTMLElement>, bookmark: Bookmark): void => {
@@ -433,7 +460,12 @@ export default function Sidebar() {
       return
     }
     const rect = event.currentTarget.getBoundingClientRect()
-    reorderTab(source.id, tab.id, event.clientX < rect.left + rect.width / 2 ? 'before' : 'after', tab.pinned)
+    reorderTab(
+      source.id,
+      tab.id,
+      event.clientX < rect.left + rect.width / 2 ? 'before' : 'after',
+      tab.pinned
+    )
     commitMove(source.id, source.pinned)
     endDrag()
   }
@@ -492,8 +524,19 @@ export default function Sidebar() {
 
   /** Clic droit sur le fond de la liste : actions qui ne visent aucun onglet. */
   const emptyTabItems = (): TileMenuItem[] => [
-    { id: 'new', label: 'Nouvel onglet', icon: 'plus', keys: shortcut('T'), onSelect: () => newTab() },
-    { id: 'new-folder', label: 'Nouveau dossier', icon: 'folder', onSelect: () => void createFolder() },
+    {
+      id: 'new',
+      label: 'Nouvel onglet',
+      icon: 'plus',
+      keys: shortcut('T'),
+      onSelect: () => newTab()
+    },
+    {
+      id: 'new-folder',
+      label: 'Nouveau dossier',
+      icon: 'folder',
+      onSelect: () => void createFolder()
+    },
     ...(view.canReopen
       ? [
           {
@@ -598,12 +641,22 @@ export default function Sidebar() {
   const draggingTab = sourceTab()
 
   return (
-    <aside className="sidebar" aria-label="Barre latérale" style={{ '--space': space.color } as CSSProperties}>
+    <aside
+      className="sidebar"
+      aria-label="Barre latérale"
+      data-collapsed={collapsed ? 'true' : undefined}
+      aria-hidden={collapsed || undefined}
+      style={{ '--space': space.color } as CSSProperties}
+    >
       <SidebarHeader />
 
       <div className="space-head">
         <SpaceAvatar space={space} size={18} />
-        <button type="button" className="space-name" onDoubleClick={() => openSpaceDialog(space.id)}>
+        <button
+          type="button"
+          className="space-name"
+          onDoubleClick={() => openSpaceDialog(space.id)}
+        >
           {space.name}
         </button>
         <button
@@ -616,13 +669,16 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <button type="button" className="brief-card" onClick={() => setOverlay('brief')}>
-        <span className="brief-kicker">
-          <Icon name="calendar" size={13} />
-          Brief
+      <button type="button" className="sessions-card" onClick={() => setOverlay('sessions')}>
+        <span className="sessions-kicker">
+          <Icon name="clock" size={13} />
+          Sessions
         </span>
-        <span className="brief-date">{view.brief.dateLabel}</span>
-        <span className="brief-arrow">
+        <span className="sessions-date">
+          {weekdayLabel(today)}
+          {sessionCount > 0 ? ` · ${sessionCount} gardée${sessionCount > 1 ? 's' : ''}` : ''}
+        </span>
+        <span className="sessions-arrow">
           <Icon name="arrow-right" size={14} />
         </span>
       </button>
@@ -636,7 +692,12 @@ export default function Sidebar() {
           onContextMenu={(event) => {
             // Les lignes et les cases ont leur propre menu : ici, c'est le fond.
             const target = event.target as HTMLElement
-            if (target.closest('.tab-row, .mini-tile, .fav-list-row, .group-head, button, input')) return
+            if (
+              target.closest(
+                '.tab-row, .mini-tile, .pin-tile, .fav-list-row, .group-head, button, input'
+              )
+            )
+              return
             event.preventDefault()
             hideTip()
             setEmptyMenu({ x: event.clientX, y: event.clientY })
@@ -649,36 +710,23 @@ export default function Sidebar() {
                 <span className="tabs-count">{pinnedCount}</span>
               </div>
               <div
-                className="mini-grid"
+                className="pin-tiles"
                 role="group"
                 aria-label={`Sites épinglés de ${space.name} — Alt + flèches pour réordonner`}
                 data-drop={drop?.kind === 'pinned-end'}
                 onDragOver={overPinnedEnd}
                 onDrop={dropOnPinnedEnd}
               >
-                {pinned.map((tab) => {
-                  // Un compteur de site (« (12) Gmail ») devient une pastille ;
-                  // une page qui joue du son se repère sur sa case, sans l’ouvrir.
-                  const count = titleBadge(tab.title)
-                  const sounding = tab.audible && !tab.muted
-                  return (
-                  <button
+                {pinned.map((tab) => (
+                  <PinnedTabTile
                     key={tab.id}
-                    type="button"
-                    className="mini-tile"
-                    data-tab-id={tab.id}
-                    data-active={tab.id === view.activeTabId}
-                    data-secondary={view.split && tab.id === view.secondTabId ? 'true' : undefined}
-                    data-dragging={draggingId === tab.id ? 'true' : undefined}
-                    data-sounding={sounding ? 'true' : undefined}
-                    draggable
-                    aria-label={`${displayTitle(tab.title)} — ${hostOf(tab.url)}${
-                      tab.muted ? ', son coupé' : sounding ? ', page en lecture' : ''
-                    }`}
-                    onMouseEnter={(event) => showTip(event, tab)}
-                    onMouseLeave={hideTip}
-                    onFocus={(event) => showTip(event, tab)}
-                    onBlur={hideTip}
+                    tab={tab}
+                    active={tab.id === view.activeTabId}
+                    secondary={Boolean(view.split && tab.id === view.secondTabId)}
+                    dragging={draggingId === tab.id}
+                    drop={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
+                    onActivate={() => selectTab(tab.id)}
+                    onToggleMute={() => toggleMute(tab.id, !tab.muted)}
                     onContextMenu={(event) => {
                       event.preventDefault()
                       event.stopPropagation()
@@ -704,22 +752,8 @@ export default function Sidebar() {
                       const rect = event.currentTarget.getBoundingClientRect()
                       openTabMenu(tab, rect.left, rect.bottom, true, rect)
                     }}
-                    onClick={() => selectTab(tab.id)}
-                  >
-                    <Favicon src={tab.favicon} url={tab.url} label={tab.title} size={18} spaceId={space.id} />
-                    {count !== null && (
-                      <span className="mini-tile-count" aria-hidden="true">
-                        {count > 99 ? '99+' : count}
-                      </span>
-                    )}
-                    {(sounding || tab.muted) && (
-                      <span className="mini-tile-sound" data-muted={tab.muted ? 'true' : undefined} aria-hidden="true">
-                        <Icon name={tab.muted ? 'volume-off' : 'volume'} size={9} />
-                      </span>
-                    )}
-                  </button>
-                  )
-                })}
+                  />
+                ))}
               </div>
             </>
           )}
@@ -734,7 +768,9 @@ export default function Sidebar() {
                     type="button"
                     className="icon-btn subtle"
                     title={favMode === 'grid' ? 'Afficher en liste fluide' : 'Afficher en grille'}
-                    aria-label={favMode === 'grid' ? 'Afficher en liste fluide' : 'Afficher en grille'}
+                    aria-label={
+                      favMode === 'grid' ? 'Afficher en liste fluide' : 'Afficher en grille'
+                    }
                     onClick={() => setFavMode((m) => (m === 'grid' ? 'list' : 'grid'))}
                   >
                     <Icon name={favMode === 'grid' ? 'list' : 'panel'} size={12} />
@@ -796,71 +832,71 @@ export default function Sidebar() {
                   ))}
                 </div>
               ) : (
-              <div
-                className="mini-grid"
-                role="group"
-                aria-label="Favoris — Alt + flèches pour réordonner"
-                data-dragging={favDragId ? 'true' : undefined}
-              >
-                {visibleBookmarks.map((bookmark) => (
-                  <button
-                    key={bookmark.id}
-                    type="button"
-                    className="mini-tile"
-                    data-bookmark-id={bookmark.id}
-                    data-dragging={favDragId === bookmark.id ? 'true' : undefined}
-                    data-drop={favDrop && favDrop.id === bookmark.id ? favDrop.edge : undefined}
-                    aria-label={`${displayTitle(bookmark.title)} — ${hostOf(bookmark.url)}`}
-                    draggable
-                    onMouseEnter={(event) => showTip(event, bookmark)}
-                    onMouseLeave={hideTip}
-                    onFocus={(event) => showTip(event, bookmark)}
-                    onBlur={hideTip}
-                    onDragStart={(event) => {
-                      hideTip()
-                      beginFavDrag(event, bookmark)
-                    }}
-                    onDragEnd={endFavDrag}
-                    onDragOver={(event) => overFav(event, bookmark)}
-                    onDragLeave={() =>
-                      setFavDrop((current) => (current?.id === bookmark.id ? null : current))
-                    }
-                    onDrop={(event) => dropOnFav(event, bookmark)}
-                    onContextMenu={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      openBookmarkMenu(bookmark, event.clientX, event.clientY)
-                    }}
-                    onKeyDown={(event) => {
-                      moveFavorite(event, bookmark)
-                      if (event.defaultPrevented) return
-                      if (!menuKey(event)) return
-                      const rect = event.currentTarget.getBoundingClientRect()
-                      openBookmarkMenu(bookmark, rect.left, rect.bottom)
-                    }}
-                    onClick={() => newTab(bookmark.url)}
-                  >
-                    <Favicon
-                      src={bookmark.favicon}
-                      url={bookmark.url}
-                      label={bookmark.title}
-                      size={18}
-                      spaceId={space.id}
-                    />
-                  </button>
-                ))}
-                {hiddenBookmarks > 0 && (
-                  <button
-                    type="button"
-                    className="mini-tile mini-tile-more"
-                    aria-label={`Déplier les ${hiddenBookmarks} autres favoris`}
-                    title={`Déplier les ${hiddenBookmarks} autres favoris`}
-                    onClick={() => setFavExpanded(true)}
-                  >
-                    <span aria-hidden="true">+{hiddenBookmarks}</span>
-                  </button>
-                )}
-              </div>
+                <div
+                  className="mini-grid"
+                  role="group"
+                  aria-label="Favoris — Alt + flèches pour réordonner"
+                  data-dragging={favDragId ? 'true' : undefined}
+                >
+                  {visibleBookmarks.map((bookmark) => (
+                    <button
+                      key={bookmark.id}
+                      type="button"
+                      className="mini-tile"
+                      data-bookmark-id={bookmark.id}
+                      data-dragging={favDragId === bookmark.id ? 'true' : undefined}
+                      data-drop={favDrop && favDrop.id === bookmark.id ? favDrop.edge : undefined}
+                      aria-label={`${displayTitle(bookmark.title)} — ${hostOf(bookmark.url)}`}
+                      draggable
+                      onMouseEnter={(event) => showTip(event, bookmark)}
+                      onMouseLeave={hideTip}
+                      onFocus={(event) => showTip(event, bookmark)}
+                      onBlur={hideTip}
+                      onDragStart={(event) => {
+                        hideTip()
+                        beginFavDrag(event, bookmark)
+                      }}
+                      onDragEnd={endFavDrag}
+                      onDragOver={(event) => overFav(event, bookmark)}
+                      onDragLeave={() =>
+                        setFavDrop((current) => (current?.id === bookmark.id ? null : current))
+                      }
+                      onDrop={(event) => dropOnFav(event, bookmark)}
+                      onContextMenu={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        openBookmarkMenu(bookmark, event.clientX, event.clientY)
+                      }}
+                      onKeyDown={(event) => {
+                        moveFavorite(event, bookmark)
+                        if (event.defaultPrevented) return
+                        if (!menuKey(event)) return
+                        const rect = event.currentTarget.getBoundingClientRect()
+                        openBookmarkMenu(bookmark, rect.left, rect.bottom)
+                      }}
+                      onClick={() => newTab(bookmark.url)}
+                    >
+                      <Favicon
+                        src={bookmark.favicon}
+                        url={bookmark.url}
+                        label={bookmark.title}
+                        size={18}
+                        spaceId={space.id}
+                      />
+                    </button>
+                  ))}
+                  {hiddenBookmarks > 0 && (
+                    <button
+                      type="button"
+                      className="mini-tile mini-tile-more"
+                      aria-label={`Déplier les ${hiddenBookmarks} autres favoris`}
+                      title={`Déplier les ${hiddenBookmarks} autres favoris`}
+                      onClick={() => setFavExpanded(true)}
+                    >
+                      <span aria-hidden="true">+{hiddenBookmarks}</span>
+                    </button>
+                  )}
+                </div>
               )}
             </>
           )}
@@ -881,7 +917,10 @@ export default function Sidebar() {
             <span>Onglets</span>
             <span className="tabs-count">{unpinned.length}</span>
             {view.memoryFreed > 0 && (
-              <span className="tabs-savings" title="Mémoire rendue par les onglets en veille depuis le lancement">
+              <span
+                className="tabs-savings"
+                title="Mémoire rendue par les onglets en veille depuis le lancement"
+              >
                 {view.memoryFreed} Mo
               </span>
             )}
@@ -894,7 +933,12 @@ export default function Sidebar() {
               >
                 <Icon name="folder" size={14} />
               </button>
-              <button type="button" className="icon-btn subtle" title="Nouvel onglet" onClick={() => newTab()}>
+              <button
+                type="button"
+                className="icon-btn subtle"
+                title="Nouvel onglet"
+                onClick={() => newTab()}
+              >
                 <Icon name="plus" size={14} />
               </button>
             </span>
@@ -921,7 +965,9 @@ export default function Sidebar() {
                   onDragOver={(event) => overGroup(event, group)}
                   onDragLeave={(event) => {
                     if (event.currentTarget.contains(event.relatedTarget as Node)) return
-                    setDrop((current) => (current?.kind === 'group' && current.id === group.id ? null : current))
+                    setDrop((current) =>
+                      current?.kind === 'group' && current.id === group.id ? null : current
+                    )
                   }}
                   onDrop={(event) => dropOnGroup(event, group)}
                 >
@@ -971,7 +1017,9 @@ export default function Sidebar() {
                     </button>
                   )}
                   <span className="group-count">{groupTabs.length}</span>
-                  {group.collapsed && live && <span className="group-live" title="Contient l’onglet actif" />}
+                  {group.collapsed && live && (
+                    <span className="group-live" title="Contient l’onglet actif" />
+                  )}
                   <span className="group-actions">
                     <button
                       type="button"
@@ -1000,7 +1048,9 @@ export default function Sidebar() {
                       className="tab-action"
                       data-confirming={confirmGroup === group.id}
                       title={
-                        confirmGroup === group.id ? 'Cliquer à nouveau pour supprimer' : 'Supprimer le dossier'
+                        confirmGroup === group.id
+                          ? 'Cliquer à nouveau pour supprimer'
+                          : 'Supprimer le dossier'
                       }
                       onClick={(event) => {
                         event.stopPropagation()
@@ -1015,7 +1065,9 @@ export default function Sidebar() {
                 {!group.collapsed && (
                   <div className="group-tabs" role="group" aria-label={`Onglets de ${group.name}`}>
                     {groupTabs.map(renderTab)}
-                    {groupTabs.length === 0 && <p className="group-empty">Glissez un onglet ici.</p>}
+                    {groupTabs.length === 0 && (
+                      <p className="group-empty">Glissez un onglet ici.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1031,7 +1083,9 @@ export default function Sidebar() {
             onDrop={dropOnLoose}
           >
             {loose.map(renderTab)}
-            {loose.length === 0 && groups.length === 0 && <p className="tabs-empty">Aucun onglet ouvert.</p>}
+            {loose.length === 0 && groups.length === 0 && (
+              <p className="tabs-empty">Aucun onglet ouvert.</p>
+            )}
             <button
               type="button"
               className="tab-new"
@@ -1059,7 +1113,12 @@ export default function Sidebar() {
         </div>
       )}
 
-      <p className="sr-only" role="status" aria-live="polite" aria-label="Annonces de la barre latérale">
+      <p
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-label="Annonces de la barre latérale"
+      >
         {announce}
       </p>
 

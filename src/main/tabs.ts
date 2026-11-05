@@ -320,13 +320,21 @@ export class TabManager {
 
     wc.on('did-start-loading', () => {
       const previous = this.runtimes.get(tabId)
-      this.runtimes.set(tabId, { loading: true, error: null, agentSent: previous?.agentSent ?? false })
+      this.runtimes.set(tabId, {
+        loading: true,
+        error: null,
+        agentSent: previous?.agentSent ?? false
+      })
       this.host.changed()
     })
 
     wc.on('did-stop-loading', () => {
       const current = this.runtimes.get(tabId)
-      this.runtimes.set(tabId, { loading: false, error: current?.error ?? null, agentSent: current?.agentSent ?? false })
+      this.runtimes.set(tabId, {
+        loading: false,
+        error: current?.error ?? null,
+        agentSent: current?.agentSent ?? false
+      })
       this.restoreScroll(tabId, view)
       this.host.changed()
     })
@@ -347,7 +355,11 @@ export class TabManager {
     // qui joue quelque chose se repère donc sans ouvrir l'onglet.
     wc.on('audio-state-changed', (event) => {
       const current = this.runtimes.get(tabId) ?? { loading: false, error: null }
-      this.runtimes.set(tabId, { ...current, audible: Boolean(event.audible), muted: wc.isAudioMuted() })
+      this.runtimes.set(tabId, {
+        ...current,
+        audible: Boolean(event.audible),
+        muted: wc.isAudioMuted()
+      })
       this.host.changed()
     })
 
@@ -366,7 +378,7 @@ export class TabManager {
 
     wc.on('did-finish-load', () => {
       const tab = this.host.tab(tabId)
-      const saved = tab ? this.host.highlightsFor?.(tab.url) ?? [] : []
+      const saved = tab ? (this.host.highlightsFor?.(tab.url) ?? []) : []
       if (saved.length > 0) void this.paintHighlights(tabId, saved)
     })
 
@@ -379,7 +391,11 @@ export class TabManager {
     wc.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
       if (!isMainFrame || code === -3 || url === HOME_URL) return
       const current = this.runtimes.get(tabId)
-      this.runtimes.set(tabId, { loading: false, error: description || 'Chargement impossible', agentSent: current?.agentSent ?? false })
+      this.runtimes.set(tabId, {
+        loading: false,
+        error: description || 'Chargement impossible',
+        agentSent: current?.agentSent ?? false
+      })
       this.host.changed()
     })
 
@@ -505,7 +521,11 @@ export class TabManager {
       return
     }
     this.runtimes.set(tabId, { loading: true, error: null })
-    this.host.patchTab(tabId, { url: target.url, title: titleFromUrl(target.url), favicon: undefined })
+    this.host.patchTab(tabId, {
+      url: target.url,
+      title: titleFromUrl(target.url),
+      favicon: undefined
+    })
     const view = this.ensure(tabId, false)
     if (view) {
       void view.webContents.loadURL(target.url).catch(() => {})
@@ -534,7 +554,8 @@ export class TabManager {
     forward = true
   ): Promise<{ matches: number; activeMatchOrdinal: number }> {
     const view = this.ensure(tabId)
-    if (!view || view.webContents.isDestroyed()) return Promise.resolve({ matches: 0, activeMatchOrdinal: 0 })
+    if (!view || view.webContents.isDestroyed())
+      return Promise.resolve({ matches: 0, activeMatchOrdinal: 0 })
     const clean = query.slice(0, 300)
     if (!clean) {
       view.webContents.stopFindInPage('clearSelection')
@@ -543,10 +564,18 @@ export class TabManager {
     return new Promise((resolve) => {
       let requestId = -1
       const listener = (_event: ElectronEvent, result: unknown): void => {
-        const detail = result as { requestId?: number; matches?: number; activeMatchOrdinal?: number; finalUpdate?: boolean }
+        const detail = result as {
+          requestId?: number
+          matches?: number
+          activeMatchOrdinal?: number
+          finalUpdate?: boolean
+        }
         if (detail.requestId !== requestId || !detail.finalUpdate) return
         view.webContents.removeListener('found-in-page', listener)
-        resolve({ matches: detail.matches ?? 0, activeMatchOrdinal: detail.activeMatchOrdinal ?? 0 })
+        resolve({
+          matches: detail.matches ?? 0,
+          activeMatchOrdinal: detail.activeMatchOrdinal ?? 0
+        })
       }
       view.webContents.on('found-in-page', listener)
       requestId = view.webContents.findInPage(clean, { findNext: true, forward })
@@ -579,7 +608,10 @@ export class TabManager {
     const view = this.views.get(tabId)
     if (!view || view.webContents.isDestroyed()) return null
     const current = view.webContents.getZoomLevel()
-    const next = direction === 'reset' ? 0 : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
+    const next =
+      direction === 'reset'
+        ? 0
+        : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
     view.webContents.setZoomLevel(next)
     return next
   }
@@ -665,7 +697,9 @@ export class TabManager {
     const y = this.scrolls.get(tabId)
     if (!y) return
     this.scrolls.delete(tabId)
-    void view.webContents.executeJavaScript(`window.scrollTo(0, ${Math.round(y)})`, true).catch(() => {})
+    void view.webContents
+      .executeJavaScript(`window.scrollTo(0, ${Math.round(y)})`, true)
+      .catch(() => {})
   }
 
   /**
@@ -813,7 +847,9 @@ export class TabManager {
     }
     if (totalMb <= PAGE_MEMORY_BUDGET_MB) return
     const candidates = [...this.views.entries()]
-      .filter(([tabId]) => !keep.has(tabId) && !this.visible.has(tabId) && !this.evicting.has(tabId))
+      .filter(
+        ([tabId]) => !keep.has(tabId) && !this.visible.has(tabId) && !this.evicting.has(tabId)
+      )
       .sort((a, b) => (this.lastUsed.get(a[0]) ?? 0) - (this.lastUsed.get(b[0]) ?? 0))
     for (const [tabId, view] of candidates) {
       if (totalMb <= PAGE_MEMORY_BUDGET_MB * 0.75) break
@@ -1131,7 +1167,7 @@ export class TabManager {
     } else if (key === 'd') {
       action = 'split'
     } else if (key === 'b') {
-      action = 'brief'
+      action = 'sessions'
     } else if (key === 'a') {
       action = 'work'
     } else if (key === 'o') {

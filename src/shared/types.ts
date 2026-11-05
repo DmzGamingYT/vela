@@ -1,7 +1,7 @@
 /**
  * Types partagés entre le processus principal, le preload et le renderer.
  * Une seule source de vérité pour l'état persisté et l'état exposé à l'interface.
- */import type { AgentActionEntry } from './agentLoop'
+ */ import type { AgentActionEntry } from './agentLoop'
 import type {
   AmbienceId,
   Density,
@@ -18,14 +18,7 @@ export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
 export type Theme = 'light' | 'dark' | 'system'
 export type BuiltinSearchEngineId =
-  | 'duckduckgo'
-  | 'brave'
-  | 'startpage'
-  | 'google'
-  | 'bing'
-  | 'ecosia'
-  | 'qwant'
-  | 'searxng'
+  'duckduckgo' | 'brave' | 'startpage' | 'google' | 'bing' | 'ecosia' | 'qwant' | 'searxng'
 
 /** Moteur intégré, ou « custom » : celui choisi dans `customEngines`. */
 export type SearchEngineId = BuiltinSearchEngineId | 'custom'
@@ -399,23 +392,6 @@ export interface MiniState {
   spaceColor: string
 }
 
-export interface BriefItem {
-  kind: 'resume' | 'finish' | 'focus' | 'start'
-  label: string
-  title: string
-  detail: string
-  url?: string
-  tabId?: string
-}
-
-export interface Brief {
-  items: BriefItem[]
-  pages: number
-  sites: number
-  blocked: number
-  dateLabel: string
-}
-
 export interface AppView {
   spaces: Space[]
   tabs: TabView[]
@@ -438,7 +414,6 @@ export interface AppView {
   tasks: Task[]
   works: WorkSummary[]
   downloads: DownloadItem[]
-  brief: Brief
   blockedTotal: number
 }
 
@@ -478,7 +453,14 @@ export interface AgentCitationSource {
 }
 
 export type AgentEvent =
-  | { runId: string; type: 'plan'; title: string; steps: string[]; mode: AgentMode; sources?: AgentCitationSource[] }
+  | {
+      runId: string
+      type: 'plan'
+      title: string
+      steps: string[]
+      mode: AgentMode
+      sources?: AgentCitationSource[]
+    }
   | { runId: string; type: 'step'; index: number; state: 'active' | 'done' }
   | { runId: string; type: 'action'; entry: AgentActionEntry }
   | { runId: string; type: 'delta'; text: string }
@@ -499,7 +481,7 @@ export type ShortcutAction =
   | 'notes'
   | 'agent'
   | 'work'
-  | 'brief'
+  | 'sessions'
   | 'settings'
   | 'sidebar'
   | 'reload'
@@ -524,7 +506,8 @@ export interface ShortcutEvent {
   digit?: number
 }
 
-export type SelectionAction = 'summarize' | 'explain' | 'translate' | 'simplify' | 'note' | 'highlight'
+export type SelectionAction =
+  'summarize' | 'explain' | 'translate' | 'simplify' | 'note' | 'highlight'
 
 /** Sélection de texte envoyée par le menu contextuel d’une page. */
 export interface SelectionPayload {
