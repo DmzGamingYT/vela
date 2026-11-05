@@ -22,7 +22,7 @@ import type {
   Space,
   TabState
 } from '@shared/types'
-import { opensMiniWindow, shouldOpenAsPopup } from '@shared/navigation'
+import { opensMiniWindow, searchOptionsOf, shouldOpenAsPopup } from '@shared/navigation'
 import { partitionFor } from '@shared/space'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
@@ -256,6 +256,9 @@ export class TabManager {
     this.lastUsed.set(tabId, Date.now())
     win.contentView.addChildView(view)
     this.wire(tabId, view)
+    // Zoom de départ choisi dans les réglages ; 1 = taille réelle.
+    const zoom = this.host.settings().defaultZoom
+    if (zoom && zoom !== 1) view.webContents.setZoomFactor(zoom)
     // Pas d'éviction ici : `applyLayout` la fait ensuite avec l'ensemble visible
     // exact. Évincer au milieu d'une mise en page suspendait la vue qu'on venait
     // de créer, puis la recréait au tour suivant.
@@ -496,7 +499,7 @@ export class TabManager {
     if (!tab) return
     this.touch(tabId)
     const settings = this.host.settings()
-    const target = normalizeInput(input, settings.searchEngine, settings.searxInstance)
+    const target = normalizeInput(input, searchOptionsOf(settings))
     if (isHomeUrl(target.url)) {
       this.goHome(tabId)
       return

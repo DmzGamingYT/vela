@@ -25,9 +25,16 @@ export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void
       <div className="about-hero">
         <VelaMark size={52} brand />
         <div>
-          <strong className="about-name">
-            Vela<span aria-hidden="true">.</span>
-          </strong>
+          <div className="about-title">
+            <strong className="about-name">
+              Vela<span aria-hidden="true">.</span>
+            </strong>
+            {update?.currentVersion && (
+              <span className="about-version" title={`Vela ${update.currentVersion}`}>
+                {update.currentVersion}
+              </span>
+            )}
+          </div>
           <p className="about-tagline">Le web, votre atelier.</p>
           <p className="about-meta">
             Navigateur de travail · macOS, Windows, Linux

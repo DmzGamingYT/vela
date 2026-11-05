@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
-import type { SearchEngineId } from '@shared/types'
-import { SEARCH_ENGINES } from '@shared/url'
+import type { BuiltinSearchEngineId, SearchEngineId } from '@shared/types'
+import { BUILTIN_ENGINES, SEARCH_ENGINES } from '@shared/url'
 import { ENGINE_LOOK } from '../lib/engines'
 import { BrandMark, ENGINE_BRANDS } from './BrandMark'
 import { Icon } from './Icon'
@@ -19,7 +19,7 @@ interface EnginePickerProps {
   variant?: 'tiles' | 'list'
 }
 
-const IDS = Object.keys(SEARCH_ENGINES) as SearchEngineId[]
+const IDS = BUILTIN_ENGINES as BuiltinSearchEngineId[]
 
 /**
  * Choix du moteur de recherche, avec la marque réelle de chacun.
@@ -38,7 +38,7 @@ export default function EnginePicker({
 }: EnginePickerProps) {
   const refs = useRef(new Map<SearchEngineId, HTMLButtonElement | null>())
   const columns = variant === 'list' ? 2 : compact ? 4 : 3
-  const current = IDS.includes(value) ? IDS.indexOf(value) : 0
+  const current = IDS.indexOf(value as BuiltinSearchEngineId)
 
   const key = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
     const moves: Record<string, number> = {

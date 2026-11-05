@@ -12,11 +12,25 @@ export interface SpaceTint {
 // et dans le même ordre : choisir un espace revient à choisir un thème, sans
 // jeu de couleurs à part. Le nom sert de libellé lisible ; la couleur reste la
 // variante claire du thème, seule valeur stockée dans vela.json.
+//
+// « Braise » est le thème du ciel de l'accueil ; l'ambiance d'espace porte
+// déjà ce nom. La teinte s'appelle donc « Brique » ici : deux choix voisins ne
+// se présentent plus sous le même mot. Seul le libellé change — les espaces
+// stockent une couleur hexadécimale, jamais le nom du thème.
+const TINT_LABELS: Record<string, string> = { braise: 'Brique' }
+
 export const SPACE_TINTS: SpaceTint[] = THEME_PRESETS.map((preset) => ({
   id: preset.id,
-  label: preset.label,
+  label: TINT_LABELS[preset.id] ?? preset.label,
   color: preset.light
 }))
+
+/** Teinte connue pour une couleur stockée, ou null pour une couleur libre. */
+export function spaceTintFor(color: string, tints: readonly SpaceTint[] = SPACE_TINTS): SpaceTint | null {
+  const needle = color.trim().toLowerCase()
+  return tints.find((tint) => tint.color.toLowerCase() === needle) ?? null
+}
+
 
 export const SPACE_COLORS = SPACE_TINTS.map((tint) => tint.color)
 
@@ -30,20 +44,43 @@ export function defaultProviders(): Record<ProviderId, ProviderSettings> {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   searchEngine: 'duckduckgo',
+  customEngineId: '',
+  customEngines: [],
+  searchKeywords: [
+    { keyword: 'g', engineId: 'google' },
+    { keyword: 'd', engineId: 'duckduckgo' },
+    { keyword: 'b', engineId: 'brave' },
+    { keyword: 's', engineId: 'startpage' }
+  ],
   searxInstance: '',
+  startupBehavior: 'restore',
+  startupUrl: '',
+  newTabBlank: false,
+  historyRetention: 'forever',
+  downloadDir: null,
+  askDownloadLocation: false,
+  openAfterDownload: false,
+  webLanguage: 'fr',
+  defaultZoom: 1,
   themeId: 'indigo',
-  customAccent: '#5B5BD6',
+  customAccent: '#5b5bd6',
   glass: 'normal',
   glassBlur: DEFAULT_GLASS_BLUR,
   ambience: 'none',
   homeBackground: 'gradient',
   homeImage: null,
   homeBlur: 18,
-  highContrast: false,
-  hourTheme: false,
-  perSpaceThemes: false,
-  dragonSky: true,
   skyVariant: 'braise',
+  density: 'normal',
+  textSize: 'normal',
+  sidebarSide: 'left',
+  highContrast: false,
+  reduceMotion: 'system',
+  hourTheme: false,
+  hourStart: 7,
+  hourEnd: 19,
+  perSpaceThemes: false,
+  skyMigrated: true,
   blockTrackers: true,
   blockLevel: 'trackers',
   thumbnails: false,

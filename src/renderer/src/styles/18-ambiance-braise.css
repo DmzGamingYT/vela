@@ -1,8 +1,8 @@
 /* ---------------------------------------------------------------
-   Ambiance Braise — ciel de braise, cases du rail, chargement
+   Ciel de l'accueil — braises montantes, nuit étoilée
    --------------------------------------------------------------- */
 
-.dragon-sky {
+.home-sky {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -10,120 +10,19 @@
   pointer-events: none;
 }
 
-.dragon-embers {
+/* La lueur chaude du bas ne bouge pas : c'est le repère du thème Braise. */
+.home-sky-warmth {
+  position: absolute;
+  inset: auto 0 -30% 0;
+  height: 72%;
+  background: radial-gradient(58% 100% at 22% 100%, rgba(255, 128, 64, 0.16), transparent 72%);
+}
+
+.home-sky-embers {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.dragon-drift {
-  position: absolute;
-  top: -10px;
-  left: 0;
-  width: 100%;
-  animation: dragon-drift 34s var(--ease-in-out) infinite alternate;
-  will-change: transform;
-}
-
-/* Le vol reste dans le ciel de gauche et s'élève avant la carte météo :
-   il ne la traverse jamais, et deux passages sont séparés par plus d'une
-   minute de ciel vide. */
-.dragon-flight {
-  width: clamp(170px, 16vw, 210px);
-  animation: dragon-cross 120s var(--ease-linear) infinite;
-  will-change: transform;
-}
-
-.dragon-shape {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-/* La silhouette reste une ombre chaude : elle ne capte ni le clic ni le focus. */
-.dragon-shape path {
-  fill: rgba(86, 33, 16, 0.13);
-}
-
-:root[data-mode='dark'] .dragon-shape path {
-  fill: rgba(255, 172, 122, 0.13);
-}
-
-.dragon-wing,
-.dragon-wing-far {
-  transform-box: view-box;
-  animation: dragon-beat 4.4s var(--ease-in-out) infinite;
-}
-
-.dragon-wing-near {
-  transform-origin: 252px 112px;
-}
-
-.dragon-wing-far {
-  transform-origin: 262px 110px;
-  opacity: 0.6;
-  animation-delay: -0.35s;
-}
-
-.dragon-wing-rib {
-  fill: none;
-  stroke: rgba(255, 196, 158, 0.22);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-
-:root[data-mode='light'] .dragon-wing-rib {
-  stroke: rgba(86, 33, 16, 0.18);
-}
-
-@keyframes dragon-cross {
-  0% {
-    transform: translate3d(-270px, 0, 0);
-  }
-  /* Entrée puis traversée du ciel libre, à vitesse constante. */
-  22% {
-    transform: translate3d(300px, 0, 0);
-  }
-  /* Montée hors champ avant d'atteindre la carte météo. */
-  28% {
-    transform: translate3d(380px, -180px, 0);
-  }
-  /* Pause : le passage suivant attend. */
-  100% {
-    transform: translate3d(380px, -180px, 0);
-  }
-}
-
-@keyframes dragon-drift {
-  from {
-    transform: translate3d(0, -4px, 0);
-  }
-  to {
-    transform: translate3d(0, 4px, 0);
-  }
-}
-
-@keyframes dragon-beat {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  50% {
-    transform: rotate(-6.5deg);
-  }
-}
-
-/* Immobile dans le ciel de gauche : la scène reste lisible sans mouvement. */
-.dragon-sky[data-calm='true'] .dragon-flight {
-  transform: translate3d(230px, 0, 0);
-  animation: none;
-}
-
-.dragon-sky[data-calm='true'] .dragon-drift,
-.dragon-sky[data-calm='true'] .dragon-wing {
-  animation: none;
 }
 
 /* Cases du rail : une braise s'allume sous la case survolée, avec le thème. */
@@ -149,7 +48,10 @@
   box-shadow: var(--inner-light-soft), 0 8px 20px -12px rgba(255, 122, 60, 0.75);
 }
 
-/* Chargement de l'accueil : trois braises, pas d'écran nu. */
+/* ---------------------------------------------------------------
+   Chargement de l'accueil : trois braises, pas d'écran nu
+   --------------------------------------------------------------- */
+
 .start-ignite {
   display: grid;
   place-items: center;
@@ -195,39 +97,13 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dragon-flight,
-  .dragon-drift,
-  .dragon-wing {
-    animation: none !important;
-  }
-
-  .dragon-flight {
-    transform: translate3d(230px, 0, 0);
-  }
-
-  .home-ignite span {
-    animation: none;
-    opacity: 0.75;
-  }
-
-  :root[data-theme='braise'] .mini-tile::after {
-    transition: none;
-  }
-
-  .westeros-star {
-    animation: none !important;
-    opacity: var(--star-alpha, 0.6);
-  }
-}
-
 /* ---------------------------------------------------------------
-   Nuit de Westeros — la seconde variante du ciel de braise
+   Nuit étoilée — la seconde variante du ciel
    --------------------------------------------------------------- */
 
 /* Les étoiles restent dans la bande haute et s'effacent avant le contenu :
    aucun point ne vient salir le verre des cartes. */
-.westeros-sky {
+.sky-night {
   position: absolute;
   inset: 0 0 auto 0;
   height: 118px;
@@ -235,7 +111,7 @@
   mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
 }
 
-.westeros-star {
+.sky-star {
   position: absolute;
   border-radius: 50%;
   background: #ffe6c2;
@@ -246,7 +122,7 @@
   animation-iteration-count: infinite;
 }
 
-:root[data-mode='light'] .westeros-star {
+:root[data-mode='light'] .sky-star {
   background: #8a5a34;
   box-shadow: none;
   opacity: calc(var(--star-alpha, 0.6) * 0.55);
@@ -262,8 +138,8 @@
   }
 }
 
-/* La lune reste à gauche de la carte météo, à la même hauteur que le dragon. */
-.westeros-moon {
+/* La lune reste à gauche de la carte météo. */
+.sky-moon {
   position: absolute;
   top: 8px;
   right: min(334px, 42%);
@@ -271,7 +147,7 @@
   height: 70px;
 }
 
-.westeros-moon::before {
+.sky-moon::before {
   content: '';
   position: absolute;
   inset: -36%;
@@ -279,26 +155,26 @@
   background: radial-gradient(circle, rgba(255, 214, 160, 0.26), transparent 68%);
 }
 
-.westeros-moon svg {
+.sky-moon svg {
   position: relative;
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.westeros-moon svg circle:first-child {
+.sky-moon svg circle:first-child {
   fill: #f6e3b8;
 }
 
-.westeros-moon svg circle:not(:first-child) {
+.sky-moon svg circle:not(:first-child) {
   fill: rgba(122, 79, 40, 0.2);
 }
 
-:root[data-mode='light'] .westeros-moon::before {
+:root[data-mode='light'] .sky-moon::before {
   background: radial-gradient(circle, rgba(214, 160, 80, 0.2), transparent 68%);
 }
 
-.dragon-sky[data-calm='true'] .westeros-star {
+.home-sky[data-calm='true'] .sky-star {
   animation: none;
   opacity: var(--star-alpha, 0.6);
 }
@@ -306,21 +182,40 @@
 /* En-tête empilé : la lune remonte dans le coin et rétrécit, sinon elle
    tomberait sur le titre de l'accueil. */
 @container start (max-width: 720px) {
-  .westeros-moon {
+  .sky-moon {
     top: 0;
     right: 22px;
     width: 46px;
     height: 46px;
   }
 
-  .westeros-sky {
+  .sky-night {
     height: 88px;
   }
 }
 
-/* Le choix du ciel s'éteint avec l'ambiance elle-même. */
-.setting-row[data-disabled='true'] {
-  opacity: 0.5;
+/* Le mouvement se tait, que la préférence vienne du système ou des réglages. */
+@media (prefers-reduced-motion: reduce) {
+  .home-ignite span {
+    animation: none;
+    opacity: 0.75;
+  }
+
+  .sky-star {
+    animation: none !important;
+    opacity: var(--star-alpha, 0.6);
+  }
+
+  :root[data-theme='braise'] .mini-tile::after {
+    transition: none;
+  }
 }
 
+:root[data-motion='reduce'] .home-ignite span,
+:root[data-motion='reduce'] .sky-star {
+  animation: none !important;
+}
 
+:root[data-motion='reduce'] .home-ignite span {
+  opacity: 0.75;
+}

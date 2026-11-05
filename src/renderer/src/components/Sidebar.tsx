@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, DragEvent, KeyboardEvent } from 'react'
+import { pinnedNeighbour } from '@shared/pinnedTabMenu'
 import type { Bookmark, TabGroup, TabView } from '@shared/types'
 import { displayTitle, hostOf, titleBadge } from '@shared/url'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
-import { VelaMark } from './BrandMark'
+import SidebarHeader from './SidebarHeader'
 import { Icon } from './Icon'
+import TabContextMenu from './TabContextMenu'
 import TabRow from './TabRow'
 import TileMenu, { type TileMenuItem } from './TileMenu'
 import TunnelSidebar from './TunnelSidebar'
@@ -20,9 +22,8 @@ type DropTarget =
   | { kind: 'pinned-end' }
   | null
 
-type MenuState =
-  | { kind: 'tab'; tab: TabView; x: number; y: number }
-  | { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
+/** Menu d'un favori ; celui d'un onglet vit dans `TabContextMenu`. */
+type MenuState = { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
 
 /** Au-delà, une tuile « +N » ouvre la liste complète plutôt que de tronquer. */
 const FAVORITE_LIMIT = 12
@@ -35,10 +36,7 @@ export default function Sidebar() {
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const workMode = useBrowser((state) => state.workMode)
   const newTab = useBrowser((state) => state.newTab)
-  const closeTab = useBrowser((state) => state.closeTab)
-  const pin = useBrowser((state) => state.pin)
-  const toggleMute = useBrowser((state) => state.toggleMute)
-  const splitWith = useBrowser((state) => state.splitWith)
+  const reopen = useBrowser((state) => state.reopen)
   const removeBookmark = useBrowser((state) => state.removeBookmark)
   const moveBookmark = useBrowser((state) => state.moveBookmark)
   const toast = useBrowser((state) => state.toast)
@@ -65,6 +63,15 @@ export default function Sidebar() {
     y: number
   } | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
+  // Onglet visé par un clic droit (ligne ou case épinglée), et fond de liste.
+  const [tabMenu, setTabMenu] = useState<{
+    tab: TabView
+    x: number
+    y: number
+    keyboard: boolean
+    rect?: { left: number; top: number; right: number; bottom: number }
+  } | null>(null)
+  const [emptyMenu, setEmptyMenu] = useState<{ x: number; y: number } | null>(null)
   // Message lu par le lecteur d'écran après un déplacement.
   const [announce, setAnnounce] = useState('')
   const cancelRename = useRef(false)
@@ -86,6 +93,8 @@ export default function Sidebar() {
     if (!overlay) return
     setTip(null)
     setMenu(null)
+    setTabMenu(null)
+    setEmptyMenu(null)
   }, [overlay])
 
   useEffect(() => {
@@ -189,7 +198,7 @@ export default function Sidebar() {
     setTip({
       title: displayTitle(item.title),
       host: hostOf(item.url),
-      note: item.muted ? 'Son coupé' : item.audible ? 'Joue du son' : undefined,
+      note: item.muted ? 'Son coupé' : item.audible ? 'Page en lecture' : undefined,
       x,
       y
     })
@@ -444,10 +453,59 @@ export default function Sidebar() {
     commitMove(tab.id, tab.pinned)
   }
 
-  const openTabMenu = (tab: TabView, x: number, y: number): void => {
-    hideTip()
-    setMenu({ kind: 'tab', tab, x, y })
+  /** Déplacement d'un épinglé depuis son menu : même chemin que Alt + flèches. */
+  const movePinnedFromMenu = (tab: TabView, step: -1 | 1): void => {
+    const targetId = pinnedNeighbour(
+      pinned.map((item) => item.id),
+      tab.id,
+      step
+    )
+    if (!targetId) return
+    reorderTab(tab.id, targetId, step < 0 ? 'before' : 'after', true)
+    commitMove(tab.id, true)
   }
+
+  const openTabMenu = (
+    tab: TabView,
+    x: number,
+    y: number,
+    keyboard: boolean,
+    rect?: { left: number; top: number; right: number; bottom: number }
+  ): void => {
+    hideTip()
+    setTabMenu({ tab, x, y, keyboard, rect })
+  }
+
+  const closeTabMenu = (id: string): void => {
+    setTabMenu(null)
+    const focusTile = (): void => {
+      document
+        .querySelector<HTMLElement>(
+          `.mini-tile[data-tab-id="${CSS.escape(id)}"], .tab-row[data-tab-id="${CSS.escape(id)}"]`
+        )
+        ?.focus()
+    }
+    // Le portail se démonte au rendu suivant : on reprend le focus après lui,
+    // sinon il retombe sur le document et le clavier repart du début.
+    requestAnimationFrame(() => requestAnimationFrame(focusTile))
+  }
+
+  /** Clic droit sur le fond de la liste : actions qui ne visent aucun onglet. */
+  const emptyTabItems = (): TileMenuItem[] => [
+    { id: 'new', label: 'Nouvel onglet', icon: 'plus', keys: shortcut('T'), onSelect: () => newTab() },
+    { id: 'new-folder', label: 'Nouveau dossier', icon: 'folder', onSelect: () => void createFolder() },
+    ...(view.canReopen
+      ? [
+          {
+            id: 'reopen',
+            label: 'Rouvrir l’onglet fermé',
+            icon: 'history' as const,
+            keys: shortcut('⇧T'),
+            onSelect: () => reopen()
+          }
+        ]
+      : [])
+  ]
 
   const openBookmarkMenu = (bookmark: Bookmark, x: number, y: number): void => {
     hideTip()
@@ -455,32 +513,6 @@ export default function Sidebar() {
   }
 
   const menuItems = (state: MenuState): TileMenuItem[] => {
-    if (!state) return []
-    if (state.kind === 'tab') {
-      return [
-        { id: 'close', label: 'Fermer', icon: 'close', onSelect: () => closeTab(state.tab.id) },
-        { id: 'unpin', label: 'Désépingler', icon: 'pin', onSelect: () => pin(state.tab.id, false) },
-        {
-          id: 'mute',
-          label: state.tab.muted ? 'Rétablir le son' : 'Couper le son',
-          icon: state.tab.muted ? 'volume' : 'volume-off',
-          onSelect: () => toggleMute(state.tab.id, !state.tab.muted)
-        },
-        { id: 'copy', label: 'Copier l’adresse', icon: 'copy', onSelect: () => void copyAddress(state.tab.url) },
-        {
-          id: 'split',
-          label: 'Ouvrir en vue scindée',
-          icon: 'split',
-          onSelect: () => splitWith(state.tab.id)
-        },
-        {
-          id: 'new',
-          label: 'Ouvrir dans un nouvel onglet',
-          icon: 'external',
-          onSelect: () => newTab(state.tab.url)
-        }
-      ]
-    }
     return [
       {
         id: 'remove',
@@ -567,14 +599,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar" aria-label="Barre latérale" style={{ '--space': space.color } as CSSProperties}>
-      <header className="sidebar-top drag">
-        <span className="brand-lockup" aria-label="Vela">
-          <VelaMark size={20} />
-          <span className="wordmark" aria-hidden="true">
-            Vela<span className="wordmark-dot">.</span>
-          </span>
-        </span>
-      </header>
+      <SidebarHeader />
 
       <div className="space-head">
         <SpaceAvatar space={space} size={18} />
@@ -605,7 +630,18 @@ export default function Sidebar() {
       {workMode === 'work' ? (
         <TunnelSidebar spaceId={space.id} />
       ) : (
-        <div className="tabs-scroll" onScroll={hideTip}>
+        <div
+          className="tabs-scroll"
+          onScroll={hideTip}
+          onContextMenu={(event) => {
+            // Les lignes et les cases ont leur propre menu : ici, c'est le fond.
+            const target = event.target as HTMLElement
+            if (target.closest('.tab-row, .mini-tile, .fav-list-row, .group-head, button, input')) return
+            event.preventDefault()
+            hideTip()
+            setEmptyMenu({ x: event.clientX, y: event.clientY })
+          }}
+        >
           {pinnedCount > 0 && (
             <>
               <div className="tabs-head">
@@ -637,7 +673,7 @@ export default function Sidebar() {
                     data-sounding={sounding ? 'true' : undefined}
                     draggable
                     aria-label={`${displayTitle(tab.title)} — ${hostOf(tab.url)}${
-                      tab.muted ? ', son coupé' : sounding ? ', joue du son' : ''
+                      tab.muted ? ', son coupé' : sounding ? ', page en lecture' : ''
                     }`}
                     onMouseEnter={(event) => showTip(event, tab)}
                     onMouseLeave={hideTip}
@@ -646,7 +682,13 @@ export default function Sidebar() {
                     onContextMenu={(event) => {
                       event.preventDefault()
                       event.stopPropagation()
-                      openTabMenu(tab, event.clientX, event.clientY)
+                      openTabMenu(
+                        tab,
+                        event.clientX,
+                        event.clientY,
+                        false,
+                        event.currentTarget.getBoundingClientRect()
+                      )
                     }}
                     onDragStart={(event) => {
                       hideTip()
@@ -660,7 +702,7 @@ export default function Sidebar() {
                       if (event.defaultPrevented) return
                       if (!menuKey(event)) return
                       const rect = event.currentTarget.getBoundingClientRect()
-                      openTabMenu(tab, rect.left, rect.bottom)
+                      openTabMenu(tab, rect.left, rect.bottom, true, rect)
                     }}
                     onClick={() => selectTab(tab.id)}
                   >
@@ -1031,13 +1073,35 @@ export default function Sidebar() {
           document.body
         )}
 
+      {tabMenu && (
+        <TabContextMenu
+          tab={tabMenu.tab}
+          x={tabMenu.x}
+          y={tabMenu.y}
+          anchor={tabMenu.rect}
+          keyboard={tabMenu.keyboard}
+          onMove={(step) => movePinnedFromMenu(tabMenu.tab, step)}
+          onClose={() => closeTabMenu(tabMenu.tab.id)}
+        />
+      )}
+
+      {emptyMenu && (
+        <TileMenu
+          x={emptyMenu.x}
+          y={emptyMenu.y}
+          label="Liste des onglets"
+          items={emptyTabItems()}
+          onClose={() => setEmptyMenu(null)}
+        />
+      )}
+
       {menu && (
         <TileMenu
           x={menu.x}
           y={menu.y}
-          label={menu.kind === 'tab' ? displayTitle(menu.tab.title) : displayTitle(menu.bookmark.title)}
+          label={displayTitle(menu.bookmark.title)}
           items={menuItems(menu)}
-          onClose={() => closeMenu(menu.kind === 'tab' ? menu.tab.id : menu.bookmark.id)}
+          onClose={() => closeMenu(menu.bookmark.id)}
         />
       )}
     </aside>

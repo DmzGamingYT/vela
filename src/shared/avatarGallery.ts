@@ -286,8 +286,9 @@ export const GALLERY_AVATARS: GalleryAvatar[] = [
   },
   {
     // L'œuf de l'ambiance Braise : un dessin original, pas une armoirie.
+    // L'identifiant reste stable (il est persisté) ; seul le nom est neutre.
     id: 'dragon-egg',
-    label: 'Œuf de dragon',
+    label: 'Œuf de braise',
     from: '#8C2F14',
     to: '#3B120A',
     ink: '#FFD9AC',

@@ -2,12 +2,22 @@
  * Types partagés entre le processus principal, le preload et le renderer.
  * Une seule source de vérité pour l'état persisté et l'état exposé à l'interface.
  */import type { AgentActionEntry } from './agentLoop'
-import type { AmbienceId, GlassIntensity, HomeBackground, ThemeId } from './theme'
+import type {
+  AmbienceId,
+  Density,
+  GlassIntensity,
+  HomeBackground,
+  MotionPreference,
+  SidebarSide,
+  SkyVariant,
+  TextSize,
+  ThemeId
+} from './theme'
 
 export const HOME_URL = 'vela://home'
 export const APP_NAME = 'Vela'
 export type Theme = 'light' | 'dark' | 'system'
-export type SearchEngineId =
+export type BuiltinSearchEngineId =
   | 'duckduckgo'
   | 'brave'
   | 'startpage'
@@ -16,6 +26,29 @@ export type SearchEngineId =
   | 'ecosia'
   | 'qwant'
   | 'searxng'
+
+/** Moteur intégré, ou « custom » : celui choisi dans `customEngines`. */
+export type SearchEngineId = BuiltinSearchEngineId | 'custom'
+
+/** Moteur ajouté par l'utilisateur : nom lisible et modèle d'adresse avec %s. */
+export interface CustomSearchEngine {
+  id: string
+  name: string
+  template: string
+}
+
+/** Mot-clé rapide de la barre d'adresse : « g verre » cherche sur ce moteur. */
+export interface SearchKeyword {
+  keyword: string
+  /** Identifiant d'un moteur intégré, ou d'un moteur personnalisé. */
+  engineId: string
+}
+
+/** Durée de conservation de l'historique. */
+export type HistoryRetention = 'forever' | '90' | '30' | '7' | 'never'
+
+/** Comportement au lancement de l'application. */
+export type StartupBehavior = 'restore' | 'home' | 'url'
 export type AgentMode = 'demo' | 'api'
 export type ProviderId =
   | 'openai'
@@ -146,14 +179,38 @@ export interface AgentSettings {
   providers: Record<ProviderId, ProviderSettings>
 }
 
-/** Les deux ciels de l'ambiance Braise. */
-export type SkyVariant = 'braise' | 'westeros'
+/** Les deux ciels de l'ambiance Braise (voir shared/theme). */
+export type { SkyVariant }
 
 export interface Settings {
   theme: Theme
   searchEngine: SearchEngineId
+  /** Moteur personnalisé retenu quand `searchEngine` vaut « custom ». */
+  customEngineId: string
+  /** Moteurs ajoutés à la main (nom + modèle d'adresse https avec %s). */
+  customEngines: CustomSearchEngine[]
+  /** Mots-clés rapides de la barre d'adresse. */
+  searchKeywords: SearchKeyword[]
   /** Instance SearXNG choisie (vide → searx.be). */
   searxInstance: string
+  /** Au lancement : reprendre la session, ouvrir l'accueil, ou une page précise. */
+  startupBehavior: StartupBehavior
+  /** Page de démarrage quand `startupBehavior` vaut « url ». */
+  startupUrl: string
+  /** Nouvel onglet : accueil Vela, ou page vide. */
+  newTabBlank: boolean
+  /** Durée de conservation de l'historique ; purgé au démarrage. */
+  historyRetention: HistoryRetention
+  /** Dossier de téléchargement choisi ; null → dossier Téléchargements du système. */
+  downloadDir: string | null
+  /** Demander où enregistrer à chaque téléchargement. */
+  askDownloadLocation: boolean
+  /** Ouvrir le fichier une fois le téléchargement terminé. */
+  openAfterDownload: boolean
+  /** Langue envoyée aux pages dans Accept-Language (code court : fr, en…). */
+  webLanguage: string
+  /** Zoom appliqué aux pages à l'ouverture (1 = taille réelle). */
+  defaultZoom: number
   /** Thème de couleur du châssis (indigo, rouge, custom…). */
   themeId: ThemeId
   /** Teinte utilisée quand themeId vaut « custom ». */
@@ -164,22 +221,34 @@ export interface Settings {
   glassBlur: number
   /** Ambiance animée du châssis ; `none` garde le fond sobre. */
   ambience: AmbienceId
-  /** Arrière-plan de la page d'accueil. */
+  /** Arrière-plan de la page d'accueil : dégradé, ciel, couleur unie, image. */
   homeBackground: HomeBackground
   /** Image locale de l'accueil (chemin disque, jamais transmis aux sites). */
   homeImage: string | null
   /** Flou appliqué à l'image d'accueil, en pixels. */
   homeBlur: number
+  /** Ciel de l'accueil : braises montantes, ou nuit étoilée avec sa lune. */
+  skyVariant: SkyVariant
+  /** Densité des rangées de l'interface. */
+  density: Density
+  /** Taille du texte de l'interface Vela (pas celle des pages). */
+  textSize: TextSize
+  /** Barre latérale à gauche ou à droite du contenu. */
+  sidebarSide: SidebarSide
   /** Bordures renforcées, transparences supprimées. */
   highContrast: boolean
+  /** Mouvement réduit : choix explicite, ou réglage du système. */
+  reduceMotion: MotionPreference
   /** Clair le jour, sombre le soir, quel que soit le mode choisi. */
   hourTheme: boolean
+  /** Première heure claire du thème automatique (incluse). */
+  hourStart: number
+  /** Heure du retour au sombre (exclue). */
+  hourEnd: number
   /** Chaque espace peut porter son propre thème. */
   perSpaceThemes: boolean
-  /** Ambiance animée de l'accueil, avec le thème Braise (jamais si « Réduire les animations »). */
-  dragonSky: boolean
-  /** Ciel de l'ambiance : braises et dragon, ou nuit étoilée avec sa lune. */
-  skyVariant: SkyVariant
+  /** Marqueur de migration du ciel (voir shared/theme). */
+  skyMigrated: boolean
   blockTrackers: boolean
   /** Intensité du filtre quand `blockTrackers` est actif. */
   blockLevel: 'trackers' | 'strict'
@@ -362,6 +431,8 @@ export interface AppView {
   privacyExemptions: string[]
   /** Mémoire rendue par les onglets mis en veille depuis le lancement (Mo). */
   memoryFreed: number
+  /** Un onglet fermé attend d'être rouvert : « Rouvrir l'onglet fermé » n'a de sens que là. */
+  canReopen: boolean
   tunnelMaps: import('./tunnel').TunnelMapSummary[]
   notes: NoteMeta[]
   tasks: Task[]

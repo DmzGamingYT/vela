@@ -103,7 +103,7 @@ body {
 }
 
 .sidebar-top {
-  padding-left: 32px;
+  padding-left: 24px;
 }
 
 .wordmark {
@@ -113,8 +113,16 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Le nom de la barre latérale et celui des Réglages suivent la même taille
+   (15–16 px) : le wordmark reste discret, posé sur la ligne des feux. */
+.sidebar-top .wordmark,
+.settings-nav .wordmark {
+  font-size: 15.5px;
+  line-height: 1;
+}
+
 .wordmark-dot {
-  color: var(--accent-b);
+  color: var(--wordmark-accent, var(--accent-label));
 }
 
 .icon-btn {
@@ -903,13 +911,21 @@ kbd {
   padding: 2px 10px 16px;
 }
 
-.settings-nav-version {
+.about-version {
   font-size: 9px;
   color: var(--faint);
   border: 1px solid var(--edge);
   border-radius: 999px;
   padding: 1px 6px;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.about-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .settings-nav-scroll {
@@ -961,11 +977,13 @@ kbd {
   color: var(--ink);
 }
 
+/* L'élément actif ne porte plus ni bordure ni liseré : le fond et la barre
+   d'accent suffisent (deux contours se lisaient comme un cadre). */
 .settings-nav-item[data-active="true"] {
   background: var(--fill-2);
-  border-color: var(--edge);
+  border-color: transparent;
   color: var(--ink);
-  box-shadow: var(--inner-light);
+  box-shadow: none;
 }
 
 .settings-nav-item[data-active="true"] svg {
@@ -998,21 +1016,23 @@ kbd {
   min-height: 0;
 }
 
+/* Pas de trait sous l'en-tête : la première carte du contenu fournit sa
+   propre bordure. Les deux additionnées coupaient le cadre en deux. */
 .settings-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px 28px 18px;
-  border-bottom: 1px solid var(--edge);
+  padding: 24px 28px 6px;
+  border-bottom: none;
 }
 
 .settings-head h1 {
   margin: 0 0 5px;
-  font-family: var(--sans);
-  font-size: 25px;
-  font-weight: 600;
-  letter-spacing: -0.032em;
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 400;
+  letter-spacing: -0.012em;
 }
 
 .settings-head p {

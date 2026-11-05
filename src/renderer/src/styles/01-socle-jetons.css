@@ -25,6 +25,8 @@
   --fill-3: rgba(255, 255, 255, 0.12);
   --tint: rgba(168, 163, 255, 0.13);
   --clay: #b3aeff;
+  /* Fermer : un rouge discret, lisible sur le verre sombre. */
+  --danger: #e0907c;
   --sage: #88d0b3;
   --indigo: #b3aeff;
   --gold: #e6cb80;
@@ -69,6 +71,8 @@
   --fill-3: rgba(255, 255, 255, 0.92);
   --tint: rgba(91, 86, 214, 0.1);
   --clay: #5b56d6;
+  /* Fermer : un rouge discret, lisible sur le papier clair. */
+  --danger: #a8432c;
   --sage: #1f8a6a;
   --indigo: #6a5cd6;
   --gold: #8d6b14;

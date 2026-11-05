@@ -319,3 +319,83 @@ describe('niveau de blocage', () => {
     expect(new Store(dir).get().settings.blockLevel).toBe('trackers')
   })
 })
+
+describe('migration des réglages d’apparence 0.3.24', () => {
+  function writeAppearanceLegacy(dir: string, settings: Record<string, unknown>): void {
+    writeFileSync(
+      join(dir, 'vela.json'),
+      JSON.stringify({
+        version: 1,
+        spaces: [{ id: 'space-1', name: 'Personnel', color: '#5b5bd6' }],
+        tabs: [],
+        settings
+      }),
+      'utf8'
+    )
+  }
+
+  it('garde chaque valeur des pages Apparence, Thèmes et Tweaks', () => {
+    const dir = tempDir()
+    writeAppearanceLegacy(dir, {
+      theme: 'dark',
+      themeId: 'braise',
+      customAccent: '#b4451f',
+      glass: 'strong',
+      glassBlur: 33,
+      ambience: 'reve-etolie',
+      homeBackground: 'gradient',
+      homeImage: '/Users/alex/Images/fond.png',
+      homeBlur: 11,
+      highContrast: true,
+      hourTheme: true,
+      perSpaceThemes: true,
+      dragonSky: true,
+      skyVariant: 'westeros'
+    })
+
+    const store = new Store(dir)
+    store.flush()
+    const settings = store.get().settings
+    expect(settings.themeId).toBe('braise')
+    expect(settings.customAccent).toBe('#b4451f')
+    expect(settings.glass).toBe('strong')
+    expect(settings.glassBlur).toBe(33)
+    expect(settings.ambience).toBe('reve-etolie')
+    expect(settings.skyVariant).toBe('nuit-etoilee')
+    // La 0.3.24 montrait le ciel dès que le thème Braise était actif : le
+    // convertir en « Ciel » garde ce que l’utilisateur voyait.
+    expect(settings.homeBackground).toBe('sky')
+    expect(settings.homeImage).toBe('/Users/alex/Images/fond.png')
+    expect(settings.homeBlur).toBe(11)
+    expect(settings.highContrast).toBe(true)
+    expect(settings.hourTheme).toBe(true)
+    expect(settings.hourStart).toBe(7)
+    expect(settings.hourEnd).toBe(19)
+    expect(settings.perSpaceThemes).toBe(true)
+    // Les réglages d’interface de la page fusionnée existent après migration.
+    expect(settings.density).toBe('normal')
+    expect(settings.textSize).toBe('normal')
+    expect(settings.sidebarSide).toBe('left')
+    expect(settings.reduceMotion).toBe('system')
+
+    // Relire le fichier migré ne change plus rien.
+    const reopened = new Store(dir)
+    reopened.flush()
+    expect(reopened.get().settings).toEqual(settings)
+  })
+
+  it('ne rallume pas le ciel quand on revient au dégradé', () => {
+    const dir = tempDir()
+    writeAppearanceLegacy(dir, { themeId: 'braise', dragonSky: true, homeBackground: 'gradient' })
+    const store = new Store(dir)
+    store.flush()
+    expect(store.get().settings.homeBackground).toBe('sky')
+
+    store.update((state) => {
+      state.settings.homeBackground = 'gradient'
+    })
+    store.flush()
+    const reopened = new Store(dir)
+    expect(reopened.get().settings.homeBackground).toBe('gradient')
+  })
+})

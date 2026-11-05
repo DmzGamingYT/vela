@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { THEME_PRESETS, type ThemeId } from '@shared/theme'
 import { isHomeUrl, normalizeInput, prettyUrl } from '@shared/url'
+import { searchOptionsOf } from '@shared/navigation'
 import { appearanceState, applyAppearance } from '../lib/appearance'
 import { normalize, rankItems } from '../lib/commandRank'
 import { shortcut } from '../lib/format'
@@ -137,7 +138,7 @@ export default function CommandBar() {
         group: 'Aller',
         label: `Ouvrir « ${query.trim()} »`,
         hint:
-          normalizeInput(query.trim(), view.settings.searchEngine, view.settings.searxInstance).kind === 'search'
+          normalizeInput(query.trim(), searchOptionsOf(view.settings)).kind === 'search'
             ? 'Recherche'
             : 'Adresse',
         icon: 'globe',

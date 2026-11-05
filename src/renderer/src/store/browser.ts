@@ -142,13 +142,17 @@ interface BrowserState {
   splitRatioLive: number | null
   init(): Promise<void>
   call<T>(task: () => Promise<T>, fallback: string): Promise<T | null>
-  toast(text: string, tone?: Toast['tone'], action?: Toast['action']): void
+  toast(text: string, tone?: Toast['tone'], action?: Toast['action'], duration?: number): void
   dismissToast(id: string): void
   setOverlay(overlay: Overlay): void
   openSpaceDialog(id?: string): void
   focusAddress(): void
   newTab(url?: string, groupId?: string): void
   closeTab(id: string): void
+  /** Ferme et propose de rouvrir pendant huit secondes. */
+  closeWithUndo(id: string): void
+  /** Décharge la page sans retirer l'onglet ; il se recharge au clic. */
+  sleep(id: string): void
   selectTab(id: string): void
   navigate(id: string, input: string): void
   back(id: string): void
@@ -181,6 +185,8 @@ interface BrowserState {
   updateSpace(id: string, patch: Omit<UpdateSpaceInput, 'id'>): Promise<void>
   saveSpaceShortcuts(id: string, shortcuts: import('@shared/space').SpaceShortcut[]): Promise<void>
   removeSpace(id: string): Promise<void>
+  duplicateSpace(id: string): Promise<void>
+  clearSpaceData(id: string): Promise<void>
   toggleNotes(open?: boolean): void
   requestVoiceNote(spaceId?: string): void
   consumeVoiceNoteRequest(): void
@@ -360,10 +366,10 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     }
   },
 
-  toast(text, tone = 'info', action) {
+  toast(text, tone = 'info', action, duration) {
     const id = crypto.randomUUID()
     set((state) => ({ toasts: [...state.toasts, { id, text, tone, action }].slice(-3) }))
-    setTimeout(() => get().dismissToast(id), action ? 7000 : 4200)
+    setTimeout(() => get().dismissToast(id), duration ?? (action ? 7000 : 4200))
   },
 
   dismissToast(id) {
@@ -412,6 +418,26 @@ export const useBrowser = create<BrowserState>((set, get) => ({
 
   closeTab(id) {
     void get().call(() => window.vela.tabs.close(id), 'Impossible de fermer l’onglet.')
+  },
+
+  closeWithUndo(id) {
+    const tab = get().view?.tabs.find((item) => item.id === id)
+    if (!tab) return
+    // `reopen` restaure le dernier onglet fermé : c'est celui-ci, à l'instant.
+    get().toast('Onglet fermé', 'info', { label: 'Annuler', run: () => get().reopen() }, 8000)
+    get().closeTab(id)
+  },
+
+  sleep(id) {
+    void (async () => {
+      const result = await get().call(
+        () => window.vela.tabs.discard(id),
+        'Mise en veille impossible.'
+      )
+      if (result !== null) {
+        get().toast('Onglet en veille : il se rechargera au prochain clic.', 'info', undefined, 4200)
+      }
+    })()
   },
 
   selectTab(id) {
@@ -561,6 +587,28 @@ export const useBrowser = create<BrowserState>((set, get) => ({
     if (result !== null) {
       set({ overlay: null })
       get().toast('Espace supprimé.')
+    }
+  },
+
+  async duplicateSpace(id) {
+    const result = await get().call(
+      () => window.vela.spaces.duplicate(id),
+      'Impossible de dupliquer l’espace.'
+    )
+    if (result !== null) {
+      set({ overlay: null })
+      get().toast('Espace dupliqué.')
+    }
+  },
+
+  async clearSpaceData(id) {
+    const result = await get().call(
+      () => window.vela.spaces.clearData(id),
+      'Impossible de vider les données de l’espace.'
+    )
+    if (result !== null) {
+      set({ overlay: null })
+      get().toast('Données de l’espace effacées.')
     }
   },
 

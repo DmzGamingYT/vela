@@ -259,6 +259,7 @@ function main(): void {
     applySessionIdentity(session.defaultSession)
     try {
       browser = new Browser(app.getPath('userData'))
+      browser.applyStartup()
     } catch (error) {
       journalFault('démarrage impossible', error)
       dialog.showErrorBox(

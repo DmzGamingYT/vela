@@ -850,6 +850,13 @@
 .tile-menu-list {
   display: grid;
   gap: 1px;
+  outline: none;
+}
+
+/* La liste peut prendre le focus à l'ouverture souris : aucun anneau alors. */
+.tile-menu-list:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Sous-menu : collé au bord droit du menu, ou à gauche faute de place. */
@@ -903,19 +910,88 @@
 
 /* Un libellé long se coupe proprement au lieu de sortir du menu. */
 .tile-menu-item > span {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* En-tête informatif d'un menu : logo, titre nettoyé, domaine. */
+.tile-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line-soft);
+  pointer-events: none;
+}
+
+.tile-menu-head-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tile-menu-head-title {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-menu-head-host {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Groupes d'actions : un trait fin, jamais une ligne de texte. */
+.tile-menu-sep {
+  height: 1px;
+  margin: 4px 7px;
+  background: var(--line);
+}
+
+/* Raccourci à droite, en touches : il reste discret mais lisible. */
+.tile-menu-keys {
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 10px;
+  pointer-events: none;
+}
+
+.tile-menu-key {
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 17px;
+  text-align: center;
+}
+
+.tile-menu-keys + .tile-menu-arrow {
+  margin-left: 4px;
+}
+
 .tile-menu-item:hover {
-  background: var(--fill);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--ink);
 }
 
 .tile-menu-item[data-danger='true'] {
-  color: var(--clay);
+  color: var(--danger);
 }
 
 .tile-menu-item[data-danger='true'] svg {

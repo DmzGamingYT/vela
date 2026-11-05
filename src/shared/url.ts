@@ -1,11 +1,11 @@
-import { HOME_URL, type SearchEngineId } from './types'
+import { HOME_URL, type BuiltinSearchEngineId, type SearchEngineId } from './types'
 
 interface Engine {
   label: string
   build: (query: string) => string
 }
 
-export const SEARCH_ENGINES: Record<SearchEngineId, Engine> = {
+export const SEARCH_ENGINES: Record<BuiltinSearchEngineId, Engine> = {
   duckduckgo: {
     label: 'DuckDuckGo',
     build: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
@@ -40,6 +40,33 @@ export const SEARCH_ENGINES: Record<SearchEngineId, Engine> = {
   }
 }
 
+/** Moteurs intégrés, dans l'ordre de la grille des réglages. */
+export const BUILTIN_ENGINES = Object.keys(SEARCH_ENGINES) as BuiltinSearchEngineId[]
+
+export function isBuiltinEngine(value: unknown): value is BuiltinSearchEngineId {
+  return typeof value === 'string' && value in SEARCH_ENGINES
+}
+
+/** Nom lisible : celui du moteur intégré, ou celui du moteur ajouté à la main. */
+export function engineLabel(engine: SearchEngineId, customName?: string | null): string {
+  if (engine === 'custom') return customName?.trim() || 'Moteur ajouté'
+  return SEARCH_ENGINES[engine]?.label ?? 'Moteur'
+}
+
+export interface KeywordRule {
+  keyword: string
+  engine: SearchEngineId
+  customTemplate?: string | null
+}
+
+/** Contexte de recherche : moteur retenu, instance, moteur ajouté, mots-clés. */
+export interface EngineOptions {
+  engine: SearchEngineId
+  searxInstance?: string | null
+  customTemplate?: string | null
+  keywords?: KeywordRule[]
+}
+
 /**
  * Instance SearXNG saisie par l'utilisateur : garde l'hôte, ignore le chemin.
  * Une valeur vide ou invalide retombe sur searx.be.
@@ -53,6 +80,45 @@ export function searxBase(instance?: string | null): string {
     return `${parsed.protocol}//${parsed.host}`
   } catch {
     return 'https://searx.be'
+  }
+}
+
+/** Modèle d'adresse fourni par l'utilisateur : https uniquement, un %s. */
+function renderTemplate(template: string | null | undefined, query: string): string | null {
+  if (!template || !/^https:\/\//i.test(template)) return null
+  if ((template.match(/%s/g) ?? []).length !== 1) return null
+  try {
+    const url = template.replace('%s', encodeURIComponent(query))
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' ? url : null
+  } catch {
+    return null
+  }
+}
+
+export function searchUrl(
+  query: string,
+  engine: SearchEngineId,
+  searxInstance?: string | null,
+  customTemplate?: string | null
+): string {
+  if (engine === 'custom') {
+    return renderTemplate(customTemplate, query) ?? SEARCH_ENGINES.duckduckgo.build(query)
+  }
+  if (engine === 'searxng') return `${searxBase(searxInstance)}/search?q=${encodeURIComponent(query)}`
+  return (SEARCH_ENGINES[engine as BuiltinSearchEngineId] ?? SEARCH_ENGINES.duckduckgo).build(query)
+}
+
+/** Hôte du moteur, pour pré-connecter (DNS + TLS) avant la première recherche. */
+export function engineHost(
+  engine: SearchEngineId,
+  searxInstance?: string | null,
+  customTemplate?: string | null
+): string {
+  try {
+    return new URL(searchUrl('test', engine, searxInstance, customTemplate)).hostname || 'duckduckgo.com'
+  } catch {
+    return 'duckduckgo.com'
   }
 }
 
@@ -129,23 +195,19 @@ export function prettyUrl(url: string): string {
   }
 }
 
-export function searchUrl(query: string, engine: SearchEngineId, searxInstance?: string | null): string {
-  if (engine === 'searxng') return `${searxBase(searxInstance)}/search?q=${encodeURIComponent(query)}`
-  return (SEARCH_ENGINES[engine] ?? SEARCH_ENGINES.duckduckgo).build(query)
-}
-
-/** Hôte du moteur, pour pré-connecter (DNS + TLS) avant la première recherche. */
-export function engineHost(engine: SearchEngineId, searxInstance?: string | null): string {
-  try {
-    return new URL(searchUrl('test', engine, searxInstance)).hostname || 'duckduckgo.com'
-  } catch {
-    return 'duckduckgo.com'
-  }
-}
-
 export interface Target {
   url: string
   kind: 'url' | 'search'
+}
+
+/** Réglage de mot-clé : « g verre » part sur Google, sans toucher au reste. */
+function keywordTarget(input: string, keywords?: KeywordRule[]): { rule: KeywordRule; query: string } | null {
+  if (!keywords || keywords.length === 0) return null
+  const match = input.match(/^([a-z0-9]{1,12})\s+(.+)$/i)
+  if (!match) return null
+  const rule = keywords.find((entry) => entry.keyword.toLowerCase() === match[1].toLowerCase())
+  if (!rule) return null
+  return { rule, query: match[2].trim() }
 }
 
 /**
@@ -154,9 +216,19 @@ export interface Target {
  */
 export function normalizeInput(
   raw: string,
-  engine: SearchEngineId = 'duckduckgo',
-  searxInstance?: string | null
+  engineOrOptions: SearchEngineId | EngineOptions = 'duckduckgo',
+  searxInstance?: string | null,
+  extra?: { customTemplate?: string | null; keywords?: KeywordRule[] }
 ): Target {
+  const options: EngineOptions =
+    typeof engineOrOptions === 'string'
+      ? {
+          engine: engineOrOptions,
+          searxInstance: searxInstance ?? '',
+          customTemplate: extra?.customTemplate ?? null,
+          keywords: extra?.keywords ?? []
+        }
+      : engineOrOptions
   const input = raw.replace(/\s+/g, ' ').trim()
   if (!input) return { url: HOME_URL, kind: 'url' }
   if (input === HOME_URL) return { url: HOME_URL, kind: 'url' }
@@ -173,7 +245,18 @@ export function normalizeInput(
     return { url: `https://${input}`, kind: 'url' }
   }
 
-  return { url: searchUrl(input, engine, searxInstance), kind: 'search' }
+  const shortcut = keywordTarget(input, options.keywords)
+  if (shortcut) {
+    return {
+      url: searchUrl(shortcut.query, shortcut.rule.engine, options.searxInstance, shortcut.rule.customTemplate),
+      kind: 'search'
+    }
+  }
+
+  return {
+    url: searchUrl(input, options.engine, options.searxInstance, options.customTemplate),
+    kind: 'search'
+  }
 }
 
 /** Titre court et propre quand la page n'en fournit pas encore. */

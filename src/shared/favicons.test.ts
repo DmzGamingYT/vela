@@ -100,4 +100,19 @@ describe('cache de favicons', () => {
     await h.cache.get('a.fr')
     expect(h.calls()).toBe(3)
   })
+
+  it('peek ne contacte jamais le réseau et ignore les échecs', async () => {
+    const h = harness()
+    expect(h.cache.peek('jamais-vu.fr')).toBeNull()
+    expect(h.calls()).toBe(0)
+    await h.cache.get('a.fr')
+    expect(h.cache.peek('a.fr')).toMatch(/^data:/)
+    // Même après expiration, la lecture seule sert l'icône déjà là.
+    h.advance(ICON_TTL * 2)
+    expect(h.cache.peek('a.fr')).toMatch(/^data:/)
+    expect(h.calls()).toBe(1)
+    h.failWith(true)
+    await h.cache.get('en-echec.fr')
+    expect(h.cache.peek('en-echec.fr')).toBeNull()
+  })
 })

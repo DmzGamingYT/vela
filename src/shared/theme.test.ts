@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ACCENT_THEMES,
   AMBIENCE_PRESETS,
   DEFAULT_CUSTOM_ACCENT,
   DEFAULT_GLASS_BLUR,
   GLASS_BLUR,
+  INK,
   PAPER,
   THEME_PRESETS,
   adjustAccent,
@@ -14,6 +16,7 @@ import {
   parseHex,
   presetById,
   resolveMode,
+  resolveMotion,
   resolveThemeId,
   sanitizeAppearance,
   sanitizeGlassBlur,
@@ -36,7 +39,7 @@ describe('parseHex', () => {
   })
 })
 
-describe('contrastes des 10 thèmes × 2 modes', () => {
+describe('contrastes des 10 couleurs et de Braise, × 2 modes', () => {
   for (const preset of THEME_PRESETS) {
     for (const mode of MODES) {
       it(`${preset.label} en ${mode}`, () => {
@@ -51,21 +54,72 @@ describe('contrastes des 10 thèmes × 2 modes', () => {
 
         // Texte d'accent (liens, libellés) sur le fond de page.
         expect(contrast(tokens['--link'], paper)).toBeGreaterThanOrEqual(4.5)
-        expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(3)
+        expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(4.5)
         // Texte posé sur un bouton plein.
         expect(contrast(tokens['--accent-contrast'], tokens['--accent'])).toBeGreaterThanOrEqual(4.5)
-        // L'anneau de focus reste visible.
-        expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(3)
+        // L'anneau de focus et la bordure de sélection restent visibles.
+        expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(4.5)
       })
     }
   }
 })
 
-describe('couleur personnalisée', () => {
-  it('assombrit une couleur trop claire en mode clair et l’explique', () => {
+/* Compose une couleur `rgba(...)` sur un fond opaque, puis renvoie le hex. */
+function composeOver(color: string, backdrop: string): string {
+  const match = color.match(/rgba?\(([^)]+)\)/)
+  if (!match) return color
+  const parts = match[1].split(',').map((part) => Number(part.trim()))
+  const [r, g, b] = parts
+  const alpha = Math.max(0, Math.min(1, parts[3] ?? 1))
+  const base = hexToRgbLocal(backdrop)
+  const clamp = (value: number): string =>
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, '0')
+  return `#${clamp(r * alpha + base.r * (1 - alpha))}${clamp(g * alpha + base.g * (1 - alpha))}${clamp(
+    b * alpha + base.b * (1 - alpha)
+  )}`
+}
+
+function hexToRgbLocal(hex: string): { r: number; g: number; b: number } {
+  const clean = (parseHex(hex) ?? '#000000').slice(1)
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16)
+  }
+}
+
+/* Le wordmark de la barre latérale : encre pleine + point d'accent, posés sur
+   le verre de la barre (lui-même sur le papier), avec le reflet blanc du haut. */
+describe('contraste du wordmark dans la barre latérale', () => {
+  for (const preset of THEME_PRESETS) {
+    for (const mode of MODES) {
+      for (const ambience of [{ id: 'none' as const }, ...AMBIENCE_PRESETS]) {
+        it(`${preset.label} en ${mode}, ambiance ${ambience.id}`, () => {
+          const tokens = appearanceTokens({
+            themeId: preset.id,
+            customAccent: DEFAULT_CUSTOM_ACCENT,
+            mode,
+            glass: 'normal',
+            highContrast: false,
+            ambience: ambience.id
+          })
+          const glass = composeOver(tokens['--glass'], PAPER[mode])
+          const background = composeOver('rgba(255, 255, 255, 0.05)', glass)
+
+          expect(contrast(INK[mode], background)).toBeGreaterThanOrEqual(4.5)
+          expect(contrast(tokens['--wordmark-accent'], background)).toBeGreaterThanOrEqual(4.5)
+        })
+      }
+    }
+  }
+})
+
+describe('couleur personnalisée', () => {  it('assombrit une couleur trop claire en mode clair et l’explique', () => {
     const result = adjustAccent('#FFF3B0', 'light')
     expect(result.adjusted).toBe(true)
-    expect(contrast(result.color, PAPER.light)).toBeGreaterThanOrEqual(3)
+    expect(contrast(result.color, PAPER.light)).toBeGreaterThanOrEqual(4.5)
     expect(result.reason).toContain('assombrie')
   })
 
@@ -82,15 +136,16 @@ describe('couleur personnalisée', () => {
   })
 
   it('produit les mêmes jetons qu’un thème fourni', () => {
+    // Une teinte déjà lisible en mode sombre : elle n’est pas corrigée.
     const tokens = appearanceTokens({
       themeId: 'custom',
-      customAccent: '#C2410C',
+      customAccent: '#FF7A59',
       mode: 'dark',
       glass: 'normal',
       highContrast: false
     })
-    expect(tokens['--accent']).toBe('#c2410c')
-    expect(tokens['--glow']).toBe('194, 65, 12')
+    expect(tokens['--accent']).toBe('#ff7a59')
+    expect(tokens['--glow']).toBe('255, 122, 89')
   })
 })
 
@@ -267,5 +322,90 @@ describe('jetons', () => {
     })
     expect(high['--surface']).toContain('1.000')
     expect(normal['--surface']).not.toBe(high['--surface'])
+  })
+})
+
+describe('grille des couleurs', () => {
+  it('propose dix thèmes, Braise restant le thème du ciel', () => {
+    expect(ACCENT_THEMES).toHaveLength(10)
+    expect(ACCENT_THEMES.some((preset) => preset.id === 'braise')).toBe(false)
+  })
+})
+
+describe('thème automatique par heures', () => {
+  it('suit les heures choisies', () => {
+    expect(resolveMode('dark', { hourTheme: true, hour: 6, hourStart: 8, hourEnd: 18 })).toBe('dark')
+    expect(resolveMode('dark', { hourTheme: true, hour: 8, hourStart: 8, hourEnd: 18 })).toBe('light')
+    expect(resolveMode('light', { hourTheme: true, hour: 17, hourStart: 8, hourEnd: 18 })).toBe('light')
+    expect(resolveMode('light', { hourTheme: true, hour: 18, hourStart: 8, hourEnd: 18 })).toBe('dark')
+  })
+
+  it('gère une plage qui passe minuit', () => {
+    expect(resolveMode('dark', { hourTheme: true, hour: 23, hourStart: 22, hourEnd: 6 })).toBe('light')
+    expect(resolveMode('light', { hourTheme: true, hour: 12, hourStart: 22, hourEnd: 6 })).toBe('dark')
+  })
+
+  it('retombe sur 7 h – 19 h sans réglage', () => {
+    expect(resolveMode('dark', { hourTheme: true, hour: 7 })).toBe('light')
+    expect(resolveMode('light', { hourTheme: true, hour: 19 })).toBe('dark')
+  })
+})
+
+describe('mouvement réduit', () => {
+  it('suit le système, ou force le choix', () => {
+    expect(resolveMotion('system', true)).toBe(true)
+    expect(resolveMotion('system', false)).toBe(false)
+    expect(resolveMotion('reduce', false)).toBe(true)
+    expect(resolveMotion('full', true)).toBe(false)
+  })
+})
+
+describe('migration de l’apparence 0.3.24', () => {
+  it('convertit la case ciel en fond, une seule fois', () => {
+    const legacy = sanitizeAppearance({
+      themeId: 'braise',
+      homeBackground: 'gradient',
+      dragonSky: true,
+      skyVariant: 'westeros'
+    } as never)
+    expect(legacy.homeBackground).toBe('sky')
+    expect(legacy.skyVariant).toBe('nuit-etoilee')
+    expect(sanitizeAppearance(legacy)).toEqual(legacy)
+  })
+
+  it('ne rallume pas le ciel après un retour au dégradé', () => {
+    const migrated = sanitizeAppearance({ themeId: 'braise', homeBackground: 'gradient' } as never)
+    expect(migrated.homeBackground).toBe('sky')
+    const back = sanitizeAppearance({ ...migrated, homeBackground: 'gradient', dragonSky: true } as never)
+    expect(back.homeBackground).toBe('gradient')
+  })
+
+  it('laisse le ciel éteint s’il l’était', () => {
+    const off = sanitizeAppearance({ themeId: 'braise', homeBackground: 'gradient', dragonSky: false } as never)
+    expect(off.homeBackground).toBe('gradient')
+  })
+
+  it('garde les réglages d’interface et borne les heures', () => {
+    const clean = sanitizeAppearance({
+      density: 'airy',
+      textSize: 'large',
+      sidebarSide: 'right',
+      reduceMotion: 'reduce',
+      hourTheme: true,
+      hourStart: 21,
+      hourEnd: 8
+    })
+    expect(clean.density).toBe('airy')
+    expect(clean.textSize).toBe('large')
+    expect(clean.sidebarSide).toBe('right')
+    expect(clean.reduceMotion).toBe('reduce')
+    expect(clean.hourStart).toBe(21)
+    expect(clean.hourEnd).toBe(8)
+    expect(sanitizeAppearance({ hourStart: 30, hourEnd: 99 }).hourStart).toBe(7)
+    expect(sanitizeAppearance({ hourStart: 7, hourEnd: 7 }).hourEnd).toBe(19)
+  })
+
+  it('refuse une variante de ciel inconnue', () => {
+    expect(sanitizeAppearance({ skyVariant: 'aurore' as never }).skyVariant).toBe('braise')
   })
 })

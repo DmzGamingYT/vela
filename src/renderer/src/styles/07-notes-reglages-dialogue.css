@@ -457,7 +457,8 @@
   margin: 3px 0 0;
   font-size: 10px;
   line-height: 1.5;
-  color: var(--muted);
+  /* Contraste ≥ 4,5:1 sur le fond de la feuille, dans les deux modes. */
+  color: var(--help);
 }
 
 .setting-actions {
@@ -591,8 +592,10 @@
   transition: transform var(--dur-2) var(--ease-standard);
 }
 
+/* Un interrupteur actif prend la couleur d'accent du thème ; au repos il
+   reste un gris clair, sans jamais emprunter la couleur d'un autre thème. */
 .switch[data-on="true"] {
-  background: var(--sage);
+  background: var(--accent);
 }
 
 .switch[data-on="true"] span {

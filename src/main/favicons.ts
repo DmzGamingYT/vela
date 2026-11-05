@@ -80,6 +80,11 @@ export function faviconDataUrl(host: string, spaceId = ''): Promise<string | nul
   return cacheFor(spaceId).get(host)
 }
 
+/** Lecture seule du cache : aucune requête, même si l'icône a expiré. */
+export function faviconCachedDataUrl(host: string, spaceId = ''): string | null {
+  return cacheFor(spaceId).peek(host)
+}
+
 /** Vide le cache de tous les espaces, et les fichiers correspondants. */
 export function purgeFavicons(): number {
   let total = 0

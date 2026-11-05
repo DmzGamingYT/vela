@@ -3,12 +3,6 @@
    =============================================================== */
 
 /* --- Marque à côté du nom ------------------------------------- */
-.brand-lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
 
 /* Verre liquide : nappe claire en haut, assise sombre en bas, reflet diagonal. */
 .vela-mark {
@@ -256,11 +250,6 @@
 
 .settings-nav-brand {
   gap: 10px;
-}
-
-.settings-nav-version {
-  flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 .settings-nav-item {

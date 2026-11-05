@@ -2,21 +2,28 @@ import { describe, expect, it } from 'vitest'
 import {
   MAX_AVATAR_LENGTH,
   MAX_SHORTCUTS,
+  MAX_SPACE_NAME,
   SPACE_AVATARS,
   SPACE_BACKGROUNDS,
   SPACE_PRESETS,
+  applySpaceTemplate,
   avatarIcon,
   avatarImage,
   isSpaceBackground,
+  moveShortcutBy,
+  moveShortcutTo,
   partitionFor,
   letterboxdUrl,
   normalizeLetterboxd,
+  normalizeSpaceName,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
   sanitizeSpaceShortcuts,
   sanitizeWatchlist,
   shortcutsForSet,
-  suggestShortcutSet
+  spaceNameProblem,
+  suggestShortcutSet,
+  suggestSpaceName
 } from './space'
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
@@ -222,6 +229,66 @@ describe('sites épinglés', () => {
     expect(suggestShortcutSet('Gaming')).toBe('gaming')
     expect(suggestShortcutSet('Développement')).toBe('dev')
     expect(suggestShortcutSet('Jardinage')).toBeNull()
+  })
+})
+
+describe('nom, modèles et ordre des sites', () => {
+  it('nettoie un nom sans toucher aux espaces internes', () => {
+    expect(normalizeSpaceName('  Travail   du   soir ')).toBe('Travail du soir')
+    expect(normalizeSpaceName(null)).toBe('')
+  })
+
+  it('refuse un nom vide, trop long ou déjà pris', () => {
+    expect(spaceNameProblem('   ')).toBe('empty')
+    expect(spaceNameProblem('x'.repeat(MAX_SPACE_NAME + 1))).toBe('too-long')
+    expect(spaceNameProblem('Travail', ['travail'])).toBe('duplicate')
+    expect(spaceNameProblem('Études', ['etudes'])).toBe('duplicate')
+    expect(spaceNameProblem('Travail', ['Veille'])).toBeNull()
+    expect(spaceNameProblem('x'.repeat(MAX_SPACE_NAME))).toBeNull()
+  })
+
+  it('propose le premier « Espace N » libre', () => {
+    expect(suggestSpaceName([])).toBe('Espace 1')
+    expect(suggestSpaceName(['Espace 1'])).toBe('Espace 2')
+    expect(suggestSpaceName(['Espace 1', 'espace 2', 'Espace 4'])).toBe('Espace 3')
+  })
+
+  it('applique un modèle sans écraser un nom déjà saisi', () => {
+    const preset = SPACE_PRESETS.find((item) => item.id === 'work')!
+    const blank = { name: '  ', color: '#000000', avatar: null, background: 'none' as const, shortcuts: [] }
+    const filled = applySpaceTemplate(blank, preset)
+    expect(filled.name).toBe(preset.name)
+    expect(filled.color).toBe(preset.color)
+    expect(filled.avatar).toBe(preset.avatar)
+    expect(filled.background).toBe(preset.background)
+    expect(filled.shortcuts).toEqual(shortcutsForSet(preset.id))
+
+    const named = applySpaceTemplate({ ...blank, name: 'Perso' }, preset)
+    expect(named.name).toBe('Perso')
+  })
+
+  it('annule un modèle en revenant au brouillon précédent', () => {
+    const preset = SPACE_PRESETS.find((item) => item.id === 'cinema')!
+    const before = { name: '', color: '#5b5bd6', avatar: 'monogram', background: 'none' as const, shortcuts: [] }
+    const after = applySpaceTemplate(before, preset)
+    // L'instantané n'est jamais modifié : le restaurer rend l'état exact.
+    const restored = { ...before }
+    expect(restored).toEqual({ name: '', color: '#5b5bd6', avatar: 'monogram', background: 'none', shortcuts: [] })
+    expect(after).not.toEqual(restored)
+    expect(after.shortcuts.length).toBeGreaterThan(0)
+  })
+
+  it('déplace un site au clavier, dans les bornes', () => {
+    const list = sanitizeSpaceShortcuts([
+      { url: 'a.fr', title: 'A' },
+      { url: 'b.fr', title: 'B' },
+      { url: 'c.fr', title: 'C' }
+    ])
+    expect(moveShortcutBy(list, list[0].id, 1).map((item) => item.title)).toEqual(['B', 'A', 'C'])
+    expect(moveShortcutBy(list, list[2].id, 1).map((item) => item.title)).toEqual(['A', 'B', 'C'])
+    expect(moveShortcutBy(list, list[1].id, -4).map((item) => item.title)).toEqual(['B', 'A', 'C'])
+    expect(moveShortcutTo(list, list[0].id, 2).map((item) => item.title)).toEqual(['B', 'C', 'A'])
+    expect(moveShortcutTo(list, 'inconnu', 1)).toEqual(list)
   })
 })
 

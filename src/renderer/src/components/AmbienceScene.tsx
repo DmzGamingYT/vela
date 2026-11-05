@@ -1,6 +1,13 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 import type { AmbienceId } from '@shared/theme'
 
+/** Vrai quand le mouvement doit être figé, par choix ou par préférence système. */
+function motionReduced(): boolean {
+  if (typeof document === 'undefined') return false
+  if (document.documentElement.dataset.motion === 'reduce') return true
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 /**
  * Calques d'ambiance du châssis.
  *
@@ -32,10 +39,13 @@ export default function AmbienceScene({
   useEffect(() => {
     const node = ref.current
     if (!node || ambience === 'none') return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (motionReduced()) return
 
     let frame = 0
     const onMove = (event: PointerEvent): void => {
+      // Le réglage des réglages prime sur la préférence du système : la
+      // parallaxe se tait dès que « Réduire les animations » est actif.
+      if (motionReduced()) return
       if (frame) return
       frame = window.requestAnimationFrame(() => {
         frame = 0

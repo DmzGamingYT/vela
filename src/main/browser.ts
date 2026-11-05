@@ -45,14 +45,28 @@ import {
   providerById
 } from '@shared/providers'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
-import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur } from '@shared/theme'
+import {
+  acceptLanguage,
+  historyRangeFloor,
+  isHistoryRange,
+  isWebLanguage,
+  resolveEngine,
+  sanitizeCustomEngines,
+  sanitizeDefaultZoom,
+  sanitizeKeywords,
+  sanitizeStartupUrl,
+  startupAddress
+} from '@shared/navigation'
+import { bookmarksToHtml, parseBookmarksHtml } from '@shared/bookmarksHtml'
+import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur, sanitizeHour } from '@shared/theme'
 import {
   normalizeLetterboxd,
   partitionFor,
   sanitizeSpaceAvatar,
   sanitizeSpaceBackground,
   sanitizeSpaceShortcuts,
-  sanitizeWatchlist
+  sanitizeWatchlist,
+  suggestSpaceName
 } from '@shared/space'
 import { sanitizeLetterboxdLog } from '@shared/letterboxd'
 import { fetchLetterboxdLog } from './letterboxd'
@@ -60,6 +74,7 @@ import {
   HOME_URL,
   type AppView,
   type DownloadItem,
+  type HistoryEntry,
   type LayoutRequest,
   type PaneSnapshot,
   type NoteMeta,
@@ -77,7 +92,7 @@ import { isHomeUrl, titleFromUrl } from '@shared/url'
 import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
-import { faviconDataUrl, purgeFavicons } from './favicons'
+import { faviconCachedDataUrl, faviconDataUrl, purgeFavicons } from './favicons'
 import { pruneAvatars, readAvatarDataUrl, saveAvatarDataUrl } from './avatars'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
@@ -343,7 +358,11 @@ export class Browser {
       ).preconnect
       if (typeof preconnect !== 'function') return
       const result = preconnect.call(ses, {
-        url: `https://${engineHost(state.settings.searchEngine, state.settings.searxInstance)}`,
+        url: `https://${engineHost(
+          resolveEngine(state.settings).engine,
+          state.settings.searxInstance,
+          resolveEngine(state.settings).template
+        )}`,
         numSockets: 3
       })
       if (result && typeof (result as Promise<unknown>).catch === 'function') {
@@ -408,6 +427,41 @@ export class Browser {
     return keep
   }
 
+  /** Effacement d'historique encore annulable pendant huit secondes. */
+  private pendingHistory: { entries: HistoryEntry[]; timer: NodeJS.Timeout } | null = null
+
+  private commitPendingHistory(): void {
+    if (!this.pendingHistory) return
+    clearTimeout(this.pendingHistory.timer)
+    this.pendingHistory = null
+  }
+
+  /**
+   * Démarrage : reprise de session par défaut, sinon un seul onglet sur
+   * l'accueil ou sur la page choisie. La conservation de l'historique
+   * s'applique au même moment.
+   */
+  applyStartup(): void {
+    const settings = this.store.get().settings
+    const address = startupAddress(settings.startupBehavior, settings.startupUrl)
+    if (address) {
+      const state = this.store.get()
+      const spaceId = state.activeSpaceId
+      this.store.update((next) => {
+        next.tabs = next.tabs.filter((tab) => tab.spaceId !== spaceId || tab.pinned)
+        const tab = createTabState(spaceId, Date.now(), {
+          url: address,
+          title: isHomeUrl(address) ? 'Nouvel onglet' : titleFromUrl(address)
+        })
+        next.tabs.push(tab)
+        next.activeTabBySpace[spaceId] = tab.id
+        next.secondTabBySpace[spaceId] = null
+        next.split = false
+      })
+    }
+    this.store.pruneHistory()
+  }
+
   private startSweeper(): void {
     if (this.sweepTimer) return
     this.sweepTimer = setInterval(() => {
@@ -427,6 +481,12 @@ export class Browser {
     const key = partition
     if (this.trackedSessions.has(key)) return
     this.trackedSessions.add(key)
+    // Langue des pages : un en-tête, aucune requête de plus. Le bloqueur écoute
+    // `onBeforeRequest`, un autre événement : les deux coexistent.
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      details.requestHeaders['Accept-Language'] = acceptLanguage(this.store.get().settings.webLanguage)
+      callback({ requestHeaders: details.requestHeaders })
+    })
     ses.on('will-download', (_event, item) => {
       const id = newId()
       const name = item.getFilename() || 'Téléchargement'
@@ -443,7 +503,13 @@ export class Browser {
       }
       this.downloads = [entry, ...this.downloads].slice(0, 30)
       this.broadcast()
-      item.setSavePath(join(app.getPath('downloads'), name))
+      const settings = this.store.get().settings
+      const folder = settings.downloadDir ?? app.getPath('downloads')
+      if (settings.askDownloadLocation) {
+        item.setSaveDialogOptions({ title: 'Enregistrer le fichier', defaultPath: join(folder, name) })
+      } else {
+        item.setSavePath(join(folder, name))
+      }
       item.on('updated', (_e, state) => {
         const found = this.downloads.find((d) => d.id === id)
         if (!found) return
@@ -458,6 +524,9 @@ export class Browser {
           found.state = state === 'completed' ? 'done' : 'cancelled'
           found.received = item.getReceivedBytes()
           found.path = state === 'completed' ? item.getSavePath() : null
+          if (found.state === 'done' && found.path && this.store.get().settings.openAfterDownload) {
+            void shell.openPath(found.path)
+          }
         }
         this.broadcast()
       })
@@ -556,6 +625,7 @@ export class Browser {
       bookmarks: state.bookmarks,
       privacyExemptions: state.privacyExemptions,
       memoryFreed: this.tabs.memoryFreedMb(),
+      canReopen: state.closed.length > 0,
       tunnelMaps: this.store.listTunnelMaps(),
       notes: this.noteCache,
       tasks: state.tasks.slice(0, 200),
@@ -619,7 +689,12 @@ export class Browser {
       typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
         ? input.spaceId
         : state.activeSpaceId
-    const url = typeof input.url === 'string' && input.url ? input.url : HOME_URL
+    const url =
+      typeof input.url === 'string' && input.url
+        ? input.url
+        : this.store.get().settings.newTabBlank
+          ? 'about:blank'
+          : HOME_URL
     const pinned = Boolean(input.pinned)
     // Une seule page d'accueil par espace : ⌘T ramène à celle qui existe.
     // Le « + » d'un dossier la réclame ailleurs : elle le rejoint plutôt que
@@ -896,6 +971,70 @@ export class Browser {
     this.focusActive()
   }
 
+  /**
+   * Duplique la configuration d'un espace — nom, apparence, sites, gadgets et
+   * compte public — sans copier ses cookies, son historique ni sa partition.
+   * Le nouvel espace reçoit donc une session Chromium neuve.
+   */
+  private duplicateSpace(id: string): void {
+    const state = this.store.get()
+    const source = state.spaces.find((item) => item.id === id)
+    if (!source) return
+    const now = Date.now()
+    const name = suggestSpaceName(state.spaces.map((item) => item.name))
+    const copy = createSpaceState(name, source.color, now)
+    copy.theme = source.theme ?? null
+    copy.avatar = source.avatar ?? null
+    copy.background = source.background ?? 'none'
+    copy.shortcuts = sanitizeSpaceShortcuts(source.shortcuts)
+    copy.blockTrackers = source.blockTrackers !== false
+    copy.watchlist = source.watchlist === true
+    copy.letterboxd = normalizeLetterboxd(source.letterboxd)
+    copy.watchItems = sanitizeWatchlist(source.watchItems)
+    // Le journal importé est un historique de lecture : il reste à la source.
+    copy.letterboxdLog = []
+    copy.letterboxdLogAt = null
+    const tab = createTabState(copy.id, now)
+    state.spaces.push(copy)
+    state.tabs.push(tab)
+    state.activeSpaceId = copy.id
+    state.activeTabBySpace[copy.id] = tab.id
+    state.secondTabBySpace[copy.id] = null
+    this.store.schedule()
+    this.broadcast()
+    this.focusActive()
+  }
+
+  /**
+   * Vide les données de navigation d'un espace : cookies, stockage, cache et
+   * historique de sa partition. Les autres espaces, qui ont chacun la leur,
+   * ne sont pas touchés. L'espace et ses réglages restent en place.
+   */
+  private async clearSpaceData(id: string): Promise<void> {
+    const state = this.store.get()
+    const space = state.spaces.find((item) => item.id === id)
+    if (!space) return
+    try {
+      const ses = session.fromPartition(partitionFor(space))
+      await ses.clearStorageData()
+      await ses.clearCache()
+    } catch {
+      /* partition déjà libérée : l'historique local part quand même */
+    }
+    state.history = state.history.filter((entry) => entry.spaceId !== id)
+    state.closed = state.closed.filter((tab) => tab.spaceId !== id)
+    this.tabs.destroySpace(id)
+    state.tabs = state.tabs.filter((tab) => tab.spaceId !== id)
+    const tab = createTabState(id)
+    state.tabs.push(tab)
+    state.activeTabBySpace[id] = tab.id
+    state.secondTabBySpace[id] = null
+    if (state.activeSpaceId === id) state.split = false
+    this.store.schedule()
+    this.broadcast()
+    this.focusActive()
+  }
+
   private activateSpace(id: string): void {
     const state = this.store.get()
     if (!state.spaces.some((space) => space.id === id)) return
@@ -1008,10 +1147,56 @@ export class Browser {
     this.store.update((state) => {
       const settings: Settings = state.settings
       if (input.theme === 'light' || input.theme === 'dark' || input.theme === 'system') settings.theme = input.theme
-      if (input.searchEngine && input.searchEngine in SEARCH_ENGINES) {
+      if (input.searchEngine === 'custom' || (input.searchEngine && input.searchEngine in SEARCH_ENGINES)) {
         settings.searchEngine = input.searchEngine
       }
+      if (Array.isArray(input.customEngines)) {
+        settings.customEngines = sanitizeCustomEngines(input.customEngines)
+        if (settings.searchEngine === 'custom' && settings.customEngines.length === 0) {
+          settings.searchEngine = 'duckduckgo'
+        }
+        if (!settings.customEngines.some((engine) => engine.id === settings.customEngineId)) {
+          settings.customEngineId = settings.customEngines[0]?.id ?? ''
+        }
+      }
+      if (
+        typeof input.customEngineId === 'string' &&
+        settings.customEngines.some((engine) => engine.id === input.customEngineId)
+      ) {
+        settings.customEngineId = input.customEngineId
+      }
+      if (Array.isArray(input.searchKeywords)) {
+        settings.searchKeywords = sanitizeKeywords(input.searchKeywords, settings.customEngines)
+      }
       if (typeof input.searxInstance === 'string') settings.searxInstance = input.searxInstance.trim().slice(0, 200)
+      if (typeof input.startupUrl === 'string') settings.startupUrl = sanitizeStartupUrl(input.startupUrl)
+      if (
+        input.startupBehavior === 'restore' ||
+        input.startupBehavior === 'home' ||
+        input.startupBehavior === 'url'
+      ) {
+        settings.startupBehavior = input.startupBehavior
+      }
+      if (typeof input.newTabBlank === 'boolean') settings.newTabBlank = input.newTabBlank
+      if (
+        input.historyRetention === 'forever' ||
+        input.historyRetention === '90' ||
+        input.historyRetention === '30' ||
+        input.historyRetention === '7' ||
+        input.historyRetention === 'never'
+      ) {
+        settings.historyRetention = input.historyRetention
+      }
+      if (input.downloadDir === null) settings.downloadDir = null
+      else if (typeof input.downloadDir === 'string' && input.downloadDir.trim()) {
+        settings.downloadDir = input.downloadDir.trim().slice(0, 1000)
+      }
+      if (typeof input.askDownloadLocation === 'boolean') settings.askDownloadLocation = input.askDownloadLocation
+      if (typeof input.openAfterDownload === 'boolean') settings.openAfterDownload = input.openAfterDownload
+      if (typeof input.webLanguage === 'string' && isWebLanguage(input.webLanguage)) {
+        settings.webLanguage = input.webLanguage
+      }
+      if (typeof input.defaultZoom === 'number') settings.defaultZoom = sanitizeDefaultZoom(input.defaultZoom)
       if (isThemeId(input.themeId)) settings.themeId = input.themeId
       if (typeof input.customAccent === 'string') {
         settings.customAccent = parseHex(input.customAccent) ?? settings.customAccent
@@ -1025,6 +1210,7 @@ export class Browser {
       if (isAmbienceId(input.ambience)) settings.ambience = input.ambience
       if (
         input.homeBackground === 'gradient' ||
+        input.homeBackground === 'sky' ||
         input.homeBackground === 'plain' ||
         input.homeBackground === 'image'
       ) {
@@ -1040,10 +1226,33 @@ export class Browser {
       if (typeof input.highContrast === 'boolean') settings.highContrast = input.highContrast
       if (typeof input.hourTheme === 'boolean') settings.hourTheme = input.hourTheme
       if (typeof input.perSpaceThemes === 'boolean') settings.perSpaceThemes = input.perSpaceThemes
-      if (typeof input.dragonSky === 'boolean') settings.dragonSky = input.dragonSky
-      if (input.skyVariant === 'braise' || input.skyVariant === 'westeros') {
+      if (input.skyVariant === 'braise' || input.skyVariant === 'nuit-etoilee') {
         settings.skyVariant = input.skyVariant
       }
+      if (input.density === 'compact' || input.density === 'normal' || input.density === 'airy') {
+        settings.density = input.density
+      }
+      if (input.textSize === 'small' || input.textSize === 'normal' || input.textSize === 'large') {
+        settings.textSize = input.textSize
+      }
+      if (input.sidebarSide === 'left' || input.sidebarSide === 'right') {
+        settings.sidebarSide = input.sidebarSide
+      }
+      if (
+        input.reduceMotion === 'system' ||
+        input.reduceMotion === 'reduce' ||
+        input.reduceMotion === 'full'
+      ) {
+        settings.reduceMotion = input.reduceMotion
+      }
+      if (typeof input.hourStart === 'number') {
+        settings.hourStart = sanitizeHour(input.hourStart, settings.hourStart)
+      }
+      if (typeof input.hourEnd === 'number') {
+        settings.hourEnd = sanitizeHour(input.hourEnd, settings.hourEnd)
+      }
+      // Deux heures égales figeraient le mode : on garde l'écart précédent.
+      if (settings.hourStart === settings.hourEnd) settings.hourEnd = (settings.hourStart + 12) % 24
       if (typeof input.blockTrackers === 'boolean') settings.blockTrackers = input.blockTrackers
       if (input.blockLevel === 'trackers' || input.blockLevel === 'strict') {
         settings.blockLevel = input.blockLevel
@@ -1325,6 +1534,11 @@ export class Browser {
       return faviconDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
     })
     handle('favicons:purge', () => purgeFavicons())
+    handle('favicons:peek', (input) => {
+      const payload = (input ?? {}) as { host?: unknown; spaceId?: unknown }
+      if (typeof payload.host !== 'string') return null
+      return faviconCachedDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
+    })
     handle('app:platform', () => process.platform)
 
     // Petite fenêtre (façon Little Arc) : sa barre compacte est un renderer à
@@ -1369,6 +1583,14 @@ export class Browser {
     })
     handle('space:remove', (payload) => {
       this.removeSpace(asId(payload))
+      return this.view()
+    })
+    handle('space:duplicate', (payload) => {
+      this.duplicateSpace(asId(payload))
+      return this.view()
+    })
+    handle('space:clear-data', async (payload) => {
+      await this.clearSpaceData(asId(payload))
       return this.view()
     })
     handle('space:activate', (payload) => {
@@ -1484,6 +1706,32 @@ export class Browser {
       if (!url) return
       this.store.removeHistory(url)
       this.broadcast()
+    })
+    // Effacement par période : la copie retirée reste disponible huit
+    // secondes, le temps d'annuler. Un nouvel effacement rend le précédent
+    // définitif.
+    handle('history:clear-range', (payload) => {
+      const range = isHistoryRange(payload) ? payload : 'all'
+      this.commitPendingHistory()
+      const removed = this.store.clearHistorySince(historyRangeFloor(range, Date.now()))
+      if (removed.length > 0) {
+        const timer = setTimeout(() => {
+          this.pendingHistory = null
+        }, 8000)
+        if (typeof timer.unref === 'function') timer.unref()
+        this.pendingHistory = { entries: removed, timer }
+      }
+      this.broadcast()
+      return removed.length
+    })
+    handle('history:undo-clear', () => {
+      const pending = this.pendingHistory
+      if (!pending) return 0
+      clearTimeout(pending.timer)
+      this.pendingHistory = null
+      const restored = this.store.restoreHistory(pending.entries)
+      this.broadcast()
+      return restored
     })
 
     handle('bookmark:toggle', (payload) => {
@@ -1793,6 +2041,32 @@ export class Browser {
       if (added > 0) this.broadcast()
       return added
     })
+    handle('bookmark:export-html', async () => {
+      const state = this.store.get()
+      const stamp = new Date().toISOString().slice(0, 10)
+      const result = await dialog.showSaveDialog({
+        title: 'Exporter les marque-pages',
+        defaultPath: join(app.getPath('documents'), `vela-marque-pages-${stamp}.html`),
+        filters: [{ name: 'Favoris HTML', extensions: ['html', 'htm'] }]
+      })
+      if (result.canceled || !result.filePath) return null
+      const ordered = [...state.bookmarks].sort((a, b) => a.order - b.order)
+      await writeFile(result.filePath, bookmarksToHtml(ordered), 'utf8')
+      return result.filePath
+    })
+    handle('bookmark:import-html', async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Importer des marque-pages',
+        properties: ['openFile'],
+        filters: [{ name: 'Favoris HTML', extensions: ['html', 'htm'] }]
+      })
+      const file = result.filePaths?.[0]
+      if (result.canceled || !file) return { added: 0, cancelled: true }
+      const html = await readFile(file, 'utf8')
+      const added = this.store.addBookmarks(parseBookmarksHtml(html))
+      if (added > 0) this.broadcast()
+      return { added, cancelled: false }
+    })
     handle('tab:print', (payload) => this.tabs.print(asId(payload)))
 
     handle('downloads:list', () => this.downloads.slice(0, 30))
@@ -1816,6 +2090,13 @@ export class Browser {
     handle('downloads:clear', () => {
       this.downloads = this.downloads.filter((d) => d.state === 'progress')
       this.broadcast()
+    })
+    handle('downloads:pick-dir', async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Dossier des téléchargements',
+        properties: ['openDirectory', 'createDirectory']
+      })
+      return result.canceled ? null : (result.filePaths[0] ?? null)
     })
     handle('app:metrics', () => this.metrics())
 

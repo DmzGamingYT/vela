@@ -346,6 +346,111 @@ export function shortcutsForSet(setId: string): SpaceShortcut[] {
   return sanitizeSpaceShortcuts(SPACE_SHORTCUT_SETS[setId] ?? [])
 }
 
+/* ------------------------------------------------------------------ */
+/* Brouillon d'espace : nom, modèles et ordre des sites               */
+/* ------------------------------------------------------------------ */
+
+/** Longueur maximale d'un nom d'espace, comptée en caractères saisis. */
+export const MAX_SPACE_NAME = 24
+
+/** Nom tel qu'il sera enregistré : espaces de bord et doubles espaces retirés. */
+export function normalizeSpaceName(value: unknown): string {
+  return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : ''
+}
+
+/** Clé de comparaison : casse, accents et espaces ignorés. */
+export function spaceNameKey(value: unknown): string {
+  return normalizeSpaceName(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+export type SpaceNameProblem = 'empty' | 'duplicate' | 'too-long'
+
+/**
+ * Valide un nom d'espace. Les noms déjà pris sont comparés sans casse ni
+ * accents : « travail » et « Travail » désignent le même espace.
+ */
+export function spaceNameProblem(
+  name: unknown,
+  existing: readonly string[] = []
+): SpaceNameProblem | null {
+  const clean = normalizeSpaceName(name)
+  if (!clean) return 'empty'
+  if (clean.length > MAX_SPACE_NAME) return 'too-long'
+  const key = spaceNameKey(clean)
+  if (existing.some((other) => spaceNameKey(other) === key)) return 'duplicate'
+  return null
+}
+
+/** Premier nom libre de la forme « Espace N », à partir de 1. */
+export function suggestSpaceName(existing: readonly string[], base = 'Espace'): string {
+  const keys = new Set(existing.map((other) => spaceNameKey(other)))
+  for (let index = 1; index <= existing.length + 1000; index += 1) {
+    const candidate = `${base} ${index}`
+    if (!keys.has(spaceNameKey(candidate))) return candidate
+  }
+  return `${base} ${existing.length + 1}`
+}
+
+/** État minimal touché par un modèle : le reste du brouillon ne bouge pas. */
+export interface SpaceTemplateDraft {
+  name: string
+  color: string
+  avatar: string | null
+  background: SpaceBackground
+  shortcuts: SpaceShortcut[]
+}
+
+/**
+ * Applique un modèle à un brouillon. Le nom n'est rempli que s'il est vide :
+ * un nom déjà saisi n'est jamais écrasé par un clic sur une carte.
+ */
+export function applySpaceTemplate(
+  draft: SpaceTemplateDraft,
+  preset: SpacePreset
+): SpaceTemplateDraft {
+  return {
+    ...draft,
+    name: normalizeSpaceName(draft.name) ? draft.name : preset.name,
+    color: preset.color,
+    avatar: preset.avatar,
+    background: preset.background,
+    shortcuts: shortcutsForSet(preset.id)
+  }
+}
+
+/**
+ * Déplace un site à une position absolue. L'identifiant inconnu ou une
+ * destination hors bornes laisse la liste intacte, sans exception.
+ */
+export function moveShortcutTo(
+  shortcuts: readonly SpaceShortcut[],
+  id: string,
+  to: number
+): SpaceShortcut[] {
+  const from = shortcuts.findIndex((shortcut) => shortcut.id === id)
+  if (from < 0) return [...shortcuts]
+  const target = Math.max(0, Math.min(shortcuts.length - 1, Math.trunc(to)))
+  if (target === from) return [...shortcuts]
+  const next = [...shortcuts]
+  const [moved] = next.splice(from, 1)
+  next.splice(target, 0, moved)
+  return next
+}
+
+/** Déplacement relatif, utilisé par Alt + flèches. */
+export function moveShortcutBy(
+  shortcuts: readonly SpaceShortcut[],
+  id: string,
+  delta: number
+): SpaceShortcut[] {
+  const from = shortcuts.findIndex((shortcut) => shortcut.id === id)
+  if (from < 0) return [...shortcuts]
+  return moveShortcutTo(shortcuts, id, from + delta)
+}
+
 const SUGGESTIONS: { set: string; words: RegExp }[] = [
   {
     set: 'dev',

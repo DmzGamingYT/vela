@@ -25,8 +25,20 @@ export type ThemeId =
 
 export type ThemePresetId = Exclude<ThemeId, 'custom'>
 export type GlassIntensity = 'light' | 'normal' | 'strong'
-export type HomeBackground = 'gradient' | 'plain' | 'image'
+export type HomeBackground = 'gradient' | 'sky' | 'plain' | 'image'
 export type ResolvedMode = 'light' | 'dark'
+/** Densité de l'interface : l'espace autour des rangées, pas la taille du texte. */
+export type Density = 'compact' | 'normal' | 'airy'
+export type TextSize = 'small' | 'normal' | 'large'
+export type SidebarSide = 'left' | 'right'
+/** « Système » suit le réglage du Mac ou de Windows ; les deux autres forcent. */
+export type MotionPreference = 'system' | 'reduce' | 'full'
+/** Les deux ciels de l'accueil, réservés au thème Braise. */
+export type SkyVariant = 'braise' | 'nuit-etoilee'
+
+/** Heures par défaut du thème automatique : clair de 7 h à 19 h. */
+export const HOUR_START = 7
+export const HOUR_END = 19
 
 /**
  * Ambiances animées du châssis. Elles sont indépendantes du thème d'accent :
@@ -61,8 +73,8 @@ export interface AmbiencePreset {
 export const AMBIENCE_PRESETS: AmbiencePreset[] = [
   {
     id: 'glace-feu',
-    label: 'Glace & Feu',
-    tagline: 'Deux règnes, une seule lueur.',
+    label: 'Givre & Braise',
+    tagline: 'Le froid et la lueur, côte à côte.',
     motion: 'Pulsation lente · braises et givre',
     light: ['#2d6fa8', '#c0392b'],
     dark: ['#7fb6e8', '#ff6b4a']
@@ -101,7 +113,7 @@ export const AMBIENCE_PRESETS: AmbiencePreset[] = [
   },
   {
     id: 'aura-tech',
-    label: 'Aura Tech',
+    label: 'Aura',
     tagline: 'Ivoire, silence, précision.',
     motion: 'Lumière ultra-douce · ondulation au clic',
     light: ['#8c8474', '#c7bea9'],
@@ -149,16 +161,24 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: 'violet', label: 'Violet', light: '#8E4EC6', dark: '#BF7AF0' },
   { id: 'rose', label: 'Rose', light: '#E93D82', dark: '#FF6BA7' },
   { id: 'graphite', label: 'Graphite', light: '#6E6E73', dark: '#A1A1A6' },
-  // Braise : la teinte de l'ambiance dragons, seule à ouvrir une animation
-  // (ciel parcouru et lueur sur les cases du rail).
+  // Braise : le thème du ciel de l'accueil, seul à ouvrir ses braises et sa
+  // nuit étoilée (et la lueur sous les cases du rail).
   { id: 'braise', label: 'Braise', light: '#B4451F', dark: '#FF8F5E' }
 ]
 
-/** Le thème qui porte l'animation des dragons. */
-export const DRAGON_THEME: ThemePresetId = 'braise'
+/** Le thème qui porte le ciel de l'accueil ; les autres n'ouvrent pas « Ciel ». */
+export const SKY_THEME: ThemePresetId = 'braise'
+
+/**
+ * Les dix thèmes de couleur de la grille : Braise n'en fait pas partie, il est
+ * le thème du ciel et se choisit depuis le fond de l'accueil.
+ */
+export const ACCENT_THEMES: ThemePreset[] = THEME_PRESETS.filter((preset) => preset.id !== SKY_THEME)
 
 export const DEFAULT_THEME: ThemePresetId = 'indigo'
-export const DEFAULT_CUSTOM_ACCENT = '#5B5BD6'
+// En minuscules, comme toute couleur relue par `parseHex` : la valeur par
+// défaut doit survivre telle quelle à un aller-retour de persistance.
+export const DEFAULT_CUSTOM_ACCENT = '#5b5bd6'
 
 /** Fonds de page, alignés sur les neutres chauds de styles.css. */
 export const PAPER: Record<ResolvedMode, string> = {
@@ -353,8 +373,9 @@ export function fillAccent(accent: string): string {
 
 /**
  * Ramène une couleur personnalisée dans une plage utilisable pour le mode
- * courant, et explique le changement. Un accent très clair en mode clair ne
- * peut pas servir de lien ni de bordure : on l'assombrit au minimum nécessaire.
+ * courant, et explique le changement. Un accent trop clair ne peut pas servir
+ * de texte ni de bordure : on l'assombrit (ou l'éclaircit) au minimum pour
+ * atteindre 4,5:1 sur le fond de page.
  */
 export function adjustAccent(
   hex: string,
@@ -363,13 +384,12 @@ export function adjustAccent(
   const parsed = parseHex(hex)
   if (!parsed) return { color: DEFAULT_CUSTOM_ACCENT, adjusted: true, reason: 'Couleur invalide : indigo conservé.' }
   const paper = PAPER[mode]
-  const minimum = ensureContrast(parsed, paper, 3)
-  if (contrast(parsed, paper) >= 3) return { color: parsed, adjusted: false }
+  if (contrast(parsed, paper) >= 4.5) return { color: parsed, adjusted: false }
   const tone = mode === 'light' ? 'assombrie' : 'éclaircie'
   return {
-    color: minimum,
+    color: ensureContrast(parsed, paper, 4.5),
     adjusted: true,
-    reason: `Couleur ${tone} pour rester visible sur le fond (contraste 3:1 minimum).`
+    reason: `Couleur ${tone} pour rester lisible sur le fond (contraste minimum de 4,5:1).`
   }
 }
 
@@ -413,9 +433,10 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   const ink = INK[mode]
   const dark = mode === 'dark'
 
-  // Le texte d'accent doit rester lisible sur le fond de page.
+  // Le texte d'accent doit rester lisible sur le fond de page, y compris
+  // quand il sert de bordure de sélection : 4,5:1 partout.
   const link = ensureContrast(accent, paper, 4.5)
-  const label = ensureContrast(accent, dark ? paper : paper, 3)
+  const label = ensureContrast(accent, paper, 4.5)
   const hover = dark ? shift(accent, 0.07) : shift(accent, -0.06)
   const contrastInk = readableOn(accent)
   const soft = alpha(accent, dark ? 0.18 : 0.13)
@@ -423,6 +444,13 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   const glassOpacity = highContrast ? 1 : glass === 'light' ? 0.58 : glass === 'strong' ? 0.92 : 0.76
   const tintMix = highContrast ? 0.04 : glass === 'strong' ? 0.14 : glass === 'light' ? 0.07 : 0.1
   const blur = sanitizeGlassBlur(input.glassBlur, GLASS_BLUR[glass])
+  // Le wordmark de la barre latérale est posé sur le verre (teinté par
+  // l'accent) puis sur le reflet blanc du haut : le point final doit rester à
+  // 4,5:1 même dans ce contexte, pas seulement sur le papier nu.
+  const glassAlpha = Math.min(1, glassOpacity + 0.04)
+  const glassSurface = mix(paper, mix(paper, accent, tintMix), glassAlpha)
+  const wordmarkSurface = mix(glassSurface, '#ffffff', 0.05)
+  const wordmarkAccent = ensureContrast(accent, wordmarkSurface, 4.5)
   // L'ambiance ne repeint jamais l'accent : elle ne fournit que les teintes
   // de ses calques. Sans ambiance, ce sont les teintes du thème qui servent
   // de repli pour que les feuilles de style n'aient jamais de valeur vide.
@@ -442,6 +470,8 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
     '--accent-contrast': contrastInk,
     // Teinte d'accent utilisable en texte ou en bordure sur le fond de page.
     '--accent-label': label,
+    // Accent du point final du wordmark, tenu lisible sur le verre de la barre.
+    '--wordmark-accent': wordmarkAccent,
     '--glass-tint': mix(paper, accent, tintMix),
     '--focus-ring': `0 0 0 2px ${paper}, 0 0 0 4px ${label}`,
     '--selection': alpha(accent, dark ? 0.32 : 0.24),
@@ -483,12 +513,32 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
 
 export function resolveMode(
   theme: 'light' | 'dark' | 'system',
-  options: { hourTheme?: boolean; hour?: number; systemDark?: boolean } = {}
+  options: {
+    hourTheme?: boolean
+    hour?: number
+    systemDark?: boolean
+    /** Première heure claire du thème automatique (incluse). */
+    hourStart?: number
+    /** Heure de retour au sombre (exclue). */
+    hourEnd?: number
+  } = {}
 ): ResolvedMode {
   const hour = options.hour ?? new Date().getHours()
-  if (options.hourTheme) return hour >= 7 && hour < 19 ? 'light' : 'dark'
+  if (options.hourTheme) {
+    const start = options.hourStart ?? HOUR_START
+    const end = options.hourEnd ?? HOUR_END
+    const light = start < end ? hour >= start && hour < end : hour >= start || hour < end
+    return light ? 'light' : 'dark'
+  }
   if (theme === 'system') return options.systemDark ? 'dark' : 'light'
   return theme
+}
+
+/** « Réduire les animations » effectif : le choix explicite, sinon le système. */
+export function resolveMotion(preference: MotionPreference, systemReduce: boolean): boolean {
+  if (preference === 'reduce') return true
+  if (preference === 'full') return false
+  return systemReduce
 }
 
 /**
@@ -515,9 +565,25 @@ export interface AppearancePrefs {
   homeBackground: HomeBackground
   homeImage: string | null
   homeBlur: number
+  /** Ciel de l'accueil, réservé au thème Braise. */
+  skyVariant: SkyVariant
   highContrast: boolean
+  reduceMotion: MotionPreference
+  density: Density
+  textSize: TextSize
+  sidebarSide: SidebarSide
   hourTheme: boolean
+  /** Première heure claire du thème automatique. */
+  hourStart: number
+  /** Heure du retour au sombre. */
+  hourEnd: number
   perSpaceThemes: boolean
+  /**
+   * Marqueur de migration : dans la 0.3.24, le ciel s'affichait dès que le
+   * thème Braise était actif. Une fois le fond converti en `sky`, on ne
+   * reconvertit plus un « Dégradé » choisi ensuite.
+   */
+  skyMigrated: boolean
 }
 
 /**
@@ -526,8 +592,24 @@ export interface AppearancePrefs {
  */
 export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefined): AppearancePrefs {
   const input = raw ?? {}
+  // Champs de la 0.3.24 : le ciel était une case à cocher, sa variante
+  // portait un nom qui n'a plus cours. Les deux sont migrés une seule fois.
+  const legacy = input as Partial<AppearancePrefs> & { dragonSky?: boolean }
+  const themeId = isThemeId(input.themeId) ? input.themeId : DEFAULT_THEME
+  const background: HomeBackground =
+    input.homeBackground === 'sky' || input.homeBackground === 'plain' || input.homeBackground === 'image'
+      ? input.homeBackground
+      : 'gradient'
+  const migrateSky =
+    legacy.skyMigrated !== true &&
+    legacy.dragonSky !== false &&
+    themeId === SKY_THEME &&
+    (input.homeBackground === undefined || input.homeBackground === 'gradient')
+  const hourStart = sanitizeHour(input.hourStart, HOUR_START)
+  const hourEnd = sanitizeHour(input.hourEnd, HOUR_END)
+
   return {
-    themeId: isThemeId(input.themeId) ? input.themeId : DEFAULT_THEME,
+    themeId,
     customAccent: parseHex(input.customAccent ?? '') ?? DEFAULT_CUSTOM_ACCENT,
     glass: input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal',
     // Un fichier d'avant le curseur n'a que le cran : on en dérive le flou.
@@ -536,8 +618,7 @@ export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefi
       GLASS_BLUR[input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal']
     ),
     ambience: isAmbienceId(input.ambience) ? input.ambience : 'none',
-    homeBackground:
-      input.homeBackground === 'plain' || input.homeBackground === 'image' ? input.homeBackground : 'gradient',
+    homeBackground: migrateSky ? 'sky' : background,
     homeImage:
       typeof input.homeImage === 'string' && input.homeImage.trim() && input.homeImage.length < 2000
         ? input.homeImage
@@ -546,10 +627,30 @@ export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefi
       typeof input.homeBlur === 'number' && input.homeBlur >= 0 && input.homeBlur <= 40
         ? Math.round(input.homeBlur)
         : 18,
+    skyVariant:
+      input.skyVariant === 'nuit-etoilee' || (input.skyVariant as string) === 'westeros'
+        ? 'nuit-etoilee'
+        : 'braise',
     highContrast: input.highContrast === true,
+    reduceMotion:
+      input.reduceMotion === 'reduce' || input.reduceMotion === 'full' ? input.reduceMotion : 'system',
+    density: input.density === 'compact' || input.density === 'airy' ? input.density : 'normal',
+    textSize: input.textSize === 'small' || input.textSize === 'large' ? input.textSize : 'normal',
+    sidebarSide: input.sidebarSide === 'right' ? 'right' : 'left',
     hourTheme: input.hourTheme === true,
-    perSpaceThemes: input.perSpaceThemes === true
+    // Deux heures égales donneraient un mode figé : on revient aux valeurs sures.
+    hourStart: hourStart === hourEnd ? HOUR_START : hourStart,
+    hourEnd: hourStart === hourEnd ? HOUR_END : hourEnd,
+    perSpaceThemes: input.perSpaceThemes === true,
+    skyMigrated: true
   }
+}
+
+/** Heure entière de 0 à 23, ou le repli fourni. */
+export function sanitizeHour(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  const hour = Math.round(value)
+  return hour >= 0 && hour <= 23 ? hour : fallback
 }
 
 /** Couleur d'aperçu d'un thème, pour les cartes des réglages et la palette. */

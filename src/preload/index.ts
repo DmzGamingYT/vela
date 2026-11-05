@@ -41,6 +41,8 @@ const api: VelaApi = {
     create: (input: CreateSpaceInput) => ipcRenderer.invoke('space:create', input),
     update: (input) => ipcRenderer.invoke('space:update', input),
     remove: (id: string) => ipcRenderer.invoke('space:remove', id),
+    duplicate: (id: string) => ipcRenderer.invoke('space:duplicate', id),
+    clearData: (id: string) => ipcRenderer.invoke('space:clear-data', id),
     activate: (id: string) => ipcRenderer.invoke('space:activate', id)
   },
   tabs: {
@@ -99,10 +101,13 @@ const api: VelaApi = {
   history: {
     list: () => ipcRenderer.invoke('history:list'),
     remove: (url: string) => ipcRenderer.invoke('history:remove', url),
-    clear: () => ipcRenderer.invoke('history:clear')
+    clear: () => ipcRenderer.invoke('history:clear'),
+    clearRange: (range: string) => ipcRenderer.invoke('history:clear-range', range),
+    undo: () => ipcRenderer.invoke('history:undo-clear')
   },
   favicons: {
     get: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:get', { host, spaceId }),
+    peek: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:peek', { host, spaceId }),
     purge: () => ipcRenderer.invoke('favicons:purge')
   },
   bookmarks: {
@@ -111,13 +116,16 @@ const api: VelaApi = {
     detect: () => ipcRenderer.invoke('bookmark:detect'),
     addMany: (entries: { url: string; title?: string }[]) => ipcRenderer.invoke('bookmark:add-many', entries),
     move: (id: string, position: number) => ipcRenderer.invoke('bookmark:move', { id, position }),
-    reorder: (ids: string[]) => ipcRenderer.invoke('bookmark:reorder', ids)
+    reorder: (ids: string[]) => ipcRenderer.invoke('bookmark:reorder', ids),
+    exportHtml: () => ipcRenderer.invoke('bookmark:export-html'),
+    importHtml: () => ipcRenderer.invoke('bookmark:import-html')
   },
   downloads: {
     list: () => ipcRenderer.invoke('downloads:list'),
     preview: (id: string) => ipcRenderer.invoke('downloads:preview', id),
     open: (id: string) => ipcRenderer.invoke('downloads:open', id),
-    clear: () => ipcRenderer.invoke('downloads:clear')
+    clear: () => ipcRenderer.invoke('downloads:clear'),
+    pickDir: () => ipcRenderer.invoke('downloads:pick-dir')
   },
   updates: {
     status: () => ipcRenderer.invoke('update:status'),

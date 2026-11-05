@@ -64,7 +64,7 @@
 /* Une seule échelle : cinq durées, cinq courbes. Toute transition et toute
    animation d'interface prend l'un de ces pas — l'audit avait relevé vingt
    valeurs entre 120 et 540 ms, dont cinq (140, 150, 160, 170, 180) que l'œil
-   ne distingue pas. Les boucles d'ambiance (rotation, aurore, dragon) gardent
+   ne distingue pas. Les boucles d'ambiance (rotation, aurore, ciel) gardent
    leur durée propre : ce n'est pas du mouvement d'interface. */
 :root {
   --dur-1: 120ms; /* appui, micro-retour */

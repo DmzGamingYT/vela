@@ -18,7 +18,7 @@ import {
   miniWindowSize,
   placeMiniWindow
 } from '@shared/mini'
-import { opensMiniWindow } from '@shared/navigation'
+import { opensMiniWindow, searchOptionsOf } from '@shared/navigation'
 import { hostOf, isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { applyBrowserIdentity } from './identity'
 
@@ -158,7 +158,7 @@ export class MiniWindow {
   /** Adresse ou recherche : la règle est celle de la barre d'adresse principale. */
   private resolve(input: string): string {
     const settings = this.host.settings()
-    const target = normalizeInput(input, settings.searchEngine, settings.searxInstance)
+    const target = normalizeInput(input, searchOptionsOf(settings))
     return isHomeUrl(target.url) ? '' : target.url
   }
 

@@ -91,6 +91,18 @@ export function createIconCache(deps: IconCacheDeps) {
     return task
   }
 
+  /**
+   * Lecture seule : renvoie l'icône déjà sur l'appareil, même périmée, sans
+   * jamais contacter le réseau. Sert aux aperçus qui ne doivent déclencher
+   * aucune requête (fenêtre d'espace).
+   */
+  function peek(host: string): string | null {
+    const key = host.trim().toLowerCase()
+    if (!key) return null
+    const entry = store[key]
+    return entry ? iconDataUrl(entry) : null
+  }
+
   /** Vide le cache ; renvoie le nombre d'entrées supprimées. */
   function purge(): number {
     const count = Object.keys(store).length
@@ -104,5 +116,5 @@ export function createIconCache(deps: IconCacheDeps) {
     return Object.keys(store).length
   }
 
-  return { get, purge, size }
+  return { get, peek, purge, size }
 }

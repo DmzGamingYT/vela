@@ -18,6 +18,16 @@ import {
 } from '@shared/bookmarkOrder'
 import { createDefaultState, createTab, defaultProviders, SPACE_COLORS } from '@shared/defaults'
 import { isProviderId, PROVIDERS, providerDefaults } from '@shared/providers'
+import {
+  isHistoryRetention,
+  isStartupBehavior,
+  isWebLanguage,
+  keepByRetention,
+  sanitizeCustomEngines,
+  sanitizeDefaultZoom,
+  sanitizeKeywords,
+  sanitizeStartupUrl
+} from '@shared/navigation'
 import type {
   Bookmark,
   HistoryEntry,
@@ -88,7 +98,8 @@ const SEARCH_ENGINES: SearchEngineId[] = [
   'bing',
   'ecosia',
   'qwant',
-  'searxng'
+  'searxng',
+  'custom'
 ]
 
 function isSearchEngine(value: unknown): value is SearchEngineId {
@@ -129,19 +140,40 @@ function mergeSettings(raw: unknown): Settings {
     providers.openai.status = agent.hasKey ? 'stored' : 'none'
   }
 
+  const customEngines = sanitizeCustomEngines(input.customEngines)
+  const requestedEngine = isSearchEngine(input.searchEngine) ? input.searchEngine : 'duckduckgo'
+  // « custom » ne tient que si un moteur ajouté existe encore : sinon on
+  // retombe sur DuckDuckGo plutôt que de laisser un identifiant orphelin.
+  const searchEngine: SearchEngineId =
+    requestedEngine === 'custom' && customEngines.length === 0 ? 'duckduckgo' : requestedEngine
+  const requestedCustom = typeof input.customEngineId === 'string' ? input.customEngineId : ''
+  const customEngineId =
+    customEngines.find((engine) => engine.id === requestedCustom)?.id ?? customEngines[0]?.id ?? ''
+
   return {
     theme: input.theme === 'light' || input.theme === 'dark' ? input.theme : 'system',
-    searchEngine: isSearchEngine(input.searchEngine) ? input.searchEngine : 'duckduckgo',
+    searchEngine,
+    customEngineId,
+    customEngines,
+    searchKeywords: sanitizeKeywords(input.searchKeywords, customEngines),
     searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
+    startupBehavior: isStartupBehavior(input.startupBehavior) ? input.startupBehavior : 'restore',
+    startupUrl: sanitizeStartupUrl(input.startupUrl),
+    newTabBlank: input.newTabBlank === true,
+    historyRetention: isHistoryRetention(input.historyRetention) ? input.historyRetention : 'forever',
+    downloadDir:
+      typeof input.downloadDir === 'string' && input.downloadDir.trim()
+        ? input.downloadDir.trim().slice(0, 1000)
+        : null,
+    askDownloadLocation: input.askDownloadLocation === true,
+    openAfterDownload: input.openAfterDownload === true,
+    webLanguage: isWebLanguage(input.webLanguage) ? input.webLanguage : 'fr',
+    defaultZoom: sanitizeDefaultZoom(input.defaultZoom),
     ...sanitizeAppearance(input),
     blockTrackers: input.blockTrackers !== false,
     // Anciens fichiers : pas de niveau → le filtre standard, jamais renforcé.
     blockLevel: input.blockLevel === 'strict' ? 'strict' : 'trackers',
     thumbnails: input.thumbnails === true,
-    // Anciens fichiers : l'animation est proposée par défaut, elle-même
-    // suspendue par « Réduire les animations ».
-    dragonSky: input.dragonSky !== false,
-    skyVariant: input.skyVariant === 'westeros' ? 'westeros' : 'braise',
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
     agent: { mode, provider, providers }
@@ -535,6 +567,50 @@ export class Store {
     this.update((state) => {
       state.history = []
     })
+  }
+
+  /** Entrées d'une période donnée, telles qu'elles seront retirées. */
+  historySince(floor: number): HistoryEntry[] {
+    return this.state.history.filter((entry) => entry.visitedAt >= floor)
+  }
+
+  /**
+   * Retire les entrées d'une période et renvoie la copie exacte retirée :
+   * elle sert à revenir en arrière pendant les secondes d'annulation.
+   */
+  clearHistorySince(floor: number): HistoryEntry[] {
+    const removed = this.state.history.filter((entry) => entry.visitedAt >= floor)
+    if (removed.length === 0) return []
+    this.update((state) => {
+      state.history = state.history.filter((entry) => entry.visitedAt < floor)
+    })
+    return removed
+  }
+
+  /** Remet en place une suppression annulée, sans doublon. */
+  restoreHistory(entries: HistoryEntry[]): number {
+    if (entries.length === 0) return 0
+    let restored = 0
+    this.update((state) => {
+      const known = new Set(state.history.map((entry) => `${entry.url}\u0000${entry.visitedAt}`))
+      const fresh = entries.filter((entry) => !known.has(`${entry.url}\u0000${entry.visitedAt}`))
+      restored = fresh.length
+      if (fresh.length === 0) return
+      state.history = [...state.history, ...fresh]
+        .sort((a, b) => b.visitedAt - a.visitedAt)
+        .slice(0, 2000)
+    })
+    return restored
+  }
+
+  /** Applique la durée de conservation au démarrage et à chaque changement. */
+  pruneHistory(now = Date.now()): number {
+    const retention = this.state.settings.historyRetention
+    const before = this.state.history.length
+    this.update((state) => {
+      state.history = state.history.filter((entry) => keepByRetention(entry.visitedAt, retention, now))
+    })
+    return before - this.state.history.length
   }
 
   removeHistory(url: string): void {

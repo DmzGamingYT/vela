@@ -10,21 +10,26 @@ import { initials, tintFor } from '../lib/format'
  */
 
 const memo = new Map<string, Promise<string | null>>()
+const memoCached = new Map<string, Promise<string | null>>()
 
-export function iconRequest(url: string, spaceId = ''): Promise<string | null> {
+export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promise<string | null> {
   const host = hostOf(url)
   if (!host) return Promise.resolve(null)
   const key = `${spaceId}|${host}`
-  const pending = memo.get(key)
+  const store = cacheOnly ? memoCached : memo
+  const pending = store.get(key)
   if (pending) return pending
-  const task = window.vela.favicons.get(host, spaceId).catch(() => null)
-  memo.set(key, task)
+  const task = (
+    cacheOnly ? window.vela.favicons.peek(host, spaceId) : window.vela.favicons.get(host, spaceId)
+  ).catch(() => null)
+  store.set(key, task)
   return task
 }
 
 /** Après une purge du cache, les prochains montages redemandent l'icône. */
 export function clearFaviconMemo(): void {
   memo.clear()
+  memoCached.clear()
 }
 
 export default function Favicon({
@@ -32,13 +37,16 @@ export default function Favicon({
   url,
   label,
   size = 16,
-  spaceId
+  spaceId,
+  cacheOnly = false
 }: {
   src?: string | null
   url?: string
   label?: string
   size?: number
   spaceId?: string
+  /** Aucune requête : seulement l'icône déjà mémorisée sur l'appareil. */
+  cacheOnly?: boolean
 }) {
   const [broken, setBroken] = useState(false)
   const [cached, setCached] = useState<string | null>(null)
@@ -47,13 +55,13 @@ export default function Favicon({
   useEffect(() => {
     if (src || !url) return
     let alive = true
-    void iconRequest(url, spaceId).then((data) => {
+    void iconRequest(url, spaceId, cacheOnly).then((data) => {
       if (alive) setCached(data)
     })
     return () => {
       alive = false
     }
-  }, [src, url, spaceId])
+  }, [src, url, spaceId, cacheOnly])
 
   const image = src && !broken ? src : cached
 

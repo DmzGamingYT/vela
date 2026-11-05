@@ -5,8 +5,8 @@ import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { initials, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import TabContextMenu from './TabContextMenu'
 import TabPreviewCard from './TabPreviewCard'
-import TileMenu, { type TileMenuItem } from './TileMenu'
 
 interface TabRowProps {
   tab: TabView
@@ -36,11 +36,9 @@ export default function TabRow({
   const pin = useBrowser((state) => state.pin)
   const splitWith = useBrowser((state) => state.splitWith)
   const toggleMute = useBrowser((state) => state.toggleMute)
-  const newTab = useBrowser((state) => state.newTab)
-  const closeOthers = useBrowser((state) => state.closeOthers)
   const [broken, setBroken] = useState(false)
   // Menu contextuel : clic droit sur la ligne, comme dans un navigateur.
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; keyboard: boolean } | null>(null)
 
   // Aperçu flottant au survol
   const [showPreview, setShowPreview] = useState(false)
@@ -101,43 +99,6 @@ export default function TabRow({
     setShowPreview(false)
   }
 
-  const copy = (value: string): void => {
-    void navigator.clipboard.writeText(value).catch(() => undefined)
-  }
-
-  const menuItems: TileMenuItem[] = [
-    {
-      id: 'pin',
-      label: tab.pinned ? 'Désépingler' : 'Épingler',
-      icon: 'pin',
-      onSelect: () => pin(tab.id, !tab.pinned)
-    }
-  ]
-  if (!home) {
-    menuItems.push(
-      { id: 'duplicate', label: 'Dupliquer l’onglet', icon: 'copy', onSelect: () => newTab(tab.url) },
-      { id: 'split', label: 'Ouvrir en vue scindée', icon: 'split', onSelect: () => splitWith(tab.id) },
-      {
-        id: 'mute',
-        label: tab.muted ? 'Rétablir le son' : 'Couper le son',
-        icon: tab.muted ? 'volume-off' : 'volume',
-        onSelect: () => toggleMute(tab.id, !tab.muted)
-      },
-      { id: 'copy-url', label: 'Copier l’adresse', icon: 'link', onSelect: () => copy(tab.url) },
-      { id: 'copy-title', label: 'Copier le titre', icon: 'notes', onSelect: () => copy(tab.title) }
-    )
-  }
-  menuItems.push(
-    { id: 'close', label: 'Fermer l’onglet', icon: 'close', onSelect: () => closeTab(tab.id) },
-    {
-      id: 'close-others',
-      label: 'Fermer les autres onglets',
-      icon: 'trash',
-      danger: true,
-      onSelect: () => void closeOthers(tab.id)
-    }
-  )
-
   return (
     <div
       className="tab-row"
@@ -155,8 +116,9 @@ export default function TabRow({
       onClick={() => selectTab(tab.id)}
       onContextMenu={(event) => {
         event.preventDefault()
+        event.stopPropagation()
         closePreview()
-        setMenu({ x: event.clientX, y: event.clientY })
+        setMenu({ x: event.clientX, y: event.clientY, keyboard: false })
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -170,7 +132,7 @@ export default function TabRow({
           event.preventDefault()
           const rect = event.currentTarget.getBoundingClientRect()
           closePreview()
-          setMenu({ x: rect.left + 12, y: rect.bottom })
+          setMenu({ x: rect.left + 12, y: rect.bottom, keyboard: true })
         }
       }}
       onDragStart={(event) => {
@@ -225,28 +187,32 @@ export default function TabRow({
       )}
 
       <span className="tab-actions">
-        <button
-          type="button"
-          className="tab-action"
-          title={tab.pinned ? 'Désépingler' : 'Épingler'}
-          onClick={(event) => {
-            event.stopPropagation()
-            pin(tab.id, !tab.pinned)
-          }}
-        >
-          <Icon name="pin" size={12} filled={tab.pinned} />
-        </button>
-        <button
-          type="button"
-          className="tab-action"
-          title="Ouvrir en vue scindée"
-          onClick={(event) => {
-            event.stopPropagation()
-            splitWith(tab.id)
-          }}
-        >
-          <Icon name="split" size={12} />
-        </button>
+        {!home && (
+          <button
+            type="button"
+            className="tab-action"
+            title={tab.pinned ? 'Désépingler' : 'Épingler'}
+            onClick={(event) => {
+              event.stopPropagation()
+              pin(tab.id, !tab.pinned)
+            }}
+          >
+            <Icon name="pin" size={12} filled={tab.pinned} />
+          </button>
+        )}
+        {!home && (
+          <button
+            type="button"
+            className="tab-action"
+            title="Ouvrir en vue scindée"
+            onClick={(event) => {
+              event.stopPropagation()
+              splitWith(tab.id)
+            }}
+          >
+            <Icon name="split" size={12} />
+          </button>
+        )}
         <button
           type="button"
           className="tab-action"
@@ -271,11 +237,11 @@ export default function TabRow({
       )}
 
       {menu && (
-        <TileMenu
+        <TabContextMenu
           x={menu.x}
           y={menu.y}
-          label={home ? 'Onglet Accueil' : tab.title}
-          items={menuItems}
+          tab={tab}
+          keyboard={menu.keyboard}
           onClose={() => setMenu(null)}
         />
       )}

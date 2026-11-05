@@ -2,15 +2,12 @@ import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import type { SkyVariant } from '@shared/types'
 
 /**
- * Ciel de braise : la couche d'animation du thème Braise, dans sa variante
- * braises ou dans celle de la nuit étoilée (« Nuit de Westeros »).
+ * Ciel de l'accueil : des braises qui montent, ou une nuit étoilée avec sa
+ * lune.
  *
- * Deux pièces seulement, toutes deux décoratives et `aria-hidden` : une
- * silhouette de dragon dessinée ici (aucune image distante, aucun visuel
- * repris d'une œuvre existante) qui traverse lentement l'accueil, et un
- * canvas de braises qui montent. Le canvas est mis en pause dès que la
- * fenêtre est masquée ; « Réduire les animations » fige la silhouette et
- * supprime les braises.
+ * Les deux pièces sont décoratives et `aria-hidden` : aucune image distante,
+ * aucun motif repris d'une œuvre existante. Le canvas est mis en pause dès que
+ * la fenêtre est masquée ; « Réduire les animations » supprime le mouvement.
  */
 
 interface Ember {
@@ -59,7 +56,7 @@ function useStars(count: number) {
   }, [count])
 }
 
-export default function DragonSky({
+export default function HomeSky({
   active,
   calm,
   variant = 'braise'
@@ -69,10 +66,10 @@ export default function DragonSky({
   variant?: SkyVariant
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const stars = useStars(variant === 'westeros' ? 54 : 0)
+  const stars = useStars(variant === 'nuit-etoilee' ? 54 : 0)
 
   useEffect(() => {
-    if (!active || calm) return
+    if (!active || calm || variant !== 'braise') return
     const canvas = canvasRef.current
     if (!canvas) return
     const context = canvas.getContext('2d')
@@ -147,23 +144,18 @@ export default function DragonSky({
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [active, calm])
+  }, [active, calm, variant])
 
   if (!active) return null
 
   return (
-    <div
-      className="dragon-sky"
-      data-calm={calm ? 'true' : undefined}
-      data-variant={variant}
-      aria-hidden="true"
-    >
-      {variant === 'westeros' && (
-        <div className="westeros-sky">
+    <div className="home-sky" data-calm={calm ? 'true' : undefined} data-variant={variant} aria-hidden="true">
+      {variant === 'nuit-etoilee' && (
+        <div className="sky-night">
           {stars.map((star, index) => (
             <span
               key={index}
-              className="westeros-star"
+              className="sky-star"
               style={
                 {
                   left: `${star.left.toFixed(2)}%`,
@@ -177,7 +169,7 @@ export default function DragonSky({
               }
             />
           ))}
-          <div className="westeros-moon">
+          <div className="sky-moon">
             <svg viewBox="0 0 80 80" focusable="false">
               <circle cx="40" cy="40" r="29" />
               <circle cx="31" cy="32" r="6" />
@@ -188,34 +180,12 @@ export default function DragonSky({
           </div>
         </div>
       )}
-      {!calm && <canvas ref={canvasRef} className="dragon-embers" />}
-      <div className="dragon-drift">
-        <div className="dragon-flight">
-          <svg className="dragon-shape" viewBox="0 0 400 200" focusable="false">
-            {/* Aile lointaine : plus petite, levée vers la droite, derrière le corps. */}
-            <g className="dragon-wing dragon-wing-far">
-              <path d="M262 110c14-30 38-54 70-68-6 20-10 40-10 60-20-2-42 1-60 8Z" />
-            </g>
-            {/* Queue longue et effilée, vers le bas-gauche. */}
-            <path
-              className="dragon-tail"
-              d="M152 126c-32 6-66 16-94 32-14 8-26 18-34 28l-6 12 4-14c8-18 24-32 44-42 26-12 54-18 86-16Z"
-            />
-            {/* Corps, cou et tête d'un seul tenant : une proue fine vers la droite. */}
-            <path
-              className="dragon-body"
-              d="M148 118c34-10 76-14 114-12 24 2 44 6 62 12l-18 6 10 3-8 5-14 2-16 14c-20 8-46 10-74 8-32-2-58-10-78-22l14-4-6-4Z"
-            />
-            {/* Pattes repliées sous le ventre. */}
-            <path className="dragon-legs" d="M222 142l4 18 7-16ZM252 142l4 17 7-15Z" />
-            {/* Aile proche : la grande voile qui bat. */}
-            <g className="dragon-wing dragon-wing-near">
-              <path d="M252 112C232 82 200 52 156 30c6 28 12 52 16 74 18-4 42-2 62 4Z" />
-              <path className="dragon-wing-rib" d="M196 40c14 12 28 26 40 44M170 60c14 10 28 22 42 36" />
-            </g>
-          </svg>
-        </div>
-      </div>
+      {variant === 'braise' && (
+        <>
+          <span className="home-sky-warmth" />
+          {!calm && <canvas ref={canvasRef} className="home-sky-embers" />}
+        </>
+      )}
     </div>
   )
 }

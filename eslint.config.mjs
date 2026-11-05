@@ -35,6 +35,11 @@ export default tseslint.config(
       'site/trailer/probe/**',
       'site/trailer/.record-data/**',
       'docs/captures/**',
+      // Extensions décompressées pour les essais locaux : code tiers, jamais
+      // livré, et des milliers d’avertissements de navigateur.
+      'extensions/**',
+      // Fixtures d’extension exécutées dans un contexte navigateur, pas Node.
+      'scripts/fixtures/**',
       '**/*.png',
       '**/*.jpg'
     ]

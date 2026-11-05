@@ -4,11 +4,11 @@ import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent
 } from 'react'
-import { canonicalUrl, hostOf, isHomeUrl, readableTitle, SEARCH_ENGINES } from '@shared/url'
-import { DRAGON_THEME, resolveThemeId } from '@shared/theme'
+import { canonicalUrl, engineLabel, hostOf, isHomeUrl, readableTitle } from '@shared/url'
+import { SKY_THEME, resolveThemeId } from '@shared/theme'
 import { greeting, shortcut, timeAgo, tintFor } from '../lib/format'
 import { useBrowser } from '../store/browser'
-import DragonSky from './DragonSky'
+import HomeSky from './HomeSky'
 import Favicon from './Favicon'
 import HomeWeather from './HomeWeather'
 import { Icon } from './Icon'
@@ -117,14 +117,15 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // Vrai pendant la saisie d'une ville : l'invite de recherche s'efface pour
   // qu'un seul champ à la fois soit en jeu.
   const [cityEditing, setCityEditing] = useState(false)
-  const [calm, setCalm] = useState(
+  const [systemCalm, setSystemCalm] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   )
 
-  // Le fond et les inclinaisons se taisent avec « Réduire les animations ».
+  // Le fond et les inclinaisons se taisent avec « Réduire les animations »,
+  // qu'elle vienne du système ou du choix fait dans les réglages.
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = (): void => setCalm(media.matches)
+    const sync = (): void => setSystemCalm(media.matches)
     media.addEventListener('change', sync)
     return () => media.removeEventListener('change', sync)
   }, [])
@@ -157,6 +158,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
     // l'accueil redemande donc les images au lieu de garder les anciennes.
   }, [thumbsEnabled, historyKey, view?.history])
 
+  const motion = view?.settings.reduceMotion ?? 'system'
+  const calm = motion === 'reduce' || (motion === 'system' && systemCalm)
+
   // Avant le premier état : trois braises, pas un écran vide.
   if (!view) {
     return (
@@ -179,16 +183,19 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const space = view.spaces.find((item) => item.id === spaceId)
 
   const settings = view.settings
-  const engine = SEARCH_ENGINES[settings.searchEngine]?.label ?? 'DuckDuckGo'
-  // Le ciel de braise n'apparaît qu'avec son thème, et se tait quand
-  // l'animation est refusée par le système.
-  const dragonSky =
-    settings.dragonSky &&
+  const engine = engineLabel(
+    settings.searchEngine,
+    settings.customEngines.find((entry) => entry.id === settings.customEngineId)?.name
+  )
+  // Le ciel n'est un fond à part entière que sur le thème Braise, et se tait
+  // quand les animations sont réduites.
+  const homeSky =
+    settings.homeBackground === 'sky' &&
     resolveThemeId({
       globalTheme: settings.themeId,
       perSpace: settings.perSpaceThemes,
       spaceTheme: space?.theme ?? null
-    }) === DRAGON_THEME
+    }) === SKY_THEME
 
   // Une tuile par page : la clé ignore la requête et l'ancre, donc
   // « article/une-page » et « article/une-page?ref=home » ne font qu'une.
@@ -419,7 +426,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
         </span>
       </div>
 
-      <DragonSky active={dragonSky} calm={calm} variant={settings.skyVariant} />
+      <HomeSky active={homeSky} calm={calm} variant={settings.skyVariant} />
 
       <div className="start-inner home">
         <header className="home-head">

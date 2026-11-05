@@ -12,5 +12,6 @@ export const ENGINE_LOOK: Record<SearchEngineId, { tint: string; host: string }>
   bing: { tint: '#0ca6a6', host: 'www.bing.com' },
   ecosia: { tint: '#2f6b3f', host: 'www.ecosia.org' },
   qwant: { tint: '#4957d6', host: 'www.qwant.com' },
-  searxng: { tint: '#62a583', host: 'searx.be' }
+  searxng: { tint: '#62a583', host: 'searx.be' },
+  custom: { tint: '#8b8578', host: 'moteur ajouté' }
 }

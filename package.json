@@ -2,7 +2,7 @@
   "name": "vela",
   "productName": "Vela",
   "desktopName": "Vela",
-  "version": "0.3.24",
+  "version": "0.3.25",
   "description": "Vela — un navigateur de travail : espaces, vue scindée, brief du jour, notes et agent local.",
   "homepage": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/",
   "license": "MIT",
@@ -27,6 +27,7 @@
     "site:releases": "node site/tools/releases.mjs"
   },
   "dependencies": {
+    "electron-chrome-extensions": "^4.10.0",
     "electron-updater": "^6.8.11",
     "zustand": "^5.0.8"
   },

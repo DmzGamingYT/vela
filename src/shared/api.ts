@@ -110,7 +110,19 @@ export interface ProviderPatch {
 export interface SettingsPatch {
   theme?: Settings['theme']
   searchEngine?: Settings['searchEngine']
+  customEngineId?: string
+  customEngines?: Settings['customEngines']
+  searchKeywords?: Settings['searchKeywords']
   searxInstance?: string
+  startupBehavior?: Settings['startupBehavior']
+  startupUrl?: string
+  newTabBlank?: boolean
+  historyRetention?: Settings['historyRetention']
+  downloadDir?: string | null
+  askDownloadLocation?: boolean
+  openAfterDownload?: boolean
+  webLanguage?: string
+  defaultZoom?: number
   themeId?: Settings['themeId']
   customAccent?: string
   glass?: Settings['glass']
@@ -119,11 +131,16 @@ export interface SettingsPatch {
   homeBackground?: Settings['homeBackground']
   homeImage?: string | null
   homeBlur?: number
-  highContrast?: boolean
-  hourTheme?: boolean
-  perSpaceThemes?: boolean
-  dragonSky?: boolean
   skyVariant?: Settings['skyVariant']
+  density?: Settings['density']
+  textSize?: Settings['textSize']
+  sidebarSide?: Settings['sidebarSide']
+  highContrast?: boolean
+  reduceMotion?: Settings['reduceMotion']
+  hourTheme?: boolean
+  hourStart?: Settings['hourStart']
+  hourEnd?: Settings['hourEnd']
+  perSpaceThemes?: boolean
   blockTrackers?: boolean
   blockLevel?: 'trackers' | 'strict'
   thumbnails?: boolean
@@ -262,6 +279,10 @@ export interface VelaApi {
     create(input: CreateSpaceInput): Promise<void>
     update(input: UpdateSpaceInput): Promise<void>
     remove(id: string): Promise<void>
+    /** Copie la configuration de l'espace, sans cookies ni historique. */
+    duplicate(id: string): Promise<void>
+    /** Vide cookies, stockage, cache et historique de cet espace seulement. */
+    clearData(id: string): Promise<void>
     activate(id: string): Promise<void>
   }
   tabs: {
@@ -331,10 +352,16 @@ export interface VelaApi {
     list(): Promise<HistoryEntry[]>
     remove(url: string): Promise<void>
     clear(): Promise<void>
+    /** Efface une période ; renvoie le nombre d'entrées retirées. */
+    clearRange(range: import('./navigation').HistoryRange): Promise<number>
+    /** Remet en place l'effacement encore annulable (8 secondes). */
+    undo(): Promise<number>
   }
   favicons: {
     /** Data URL de l'icône du domaine, servie par le cache local de l'espace. */
     get(host: string, spaceId?: string): Promise<string | null>
+    /** Même lecture, sans requête : seulement ce qui est déjà sur l'appareil. */
+    peek(host: string, spaceId?: string): Promise<string | null>
     /** Vide mémoire et disque ; renvoie le nombre d'entrées supprimées. */
     purge(): Promise<number>
   }
@@ -350,6 +377,10 @@ export interface VelaApi {
     move(id: string, position: number): Promise<boolean>
     /** Applique une permutation complète ; false si un doublon ou un inconnu apparaît. */
     reorder(ids: string[]): Promise<boolean>
+    /** Écrit un fichier HTML de favoris ; renvoie le chemin, ou null si annulé. */
+    exportHtml(): Promise<string | null>
+    /** Lit un fichier HTML de favoris ; renvoie le nombre ajouté. */
+    importHtml(): Promise<{ added: number; cancelled: boolean }>
   }
   tasks: {
     create(input: { title: string; dueAt?: number | null }): Promise<import('./types').Task>
@@ -438,6 +469,8 @@ export interface VelaApi {
     preview(id: string): Promise<boolean>
     open(id: string): Promise<void>
     clear(): Promise<void>
+    /** Dossier de destination choisi ; null si la boîte est annulée. */
+    pickDir(): Promise<string | null>
   }
   updates: {
     status(): Promise<UpdateInfo>

@@ -1,0 +1,43 @@
+{
+  "version": "0.3.25",
+  "slug": "0-3-25",
+  "date": "2026-11-05",
+  "headline": "La fenêtre d’espace montre ce qu’elle crée",
+  "intro": "La fenêtre d’espace devient un aperçu vivant : le nom, l’avatar, les sites épinglés, la teinte et l’ambiance s’y lisent avant d’enregistrer. Les réglages se séparent en pages dédiées, la confidentialité se lit flux par flux, et les onglets épinglés gagnent un menu complet.",
+  "tags": ["espaces", "réglages", "onglets"],
+  "stats": {
+    "commits": 1,
+    "files": 77,
+    "insertions": 10865,
+    "deletions": 2170
+  },
+  "sections": [
+    {
+      "title": "Un espace qui se voit avant d’exister",
+      "body": [
+        "La colonne gauche garde l’aperçu sous les yeux pendant toute la saisie : une mini-fenêtre Vela reprend le nom tapé, l’avatar, les sites épinglés, la teinte et l’ambiance, en clair comme en sombre. Le chrome de la fenêtre reste neutre — une teinte rouge ne se lit plus comme une erreur.",
+        "La colonne droite défile seule, le pied reste fixe, et la fenêtre tient debout à 660 px de haut. Le mode « Modifier l’espace » réutilise exactement la même fenêtre, avec la duplication, le vidage et la suppression confirmée."
+      ]
+    },
+    {
+      "title": "Des réglages et une confidentialité lisibles",
+      "body": [
+        "Apparence, Navigation et Confidentialité ont leurs pages. Les flux réseau y sont regroupés et décrits un par un : ce qui reste sur l’appareil, ce qui sort, et vers quel hôte. Les favoris s’importent et s’exportent en HTML, sans passer par un service.",
+        "Les thèmes et ambiances gardent leurs pages dédiées ; la teinte « Braise » y devient « Brique », sans perdre la couleur des espaces existants."
+      ]
+    },
+    {
+      "title": "Le menu des onglets épinglés",
+      "body": [
+        "Un épinglé ouvre désormais un menu groupé : en-tête avec favicon, titre et domaine ; page, son conditionnel, actions Vela, organisation et fermeture. La veille recharge la page au clic, la fermeture s’annule huit secondes, et les déplacements annoncent la nouvelle position.",
+        "Le même composant sert la ligne d’onglet et la tuile épinglée : flèches, Entrée, Échap, saisie pour sauter à un libellé et focus rendu au déclencheur."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir « Nouvel espace » : l’aperçu suit le nom, l’avatar, les sites et l’ambiance ; la fenêtre reste complète à 660 px de haut.",
+    "Parcourir Réglages › Confidentialité : chaque flux annonce son hôte, son déclencheur et son moyen de coupure.",
+    "Clic droit ou touche Menu sur un onglet épinglé : groupes, veille, fermeture annulable et déplacement annoncé."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.24...v0.3.25"
+}
