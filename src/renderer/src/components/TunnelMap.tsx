@@ -9,23 +9,21 @@ import {
 } from '@shared/tunnel'
 import { useBrowser } from '../store/browser'
 import { useTunnel } from '../store/tunnel'
-import { Icon, type IconName } from './Icon'
+import { Icon } from './Icon'
 import TunnelBackdrop from './TunnelBackdrop'
 
-const NODE_WIDTH = 230
-const NODE_HEIGHT = 74
-const COLUMN_WIDTH = 276
-const ROW_GAP = 8
-
-const KIND_ICON: Record<MapNodeKind, IconName> = {
-  subject: 'sparkles',
-  angle: 'map',
-  subangle: 'chevron-right',
-  detail: 'circle',
-  concept: 'star',
-  site: 'globe',
-  tension: 'warning'
+/** Trois gabarits : le sujet, les angles (et précisions), les sources. */
+const CARD_SIZE: Record<MapNodeKind, { width: number; height: number }> = {
+  subject: { width: 288, height: 100 },
+  angle: { width: 224, height: 62 },
+  subangle: { width: 224, height: 62 },
+  detail: { width: 216, height: 56 },
+  concept: { width: 200, height: 54 },
+  site: { width: 244, height: 92 },
+  tension: { width: 248, height: 96 }
 }
+const COLUMN_WIDTH = 312
+const ROW_GAP = 10
 
 const SOURCE_LABEL = new Map(SOURCE_TYPES.map((type) => [type.id, type.label]))
 
@@ -161,6 +159,14 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
 
   const subject = active?.nodes.find((node) => node.kind === 'subject') ?? null
 
+  const subjectStats = useMemo(() => {
+    const shown = (active?.nodes ?? []).filter((node) => visible.has(node.id))
+    return {
+      angles: shown.filter((node) => node.kind === 'angle' || node.kind === 'subangle').length,
+      sites: shown.filter((node) => node.kind === 'site').length
+    }
+  }, [active, visible])
+
   const layoutNodes = useMemo(() => {
     const subjectId = subject?.id ?? null
     return shown.map((node) => {
@@ -193,26 +199,27 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
     )
     const treeNodes = layoutNodes.filter((node) => !satelliteIds.has(node.id))
     const tree = layoutMap(treeNodes, {
-      nodeWidth: NODE_WIDTH,
-      nodeHeight: NODE_HEIGHT,
       columnWidth: COLUMN_WIDTH,
-      rowGap: ROW_GAP
+      rowGap: ROW_GAP,
+      sizeOf: (node) => CARD_SIZE[node.kind]
     })
     const satellites = layoutNodes.filter((node) => satelliteIds.has(node.id))
-    const stacked = satellites.length * (NODE_HEIGHT + ROW_GAP) - ROW_GAP
+    const stacked =
+      satellites.reduce((sum, node) => sum + CARD_SIZE[node.kind].height + ROW_GAP, -ROW_GAP) || 0
     const result: Record<string, Box> = { ...tree.boxes }
     let y = Math.max(0, (tree.height - stacked) / 2)
     let width = tree.width
     for (const node of satellites) {
+      const size = CARD_SIZE[node.kind]
       result[node.id] = {
         x: tree.width + 40,
         y,
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
+        width: size.width,
+        height: size.height,
         depth: 1
       }
-      y += NODE_HEIGHT + ROW_GAP
-      width = Math.max(width, tree.width + 40 + NODE_WIDTH)
+      y += size.height + ROW_GAP
+      width = Math.max(width, tree.width + 40 + size.width)
     }
     // Une position choisie à la main prime sur la disposition automatique.
     for (const node of layoutNodes) {
@@ -222,7 +229,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       }
     }
     const height = Math.max(tree.height, y > 0 ? y - ROW_GAP : 0)
-    return { boxes: result, width: width || NODE_WIDTH, height: height || NODE_HEIGHT }
+    return { boxes: result, width: width || CARD_SIZE.subject.width, height: height || CARD_SIZE.subject.height }
   }, [layoutNodes, subject])
 
   const boxes = useMemo(() => {
@@ -265,11 +272,11 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
     return set
   }, [hoverId, active, byId, layoutNodes])
 
-  const fit = useCallback(() => {
+  const fit = useCallback((): boolean => {
     const element = containerRef.current
-    if (!element) return
+    if (!element) return false
     const rect = element.getBoundingClientRect()
-    if (rect.width < 40 || rect.height < 40) return
+    if (rect.width < 40 || rect.height < 40) return false
     const next = Math.min(
       (rect.width - 64) / Math.max(1, layout.width),
       (rect.height - 108) / Math.max(1, layout.height),
@@ -283,6 +290,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       x: Math.max(24, (rect.width - layout.width * clamped) / 2),
       y: Math.max(24, 46 + (rect.height - 108 - layout.height * clamped) / 2)
     })
+    return true
   }, [layout.width, layout.height])
 
   useEffect(() => {
@@ -303,9 +311,25 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
     // ajoutée sans nouveau nœud élargit la carte et doit être recadrée.
     const key = `${active.id}:${layoutNodes.length}:${level}:${Math.round(layout.width)}x${Math.round(layout.height)}`
     if (fitted.current === key) return
-    fitted.current = key
-    const timer = setTimeout(fit, 40)
-    return () => clearTimeout(timer)
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    let attempts = 0
+    // Le cadre peut n’être pas encore mesuré au premier passage : on réessaie
+    // au lieu de marquer la carte recadrée sans l’avoir fait.
+    const attempt = (): void => {
+      if (cancelled) return
+      if (fit()) {
+        fitted.current = key
+        return
+      }
+      attempts += 1
+      if (attempts < 20) timer = setTimeout(attempt, 120)
+    }
+    timer = setTimeout(attempt, 40)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [active, layoutNodes.length, level, layout.width, layout.height, fit])
 
   useEffect(() => {
@@ -408,24 +432,13 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
 
   if (!active) return <div className="tunnel-canvas" />
 
-  // Le texte garde une taille lisible à l’écran ; seuls les cadres rétrécissent.
-  const fontUnit = 1 / Math.max(0.38, zoom)
-  const titleSize = 13 * fontUnit
-  const metaSize = 12.2 * fontUnit
-  const excerptSize = 11.5 * fontUnit
-  // Le titre commence après l’icône, dont l’échelle suit le zoom : la largeur
-  // disponible doit être calculée dans la même unité que la police.
-  const titleLeft = 8 * fontUnit + 21 * fontUnit
-  const maxChars = Math.max(
-    8,
-    Math.floor((NODE_WIDTH - titleLeft - 8 * fontUnit) / (titleSize * 0.52))
-  )
+  // Le texte garde une taille lisible à l’écran ; sous 0,5 de zoom il cesse de
+  // grossir, sinon il déborderait des cartes qui, elles, continuent de réduire.
+  const fontUnit = Math.min(2, 1 / Math.max(0.5, zoom))
   // Zoom sémantique : loin = pastille avec le titre, moyen = carte complète,
-  // proche = extrait. Deux lignes seulement si la hauteur écran le permet.
-  const compact = zoom < 0.5
-  const maxLines = zoom >= 0.55 ? 2 : 1
-  // Le zoom sémantique remplace le badge par un extrait, sans jamais
-  // superposer les deux dans une carte de 74 px.
+  // proche = extrait. Une seule ligne tant que la carte est petite à l’écran.
+  const compact = zoom < 0.55
+  const maxLines = zoom >= 0.85 ? 2 : 1
   const showExcerpt = zoom >= 1.32
 
   return (
@@ -536,21 +549,29 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
               const box = boxes[node.id]
               if (!box) return null
               const dim = branch ? !branch.has(node.id) : false
-              const titleLines = wrapTitle(node.title, maxChars, maxLines)
+              const kind = node.kind
+              const isSubject = kind === 'subject'
+              const isSite = kind === 'site'
+              const isPill =
+                kind === 'angle' || kind === 'subangle' || kind === 'detail' || kind === 'concept'
               const isSelected = selectedId === node.id
               const isChecked = checkedIds.includes(node.id)
-              const padding = 8 * fontUnit
-              const paddingY = 5 * fontUnit
-              const metaY = box.height - paddingY - fontUnit * 0.9
-              const titleTop = paddingY + titleSize * 0.95
-              const metaText = shorten(
-                metaLabel(node),
-                Math.floor((NODE_WIDTH - 2 * padding) / (metaSize * 0.58))
+              const pad = 10 * fontUnit
+              const inner = box.width - pad * 2
+              const titleSize = (isSubject ? 16 : isPill ? 13 : 12.4) * fontUnit
+              const metaSize = 10.5 * fontUnit
+              const domainSize = 10.4 * fontUnit
+              const kickerSize = 9 * fontUnit
+              const radius = isSubject ? 18 : isSite ? 14 : 13
+              const maxChars = Math.max(
+                6,
+                Math.floor(inner / (titleSize * (isSubject ? 0.44 : 0.52)))
               )
-              const badgeWidth = Math.min(
-                box.width - padding * 2,
-                metaText.length * metaSize * 0.56 + 12 * fontUnit
-              )
+              const titleLines = wrapTitle(node.title, maxChars, maxLines)
+              const lineHeight = titleSize * 1.14
+              const block = titleLines.length * lineHeight
+              const metaText = shorten(metaLabel(node), Math.floor(inner / (metaSize * 0.58)))
+              const badgeWidth = Math.min(inner, metaText.length * metaSize * 0.56 + 12 * fontUnit)
               return (
                 <g
                   key={node.id}
@@ -660,84 +681,174 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                     y={-2 * fontUnit}
                     width={box.width + 4 * fontUnit}
                     height={box.height + 4 * fontUnit}
-                    rx={16}
+                    rx={radius + 3}
                   />
-                  <rect
-                    className="tunnel-card"
-                    width={box.width}
-                    height={box.height}
-                    rx={14}
-                  />
-                  <rect
-                    className="tunnel-card-sheen"
-                    width={box.width - 2 * fontUnit}
-                    height={Math.min(box.height / 2, 26 * fontUnit)}
-                    x={fontUnit}
-                    y={fontUnit}
-                    rx={12}
-                  />
+                  <rect className="tunnel-card" width={box.width} height={box.height} rx={radius} />
+                  {!compact && (
+                    <rect
+                      className="tunnel-card-sheen"
+                      width={box.width - 2 * fontUnit}
+                      height={Math.min(box.height / 2, 26 * fontUnit)}
+                      x={fontUnit}
+                      y={fontUnit}
+                      rx={radius - 3}
+                    />
+                  )}
                   <rect
                     className="tunnel-node-accent"
                     x={0}
-                    y={12 * fontUnit}
-                    width={3 * fontUnit}
-                    height={box.height - 24 * fontUnit}
-                    rx={1.5 * fontUnit}
+                    y={isSubject ? 14 * fontUnit : 12 * fontUnit}
+                    width={(isSubject ? 4 : 3) * fontUnit}
+                    height={box.height - (isSubject ? 28 : 24) * fontUnit}
+                    rx={2 * fontUnit}
                   />
-                  <g
-                    className="tunnel-node-icon"
-                    transform={`translate(${padding} ${padding}) scale(${0.86 * fontUnit})`}
-                  >
-                    <Icon name={KIND_ICON[node.kind]} size={14} />
-                  </g>
-                  {titleLines.map((line, index) => (
+
+                  {compact ? (
                     <text
-                      key={index}
-                      className="tunnel-node-title"
-                      x={padding + 21 * fontUnit}
-                      y={titleTop + index * titleSize * 1.1}
+                      className={`tunnel-node-title${isSubject ? ' tunnel-node-title-subject' : ''}`}
+                      x={pad}
+                      y={box.height / 2 + titleSize * 0.34}
                       fontSize={titleSize}
                     >
-                      {line}
+                      {shorten(node.title, maxChars)}
                     </text>
-                  ))}
-                  {!compact && !showExcerpt && (
-                    <g className="tunnel-badge" data-kind={node.kind}>
-                      <rect
-                        x={padding - 2 * fontUnit}
-                        y={metaY - metaSize * 1.15}
-                        width={badgeWidth}
-                        height={metaSize * 1.5}
-                        rx={metaSize * 0.75}
-                      />
-                      <text x={padding + 4 * fontUnit} y={metaY} fontSize={metaSize}>
-                        {metaText}
+                  ) : isSubject ? (
+                    <>
+                      <text className="tunnel-node-kicker" x={pad} y={pad + kickerSize} fontSize={kickerSize}>
+                        SUJET
                       </text>
-                    </g>
+                      {titleLines.map((line, index) => (
+                        <text
+                          key={index}
+                          className="tunnel-node-title tunnel-node-title-subject"
+                          x={pad}
+                          y={pad + kickerSize + 17 * fontUnit + index * lineHeight}
+                          fontSize={titleSize}
+                        >
+                          {line}
+                        </text>
+                      ))}
+                      <text className="tunnel-node-meta" x={pad} y={box.height - pad} fontSize={metaSize}>
+                        {subjectStats.angles} angle{subjectStats.angles > 1 ? 's' : ''} ·{' '}
+                        {subjectStats.sites} source{subjectStats.sites > 1 ? 's' : ''}
+                      </text>
+                    </>
+                  ) : isPill ? (
+                    <>
+                      <circle
+                        className="tunnel-node-dot"
+                        cx={pad + 2 * fontUnit}
+                        cy={box.height / 2}
+                        r={3.4 * fontUnit}
+                      />
+                      {titleLines.map((line, index) => (
+                        <text
+                          key={index}
+                          className="tunnel-node-title"
+                          x={pad + 12 * fontUnit}
+                          y={box.height / 2 - block / 2 + lineHeight * (index + 0.78)}
+                          fontSize={titleSize}
+                        >
+                          {line}
+                        </text>
+                      ))}
+                    </>
+                  ) : isSite ? (
+                    <>
+                      <g className="tunnel-node-icon" transform={`translate(${pad} ${pad}) scale(${0.82 * fontUnit})`}>
+                        <Icon name="globe" size={13} />
+                      </g>
+                      <text
+                        className="tunnel-node-domain"
+                        x={pad + 16 * fontUnit}
+                        y={pad + 9 * fontUnit}
+                        fontSize={domainSize}
+                      >
+                        {shorten(shortDomain(node), Math.floor(inner / (domainSize * 0.56)))}
+                      </text>
+                      {titleLines.map((line, index) => (
+                        <text
+                          key={index}
+                          className="tunnel-node-title"
+                          x={pad}
+                          y={pad + 16 * fontUnit + lineHeight * (index + 0.86)}
+                          fontSize={titleSize}
+                        >
+                          {line}
+                        </text>
+                      ))}
+                      <rect
+                        className="tunnel-relevance-track"
+                        x={pad}
+                        y={box.height - pad - 3 * fontUnit}
+                        width={inner}
+                        height={3 * fontUnit}
+                        rx={1.5 * fontUnit}
+                      />
+                      <rect
+                        className="tunnel-relevance-bar"
+                        data-level={node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'}
+                        x={pad}
+                        y={box.height - pad - 3 * fontUnit}
+                        width={Math.max(
+                          3 * fontUnit,
+                          (inner * Math.min(100, Math.max(0, node.relevance))) / 100
+                        )}
+                        height={3 * fontUnit}
+                        rx={1.5 * fontUnit}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <g className="tunnel-node-icon" transform={`translate(${pad} ${pad}) scale(${0.86 * fontUnit})`}>
+                        <Icon name="warning" size={14} />
+                      </g>
+                      {titleLines.map((line, index) => (
+                        <text
+                          key={index}
+                          className="tunnel-node-title"
+                          x={pad + 21 * fontUnit}
+                          y={pad + titleSize * 0.95 + index * lineHeight}
+                          fontSize={titleSize}
+                        >
+                          {line}
+                        </text>
+                      ))}
+                      <g className="tunnel-badge" data-kind={kind}>
+                        <rect
+                          x={pad - 2 * fontUnit}
+                          y={box.height - pad - metaSize * 1.15}
+                          width={badgeWidth}
+                          height={metaSize * 1.5}
+                          rx={metaSize * 0.75}
+                        />
+                        <text x={pad + 4 * fontUnit} y={box.height - pad} fontSize={metaSize}>
+                          {metaText}
+                        </text>
+                      </g>
+                    </>
                   )}
-                  {showExcerpt && node.kind === 'site' && node.excerpt && (
+
+                  {showExcerpt && isSite && node.excerpt && (
                     <text
                       className="tunnel-node-excerpt"
-                      x={padding}
-                      y={metaY}
-                      fontSize={excerptSize}
+                      x={pad}
+                      y={box.height - pad - 8 * fontUnit}
+                      fontSize={11.5 * fontUnit}
                     >
-                      {shorten(node.excerpt.replace(/\s+/g, ' '), Math.floor((NODE_WIDTH - 2 * padding) / (excerptSize * 0.56)))}
+                      {shorten(
+                        node.excerpt.replace(/\s+/g, ' '),
+                        Math.floor(inner / (11.5 * fontUnit * 0.56))
+                      )}
                     </text>
-                  )}
-                  {node.kind === 'site' && (
-                    <circle
-                      className="tunnel-relevance"
-                      cx={box.width - 13 * fontUnit}
-                      cy={13 * fontUnit}
-                      r={3.4 * fontUnit}
-                      data-level={node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'}
-                    />
                   )}
                   {isChecked && (
                     <g transform={`translate(${box.width - 26 * fontUnit} ${box.height - 22 * fontUnit})`}>
                       <circle r={7 * fontUnit} className="tunnel-check-dot" />
-                      <path d={`M${-3 * fontUnit} 0 L${-0.8 * fontUnit} ${2.4 * fontUnit} L${3.4 * fontUnit} ${-2.8 * fontUnit}`} className="tunnel-check-mark" />
+                      <path
+                        d={`M${-3 * fontUnit} 0 L${-0.8 * fontUnit} ${2.4 * fontUnit} L${3.4 * fontUnit} ${-2.8 * fontUnit}`}
+                        className="tunnel-check-mark"
+                      />
                     </g>
                   )}
                 </g>

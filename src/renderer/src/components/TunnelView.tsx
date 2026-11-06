@@ -15,10 +15,10 @@ import TunnelDetail from './TunnelDetail'
 import TunnelMap from './TunnelMap'
 import TunnelProjects from './TunnelProjects'
 
-const EXAMPLES = [
-  'Comparer les hébergeurs d’images libres',
-  'Utiliser l’IA pour rédiger des textes',
-  'Histoire de la photographie argentique'
+const EXAMPLES: { query: string; hint: string }[] = [
+  { query: 'Comparer les hébergeurs d’images libres', hint: 'Comparatifs, licences, limites' },
+  { query: 'Utiliser l’IA pour rédiger des textes', hint: 'Outils, méthodes, dérives' },
+  { query: 'Histoire de la photographie argentique', hint: 'Techniques, archives, usages' }
 ]
 
 const PERIODS = [
@@ -168,13 +168,14 @@ export default function TunnelView() {
     useBrowser.getState().setWorkMode('browse')
   }
 
-  const filtersActive =
-    filters.minRelevance !== 60 ||
-    filters.sourceTypes.length > 0 ||
-    filters.from !== null ||
-    filters.lang !== 'all' ||
-    filters.tags.length > 0 ||
-    filters.minExcerpt > 0
+  const activeFilterCount =
+    (filters.minRelevance !== 60 ? 1 : 0) +
+    (filters.sourceTypes.length > 0 ? 1 : 0) +
+    (filters.from !== null ? 1 : 0) +
+    (filters.lang !== 'all' ? 1 : 0) +
+    (filters.tags.length > 0 ? 1 : 0) +
+    (filters.minExcerpt > 0 ? 1 : 0)
+  const filtersActive = activeFilterCount > 0
 
   const selectedNode = selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null
   // L'horloge est figée au montage : reconnaître la période choisie n'exige
@@ -192,24 +193,36 @@ export default function TunnelView() {
     <section className="tunnel" aria-label="Tunnel de recherche">
       <header className="tunnel-bar">
         <div className="tunnel-head">
-          <div>
+          <div className="tunnel-title">
             <h1>Tunnel de recherche</h1>
-            <p>Carte mentale de sources réelles</p>
+            <p title={active?.query}>{active ? active.query : 'Carte mentale de sources réelles'}</p>
           </div>
-          {active && nodes.length > 0 && (
-            <span className="tunnel-badges">
-              <span className="tunnel-badge">
-                <Icon name="lock" size={12} /> carte locale
-              </span>
-              <span
-                className="tunnel-badge"
-                title={sourceTotal > sourceCount ? `${sourceCount} affichées sur ${sourceTotal}` : undefined}
-              >
-                {sourceTotal} source{sourceTotal > 1 ? 's' : ''}
-              </span>
-              <span className="tunnel-badge">{nodeCount} nœuds</span>
-            </span>
-          )}
+          <form
+            className="tunnel-search"
+            onSubmit={(event) => {
+              event.preventDefault()
+              submit(input)
+            }}
+          >
+            <Icon name="search" size={16} />
+            <input
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Un sujet, une question, un angle"
+              aria-label="Sujet du tunnel"
+              autoFocus
+            />
+            {running ? (
+              <button type="button" className="tunnel-run stop" onClick={cancel}>
+                <Icon name="stop" size={13} /> Arrêter
+              </button>
+            ) : (
+              <button type="submit" className="tunnel-run" disabled={!input.trim()}>
+                Explorer
+              </button>
+            )}
+          </form>
+
           <div className="tunnel-tools">
             <button
               type="button"
@@ -218,7 +231,9 @@ export default function TunnelView() {
               aria-expanded={filtersOpen}
               onClick={() => setFiltersOpen(!filtersOpen)}
             >
-              <Icon name="filter" size={14} /> Entonnoir
+              <Icon name="filter" size={14} />
+              <span className="tunnel-tool-label">Entonnoir</span>
+              {activeFilterCount > 0 && <span className="tunnel-tool-count">{activeFilterCount}</span>}
             </button>
             <div className="tunnel-seg" role="tablist" aria-label="Affichage">
               <button
@@ -243,23 +258,36 @@ export default function TunnelView() {
             <button
               type="button"
               className="tunnel-tool"
+              data-compact="true"
               disabled={!active}
               title={selectedId ? 'Ajouter une carte sous ce nœud' : 'Ajouter une carte sous le sujet'}
+              aria-label="Nouvelle carte"
               onClick={() => void addCard(selectedId ?? null)}
-            >                <Icon name="plus" size={14} /> Nouvelle carte
+            >
+              <Icon name="plus" size={14} />
             </button>
-            <button type="button" className="tunnel-tool" onClick={() => setProjectsOpen(true)}>
-              <Icon name="folder" size={14} /> Projets
+            <button
+              type="button"
+              className="tunnel-tool"
+              data-compact="true"
+              title="Projets"
+              aria-label="Projets"
+              onClick={() => setProjectsOpen(true)}
+            >
+              <Icon name="folder" size={14} />
             </button>
             <div className="tunnel-export">
               <button
                 type="button"
                 className="tunnel-tool"
+                data-compact="true"
                 disabled={!active}
+                title="Exporter"
+                aria-label="Exporter"
                 aria-expanded={exportOpen}
                 onClick={() => setExportOpen(!exportOpen)}
               >
-                <Icon name="download" size={14} /> Exporter
+                <Icon name="download" size={14} />
               </button>
               {exportOpen && (
                 <div className="tunnel-menu" role="menu">
@@ -289,32 +317,6 @@ export default function TunnelView() {
             </button>
           </div>
         </div>
-
-        <form
-          className="tunnel-search"
-          onSubmit={(event) => {
-            event.preventDefault()
-            submit(input)
-          }}
-        >
-          <Icon name="search" size={16} />
-          <input
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="Un sujet, une question, un angle"
-            aria-label="Sujet du tunnel"
-            autoFocus
-          />
-          {running ? (
-            <button type="button" className="tunnel-run stop" onClick={cancel}>
-              <Icon name="stop" size={13} /> Arrêter
-            </button>
-          ) : (
-            <button type="submit" className="tunnel-run" disabled={!input.trim()}>
-              Explorer
-            </button>
-          )}
-        </form>
 
         <div className="tunnel-row">
           <div className="tunnel-chips" role="group" aria-label="Types de sources">
@@ -369,16 +371,6 @@ export default function TunnelView() {
               </button>
             )}
           </div>
-        )}
-
-        {active && (
-          <p className="tunnel-summary">
-            {sourceTotal} source{sourceTotal > 1 ? 's' : ''} réelle{sourceTotal > 1 ? 's' : ''}
-            {sourceCount !== sourceTotal && ` · ${sourceCount} affichée${sourceCount > 1 ? 's' : ''}`}.{' '}
-            <strong>« {active.query} »</strong> ouvre le sujet.
-            {hiddenSites > 0 && <span className="tunnel-muted"> {hiddenSites} écartée{hiddenSites > 1 ? 's' : ''} par l’entonnoir.</span>}
-            {phase && running && <span className="tunnel-muted"> {phase}</span>}
-          </p>
         )}
 
         {filtersOpen && (
@@ -467,7 +459,7 @@ export default function TunnelView() {
           {!active && !running && (
             <div className="tunnel-empty">
               <span className="tunnel-empty-icon">
-                <Icon name="map" size={26} />
+                <Icon name="map" size={22} />
               </span>
               <h2>Descendez d’un sujet jusqu’aux sources</h2>
               <p>
@@ -476,8 +468,17 @@ export default function TunnelView() {
               </p>
               <div className="tunnel-examples">
                 {EXAMPLES.map((example) => (
-                  <button key={example} type="button" onClick={() => submit(example)}>
-                    {example}
+                  <button
+                    key={example.query}
+                    type="button"
+                    className="tunnel-example"
+                    onClick={() => submit(example.query)}
+                  >
+                    <strong>{example.query}</strong>
+                    <span className="tunnel-example-hint">{example.hint}</span>
+                    <span className="tunnel-example-go" aria-hidden="true">
+                      <Icon name="arrow-right" size={13} />
+                    </span>
                   </button>
                 ))}
               </div>
@@ -669,13 +670,22 @@ export default function TunnelView() {
 
       <footer className="tunnel-foot">
         <span>{active ? tunnelMapTitle(active) : 'Aucune carte ouverte'}</span>
-        <span className="tunnel-muted">
-          {checkedIds.length > 0 && `${checkedIds.length} sélectionnée${checkedIds.length > 1 ? 's' : ''} · `}
-          {running
-            ? 'construction en cours'
-            : active
-              ? 'carte enregistrée automatiquement'
-              : 'aucune carte pour l’instant'}
+        <span className="tunnel-foot-meta">
+          {active && (
+            <span>
+              {sourceTotal} source{sourceTotal > 1 ? 's' : ''} · {nodeCount} nœud{nodeCount > 1 ? 's' : ''}
+              {sourceCount !== sourceTotal && ` · ${sourceCount} affichée${sourceCount > 1 ? 's' : ''}`}
+              {hiddenSites > 0 && ` · ${hiddenSites} écartée${hiddenSites > 1 ? 's' : ''}`}
+            </span>
+          )}
+          <span>
+            {checkedIds.length > 0 && `${checkedIds.length} sélectionnée${checkedIds.length > 1 ? 's' : ''} · `}
+            {running
+              ? phase || 'construction en cours'
+              : active
+                ? 'carte enregistrée automatiquement'
+                : 'aucune carte pour l’instant'}
+          </span>
         </span>
       </footer>
     </section>

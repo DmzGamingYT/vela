@@ -534,12 +534,25 @@ const ROW_GAP = 16
  */
 export function layoutMap(
   nodes: MapNode[],
-  options: { nodeHeight?: number; rowGap?: number; columnWidth?: number; nodeWidth?: number } = {}
+  options: {
+    nodeHeight?: number
+    rowGap?: number
+    columnWidth?: number
+    nodeWidth?: number
+    /** Taille propre à un nœud ; les valeurs uniformes servent de repli. */
+    sizeOf?: (node: MapNode) => { width?: number; height?: number }
+  } = {}
 ): LayoutResult {
   const nodeHeight = options.nodeHeight ?? NODE_HEIGHT
   const rowGap = options.rowGap ?? ROW_GAP
   const columnWidth = options.columnWidth ?? COLUMN_WIDTH
   const nodeWidth = options.nodeWidth ?? NODE_WIDTH
+  const byId = new Map(nodes.map((node) => [node.id, node]))
+  const sizeOf = (id: string): { width: number; height: number } => {
+    const node = byId.get(id)
+    const custom = node && options.sizeOf ? options.sizeOf(node) : null
+    return { width: custom?.width ?? nodeWidth, height: custom?.height ?? nodeHeight }
+  }
 
   const present = new Set(nodes.map((node) => node.id))
   const children = new Map<string, string[]>()
@@ -568,8 +581,8 @@ export function layoutMap(
     depths.set(id, depth)
     const kids = children.get(id) ?? []
     if (kids.length === 0) {
-      heights.set(id, nodeHeight)
-      return nodeHeight
+      heights.set(id, sizeOf(id).height)
+      return sizeOf(id).height
     }
     let total = 0
     for (const kid of kids) {
@@ -577,18 +590,19 @@ export function layoutMap(
       total += rowGap
     }
     total -= rowGap
-    const own = Math.max(nodeHeight, total)
+    const own = Math.max(sizeOf(id).height, total)
     heights.set(id, own)
     return own
   }
 
   const place = (id: string, top: number): void => {
     const depth = depths.get(id) ?? 0
-    const own = heights.get(id) ?? nodeHeight
+    const own = heights.get(id) ?? sizeOf(id).height
+    const size = sizeOf(id)
     const kids = children.get(id) ?? []
-    box.set(id, { x: depth * columnWidth, y: top + own / 2 - nodeHeight / 2, width: nodeWidth, height: nodeHeight, depth })
+    box.set(id, { x: depth * columnWidth, y: top + own / 2 - size.height / 2, width: size.width, height: size.height, depth })
     if (kids.length === 0) return
-    const total = kids.reduce((sum, kid) => sum + (heights.get(kid) ?? nodeHeight) + rowGap, -rowGap)
+    const total = kids.reduce((sum, kid) => sum + (heights.get(kid) ?? sizeOf(kid).height) + rowGap, -rowGap)
     let cursor = top + own / 2 - total / 2
     for (const kid of kids) {
       const kidHeight = heights.get(kid) ?? nodeHeight

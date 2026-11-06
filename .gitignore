@@ -53,3 +53,6 @@ planche-*-aperçu.png
 site/dist/
 # Pages de release : générées depuis site/releases/*.json à chaque build.
 site/public/nouveautes/0-3-*/
+
+# Scratch de l’audit de recherche (pages capturées, jetable).
+.audit-pass/
