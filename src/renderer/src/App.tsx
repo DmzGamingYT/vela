@@ -20,7 +20,6 @@ const CommandBar = lazy(() => import('./components/CommandBar'))
 const DownloadsPanel = lazy(() => import('./components/DownloadsPanel'))
 const ProcessManager = lazy(() => import('./components/ProcessManager'))
 const NotesDrawer = lazy(() => import('./components/NotesDrawer'))
-const ProtectionPanel = lazy(() => import('./components/ProtectionPanel'))
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'))
 const SpaceDialog = lazy(() => import('./components/SpaceDialog'))
 
@@ -73,8 +72,10 @@ export default function App() {
   }, [settings, space])
 
   // Image d'accueil : lue à la demande, jamais incluse dans l'état diffusé.
+  const homeBackground = settings?.homeBackground
+  const homeImage = settings?.homeImage
   useEffect(() => {
-    if (!settings || settings.homeBackground !== 'image' || !settings.homeImage) {
+    if (homeBackground !== 'image' || !homeImage) {
       document.documentElement.style.removeProperty('--home-image')
       return
     }
@@ -87,7 +88,7 @@ export default function App() {
     return () => {
       alive = false
     }
-  }, [settings?.homeBackground, settings?.homeImage])
+  }, [homeBackground, homeImage])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -191,9 +192,6 @@ export default function App() {
         </Presence>
         <Presence open={overlay === 'bookmarks'} exit={!overlay}>
           <BookmarksPanel />
-        </Presence>
-        <Presence open={overlay === 'protection'} exit={!overlay}>
-          <ProtectionPanel />
         </Presence>
         {/* L’accueil se retire le temps d’un panneau : sans cela, il recouvrait
             les réglages ouverts depuis « Votre clé ou Ollama » et le bouton

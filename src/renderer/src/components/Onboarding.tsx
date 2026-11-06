@@ -93,7 +93,7 @@ export default function Onboarding() {
 
   const searxSetting = view?.settings.searxInstance ?? ''
   useEffect(() => {
-    setInstance(searxSetting)
+    queueMicrotask(() => setInstance(searxSetting))
   }, [searxSetting])
 
   // Le focus part sur l'action principale, pas sur « Passer » : le premier

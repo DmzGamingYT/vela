@@ -7,7 +7,6 @@ import { useBrowser } from '../store/browser'
 import { usePageTranslation } from '../lib/usePageTranslation'
 import { Icon } from './Icon'
 import BarButton from './BarButton'
-import PrivacyPill from './PrivacyPill'
 import TranslateButton from './TranslateButton'
 import TranslatePopover from './TranslatePopover'
 
@@ -25,7 +24,6 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const stop = useBrowser((state) => state.stop)
   const splitToggle = useBrowser((state) => state.splitToggle)
   const toggleBookmark = useBrowser((state) => state.toggleBookmark)
-  const setOverlay = useBrowser((state) => state.setOverlay)
   const toast = useBrowser((state) => state.toast)
   const beginMenu = useBrowser((state) => state.beginMenu)
   const endMenu = useBrowser((state) => state.endMenu)
@@ -42,22 +40,30 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const [comicBusy, setComicBusy] = useState(false)
 
   // Les calques vivent dans la page : une navigation les emporte avec elle.
+  // Les remises à zéro passent par une microtâche : un setState synchrone dans
+  // un effet est refusé par le compilateur React, et la microtâche passe avant
+  // la peinture.
   useEffect(() => {
-    setComicActive(false)
-    setComicBusy(false)
-    setTranslationOpen(false)
+    queueMicrotask(() => {
+      setComicActive(false)
+      setComicBusy(false)
+      setTranslationOpen(false)
+    })
   }, [tab.id, tab.url])
 
   // La fenêtre de traduction flotte au-dessus de la page : la vue native
   // quitterait la scène, comme pour un menu contextuel.
   useEffect(() => {
     if (!translationOpen) return
-    beginMenu()
-    return () => endMenu()
+    // La vue native doit quitter la scène avant la peinture, pas forcément
+    // dans le corps de l'effet : la microtâche garde ce délai.
+    queueMicrotask(() => beginMenu())
+    return () => queueMicrotask(() => endMenu())
   }, [translationOpen, beginMenu, endMenu])
 
   useEffect(() => {
-    if (translation.status !== 'translated') setTranslationOpen(false)
+    if (translation.status === 'translated') return
+    queueMicrotask(() => setTranslationOpen(false))
   }, [translation.status])
 
   useEffect(() => {
@@ -98,7 +104,8 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const home = isHomeUrl(tab.url)
 
   useEffect(() => {
-    if (!focused) setDraft(home ? '' : tab.url)
+    if (focused) return
+    queueMicrotask(() => setDraft(home ? '' : tab.url))
   }, [tab.url, home, focused])
 
   // Façon Dia/Zephium : au repos on lit le nom de la page, au survol l'adresse,
@@ -160,8 +167,6 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           inputRef.current?.blur()
         }}
       >
-        {!home && <PrivacyPill count={tab.blocked} onOpen={() => setOverlay('protection')} />}
-
         <input
           ref={inputRef}
           className="address-input"
@@ -260,7 +265,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       <div className="pane-tools">
         {!home && (
           <BarButton
-            icon="translate"
+            icon="comic"
             label={
               comicActive || comicBusy
                 ? 'Traduire la BD — traduction active'

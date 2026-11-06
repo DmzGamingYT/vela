@@ -166,62 +166,6 @@
   flex: none;
 }
 
-/* --- Pastille de confidentialité -------------------------------- */
-
-.privacy-pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  min-width: 40px;
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 20px;
-  background: var(--bar-hover);
-  color: var(--bar-ink);
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  -webkit-app-region: no-drag;
-  transition: background 150ms ease;
-}
-
-.privacy-pill::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 22px;
-}
-
-.privacy-pill:hover {
-  background: color-mix(in srgb, var(--bar-hover) 82%, var(--bar-ink) 7%);
-}
-
-.privacy-pill:focus-visible {
-  outline: 2px solid var(--bar-ink);
-  outline-offset: 2px;
-}
-
-/* Rien de bloqué : le bouclier seul, sans chiffre ni fond appuyé. */
-.privacy-pill[data-empty='true'] {
-  width: 40px;
-  min-width: 40px;
-  padding: 0;
-  background: transparent;
-  color: var(--bar-soft);
-}
-
-.privacy-pill svg {
-  display: block;
-  flex: none;
-}
-
 /* --- Pastille de traduction, quatre états ----------------------- */
 
 .translate-pill {
@@ -479,20 +423,6 @@
     display: none;
   }
 
-  .privacy-pill svg {
-    display: none;
-  }
-
-  .privacy-pill {
-    min-width: 36px;
-    padding: 0 10px;
-  }
-
-  /* Bouclier seul quand rien n’a été bloqué : il n’y a pas de chiffre. */
-  .privacy-pill[data-empty='true'] svg {
-    display: block;
-  }
-
   .pane-tools {
     gap: 4px;
   }
@@ -508,7 +438,6 @@
   }
 
   .bar-btn,
-  .privacy-pill,
   .translate-pill {
     transition: none;
   }

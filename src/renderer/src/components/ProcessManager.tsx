@@ -22,7 +22,8 @@ export default function ProcessManager() {
   }
 
   useEffect(() => {
-    void refresh()
+    // Hors du corps de l'effet : `refresh` écrit l'état en revenant.
+    queueMicrotask(() => void refresh())
     const t = setInterval(() => void refresh(), 3000)
     return () => clearInterval(t)
   }, [])

@@ -29,6 +29,8 @@ interface CommandItem {
   hint?: string
   icon: IconName
   run: () => void
+  /** Fabriquée à partir de la frappe : classée derrière les actions réelles. */
+  generated?: boolean
   /** Aperçu temporaire au survol, sans enregistrer le réglage. */
   preview?: () => void
 }
@@ -138,6 +140,7 @@ export default function CommandBar() {
       all.push({
         id: 'open',
         group: 'Aller',
+        generated: true,
         label: `Ouvrir « ${query.trim()} »`,
         hint:
           normalizeInput(query.trim(), searchOptionsOf(view.settings)).kind === 'search'
@@ -149,6 +152,7 @@ export default function CommandBar() {
       all.push({
         id: 'open-mini',
         group: 'Aller',
+        generated: true,
         label: `Ouvrir « ${query.trim()} » dans le mini navigateur`,
         hint: 'Petite fenêtre jetable',
         icon: 'external',
@@ -157,6 +161,7 @@ export default function CommandBar() {
       all.push({
         id: 'agent-query',
         group: 'Agent',
+        generated: true,
         label: `Demander à l’agent : ${query.trim()}`,
         hint: 'Résumé, comparaison, synthèse',
         icon: 'sparkles',
@@ -501,12 +506,15 @@ export default function CommandBar() {
     printPage
   ])
 
+  // Les deux remises à zéro passent par une microtâche : un setState synchrone
+  // dans un effet est refusé par le compilateur React, et la microtâche passe
+  // avant la peinture.
   useEffect(() => {
-    setIndex(0)
+    queueMicrotask(() => setIndex(0))
   }, [query, filter])
 
   useEffect(() => {
-    setIndex((current) => Math.min(current, Math.max(0, items.length - 1)))
+    queueMicrotask(() => setIndex((current) => Math.min(current, Math.max(0, items.length - 1))))
   }, [items.length])
 
   const groups = useMemo(() => {

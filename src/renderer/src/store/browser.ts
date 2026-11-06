@@ -59,7 +59,6 @@ export type Overlay =
   | 'downloads'
   | 'history'
   | 'bookmarks'
-  | 'protection'
   | null
 
 export type WorkMode = 'browse' | 'work'

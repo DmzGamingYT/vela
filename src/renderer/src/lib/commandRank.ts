@@ -9,6 +9,8 @@ export interface Rankable {
   group: string
   label: string
   hint?: string
+  /** Entrée fabriquée à partir de la frappe, jamais prioritaire sur une action. */
+  generated?: boolean
 }
 
 export function normalize(value: string): string {
@@ -28,6 +30,10 @@ export function scoreOf(item: Rankable, search: string): number {
   else if (label.split(/[^a-z0-9]+/).some((word) => word.startsWith(search))) score = 68
   else if (label.includes(search)) score = 46
   else if (hint.includes(search)) score = 26
+  // Les entrées fabriquées à partir de la frappe (« Ouvrir « historique » »)
+  // ne doivent pas passer devant l'action qui porte vraiment ce mot : taper
+  // « historique » puis Entrée doit ouvrir l'historique, pas une recherche.
+  if (item.generated) score -= 24
   // Onglets et notes sont des destinations : à pertinence égale, ils passent
   // devant les commandes et les réglages.
   if (item.group === 'Onglets') score += 12

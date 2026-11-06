@@ -94,7 +94,7 @@ export default function TunnelView() {
   const findRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    setInput(query)
+    queueMicrotask(() => setInput(query))
   }, [query])
 
   useEffect(() => {
@@ -120,7 +120,9 @@ export default function TunnelView() {
     return () => window.removeEventListener('keydown', onKey)
   }, [findOpen])
 
-  const nodes = active?.nodes ?? []
+  // Tableau stable entre deux rendus : sinon chaque dérivé ci-dessous
+  // recalcule à chaque image (`?? []` fabrique un tableau neuf).
+  const nodes = useMemo(() => active?.nodes ?? [], [active?.nodes])
   const { visible, hiddenSites } = useMemo(() => filterMap(nodes, filters), [nodes, filters])
   const sourceCount = useMemo(
     () => nodes.filter((node) => node.kind === 'site' && visible.has(node.id)).length,
@@ -175,11 +177,15 @@ export default function TunnelView() {
     filters.minExcerpt > 0
 
   const selectedNode = selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null
+  // L'horloge est figée au montage : reconnaître la période choisie n'exige
+  // pas l'instant du rendu, et lire l'heure pendant un rendu est impur.
+  const [mountedAt] = useState(() => Date.now())
   const periodYears =
     filters.from === null
       ? 0
       : [1, 5, 10].find(
-          (years) => Math.abs(Date.now() - filters.from! - years * 365 * 24 * 3600 * 1000) < 1000 * 3600 * 24 * 2
+          (years) =>
+            Math.abs(mountedAt - filters.from! - years * 365 * 24 * 3600 * 1000) < 1000 * 3600 * 24 * 2
         ) ?? 0
 
   return (

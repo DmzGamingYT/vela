@@ -34,23 +34,22 @@ export default function SpaceAvatar({
   className?: string
 }) {
   const name = avatarFile(space.avatar)
-  const [stored, setStored] = useState<string | null>(null)
+  // La photo lue est étiquetée par son fichier : changer de photo n'exige pas
+  // d'effacer l'ancienne, elle cesse simplement de correspondre.
+  const [stored, setStored] = useState<{ name: string; data: string } | null>(null)
 
   useEffect(() => {
-    if (!name) {
-      setStored(null)
-      return
-    }
+    if (!name) return
     let alive = true
     void fileImage(name).then((data) => {
-      if (alive) setStored(data)
+      if (alive && data) setStored({ name, data })
     })
     return () => {
       alive = false
     }
   }, [name])
 
-  const image = avatarImage(space.avatar) ?? stored
+  const image = avatarImage(space.avatar) ?? (stored && stored.name === name ? stored.data : null)
   const gallery = avatarGalleryId(space.avatar)
   const icon = avatarIcon(space.avatar)
   const initial = space.name.trim().slice(0, 1).toUpperCase() || '·'

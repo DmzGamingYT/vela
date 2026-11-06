@@ -74,11 +74,15 @@ export default function AgentCanvas({
   // Ouverture depuis une sélection de page : l’onglet d’origine est joint.
   useEffect(() => {
     if (!agentSourceTab) return
-    setSelected((current) =>
-      current.includes(agentSourceTab) ? current : [...current, agentSourceTab]
-    )
-    useBrowser.setState({ agentSourceTab: null })
-    promptRef.current?.focus()
+    // Hors du corps de l'effet (le compilateur React refuse un setState
+    // synchrone) : la microtâche s'exécute avant la peinture.
+    queueMicrotask(() => {
+      setSelected((current) =>
+        current.includes(agentSourceTab) ? current : [...current, agentSourceTab]
+      )
+      useBrowser.setState({ agentSourceTab: null })
+      promptRef.current?.focus()
+    })
   }, [agentSourceTab])
 
   const running = agent.status === 'running'

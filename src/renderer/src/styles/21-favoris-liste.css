@@ -119,6 +119,13 @@
 .sidebar .tabs-head {
   font-size: 11px;
   letter-spacing: 0.1em;
+  /* Les en-têtes de section portent la structure de la barre latérale :
+     un gris à 60 % sur 11 px les rendait presque décoratifs. */
+  color: var(--ink-soft);
+}
+
+.sidebar .tabs-head .tabs-count {
+  opacity: 0.85;
 }
 
 @media (max-width: 1120px) {

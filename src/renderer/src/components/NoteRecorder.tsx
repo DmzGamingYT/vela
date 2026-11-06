@@ -10,6 +10,9 @@ import {
 import { audioToken } from '@shared/noteLinks'
 import { Icon } from './Icon'
 
+/** Heure de départ de l'enregistrement : lue au clic, jamais pendant un rendu. */
+const nowMs = (): number => Date.now()
+
 /**
  * Enregistrement d'une note vocale.
  *
@@ -100,7 +103,7 @@ export default function NoteRecorder({
     }
     next.onstop = () => void finish(next.mimeType || mime || 'audio/webm')
     recorder.current = next
-    startedAt.current = Date.now()
+    startedAt.current = nowMs()
     pausedAt.current = 0
     elapsed.current = 0
     setSeconds(0)
@@ -128,7 +131,7 @@ export default function NoteRecorder({
     const active = recorder.current
     if (!active || active.state !== 'paused') return
     active.resume()
-    startedAt.current = Date.now()
+    startedAt.current = nowMs()
     pausedAt.current = 0
     setStage('recording')
   }

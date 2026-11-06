@@ -1,6 +1,7 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { appearanceTokens, type ResolvedMode } from '@shared/theme'
 import type { Settings } from '@shared/types'
+import { greeting, weekdayLabel } from '../lib/format'
 import AmbienceScene from './AmbienceScene'
 
 /**
@@ -30,6 +31,9 @@ export default function AppearancePreview({
     ambience: settings.ambience
   }) as CSSProperties
   const blur = Math.round(settings.glassBlur * 0.55)
+  // L'horloge est lue une fois, au montage : lire l'heure pendant un rendu est
+  // impur, et l'aperçu n'a pas à changer de jour en direct.
+  const [today] = useState(() => Date.now())
 
   return (
     <div
@@ -59,10 +63,10 @@ export default function AppearancePreview({
             <i /> Accueil
           </span>
           <span className="pv-nav">
-            <i /> Travail
+            <i /> Atelier
           </span>
           <span className="pv-nav">
-            <i /> Lecture
+            <i /> Notes
           </span>
           <span className="pv-side-foot">
             <i /> Sessions
@@ -71,8 +75,10 @@ export default function AppearancePreview({
         <div className="pv-home">
           <div className="pv-home-sky" />
           <div className="pv-home-copy">
-            <span className="pv-kicker">Mardi 5 novembre</span>
-            <strong className="pv-word">Bonsoir.</strong>
+            {/* La date et le mot d’accueil viennent du même code que l’accueil
+                réel : l’aperçu ne peut pas annoncer un autre jour. */}
+            <span className="pv-kicker">{weekdayLabel(today)}</span>
+            <strong className="pv-word">{greeting()}.</strong>
             <span className="pv-search">
               <i />
               Rechercher ou saisir une adresse

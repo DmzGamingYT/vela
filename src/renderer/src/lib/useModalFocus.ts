@@ -26,9 +26,16 @@ function focusables(root: HTMLElement): HTMLElement[] {
  * parcourait la barre latérale et la page masquées. Ce hook pose le focus dans
  * la feuille, y garde Tab et Shift+Tab, et le rend au déclencheur à la
  * fermeture. Il ne remplace pas Échap, déjà traité par l'application.
+ *
+ * `initialFocus: 'container'` pose le focus sur la feuille elle-même au lieu
+ * du premier champ : un panneau de réglages ne doit pas commencer sa vie dans
+ * le champ de recherche, anneau de focus compris.
  */
-export function useModalFocus<T extends HTMLElement>(): RefObject<T | null> {
+export function useModalFocus<T extends HTMLElement>(
+  options: { initialFocus?: 'first' | 'container' } = {}
+): RefObject<T | null> {
   const ref = useRef<T | null>(null)
+  const initialFocus = options.initialFocus ?? 'first'
 
   useEffect(() => {
     const node = ref.current
@@ -39,11 +46,12 @@ export function useModalFocus<T extends HTMLElement>(): RefObject<T | null> {
     const frame = requestAnimationFrame(() => {
       if (node.contains(document.activeElement)) return
       const items = focusables(node)
-      if (items.length > 0) items[0].focus()
-      else {
+      if (initialFocus === 'container' || items.length === 0) {
         node.tabIndex = -1
         node.focus()
+        return
       }
+      items[0].focus()
     })
 
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -81,7 +89,7 @@ export function useModalFocus<T extends HTMLElement>(): RefObject<T | null> {
       document.removeEventListener('keydown', onKeyDown, true)
       if (previous && previous.isConnected) previous.focus()
     }
-  }, [])
+  }, [initialFocus])
 
   return ref
 }

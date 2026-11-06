@@ -8,6 +8,7 @@ import { Icon } from './Icon'
 export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
   const maps = useTunnel((s) => s.maps)
   const active = useTunnel((s) => s.active)
+  const running = useTunnel((s) => s.running)
   const refreshMaps = useTunnel((s) => s.refreshMaps)
   const loadMap = useTunnel((s) => s.loadMap)
   const removeMap = useTunnel((s) => s.removeMap)
@@ -35,6 +36,18 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
   }, [confirmId])
 
   const visible = maps.filter((map) => !map.spaceId || map.spaceId === spaceId)
+  // Une recherche en cours n'a pas encore de carte enregistrée : sans cette
+  // ligne, la barre latérale restait sur « 0 · Aucune carte » pendant que la
+  // carte se remplissait à l'écran.
+  const live =
+    running &&
+    active &&
+    (!active.spaceId || active.spaceId === spaceId) &&
+    !visible.some((map) => map.id === active.id)
+      ? active
+      : null
+  const total = visible.length + (live ? 1 : 0)
+  const liveSources = live ? live.nodes.filter((node) => node.kind === 'site').length : 0
 
   useEffect(() => {
     if (pendingFocus.current === null) return
@@ -44,7 +57,7 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
     const next = rows?.[Math.min(index, Math.max(0, (rows?.length ?? 0) - 1))]
     if (next) next.focus()
     else newRef.current?.focus()
-  }, [visible.length])
+  }, [total])
 
   /** Supprime une carte, puis ramène le focus dans la liste plutôt que nulle part. */
   const remove = async (id: string, index: number): Promise<void> => {
@@ -58,7 +71,7 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
     <div className="tabs-scroll work-cards">
       <div className="tabs-head">
         <span>Cartes du tunnel</span>
-        <span className="tabs-count">{visible.length}</span>
+        <span className="tabs-count">{total}</span>
         <span className="tabs-tools">
           <button
             ref={newRef}
@@ -81,6 +94,16 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
       </div>
 
       <div className="tabs-group" ref={listRef}>
+        {live && (
+          <div className="work-card-row" data-active="true" data-live="true">
+            <span className="work-card">
+              <span className="work-card-title">{live.query || 'Recherche en cours'}</span>
+              <span className="work-card-meta">
+                {liveSources} source{liveSources > 1 ? 's' : ''} · en cours…
+              </span>
+            </span>
+          </div>
+        )}
         {visible.map((map, index) => (
           <div key={map.id} className="work-card-row" data-active={active?.id === map.id}>
             <button
@@ -115,7 +138,7 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
             </button>
           </div>
         ))}
-        {visible.length === 0 && <p className="tabs-empty">Aucune carte pour l’instant.</p>}
+        {visible.length === 0 && !live && <p className="tabs-empty">Aucune carte pour l’instant.</p>}
       </div>
 
       <p className="work-hint">

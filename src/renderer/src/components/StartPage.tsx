@@ -148,7 +148,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   useEffect(() => {
     if (!thumbsEnabled || !historyKey) {
-      setThumbs({})
+      queueMicrotask(() => setThumbs({}))
       return
     }
     let alive = true
@@ -170,6 +170,29 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   const motion = view?.settings.reduceMotion ?? 'system'
   const calm = motion === 'reduce' || (motion === 'system' && systemCalm)
+
+  // Le survol de l'accueil est le seul poste chaud mesuré de l'app : chaque
+  // `pointermove` écrivait cinq variables CSS sur `.start`, donc sur tout
+  // l'arbre qui les hérite. Ici la position attend la prochaine image, les
+  // variables de l'aurora vivent sur leur propre nappe (seule à les lire) et
+  // l'inclinaison ne touche que la tuile survolée.
+  //
+  // Ces références vivent au-dessus du premier `return` : un accueil sans état
+  // doit tout de même monter les mêmes hooks.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const auroraRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef(0)
+  const pendingRef = useRef<{ tile: HTMLElement | null; x: number; y: number } | null>(null)
+  const tiltedRef = useRef<HTMLElement | null>(null)
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      if (idleRef.current) clearTimeout(idleRef.current)
+    },
+    []
+  )
 
   // Avant le premier état : trois braises, pas un écran vide.
   if (!view) {
@@ -279,6 +302,13 @@ export default function StartPage({ tabId }: { tabId: string }) {
     }
   }
   const onlyStarters = tiles.every((tile) => tile.kind === 'starter')
+  // Sans historique, la grille ne montre que des favoris : l'en-tête le dit
+  // plutôt que d'annoncer « Récemment » au-dessus de pages jamais visitées.
+  const recentLabel = onlyStarters
+    ? 'Pour commencer'
+    : tiles.some((tile) => tile.kind === 'history')
+      ? 'Récemment'
+      : 'Vos favoris'
 
   // L'accueil ne compte pas comme une page : une fenêtre qui ne montre que son
   // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
@@ -291,26 +321,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
     openPages === 0
       ? `Aucune page ouverte · ${pagesLabel}`
       : `${openPages} page${openPages > 1 ? 's' : ''} ouverte${openPages > 1 ? 's' : ''} · ${pagesLabel}`
-
-  // Le survol de l'accueil est le seul poste chaud mesuré de l'app : chaque
-  // `pointermove` écrivait cinq variables CSS sur `.start`, donc sur tout
-  // l'arbre qui les hérite. Ici la position attend la prochaine image, les
-  // variables de l'aurora vivent sur leur propre nappe (seule à les lire) et
-  // l'inclinaison ne touche que la tuile survolée.
-  const rootRef = useRef<HTMLDivElement>(null)
-  const auroraRef = useRef<HTMLDivElement>(null)
-  const frameRef = useRef(0)
-  const pendingRef = useRef<{ tile: HTMLElement | null; x: number; y: number } | null>(null)
-  const tiltedRef = useRef<HTMLElement | null>(null)
-  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(
-    () => () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current)
-      if (idleRef.current) clearTimeout(idleRef.current)
-    },
-    []
-  )
 
   const paintHover = (): void => {
     frameRef.current = 0
@@ -621,9 +631,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
           }
         >
           {modules.recent && (
-            <section className="home-card home-recent" aria-label="Récemment">
+            <section className="home-card home-recent" aria-label={recentLabel}>
               <div className="home-card-head">
-                <h2>{onlyStarters ? 'Pour commencer' : 'Récemment'}</h2>
+                <h2>{recentLabel}</h2>
                 <button
                   type="button"
                   className="home-card-action"

@@ -151,7 +151,7 @@ async function main() {
   record('harnais', `comic:run → ${JSON.stringify(run)}`)
 
   const deadline = Date.now() + SECONDS * 1000
-  let status = ''
+  let status
   while (Date.now() < deadline) {
     status = (await evaluate(`document.querySelector('.vt-panel #vt-status')?.textContent || ''`).catch(() => '')) || ''
     record('harnais', `état : ${status}`)

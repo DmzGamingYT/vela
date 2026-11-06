@@ -27,19 +27,25 @@ export default function Presence({
   const [held, setHeld] = useState(open)
   const [closing, setClosing] = useState(false)
 
+  // La microtâche s'exécute avant la peinture : la surface est déjà dans son
+  // état d'arrivée à la première image, comme avec un setState synchrone.
   useLayoutEffect(() => {
     if (open) {
-      setHeld(true)
-      setClosing(false)
+      queueMicrotask(() => {
+        setHeld(true)
+        setClosing(false)
+      })
       return
     }
     // Fermeture : la surface reste montée le temps du fondu de sortie.
     if (held && exit) {
-      setClosing(true)
+      queueMicrotask(() => setClosing(true))
       return
     }
-    setHeld(false)
-    setClosing(false)
+    queueMicrotask(() => {
+      setHeld(false)
+      setClosing(false)
+    })
   }, [open, held, exit])
 
   useLayoutEffect(() => {

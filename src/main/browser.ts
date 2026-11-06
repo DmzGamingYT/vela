@@ -212,6 +212,14 @@ export class Browser {
     highlightsFor: (url) => this.highlights.list(url).map((entry) => entry.text)
   }
 
+  /** Construit le service et ouvre les clés avant la première fenêtre. */
+  static async create(dir: string): Promise<Browser> {
+    const browser = new Browser(dir)
+    await browser.store.loadSecrets()
+    browser.broadcast()
+    return browser
+  }
+
   constructor(dir: string) {
     this.store = new Store(dir)
     this.dedupeHomeTabs()
@@ -1384,7 +1392,7 @@ export class Browser {
    */
   private startSelectionDrag(sender: WebContents, selected: string): void {
     const text = selected
-      .replace(/\u0000/g, '')
+      .replaceAll('\u0000', '')
       .trim()
       .slice(0, 8000)
     if (!text) return

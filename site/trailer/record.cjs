@@ -85,8 +85,8 @@ const marks = []
   const input = makeInputs(app.client)
   /* Taille réellement obtenue, une fois la fenêtre bornée à l'écran : c'est
      elle qui définit la région capturée et le repère des coordonnées. */
-  let width = app.width
-  let height = app.height
+  let width
+  let height
 
   let recorder = null
   let recorderExit = null

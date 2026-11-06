@@ -464,7 +464,16 @@ export class AgentRunner {
       const confirm = async (phase: 'action' | 'submission'): Promise<boolean> => {
         const win = this.getWindow()
         if (!win || win.isDestroyed()) return false
-        const preview = (value: string): string => value.replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, '�')
+        const preview = (value: string): string =>
+          Array.from(value, (char) => {
+            const code = char.codePointAt(0) ?? 0
+            const control =
+              code <= 0x1f ||
+              (code >= 0x7f && code <= 0x9f) ||
+              (code >= 0x202a && code <= 0x202e) ||
+              (code >= 0x2066 && code <= 0x2069)
+            return control ? '�' : char
+          }).join('')
         const decision = await dialog.showMessageBox(win, {
           type: 'question',
           title: 'Valider l’action de l’agent',
@@ -601,7 +610,7 @@ export class AgentRunner {
     } catch (error) {
       if (run.cancelled) throw error
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Le modèle n’a pas répondu dans la minute.')
+        throw new Error('Le modèle n’a pas répondu dans la minute.', { cause: error })
       }
       throw error
     } finally {

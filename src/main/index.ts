@@ -235,7 +235,7 @@ function installStatusItem(): void {
     ])
   )
   if (!app.isPackaged) {
-    console.log('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela')
+    process.stdout.write('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela\n')
   }
 }
 
@@ -255,10 +255,12 @@ function main(): void {
     contents.on('will-attach-webview', (event) => event.preventDefault())
   })
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     applySessionIdentity(session.defaultSession)
     try {
-      browser = new Browser(app.getPath('userData'))
+      // Les clés du trousseau sont lues avant la fenêtre : le premier état
+      // diffusé dit déjà quels fournisseurs ont une clé.
+      browser = await Browser.create(app.getPath('userData'))
       browser.applyStartup()
     } catch (error) {
       journalFault('démarrage impossible', error)

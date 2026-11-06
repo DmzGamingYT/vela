@@ -87,7 +87,7 @@ export default function TileMenu({
       window.removeEventListener('pointerdown', onPointerDown, true)
       if (opener && opener.isConnected) opener.focus()
     }
-  }, [onClose])
+  }, [onClose, keyboard])
 
   useEffect(() => {
     // Le menu flotte au-dessus de la page : les vues natives quittent la scène

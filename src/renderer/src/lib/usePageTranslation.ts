@@ -69,12 +69,19 @@ export function usePageTranslation(tab: TabView, uiLanguage: string): PageTransl
   )
 
   // Nouvelle page : on repart de l’état de départ, jamais de l’état précédent.
+  // La remise à zéro part après le corps de l’effet, pour ne pas faire rendre
+  // la coque pendant l’effet ; le ticket évite qu’une page quittée entre-temps
+  // ne repeigne l’état de la suivante.
   useEffect(() => {
     request.current += 1
-    setError(null)
-    setTargetState(uiLanguage)
-    setStatus(initialTranslationStatus(source, uiLanguage, available))
-    setAlwaysState(alwaysTranslateFor(source))
+    const ticket = request.current
+    queueMicrotask(() => {
+      if (ticket !== request.current) return
+      setError(null)
+      setTargetState(uiLanguage)
+      setStatus(initialTranslationStatus(source, uiLanguage, available))
+      setAlwaysState(alwaysTranslateFor(source))
+    })
   }, [tab.id, tab.url, source, uiLanguage, available])
 
   const activate = useCallback(() => {
@@ -110,10 +117,12 @@ export function usePageTranslation(tab: TabView, uiLanguage: string): PageTransl
   )
 
   // « Toujours traduire » : une seule tentative par page, pour ne pas boucler
-  // sur une erreur.
+  // sur une erreur. La demande part après le corps de l'effet : `run` écrit
+  // l'état de la pastille, et un setState pendant l'effet ferait rendre deux
+  // fois la coque pour rien.
   useEffect(() => {
     if (!available || !always || status !== 'proposed') return
-    void run(target)
+    queueMicrotask(() => void run(target))
   }, [available, always, status, run, target])
 
   return { status, source, target, error, always, activate, restore, setAlways, setTarget }

@@ -18,6 +18,9 @@ export default function SessionsPanel() {
   const [notice, setNotice] = useState('')
   const [today] = useState(() => Date.now())
 
+  // Le nombre est déjà dans la grande ligne : le libellé ne le répète pas.
+  const label = (count: number, one: string, many: string): string => (count > 1 ? many : one)
+
   if (!view) return null
 
   const space = view.spaces.find((item) => item.id === view.activeSpaceId)
@@ -95,15 +98,15 @@ export default function SessionsPanel() {
         <div className="sessions-stats">
           <div>
             <strong>{openTabs.length}</strong>
-            <span>onglets ouverts</span>
+            <span>{label(openTabs.length, 'onglet ouvert', 'onglets ouverts')}</span>
           </div>
           <div>
             <strong>{sessions.length}</strong>
-            <span>sessions gardées</span>
+            <span>{label(sessions.length, 'session gardée', 'sessions gardées')}</span>
           </div>
           <div>
             <strong>{savedPages}</strong>
-            <span>pages sauvegardées</span>
+            <span>{label(savedPages, 'page sauvegardée', 'pages sauvegardées')}</span>
           </div>
         </div>
 

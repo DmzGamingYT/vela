@@ -1,0 +1,65 @@
+{
+  "version": "0.3.28",
+  "slug": "0-3-28",
+  "date": "2026-11-06",
+  "headline": "Les coutures, une par une",
+  "intro": "Une revue complète de l’interface a relevé quinze défauts discrets : un aperçu de note qui répétait son titre, une palette qui proposait d’ouvrir une recherche avant l’historique, un panneau de réglages dont le focus atterrissait dans le champ de recherche. Tous corrigés, et la base repasse à zéro avertissement ESLint — sans une seule exception ajoutée au code.",
+  "tags": ["revue", "palette", "notes", "réglages", "qualité"],
+  "stats": {
+    "commits": 1,
+    "files": 62,
+    "insertions": 800,
+    "deletions": 1002
+  },
+  "sections": [
+    {
+      "title": "Chercher n’est plus fouiller",
+      "body": [
+        "La palette fabrique une entrée à partir de ce que l’on tape — « Ouvrir « historique » » — et cette entrée passait devant l’action qui porte vraiment le mot : taper « historique » puis Entrée lançait une recherche au lieu d’ouvrir l’historique. Les entrées nées de la frappe reculent désormais de vingt-quatre points, assez pour laisser la commande réelle devant sans les faire disparaître quand rien d’autre ne correspond.",
+        "Le classement lui-même ne bouge pas : un onglet ou une note restent des destinations, et à pertinence égale ils passent toujours devant les réglages."
+      ]
+    },
+    {
+      "title": "Les notes se lisent d’un coup d’œil",
+      "body": [
+        "L’aperçu d’une carte de note reprenait le premier titre du corps, qui répète presque toujours le titre de la note : la carte affichait deux fois la même chose et perdait la première ligne utile. L’aperçu commence maintenant après le titre, « Un site de vitrine… » au lieu de « Hébergement statique Un site… » — et seulement si le corps commence bien par ce titre.",
+        "Réglages › Notes ne montrait qu’un compteur et un dossier. La page liste les six notes les plus récentes, tous espaces confondus, avec leur aperçu et leur date, et chaque ligne ouvre le tiroir. La barre d’actions des notes, elle, passe à la ligne au lieu de défiler horizontalement : plus d’action rognée dans une fenêtre étroite."
+      ]
+    },
+    {
+      "title": "La carte du tunnel tient dans son cadre",
+      "body": [
+        "Le recadrage butait sur un plancher de zoom à 0,38 : une carte large — trois niveaux et leurs colonnes satellites — voyait sa dernière colonne sortir du cadre, sans moyen de la faire tenir entière. Le plancher descend à 0,24, et le recadrage suit désormais la largeur réelle de la carte : une colonne ajoutée sans nouveau nœud la déclenche aussi.",
+        "Pendant une recherche, la barre latérale annonçait « 0 · Aucune carte » alors que la carte se remplissait à l’écran, puis la carte apparaissait d’un coup à la fin. La recherche en cours compte comme une carte, avec ses sources réelles, et le focus revient dans la liste après une suppression au lieu de partir nulle part."
+      ]
+    },
+    {
+      "title": "Le focus reste où l’on regarde",
+      "body": [
+        "Les réglages s’ouvraient avec le curseur dans le champ de recherche, anneau de focus compris : le premier geste consistait à en sortir. La feuille reçoit le focus elle-même, et Tab entre dans les champs quand on le demande.",
+        "Les compteurs de session s’accordent : « 1 onglet ouvert », « 3 onglets ouverts ». Le nombre est déjà dans la grande ligne, le libellé ne le répète plus au pluriel."
+      ]
+    },
+    {
+      "title": "Zéro avertissement, sans exception",
+      "body": [
+        "Les quatre-vingt-un avertissements ESLint sont tombés à zéro. Aucun <code>eslint-disable</code>, aucune règle désactivée : les hooks de <code>StartPage</code> et du tiroir de notes sont remontés au-dessus du premier retour pour que leur ordre soit stable ; l’état qui pouvait être dérivé l’est (avatar d’espace, nœuds du tunnel, onglet en cours de glisser) ; l’horloge n’est plus lue pendant le rendu, et une référence n’est plus lue au rendu pour un attribut de style.",
+        "Là où l’écriture d’état devait rester dans un effet, elle passe par une microtâche : elle s’exécute avant la peinture, donc l’ordre visuel ne change pas. Le userscript de traduction de bande dessinée perd au passage deux fonctions mortes, et les scripts de production ne gardent plus de variables jamais lues."
+      ]
+    },
+    {
+      "title": "Derrière, les tests suivent",
+      "body": [
+        "Trois fichiers de tests accompagnent la revue : le panneau des sessions (compteurs, accord, état vide), la barre d’actions des notes vérifiée sur sa feuille de style, et le classement de la palette sur les entrées fabriquées. Les 742 tests passent, un seul est ignoré.",
+        "Rien de tout cela ne change la façon d’utiliser Vela : ce sont les coutures qui se voient quand on regarde de près."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir la palette (⌘K), taper « historique » puis Entrée : l’historique s’ouvre, pas une recherche.",
+    "Réglages › Notes : six notes récentes sont listées ; un clic sur une ligne ouvre le tiroir de notes.",
+    "Ouvrir les réglages (⌘,) : le focus est sur la feuille, pas dans le champ de recherche ; Tab entre dans les champs.",
+    "Afficher une note dont le corps commence par son titre : la carte ne répète plus le titre dans l’aperçu."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.27...v0.3.28"
+}

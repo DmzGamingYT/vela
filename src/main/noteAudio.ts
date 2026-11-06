@@ -135,21 +135,19 @@ export class NoteAudioStore {
   /** Supprime les fichiers qu'aucune note ne cite plus. */
   prune(referenced: Set<string>): number {
     let removed = 0
-    let folders: string[] = []
-    try {
-      folders = readdirSync(this.dir)
-    } catch {
-      return 0
+    const list = (dir: string): string[] | null => {
+      try {
+        return statSync(dir).isDirectory() ? readdirSync(dir) : null
+      } catch {
+        return null
+      }
     }
+    const folders = list(this.dir)
+    if (!folders) return 0
     for (const folder of folders) {
       const full = join(this.dir, folder)
-      let files: string[] = []
-      try {
-        if (!statSync(full).isDirectory()) continue
-        files = readdirSync(full)
-      } catch {
-        continue
-      }
+      const files = list(full)
+      if (!files) continue
       for (const file of files) {
         const name = `${folder}/${file}`
         if (referenced.has(name)) continue

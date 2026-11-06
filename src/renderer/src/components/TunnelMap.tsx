@@ -107,6 +107,9 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
   const [zoom, setZoom] = useState(0.95)
   const [pan, setPan] = useState({ x: 24, y: 24 })
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
+  // Le glisser en cours est aussi un état : l'attribut `data-dragging` change
+  // de style, il ne peut pas se contenter d'une référence lue au rendu.
+  const [dragging, setDragging] = useState(false)
   const fitted = useRef<string>('')
   // Déplacement d'un nœud : aperçu local pendant le geste, écriture à la fin.
   const [nodeDrag, setNodeDrag] = useState<{ id: string; x: number; y: number } | null>(null)
@@ -272,7 +275,9 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       (rect.height - 108) / Math.max(1, layout.height),
       1.15
     )
-    const clamped = Math.max(0.38, next)
+    // Un plancher à 0,38 laissait la dernière colonne sortir du cadre : une
+    // carte large doit pouvoir se réduire assez pour tenir entière.
+    const clamped = Math.max(0.24, next)
     setZoom(Number(clamped.toFixed(3)))
     setPan({
       x: Math.max(24, (rect.width - layout.width * clamped) / 2),
@@ -294,12 +299,14 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
 
   useEffect(() => {
     if (!active) return
-    const key = `${active.id}:${layoutNodes.length}:${level}`
+    // La largeur et la hauteur entrent dans la clé : une colonne satellite
+    // ajoutée sans nouveau nœud élargit la carte et doit être recadrée.
+    const key = `${active.id}:${layoutNodes.length}:${level}:${Math.round(layout.width)}x${Math.round(layout.height)}`
     if (fitted.current === key) return
     fitted.current = key
     const timer = setTimeout(fit, 40)
     return () => clearTimeout(timer)
-  }, [active, layoutNodes.length, level, fit])
+  }, [active, layoutNodes.length, level, layout.width, layout.height, fit])
 
   useEffect(() => {
     const element = containerRef.current
@@ -351,6 +358,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
     const target = event.target as Element
     if (target.closest('.tunnel-node')) return
     drag.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y }
+    setDragging(true)
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
   }
 
@@ -364,6 +372,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
 
   const endPan = (): void => {
     drag.current = null
+    setDragging(false)
   }
 
   const zoomBy = (factor: number): void => {
@@ -428,12 +437,10 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
         onPointerMove={movePan}
         onPointerUp={endPan}
         onPointerCancel={endPan}
-        data-dragging={Boolean(drag.current)}
+        data-dragging={dragging}
       >
         <svg
-          ref={(element) => {
-            svgRef.current = element
-          }}
+          ref={svgRef}
           className="tunnel-svg"
           width="100%"
           height="100%"

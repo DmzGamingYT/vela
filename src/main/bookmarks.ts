@@ -60,18 +60,19 @@ function walkChromium(node: ChromeNode | undefined, out: { title: string; url: s
 
 function readChromium(install: BrowserInstall, limit: number): { title: string; url: string }[] {
   const out: { title: string; url: string }[] = []
-  let profiles: string[] = []
+  let entries: string[]
   try {
-    profiles = readdirSync(install.dir).filter((name) => {
-      try {
-        return statSync(join(install.dir, name, 'Bookmarks')).isFile()
-      } catch {
-        return false
-      }
-    })
+    entries = readdirSync(install.dir)
   } catch {
     return out
   }
+  const profiles = entries.filter((name) => {
+    try {
+      return statSync(join(install.dir, name, 'Bookmarks')).isFile()
+    } catch {
+      return false
+    }
+  })
   for (const profile of profiles) {
     try {
       const raw = JSON.parse(readFileSync(join(install.dir, profile, 'Bookmarks'), 'utf8')) as {

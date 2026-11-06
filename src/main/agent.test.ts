@@ -58,7 +58,7 @@ describe('validation des actions de l’agent', () => {
   it('ne lance pas une navigation refusée', async () => {
     showMessageBox.mockResolvedValue({ response: 0 })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
-      'data: {"choices":[{"delta":{"content":"{\\\"tool\\\":\\\"open\\\",\\\"args\\\":{\\\"url\\\":\\\"https://example.org/\\\"}}"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"{\\"tool\\":\\"open\\",\\"args\\":{\\"url\\":\\"https://example.org/\\"}}"}}]}\n\n',
       { status: 200 }
     )))
     const open = vi.fn()

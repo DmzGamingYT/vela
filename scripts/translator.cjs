@@ -26,7 +26,7 @@ function config() {
   try {
     host = new URL(url).hostname
   } catch {
-    host = ''
+    /* URL illisible : aucun hôte local à reconnaître, on garde la chaîne vide. */
   }
   const local = LOCAL_HOSTS.has(host)
   const configured = Boolean(model) && (Boolean(key) || local)
@@ -150,7 +150,7 @@ async function vision(cfg, dataUrl, timeoutMs = 60_000) {
   if (!result.ok) return result
   const match = result.content.match(/\{[\s\S]*\}/)
   if (!match) return { ok: false, error: 'réponse de vision illisible', ms: result.ms }
-  let texte = ''
+  let texte
   try {
     texte = String(JSON.parse(match[0]).texte || '').trim()
   } catch {

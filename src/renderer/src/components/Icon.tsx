@@ -48,6 +48,7 @@ export type IconName =
   | 'list'
   | 'image'
   | 'translate'
+  | 'comic'
   | 'refresh'
   | 'link'
   | 'code'
@@ -273,6 +274,17 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M5.1 14.4h5" />
       <path d="M14.6 13h5.8" />
       <path d="m18 10.6 2.4 2.4-2.4 2.4" />
+    </>
+  ),
+  // Une planche — trois cases — et une bulle de dialogue : la traduction de
+  // bande dessinée a son propre glyphe, distinct du « A → » de la traduction
+  // de page. Traits seuls, pour rester net à 16 comme à 24 px.
+  comic: (
+    <>
+      <rect x="2.6" y="3.4" width="8.8" height="17.2" rx="2.2" />
+      <path d="M2.6 9.1h8.8M2.6 14.8h8.8" />
+      <path d="M15 7.6h4.8a2 2 0 0 1 2 2v3.4a2 2 0 0 1-2 2h-1.6l-2.8 2.5v-2.5H15a2 2 0 0 1-2-2V9.6a2 2 0 0 1 2-2Z" />
+      <path d="M15.8 11.4h3.6" />
     </>
   ),
   refresh: (

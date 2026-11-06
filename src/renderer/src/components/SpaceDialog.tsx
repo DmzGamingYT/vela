@@ -185,7 +185,9 @@ export default function SpaceDialog() {
   )
   const templateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const initialRef = useRef<DraftState>({
+  // L'état d'ouverture sert de référence à « modifié » : figé une fois, dans un
+  // état — une référence ne se lit pas pendant un rendu.
+  const [initial] = useState<DraftState>(() => ({
     name: existing?.name ?? '',
     color: existing?.color ?? SPACE_COLORS[(view?.spaces.length ?? 0) % SPACE_COLORS.length],
     avatar: existing?.avatar ?? null,
@@ -195,7 +197,7 @@ export default function SpaceDialog() {
     theme: existing?.theme ?? null,
     watchlist: existing?.watchlist === true,
     letterboxd: existing?.letterboxd ?? ''
-  })
+  }))
 
   const draft: DraftState = {
     name,
@@ -225,7 +227,7 @@ export default function SpaceDialog() {
   const iconSpaceId = existing?.id ?? view?.activeSpaceId ?? undefined
   const storedImage = avatarImage(avatar) ?? filePreview
   const storedFile = avatarFile(avatar)
-  const dirty = comparable(draft) !== comparable(initialRef.current)
+  const dirty = comparable(draft) !== comparable(initial)
   const suggestedSet = shortcuts.length === 0 ? suggestShortcutSet(name) : null
   const suggestedLabel = suggestedSet
     ? (SPACE_PRESETS.find((preset) => preset.id === suggestedSet)?.label ?? 'ce type d’espace')
@@ -251,7 +253,9 @@ export default function SpaceDialog() {
   // l’aperçu et le recadrage, sans la remettre dans vela.json.
   useEffect(() => {
     if (!storedFile) {
-      setFilePreview(null)
+      // Hors du corps de l'effet : le compilateur React refuse un setState
+      // synchrone ; la microtâche s'exécute avant la peinture.
+      queueMicrotask(() => setFilePreview(null))
       return
     }
     let alive = true
@@ -265,6 +269,15 @@ export default function SpaceDialog() {
       alive = false
     }
   }, [storedFile])
+
+  // Fermer avec Échap passe par la même confirmation que la croix.
+  const requestClose = (): void => {
+    if (dirty && !dirtyClose) {
+      setDirtyClose(true)
+      return
+    }
+    setOverlay(null)
+  }
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -483,14 +496,6 @@ export default function SpaceDialog() {
     }
     reader.onerror = () => setPhotoError('Lecture de l’image impossible.')
     reader.readAsDataURL(file)
-  }
-
-  const requestClose = (): void => {
-    if (dirty && !dirtyClose) {
-      setDirtyClose(true)
-      return
-    }
-    setOverlay(null)
   }
 
   const submit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {

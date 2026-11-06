@@ -12,11 +12,11 @@ const keychain = vi.hoisted(() => ({
 
 vi.mock('electron', () => ({
   safeStorage: {
-    isEncryptionAvailable: () => keychain.available,
-    decryptString: (buffer: Buffer) => {
+    isAsyncEncryptionAvailable: async () => keychain.available,
+    decryptStringAsync: async (buffer: Buffer) => {
       if (keychain.decryptFails) throw new Error('trousseau indisponible')
       const text = buffer.toString('latin1')
-      return text.startsWith('enc:') ? text.slice(4) : ''
+      return { shouldReEncrypt: false, result: text.startsWith('enc:') ? text.slice(4) : '' }
     },
     encryptString: (value: string) => {
       if (keychain.encryptFails) throw new Error('trousseau verrouillé')
@@ -77,10 +77,10 @@ afterEach(() => {
 })
 
 describe('clé héritée (secret.bin)', () => {
-  it('ne supprime l’ancienne clé qu’après relecture de la nouvelle', () => {
+  it('ne supprime l’ancienne clé qu’après relecture de la nouvelle', async () => {
     const dir = tempDir()
     const legacy = legacyFile(dir)
-    const store = new Store(dir)
+    const store = await Store.open(dir)
     store.flush()
 
     expect(store.getSecret('openai')).toBe('sk-ancienne-cle')
@@ -88,45 +88,45 @@ describe('clé héritée (secret.bin)', () => {
     expect(readFileSync(join(dir, 'secrets.json')).toString('latin1')).toContain('sk-ancienne-cle')
   })
 
-  it('garde le fichier quand le chiffrement est indisponible', () => {
+  it('garde le fichier quand le chiffrement est indisponible', async () => {
     keychain.available = false
     const dir = tempDir()
     const legacy = legacyFile(dir)
-    const store = new Store(dir)
+    const store = await Store.open(dir)
 
     expect(store.getSecret('openai')).toBeNull()
     expect(existsSync(legacy)).toBe(true)
   })
 
-  it('garde le fichier quand la clé est illisible', () => {
+  it('garde le fichier quand la clé est illisible', async () => {
     keychain.decryptFails = true
     const dir = tempDir()
     const legacy = legacyFile(dir)
-    const store = new Store(dir)
+    const store = await Store.open(dir)
 
     expect(store.getSecret('openai')).toBeNull()
     expect(existsSync(legacy)).toBe(true)
   })
 
-  it('garde le fichier quand l’écriture échoue, sans clé en mémoire', () => {
+  it('garde le fichier quand l’écriture échoue, sans clé en mémoire', async () => {
     keychain.encryptFails = true
     const dir = tempDir()
     const legacy = legacyFile(dir)
-    const store = new Store(dir)
+    const store = await Store.open(dir)
 
     expect(store.getSecret('openai')).toBeNull()
     expect(existsSync(legacy)).toBe(true)
   })
 
-  it('ne devine pas le fournisseur quand la clé active existe déjà', () => {
+  it('ne devine pas le fournisseur quand la clé active existe déjà', async () => {
     const dir = tempDir()
     keychain.encryptFails = false
     // Première passe : la clé rejoint OpenAI.
     legacyFile(dir, 'sk-premiere')
-    new Store(dir).flush()
+    ;(await Store.open(dir)).flush()
     // Seconde passe : une autre ancienne clé apparaît, OpenAI en a déjà une.
     const legacy = legacyFile(dir, 'sk-seconde')
-    const store = new Store(dir)
+    const store = await Store.open(dir)
 
     expect(store.getSecret('openai')).toBe('sk-premiere')
     expect(existsSync(legacy)).toBe(true)

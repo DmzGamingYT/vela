@@ -194,9 +194,9 @@ const server = createServer((request, response) => {
       if (raw.length > 100_000) request.destroy()
     })
     request.on('end', () => {
-      let body = {}
+      let body
       try {
-        body = JSON.parse(raw || '{}')
+        body = JSON.parse(raw || '{}') ?? {}
       } catch {
         return send(400, { ok: false, error: 'corps illisible' })
       }
@@ -224,9 +224,9 @@ const server = createServer((request, response) => {
       if (raw.length > 20_000) request.destroy()
     })
     request.on('end', async () => {
-      let body = {}
+      let body
       try {
-        body = JSON.parse(raw || '{}')
+        body = JSON.parse(raw || '{}') ?? {}
       } catch {
         return send(400, { ok: false, error: 'corps illisible' })
       }

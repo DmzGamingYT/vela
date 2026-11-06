@@ -244,7 +244,7 @@ export class ComicBridge {
 
   /** Une ligne par planche dans le journal du processus principal. */
   private diag(line: string): void {
-    console.log(`[BD][main] ${line}`)
+    process.stdout.write(`[BD][main] ${line}\n`)
   }
 
   private async image(grant: Grant, url: string): Promise<{ ok: boolean; base64?: string; type?: string; error?: string }> {

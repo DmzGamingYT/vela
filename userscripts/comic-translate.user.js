@@ -832,13 +832,6 @@
     return lines
   }
 
-  /** Part de la boîte de `a` couverte par `b` : sert à ne pas compter deux fois. */
-  function covered(a, b) {
-    const x = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0))
-    const y = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0))
-    return (x * y) / Math.max(1, (a.x1 - a.x0) * (a.y1 - a.y0))
-  }
-
   function lineHeightOf(lines) {
     const heights = lines.map((line) => line.bbox.y1 - line.bbox.y0).sort((a, b) => a - b)
     return heights.length ? heights[Math.floor(heights.length / 2)] : 0
@@ -2155,112 +2148,6 @@
     }
     if (area < 400) return null
     return { mask, width: sw, height: sh, area, cx: sumX / area, cy: sumY / area, minX, minY, maxX, maxY }
-  }
-
-  /**
-   * Contour ouvert : on reconstruit la forme par l'enveloppe convexe des pixels
-   * d'encre. L'enveloppe n'est retenue que si elle est réellement suivie par un
-   * trait, sinon c'est un cadre ou du bruit et on renvoie null.
-   */
-  function hullRegion(image, box) {
-    const { data, width, height } = image
-    const x0 = Math.max(0, Math.floor(box.x0))
-    const y0 = Math.max(0, Math.floor(box.y0))
-    const x1 = Math.min(width - 1, Math.ceil(box.x1))
-    const y1 = Math.min(height - 1, Math.ceil(box.y1))
-    let min = 255
-    let max = 0
-    for (let y = y0; y <= y1; y += 1) {
-      for (let x = x0; x <= x1; x += 1) {
-        const value = luminance(data, (y * width + x) * 4)
-        if (value < min) min = value
-        if (value > max) max = value
-      }
-    }
-    if (max - min < 40) return null
-    const cut = (min + max) / 2
-    const points = []
-    for (let y = y0; y <= y1; y += 1) {
-      for (let x = x0; x <= x1; x += 1) {
-        if (luminance(data, (y * width + x) * 4) < cut) points.push([x, y])
-      }
-    }
-    if (points.length < 60) return null
-    points.sort((a, b) => a[0] - b[0] || a[1] - b[1])
-    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
-    const lower = []
-    for (const point of points) {
-      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop()
-      lower.push(point)
-    }
-    const upper = []
-    for (let index = points.length - 1; index >= 0; index -= 1) {
-      const point = points[index]
-      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop()
-      upper.push(point)
-    }
-    const hull = lower.slice(0, -1).concat(upper.slice(0, -1))
-    if (hull.length < 3) return null
-    let supported = 0
-    const probes = 60
-    for (let step = 0; step < probes; step += 1) {
-      const a = hull[Math.floor((step * hull.length) / probes)]
-      const b = hull[Math.floor(((step + 1) * hull.length) / probes) % hull.length]
-      const px = Math.round(a[0] + (b[0] - a[0]) * 0.5)
-      const py = Math.round(a[1] + (b[1] - a[1]) * 0.5)
-      let found = false
-      for (let dy = -6; dy <= 6 && !found; dy += 1) {
-        for (let dx = -6; dx <= 6 && !found; dx += 1) {
-          const x = px + dx
-          const y = py + dy
-          if (x < 0 || y < 0 || x >= width || y >= height) continue
-          if (luminance(data, (y * width + x) * 4) < cut) found = true
-        }
-      }
-      if (found) supported += 1
-    }
-    if (supported / probes < 0.5) return null
-
-    const mask = new Uint8Array(width * height)
-    let minX = width
-    let minY = height
-    let maxX = 0
-    let maxY = 0
-    for (const [x, y] of hull) {
-      if (x < minX) minX = x
-      if (x > maxX) maxX = x
-      if (y < minY) minY = y
-      if (y > maxY) maxY = y
-    }
-    let area = 0
-    let sumX = 0
-    let sumY = 0
-    for (let y = minY; y <= maxY; y += 1) {
-      const crossings = []
-      for (let index = 0; index < hull.length; index += 1) {
-        const a = hull[index]
-        const b = hull[(index + 1) % hull.length]
-        if ((a[1] <= y && b[1] > y) || (b[1] <= y && a[1] > y)) {
-          crossings.push(a[0] + ((y - a[1]) * (b[0] - a[0])) / (b[1] - a[1]))
-        }
-      }
-      crossings.sort((a, b) => a - b)
-      for (let index = 0; index + 1 < crossings.length; index += 2) {
-        const from = Math.max(0, Math.ceil(crossings[index]))
-        const to = Math.min(width - 1, Math.floor(crossings[index + 1]))
-        for (let x = from; x <= to; x += 1) {
-          mask[y * width + x] = 1
-          area += 1
-          sumX += x
-          sumY += y
-        }
-      }
-    }
-    // Une enveloppe à peine plus grande que la boîte du texte, c'est le texte
-    // lui-même, pas un contour : on refuse plutôt que d'inventer une bulle.
-    const boxArea = Math.max(1, (box.x1 - box.x0) * (box.y1 - box.y0))
-    if (area < 400 || area < boxArea * 1.5) return null
-    return { mask, width, height, area, cx: sumX / area, cy: sumY / area, minX, minY, maxX, maxY }
   }
 
   const pixelCache = new WeakMap()

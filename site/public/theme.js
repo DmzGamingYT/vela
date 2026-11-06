@@ -15,7 +15,7 @@ document.documentElement.classList.add('js')
     else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
     const storedAccent = localStorage.getItem('vela-site-accent')
     if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-  } catch (error) {
+  } catch {
     /* stockage indisponible : thème clair, indigo */
   }
   document.documentElement.dataset.theme = theme

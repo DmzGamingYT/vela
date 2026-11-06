@@ -84,20 +84,27 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
     return () => window.clearInterval(timer)
   }, [])
 
+  // Les écritures d'état du corps de l'effet passent par une microtâche (le
+  // compilateur React refuse un setState synchrone) : elle s'exécute avant la
+  // peinture, l'écran ne change donc pas.
   useEffect(() => {
     if (!place) {
-      setWeather(null)
-      setStatus('idle')
+      queueMicrotask(() => {
+        setWeather(null)
+        setStatus('idle')
+      })
       return
     }
     const cached = readCache(place)
     if (cached) {
-      setWeather(cached)
-      setStatus('ready')
+      queueMicrotask(() => {
+        setWeather(cached)
+        setStatus('ready')
+      })
       return
     }
     let alive = true
-    setStatus('loading')
+    queueMicrotask(() => setStatus('loading'))
     const url =
       'https://api.open-meteo.com/v1/forecast' +
       `?latitude=${place.latitude}&longitude=${place.longitude}` +

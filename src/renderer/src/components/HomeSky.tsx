@@ -37,23 +37,29 @@ function seedEmbers(width: number, height: number): Ember[] {
   }))
 }
 
+/** Tirage déterministe à partir d'un rang : même étoile à chaque rendu. */
+function scatter(rank: number): number {
+  const value = Math.sin(rank * 12.9898) * 43758.5453
+  return value - Math.floor(value)
+}
+
 /** Étoiles fixes : un tirage déterministe, sinon elles changeraient à chaque rendu. */
 function useStars(count: number) {
-  return useMemo(() => {
-    let seed = 20174
-    const next = (): number => {
-      seed = (seed * 1664525 + 1013904223) % 4294967296
-      return seed / 4294967296
-    }
-    return Array.from({ length: count }, () => ({
-      left: next() * 100,
-      top: next() * 100,
-      size: 1 + Math.round(next() * 12) / 10,
-      delay: -next() * 7,
-      duration: 4.5 + next() * 5,
-      alpha: 0.3 + next() * 0.55
-    }))
-  }, [count])
+  return useMemo(
+    () =>
+      Array.from({ length: count }, (_, index) => {
+        const rank = index * 6
+        return {
+          left: scatter(rank + 1) * 100,
+          top: scatter(rank + 2) * 100,
+          size: 1 + Math.round(scatter(rank + 3) * 12) / 10,
+          delay: -scatter(rank + 4) * 7,
+          duration: 4.5 + scatter(rank + 5) * 5,
+          alpha: 0.3 + scatter(rank + 6) * 0.55
+        }
+      }),
+    [count]
+  )
 }
 
 export default function HomeSky({

@@ -57,8 +57,8 @@ function slugify(title: string): string {
   )
 }
 
-function previewOf(body: string): string {
-  const text = body
+function pressText(body: string): string {
+  return body
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '[croquis]')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/^#+\s*/gm, '')
@@ -68,6 +68,25 @@ function previewOf(body: string): string {
     .replace(/[*_>`|-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/**
+ * Aperçu d'une note pour sa carte. Le premier titre du corps répète presque
+ * toujours le titre de la note : la carte l'affiche déjà, l'aperçu commence
+ * donc après lui (« Un site de vitrine… », pas « Hébergement statique Un site… »).
+ */
+function previewOf(body: string, title = ''): string {
+  let text = pressText(body)
+  const words = title.trim().split(/\s+/).filter(Boolean).length
+  if (words > 0) {
+    const same =
+      text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, title.trim().length) ===
+      title.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    if (same) {
+      const rest = text.split(/\s+/).slice(words).join(' ').replace(/^[·—–-]+\s*/, '')
+      if (rest) text = rest
+    }
+  }
   return text.length > 120 ? `${text.slice(0, 119)}…` : text
 }
 
@@ -163,7 +182,7 @@ export class NotesStore {
       .map((entry) => ({
         id: entry.id,
         title: entry.title,
-        preview: previewOf(this.bodyOf(entry)),
+        preview: previewOf(this.bodyOf(entry), entry.title),
         spaceId: entry.spaceId,
         url: entry.url,
         tags: entry.tags,

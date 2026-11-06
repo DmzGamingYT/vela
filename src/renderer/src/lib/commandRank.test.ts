@@ -6,6 +6,7 @@ interface Item {
   group: string
   label: string
   hint?: string
+  generated?: boolean
 }
 
 const note: Item = { id: 'note', group: 'Notes', label: 'Hébergement statique', hint: 'Notes de mise en ligne' }
@@ -49,6 +50,21 @@ describe('rankItems', () => {
     // Les notes ont le bonus de destination : leur groupe passe devant, mais
     // chaque groupe reste d'un seul bloc.
     expect(groups).toEqual(['Notes', 'Notes', 'Actions', 'Actions'])
+  })
+
+  it('met l’action qui porte le mot devant la recherche fabriquée à partir de la frappe', () => {
+    const search = {
+      id: 'search',
+      group: 'Aller',
+      generated: true,
+      label: 'Ouvrir « historique »',
+      hint: 'Recherche'
+    }
+    const action = { id: 'history', group: 'Actions', label: 'Afficher l’historique', hint: '⌘Y' }
+    expect(rankItems([search, action], 'historique')[0]?.id).toBe('history')
+    // Une recherche reste le seul résultat quand rien d'autre ne correspond.
+    const alone = { id: 'only', group: 'Aller', generated: true, label: 'Ouvrir « zzz »', hint: 'Recherche' }
+    expect(rankItems([alone], 'zzz')[0]?.id).toBe('only')
   })
 
   it('écarte les résultats qui ne correspondent pas et conserve l’ordre sans recherche', () => {

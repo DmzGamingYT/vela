@@ -83,6 +83,11 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   // Après un déplacement, la case déplacée reprend le focus une fois la
   // nouvelle ordonnance arrivée : sans cela, Tab repartirait du début.
   const focusAfterMove = useRef<string | null>(null)
+  // Le drapeau d'annulation appartient au début du renommage : une seule
+  // écriture, dans un effet, plutôt que dans chaque fonction qui l'ouvre.
+  useEffect(() => {
+    if (renamingId) cancelRename.current = false
+  }, [renamingId])
   // Annonce différée : il faut la nouvelle ordonnance pour compter les places.
   const pendingMove = useRef<{ kind: 'tab' | 'bookmark'; id: string; from: boolean } | null>(null)
   // Glisser d'un favori : distinct des onglets, avec son propre indicateur.
@@ -97,10 +102,13 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   // barre montée : ses surcouches doivent disparaître avec elle.
   useEffect(() => {
     if (!overlay && !collapsed) return
-    setTip(null)
-    setMenu(null)
-    setTabMenu(null)
-    setEmptyMenu(null)
+    // Hors du corps de l'effet : la microtâche s'exécute avant la peinture.
+    queueMicrotask(() => {
+      setTip(null)
+      setMenu(null)
+      setTabMenu(null)
+      setEmptyMenu(null)
+    })
   }, [overlay, collapsed])
 
   useEffect(() => {
@@ -200,7 +208,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const hiddenBookmarks = view.bookmarks.length - visibleBookmarks.length
 
   const sourceTab = (): TabView | undefined =>
-    draggingRef.current ? spaceTabs.find((tab) => tab.id === draggingRef.current) : undefined
+    draggingId ? spaceTabs.find((tab) => tab.id === draggingId) : undefined
 
   const showTip = (
     event: { currentTarget: HTMLElement },
@@ -522,6 +530,16 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     requestAnimationFrame(() => requestAnimationFrame(focusTile))
   }
 
+  const createFolder = async (): Promise<void> => {
+    const active = spaceTabs.find((tab) => tab.id === view.activeTabId)
+    const tabId = active && !active.pinned && !active.groupId ? active.id : undefined
+    const group = await createGroup(tabId)
+    if (group) {
+      setRenamingId(group.id)
+      setRenameValue(group.name)
+    }
+  }
+
   /** Clic droit sur le fond de la liste : actions qui ne visent aucun onglet. */
   const emptyTabItems = (): TileMenuItem[] => [
     {
@@ -583,7 +601,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   }
 
   const startRename = (group: TabGroup): void => {
-    cancelRename.current = false
     setRenamingId(group.id)
     setRenameValue(group.name)
     setConfirmGroup(null)
@@ -598,17 +615,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     if (!id) return
     void updateGroup(id, { name: renameValue.trim() || 'Dossier' })
     setRenamingId(null)
-  }
-
-  const createFolder = async (): Promise<void> => {
-    const active = spaceTabs.find((tab) => tab.id === view.activeTabId)
-    const tabId = active && !active.pinned && !active.groupId ? active.id : undefined
-    const group = await createGroup(tabId)
-    if (group) {
-      cancelRename.current = false
-      setRenamingId(group.id)
-      setRenameValue(group.name)
-    }
   }
 
   const requestDelete = (group: TabGroup): void => {

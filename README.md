@@ -173,12 +173,12 @@ npm version patch   # 0.1.1 → 0.1.2 : bump + commit
 git push            # la release se construit et se publie en arrière-plan
 ```
 
-## Navigation et Travail
+## Navigation et Atelier
 
 Deux modes, un seul commutateur en haut de la barre latérale (ou `⌘⇧A`).
 
 - **Navigation** — le web ordinaire : onglets, dossiers, vue scindée, historique, tout le web.
-- **Travail** — le tunnel de recherche occupe la scène : un sujet descend en angles, sous-angles puis
+- **Atelier** — le tunnel de recherche occupe la scène : un sujet descend en angles, sous-angles puis
 sources réelles, avec leur extrait, leur pertinence et les contradictions entre pages. L’agent reste
 accessible en panneau (`⌘J`) sans masquer la carte. Chaque carte est enregistrée automatiquement dans
 l’espace actif, et la barre latérale les liste : on rouvre, on renomme, on duplique.
@@ -245,7 +245,7 @@ site manque ou invente un flux.
 | **Épinglés et favoris** | Les onglets épinglés et les favoris forment une grille de cases compactes en verre, réduites au favicon du site avec une infobulle titre et domaine ; les onglets normaux gardent leur ligne complète. Au-delà de onze cases, une tuile « +N » ouvre la liste complète plutôt que de masquer les favoris. Les épinglés se réordonnent au glisser-déposer ou au clavier (<kbd>Alt</kbd> + flèches), passent d’un état à l’autre en les déposant sur la zone prévue (<kbd>Échap</kbd> annule), et un menu contextuel (clic droit, touche Menu ou <kbd>⇧</kbd><kbd>F10</kbd>) donne fermer, désépingler, copier l’adresse, ouvrir en vue scindée ou dans un nouvel onglet. Les icônes sont gardées sept jours dans les données de l’espace, une requête par domaine. |
 | **Dossiers** | Regroupez des onglets, repliez-les d’un clic, renommez-les et glissez-les entre dossiers. |
 | **Réorganisation** | Glisser-déposer pour ordonner les onglets, y compris à l’intérieur d’un dossier. |
-| **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct, modèles Travail, Personnel, Gaming, Études, Développement et sites épinglés préremplis. |
+| **Espaces** | Une partition Chromium par espace (cookies, cache, sessions), une photo ou une marque, une ambiance de fond et un filtre de traqueurs propre. Fenêtre de personnalisation avec aperçu en direct, modèles Travail, Vie personnelle, Gaming, Études, Développement, Cinéma et sites épinglés préremplis. |
 | **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, ajout d’une adresse glissée depuis la page. Réorganisation au glisser ou par `Alt` + flèches (focus conservé, annonce lecteur d’écran), menu contextuel (clic droit, touche Menu ou `⇧F10`) avec renommage et adresse modifiables sur place, copie vers un autre espace ou déplacement, annulable. 200 sites au plus, la barre défile au-delà de quelques rangées. Enregistrée avec l’espace, restaurée au redémarrage. |
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups, pour la compatibilité des sites. Google peut malgré tout refuser une connexion : voir [Limites connues](#limites-connues). |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
@@ -293,7 +293,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⇧` + clic | Ouvrir un lien dans le mini navigateur |
 | `⌘E` | Notes |
 | `⌘J` | Agent |
-| `⌘⇧A` | Basculer Navigation / Travail |
+| `⌘⇧A` | Basculer Navigation / Atelier |
 | `⌘⇧B` | Sessions |
 | `⌘S` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |
@@ -321,7 +321,7 @@ src/
 └── renderer/             interface React + zustand
 ```
 
-**Apparence** — les réglages sont séparés en trois pages : *Apparence* (mode, accueil, options), *Tweaks* (palette d’accent pure, teinte libre en HEX ou RVB, curseur d’intensité du verre dépoli) et *Thèmes* (huit ambiances animées, indépendantes de l’accent). `shared/theme.ts` ne contient que des couleurs de départ : chaque thème est une teinte d’accent dont on dérive le survol, le fond doux, le texte sur accent, le verre, le focus et les liens ; une couleur personnalisée passe par le même calcul. Les ambiances ne fournissent que leurs deux teintes de calques (`--amb-1`, `--amb-2`) : choisir « Cyber-Néon » ne change aucun accent. Le renderer pose tous ces jetons sur `:root` (`data-mode`, `data-theme`, `data-glass`, `data-ambience`, `data-contrast`) et les met en cache dans `localStorage` pour être rejoués avant le premier pixel. Les animations vivent dans `22-ambiances.css` et ne touchent que `transform` et `opacity` sur des calques composés ; elles restent confinées au châssis, jamais au-dessus du contenu. Le contenu des onglets vit dans des `WebContentsView` séparées : aucun jeton ni calque ne l’atteint.
+**Apparence** — les réglages tiennent dans un seul panneau, avec une colonne de sections : *Navigateur* (Apparence, Navigation, Confidentialité), *Agent* (Modèles, Notes) et *Application* (Raccourcis, Mises à jour, À propos). La page *Apparence* porte le mode, le fond d’accueil, la palette d’accent (y compris une teinte libre en HEX ou RVB), l’intensité du verre dépoli, les huit ambiances animées — indépendantes de l’accent — et les options d’accessibilité. `shared/theme.ts` ne contient que des couleurs de départ : chaque thème est une teinte d’accent dont on dérive le survol, le fond doux, le texte sur accent, le verre, le focus et les liens ; une couleur personnalisée passe par le même calcul. Les ambiances ne fournissent que leurs deux teintes de calques (`--amb-1`, `--amb-2`) : choisir « Cyber-Néon » ne change aucun accent. Le renderer pose tous ces jetons sur `:root` (`data-mode`, `data-theme`, `data-glass`, `data-ambience`, `data-contrast`) et les met en cache dans `localStorage` pour être rejoués avant le premier pixel. Les animations vivent dans `22-ambiances.css` et ne touchent que `transform` et `opacity` sur des calques composés ; elles restent confinées au châssis, jamais au-dessus du contenu. Le contenu des onglets vit dans des `WebContentsView` séparées : aucun jeton ni calque ne l’atteint.
 
 **Chaque onglet est un `WebContentsView` natif**, pas une `<webview>`. Le renderer mesure les zones `.pane-body` et envoie leurs rectangles au processus principal ; les vues sont placées au-dessus du DOM. Les surcouches (palette, sessions, réglages, agent) masquent les vues natives le temps de l’interaction ; le tiroir de notes, lui, réduit la largeur de la page.
 
@@ -367,9 +367,10 @@ Le canvas permet de choisir les onglets sources, d’arrêter une recherche, de 
 
 La fenêtre d’espace montre à gauche un aperçu vivant du châssis (rail, barre latérale, onglets,
 accueil) et règle à droite le nom, l’avatar, la teinte, l’ambiance, les sites épinglés et l’isolation.
-Cinq modèles préremplissent l’ensemble en un clic — nom, teinte, avatar, ambiance et barre de sites
-(Travail : Notion, Gmail, Drive, Agenda, Slack ; Gaming : Steam, GeForce NOW, Discord…). Un espace
-existant se rouvre par double-clic sur sa pastille.
+Six modèles préremplissent l’ensemble en un clic — nom, teinte, avatar, ambiance et barre de sites
+(Travail : Notion, Gmail, Drive, Agenda, Slack ; Gaming : Steam, GeForce NOW, Discord… ; « Vie
+personnelle », « Études », « Développement » et « Cinéma » complètent la liste). Un espace existant se
+rouvre par double-clic sur sa pastille.
 
 Les sites épinglés vivent dans l’espace, pas dans un profil global : la barre de l’accueil ne montre que
 ceux de l’espace affiché, et changer d’espace change la barre. Les adresses sont validées (http et
@@ -391,7 +392,7 @@ Les raccourcis clavier par espace et les extensions ne sont pas gérés par cett
 
 ### Tunnel de recherche
 
-Le mode **Travail** ne démarre pas par un formulaire mais par un tunnel : le sujet saisi devient la racine
+Le mode **Atelier** ne démarre pas par un formulaire mais par un tunnel : le sujet saisi devient la racine
 d’une carte où chaque niveau affine la recherche (angles, sous-angles, puis pages). Les fournisseurs sont
 remplaçables (`src/main/tunnel.ts`) : DuckDuckGo (HTML, sans clé), Wikipédia, arXiv, Hacker News et GDELT.
 Chaque nœud *Site* correspond à une page effectivement récupérée ; une page inaccessible est marquée comme
@@ -408,7 +409,7 @@ animations » ; les cartes sont en verre dépoli avec un liseré d’accent au s
 La carte, la mise en page, les filtres, l’édition, le rapport et les exports sont dans `src/shared/tunnel.ts`,
 testés sans Electron.
 Depuis le panneau de détail d’une source, **Ouvrir en vue scindée** garde la carte à gauche et ouvre la page
-à droite, avec le séparateur redimensionnable : on ne quitte pas le mode Travail.
+à droite, avec le séparateur redimensionnable : on ne quitte pas le mode Atelier.
 
 ### Traduction de BD
 

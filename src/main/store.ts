@@ -374,6 +374,10 @@ export class Store {
   private readonly legacySecretFile: string
   private state: PersistedState
   private secrets: Record<string, string>
+  /** Le trousseau a-t-il été interrogé ? Une seule fois, après la construction. */
+  private secretsLoaded = false
+  /** Réponse de safeStorage, gardée pour le chemin d'écriture synchrone. */
+  private encryptionAvailable = false
   private timer: NodeJS.Timeout | null = null
   /** Dernier contenu écrit : évite de réécrire le même fichier inutilement. */
   private lastPayload: string | null = null
@@ -391,7 +395,10 @@ export class Store {
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Format de données invalide')
       } catch (error) {
         this.journal('Données illisibles : le fichier original est conservé et les écritures sont suspendues.', error)
-        throw new Error('Les données de Vela sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.')
+        throw new Error(
+          'Les données de Vela sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.',
+          { cause: error }
+        )
       }
     }
     const migratedBookmarks = this.migrateBookmarks(raw)
@@ -400,9 +407,28 @@ export class Store {
     // Écrit tout de suite : le fichier reste lisible par une version antérieure
     // (les favoris gardent leur ordre) et les migrations ne sont jamais rejouées.
     if (migratedAvatars !== raw) this.flush()
-    this.secrets = this.readSecrets()
-    this.migrateLegacySecret()
+    // Le trousseau est interrogé par `loadSecrets`, après la construction :
+    // Electron 45 déprécie les variantes synchrones de safeStorage.
+    this.secrets = {}
     this.syncKeyFlags()
+  }
+
+  /** Construit le magasin et ouvre les clés, pour que `hasKey` soit juste. */
+  static async open(dir: string): Promise<Store> {
+    const store = new Store(dir)
+    await store.loadSecrets()
+    return store
+  }
+
+  /** Lit le trousseau une seule fois ; les lectures suivantes ne coûtent rien. */
+  async loadSecrets(): Promise<void> {
+    if (this.secretsLoaded) return
+    this.secretsLoaded = true
+    this.encryptionAvailable = await safeStorage.isAsyncEncryptionAvailable()
+    this.secrets = await this.readSecrets()
+    await this.migrateLegacySecret()
+    this.syncKeyFlags()
+    this.schedule()
   }
 
   /**
@@ -811,11 +837,12 @@ export class Store {
     })
   }
 
-  private readSecrets(): Record<string, string> {
+  private async readSecrets(): Promise<Record<string, string>> {
     if (!existsSync(this.secretsFile)) return {}
     try {
-      if (!safeStorage.isEncryptionAvailable()) return {}
-      const parsed = JSON.parse(safeStorage.decryptString(readFileSync(this.secretsFile))) as unknown
+      if (!this.encryptionAvailable) return {}
+      const decrypted = await safeStorage.decryptStringAsync(readFileSync(this.secretsFile))
+      const parsed = JSON.parse(decrypted.result) as unknown
       if (!parsed || typeof parsed !== 'object') return {}
       const secrets: Record<string, string> = {}
       for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
@@ -841,9 +868,9 @@ export class Store {
    * Sans chiffrement disponible, clé illisible ou écriture ratée, le fichier
    * reste en place : une clé perdue ne se remplace pas.
    */
-  private migrateLegacySecret(): void {
+  private async migrateLegacySecret(): Promise<void> {
     if (!existsSync(this.legacySecretFile)) return
-    if (!safeStorage.isEncryptionAvailable()) return
+    if (!this.encryptionAvailable) return
 
     const provider = this.state.settings.agent.provider
     if (this.secrets[provider]) {
@@ -852,9 +879,9 @@ export class Store {
       return
     }
 
-    let value = ''
+    let value: string
     try {
-      value = safeStorage.decryptString(readFileSync(this.legacySecretFile))
+      value = (await safeStorage.decryptStringAsync(readFileSync(this.legacySecretFile))).result
     } catch {
       return
     }
@@ -870,7 +897,7 @@ export class Store {
     }
 
     // Relecture : c’est le fichier qui fait foi, pas la mémoire du processus.
-    if (this.readSecrets()[provider] !== value) {
+    if ((await this.readSecrets())[provider] !== value) {
       delete this.secrets[provider]
       this.journal('Clé héritée non relue après écriture : le fichier secret.bin est conservé.')
       return
@@ -907,7 +934,7 @@ export class Store {
   setSecret(provider: ProviderId, value: string | null): boolean {
     const trimmed = (value ?? '').trim()
     if (trimmed) {
-      if (!safeStorage.isEncryptionAvailable()) return false
+      if (!this.encryptionAvailable) return false
       this.secrets[provider] = trimmed
     } else {
       delete this.secrets[provider]

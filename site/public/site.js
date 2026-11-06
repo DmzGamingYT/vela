@@ -19,7 +19,7 @@
       root.dataset.theme = next
       try {
         localStorage.setItem('vela-theme', next)
-      } catch (error) {
+      } catch {
         /* stockage indisponible : le choix vaut pour la page */
       }
       paintTheme()
@@ -48,7 +48,7 @@
         root.style.setProperty('--accent', swatch.dataset.accent)
         try {
           localStorage.setItem('vela-site-accent', swatch.dataset.accent)
-        } catch (error) {
+        } catch {
           /* stockage indisponible : le choix vaut pour la page */
         }
         markAccent()
@@ -106,39 +106,39 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.27/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.28/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
       size: 'Apple silicon et Intel · 224,1 Mo',
-      href: download('Vela-0.3.27-universal.dmg')
+      href: download('Vela-0.3.28-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
       size: 'Apple silicon · 120,3 Mo',
-      href: download('Vela-0.3.27-arm64.dmg')
+      href: download('Vela-0.3.28-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
       size: 'Intel · 127,7 Mo',
-      href: download('Vela-0.3.27-x64.dmg')
+      href: download('Vela-0.3.28-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
       size: 'x64 · 122,1 Mo',
-      href: download('Vela-0.3.27-x64.exe')
+      href: download('Vela-0.3.28-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
       size: 'AppImage · 126,8 Mo',
-      href: download('Vela-0.3.27-x86_64.AppImage')
+      href: download('Vela-0.3.28-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.27`
+      href: `${RELEASE}/tag/v0.3.28`
     }
   }
 
@@ -179,7 +179,7 @@
       try {
         await navigator.clipboard.writeText(value)
         return
-      } catch (error) {
+      } catch {
         /* fenêtre non focalisée ou permission refusée : on tente la sélection */
       }
     }
@@ -201,7 +201,7 @@
     button.addEventListener('click', async () => {
       try {
         await copy(button.dataset.copy)
-      } catch (error) {
+      } catch {
         if (copyStatus)
           copyStatus.textContent = 'Copie impossible : sélectionnez l’empreinte à la main.'
         return

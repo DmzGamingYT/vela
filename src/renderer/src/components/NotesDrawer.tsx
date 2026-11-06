@@ -97,7 +97,11 @@ export default function NotesDrawer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const drawing = useRef<{ active: boolean; x: number; y: number } | null>(null)
 
-  latest.current = { draft, dirty }
+  // Le brouillon courant est recopié dans une référence lue au démontage :
+  // l'écriture se fait après le rendu, jamais pendant.
+  useEffect(() => {
+    latest.current = { draft, dirty }
+  }, [draft, dirty])
 
   const activeTab = view?.tabs.find((tab) => tab.id === view.activeTabId)
   const activeUrl = activeTab && !isHomeUrl(activeTab.url) ? activeTab.url : undefined
@@ -219,8 +223,12 @@ export default function NotesDrawer() {
   // Une commande de la palette a choisi une note : on l'ouvre vraiment.
   useEffect(() => {
     if (!noteRequest) return
-    consumeNoteRequest()
-    void openNote(noteRequest.id)
+    // `openNote` écrit le brouillon : on le lance hors du corps de l'effet, la
+    // microtâche passant avant la peinture.
+    queueMicrotask(() => {
+      consumeNoteRequest()
+      void openNote(noteRequest.id)
+    })
   }, [noteRequest, consumeNoteRequest, openNote])
 
   useEffect(() => {
@@ -283,7 +291,7 @@ export default function NotesDrawer() {
   useEffect(() => {
     const id = draft?.id
     if (!id) {
-      setGraph(null)
+      queueMicrotask(() => setGraph(null))
       return
     }
     let alive = true
@@ -311,6 +319,36 @@ export default function NotesDrawer() {
     context.lineJoin = 'round'
   }, [sketchOpen])
 
+  // Une note vocale demandée depuis le rail : le brouillon est créé une seule
+  // fois par demande, hors du corps de l'effet (la microtâche passe avant la
+  // peinture).
+  const voiceSpaceTarget = voiceNoteSpaceId ?? view?.activeSpaceId
+  useEffect(() => {
+    if (!voiceNoteRequest) return
+    queueMicrotask(() => {
+      draftVersion.current += 1
+      setDraft({
+        title: 'Note vocale',
+        body: '',
+        spaceId: voiceSpaceTarget ?? '',
+        url: undefined,
+        tags: ['vocal'],
+        pinned: false
+      })
+      setDirty(false)
+      setPreview(false)
+      setConfirming(false)
+      setSavedAt(null)
+      setAiMode(null)
+      setRenameUndo(null)
+      setLinkMenu(null)
+      setGraph(null)
+      loadedTitle.current = ''
+      setRecorderOpen(true)
+      consumeVoiceNoteRequest()
+    })
+  }, [voiceNoteRequest, voiceSpaceTarget, consumeVoiceNoteRequest])
+
   if (!view) return null
 
   const newNote = async (): Promise<void> => {
@@ -335,29 +373,6 @@ export default function NotesDrawer() {
     loadedTitle.current = ''
   }
 
-  useEffect(() => {
-    if (!voiceNoteRequest || !view) return
-    draftVersion.current += 1
-    setDraft({
-      title: 'Note vocale',
-      body: '',
-      spaceId: voiceNoteSpaceId ?? view.activeSpaceId,
-      url: undefined,
-      tags: ['vocal'],
-      pinned: false
-    })
-    setDirty(false)
-    setPreview(false)
-    setConfirming(false)
-    setSavedAt(null)
-    setAiMode(null)
-    setRenameUndo(null)
-    setLinkMenu(null)
-    setGraph(null)
-    loadedTitle.current = ''
-    setRecorderOpen(true)
-    consumeVoiceNoteRequest()
-  }, [voiceNoteRequest])
 
   const capturePage = async (): Promise<void> => {
     if (!activeTab || !activeUrl) {
