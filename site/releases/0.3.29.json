@@ -1,0 +1,72 @@
+{
+  "version": "0.3.29",
+  "slug": "0-3-29",
+  "date": "2026-11-06",
+  "headline": "Trois cartes, un en-tête",
+  "intro": "L’en-tête du tunnel perd un tiers de sa hauteur, l’état vide montre ce qu’une carte va contenir, et la carte elle-même distingue enfin sujet, angles et sources par trois gabarits de tailles différentes. Dans la même version, l’agent devient un fil de conversation et les téléchargements remontent dans la barre du haut.",
+  "tags": ["tunnel", "cartes", "agent", "interface", "découpes"],
+  "stats": {
+    "commits": 6,
+    "files": 100,
+    "insertions": 10066,
+    "deletions": 5530
+  },
+  "sections": [
+    {
+      "title": "L’en-tête respire",
+      "body": [
+        "Le tunnel empilait quatre rangées avant le premier nœud : un titre, une recherche de 44 px, une bande de types et une rangée de profondeur. La recherche monte à côté du titre, avec les trois actions secondaires réduites à des pictogrammes de 30 px ; les types et la profondeur tiennent sur la seconde ligne, et les compteurs descendent dans le pied de page.",
+        "L’ensemble passe de 188 à 124 px, et le sous-titre n’affiche plus qu’une chose à la fois : la requête quand une recherche est en cours, le rappel des commandes sinon. Sous 980 px de large, la recherche reprend sa propre ligne plutôt que d’écraser le titre."
+      ],
+      "figure": {
+        "type": "metrics",
+        "caption": "Mesuré à 1380 px de large, sur une carte ouverte.",
+        "items": [
+          { "before": "188 px", "after": "124 px", "label": "hauteur de l’en-tête" },
+          { "before": "44 px", "after": "38 px", "label": "champ de recherche" }
+        ]
+      }
+    },
+    {
+      "title": "L’état vide montre le résultat",
+      "body": [
+        "Une carte vide ne disait pas à quoi ressemble une carte. Trois exemples remplacent les puces : « Comparer deux offres », « Comprendre un sujet », « Vérifier une affirmation », chacun avec les angles qu’il produit — d’un côté le pour et le contre, de l’autre les définitions et les sources officielles — et une flèche qui lance la requête.",
+        "Ils se rangent en une colonne sous 860 px et gardent leur hauteur de 78 px au-dessus : ce sont des exemples à cliquer, pas une explication à lire."
+      ]
+    },
+    {
+      "title": "Trois gabarits selon ce que le nœud est",
+      "body": [
+        "Un sujet n’a pas la même chose à dire qu’une source. Le sujet prend 288 × 100 px, avec son intitulé en serif et le compte de ce qu’il porte — « 2 angles · 5 sources ». Une source prend 244 × 92 px : le domaine en petit, le titre sur deux lignes et une jauge de pertinence de 3 px. Angles, sous-angles, précisions et concepts partagent un gabarit de 224 × 62 px, pastille à gauche et titre centré ; la tension garde son icône et son badge.",
+        "Le rendu ne change donc plus de forme au hasard des données : la largeur de colonne est fixe à 312 px, et le texte se replie selon la place réelle. À 165 % de zoom, aucun texte ne dépasse sa carte — vérifié sur huit nœuds."
+      ]
+    },
+    {
+      "title": "Le cadrage ne renonce plus",
+      "body": [
+        "À l’ouverture d’une carte, le recadrage pouvait échouer silencieusement : la carte apparaissait à 100 % avec sa dernière colonne hors du cadre, et rien ne réessayait. Le recadrage dit maintenant s’il a réussi, et l’ouverture réessaie vingt fois à 120 ms d’intervalle. Une carte large s’ouvre à 85 % avec tout son contenu visible."
+      ]
+    },
+    {
+      "title": "L’agent en fil, les téléchargements en haut",
+      "body": [
+        "Le panneau de l’agent cesse d’être un formulaire à trois blocs : les actions s’enchaînent dans le fil, chacune avec son pictogramme, sa durée et le budget consommé, et la réponse se lit comme une conversation.",
+        "Les téléchargements quittent le panneau latéral pour la barre du haut, avec un anneau de progression sur l’icône : on les voit sans changer de vue, et la barre d’adresse centre son libellé au repos au lieu de le coller à gauche."
+      ]
+    },
+    {
+      "title": "Découpes derrière l’écran",
+      "body": [
+        "<code>SpaceDialog</code> et <code>NotesDrawer</code> dépassaient 900 lignes et mêlaient état, gestes et rendu : les sections et l’aperçu vivent désormais dans <code>components/space</code>, les vues et les outils Markdown, IA et croquis dans <code>components/notes</code>. Le pont IPC et le store se découpent de la même façon, par domaine, avec un test qui vérifie qu’aucun canal ne reste sans gestionnaire.",
+        "Rien de tout cela ne change la façon d’utiliser Vela : les mêmes gestes, sur un code qui se lit par morceaux."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir le tunnel (⌘T) : l’en-tête tient sur deux lignes, la recherche à côté du titre, les compteurs dans le pied de page.",
+    "Sur une carte vide, cliquer l’exemple « Comparer deux offres » : la requête se lance avec ses angles.",
+    "Ouvrir une carte large : elle s’affiche entière, autour de 85 %, sans colonne coupée.",
+    "Lancer une recherche depuis le panneau de l’agent : les actions s’empilent dans le fil avec leur durée."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.28...v0.3.29"
+}
