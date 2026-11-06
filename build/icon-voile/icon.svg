@@ -1,17 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
-     style="--vela-night:#1F1E45;--vela-edge:#34336B;--vela-sail:#F4EEE3;--vela-hull:#D9774F"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="1024" height="1024"
      role="img" aria-labelledby="vela-title vela-desc">
   <title id="vela-title">Vela</title>
-  <desc id="vela-desc">Deux voiles crème sur une coque terracotta, dans un carré bleu nuit.</desc>
-  <!-- Icône plate : aucun dégradé, aucune ombre, aucun texte. -->
+  <desc id="vela-desc">Un voilier à deux voiles sur une coque corail, devant un soleil couchant, sur un fond bleu nuit arrondi.</desc>
+  <!-- Icône plate : aucun dégradé, aucune ombre, aucun texte. Le carré
+       arrondi occupe tout le cadre ; build/make-voile-icons.py le pose sur
+       un canevas transparent de 1024 px, marge macOS comprise. -->
   <style>
-    .tile { fill: var(--vela-night); stroke: var(--vela-edge); stroke-width: 6; }
-    .sail { fill: var(--vela-sail); }
-    .sail--small { fill: var(--vela-sail); opacity: .72; }
-    .hull { fill: var(--vela-hull); }
+    .tile { fill: #1B2150; }
+    .sun { fill: #E8805A; opacity: .28; }
+    .sea { fill: #26307A; }
+    .foam { fill: none; stroke: #3B4AA8; stroke-width: 2; }
+    .sail { fill: #F6EFE4; }
+    .sail--soft { fill: #B9BECB; }
+    .hull { fill: #E8805A; }
+    .hull--edge { fill: #C4623F; }
   </style>
-  <rect class="tile" x="99" y="99" width="826" height="826" rx="181" />
-  <path class="sail" d="M478 260 L282 694 L494 694 Z" />
-  <path class="sail--small" d="M648 374 L558 694 L742 694 Z" />
-  <path class="hull" d="M252 684 H772 L722 762 H302 Z" />
+  <rect class="tile" x="0" y="0" width="200" height="200" rx="46" />
+  <circle class="sun" cx="100" cy="98" r="52" />
+  <path class="sea" d="M0 156 Q30 146 60 156 T120 156 T180 156 T200 154 L200 154 Q200 200 154 200 L46 200 Q0 200 0 154 Z" />
+  <path class="foam" d="M0 158 Q30 148 60 158 T120 158 T180 158 L200 156" />
+  <path class="sail" d="M96 38 L96 128 L46 128 Z" />
+  <path class="sail--soft" d="M106 64 L106 128 L142 128 Z" />
+  <rect class="sail" x="95" y="34" width="3" height="98" />
+  <path class="hull" d="M32 132 L168 132 L150 152 L50 152 Z" />
+  <path class="hull--edge" d="M50 152 L150 152 L146 156 L54 156 Z" />
 </svg>

@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="244 252 536 518" width="16" height="16"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="32 34 136 122" width="16" height="16"
      style="color:#000" role="img" aria-label="Vela">
   <!-- Gabarit monochrome pour la barre de menus : noir plein, fond transparent.
        macOS inverse lui-même les images « template ». -->
   <style>.mark { fill: currentColor; }</style>
-  <path class="mark" d="M478 260 L282 694 L494 694 Z" />
-  <path class="mark" d="M648 374 L558 694 L742 694 Z" />
-  <path class="mark" d="M252 684 H772 L722 762 H302 Z" />
+  <path class="mark" d="M96 38 L96 128 L46 128 Z" />
+  <path class="mark" d="M106 64 L106 128 L142 128 Z" />
+  <rect class="mark" x="95" y="34" width="3" height="98" />
+  <path class="mark" d="M32 132 L168 132 L150 152 L50 152 Z" />
+  <path class="mark" d="M50 152 L150 152 L146 156 L54 156 Z" />
 </svg>
