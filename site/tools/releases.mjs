@@ -194,7 +194,7 @@ const rendrePage = (version, charpente, voisines) => {
       </div>
     </main>${charpente.suffixe}`
 
-  const head = corps
+  const head = versionPied(corps)
     .replace(
       /<title>[^<]*<\/title>/,
       `<title>Vela ${version.version} — ${echappe(version.headline)}</title>`
@@ -236,6 +236,14 @@ const versions = readdirSync(RELEASES)
   .map((fichier) => JSON.parse(readFileSync(join(RELEASES, fichier), 'utf8')))
   .sort((a, b) => b.version.localeCompare(a.version, 'fr', { numeric: true }))
 
+// Le pied de page porte la version : il est recopié dans chaque page de
+// release, il doit donc dire la dernière publiée, pas celle qu'avait la
+// charpente le jour où elle a été écrite.
+const derniere = versions[0]
+const plusAncienne = versions[versions.length - 1]
+const versionPied = (html) =>
+  html.replace(/Version \d+\.\d+\.\d+( · logiciel libre)/, `Version ${derniere.version}$1`)
+
 const charpente = charpenteDe()
 
 versions.forEach((version, index) => {
@@ -265,6 +273,13 @@ for (const version of versions) {
   const titreLie = `<h2><a href="/nouveautes/${version.slug}/">${version.headline}</a></h2>`
   if (journal.includes(titreNu)) journal = journal.replace(titreNu, titreLie)
 }
+// Le journal est lui-même la charpente : sa description dit la même chose que
+// le pied de page, donc elle se recalcule au passage.
+journal = versionPied(journal)
+journal = journal.replace(
+  /(<meta\s+name="description"\s+content=")[^"]*(")/,
+  `$1${versions.length} versions de Vela, de la ${plusAncienne.version} à la ${derniere.version} : sessions, historique, espaces et sécurité.$2`
+)
 writeFileSync(JOURNAL, journal)
 
 // --- Sitemap ---------------------------------------------------------------
