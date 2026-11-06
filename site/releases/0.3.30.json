@@ -1,0 +1,61 @@
+{
+  "version": "0.3.30",
+  "slug": "0-3-30",
+  "date": "2026-11-06",
+  "headline": "Le voilier devient l’icône",
+  "intro": "Vela change de visage dans le Dock, le Launchpad et la barre des tâches : un voilier à deux voiles sur une coque corail, devant un soleil couchant, sur un carré bleu nuit. La barre de menus reçoit le même bateau en noir et blanc, et le site corrige un pied de page qui annonçait encore la 0.3.26.",
+  "tags": [
+    "icône",
+    "identité",
+    "site"
+  ],
+  "stats": {
+    "commits": 3,
+    "files": 21,
+    "insertions": 192,
+    "deletions": 85
+  },
+  "sections": [
+    {
+      "title": "Un bateau, six tailles",
+      "body": [
+        "L’icône part d’un SVG de 200 px : un carré bleu nuit à coins arrondis, un soleil corail posé à 28 %, la mer en dessous et deux voiles — la grande crème, la petite grise — sur une coque corail soulignée de terracotta. Le carré occupe désormais tout le cadre ; le fichier d’origine laissait 90 px de marge autour, qu’on ne voit pas dans le Dock.",
+        "Tout se calcule avec Pillow, sans dépendance ni fichier distant : les courbes du SVG sont échantillonnées, la tuile est suréchantillonnée huit fois puis réduite, et un masque arrondi coupe les coins — sans lui, la mer débordait du carré aux angles. De ce maître 1024 px sortent le jeu d’icônes complet, le <code>.icns</code> à dix tailles et le <code>.ico</code> de 16 à 256 px."
+      ],
+      "figure": {
+        "type": "metrics",
+        "caption": "Une seule source, les mêmes formes à toutes les tailles.",
+        "items": [
+          {
+            "before": "16 px",
+            "after": "1024 px",
+            "label": "une seule géométrie"
+          },
+          {
+            "before": "1 SVG",
+            "after": "10 tailles",
+            "label": "dans l’icns macOS"
+          }
+        ]
+      }
+    },
+    {
+      "title": "La barre de menus suit",
+      "body": [
+        "Le gabarit monochrome qui vit à côté de l’exécutable reprend voiles, mât et coque, sans la mer ni le fond : macOS inverse lui-même les images « template », donc le bateau reste lisible en clair comme en sombre. Il est livré en 16 et 32 px, posés côte à côte pour que l’écran Retina prenne le second."
+      ]
+    },
+    {
+      "title": "Le pied de page du journal ne ment plus",
+      "body": [
+        "Les pages de nouveautés recopiaient la charpente du journal, et avec elle un « Version 0.3.26 » figé : chaque release affichait donc une version vieille de quatre sorties dans son pied de page. Le script qui rend ces pages pose maintenant la dernière version publiée, et la description du journal se recalcule au même passage — elle annonçait « vingt et une versions » depuis la 0.3.26."
+      ]
+    }
+  ],
+  "verify": [
+    "Regarder l’icône de Vela dans le Dock, le Launchpad et le Finder : le voilier bleu nuit y remplace l’ancienne voile.",
+    "Ouvrir le menu de Vela dans la barre des menus : le bateau monochrome s’inverse correctement en thème sombre.",
+    "Ouvrir une page de nouveautés, la 0.3.29 par exemple : le pied de page annonce la version courante, plus la 0.3.26."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.29...v0.3.30"
+}
