@@ -190,7 +190,7 @@
   }
 
   .recent-grid {
-    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+    --tile-min: 122px;
   }
 
   .home-foot {
@@ -219,7 +219,7 @@
   }
 
   .recent-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --tile-min: calc(50% - 4px);
     gap: 8px;
   }
 

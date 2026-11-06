@@ -49,13 +49,93 @@
   padding: 2px 0 4px;
 }
 
-/* Un filet sépare les outils de travail des réglages de l'application. */
-.rail-divider {
-  display: block;
-  width: 20px;
+/* Outils de l'application (notes, agent, réglages) : au pied de la barre
+   latérale, sous les onglets. Mêmes pastilles que le reste de la colonne
+   (30 px, rayon 9), et la marge gauche place le glyphe des icônes sur les
+   24 px du sélecteur d'espace, comme les onglets et l'en-tête. */
+.sidebar-tools {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 10px 7px 18px;
+}
+
+/* Un filet court, posé sur les marges du contenu (24 px à gauche, 16 px à
+   droite) et évanoui vers la droite : il sépare sans barrer toute la colonne. */
+.sidebar-tools::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 16px;
   height: 1px;
-  margin: 5px auto;
-  background: var(--line);
+  background: linear-gradient(90deg, var(--line-soft), transparent);
+}
+
+/* Survol commun de la colonne : un seul voile, posé sur la barre latérale.
+   Les outils du pied et les lignes d'onglets partagent ainsi la même teinte,
+   la même lumière intérieure et le même rayon : le survol se lit pareil d'un
+   bout à l'autre de la colonne. */
+.sidebar {
+  --sidebar-veil: var(--fill);
+  --sidebar-veil-light: var(--inner-light-soft);
+  --sidebar-veil-radius: 9px;
+}
+
+/* Survol commun : la rangée s'allume d'un bloc derrière ses trois pastilles,
+   pour que Notes, Agent et Réglages se lisent comme un seul groupe. Le voile
+   s'arrête sur les mêmes marges que le filet (18 px / 10 px) et laisse passer
+   la souris : ce sont les pastilles qui gardent leur propre survol. */
+.sidebar-tools::after {
+  content: '';
+  position: absolute;
+  inset: 4px 10px 4px 18px;
+  z-index: 0;
+  border-radius: var(--sidebar-veil-radius);
+  background: var(--sidebar-veil);
+  box-shadow: var(--sidebar-veil-light);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-standard);
+}
+
+.sidebar-tools:hover::after,
+.sidebar-tools:focus-within::after {
+  opacity: 1;
+}
+
+/* Les pastilles passent au-dessus du voile ; le focus clavier allume le
+   groupe comme la souris. */
+.sidebar-tools .icon-btn {
+  position: relative;
+  z-index: 1;
+}
+
+/* Les lignes d'onglets reprennent exactement ce voile. La ligne active garde
+   son propre fond (data-active) : elle ne s'éclaircit pas au survol, sinon on
+   perdrait l'onglet courant sous le curseur. */
+.sidebar .tab-row {
+  border-radius: var(--sidebar-veil-radius);
+}
+
+.sidebar .tab-row:hover:not([data-active='true']),
+.sidebar .tab-row:focus-within:not([data-active='true']) {
+  background: var(--sidebar-veil);
+  box-shadow: var(--sidebar-veil-light);
+}
+
+/* La ligne « Nouvel onglet » suit la même lumière ; son cadre pointillé
+   reste visible au survol. */
+.sidebar .tab-new:hover {
+  box-shadow: var(--sidebar-veil-light);
+}
+
+/* Les réglages restent à l'écart, à droite : le filet du rail séparait déjà
+   les outils de travail de la configuration de l'application. */
+.sidebar-tools-end {
+  margin-left: auto;
 }
 
 /* --- Panneau agent ancré ------------------------------------------- */
@@ -179,11 +259,12 @@
   min-height: 76px;
 }
 
-/* Sans rapport ouvert, la demande prend la place libre : le champ grandit et
-   l'action reste au bas du panneau au lieu de flotter au milieu. */
+/* Sans rapport ouvert, la demande garde une hauteur stable : le plan proposé
+   occupe la place libre et l'action reste au bas du panneau. Un champ qui
+   grandissait jusqu'au plafond repoussait ce plan hors de vue. */
 .agent[data-docked='true'] .agent-body[data-idle='true'] .agent-prompt {
-  flex: 1 1 auto;
-  min-height: 132px;
+  flex: 0 0 auto;
+  min-height: 104px;
 }
 
 .agent[data-docked='true'] .source-list {

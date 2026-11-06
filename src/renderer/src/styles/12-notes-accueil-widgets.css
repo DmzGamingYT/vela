@@ -1325,10 +1325,14 @@
   color: var(--muted);
 }
 
-/* Grille des pages récentes, avec inclinaison au pointeur. */
+/* Tuiles des pages récentes, avec inclinaison au pointeur. Un flex qui
+   s'étire plutôt qu'une grille : dans un volet étroit ou le tiroir de notes
+   ouvert, la troisième tuile prenait seule une demi-largeur et laissait un
+   trou à côté d'elle. Ici la dernière ligne se remplit. */
 .recent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  --tile-min: 148px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -1336,6 +1340,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1 1 var(--tile-min);
+  min-width: 0;
   gap: 8px;
   min-height: 116px;
   padding: 12px 12px 16px;
@@ -1638,6 +1644,25 @@
 }
 
 /* Tâches : progression et coche animée. */
+
+/* Carte vide : le champ d'ajout monte dans l'en-tête et partage sa ligne avec
+   le titre. Un module qui ne contient qu'un champ n'a plus de hauteur de
+   module. */
+.home-tasks[data-empty='true'] {
+  padding: 12px 14px;
+}
+
+.home-tasks[data-empty='true'] .home-card-head {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  margin-bottom: 0;
+}
+
+.home-tasks[data-empty='true'] .tasks-add {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
 .home-tasks .tasks-score {
   font-family: var(--mono);
   font-size: 9px;

@@ -63,14 +63,17 @@
   border: 0;
 }
 
-/* --- Le champ d’adresse, pilule de 48 px ------------------------ */
+/* --- Le champ d’adresse, pilule de 42 px ------------------------ */
 
+/* Une barre de 56 px : la pilule garde 7 px de papier au-dessus et en dessous.
+   À 48 px, elle touchait presque les bords et paraissait plus lourde que le
+   contenu qu’elle porte. */
 .address {
   position: relative;
-  height: 48px;
-  gap: 8px;
-  padding: 0 4px;
-  border-radius: 24px;
+  height: 42px;
+  gap: 6px;
+  padding: 0 5px;
+  border-radius: 21px;
   border: 1px solid var(--bar-line);
   background: var(--bar-field);
 }
@@ -109,17 +112,19 @@
 
 /* --- Bouton de barre commun ------------------------------------- */
 
+/* 34 px visibles, un cran sous les 40 px précédents : les commandes de la
+   barre restent alignées sur la hauteur de la pilule au lieu de la dépasser. */
 .bar-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 0;
-  border-radius: 20px;
+  border-radius: 17px;
   background: transparent;
   color: var(--bar-soft);
   cursor: pointer;
@@ -129,13 +134,13 @@
     color 150ms ease;
 }
 
-/* 44 × 44 px de zone cliquable sans déborder sur le bouton voisin : la marge
-   entre deux boutons fait 8 px, le pseudo-élément n’en prend que 2. */
+/* Zone cliquable de 38 px sans déborder sur le bouton voisin : la marge entre
+   deux boutons fait 6 px, le pseudo-élément n’en prend que 2. */
 .bar-btn::before {
   content: '';
   position: absolute;
   inset: -2px;
-  border-radius: 22px;
+  border-radius: 19px;
 }
 
 .bar-btn:hover:not(:disabled) {
@@ -172,12 +177,12 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex: 0 0 auto;
-  height: 40px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 20px;
+  border-radius: 17px;
   background: transparent;
   color: var(--bar-soft);
   /* Le halo de l’icône doit valoir exactement le fond de la pastille. */
@@ -198,7 +203,7 @@
   content: '';
   position: absolute;
   inset: -2px;
-  border-radius: 22px;
+  border-radius: 19px;
 }
 
 .translate-pill[data-state='proposed'] {
@@ -368,11 +373,11 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 15px;
+  border-radius: 13px;
   background: transparent;
   color: var(--bar-soft);
   cursor: pointer;
@@ -405,7 +410,7 @@
 .pane-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   -webkit-app-region: no-drag;
 }
 
@@ -413,7 +418,7 @@
 
 @container pane (max-width: 480px) {
   .translate-pill {
-    width: 40px;
+    width: 34px;
     padding: 0;
     justify-content: center;
   }

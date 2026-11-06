@@ -189,18 +189,18 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
       await sleep(900)
       await shoot(`page-${suffix}`)
 
-      if (await click('.rail-bottom button[title^="Notes"]')) {
+      if (await click('.sidebar-tools button[title^="Notes"]')) {
         await shoot(`notes-${suffix}`)
-        await click('.rail-bottom button[title^="Notes"]')
+        await click('.sidebar-tools button[title^="Notes"]')
       }
 
-      if (await click('.rail-bottom button[title^="Agent"]')) {
+      if (await click('.sidebar-tools button[title^="Agent"]')) {
         await sleep(600)
         await shoot(`agent-${suffix}`)
-        await click('.rail-bottom button[title^="Agent"]')
+        await click('.sidebar-tools button[title^="Agent"]')
       }
 
-      if (await click('.rail-bottom button[title^="Réglages"]')) {
+      if (await click('.sidebar-tools button[title^="Réglages"]')) {
         await sleep(600)
         await shoot(`reglages-${suffix}`)
         await escape()

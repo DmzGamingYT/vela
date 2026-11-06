@@ -174,7 +174,7 @@ p.ad{margin:0;padding:10px 20px}
     })()`)
     await sleep(700)
     await renderer.evaluate(`(() => {
-      const button = document.querySelector('.rail-bottom button[title^="Réglages"]')
+      const button = document.querySelector('.sidebar-tools button[title^="Réglages"]')
       if (button) button.click()
       return Boolean(button)
     })()`)

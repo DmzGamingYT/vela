@@ -12,14 +12,14 @@ interface BarButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, '
 }
 
 /**
- * Bouton de barre d’adresse : 40 px visibles, rayon 20 px, icône 20 px, zone
- * cliquable de 44 × 44 px. Un seul gabarit pour le bouclier, la traduction,
+ * Bouton de barre d’adresse : 34 px visibles, rayon 17 px, icône 18 px, zone
+ * cliquable de 38 × 38 px. Un seul gabarit pour le bouclier, la traduction,
  * l’étoile et les commandes de vue.
  */
 export default function BarButton({
   icon,
   label,
-  iconSize = 20,
+  iconSize = 18,
   filled = false,
   active = false,
   tone = 'plain',

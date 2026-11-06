@@ -33,13 +33,8 @@ import {
   SPACE_COLORS
 } from '@shared/defaults'
 import { moveTab } from '@shared/ordering'
-import {
-  buildTestRequest,
-  endpointHost,
-  isLoopbackEndpoint,
-  isProviderId,
-  providerById
-} from '@shared/providers'
+import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
+import { chatModel } from '@shared/agentModel'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
 import {
   acceptLanguage,
@@ -1306,38 +1301,28 @@ export class Browser {
       return { ok: false, message: 'Ajoutez d’abord une clé.' }
     }
 
-    const request = buildTestRequest(
+    const probe = await chatModel({
       definition,
-      { baseUrl: state.baseUrl, model: state.model },
+      config: { baseUrl: state.baseUrl, model: state.model },
       key
-    )
-    try {
-      const response = await fetch(request.url, {
-        headers: request.headers,
-        signal: AbortSignal.timeout(9000)
-      })
-      if (response.ok) {
-        const message = definition.local ? 'Serveur local joignable.' : 'Clé acceptée.'
-        this.store.setKeyStatus(id, 'ok', message)
-        this.broadcast()
-        return { ok: true, message }
-      }
-      const detail = (await response.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120)
-      const message =
-        response.status === 401 || response.status === 403
-          ? 'Clé refusée par le fournisseur.'
-          : `Réponse ${response.status}${detail ? ` · ${detail}` : ''}`
-      this.store.setKeyStatus(id, 'error', message)
+    }).probe()
+    if (probe.availability === 'available') {
+      const message = definition.local ? 'Serveur local joignable.' : 'Clé acceptée.'
+      this.store.setKeyStatus(id, 'ok', message)
       this.broadcast()
-      return { ok: false, message }
-    } catch {
-      const message = definition.local
-        ? 'Serveur local injoignable. Lancez-le, puis réessayez.'
-        : 'Connexion impossible. Vérifiez l’endpoint et le réseau.'
-      this.store.setKeyStatus(id, 'error', message)
-      this.broadcast()
-      return { ok: false, message }
+      return { ok: true, message }
     }
+    const message =
+      probe.status === 401 || probe.status === 403
+        ? 'Clé refusée par le fournisseur.'
+        : probe.status
+          ? `Réponse ${probe.status}${probe.detail ? ` · ${probe.detail}` : ''}`
+          : definition.local
+            ? 'Serveur local injoignable. Lancez-le, puis réessayez.'
+            : 'Connexion impossible. Vérifiez l’endpoint et le réseau.'
+    this.store.setKeyStatus(id, 'error', message)
+    this.broadcast()
+    return { ok: false, message }
   }
 
   /**

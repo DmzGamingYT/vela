@@ -62,11 +62,15 @@ function pressText(body: string): string {
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '[croquis]')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/^#+\s*/gm, '')
+    // Deux puces ramenées sur une ligne se lisaient comme une phrase :
+    // « À vérifier La densité… ». Le point médian garde la césure.
+    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, ' · ')
     .replace(/\[\[([^[\]|]+)(?:\|([^[\]]+))?\]\]/g, (_match, target: string, alias?: string) => alias || target)
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\[[ xX]\]\s?/g, '')
     .replace(/[*_>`|-]/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/^(?:·\s*)+/, '')
     .trim()
 }
 

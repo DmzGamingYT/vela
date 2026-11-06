@@ -57,10 +57,13 @@ describe('validation des actions de l’agent', () => {
 
   it('ne lance pas une navigation refusée', async () => {
     showMessageBox.mockResolvedValue({ response: 0 })
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+    const reply = (): Response => new Response(
       'data: {"choices":[{"delta":{"content":"{\\"tool\\":\\"open\\",\\"args\\":{\\"url\\":\\"https://example.org/\\"}}"}}]}\n\n',
       { status: 200 }
-    )))
+    )
+    // Un corps ne se lit qu'une fois : l'agent interroge le modèle deux fois
+    // par action, donc chaque appel reçoit sa propre réponse.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(reply())))
     const open = vi.fn()
     const send = vi.fn()
     const win = { isDestroyed: () => false, webContents: { isDestroyed: () => false, send } }
@@ -82,13 +85,18 @@ describe('validation des actions de l’agent', () => {
 
   it('exécute uniquement une action acceptée puis interrompt une action refusée', async () => {
     showMessageBox.mockResolvedValueOnce({ response: 1 }).mockResolvedValueOnce({ response: 0 })
-    const reply = (action: object): Response => new Response(
-      `data: ${JSON.stringify({ choices: [{ delta: { content: JSON.stringify(action) } }] })}\n\n`,
+    const reply = (payload: object | string): Response => new Response(
+      `data: ${JSON.stringify({
+        choices: [{ delta: { content: typeof payload === 'string' ? payload : JSON.stringify(payload) } }]
+      })}\n\n`,
       { status: 200 }
     )
+    // Deux appels par action : l'outil, puis ses arguments.
     vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(reply({ tool: 'open', args: { url: 'https://example.org/' } }))
-      .mockResolvedValueOnce(reply({ tool: 'click', args: { name: 'Envoyer' } })))
+      .mockResolvedValueOnce(reply('open'))
+      .mockResolvedValueOnce(reply({ url: 'https://example.org/' }))
+      .mockResolvedValueOnce(reply('click'))
+      .mockResolvedValueOnce(reply({ name: 'Envoyer' })))
     const send = vi.fn()
     const sendInputEvent = vi.fn()
     const contents = {

@@ -30,14 +30,22 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const bookmarked = useBrowser((state) =>
     Boolean(state.view?.bookmarks.some((bookmark) => bookmark.url === tab.url))
   )
+  const downloads = useBrowser((state) => state.view?.downloads.length ?? 0)
+  const downloading = useBrowser(
+    (state) => state.view?.downloads.find((item) => item.state === 'progress') ?? null
+  )
+  // Taille inconnue tant que le serveur n’a pas annoncé de Content-Length :
+  // l’anneau tourne alors au lieu de mentir sur un pourcentage.
+  const percent =
+    downloading && downloading.total > 0
+      ? Math.min(100, Math.round((downloading.received / downloading.total) * 100))
+      : null
+  const setOverlay = useBrowser((state) => state.setOverlay)
   const uiLanguage = useBrowser((state) => state.view?.settings.webLanguage ?? 'fr')
 
   const translation = usePageTranslation(tab, uiLanguage)
   const [translationOpen, setTranslationOpen] = useState(false)
   const translateButton = useRef<HTMLButtonElement>(null)
-
-  const [comicActive, setComicActive] = useState(false)
-  const [comicBusy, setComicBusy] = useState(false)
 
   // Les calques vivent dans la page : une navigation les emporte avec elle.
   // Les remises à zéro passent par une microtâche : un setState synchrone dans
@@ -45,8 +53,6 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   // la peinture.
   useEffect(() => {
     queueMicrotask(() => {
-      setComicActive(false)
-      setComicBusy(false)
       setTranslationOpen(false)
     })
   }, [tab.id, tab.url])
@@ -73,28 +79,6 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const closeTranslation = (): void => {
     setTranslationOpen(false)
     translateButton.current?.focus()
-  }
-
-  const toggleComic = async (): Promise<void> => {
-    if (comicBusy) return
-    setComicBusy(true)
-    try {
-      if (comicActive) {
-        await window.vela.comic.clear(tab.id)
-        setComicActive(false)
-        return
-      }
-      const result = await window.vela.comic.run(tab.id)
-      if (result.ok) {
-        setComicActive(true)
-        return
-      }
-      toast(result.reason ?? 'Traduction de BD impossible.', 'error')
-    } catch {
-      toast('Traduction de BD impossible.', 'error')
-    } finally {
-      setComicBusy(false)
-    }
   }
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -240,7 +224,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             title={`${bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'} (${shortcut('D')})`}
             onClick={() => void toggleBookmark(tab.id)}
           >
-            <Icon name="star" size={20} filled={bookmarked} />
+            <Icon name="star" size={18} filled={bookmarked} />
           </button>
         )}
 
@@ -263,17 +247,44 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       </form>
 
       <div className="pane-tools">
-        {!home && (
-          <BarButton
-            icon="comic"
-            label={
-              comicActive || comicBusy
-                ? 'Traduire la BD — traduction active'
-                : 'Traduire la BD (OCR local, calque français)'
+        {primary && (
+          <button
+            type="button"
+            className="bar-btn download-btn"
+            onClick={() => setOverlay('downloads')}
+            aria-label={
+              downloading
+                ? `Téléchargement en cours : ${downloading.name}, ${
+                    percent === null ? 'durée inconnue' : `${percent} pour cent`
+                  } — voir la liste`
+                : downloads > 0
+                  ? `${downloads} téléchargement${downloads > 1 ? 's' : ''}, voir la liste`
+                  : 'Téléchargements'
             }
-            active={comicActive || comicBusy}
-            onClick={() => void toggleComic()}
-          />
+            title={
+              downloading
+                ? `${downloading.name} — ${percent === null ? 'en cours' : `${percent} %`}`
+                : 'Téléchargements'
+            }
+          >
+            {downloading && (
+              <svg className="download-ring" viewBox="0 0 34 34" aria-hidden="true">
+                <circle className="download-ring-track" cx="17" cy="17" r="15" />
+                <circle
+                  className="download-ring-fill"
+                  data-known={percent !== null}
+                  cx="17"
+                  cy="17"
+                  r="15"
+                  strokeDasharray={
+                    percent === null ? '23.5 94.25' : `${Math.max(percent, 1) * 0.9425} 94.25`
+                  }
+                />
+              </svg>
+            )}
+            <Icon name="download" size={18} />
+            {downloads > 0 && !downloading && <span className="bar-count">{downloads}</span>}
+          </button>
         )}
         <BarButton
           icon={secondary ? 'close' : 'split'}

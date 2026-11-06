@@ -71,6 +71,7 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
             className="home-card-action"
             onClick={() => toggleNotes(true)}
             title="Ouvrir le carnet de notes"
+            aria-label="Ouvrir le carnet de notes"
           >
             <span>Toutes</span>
             <Icon name="arrow-right" size={12} />

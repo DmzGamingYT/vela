@@ -86,12 +86,27 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
+  /* Le lavis du thème passe au-dessus du verre : posé dessous, il était
+     absorbé par l'opacité du fond et la colonne paraissait la même dans tous
+     les thèmes. Il reste loin du mot « Vela. », dont le contraste est calculé
+     sur le verre nu. */
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)), var(--glass);
-  backdrop-filter: blur(34px) saturate(185%);
-  -webkit-backdrop-filter: blur(34px) saturate(185%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    radial-gradient(95% 44% at 100% 2%, color-mix(in srgb, var(--amb-mix) 10%, transparent), transparent 72%),
+    radial-gradient(120% 52% at 50% 104%, color-mix(in srgb, var(--accent-b) 15%, transparent), transparent 74%),
+    var(--glass);
+  /* Le flou suit le réglage « Intensité du verre » : à 34 px fixes, le thème
+     et l'ambiance se noyaient dans une plaque uniforme. */
+  backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 170%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 170%));
   box-shadow: var(--inner-light-soft);
   pointer-events: none;
+}
+
+/* Contraste élevé : le verre redevient une plaque unie, sans lavis. */
+:root[data-contrast='high'] .rail::before,
+:root[data-contrast='high'] .sidebar::before {
+  background: var(--glass);
 }
 
 .sidebar {
@@ -157,10 +172,6 @@ body {
   left: -12px;
   background: var(--accent-b);
   box-shadow: 0 0 10px rgba(var(--glow), 0.45);
-}
-
-.rail-bottom {
-  border-top: 1px solid var(--edge);
 }
 
 .rail-ghost:hover,

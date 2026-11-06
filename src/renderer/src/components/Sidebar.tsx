@@ -34,6 +34,10 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const notesOpen = useBrowser((state) => state.notesOpen)
+  const agentOpen = useBrowser((state) => state.agentOpen)
+  const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const openAgent = useBrowser((state) => state.openAgent)
   const sessionCount = useSessionCount()
   const [today] = useState(() => Date.now())
   const selectTab = useBrowser((state) => state.selectTab)
@@ -1118,6 +1122,38 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           )}
         </div>
       )}
+
+      {/* Notes, Agent et Réglages vivent au pied de la colonne : le rail ne
+          porte plus que les modes et les espaces. */}
+      <div className="sidebar-tools" role="group" aria-label="Outils">
+        <button
+          type="button"
+          className="icon-btn"
+          data-active={notesOpen}
+          onClick={() => toggleNotes()}
+          title={`Notes (${shortcut('E')})`}
+        >
+          <Icon name="notes" size={18} />
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          data-active={agentOpen}
+          aria-pressed={agentOpen}
+          onClick={() => openAgent()}
+          title={`Agent (${shortcut('J')})`}
+        >
+          <Icon name="sparkles" size={18} />
+        </button>
+        <button
+          type="button"
+          className="icon-btn sidebar-tools-end"
+          onClick={() => setOverlay('settings')}
+          title={`Réglages (${shortcut(',')})`}
+        >
+          <Icon name="settings" size={18} />
+        </button>
+      </div>
 
       <p
         className="sr-only"

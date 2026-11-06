@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela — maquette de l’atelier IA</title>
+    <style>
+      :root {
+        --paper: #faf8f5;
+        --paper-deep: #f2ede5;
+        --surface: #fffdfa;
+        --ink: #1b1a18;
+        --ink-soft: #45413c;
+        --muted: rgba(27, 26, 24, 0.62);
+        --faint: rgba(27, 26, 24, 0.42);
+        --line: rgba(27, 26, 22, 0.11);
+        --line-soft: rgba(27, 26, 22, 0.06);
+        --accent: #5b56d6;
+        --accent-soft: rgba(91, 86, 214, 0.09);
+        --sage: #1f8a6a;
+        --sage-soft: rgba(31, 138, 106, 0.09);
+        --warn: #a8432c;
+        --warn-soft: rgba(168, 67, 44, 0.08);
+        --gold: #8d6b14;
+        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+        --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 44px 40px 72px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 13px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .board { max-width: 1320px; margin: 0 auto; }
+
+      /* --- En-tête de planche ------------------------------------ */
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .eyebrow i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .board-head h1 {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: clamp(32px, 4vw, 46px);
+        font-weight: 400;
+        letter-spacing: -0.025em;
+        line-height: 1.05;
+      }
+
+      .board-head .lede {
+        max-width: 620px;
+        margin: 12px 0 0;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+
+      .board-head .lede strong { color: var(--ink); }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 20px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .meta li {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      /* --- Les trois panneaux ----------------------------------- */
+
+      .panels {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 18px;
+        margin-top: 30px;
+        align-items: start;
+      }
+
+      .panel {
+        position: relative;
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--surface);
+        box-shadow: 0 18px 44px rgba(72, 58, 38, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-family: var(--serif);
+        font-size: 16px;
+      }
+
+      .panel-title span {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+
+      .panel-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+      /* --- Capacité --------------------------------------------- */
+
+      .cap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 11px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: var(--paper);
+      }
+
+      .cap-mark {
+        width: 26px;
+        height: 26px;
+        flex: 0 0 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .cap-copy { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+      .cap-copy b { font-size: 11.5px; font-weight: 600; }
+      .cap-copy small { font-size: 9.5px; color: var(--muted); }
+
+      .cap-state {
+        margin-left: auto;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--sage);
+        background: var(--sage-soft);
+        border: 1px solid rgba(31, 138, 106, 0.28);
+        white-space: nowrap;
+      }
+
+      .cap[data-off="true"] { opacity: 0.62; }
+      .cap[data-off="true"] .cap-mark { color: var(--faint); background: var(--line-soft); }
+      .cap[data-off="true"] .cap-state {
+        color: var(--muted);
+        background: transparent;
+        border-color: var(--line);
+      }
+
+      .promise {
+        margin: 0;
+        font-size: 10px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      /* --- Composer --------------------------------------------- */
+
+      .composer {
+        padding: 11px 12px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .composer p { margin: 0; font-size: 12.5px; line-height: 1.5; }
+      .composer .cursor {
+        display: inline-block;
+        width: 1.5px;
+        height: 12px;
+        vertical-align: -2px;
+        margin-left: 2px;
+        background: var(--accent);
+      }
+
+      .attach {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 9px;
+        padding-top: 9px;
+        border-top: 1px dashed var(--line);
+      }
+
+      .attach-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 100%;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 9.5px;
+        color: var(--ink-soft);
+        background: var(--paper);
+      }
+
+      .attach-chip b { font-weight: 500; color: var(--muted); }
+
+      /* --- Plan typé -------------------------------------------- */
+
+      .plan-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .plan-head em {
+        margin-left: auto;
+        font-style: normal;
+        letter-spacing: 0;
+        text-transform: none;
+        font-weight: 400;
+        color: var(--faint);
+      }
+
+      .steps { display: flex; flex-direction: column; gap: 6px; }
+
+      .step-row {
+        display: grid;
+        grid-template-columns: 18px 62px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        padding: 7px 9px;
+        border-radius: 9px;
+        border: 1px solid var(--line-soft);
+        background: var(--paper);
+        font-size: 10.5px;
+      }
+
+      .step-index { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+
+      .tool {
+        justify-self: start;
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--accent);
+        background: var(--accent-soft);
+        border: 1px solid rgba(91, 86, 214, 0.2);
+      }
+
+      .step-row small { color: var(--muted); font-size: 10px; }
+
+      .filtered {
+        display: flex;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px dashed var(--line);
+        font-size: 10px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .filtered b { color: var(--ink-soft); font-weight: 600; }
+
+      .filtered .struck {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        text-decoration: line-through;
+        color: var(--faint);
+      }
+
+      .budget {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        font-size: 9.5px;
+        color: var(--muted);
+      }
+
+      .budget span { display: inline-flex; align-items: center; gap: 5px; }
+      .budget i { width: 4px; height: 4px; border-radius: 50%; background: var(--faint); }
+
+      .cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        width: 100%;
+        padding: 9px 12px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #fff;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 500;
+      }
+
+      .cta.ghost {
+        background: transparent;
+        color: var(--ink-soft);
+        border-color: var(--line);
+      }
+
+      .cta-row { display: flex; gap: 7px; }
+
+      /* --- Décision --------------------------------------------- */
+
+      .decision {
+        padding: 11px 12px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .decision-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .decision-head b { color: var(--ink); font-weight: 600; }
+
+      .choice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px solid rgba(31, 138, 106, 0.28);
+        background: var(--sage-soft);
+      }
+
+      .choice .tool {
+        color: var(--sage);
+        background: rgba(31, 138, 106, 0.12);
+        border-color: rgba(31, 138, 106, 0.25);
+      }
+
+      .choice span { font-size: 10.5px; color: var(--ink-soft); }
+      .choice em { margin-left: auto; font-style: normal; font-size: 9px; color: var(--sage); }
+
+      .rejected {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--warn-soft);
+        background: var(--warn-soft);
+        font-size: 10px;
+        line-height: 1.45;
+        color: var(--ink-soft);
+      }
+
+      .rejected .tool {
+        color: var(--warn);
+        background: rgba(168, 67, 44, 0.1);
+        border-color: rgba(168, 67, 44, 0.2);
+        text-decoration: line-through;
+      }
+
+      .rejected b { color: var(--ink); font-weight: 600; }
+
+      .trace {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        padding: 7px 9px;
+        border-radius: 8px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .trace b { color: var(--faint); font-weight: 400; }
+
+      .confirm {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 10px 11px;
+        border-radius: 10px;
+        border: 1px solid rgba(91, 86, 214, 0.3);
+        background: var(--accent-soft);
+      }
+
+      .confirm strong { font-size: 11px; }
+      .confirm small { font-size: 9.5px; color: var(--muted); }
+
+      /* --- Journal ---------------------------------------------- */
+
+      .journal { display: flex; flex-direction: column; gap: 5px; }
+
+      .journal-row {
+        display: grid;
+        grid-template-columns: 14px 56px minmax(0, 1fr) 12px;
+        gap: 7px;
+        align-items: center;
+        font-size: 10px;
+        color: var(--ink-soft);
+      }
+
+      .journal-row .n { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+      .journal-row .ok { color: var(--sage); font-size: 10px; }
+      .journal-row .ko { color: var(--warn); font-size: 10px; }
+      .journal-row span:last-child { text-align: right; }
+
+      .journal-row .tool { font-size: 9px; padding: 1px 5px; }
+
+      /* --- Rapport ---------------------------------------------- */
+
+      .report {
+        padding: 12px 13px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .report h3 {
+        margin: 0 0 7px;
+        font-family: var(--serif);
+        font-size: 17px;
+        font-weight: 500;
+        letter-spacing: -0.015em;
+      }
+
+      .report ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; }
+      .report li { font-size: 10.5px; line-height: 1.5; color: var(--ink-soft); }
+      .report li::marker { color: var(--faint); }
+
+      .report-foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 9px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 9px;
+        color: var(--muted);
+      }
+
+      .report-foot b { color: var(--ink-soft); font-weight: 500; }
+
+      .src {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 9px;
+      }
+
+      .src i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent);
+        opacity: 0.6;
+      }
+
+      /* --- Notes numérotées ------------------------------------- */
+
+      .note {
+        display: flex;
+        gap: 9px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 10px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .note b {
+        flex: 0 0 16px;
+        height: 16px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        font-family: var(--mono);
+        font-size: 8.5px;
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .note strong { color: var(--ink-soft); font-weight: 600; }
+
+      /* --- Avant / après ---------------------------------------- */
+
+      .section-title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 46px 0 14px;
+        font-family: var(--serif);
+        font-size: 24px;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+      }
+
+      .section-title small {
+        font-family: var(--sans);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+
+      table.compare {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--surface);
+        font-size: 11px;
+      }
+
+      table.compare th {
+        text-align: left;
+        padding: 9px 13px;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--paper-deep);
+        border-bottom: 1px solid var(--line);
+      }
+
+      table.compare td {
+        padding: 10px 13px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+
+      table.compare tr:last-child td { border-bottom: none; }
+      table.compare td:first-child { color: var(--ink); font-weight: 500; white-space: nowrap; }
+      table.compare .was { color: var(--muted); }
+      table.compare .now { color: var(--ink); }
+
+      .cost {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .cost-card {
+        padding: 14px 15px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+      }
+
+      .cost-card h3 {
+        margin: 0 0 6px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .cost-card p { margin: 0; font-size: 11px; line-height: 1.55; color: var(--ink-soft); }
+      .cost-card code {
+        font-family: var(--mono);
+        font-size: 10px;
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: var(--paper-deep);
+        border: 1px solid var(--line-soft);
+      }
+
+      .limit {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: 13px;
+        border: 1px solid rgba(168, 67, 44, 0.22);
+        background: var(--warn-soft);
+        font-size: 11px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+
+      .limit b { color: var(--warn); font-weight: 600; }
+
+      @media (max-width: 720px) {
+        body { padding: 26px 18px 48px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-head">
+        <p class="eyebrow"><i></i>Maquette · proposition, rien n’est codé</p>
+        <h1>L’atelier IA, refondu.</h1>
+        <p class="lede">
+          Trois états d’un même panneau : <strong>ce que Vela sait faire</strong>,
+          <strong>ce qu’il propose de faire</strong>, <strong>ce qu’il a fait</strong>. La refonte
+          part de ce que la mesure a montré : un petit modèle ne se trompe pas de syntaxe, il se
+          trompe d’outil.
+        </p>
+        <ul class="meta">
+          <li>Gemma 3 · 1 B · local</li>
+          <li>Panneau droit, 360 px</li>
+          <li>Papier &amp; indigo, jetons existants</li>
+        </ul>
+      </header>
+
+      <section class="panels">
+        <!-- 1. Demander -->
+        <figure class="panel" aria-labelledby="p1">
+          <figcaption class="panel-head">
+            <span class="panel-title" id="p1"><span>01</span>Demander</span>
+            <span class="cap-state">prêt</span>
+          </figcaption>
+          <div class="panel-body">
+            <div class="cap">
+              <span class="cap-mark">⌂</span>
+              <span class="cap-copy">
+                <b>Local · gemma3:1b</b>
+                <small>806 Mo · tourne sur cet appareil</small>
+              </span>
+              <span class="cap-state">disponible</span>
+            </div>
+            <div class="cap" data-off="true">
+              <span class="cap-mark">☁</span>
+              <span class="cap-copy">
+                <b>Cloud · aucun fournisseur</b>
+                <small>Ajouter une clé dans Réglages › Modèles</small>
+              </span>
+              <span class="cap-state">inactif</span>
+            </div>
+
+            <p class="promise">
+              Ce que vous joignez ne quitte pas l’appareil. Aucune requête réseau dans cet état.
+            </p>
+
+            <div class="composer">
+              <p>Ouvre les tarifs et dis-moi laquelle prendre.<span class="cursor"></span></p>
+              <div class="attach">
+                <span class="attach-chip"><b>example.org</b> Tarifs</span>
+                <span class="attach-chip"><b>example.org</b> Accueil</span>
+              </div>
+            </div>
+
+            <p class="plan-head">Plan proposé <em>3 outils retenus sur 7</em></p>
+            <div class="steps">
+              <div class="step-row">
+                <span class="step-index">1</span>
+                <span class="tool">open</span>
+                <small>Ouvrir <b>example.org/tarifs</b></small>
+              </div>
+              <div class="step-row">
+                <span class="step-index">2</span>
+                <span class="tool">read</span>
+                <small>Lire la page · texte visible</small>
+              </div>
+              <div class="step-row">
+                <span class="step-index">3</span>
+                <span class="tool">done</span>
+                <small>Répondre avec les sources</small>
+              </div>
+            </div>
+            <div class="filtered">
+              <span>
+                <b>Écartés pour cette page</b> —
+                <span class="struck">type</span>
+                <span class="struck">click</span>
+                <span class="struck">scroll</span>
+                : aucun champ, aucun lien, page plus courte que l’écran.
+              </span>
+            </div>
+
+            <div class="budget">
+              <span><i></i>6 actions</span>
+              <span><i></i>3 min</span>
+              <span><i></i>0 requête réseau</span>
+            </div>
+            <button class="cta" type="button">Proposer, puis agir</button>
+          </div>
+          <p class="note">
+            <b>1</b>
+            <span
+              ><strong>La capacité passe avant la demande.</strong> Aujourd’hui un seul mot
+              (« Démo » ou « Modèle connecté ») mélange trois choses : où tourne le modèle, ce
+              qu’il coûte, et ce qui sort. Ici, chaque moteur est une ligne lisible, avec son état
+              — le motif des cartes WebAI d’Opera, appliqué au réglage plutôt qu’à la vitrine.</span
+            >
+          </p>
+        </figure>
+
+        <!-- 2. Décider -->
+        <figure class="panel" aria-labelledby="p2">
+          <figcaption class="panel-head">
+            <span class="panel-title" id="p2"><span>02</span>Décider</span>
+            <span class="cap-state">validation</span>
+          </figcaption>
+          <div class="panel-body">
+            <div class="decision">
+              <p class="decision-head"><b>Étape 1</b> · choisir l’outil</p>
+              <div class="choice">
+                <span class="tool">read</span>
+                <span>Lire la page ouverte</span>
+                <em>cohérent</em>
+              </div>
+              <div class="rejected">
+                <span class="tool">type</span>
+                <span
+                  ><b>Proposé par le modèle, écarté.</b> Aucun champ éditable sur cette page :
+                  saisir du texte n’a pas de cible.</span
+                >
+              </div>
+              <div class="trace"><b>réponse brute · </b>{"tool": "type"}</div>
+            </div>
+
+            <div class="confirm">
+              <strong>Cliquer sur « Nous contacter »</strong>
+              <small>example.org/tarifs · lien visible dans la page</small>
+              <div class="cta-row">
+                <button class="cta" type="button">Autoriser cette action</button>
+                <button class="cta ghost" type="button">Voir ce qui a été lu</button>
+              </div>
+              <small>Rien n’est exécuté sans votre accord. Une saisie demande un second accord.</small>
+            </div>
+
+            <p class="plan-head">Journal <em>2 actions · 0 échec</em></p>
+            <div class="journal">
+              <div class="journal-row">
+                <span class="n">1</span><span class="tool">open</span>
+                <span>Ouvrir example.org/tarifs</span><span class="ok">✓</span>
+              </div>
+              <div class="journal-row">
+                <span class="n">2</span><span class="tool">read</span>
+                <span>Lire la page · 4 800 caractères</span><span class="ok">✓</span>
+              </div>
+              <div class="journal-row">
+                <span class="n">3</span><span class="tool">click</span>
+                <span>Cliquer sur « Nous contacter » · en attente</span><span class="ko">…</span>
+              </div>
+            </div>
+          </div>
+          <p class="note">
+            <b>2</b>
+            <span
+              ><strong>La décision devient visible et corrigeable.</strong> Le modèle a répondu
+              <code>type</code> ; la page ne contient aucun champ, donc Vela propose
+              <code>read</code> et montre la réponse brute. C’est exactement l’échec mesuré
+              (11 fois « type » sur 18 essais) transformé en interface : on ne cache plus le
+              tâtonnement, on le rend arbitrable.</span
+            >
+          </p>
+        </figure>
+
+        <!-- 3. Répondre -->
+        <figure class="panel" aria-labelledby="p3">
+          <figcaption class="panel-head">
+            <span class="panel-title" id="p3"><span>03</span>Répondre</span>
+            <span class="cap-state">terminé</span>
+          </figcaption>
+          <div class="panel-body">
+            <div class="report">
+              <h3>Le tarif à prendre</h3>
+              <ul>
+                <li>Le mensuel est à 12 €, sans engagement, résiliable en un clic.</li>
+                <li>L’annuel revient à 9 € par mois, mais bloque douze mois.</li>
+                <li>Le plan entreprise n’ajoute que la facturation centralisée.</li>
+              </ul>
+              <div class="report-foot">
+                <span class="src"><i></i>example.org/tarifs</span>
+                <span class="src"><i></i>example.org/accueil</span>
+                <span><b>4 actions</b> · 0 échec</span>
+                <span><b>gemma3:1b</b> · local</span>
+              </div>
+            </div>
+
+            <div class="cta-row">
+              <button class="cta" type="button">Relire et approuver</button>
+              <button class="cta ghost" type="button">Archiver</button>
+            </div>
+
+            <p class="plan-head">Après coup <em>ce qui reste</em></p>
+            <div class="steps">
+              <div class="step-row">
+                <span class="step-index">·</span>
+                <span class="tool">note</span>
+                <small>Enregistrer la réponse dans l’espace</small>
+              </div>
+              <div class="step-row">
+                <span class="step-index">·</span>
+                <span class="tool">rejouer</span>
+                <small>Même demande, autre capacité (local ⇄ cloud)</small>
+              </div>
+            </div>
+          </div>
+          <p class="note">
+            <b>3</b>
+            <span
+              ><strong>La sortie dit ce qu’elle a coûté.</strong> Sources, nombre d’actions,
+              échecs, moteur et localité sur une seule ligne : de quoi juger un rapport sans
+              ouvrir le journal. « Rejouer avec l’autre capacité » rend le compromis local/cloud
+              tangible au lieu d’en faire un réglage abstrait.</span
+            >
+          </p>
+        </figure>
+      </section>
+
+      <h2 class="section-title">Avant / après <small>quatre décisions</small></h2>
+      <table class="compare">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Aujourd’hui</th>
+            <th>Proposition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Moteur</td>
+            <td class="was">Une pastille « Démo » ou « Modèle connecté » ; le reste vit dans Réglages.</td>
+            <td class="now">Une ligne par capacité : nom du modèle, taille, localité, état, réseau.</td>
+          </tr>
+          <tr>
+            <td>Outils</td>
+            <td class="was">Les sept proposés à chaque tour, quelle que soit la page.</td>
+            <td class="now">Filtrés par l’état réel de la page, avec la raison de chaque écart.</td>
+          </tr>
+          <tr>
+            <td>Décision</td>
+            <td class="was">Invisible : on lit le journal une fois l’action faite.</td>
+            <td class="now">Proposée, justifiée, corrigée si incohérente, révocable avant exécution.</td>
+          </tr>
+          <tr>
+            <td>Sortie</td>
+            <td class="was">Rapport Markdown + bouton « Enregistrer en note ».</td>
+            <td class="now">Rapport + coût (actions, échecs, moteur) + rejouer avec l’autre capacité.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="section-title">Ce que ça coûte <small>côté code</small></h2>
+      <div class="cost">
+        <div class="cost-card">
+          <h3>Déjà en place</h3>
+          <p>
+            La façade <code>AgentModel</code> et le protocole en deux temps existent. Le panneau
+            actuel (<code>AgentCanvas</code>) est un seul composant : il se découpe en trois
+            (capacité, décision, sortie) sans toucher au processus principal.
+          </p>
+        </div>
+        <div class="cost-card">
+          <h3>À ajouter</h3>
+          <p>
+            Une fonction pure <code>availableTools(page)</code> qui décide quels outils ont une
+            cible, et un champ <code>reason</code> sur chaque action refusée. Le reste est du
+            rendu.
+          </p>
+        </div>
+        <div class="cost-card">
+          <h3>À ne pas ajouter</h3>
+          <p>
+            Aucun service, aucune dépendance, aucun réglage de plus. Le filtre est déterministe :
+            il lit la page, il ne devine pas.
+          </p>
+        </div>
+      </div>
+
+      <p class="limit">
+        <b>Ce que la maquette ne promet pas.</b> Filtrer les outils ne rend pas un 1 B bon : le
+        test a montré 6 bons outils sur 18 avec le meilleur protocole. Retirer trois mauvaises
+        options sur sept aide, mais la décision reste faible — c’est pour ça que l’écran montre la
+        réponse brute au lieu de la masquer. Le filtre exact, et le gain réel, se mesurent avec le
+        banc <code>agentLocal.test.ts</code> avant d’être annoncés.
+      </p>
+    </div>
+  </body>
+</html>

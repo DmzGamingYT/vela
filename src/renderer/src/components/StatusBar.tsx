@@ -30,8 +30,9 @@ function rememberLater(version: string): void {
 }
 
 /**
- * Barre d’état : la mise à jour à droite, le zoom et les téléchargements
- * quand ils ont quelque chose à dire. Rien à signaler → aucune barre.
+ * Barre d’état : la mise à jour à droite, le zoom quand il a bougé. Rien à
+ * signaler → aucune barre. Les téléchargements, eux, vivent dans la barre du
+ * haut : un bouton toujours là vaut mieux qu’un bandeau qui apparaît.
  *
  * Le compteur de requêtes bloquées n’est pas ici : le bouclier du volet le
  * porte déjà, page par page, et un second compteur global en bas faisait
@@ -39,7 +40,6 @@ function rememberLater(version: string): void {
  */
 export default function StatusBar() {
   const view = useBrowser((s) => s.view)
-  const setOverlay = useBrowser((s) => s.setOverlay)
   const update = useBrowser((s) => s.update)
   const installUpdate = useBrowser((s) => s.installUpdate)
   const downloadUpdate = useBrowser((s) => s.downloadUpdate)
@@ -79,7 +79,6 @@ export default function StatusBar() {
   if (!view) return null
 
   const model = statusBarView(update, window.vela.platform, ui)
-  const downloads = view.downloads.length
 
   const later = (): void => {
     const version = update?.version ?? ''
@@ -94,7 +93,7 @@ export default function StatusBar() {
       update?.state === 'cancelled' ||
       (update?.state === 'downloaded' && ui.laterVersion === (update.version ?? ''))
     if (deferred) return null
-    if (downloads === 0 && zoomNotice === null) return null
+    if (zoomNotice === null) return null
     return (
       <div className="statusbar statusbar-compact" role="status" aria-label="Barre de statut">
         {zoomNotice !== null && (
@@ -107,17 +106,6 @@ export default function StatusBar() {
           >
             <Icon name="search" size={15} />
             <span>{zoomNotice} %</span>
-          </button>
-        )}
-        {downloads > 0 && (
-          <button
-            type="button"
-            className="statusbar-utility"
-            onClick={() => setOverlay('downloads')}
-            aria-label={`${downloads} téléchargement${downloads > 1 ? 's' : ''}, voir la liste`}
-          >
-            <Icon name="download" size={15} />
-            <span>{downloads}</span>
           </button>
         )}
       </div>

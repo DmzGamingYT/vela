@@ -324,24 +324,6 @@ export default function CommandBar() {
         run: run(() => setWorkMode(workMode === 'work' ? 'browse' : 'work'))
       },
       {
-        id: 'action-comic',
-        group: 'Actions',
-        label: 'Traduire la BD',
-        hint: 'OCR local, calque français',
-        icon: 'translate',
-        run: run(() => {
-          const state = useBrowser.getState()
-          const tabId = state.view?.activeTabId
-          if (!tabId) return
-          state.toast('Traduction de BD : préparation…')
-          void window.vela.comic.run(tabId).then((result) => {
-            const latest = useBrowser.getState()
-            if (!result.ok) latest.toast(result.reason ?? 'Traduction impossible.', 'error')
-            else latest.toast('Panneau de traduction ouvert dans la page.')
-          })
-        })
-      },
-      {
         id: 'action-processes',
         group: 'Actions',
         label: 'Gestionnaire de processus',

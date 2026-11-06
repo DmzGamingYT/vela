@@ -28,10 +28,8 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
   const bookmarks = view.bookmarks.filter((entry) => /^https?:/i.test(entry.url))
   const visible = bookmarks.slice(0, VISIBLE_FAVORITES)
   const hidden = bookmarks.length - visible.length
-  const countLabel =
-    bookmarks.length > 0
-      ? `${bookmarks.length} favori${bookmarks.length > 1 ? 's' : ''}`
-      : 'aucun favori'
+  const empty = bookmarks.length === 0
+  const countLabel = `${bookmarks.length} favori${bookmarks.length > 1 ? 's' : ''}`
 
   const toggleCollapsed = (): void => {
     setCollapsed((previous) => {
@@ -46,14 +44,24 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
   }
 
   return (
-    <section className="home-pins home-favorites" aria-label="Favoris">
+    <section
+      className="home-pins home-favorites"
+      data-empty={empty ? 'true' : undefined}
+      aria-label="Favoris"
+    >
       <div className="home-pins-head">
         <h2>
           Favoris
-          <span className="home-pins-count">{countLabel}</span>
+          {empty ? null : <span className="home-pins-count">{countLabel}</span>}
         </h2>
-        <div className="home-pins-actions">
-          {bookmarks.length > 0 && (
+        {empty ? (
+          // Une ligne, pas un bloc : sur un profil neuf, un panneau vide de
+          // trois lignes pesait autant qu'un module actif.
+          <p className="home-favorites-empty">
+            Ouvrez une page, puis utilisez l’étoile de la barre d’adresse.
+          </p>
+        ) : (
+          <div className="home-pins-actions">
             <button
               type="button"
               className="home-card-action"
@@ -63,28 +71,22 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
               <span>Tous</span>
               <Icon name="arrow-right" size={12} />
             </button>
-          )}
-          <button
-            type="button"
-            className="pins-toggle"
-            data-collapsed={collapsed ? 'true' : undefined}
-            aria-expanded={!collapsed}
-            onClick={toggleCollapsed}
-            title={collapsed ? 'Déplier les favoris' : 'Replier les favoris'}
-          >
-            <Icon name="forward" size={13} />
-          </button>
-        </div>
+            <button
+              type="button"
+              className="pins-toggle"
+              data-collapsed={collapsed ? 'true' : undefined}
+              aria-expanded={!collapsed}
+              onClick={toggleCollapsed}
+              title={collapsed ? 'Déplier les favoris' : 'Replier les favoris'}
+            >
+              <Icon name="forward" size={13} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {!collapsed &&
-        (bookmarks.length === 0 ? (
-          <p className="home-favorites-empty">
-            Aucun favori pour l’instant. Ouvrez une page, puis utilisez l’étoile dans la barre
-            d’adresse.
-          </p>
-        ) : (
-          <div className="pin-grid" role="list" aria-label="Favoris">
+      {!collapsed && !empty ? (
+        <div className="pin-grid" role="list" aria-label="Favoris">
             {visible.map((bookmark) => {
               const host = hostOf(bookmark.url)
               const title = bookmark.title.trim() || host
@@ -124,8 +126,8 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
                 <span className="sr-only">Voir les {hidden} autres favoris</span>
               </button>
             )}
-          </div>
-        ))}
+        </div>
+      ) : null}
     </section>
   )
 }

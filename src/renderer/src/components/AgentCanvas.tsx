@@ -1,32 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { AGENT_EXAMPLES } from '@shared/agent'
-import { providerReady } from '@shared/providers'
-import { hostOf, isHomeUrl } from '@shared/url'
-import { Markdown } from '../lib/markdown'
+import { isLoopbackEndpoint, providerReady, providerState } from '@shared/providers'
+import { isHomeUrl } from '@shared/url'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
-import Favicon from './Favicon'
+import AgentEngine from './agent/AgentEngine'
+import ChatComposer, { type ComposerTab } from './agent/ChatComposer'
+import ChatTranscript from './agent/ChatTranscript'
 import { Icon } from './Icon'
 import WorkList from './WorkList'
 
-const CAPABILITIES = [
-  {
-    title: 'Comparer',
-    detail: 'Deux ou trois pages, un tableau, une recommandation nette.',
-    icon: 'split' as const
-  },
-  {
-    title: 'Synthétiser',
-    detail: 'Un rapport court qui remplace dix onglets ouverts.',
-    icon: 'notes' as const
-  },
-  {
-    title: 'Décider',
-    detail: 'Les critères, les risques, la prochaine étape.',
-    icon: 'sparkles' as const
-  }
-]
-
+/**
+ * L’atelier est un chat : on demande, l’agent répond et agit, les actions
+ * apparaissent dans le fil.
+ *
+ * Ce qui a disparu : les deux colonnes, le bloc de capacité, le plan avant
+ * départ et le gros bouton « Lancer ». Le moteur tient sur la ligne sous le
+ * titre, la capacité agentique est une pastille du composeur, et le plan
+ * s’insère dans la conversation au moment où il s’exécute.
+ */
 export default function AgentCanvas({
   embedded = false,
   docked = false
@@ -52,7 +43,6 @@ export default function AgentCanvas({
   const [showWorks, setShowWorks] = useState(false)
 
   const [prompt, setPrompt] = useState(() => useBrowser.getState().agentDraft)
-  // « Répondre » lit et rédige ; « Agir » ouvre un onglet et exécute des actions.
   const [mode, setMode] = useState<'answer' | 'act'>(() => useBrowser.getState().agent.requestMode)
   const [selected, setSelected] = useState<string[]>(() => {
     const initial = useBrowser.getState().view
@@ -63,12 +53,11 @@ export default function AgentCanvas({
       .map((tab) => tab.id)
   })
 
-  const reportRef = useRef<HTMLDivElement>(null)
-  const promptRef = useRef<HTMLTextAreaElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // Dans l’atelier (mode Work), la demande a le focus dès l’arrivée.
   useEffect(() => {
-    if (embedded) promptRef.current?.focus()
+    if (embedded) inputRef.current?.focus()
   }, [embedded])
 
   // Ouverture depuis une sélection de page : l’onglet d’origine est joint.
@@ -81,57 +70,56 @@ export default function AgentCanvas({
         current.includes(agentSourceTab) ? current : [...current, agentSourceTab]
       )
       useBrowser.setState({ agentSourceTab: null })
-      promptRef.current?.focus()
+      inputRef.current?.focus()
     })
   }, [agentSourceTab])
 
-  const running = agent.status === 'running'
-  const sources = (view?.tabs ?? [])
-    .filter((tab) => !isHomeUrl(tab.url))
-    .sort((a, b) => Number(b.spaceId === view?.activeSpaceId) - Number(a.spaceId === view?.activeSpaceId))
-  const configured = view ? providerReady(view.settings) : false
-  const modeLabel = running || agent.status !== 'idle' ? agent.mode : configured ? 'api' : 'demo'
-
-  useEffect(() => {
-    if (!running) return
-    const node = reportRef.current
-    if (node) node.scrollTop = node.scrollHeight
-  }, [agent.markdown, running])
-
   if (!view) return null
+
+  const running = agent.status === 'running'
+  const configured = providerReady(view.settings)
+  const engine = providerState(view.settings)
+  const engineLocal = isLoopbackEndpoint(engine.baseUrl)
+  const engineLabel = configured ? engine.model.trim() || 'modèle local' : 'Démo locale'
+  const tabs: ComposerTab[] = view.tabs
+    .filter((tab) => !isHomeUrl(tab.url))
+    .sort(
+      (a, b) => Number(b.spaceId === view.activeSpaceId) - Number(a.spaceId === view.activeSpaceId)
+    )
+    .map((tab) => ({ id: tab.id, title: tab.title, url: tab.url, favicon: tab.favicon }))
 
   const run = (): void => {
     setApproved(false)
     if (running) return
-    // En mode « agir », l'agent ouvre son propre onglet : aucune page à joindre.
+    if (!prompt.trim()) {
+      toast(mode === 'act' ? 'Dites à l’agent quoi faire.' : 'Dites à l’agent quoi chercher.', 'error')
+      inputRef.current?.focus()
+      return
+    }
     if (mode === 'answer' && selected.length === 0) {
       toast('Joignez au moins une page à lire.', 'error')
       return
     }
-    if (!prompt.trim()) {
-      toast(mode === 'act' ? 'Dites à l’agent quoi faire.' : 'Dites à l’agent quoi chercher.', 'error')
-      promptRef.current?.focus()
-      return
-    }
     void startAgent(prompt, selected, mode)
+    // Un chat vide son champ à l’envoi : la demande vit maintenant dans le fil.
+    setPrompt('')
   }
 
   const toggleSource = (id: string): void => {
-    setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
+    setSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    )
   }
 
   const copy = async (): Promise<void> => {
     if (!agent.markdown) return
     try {
       await navigator.clipboard.writeText(agent.markdown)
-      toast('Rapport copié.')
+      toast('Réponse copiée.')
     } catch {
       toast('Copie impossible.', 'error')
     }
   }
-
-  const currentTab = view?.tabs.find((tab) => tab.id === view.activeTabId)
-  const canAttachCurrent = Boolean(currentTab && !isHomeUrl(currentTab.url))
 
   const canvas = (
     <div
@@ -141,421 +129,86 @@ export default function AgentCanvas({
       role={embedded ? 'region' : docked ? 'complementary' : 'dialog'}
       aria-label={embedded ? 'Atelier Vela' : 'Agent Vela'}
     >
-        <header className="agent-head">
-          <div className="agent-identity">
-            <span className="agent-mark">
-              <Icon name="sparkles" size={18} />
-            </span>
-            <div>
-              <h1>{embedded ? 'Atelier' : 'Agent Vela'}</h1>
-              <p>
-                {embedded
-                  ? 'Le mode où l’IA travaille : joignez des onglets, demandez, relisez.'
-                  : 'Lit les onglets joints et rédige à côté de la page, sans la masquer.'}
-              </p>
-            </div>
+      <header className="agent-head">
+        <div className="agent-identity">
+          <span className="agent-mark">
+            <Icon name="sparkles" size={18} />
+          </span>
+          <div>
+            <h1>{embedded ? 'Atelier' : 'Agent Vela'}</h1>
+            <AgentEngine
+              settings={view.settings}
+              onConfigure={() => setOverlay('settings')}
+            />
           </div>
-          <div className="agent-head-actions">
+        </div>
+        <div className="agent-head-actions">
+          <button
+            type="button"
+            className="work-toggle"
+            data-active={showWorks}
+            onClick={() => setShowWorks((value) => !value)}
+            title="Conversations enregistrées"
+          >
+            <Icon name="inbox" size={14} />
+            <span className="work-toggle-label">Rapports</span>
+            {activeWorks > 0 && <span className="work-toggle-count">{activeWorks}</span>}
+          </button>
+          {!embedded && (
             <button
               type="button"
-              className="work-toggle"
-              data-active={showWorks}
-              onClick={() => setShowWorks((value) => !value)}
-              title="Rapports de l’atelier"
+              className="icon-btn"
+              onClick={() => toggleAgent(false)}
+              title={`Fermer l’agent (${shortcut('J')})`}
+              aria-label="Fermer l’agent"
             >
-              <Icon name="inbox" size={14} />
-              <span className="work-toggle-label">Rapports</span>
-              {activeWorks > 0 && <span className="work-toggle-count">{activeWorks}</span>}
+              <Icon name="close" size={18} />
             </button>
-            <span className="mode-chip" data-mode={modeLabel}>
-              {modeLabel === 'api'
-                ? docked
-                  ? 'API'
-                  : 'Modèle connecté'
-                : docked
-                  ? 'Démo'
-                  : 'Démo locale'}
-            </span>
-            {!embedded && (
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => toggleAgent(false)}
-                title={`Fermer l’agent (${shortcut('J')})`}
-                aria-label="Fermer l’agent"
-              >
-                <Icon name="close" size={18} />
-              </button>
-            )}
-          </div>
-        </header>
+          )}
+        </div>
+      </header>
 
-        {showWorks && (
-          <WorkList
-            onOpen={async (work) => {
-              if (await openWork(work)) setShowWorks(false)
-            }}
-          />
-        )}
+      {showWorks && (
+        <WorkList
+          onOpen={async (work) => {
+            if (await openWork(work)) setShowWorks(false)
+          }}
+        />
+      )}
 
-        <div className="agent-body" data-hidden={showWorks} data-idle={agent.status === 'idle'}>
-          <aside className="agent-left">
-            {!configured && (
-              <div className="agent-setup">
-                <span className="agent-setup-icon">
-                  <Icon name="key" size={15} />
-                </span>
-                <div className="agent-setup-copy">
-                  <strong>Aucun modèle connecté</strong>
-                  <p>Rapport simulé en local. Une clé ou Ollama donne un vrai rapport.</p>
-                  <button type="button" className="action" onClick={() => setOverlay('settings')}>
-                    <Icon name="settings" size={14} />
-                    Connecter un modèle
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="agent-mode-switch" role="group" aria-label="Ce que fait l’agent">
-              <button
-                type="button"
-                data-active={mode === 'answer'}
-                aria-pressed={mode === 'answer'}
-                onClick={() => setMode('answer')}
-                title="Lire les onglets joints et rédiger un rapport"
-                disabled={running}
-              >
-                <Icon name="notes" size={13} />
-                Répondre
-              </button>
-              <button
-                type="button"
-                data-active={mode === 'act'}
-                aria-pressed={mode === 'act'}
-                onClick={() => setMode('act')}
-                title="Ouvrir un onglet de travail et agir : cliquer, saisir, défiler, lire"
-                disabled={running}
-              >
-                <Icon name="globe" size={13} />
-                Agir
-              </button>
-            </div>
-
-            <label className="field-label" htmlFor="agent-prompt">
-              {mode === 'act' ? 'Votre consigne' : 'Votre demande'}
-            </label>
-            <textarea
-              id="agent-prompt"
-              ref={promptRef}
-              className="agent-prompt"
-              rows={4}
-              value={prompt}
-              placeholder="Ex. Compare ces deux articles et dis-moi lequel garder."
-              onChange={(event) => setPrompt(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                  event.preventDefault()
-                  run()
-                }
-              }}
-            />
-
-            <div className="sources-head">
-              <span className="sources-label">
-                Onglets joints
-                <span className="sources-count">{selected.length}</span>
-              </span>
-              <div className="sources-actions">
-                {canAttachCurrent && currentTab && !selected.includes(currentTab.id) && (
-                  <button
-                    type="button"
-                    className="text-btn"
-                    onClick={() => setSelected((current) => [...current, currentTab.id])}
-                  >
-                    Joindre l’actuel
-                  </button>
-                )}
-                {sources.length > 0 && (
-                  <button
-                    type="button"
-                    className="text-btn"
-                    title={
-                      selected.length === sources.length
-                        ? 'Détacher toutes les pages de cet espace'
-                        : 'Joindre toutes les pages de cet espace'
-                    }
-                    onClick={() =>
-                      setSelected(selected.length === sources.length ? [] : sources.map((tab) => tab.id))
-                    }
-                  >
-                    {selected.length === sources.length ? 'Tout détacher' : 'Tout joindre'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="source-list" data-empty={sources.length === 0}>
-              {sources.length === 0 && (
-                <p className="sources-empty">Ouvrez une page dans cet espace pour la donner à lire à l’agent.</p>
-              )}
-              {sources.map((tab) => {
-                const checked = selected.includes(tab.id)
-                return (
-                  <label key={tab.id} className="source-row" data-selected={checked}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleSource(tab.id)} />
-                    <Favicon src={tab.favicon} label={tab.title || hostOf(tab.url)} size={14} />
-                    <span className="source-copy">
-                      <span className="source-title">{tab.title}</span>
-                      <span className="source-host">{hostOf(tab.url)}</span>
-                    </span>
-                  </label>
-                )
-              })}
-            </div>
-
-            {!running && mode === 'answer' && selected.length === 0 && (
-              <p className="agent-hint">Joignez au moins une page : l’agent ne lit que ce que vous lui donnez.</p>
-            )}
-            {!running && mode === 'act' && (
-              <p className="agent-hint">
-                L’agent ouvrira son propre onglet dans cet espace et y agira avec vos sessions. Les
-                onglets joints restent un contexte.
-              </p>
-            )}
-
-            <div className="agent-run">
-              <button
-                type="button"
-                className="action primary wide"
-                onClick={run}
-                disabled={running || (mode === 'answer' && selected.length === 0)}
-                title={
-                  mode === 'answer' && selected.length === 0
-                    ? 'Joignez au moins une page pour lancer l’agent'
-                    : undefined
-                }
-              >
-                <Icon name="sparkles" size={15} />
-                {running
-                  ? 'L’agent travaille…'
-                  : mode === 'act'
-                    ? 'Agir sur les pages'
-                    : modeLabel === 'api'
-                      ? 'Lancer l’agent'
-                      : 'Lancer la démo'}
-                {!running && (mode === 'act' || selected.length > 0) && <kbd>{shortcut('↵')}</kbd>}
-              </button>
-              {running && (
-                <button type="button" className="action wide" onClick={() => cancelAgent()}>
-                  <Icon name="stop" size={13} />
-                  Arrêter
-                </button>
-              )}
-              {!running && (
-                <div className="agent-recent">
-                  <span className="field-label">{activeWorks > 0 ? 'Derniers travaux' : 'Exemples'}</span>
-                  <ul>
-                    {activeWorks > 0
-                      ? works
-                          .filter((work) => !work.archived)
-                          .slice(0, 3)
-                          .map((work) => (
-                            <li key={work.id}>
-                              <button type="button" className="agent-recent-row" onClick={() => void openWork(work)}>
-                                <Icon name="notes" size={12} />
-                                <span className="agent-recent-title">{work.title}</span>
-                                <span className="agent-recent-meta">
-                                  {work.sourceCount} source{work.sourceCount > 1 ? 's' : ''}
-                                </span>
-                              </button>
-                            </li>
-                          ))
-                      : AGENT_EXAMPLES.slice(0, 2).map((example) => (
-                          <li key={example}>
-                            <button
-                              type="button"
-                              className="agent-recent-row"
-                              onClick={() => {
-                                setPrompt(example)
-                                promptRef.current?.focus()
-                              }}
-                            >
-                              <Icon name="sparkles" size={12} />
-                              <span className="agent-recent-title">{example}</span>
-                            </button>
-                          </li>
-                        ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <p className="agent-note">
-              {modeLabel !== 'api'
-                ? mode === 'act'
-                  ? 'Agir demande un modèle connecté : la démo locale ne sait pas cliquer.'
-                  : 'Mode démo : rapport simulé localement à partir des titres. Aucune page n’est envoyée.'
-                : mode === 'act'
-                  ? 'L’agent envoie au modèle ce qu’il lit dans son onglet. Chaque action demande votre validation : vérifiez-la, notamment avant toute saisie ou soumission.'
-                  : 'Le texte des onglets joints est envoyé au modèle configuré. Le contenu des pages est traité comme une donnée non fiable, jamais comme une instruction.'}
-            </p>
-          </aside>
-
-          <section className="agent-right">
-            {agent.status === 'idle' ? (
-              <div className="agent-empty">
-                <p className="eyebrow">
-                  <span className="eyebrow-dot" />
-                  Espace de travail
-                </p>
-                <h2>
-                  Un rapport,
-                  <br />
-                  pas dix onglets.
-                </h2>
-                <p className="agent-empty-lede">
-                  Joignez des pages, posez une question. L’agent lit, croise et rédige — vous gardez la décision.
-                </p>
-                <div className="capability-grid">
-                  {CAPABILITIES.map((capability) => (
-                    <div className="capability" key={capability.title}>
-                      <span className="capability-icon">
-                        <Icon name={capability.icon} size={16} />
-                      </span>
-                      <strong>{capability.title}</strong>
-                      <span>{capability.detail}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="agent-result" role="region" aria-label="Rapport de l’agent">
-                <div className="result-head">
-                  <div>
-                    <p className="eyebrow">
-                      <span className="eyebrow-dot" />
-                      {running ? (
-                        <span className="thinking-dots" aria-label="Rédaction en cours">
-                          Rédaction en cours<span>.</span>
-                          <span>.</span>
-                          <span>.</span>
-                        </span>
-                      ) : agent.status === 'done'
-                          ? 'Rapport prêt'
-                          : agent.status === 'cancelled'
-                            ? 'Recherche arrêtée'
-                            : 'Une erreur est survenue'}
-                    </p>
-                    <h2>{agent.title || 'Rapport Vela'}</h2>
-                  </div>
-                  <div className="result-actions">
-                    <button type="button" className="icon-btn" onClick={() => void copy()} title="Copier le rapport" disabled={!agent.markdown}>
-                      <Icon name="copy" size={15} />
-                    </button>
-
-                    <button type="button" className="icon-btn" onClick={() => resetAgent()} title="Nouvelle demande">
-                      <Icon name="plus" size={15} />
-                    </button>
-                  </div>
-                </div>
-
-                <ol className="steps">
-                  {agent.steps.map((step, index) => (
-                    <li key={`${step.label}-${index}`} data-state={step.state}>
-                      <span className="step-dot">
-                        {step.state === 'done' ? <Icon name="check" size={10} /> : <span />}
-                      </span>
-                      {step.label}
-                    </li>
-                  ))}
-                  {agent.steps.length === 0 && running && (
-                    <li data-state="active">
-                      <span className="step-dot">
-                        <span />
-                      </span>
-                      Connexion à l’agent…
-                    </li>
-                  )}
-                </ol>
-
-                {agent.journal.length > 0 && (
-                  <div className="agent-journal" role="region" aria-label="Journal des actions">
-                    <p className="journal-head">
-                      <Icon name="list" size={13} />
-                      Journal des actions
-                      <span className="journal-count">{agent.journal.length}</span>
-                    </p>
-                    <ol className="journal-list">
-                      {agent.journal.map((entry) => (
-                        <li key={entry.id} data-ok={entry.ok}>
-                          <span className="journal-index">{entry.index}</span>
-                          <span className="journal-copy">
-                            <span className="journal-label">{entry.label}</span>
-                            <span className="journal-detail">{entry.detail}</span>
-                          </span>
-                          <span className="journal-state">
-                            <Icon name={entry.ok ? 'check' : 'warning'} size={11} />
-                            <span className="sr-only">{entry.ok ? 'Fait' : 'Échec'}</span>
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
-                {agent.error && (
-                  <div className="agent-error">
-                    <Icon name="warning" size={15} />
-                    <div>
-                      <strong>L’agent s’est arrêté.</strong>
-                      <p>{agent.error}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="result-scroll" ref={reportRef}>
-                  {agent.markdown ? (
-                    <>
-                      <Markdown
-                        text={agent.markdown}
-                        sourceLinks={agent.mode === 'api' ? agent.sources : []}
-                      />
-                      {running && <span className="caret" />}
-                    </>
-                  ) : (
-                    !agent.error && (
-                      <div className="result-skeleton">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                    )
-                  )}
-                </div>
-
-                <div className="work-sources">
-                  {sources.filter((t) => selected.includes(t.id)).slice(0, 4).map((t) => (
-                    <span key={t.id} className="work-source"><strong>{hostOf(t.url)}</strong> {t.title.slice(0, 40)}</span>
-                  ))}
-                </div>
-                <footer className="result-foot">
-                  <span className="result-mode">
-                    <Icon name="sparkles" size={13} />
-                    {modeLabel === 'api' ? 'Modèle connecté' : 'Démo locale'}
-                    {approved && ' · Relu ✓'}
-                  </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="action" onClick={() => setApproved(true)} disabled={!agent.markdown || agent.status !== 'done' || approved}>
-                      <Icon name="check" size={14} /> {approved ? 'Relu' : 'Relire et approuver'}
-                    </button>
-                    <button type="button" className="action primary" onClick={() => void saveAgentNote()} disabled={!agent.markdown || !approved} title={approved ? 'Enregistrer' : 'Approuvez d’abord le rapport'}>
-                      <Icon name="notes" size={14} /> Enregistrer en note
-                    </button>
-                  </div>
-                </footer>
-              </div>
-            )}
-          </section>
+      <div className="chat" data-hidden={showWorks}>
+        <ChatTranscript
+          agent={agent}
+          mode={mode}
+          approved={approved}
+          engineLabel={engineLabel}
+          engineLocal={engineLocal}
+          onPick={(text) => {
+            setPrompt(text)
+            inputRef.current?.focus()
+          }}
+          onCopy={() => void copy()}
+          onApprove={() => setApproved(true)}
+          onSave={() => void saveAgentNote()}
+          onReset={() => {
+            setApproved(false)
+            resetAgent()
+          }}
+        />
+        <ChatComposer
+          value={prompt}
+          onChange={setPrompt}
+          onSend={run}
+          running={running}
+          onCancel={() => cancelAgent()}
+          mode={mode}
+          onMode={setMode}
+          tabs={tabs}
+          selected={selected}
+          onToggle={toggleSource}
+          onJoinAll={(join) => setSelected(join ? tabs.map((tab) => tab.id) : [])}
+          inputRef={inputRef}
+        />
       </div>
     </div>
   )

@@ -76,12 +76,17 @@ function AudioToken({ name, label }: { name: string; label?: string }) {
 }
 
 function renderInline(text: string, prefix: string): ReactNode[] {
+  // `_italique_` et `__gras__` sont bornés aux mots : une regex nue avalait
+  // les identifiants (`snake_case`) et les chemins d’URL.
   const tokens = text.split(
-    /(!\[[^\]]*\]\([^)]+\)|\[\[[^[\]|\n]+(?:\|[^[\]\n]+)?\]\]|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g
+    /(!\[[^\]]*\]\([^)]+\)|\[\[[^[\]|\n]+(?:\|[^[\]\n]+)?\]\]|\*\*[^*]+\*\*|(?<![\w])__[^_\n]+__(?![\w])|\*[^*]+\*|(?<![\w])_[^_\n]+_(?![\w])|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~)/g
   )
   return tokens.filter(Boolean).map((token, index) => {
     const key = `${prefix}-${index}`
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+      return <strong key={key}>{renderInline(token.slice(2, -2), key)}</strong>
+    }
+    if (token.startsWith('__') && token.endsWith('__') && token.length > 4) {
       return <strong key={key}>{renderInline(token.slice(2, -2), key)}</strong>
     }
     if (token.startsWith('~~') && token.endsWith('~~') && token.length > 4) {
@@ -91,6 +96,9 @@ function renderInline(text: string, prefix: string): ReactNode[] {
       return <code key={key}>{token.slice(1, -1)}</code>
     }
     if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
+      return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
+    }
+    if (token.startsWith('_') && token.endsWith('_') && token.length > 2) {
       return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
     }
     const wiki = token.match(/^\[\[([^[\]|\n]{1,120})(?:\|([^[\]\n]{1,120}))?\]\]$/)

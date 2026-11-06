@@ -1,22 +1,27 @@
 import { dialog, type BrowserWindow } from 'electron'
 import { planDemoRun } from '@shared/agent'
 import {
-  ACT_SYSTEM_PROMPT,
+  ACT_ARGS_SYSTEM,
+  ACT_CHOICE_SYSTEM,
   AGENT_BUDGET,
   buildActReport,
-  buildStepPrompt,
+  buildToolArgsPrompt,
+  buildToolChoicePrompt,
   describeAction,
-  parseAgentAction,
-  type AgentActionEntry
+  parseToolArgs,
+  parseToolChoice,
+  type AgentAction,
+  type AgentActionEntry,
+  type ToolArgsPromptInput
 } from '@shared/agentLoop'
 import { newId } from '@shared/defaults'
 import {
-  buildChatRequest,
-  parseStreamPayload,
   providerById,
   providerReady,
-  providerState
+  providerState,
+  type ProviderDefinition
 } from '@shared/providers'
+import { chatModel, type AgentModel } from '@shared/agentModel'
 import type { AgentEvent, AgentMode, AgentRunRequest, ProviderId, Settings } from '@shared/types'
 import { PageDriver, type DriverWorkspace } from './pageDriver'
 
@@ -144,49 +149,16 @@ export class AgentRunner {
       }
     }
     const state = providerState(settings)
-    const chat = buildChatRequest(definition, { baseUrl: state.baseUrl, model: state.model }, key, [
-      { role: 'system', content: input.system },
-      { role: 'user', content: input.prompt }
-    ])
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 60_000)
+    const session = await chatModel({
+      definition,
+      config: { baseUrl: state.baseUrl, model: state.model },
+      key,
+      timeoutMs: 60_000
+    }).create({ system: input.system })
     try {
-      const response = await fetch(chat.url, {
-        method: 'POST',
-        headers: chat.headers,
-        body: chat.body,
-        signal: controller.signal
-      })
-      if (!response.ok || !response.body) {
-        const detail = await response.text().catch(() => '')
-        throw new Error(
-          `Modèle indisponible (${response.status}). ${detail.slice(0, 160) || 'Vérifiez la clé et l’URL.'}`
-        )
-      }
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let text = ''
-      for (;;) {
-        const { value, done } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (!trimmed.startsWith('data:')) continue
-          const data = trimmed.slice(5).trim()
-          if (!data || data === '[DONE]') continue
-          const delta = parseStreamPayload(definition.protocol, data)
-          if (delta) text += delta
-        }
-      }
-      const clean = text.trim()
-      if (!clean) throw new Error('Le modèle n’a renvoyé aucun texte.')
-      return { text: clean, mode: 'api' }
+      return { text: await session.prompt(input.prompt), mode: 'api' }
     } finally {
-      clearTimeout(timer)
+      session.destroy()
     }
   }
 
@@ -434,25 +406,37 @@ export class AgentRunner {
         reason = 'budget'
         break
       }
-      const reply = await this.chatOnce(
+      const config = { baseUrl: state.baseUrl, model: state.model }
+      const turn = {
+        prompt: request.prompt,
+        step,
+        steps: AGENT_BUDGET.steps,
+        page: driver.page(),
+        transcript: transcript.join('\n')
+      }
+      // Deux temps courts : un mot pour l'outil, puis ses arguments. Un petit
+      // modèle tient ces deux formats mieux qu'un objet JSON complet.
+      const choice = await this.chatOnce(
         run,
         definition,
-        { baseUrl: state.baseUrl, model: state.model },
+        config,
         key,
-        buildStepPrompt({
-          prompt: request.prompt,
-          step,
-          steps: AGENT_BUDGET.steps,
-          page: driver.page(),
-          transcript: transcript.join('\n')
-        })
+        buildToolChoicePrompt(turn),
+        ACT_CHOICE_SYSTEM
       )
       if (!this.alive(run)) return
-      const action = parseAgentAction(reply)
+      const tool = parseToolChoice(choice)
+      if (!tool) {
+        // Rien d'exploitable : on garde sa réponse comme conclusion plutôt que
+        // d'exécuter une action inventée.
+        answer = choice.trim()
+        reason = 'unparsed'
+        break
+      }
+      const action = await this.argsFor(run, definition, config, key, { ...turn, tool })
+      if (!this.alive(run)) return
       if (!action) {
-        // Le modèle a répondu autre chose qu'une action : on garde sa réponse
-        // comme conclusion plutôt que d'exécuter quelque chose d'inventé.
-        answer = reply.trim()
+        answer = `L’agent n’a pas fourni les arguments de « ${tool} » : l’exécution s’arrête là.`
         reason = 'unparsed'
         break
       }
@@ -558,65 +542,64 @@ export class AgentRunner {
     this.finish(run)
   }
 
-  /** Un tour de conversation : le modèle ne renvoie qu'une action. */
+  /** Le modèle de cette exécution : annuler l'agent coupe le tour en cours. */
+  private model(
+    run: ActiveRun,
+    definition: ProviderDefinition,
+    config: { baseUrl: string; model: string },
+    key: string | null
+  ): AgentModel {
+    return chatModel({ definition, config, key, signal: run.controller.signal })
+  }
+
+  /** Un tour de conversation, avec la consigne propre à l'étape. */
   private async chatOnce(
     run: ActiveRun,
-    definition: ReturnType<typeof providerById>,
+    definition: ProviderDefinition,
     config: { baseUrl: string; model: string },
     key: string | null,
-    user: string
+    user: string,
+    system: string
   ): Promise<string> {
-    const chat = buildChatRequest(definition, config, key, [
-      { role: 'system', content: ACT_SYSTEM_PROMPT },
-      { role: 'user', content: user }
-    ])
-    const controller = new AbortController()
-    const relay = (): void => controller.abort()
-    run.controller.signal.addEventListener('abort', relay)
-    const timer = setTimeout(() => controller.abort(), 60_000)
+    const session = await this.model(run, definition, config, key).create({ system })
     try {
-      const response = await fetch(chat.url, {
-        method: 'POST',
-        headers: chat.headers,
-        body: chat.body,
-        signal: controller.signal
-      })
-      if (!response.ok || !response.body) {
-        const detail = await response.text().catch(() => '')
-        throw new Error(
-          `Modèle indisponible (${response.status}). ${detail.slice(0, 160) || 'Vérifiez l’URL et la clé.'}`
-        )
-      }
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let collected = ''
-      for (;;) {
-        const { value, done } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (!trimmed.startsWith('data:')) continue
-          const data = trimmed.slice(5).trim()
-          if (!data || data === '[DONE]') continue
-          collected += parseStreamPayload(definition.protocol, data)
-        }
-      }
-      if (!collected.trim()) throw new Error('Le modèle n’a renvoyé aucun texte.')
-      return collected.trim()
-    } catch (error) {
-      if (run.cancelled) throw error
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Le modèle n’a pas répondu dans la minute.', { cause: error })
-      }
-      throw error
+      return await session.prompt(user)
     } finally {
-      clearTimeout(timer)
-      run.controller.signal.removeEventListener('abort', relay)
+      session.destroy()
     }
+  }
+
+  /**
+   * Deuxième temps du tour : les arguments du seul outil retenu. Une relance
+   * unique, avec la réponse fautive citée, vaut mieux que d'abandonner une
+   * tâche sur un champ mal nommé.
+   */
+  private async argsFor(
+    run: ActiveRun,
+    definition: ProviderDefinition,
+    config: { baseUrl: string; model: string },
+    key: string | null,
+    input: ToolArgsPromptInput
+  ): Promise<AgentAction | null> {
+    const first = await this.chatOnce(
+      run,
+      definition,
+      config,
+      key,
+      buildToolArgsPrompt(input),
+      ACT_ARGS_SYSTEM
+    )
+    const action = parseToolArgs(input.tool, first)
+    if (action || !this.alive(run)) return action
+    const retry = await this.chatOnce(
+      run,
+      definition,
+      config,
+      key,
+      buildToolArgsPrompt({ ...input, correction: first }),
+      ACT_ARGS_SYSTEM
+    )
+    return parseToolArgs(input.tool, retry)
   }
 
   /** Affiche le rapport au fil de l'eau, comme un texte rédigé. */
@@ -691,25 +674,15 @@ export class AgentRunner {
       }
     ]
 
-    const chat = buildChatRequest(
+    const session = await chatModel({
       definition,
-      { baseUrl: state.baseUrl, model: state.model },
+      config: { baseUrl: state.baseUrl, model: state.model },
       key,
-      messages as { role: 'system' | 'user'; content: string }[]
-    )
-    const response = await fetch(chat.url, {
-      method: 'POST',
-      headers: chat.headers,
-      body: chat.body,
-      signal: run.controller.signal
-    })
-
-    if (!response.ok || !response.body) {
-      const detail = await response.text().catch(() => '')
-      throw new Error(
-        `Modèle indisponible (${response.status}). ${detail.slice(0, 160) || 'Vérifiez l’URL et la clé.'}`
-      )
-    }
+      signal: run.controller.signal,
+      // Un rapport peut être long : pas de limite de tour, seule l'annulation
+      // de l'exécution arrête le flux.
+      timeoutMs: 0
+    }).create({ system: messages[0].content })
 
     this.emit({ runId: run.id, type: 'step', index: 0, state: 'done' })
     this.emit({ runId: run.id, type: 'step', index: 1, state: 'active' })
@@ -718,37 +691,19 @@ export class AgentRunner {
     this.emit({ runId: run.id, type: 'step', index: 1, state: 'done' })
     this.emit({ runId: run.id, type: 'step', index: 2, state: 'active' })
 
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let sawDelta = false
-
-    for (;;) {
-      const { value, done } = await reader.read()
-      if (done) break
-      if (!this.alive(run)) {
-        await reader.cancel().catch(() => {})
-        return
+    try {
+      let sawDelta = false
+      for await (const delta of session.promptStreaming(messages[1].content)) {
+        if (!this.alive(run)) return
+        sawDelta = true
+        run.markdown += delta
+        this.emit({ runId: run.id, type: 'delta', text: delta })
       }
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed.startsWith('data:')) continue
-        const data = trimmed.slice(5).trim()
-        if (!data || data === '[DONE]') continue
-        const delta = parseStreamPayload(definition.protocol, data)
-        if (delta) {
-          sawDelta = true
-          run.markdown += delta
-          this.emit({ runId: run.id, type: 'delta', text: delta })
-        }
-      }
+      if (!this.alive(run)) return
+      if (!sawDelta) throw new Error('Le modèle n’a renvoyé aucun texte.')
+    } finally {
+      session.destroy()
     }
-
-    if (!this.alive(run)) return
-    if (!sawDelta) throw new Error('Le modèle n’a renvoyé aucun texte.')
     this.emit({ runId: run.id, type: 'step', index: 2, state: 'done' })
     this.emit({ runId: run.id, type: 'done' })
     this.archive(run, 'done')

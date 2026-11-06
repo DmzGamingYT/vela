@@ -72,6 +72,23 @@
 
 .quicknotes-heading h2 {
   margin-bottom: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Sous 300 px de contenu — le tiroir de notes ouvre l'accueil sur une colonne
+   étroite — « Mémoire de l'espace » ne tenait plus à côté de « Voix » et
+   « Toutes » et se coupait sur deux lignes. Les actions gardent leur icône et
+   leur infobulle, seul leur libellé s'efface. */
+.home-quicknotes {
+  container-type: inline-size;
+}
+
+@container (max-width: 300px) {
+  .home-quicknotes .home-card-action span {
+    display: none;
+  }
 }
 
 .quicknotes-scope {

@@ -16,7 +16,8 @@ export default function TasksCard() {
   const open = tasks.filter((t) => !t.done)
   const done = tasks.filter((t) => t.done)
   const total = tasks.length
-  const percent = total === 0 ? 0 : Math.round((done.length / total) * 100)
+  const empty = total === 0
+  const percent = empty ? 0 : Math.round((done.length / total) * 100)
   const visible = [...open.slice(0, 4), ...done.slice(0, 2)]
 
   const submit = (): void => {
@@ -25,11 +26,41 @@ export default function TasksCard() {
     setDraft('')
   }
 
+  // Sans tâche, le champ monte dans l'en-tête : la carte vide tenait cent
+  // pixels pour un titre et un champ. Dans un volet étroit, il passe dessous
+  // au lieu de se comprimer.
+  const addTask = (
+    <div className="tasks-add">
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder="Ajouter une tâche…"
+        spellCheck={false}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            submit()
+          }
+        }}
+        aria-label="Nouvelle tâche"
+      />
+      <button type="button" onClick={submit} title="Ajouter" aria-label="Ajouter la tâche" disabled={!draft.trim()}>
+        <Icon name="plus" size={13} />
+      </button>
+    </div>
+  )
+
   return (
-    <section className="home-card home-tasks" aria-label="Tâches du jour">
+    <section
+      className="home-card home-tasks"
+      data-empty={empty ? 'true' : undefined}
+      aria-label="Tâches du jour"
+    >
       <div className="home-card-head">
         <h2>Tâches du jour</h2>
-        {total > 0 && (
+        {empty ? (
+          addTask
+        ) : (
           <span className="tasks-score" aria-hidden="true">
             {done.length}/{total}
           </span>
@@ -52,6 +83,7 @@ export default function TasksCard() {
         </div>
       )}
 
+      {total > 0 && (
       <ul className="tasks-list">
         {visible.map((task) => (
           <li key={task.id} className="task-row" data-done={task.done ? 'true' : undefined}>
@@ -81,25 +113,9 @@ export default function TasksCard() {
           </li>
         ))}
       </ul>
+      )}
 
-      <div className="tasks-add">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ajouter une tâche…"
-          spellCheck={false}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              submit()
-            }
-          }}
-          aria-label="Nouvelle tâche"
-        />
-        <button type="button" onClick={submit} title="Ajouter" aria-label="Ajouter la tâche" disabled={!draft.trim()}>
-          <Icon name="plus" size={13} />
-        </button>
-      </div>
+      {empty ? null : addTask}
     </section>
   )
 }

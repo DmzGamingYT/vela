@@ -40,7 +40,12 @@
   -webkit-app-region: drag;
 }
 
+/* Les trois commandes de navigation restent plus petites que la pilule :
+   28 px de large, l'icône à 16 px garde son air autour d'elle. */
 .pane-head .icon-btn {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   -webkit-app-region: no-drag;
 }
 
@@ -82,6 +87,13 @@
   cursor: pointer;
 }
 
+/* Au repos la pilule affiche un nom de page, pas une URL : il se centre dans
+   la barre. Au focus le champ redevient une adresse éditable, alignée à
+   gauche, sinon le curseur saute au milieu du texte. */
+.address:not([data-focused='true']) .address-input {
+  text-align: center;
+}
+
 .address[data-focused='true'] {
   background: var(--surface);
   border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
@@ -106,6 +118,69 @@
 .address-input::placeholder {
   color: var(--muted);
   opacity: 0.8;
+}
+
+/* Progression d’un téléchargement en cours, sur le bouton de la barre. */
+.download-btn {
+  position: relative;
+}
+
+.download-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.download-ring-track {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.14;
+  stroke-width: 2;
+}
+
+.download-ring-fill {
+  fill: none;
+  stroke: var(--clay);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 17px 17px;
+  transition: stroke-dasharray 240ms ease;
+}
+
+/* Taille inconnue : l’anneau tourne au lieu d’afficher un faux chiffre. */
+.download-ring-fill[data-known='false'] {
+  animation: download-ring-turn 1.2s linear infinite;
+}
+
+@keyframes download-ring-turn {
+  to {
+    transform: rotate(270deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-ring-fill {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Pastille du bouton Téléchargements, dans la barre du haut. */
+.bar-count {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  min-width: 13px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--clay);
+  color: var(--paper);
+  font-size: 8px;
+  line-height: 13px;
+  text-align: center;
 }
 
 
