@@ -1,51 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { NoteAiAction } from '@shared/api'
 import { parseDroppedExcerpt } from '@shared/noteDrop'
-import {
-  completeLink,
-  findNoteByTitle,
-  linkQueryAt,
-  removeAudioToken,
-  suggestNotes,
-  type NoteGraph
-} from '@shared/noteLinks'
-import type { Note, NoteMeta, PageHighlight } from '@shared/types'
+import { findNoteByTitle, removeAudioToken, type NoteGraph } from '@shared/noteLinks'
+import type { NoteMeta, PageHighlight } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
-import { shortDate, timeAgo } from '../lib/format'
-import { Markdown, type NoteAudioContext, type NoteLinkContext } from '../lib/markdown'
+import type { NoteAudioContext, NoteLinkContext } from '../lib/markdown'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import NoteRecorder from './NoteRecorder'
-
-interface Draft {
-  id?: string
-  title: string
-  body: string
-  spaceId: string
-  url?: string
-  tags: string[]
-  pinned: boolean
-}
-
-const AI_ACTIONS: { id: NoteAiAction; label: string; hint: string }[] = [
-  { id: 'reformulate', label: 'Reformuler', hint: 'Phrases claires, même contenu' },
-  { id: 'summarize', label: 'Résumer', hint: 'Cinq points et une synthèse' },
-  { id: 'translate', label: 'Traduire', hint: 'En français, structure conservée' },
-  { id: 'correct', label: 'Corriger', hint: 'Orthographe et grammaire' },
-  { id: 'beautify', label: 'Embellir', hint: 'Mise en page Markdown' }
-]
-
-function draftFrom(note: Note): Draft {
-  return {
-    id: note.id,
-    title: note.title,
-    body: note.body,
-    spaceId: note.spaceId,
-    url: note.url,
-    tags: note.tags ?? [],
-    pinned: note.pinned ?? false
-  }
-}
+import NoteActions from './notes/NoteActions'
+import NoteEditor from './notes/NoteEditor'
+import NoteSketch from './notes/NoteSketch'
+import NotesHead from './notes/NotesHead'
+import NotesList from './notes/NotesList'
+import { draftFrom, type Draft } from './notes/draft'
+import { useMarkdownTools } from './notes/useMarkdownTools'
+import { useNoteAi } from './notes/useNoteAi'
+import { useSketch } from './notes/useSketch'
 
 export default function NotesDrawer() {
   const view = useBrowser((state) => state.view)
@@ -70,12 +40,8 @@ export default function NotesDrawer() {
   const [preview, setPreview] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [tagDraft, setTagDraft] = useState('')
-  const [aiBusy, setAiBusy] = useState<NoteAiAction | 'generate' | null>(null)
-  const [aiMode, setAiMode] = useState<'api' | 'demo' | null>(null)
-  const [sketchOpen, setSketchOpen] = useState(false)
   const [dropping, setDropping] = useState(false)
   const [highlights, setHighlights] = useState<PageHighlight[]>([])
-  const [linkMenu, setLinkMenu] = useState<{ query: string; index: number } | null>(null)
   const [graph, setGraph] = useState<NoteGraph | null>(null)
   const [linksOpen, setLinksOpen] = useState(true)
   const [renameUndo, setRenameUndo] = useState<{ id: string; from: string; updated: number } | null>(null)
@@ -94,8 +60,6 @@ export default function NotesDrawer() {
   // brouillon pour pouvoir vider la file avant de changer de note.
   const pendingSave = useRef<{ timer: ReturnType<typeof setTimeout>; draft: Draft } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const drawing = useRef<{ active: boolean; x: number; y: number } | null>(null)
 
   // Le brouillon courant est recopié dans une référence lue au démontage :
   // l'écriture se fait après le rendu, jamais pendant.
@@ -107,6 +71,39 @@ export default function NotesDrawer() {
   const activeUrl = activeTab && !isHomeUrl(activeTab.url) ? activeTab.url : undefined
   const space = view?.spaces.find((item) => item.id === view.activeSpaceId)
 
+  const {
+    linkMenu,
+    setLinkMenu,
+    linkSuggestions,
+    insertMarkdown,
+    prefixLines,
+    updateLinkMenu,
+    applyLinkSuggestion
+  } = useMarkdownTools({
+    draft,
+    setDraft,
+    setDirty,
+    setPreview,
+    textareaRef,
+    notes: view?.notes ?? []
+  })
+
+  const { aiBusy, aiMode, setAiMode, runAi, generateNote } = useNoteAi({
+    draft,
+    setDraft,
+    setDirty,
+    setPreview,
+    setSavedAt,
+    saveNote,
+    activeTitle: activeTab?.title,
+    activeUrl,
+    spaceId: view?.activeSpaceId ?? '',
+    toast
+  })
+
+  const { sketchOpen, setSketchOpen, canvasRef, startDraw, moveDraw, endDraw, insertSketch } =
+    useSketch({ hasDraft: Boolean(draft), insertMarkdown, toast })
+
   const allTags = useMemo(() => {
     const counts = new Map<string, number>()
     for (const note of view?.notes ?? []) {
@@ -114,7 +111,6 @@ export default function NotesDrawer() {
     }
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
   }, [view?.notes])
-
   const notes = useMemo(() => {
     const list = view?.notes ?? []
     const search = filter.trim().toLowerCase()
@@ -217,7 +213,7 @@ export default function NotesDrawer() {
         toast('Cette note est introuvable.', 'error')
       }
     },
-    [flushPending, toast]
+    [flushPending, toast, setAiMode, setLinkMenu]
   )
 
   // Une commande de la palette a choisi une note : on l'ouvre vraiment.
@@ -276,18 +272,6 @@ export default function NotesDrawer() {
     }
   }, [activeUrl])
 
-  const linkSuggestions = useMemo(
-    () =>
-      linkMenu && draft
-        ? suggestNotes(
-            (view?.notes ?? []).map((note) => ({ id: note.id, title: note.title })),
-            linkMenu.query,
-            draft.id
-          )
-        : [],
-    [linkMenu, draft, view?.notes]
-  )
-
   useEffect(() => {
     const id = draft?.id
     if (!id) {
@@ -305,19 +289,6 @@ export default function NotesDrawer() {
       alive = false
     }
   }, [draft?.id])
-
-  useEffect(() => {
-    if (!sketchOpen) return
-    const canvas = canvasRef.current
-    const context = canvas?.getContext('2d')
-    if (!canvas || !context) return
-    context.fillStyle = '#fffdf9'
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    context.strokeStyle = '#221f2e'
-    context.lineWidth = 2.6
-    context.lineCap = 'round'
-    context.lineJoin = 'round'
-  }, [sketchOpen])
 
   // Une note vocale demandée depuis le rail : le brouillon est créé une seule
   // fois par demande, hors du corps de l'effet (la microtâche passe avant la
@@ -347,7 +318,7 @@ export default function NotesDrawer() {
       setRecorderOpen(true)
       consumeVoiceNoteRequest()
     })
-  }, [voiceNoteRequest, voiceSpaceTarget, consumeVoiceNoteRequest])
+  }, [voiceNoteRequest, voiceSpaceTarget, consumeVoiceNoteRequest, setAiMode, setLinkMenu])
 
   if (!view) return null
 
@@ -372,7 +343,6 @@ export default function NotesDrawer() {
     setGraph(null)
     loadedTitle.current = ''
   }
-
 
   const capturePage = async (): Promise<void> => {
     if (!activeTab || !activeUrl) {
@@ -480,66 +450,6 @@ export default function NotesDrawer() {
     patchDraft({ tags: draft.tags.filter((entry) => entry !== tag) })
   }
 
-  /** Insère du Markdown au curseur, ou autour de la sélection. */
-  const insertMarkdown = (before: string, after = '', options: { block?: boolean } = {}): void => {
-    if (!draft) return
-    const area = textareaRef.current
-    const start = area?.selectionStart ?? draft.body.length
-    const end = area?.selectionEnd ?? draft.body.length
-    const selected = draft.body.slice(start, end)
-    const chunk = options.block ? `\n${before}${selected}${after}\n` : `${before}${selected}${after}`
-    const body = `${draft.body.slice(0, start)}${chunk}${draft.body.slice(end)}`
-    setDraft({ ...draft, body })
-    setDirty(true)
-    setPreview(false)
-    requestAnimationFrame(() => {
-      if (!area) return
-      area.focus()
-      const caret = start + chunk.length
-      area.setSelectionRange(caret, caret)
-    })
-  }
-
-  const prefixLines = (prefix: string): void => {
-    if (!draft) return
-    const area = textareaRef.current
-    const start = area?.selectionStart ?? 0
-    const end = area?.selectionEnd ?? 0
-    const selected = draft.body.slice(start, end) || ''
-    const block = selected
-      .split('\n')
-      .map((line) => `${prefix}${line}`)
-      .join('\n')
-    insertMarkdown(block || prefix)
-  }
-
-  /** Met à jour l'autocomplétion d'après le curseur, ou la ferme. */
-  const updateLinkMenu = (body: string, caret: number | null): void => {
-    if (caret === null) {
-      setLinkMenu(null)
-      return
-    }
-    const query = linkQueryAt(body, caret)
-    setLinkMenu(query ? { query: query.query, index: 0 } : null)
-  }
-
-  /** Remplace `[[frappe` par un lien complet vers la note choisie. */
-  const applyLinkSuggestion = (title: string): void => {
-    if (!draft) return
-    const area = textareaRef.current
-    const caret = area?.selectionStart ?? draft.body.length
-    const result = completeLink(draft.body, caret, title)
-    setDraft({ ...draft, body: result.body })
-    setDirty(true)
-    setPreview(false)
-    setLinkMenu(null)
-    requestAnimationFrame(() => {
-      if (!area) return
-      area.focus()
-      area.setSelectionRange(result.caret, result.caret)
-    })
-  }
-
   /** Crée la note manquante d'un lien, puis l'ouvre. */
   const createLinkedNote = async (title: string): Promise<void> => {
     if (!draft) return
@@ -603,66 +513,6 @@ export default function NotesDrawer() {
       }
     : undefined
 
-  const runAi = async (action: NoteAiAction): Promise<void> => {
-    if (!draft) return
-    if (!draft.body.trim()) {
-      toast('Écrivez d’abord quelques lignes.', 'error')
-      return
-    }
-    setAiBusy(action)
-    try {
-      const result = await window.vela.notes.ai({
-        action,
-        body: draft.body,
-        title: draft.title,
-        url: draft.url
-      })
-      if (!result.text) throw new Error('Réponse vide')
-      setDraft({
-        ...draft,
-        body: result.text,
-        tags: draft.tags.includes('ia') ? draft.tags : [...draft.tags, 'ia']
-      })
-      setDirty(true)
-      setPreview(true)
-      setAiMode(result.mode)
-      toast(result.mode === 'demo' ? 'Note réécrite en mode démo (aucun modèle configuré).' : 'Note réécrite par le modèle.')
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Le modèle n’a pas répondu.', 'error')
-    } finally {
-      setAiBusy(null)
-    }
-  }
-
-  const generateNote = async (): Promise<void> => {
-    setAiBusy('generate')
-    try {
-      const result = await window.vela.notes.ai({ action: 'generate' })
-      if (!result.text) throw new Error('Réponse vide')
-      const title = activeTab?.title ? `Note — ${activeTab.title}` : 'Note générée'
-      const note = await saveNote({
-        title: title.slice(0, 160),
-        body: result.text,
-        spaceId: view.activeSpaceId,
-        url: activeUrl,
-        tags: ['ia'],
-        pinned: false
-      })
-      if (note) {
-        setDraft(draftFrom(note))
-        setSavedAt(note.updatedAt)
-        setDirty(false)
-        setPreview(true)
-        setAiMode(result.mode)
-        toast(result.mode === 'demo' ? 'Note générée en mode démo (aucun modèle configuré).' : 'Note générée par le modèle.')
-      }
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Génération impossible.', 'error')
-    } finally {
-      setAiBusy(null)
-    }
-  }
-
   const dropCapture = async (event: React.DragEvent<HTMLElement>): Promise<void> => {
     event.preventDefault()
     setDropping(false)
@@ -698,116 +548,23 @@ export default function NotesDrawer() {
     }
   }
 
-  const startDraw = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = ((event.clientX - rect.left) / rect.width) * canvas.width
-    const y = ((event.clientY - rect.top) / rect.height) * canvas.height
-    drawing.current = { active: true, x, y }
-    canvas.setPointerCapture(event.pointerId)
-  }
-
-  const moveDraw = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    const canvas = canvasRef.current
-    const context = canvas?.getContext('2d')
-    const state = drawing.current
-    if (!canvas || !context || !state?.active) return
-    const rect = canvas.getBoundingClientRect()
-    const x = ((event.clientX - rect.left) / rect.width) * canvas.width
-    const y = ((event.clientY - rect.top) / rect.height) * canvas.height
-    context.beginPath()
-    context.moveTo(state.x, state.y)
-    context.lineTo(x, y)
-    context.stroke()
-    drawing.current = { active: true, x, y }
-  }
-
-  const endDraw = (): void => {
-    drawing.current = null
-  }
-
-  const insertSketch = (): void => {
-    const canvas = canvasRef.current
-    if (!canvas || !draft) return
-    const dataUrl = canvas.toDataURL('image/png')
-    insertMarkdown(`\n\n![Croquis](${dataUrl})\n\n`)
-    setSketchOpen(false)
-    toast('Croquis inséré dans la note.')
-  }
-
   const pageNote = activeUrl ? view.notes.find((note) => note.url === activeUrl) : undefined
   const noNotes = view.notes.length === 0
 
   // Une seule définition des cinq actions : dans la barre compacte quand il y a
   // des notes, dans la surface de départ quand le tiroir est encore vierge.
   const renderActions = (inEmpty = false) => (
-    <div className={inEmpty ? 'notes-actions is-empty' : 'notes-actions'}>
-      <button type="button" className="action primary" onClick={newNote}>
-        <Icon name="plus" size={14} />
-        Nouvelle note
-      </button>
-      <button
-        type="button"
-        className="action"
-        onClick={() => {
-          if (!activeUrl || aiBusy !== null) return
-          void generateNote()
-        }}
-        // `aria-disabled` plutôt que `disabled` : un bouton réellement
-        // désactivé ne montre pas son info-bulle et sort du clavier.
-        aria-disabled={aiBusy !== null || !activeUrl}
-        title={
-          !activeUrl
-            ? 'Ouvrez une page pour la synthèse'
-            : aiBusy !== null
-              ? 'Une rédaction est déjà en cours'
-              : 'Lire la page et rédiger une note structurée'
-        }
-      >
-        <Icon name="sparkles" size={13} />
-        {aiBusy === 'generate' ? 'Génération…' : 'Note IA'}
-      </button>
-      <button
-        type="button"
-        className="action"
-        onClick={() => {
-          if (!activeUrl) return
-          capturePage()
-        }}
-        aria-disabled={!activeUrl}
-        title={activeUrl ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
-      >
-        <Icon name="globe" size={13} />
-        Page
-      </button>
-      <button
-        type="button"
-        className="action"
-        onClick={() => {
-          if (!activeUrl) return
-          void handleSelect()
-        }}
-        aria-disabled={!activeUrl}
-        title={activeUrl ? 'Garder le passage sélectionné, avec sa source et sa date' : 'Ouvrez une page, sélectionnez un passage'}
-      >
-        <Icon name="copy" size={13} />
-        Sélection
-      </button>
-      <button
-        type="button"
-        className="action"
-        onClick={() => {
-          if (!activeUrl) return
-          void highlightSelection()
-        }}
-        aria-disabled={!activeUrl}
-        title={activeUrl ? 'Surligner le passage sélectionné et l’ajouter à la note de la page' : 'Ouvrez une page, sélectionnez un passage'}
-      >
-        <Icon name="edit" size={13} />
-        Surligner
-      </button>
-    </div>
+    <NoteActions
+      inEmpty={inEmpty}
+      hasPage={Boolean(activeUrl)}
+      generating={aiBusy === 'generate'}
+      busy={aiBusy !== null}
+      onNew={() => void newNote()}
+      onGenerate={() => void generateNote()}
+      onCapture={() => void capturePage()}
+      onSelect={() => void handleSelect()}
+      onHighlight={() => void highlightSelection()}
+    />
   )
 
   return (
@@ -827,55 +584,19 @@ export default function NotesDrawer() {
       }}
       onDrop={(event) => void dropCapture(event)}
     >
-      <div
-        className="notes-resize"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Redimensionner les notes"
-        onPointerDown={(event) => {
-          event.preventDefault()
-          const startX = event.clientX
-          const startWidth = width
-          const move = (moveEvent: PointerEvent): void => {
-            const next = Math.min(760, Math.max(320, startWidth + (startX - moveEvent.clientX)))
-            setWidth(next)
-          }
-          const up = (): void => {
-            window.removeEventListener('pointermove', move)
-            window.removeEventListener('pointerup', up)
-            document.body.style.cursor = ''
-            setWidth((current) => {
-              window.localStorage.setItem('vela-notes-width', String(current))
-              return current
-            })
-          }
-          document.body.style.cursor = 'col-resize'
-          window.addEventListener('pointermove', move)
-          window.addEventListener('pointerup', up)
-        }}
+      <NotesHead
+        width={width}
+        onWidth={setWidth}
+        onCommitWidth={() =>
+          setWidth((current) => {
+            window.localStorage.setItem('vela-notes-width', String(current))
+            return current
+          })
+        }
+        noteCount={view.notes.length}
+        onNew={() => void newNote()}
+        onClose={close}
       />
-
-      <header className="notes-head">
-        <div className="notes-title">
-          <span className="notes-mark">
-            <Icon name="notes" size={15} />
-          </span>
-          <div>
-            <h2>Notes</h2>
-            <p>
-              {view.notes.length} note{view.notes.length > 1 ? 's' : ''} · Markdown local
-            </p>
-          </div>
-        </div>
-        <div className="notes-head-actions">
-          <button type="button" className="icon-btn" onClick={newNote} title="Nouvelle note" aria-label="Nouvelle note">
-            <Icon name="plus" size={16} />
-          </button>
-          <button type="button" className="icon-btn" onClick={close} title="Fermer (Échap)" aria-label="Fermer les notes">
-            <Icon name="close" size={16} />
-          </button>
-        </div>
-      </header>
 
       {dropping && (
         <div className="notes-drop" aria-hidden="true">
@@ -886,515 +607,67 @@ export default function NotesDrawer() {
       )}
 
       {draft ? (
-        <div className="note-editor">
-          <div className="note-editor-head">
-            <button type="button" className="icon-btn" onClick={() => void backToList()} title="Retour aux notes" aria-label="Retour aux notes">
-              <Icon name="back" size={16} />
-            </button>
-            <input
-              className="note-title-input"
-              aria-label="Titre de la note"
-              value={draft.title}
-              placeholder="Titre de la note"
-              onChange={(event) => patchDraft({ title: event.target.value })}
-            />
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={toggleDraftPin}
-              aria-pressed={draft.pinned}
-              data-active={draft.pinned}
-              title={draft.pinned ? 'Désépingler' : 'Épingler en tête'}
-            >
-              <Icon name="star" size={15} filled={draft.pinned} />
-            </button>
-            <button
-              type="button"
-              className="icon-btn danger"
-              onClick={() => void removeDraft()}
-              title={confirming ? 'Cliquer à nouveau pour confirmer' : 'Supprimer la note'}
-              data-confirming={confirming}
-              aria-label="Supprimer la note"
-            >
-              <Icon name={confirming ? 'warning' : 'trash'} size={15} />
-            </button>
-          </div>
-
-          {(draft.url || draft.tags.length > 0) && (
-            <div className="note-meta-row">
-              {draft.url && (
-                <span className="note-source">
-                  <Icon name="globe" size={12} />
-                  <span>{hostOf(draft.url)}</span>
-                  <button
-                    type="button"
-                    className="text-btn"
-                    onClick={() => patchDraft({ url: undefined })}
-                    title="Détacher la source"
-                  >
-                    Détacher
-                  </button>
-                </span>
-              )}
-              <div className="note-tags editor">
-                {draft.tags.map((tag) => (
-                  <span className="note-tag" key={tag}>
-                    {tag}
-                    <button type="button" onClick={() => removeTag(tag)} aria-label={`Retirer l’étiquette ${tag}`}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <input
-                  className="note-tag-input"
-                  value={tagDraft}
-                  onChange={(event) => setTagDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ',') {
-                      event.preventDefault()
-                      addTag()
-                    }
-                    if (event.key === 'Backspace' && !tagDraft && draft.tags.length > 0) {
-                      removeTag(draft.tags[draft.tags.length - 1])
-                    }
-                  }}
-                  placeholder="+ étiquette"
-                  aria-label="Ajouter une étiquette"
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="note-toolbar" role="toolbar" aria-label="Mise en forme">
-            <button type="button" className="note-tool" onClick={() => insertMarkdown('## ')} title="Titre de section">
-              H2
-            </button>
-            <button type="button" className="note-tool" onClick={() => insertMarkdown('**', '**')} title="Gras">
-              <b>B</b>
-            </button>
-            <button type="button" className="note-tool" onClick={() => prefixLines('- ')} title="Liste à puces">
-              <Icon name="list" size={14} />
-            </button>
-            <button type="button" className="note-tool" onClick={() => prefixLines('- [ ] ')} title="Liste de tâches">
-              <Icon name="check" size={14} />
-            </button>
-            <button type="button" className="note-tool" onClick={() => insertMarkdown('```\n', '\n```', { block: true })} title="Bloc de code">
-              <Icon name="code" size={14} />
-            </button>
-            <button type="button" className="note-tool" onClick={() => insertMarkdown('[', '](https://)')} title="Lien">
-              <Icon name="link" size={14} />
-            </button>
-            <button
-              type="button"
-              className="note-tool"
-              onClick={() => {
-                // On n'insère que l'ouverture : le titre choisi complète le lien.
-                insertMarkdown('[[')
-                setLinkMenu({ query: '', index: 0 })
-              }}
-              title="Lien vers une note ([[)"
-            >
-              <span className="note-tool-brackets">[[ ]]</span>
-            </button>
-            <button
-              type="button"
-              className="note-tool"
-              onClick={() => setRecorderOpen(true)}
-              title="Enregistrer une note vocale"
-              aria-label="Enregistrer une note vocale"
-            >
-              <Icon name="mic" size={14} />
-            </button>
-            <button type="button" className="note-tool" onClick={() => setSketchOpen(true)} title="Insérer un croquis">
-              <Icon name="edit" size={14} />
-            </button>
-            {activeUrl && (
-              <button
-                type="button"
-                className="note-tool"
-                onClick={() => void highlightSelection()}
-                title="Surligner la sélection de la page et l’ajouter ici"
-              >
-                <Icon name="sparkles" size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="note-ai-row">
-            <span className="note-ai-label">
-              <Icon name="sparkles" size={12} /> IA
-            </span>
-            {AI_ACTIONS.map((action) => (
-              <button
-                key={action.id}
-                type="button"
-                className="note-ai"
-                onClick={() => void runAi(action.id)}
-                disabled={aiBusy !== null}
-                title={action.hint}
-              >
-                {aiBusy === action.id ? '…' : action.label}
-              </button>
-            ))}
-          </div>
-
-          {linkMenu && (
-            <div className="note-link-menu" role="listbox" aria-label="Liens vers une note">
-              <p className="note-link-menu-head">
-                <Icon name="notes" size={12} /> Lien vers une note
-              </p>
-              {linkSuggestions.map((note, index) => (
-                <button
-                  key={note.id}
-                  type="button"
-                  role="option"
-                  aria-selected={linkMenu.index === index}
-                  className="note-link-option"
-                  data-active={linkMenu.index === index}
-                  onMouseEnter={() => setLinkMenu({ ...linkMenu, index })}
-                  onClick={() => applyLinkSuggestion(note.title)}
-                >
-                  {note.title}
-                </button>
-              ))}
-              {linkMenu.query.trim() && (
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={linkSuggestions.length === 0}
-                  className="note-link-option"
-                  data-active={linkSuggestions.length === 0}
-                  onClick={() => applyLinkSuggestion(linkMenu.query)}
-                >
-                  <Icon name="plus" size={12} /> Lier « {linkMenu.query.trim()} »
-                </button>
-              )}
-              <span className="note-link-hint">Entrée pour insérer · Échap pour fermer</span>
-            </div>
-          )}
-
-          <div className="note-modes">
-            <button type="button" className="seg" data-active={!preview} onClick={() => setPreview(false)}>
-              Écrire
-            </button>
-            <button type="button" className="seg" data-active={preview} onClick={() => setPreview(true)}>
-              Aperçu
-            </button>
-            <span className="note-saved" role="status">
-              {aiBusy
-                ? aiBusy === 'generate'
-                  ? 'Génération…'
-                  : 'Réécriture…'
-                : saving
-                  ? 'Enregistrement…'
-                  : dirty
-                    ? 'Modifié'
-                    : savedAt
-                      ? `Enregistré · ${timeAgo(savedAt)}`
-                      : 'Brouillon'}
-            </span>
-          </div>
-
-          {aiMode === 'demo' && !aiBusy && (
-            <p className="note-ai-note">Repli local : aucun modèle n’est configuré (Réglages › Modèles).</p>
-          )}
-
-          {renameUndo && (
-            <div className="note-rename-undo" role="status">
-              <span>
-                <Icon name="link" size={12} /> Liens mis à jour dans {renameUndo.updated} note
-                {renameUndo.updated > 1 ? 's' : ''}
-              </span>
-              <button type="button" className="text-btn" onClick={() => void undoRename()}>
-                Annuler
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => setRenameUndo(null)}
-                aria-label="Ignorer la modification des liens"
-              >
-                <Icon name="close" size={12} />
-              </button>
-            </div>
-          )}
-
-          {preview ? (
-            <div className="note-preview">
-              {draft.body.trim() ? (
-                <Markdown text={draft.body} links={noteLinks} audio={noteAudio} />
-              ) : (
-                <p className="note-empty-preview">Rien à prévisualiser.</p>
-              )}
-            </div>
-          ) : (
-            <textarea
-              ref={textareaRef}
-              className="note-textarea"
-              aria-label="Texte de la note"
-              value={draft.body}
-              placeholder="Écrivez en Markdown, glissez un extrait depuis la page, ou liez une note avec [[Titre]]."
-              spellCheck
-              onChange={(event) => {
-                const value = event.target.value
-                patchDraft({ body: value })
-                updateLinkMenu(value, event.target.selectionStart)
-              }}
-              onClick={(event) => updateLinkMenu(draft.body, event.currentTarget.selectionStart)}
-              onKeyDown={(event) => {
-                if (!linkMenu) return
-                if (event.key === 'Escape') {
-                  event.preventDefault()
-                  setLinkMenu(null)
-                  return
-                }
-                const count = linkSuggestions.length
-                if (count === 0) return
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  setLinkMenu({ ...linkMenu, index: (linkMenu.index + 1) % count })
-                  return
-                }
-                if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  setLinkMenu({ ...linkMenu, index: (linkMenu.index - 1 + count) % count })
-                  return
-                }
-                if (event.key === 'Enter' || event.key === 'Tab') {
-                  event.preventDefault()
-                  applyLinkSuggestion(linkSuggestions[linkMenu.index]?.title ?? linkMenu.query)
-                }
-              }}
-            />
-          )}
-
-          {draft.id && graph && (graph.outgoing.length > 0 || graph.incoming.length > 0 || graph.missing.length > 0) && (
-            <section className="note-links" data-open={linksOpen} aria-label="Notes liées">
-              <button
-                type="button"
-                className="note-links-head"
-                aria-expanded={linksOpen}
-                onClick={() => setLinksOpen(!linksOpen)}
-              >
-                <Icon name={linksOpen ? 'chevron-down' : 'chevron-right'} size={12} />
-                Notes liées
-                <span className="note-links-count">
-                  {graph.outgoing.length + graph.incoming.length + graph.missing.length}
-                </span>
-              </button>
-              {linksOpen && (
-                <div className="note-links-body">
-                  {graph.outgoing.length > 0 && (
-                    <div className="note-links-group">
-                      <h3>Vers</h3>
-                      <ul>
-                        {graph.outgoing.map((ref) => (
-                          <li key={`out-${ref.id}`}>
-                            <button type="button" onClick={() => ref.id && void openNote(ref.id)}>
-                              {ref.title}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {graph.incoming.length > 0 && (
-                    <div className="note-links-group">
-                      <h3>Citée par</h3>
-                      <ul>
-                        {graph.incoming.map((ref) => (
-                          <li key={`in-${ref.id}`}>
-                            <button type="button" onClick={() => ref.id && void openNote(ref.id)}>
-                              {ref.title}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {graph.missing.length > 0 && (
-                    <div className="note-links-group broken">
-                      <h3>Liens cassés</h3>
-                      <ul>
-                        {graph.missing.map((title) => (
-                          <li key={`missing-${title}`}>
-                            <span>{title}</span>
-                            <button type="button" className="text-btn" onClick={() => void createLinkedNote(title)}>
-                              Créer la note
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-          )}
-
-          <footer className="note-foot">
-            <span>
-              {draft.body.length} caractères · {draft.body.split(/\s+/).filter(Boolean).length} mots
-            </span>
-            <button type="button" className="text-btn" onClick={() => void window.vela.notes.openFolder()}>
-              <Icon name="folder" size={13} />
-              Dossier
-            </button>
-          </footer>
-        </div>
+        <NoteEditor
+          draft={draft}
+          confirming={confirming}
+          saving={saving}
+          dirty={dirty}
+          savedAt={savedAt}
+          preview={preview}
+          aiBusy={aiBusy}
+          aiMode={aiMode}
+          renameUndo={renameUndo}
+          tagDraft={tagDraft}
+          linkMenu={linkMenu}
+          linkSuggestions={linkSuggestions}
+          graph={graph}
+          linksOpen={linksOpen}
+          noteLinks={noteLinks}
+          noteAudio={noteAudio}
+          textareaRef={textareaRef}
+          hasPage={Boolean(activeUrl)}
+          onBack={() => void backToList()}
+          onPatch={patchDraft}
+          onTogglePin={toggleDraftPin}
+          onRemove={() => void removeDraft()}
+          onTagDraft={setTagDraft}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
+          onInsert={insertMarkdown}
+          onPrefix={prefixLines}
+          onRecorder={() => setRecorderOpen(true)}
+          onSketch={() => setSketchOpen(true)}
+          onHighlight={() => void highlightSelection()}
+          onRunAi={(action) => void runAi(action)}
+          onUndoRename={() => void undoRename()}
+          onDismissRename={() => setRenameUndo(null)}
+          onPreview={setPreview}
+          onLinkMenu={setLinkMenu}
+          onApplyLink={applyLinkSuggestion}
+          onUpdateLink={updateLinkMenu}
+          onToggleLinks={() => setLinksOpen(!linksOpen)}
+          onOpenNote={(id) => void openNote(id)}
+          onCreateLinked={(title) => void createLinkedNote(title)}
+        />
       ) : (
-        <div className="notes-list-wrap" data-empty={noNotes}>
-          <div className="notes-search">
-            <Icon name="search" size={14} />
-            <input
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-              placeholder="Rechercher une note, un tag…"
-              aria-label="Rechercher dans les notes"
-            />
-            {filter && (
-              <button type="button" className="icon-btn" onClick={() => setFilter('')} aria-label="Effacer la recherche">
-                <Icon name="close" size={13} />
-              </button>
-            )}
-          </div>
-
-          <div className="notes-filters" role="group" aria-label="Filtres des notes">
-            <button type="button" className="notes-filter" data-active={!onlyPinned && !tagFilter} onClick={() => { setOnlyPinned(false); setTagFilter(null) }}>
-              Toutes
-            </button>
-            <button type="button" className="notes-filter" data-active={onlyPinned} onClick={() => setOnlyPinned(!onlyPinned)}>
-              <Icon name="star" size={11} /> Épinglées
-            </button>
-            {allTags.map(([tag, count]) => (
-              <button
-                key={tag}
-                type="button"
-                className="notes-filter"
-                data-active={tagFilter === tag}
-                onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-              >
-                {tag}
-                <span className="notes-filter-count">{count}</span>
-              </button>
-            ))}
-          </div>
-
-          {!noNotes && renderActions()}
-
-          {highlights.length > 0 && (
-            <div className="notes-highlight-strip">
-              <span>
-                <Icon name="sparkles" size={12} /> {highlights.length} surlignage{highlights.length > 1 ? 's' : ''} sur cette page
-              </span>
-              {pageNote && (
-                <button type="button" className="text-btn" onClick={() => void openNote(pageNote.id)}>
-                  Ouvrir la note
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="notes-scroll">
-            {notes.length === 0 && (
-              <div className="notes-empty" data-start={noNotes}>
-                <span className="notes-empty-mark">
-                  <Icon name="notes" size={20} />
-                </span>
-                <p>
-                  {filter || tagFilter || onlyPinned
-                    ? 'Aucune note ne correspond.'
-                    : 'Aucune note pour l’instant.'}
-                </p>
-                <span>
-                  {filter || tagFilter || onlyPinned
-                    ? 'Videz la recherche ou revenez à toutes les notes.'
-                    : 'Glissez un passage depuis la page, ou écrivez à côté d’elle.'}
-                </span>
-                {noNotes
-                  ? renderActions(true)
-                  : (filter || tagFilter || onlyPinned) && (
-                      <button
-                        type="button"
-                        className="action"
-                        onClick={() => {
-                          setFilter('')
-                          setTagFilter(null)
-                          setOnlyPinned(false)
-                        }}
-                      >
-                        Tout afficher
-                      </button>
-                    )}
-              </div>
-            )}
-
-            {notes.map((note) => {
-              const noteSpace = view.spaces.find((item) => item.id === note.spaceId)
-              return (
-                <div
-                  key={note.id}
-                  className="note-card"
-                  data-pinned={note.pinned}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => void openNote(note.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      void openNote(note.id)
-                    }
-                  }}
-                >
-                  <div className="note-card-top">
-                    <span className="note-space-dot" style={{ background: noteSpace?.color ?? 'var(--muted)' }} />
-                    <span className="note-card-title">{note.title}</span>
-                    <button
-                      type="button"
-                      className="note-pin"
-                      data-active={note.pinned}
-                      aria-pressed={note.pinned}
-                      aria-label={note.pinned ? `Désépingler ${note.title}` : `Épingler ${note.title}`}
-                      title={note.pinned ? 'Désépingler' : 'Épingler'}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        void togglePin(note)
-                      }}
-                    >
-                      <Icon name="star" size={13} filled={note.pinned} />
-                    </button>
-                  </div>
-                  <p className="note-card-preview">{note.preview || 'Note vide'}</p>
-                  <div className="note-card-foot">
-                    <div className="note-tags">
-                      {(note.tags ?? []).slice(0, 3).map((tag) => (
-                        <span className="note-tag" key={tag}>
-                          {tag}
-                        </span>
-                      ))}
-                      {(note.tags?.length ?? 0) > 3 && <span className="note-tag more">+{(note.tags?.length ?? 0) - 3}</span>}
-                    </div>
-                    <span className="note-card-date">{shortDate(note.updatedAt)}</span>
-                  </div>
-                  {note.url && (
-                    <span className="note-card-source">
-                      <Icon name="globe" size={10} />
-                      {hostOf(note.url)}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          <footer className="note-foot note-foot-inset">
-            <span>{space ? `Espace ${space.name}` : 'Vela'} · fichiers .md</span>
-            <button type="button" className="text-btn" onClick={() => void window.vela.notes.openFolder()}>
-              <Icon name="folder" size={13} />
-              Ouvrir le dossier
-            </button>
-          </footer>
-        </div>
+        <NotesList
+          notes={notes}
+          spaces={view.spaces}
+          filter={filter}
+          onFilter={setFilter}
+          tagFilter={tagFilter}
+          onTagFilter={setTagFilter}
+          onlyPinned={onlyPinned}
+          onOnlyPinned={setOnlyPinned}
+          allTags={allTags}
+          highlights={highlights}
+          pageNote={pageNote}
+          noNotes={noNotes}
+          spaceName={space?.name}
+          onOpen={(id) => void openNote(id)}
+          onTogglePin={(note) => void togglePin(note)}
+          renderActions={renderActions}
+        />
       )}
 
       {recorderOpen && draft && (
@@ -1410,47 +683,14 @@ export default function NotesDrawer() {
       )}
 
       {sketchOpen && (
-        <div className="note-sketch" role="dialog" aria-modal="true" aria-label="Croquis">
-          <div className="note-sketch-card">
-            <header>
-              <strong>Croquis</strong>
-              <button type="button" className="icon-btn" onClick={() => setSketchOpen(false)} aria-label="Fermer le croquis">
-                <Icon name="close" size={15} />
-              </button>
-            </header>
-            <canvas
-              ref={canvasRef}
-              width={640}
-              height={360}
-              onPointerDown={startDraw}
-              onPointerMove={moveDraw}
-              onPointerUp={endDraw}
-              onPointerCancel={endDraw}
-              aria-label="Zone de dessin"
-            />
-            <footer>
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => {
-                  const canvas = canvasRef.current
-                  const context = canvas?.getContext('2d')
-                  if (!canvas || !context) return
-                  context.fillStyle = '#fffdf9'
-                  context.fillRect(0, 0, canvas.width, canvas.height)
-                }}
-              >
-                Effacer
-              </button>
-              <button type="button" className="ghost-btn" onClick={() => setSketchOpen(false)}>
-                Annuler
-              </button>
-              <button type="button" className="action" onClick={insertSketch}>
-                <Icon name="check" size={13} /> Insérer
-              </button>
-            </footer>
-          </div>
-        </div>
+        <NoteSketch
+          canvasRef={canvasRef}
+          onClose={() => setSketchOpen(false)}
+          onInsert={insertSketch}
+          onPointerDown={startDraw}
+          onPointerMove={moveDraw}
+          onPointerEnd={endDraw}
+        />
       )}
     </aside>
   )
