@@ -133,7 +133,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     category: 'modeles',
     trigger:
       'Quand vous lancez l’agent, une réécriture de note, la traduction d’une planche, ou la transcription d’une note vocale après votre accord.',
-    data: 'Votre demande, le texte des onglets joints ou de la note, et la clé dans un en-tête — jamais dans l’URL. Pour une transcription, l’enregistrement audio complet, et rien de plus : il ne part qu’après une confirmation explicite.',
+    data: 'Votre demande, les onglets joints, le texte d’une note, les bulles d’une planche ou l’enregistrement audio d’une note vocale, et la clé dans un en-tête — jamais dans l’URL. L’audio ne part qu’après une confirmation explicite.',
     off: 'Rester en démo locale, ou brancher un serveur local.'
   },
   {
@@ -154,9 +154,9 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: ['github.com', 'objects.githubusercontent.com', 'release-assets.githubusercontent.com'],
     category: 'mises-a-jour',
     trigger:
-      'Douze secondes après le démarrage, puis toutes les trois heures, au retour de veille et au retour du focus. Sur macOS, le téléchargement de l’installateur suit la même règle.',
-    data: 'La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant, aucun réglage.',
-    off: null
+      'Douze secondes après le démarrage, puis toutes les trois heures (réglage par défaut), au retour de veille et du focus (au plus toutes les trente minutes). Le rythme se règle sur « une fois par semaine » ou « jamais » dans Réglages › Mises à jour.',
+    data: 'La version installée et la plateforme. Sur macOS, le manifeste latest-mac.yml puis le .dmg de la nouvelle version sont téléchargés ; l’empreinte SHA-512 du manifeste est vérifiée avant de proposer le fichier. Aucun identifiant.',
+    off: 'Réglages › Mises à jour › Vérification automatique : « Jamais » ; le bouton manuel reste disponible.'
   },
   {
     id: 'bd-ocr',
@@ -165,7 +165,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: ['cdn.jsdelivr.net'],
     category: 'extensions',
     trigger: 'Quand vous lancez la traduction d’une planche de BD.',
-    data: 'Aucune donnée applicative : téléchargement du moteur de reconnaissance de texte, une fois. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.',
+    data: 'Aucune donnée de la planche : téléchargement du moteur de reconnaissance de texte et de ses données de langue depuis le CDN, à la première traduction. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport au CDN.',
     off: 'Ne pas lancer la traduction de BD.'
   },
   {

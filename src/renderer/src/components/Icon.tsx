@@ -17,6 +17,8 @@ export type IconName =
   | 'globe'
   | 'lock'
   | 'arrow-right'
+  | 'arrow-up'
+  | 'arrow-down'
   | 'trash'
   | 'copy'
   | 'folder'
@@ -36,6 +38,8 @@ export type IconName =
   | 'home'
   | 'circle'
   | 'palette'
+  | 'compass'
+  | 'info'
   | 'key'
   | 'keyboard'
   | 'download'
@@ -109,6 +113,18 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />,
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m15.6 8.4-2.3 5-5 2.3 2.3-5Z" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </>
+  ),
   globe: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -122,6 +138,8 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   'arrow-right': <path d="M5 12h14M13 6l6 6-6 6" />,
+  'arrow-up': <path d="M12 19V5M6 11l6-6 6 6" />,
+  'arrow-down': <path d="M12 5v14M6 13l6 6 6-6" />,
   trash: (
     <>
       <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />

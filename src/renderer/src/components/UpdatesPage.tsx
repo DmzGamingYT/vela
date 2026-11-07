@@ -1,4 +1,5 @@
 import type { UpdateChannel } from '@shared/api'
+import type { UpdateChecks } from '@shared/types'
 import { updateDescription } from '@shared/update'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
@@ -11,6 +12,12 @@ const CHANNEL_LABEL: Record<UpdateChannel, string> = {
   other: 'Application'
 }
 
+const CHECK_LABEL: Record<UpdateChecks, string> = {
+  auto: 'Démarrage · toutes les 3 h',
+  weekly: 'Démarrage · chaque semaine',
+  off: 'Désactivé'
+}
+
 /**
  * Page « Mises à jour » des réglages.
  *
@@ -21,6 +28,8 @@ const CHANNEL_LABEL: Record<UpdateChannel, string> = {
  */
 export default function UpdatesPage() {
   const update = useBrowser((state) => state.update)
+  const view = useBrowser((state) => state.view)
+  const updateSettings = useBrowser((state) => state.updateSettings)
   const checkUpdate = useBrowser((state) => state.checkUpdate)
   const downloadUpdate = useBrowser((state) => state.downloadUpdate)
   const installUpdate = useBrowser((state) => state.installUpdate)
@@ -35,6 +44,7 @@ export default function UpdatesPage() {
   const downloaded = update?.state === 'downloaded'
   const available = update?.state === 'available'
   const progress = Math.min(100, Math.max(0, update?.progress ?? 0))
+  const checks = view?.settings.updateChecks ?? 'auto'
 
   const actionLabel = downloaded
     ? platform === 'linux' && !isAppImage
@@ -84,7 +94,30 @@ export default function UpdatesPage() {
         </div>
         <div>
           <span>Contrôle</span>
-          <strong>Démarrage · toutes les 3 h</strong>
+          <strong>{CHECK_LABEL[checks]}</strong>
+        </div>
+      </div>
+
+      <div className="setting-row">
+        <div>
+          <label htmlFor="update-checks">Vérification automatique</label>
+          <p className="setting-hint">
+            Rythme du contrôle silencieux. « Toutes les 3 h » vérifie aussi au retour de veille ou
+            de focus (au plus toutes les 30 min). Le bouton reste disponible dans les trois cas.
+          </p>
+        </div>
+        <div className="setting-actions">
+          <select
+            id="update-checks"
+            value={checks}
+            onChange={(event) =>
+              void updateSettings({ updateChecks: event.target.value as UpdateChecks })
+            }
+          >
+            <option value="auto">Toutes les 3 h</option>
+            <option value="weekly">Une fois par semaine</option>
+            <option value="off">Jamais</option>
+          </select>
         </div>
       </div>
 

@@ -1,25 +1,34 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { NoteAiAction } from '@shared/api'
 import { parseDroppedExcerpt } from '@shared/noteDrop'
 import { findNoteByTitle, removeAudioToken, type NoteGraph } from '@shared/noteLinks'
-import type { NoteMeta, PageHighlight } from '@shared/types'
+import { matchesSearch, normalizeSearchText, parseSearchQuery } from '@shared/search'
+import type { NoteMeta, PageHighlight, TrashedNote } from '@shared/types'
 import { hostOf, isHomeUrl } from '@shared/url'
 import type { NoteAudioContext, NoteLinkContext } from '../lib/markdown'
+import type { NotesSort } from '../store/types'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
 import NoteRecorder from './NoteRecorder'
 import NoteActions from './notes/NoteActions'
 import NoteEditor from './notes/NoteEditor'
 import NoteSketch from './notes/NoteSketch'
+import NoteTemplatePicker from './notes/NoteTemplatePicker'
 import NotesHead from './notes/NotesHead'
+import TrashPanel from './notes/TrashPanel'
 import NotesList from './notes/NotesList'
 import { draftFrom, type Draft } from './notes/draft'
+import type { NoteTemplate } from './notes/templates'
+import { aiActionForEvent } from './notes/aiActions'
 import { useMarkdownTools } from './notes/useMarkdownTools'
 import { useNoteAi } from './notes/useNoteAi'
 import { useSketch } from './notes/useSketch'
 
 export default function NotesDrawer() {
   const view = useBrowser((state) => state.view)
+  const notesOpen = useBrowser((state) => state.notesOpen)
   const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const newTab = useBrowser((state) => state.newTab)
   const saveNote = useBrowser((state) => state.saveNote)
   const deleteNote = useBrowser((state) => state.deleteNote)
   const captureSelection = useBrowser((state) => state.captureSelection)
@@ -28,6 +37,8 @@ export default function NotesDrawer() {
   const consumeVoiceNoteRequest = useBrowser((state) => state.consumeVoiceNoteRequest)
   const noteRequest = useBrowser((state) => state.noteRequest)
   const consumeNoteRequest = useBrowser((state) => state.consumeNoteRequest)
+  const notesSearchRequest = useBrowser((state) => state.notesSearchRequest)
+  const consumeNotesSearchRequest = useBrowser((state) => state.consumeNotesSearchRequest)
   const toast = useBrowser((state) => state.toast)
 
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -37,7 +48,12 @@ export default function NotesDrawer() {
   const [filter, setFilter] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [onlyPinned, setOnlyPinned] = useState(false)
+  const [sort, setSort] = useState<NotesSort>(() =>
+    window.localStorage.getItem('vela-notes-sort') === 'title' ? 'title' : 'updated'
+  )
   const [preview, setPreview] = useState(false)
+  const [searchHit, setSearchHit] = useState('')
+  const [searchFocusNonce, setSearchFocusNonce] = useState(0)
   const [confirming, setConfirming] = useState(false)
   const [tagDraft, setTagDraft] = useState('')
   const [dropping, setDropping] = useState(false)
@@ -47,9 +63,25 @@ export default function NotesDrawer() {
   const [renameUndo, setRenameUndo] = useState<{ id: string; from: string; updated: number } | null>(null)
   const [recorderOpen, setRecorderOpen] = useState(false)
   const loadedTitle = useRef('')
+  // Vue large : liste et éditeur côte à côte. Le choix et la dernière largeur
+  // simple sont mémorisés pour retrouver le même tiroir au prochain passage.
+  const [wide, setWide] = useState(() => window.localStorage.getItem('vela-notes-wide') === 'true')
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [contentHits, setContentHits] = useState<{ query: string; ids: string[] } | null>(null)
+  const [trash, setTrash] = useState<TrashedNote[]>([])
+  const [trashOpen, setTrashOpen] = useState(false)
+  const [trashBusy, setTrashBusy] = useState(false)
+  const narrowWidth = useRef(400)
+  // La dernière note ouverte est relue au montage : l'effet qui nettoie la
+  // clé quand aucun brouillon n'est ouvert ne doit pas l'effacer avant.
+  const lastNoteId = useRef<string | null>(window.localStorage.getItem('vela-notes-last'))
+  const restoredLastNote = useRef(false)
   const [width, setWidth] = useState(() => {
     const stored = Number(window.localStorage.getItem('vela-notes-width'))
-    return Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 400
+    const base = Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 400
+    return window.localStorage.getItem('vela-notes-wide') === 'true'
+      ? Math.min(760, Math.max(base, 660))
+      : base
   })
   const latest = useRef<{ draft: Draft | null; dirty: boolean }>({ draft: null, dirty: false })
   // Identité de la note ouverte : une sauvegarde qui se termine après un
@@ -60,12 +92,61 @@ export default function NotesDrawer() {
   // brouillon pour pouvoir vider la file avant de changer de note.
   const pendingSave = useRef<{ timer: ReturnType<typeof setTimeout>; draft: Draft } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   // Le brouillon courant est recopié dans une référence lue au démontage :
   // l'écriture se fait après le rendu, jamais pendant.
   useEffect(() => {
     latest.current = { draft, dirty }
   }, [draft, dirty])
+
+  const draftId = draft?.id
+  const hasDraft = draft !== null
+
+  useEffect(() => {
+    if (draftId) window.localStorage.setItem('vela-notes-last', draftId)
+  }, [draftId])
+
+  useEffect(() => {
+    if (!hasDraft) window.localStorage.removeItem('vela-notes-last')
+  }, [hasDraft])
+
+  const refreshTrash = useCallback(async (): Promise<void> => {
+    try {
+      setTrash(await window.vela.notes.trash())
+    } catch {
+      // Corbeille indisponible : la liste précédente reste affichée.
+    }
+  }, [])
+
+  useEffect(() => {
+    // La lecture passe après le rendu : l'état ne se met pas à jour dans le
+    // corps de l'effet (même règle que les surlignages plus bas).
+    queueMicrotask(() => void refreshTrash())
+  }, [refreshTrash])
+
+  // Le corps des notes n'est pas dans la liste : une frappe un peu posée
+  // demande au stockage quels fichiers contiennent le texte.
+  useEffect(() => {
+    const query = filter.trim()
+    if (query.length < 2) {
+      queueMicrotask(() => setContentHits(null))
+      return
+    }
+    let alive = true
+    const timer = setTimeout(() => {
+      void window.vela.notes
+        .search(query)
+        .then((ids) => {
+          if (alive) setContentHits({ query, ids })
+        })
+        .catch(() => undefined)
+    }, 180)
+    return () => {
+      alive = false
+      clearTimeout(timer)
+    }
+  }, [filter])
 
   const activeTab = view?.tabs.find((tab) => tab.id === view.activeTabId)
   const activeUrl = activeTab && !isHomeUrl(activeTab.url) ? activeTab.url : undefined
@@ -113,18 +194,37 @@ export default function NotesDrawer() {
   }, [view?.notes])
   const notes = useMemo(() => {
     const list = view?.notes ?? []
-    const search = filter.trim().toLowerCase()
+    const query = filter.trim()
+    const parsed = parseSearchQuery(query)
+    const filtering = parsed.include.length > 0 || parsed.exclude.length > 0
+    const bodyIds = contentHits?.query === query ? new Set(contentHits.ids) : null
     return list
       .filter((note) => (onlyPinned ? note.pinned : true))
       .filter((note) => (tagFilter ? (note.tags ?? []).includes(tagFilter) : true))
-      .filter((note) =>
-        search
-          ? `${note.title} ${note.preview} ${(note.tags ?? []).join(' ')}`.toLowerCase().includes(search)
-          : true
-      )
+      .filter((note) => {
+        if (!filtering) return true
+        // Le stockage lit aussi le corps : ses identifiants font foi dès qu'ils
+        // sont disponibles, notamment pour les exclusions.
+        if (bodyIds) return bodyIds.has(note.id)
+        return matchesSearch(
+          `${note.title} ${note.preview} ${(note.tags ?? []).join(' ')}`,
+          parsed
+        )
+      })
       .slice()
-      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt)
-  }, [view?.notes, filter, tagFilter, onlyPinned])
+      .sort(
+        (a, b) =>
+          Number(b.pinned) - Number(a.pinned) ||
+          (sort === 'title'
+            ? a.title.localeCompare(b.title, 'fr', { sensitivity: 'base' })
+            : b.updatedAt - a.updatedAt)
+      )
+  }, [view?.notes, filter, tagFilter, onlyPinned, sort, contentHits])
+
+  const changeSort = (value: NotesSort): void => {
+    setSort(value)
+    window.localStorage.setItem('vela-notes-sort', value)
+  }
 
   /**
    * Enregistre un brouillon. Le même chemin sert à la sauvegarde différée et
@@ -192,16 +292,22 @@ export default function NotesDrawer() {
    * demander une note précise dès le premier rendu du tiroir.
    */
   const openNote = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, highlight = ''): Promise<void> => {
       try {
         // Rien ne doit rester dans le minuteur de la note qu'on quitte.
         await flushPending()
         const note = await window.vela.notes.get(id)
         if (!note) return
+        setTemplateOpen(false)
         draftVersion.current += 1
         setDraft(draftFrom(note))
         setDirty(false)
-        setPreview(false)
+        // Une note ouverte depuis les résultats s'ouvre sur le passage trouvé.
+        const parsed = parseSearchQuery(highlight)
+        const body = normalizeSearchText(note.body)
+        const hit = parsed.include.some((term) => body.includes(term)) ? highlight.trim() : ''
+        setSearchHit(hit)
+        setPreview(Boolean(hit))
         setConfirming(false)
         setSavedAt(note.updatedAt)
         setAiMode(null)
@@ -216,6 +322,53 @@ export default function NotesDrawer() {
     [flushPending, toast, setAiMode, setLinkMenu]
   )
 
+  /** Ramène la liste au premier plan et place le curseur dans la recherche. */
+  const focusSearch = useCallback((): void => {
+    if (draft && !wide) {
+      // En vue simple, l'éditeur masque la liste : on enregistre les frappes
+      // en attente, puis on revient à la liste avant de donner le focus.
+      void flushPending().then(() => {
+        setDraft(null)
+        setDirty(false)
+        setPreview(false)
+        setSearchHit('')
+        setSearchFocusNonce((value) => value + 1)
+      })
+      return
+    }
+    setSearchFocusNonce((value) => value + 1)
+  }, [draft, wide, flushPending])
+
+  /** Ouvre le résultat suivant de la liste filtrée, avec bouclage. */
+  const advanceSearch = useCallback((): void => {
+    const query = filter.trim()
+    if (!query) {
+      focusSearch()
+      return
+    }
+    if (notes.length === 0) return
+    const current = draftId ? notes.findIndex((note) => note.id === draftId) : -1
+    const next = current < 0 ? 0 : (current + 1) % notes.length
+    void openNote(notes[next].id, query)
+  }, [draftId, filter, focusSearch, notes, openNote])
+
+  useEffect(() => {
+    if (!notesSearchRequest) return
+    consumeNotesSearchRequest()
+    queueMicrotask(() => {
+      if (notesSearchRequest.mode === 'next') advanceSearch()
+      else focusSearch()
+    })
+  }, [notesSearchRequest, consumeNotesSearchRequest, advanceSearch, focusSearch])
+
+  // Le focus attend le rendu de la liste, notamment après le retour depuis
+  // l'éditeur en vue simple.
+  useEffect(() => {
+    if (!searchFocusNonce) return
+    searchInputRef.current?.focus()
+    searchInputRef.current?.select()
+  }, [searchFocusNonce])
+
   // Une commande de la palette a choisi une note : on l'ouvre vraiment.
   useEffect(() => {
     if (!noteRequest) return
@@ -226,6 +379,124 @@ export default function NotesDrawer() {
       void openNote(noteRequest.id)
     })
   }, [noteRequest, consumeNoteRequest, openNote])
+
+  // Au démarrage, la vue large rouvre la note qui était ouverte. Une note
+  // demandée par la palette ou une note vocale reste prioritaire.
+  useEffect(() => {
+    if (restoredLastNote.current || !view) return
+    restoredLastNote.current = true
+    if (!wide || noteRequest || voiceNoteRequest || hasDraft) return
+    const id = lastNoteId.current
+    if (!id) return
+    // La note a pu être supprimée ou déplacée dans la corbeille entre-temps.
+    if (!view.notes.some((note) => note.id === id)) {
+      window.localStorage.removeItem('vela-notes-last')
+      return
+    }
+    queueMicrotask(() => void openNote(id))
+  }, [view, wide, noteRequest, voiceNoteRequest, hasDraft, openNote])
+
+  const patchDraft = (patch: Partial<Draft>): void => {
+    if (!draft) return
+    setDraft({ ...draft, ...patch })
+    setDirty(true)
+  }
+
+  const toggleDraftPin = (): void => {
+    if (!draft) return
+    patchDraft({ pinned: !draft.pinned })
+  }
+
+  const copyDraft = async (): Promise<void> => {
+    if (!draft?.body.trim()) return
+    try {
+      await navigator.clipboard.writeText(draft.body)
+      toast('Note copiée en Markdown.')
+    } catch {
+      toast('Copie impossible.', 'error')
+    }
+  }
+
+  // Raccourcis de l'éditeur. Le gestionnaire reste stable pendant la frappe :
+  // il lit une référence remplie après chaque rendu avec les actions du moment.
+  const shortcutState = useRef<{
+    active: boolean
+    draft: Draft | null
+    notes: NoteMeta[]
+    aiBusy: boolean
+    pin(): void
+    copy(): void
+    open(id: string): void
+    ai(action: NoteAiAction): void
+  }>({
+    active: false,
+    draft: null,
+    notes: [],
+    aiBusy: false,
+    pin: () => undefined,
+    copy: () => undefined,
+    open: () => undefined,
+    ai: () => undefined
+  })
+
+  useEffect(() => {
+    if (!view) return
+    shortcutState.current = {
+      active: notesOpen && !templateOpen && !trashOpen && !recorderOpen && !sketchOpen,
+      draft,
+      notes,
+      aiBusy: aiBusy !== null,
+      pin: toggleDraftPin,
+      copy: () => void copyDraft(),
+      open: (id) => void openNote(id, filter.trim()),
+      ai: (action) => void runAi(action)
+    }
+  })
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      const state = shortcutState.current
+      if (!state.active || !state.draft) return
+      if (event.defaultPrevented || event.isComposing) return
+      if (!(event.metaKey || event.ctrlKey)) return
+      const key = event.key.toLowerCase()
+      if (event.shiftKey && !event.altKey && key === 'p') {
+        event.preventDefault()
+        state.pin()
+        return
+      }
+      if (event.shiftKey && !event.altKey && key === 'c') {
+        event.preventDefault()
+        state.copy()
+        return
+      }
+      if (event.altKey && !event.shiftKey) {
+        const action = aiActionForEvent(event)
+        if (action) {
+          event.preventDefault()
+          if (!state.aiBusy) state.ai(action)
+          return
+        }
+      }
+      if (event.altKey && !event.shiftKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        event.preventDefault()
+        if (state.notes.length === 0) return
+        const current = state.draft.id
+          ? state.notes.findIndex((note) => note.id === state.draft?.id)
+          : -1
+        const step = event.key === 'ArrowDown' ? 1 : -1
+        const next =
+          current < 0
+            ? step > 0
+              ? 0
+              : state.notes.length - 1
+            : (current + step + state.notes.length) % state.notes.length
+        state.open(state.notes[next].id)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     if (!draft || !dirty) return
@@ -322,19 +593,21 @@ export default function NotesDrawer() {
 
   if (!view) return null
 
-  const newNote = async (): Promise<void> => {
+  const newNote = async (template?: NoteTemplate | null): Promise<void> => {
     await flushPending()
     draftVersion.current += 1
     setDraft({
-      title: '',
-      body: '',
+      title: template?.title ?? '',
+      body: template?.body ?? '',
       spaceId: view.activeSpaceId,
       url: undefined,
-      tags: tagFilter ? [tagFilter] : [],
+      tags: template ? [...template.tags] : tagFilter ? [tagFilter] : [],
       pinned: false
     })
-    setDirty(false)
+    // Un modèle est déjà du contenu : il doit être enregistré même sans frappe.
+    setDirty(Boolean(template))
     setPreview(false)
+    setSearchHit('')
     setConfirming(false)
     setSavedAt(null)
     setAiMode(null)
@@ -361,6 +634,7 @@ export default function NotesDrawer() {
     })
     setDirty(true)
     setPreview(false)
+    setSearchHit('')
     setConfirming(false)
     setSavedAt(null)
   }
@@ -369,12 +643,26 @@ export default function NotesDrawer() {
     toggleNotes(false)
   }
 
+  /** Bascule entre le tiroir simple et la vue à deux colonnes. */
+  const toggleWide = (): void => {
+    const next = !wide
+    window.localStorage.setItem('vela-notes-wide', String(next))
+    if (next) {
+      narrowWidth.current = width
+      setWidth(Math.min(760, Math.max(width, 660)))
+    } else {
+      setWidth(narrowWidth.current)
+    }
+    setWide(next)
+  }
+
   /** Retour à la liste : la note en cours ne doit pas perdre ses frappes. */
   const backToList = async (): Promise<void> => {
     await flushPending()
     setDraft(null)
     setDirty(false)
     setPreview(false)
+    setSearchHit('')
   }
 
   const removeDraft = async (): Promise<void> => {
@@ -388,15 +676,29 @@ export default function NotesDrawer() {
       return
     }
     await deleteNote(draft.id)
+    await refreshTrash()
     setDraft(null)
     setDirty(false)
     setConfirming(false)
   }
 
-  const patchDraft = (patch: Partial<Draft>): void => {
-    if (!draft) return
-    setDraft({ ...draft, ...patch })
-    setDirty(true)
+  /** Remet une note de la corbeille dans la liste, depuis le panneau. */
+  const restoreFromTrash = async (id: string): Promise<void> => {
+    if (trashBusy) return
+    setTrashBusy(true)
+    try {
+      const note = await window.vela.notes.restore(id)
+      if (!note) {
+        toast('Cette note n’a pas pu être restaurée.', 'error')
+        return
+      }
+      await refreshTrash()
+      toast(`« ${note.title} » restaurée.`)
+    } catch {
+      toast('Restauration impossible.', 'error')
+    } finally {
+      setTrashBusy(false)
+    }
   }
 
   const handleSelect = async (): Promise<void> => {
@@ -413,7 +715,10 @@ export default function NotesDrawer() {
       }
       setHighlights(await window.vela.notes.highlights())
       toast('Passage surligné et ajouté à la note de la page.')
-      if (!draft) setDraft(draftFrom(note))
+      if (!draft) {
+        setDraft(draftFrom(note))
+        setSearchHit('')
+      }
     } catch {
       toast('Surlignage impossible.', 'error')
     }
@@ -428,9 +733,29 @@ export default function NotesDrawer() {
     }
   }
 
-  const toggleDraftPin = (): void => {
+  /** Une copie indépendante : même contenu, mêmes étiquettes, sans l'identité. */
+  const duplicateDraft = async (): Promise<void> => {
     if (!draft) return
-    patchDraft({ pinned: !draft.pinned })
+    await flushPending()
+    const title = `${draft.title.trim() || 'Note sans titre'} (copie)`
+    const note = await saveNote({
+      title: title.slice(0, 160),
+      body: draft.body,
+      spaceId: draft.spaceId,
+      url: draft.url,
+      tags: draft.tags,
+      pinned: false
+    })
+    if (!note) return
+    draftVersion.current += 1
+    setDraft(draftFrom(note))
+    setDirty(false)
+    setSavedAt(note.updatedAt)
+    setPreview(false)
+    setConfirming(false)
+    loadedTitle.current = note.title
+    setGraph(null)
+    toast('Note dupliquée.')
   }
 
   const addTag = (): void => {
@@ -543,6 +868,7 @@ export default function NotesDrawer() {
       setDirty(false)
       setSavedAt(note.updatedAt)
       setPreview(false)
+      setSearchHit('')
       setAiMode(null)
       toast(source ? 'Extrait déposé, source conservée.' : 'Extrait déposé dans les notes.')
     }
@@ -559,13 +885,92 @@ export default function NotesDrawer() {
       hasPage={Boolean(activeUrl)}
       generating={aiBusy === 'generate'}
       busy={aiBusy !== null}
-      onNew={() => void newNote()}
+      onNew={() => setTemplateOpen(true)}
       onGenerate={() => void generateNote()}
       onCapture={() => void capturePage()}
       onSelect={() => void handleSelect()}
       onHighlight={() => void highlightSelection()}
     />
   )
+
+  const listPane = (
+    <NotesList
+      notes={notes}
+      spaces={view.spaces}
+      filter={filter}
+      onFilter={setFilter}
+      searchInputRef={searchInputRef}
+      onNext={advanceSearch}
+      tagFilter={tagFilter}
+      onTagFilter={setTagFilter}
+      onlyPinned={onlyPinned}
+      onOnlyPinned={setOnlyPinned}
+      sort={sort}
+      onSort={changeSort}
+      allTags={allTags}
+      highlights={highlights}
+      pageNote={pageNote}
+      noNotes={noNotes}
+      spaceName={space?.name}
+      onOpen={(id) => void openNote(id, filter.trim())}
+      onTogglePin={(note) => void togglePin(note)}
+      trashCount={trash.length}
+      onTrash={() => {
+        setTrashOpen(true)
+        void refreshTrash()
+      }}
+      renderActions={renderActions}
+    />
+  )
+
+  const editorPane = draft ? (
+    <NoteEditor
+      draft={draft}
+      confirming={confirming}
+      saving={saving}
+      dirty={dirty}
+      savedAt={savedAt}
+      preview={preview}
+      highlight={searchHit}
+      aiBusy={aiBusy}
+      aiMode={aiMode}
+      renameUndo={renameUndo}
+      tagDraft={tagDraft}
+      linkMenu={linkMenu}
+      linkSuggestions={linkSuggestions}
+      graph={graph}
+      linksOpen={linksOpen}
+      noteLinks={noteLinks}
+      noteAudio={noteAudio}
+      textareaRef={textareaRef}
+      hasPage={Boolean(activeUrl)}
+      onBack={() => void backToList()}
+      onPatch={patchDraft}
+      onTogglePin={toggleDraftPin}
+      onRemove={() => void removeDraft()}
+      onCopy={() => void copyDraft()}
+      onDuplicate={() => void duplicateDraft()}
+      onOpenSource={(url) => newTab(url)}
+      onTagDraft={setTagDraft}
+      onAddTag={addTag}
+      onRemoveTag={removeTag}
+      onInsert={insertMarkdown}
+      onPrefix={prefixLines}
+      onRecorder={() => setRecorderOpen(true)}
+      onSketch={() => setSketchOpen(true)}
+      onHighlight={() => void highlightSelection()}
+      onRunAi={(action) => void runAi(action)}
+      onUndoRename={() => void undoRename()}
+      onDismissRename={() => setRenameUndo(null)}
+      onPreview={setPreview}
+      onLinkMenu={setLinkMenu}
+      onApplyLink={applyLinkSuggestion}
+      onUpdateLink={updateLinkMenu}
+      onToggleLinks={() => setLinksOpen(!linksOpen)}
+      onOpenNote={(id) => void openNote(id)}
+      onCreateLinked={(title) => void createLinkedNote(title)}
+    />
+  ) : null
 
   return (
     <aside
@@ -586,7 +991,7 @@ export default function NotesDrawer() {
     >
       <NotesHead
         width={width}
-        onWidth={setWidth}
+        onWidth={(value) => setWidth(wide ? Math.max(560, value) : value)}
         onCommitWidth={() =>
           setWidth((current) => {
             window.localStorage.setItem('vela-notes-width', String(current))
@@ -594,7 +999,9 @@ export default function NotesDrawer() {
           })
         }
         noteCount={view.notes.length}
-        onNew={() => void newNote()}
+        wide={wide}
+        onToggleWide={toggleWide}
+        onNew={() => setTemplateOpen(true)}
         onClose={close}
       />
 
@@ -606,67 +1013,41 @@ export default function NotesDrawer() {
         </div>
       )}
 
-      {draft ? (
-        <NoteEditor
-          draft={draft}
-          confirming={confirming}
-          saving={saving}
-          dirty={dirty}
-          savedAt={savedAt}
-          preview={preview}
-          aiBusy={aiBusy}
-          aiMode={aiMode}
-          renameUndo={renameUndo}
-          tagDraft={tagDraft}
-          linkMenu={linkMenu}
-          linkSuggestions={linkSuggestions}
-          graph={graph}
-          linksOpen={linksOpen}
-          noteLinks={noteLinks}
-          noteAudio={noteAudio}
-          textareaRef={textareaRef}
-          hasPage={Boolean(activeUrl)}
-          onBack={() => void backToList()}
-          onPatch={patchDraft}
-          onTogglePin={toggleDraftPin}
-          onRemove={() => void removeDraft()}
-          onTagDraft={setTagDraft}
-          onAddTag={addTag}
-          onRemoveTag={removeTag}
-          onInsert={insertMarkdown}
-          onPrefix={prefixLines}
-          onRecorder={() => setRecorderOpen(true)}
-          onSketch={() => setSketchOpen(true)}
-          onHighlight={() => void highlightSelection()}
-          onRunAi={(action) => void runAi(action)}
-          onUndoRename={() => void undoRename()}
-          onDismissRename={() => setRenameUndo(null)}
-          onPreview={setPreview}
-          onLinkMenu={setLinkMenu}
-          onApplyLink={applyLinkSuggestion}
-          onUpdateLink={updateLinkMenu}
-          onToggleLinks={() => setLinksOpen(!linksOpen)}
-          onOpenNote={(id) => void openNote(id)}
-          onCreateLinked={(title) => void createLinkedNote(title)}
-        />
+      {wide && (draft || !noNotes) ? (
+        <div className="notes-wide">
+          <div className="notes-wide-list">{listPane}</div>
+          <div className="notes-wide-editor">
+            {editorPane ?? (
+              <div className="notes-wide-empty">
+                <span className="notes-wide-mark">
+                  <Icon name="notes" size={18} />
+                </span>
+                <p>Choisissez une note</p>
+                <small>La liste reste à gauche, l’éditeur s’ouvre ici.</small>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        <NotesList
-          notes={notes}
-          spaces={view.spaces}
-          filter={filter}
-          onFilter={setFilter}
-          tagFilter={tagFilter}
-          onTagFilter={setTagFilter}
-          onlyPinned={onlyPinned}
-          onOnlyPinned={setOnlyPinned}
-          allTags={allTags}
-          highlights={highlights}
-          pageNote={pageNote}
-          noNotes={noNotes}
-          spaceName={space?.name}
-          onOpen={(id) => void openNote(id)}
-          onTogglePin={(note) => void togglePin(note)}
-          renderActions={renderActions}
+        (editorPane ?? listPane)
+      )}
+
+      {trashOpen && (
+        <TrashPanel
+          notes={trash}
+          busy={trashBusy}
+          onRestore={(id) => void restoreFromTrash(id)}
+          onClose={() => setTrashOpen(false)}
+        />
+      )}
+
+      {templateOpen && (
+        <NoteTemplatePicker
+          onPick={(template) => {
+            setTemplateOpen(false)
+            void newNote(template)
+          }}
+          onClose={() => setTemplateOpen(false)}
         />
       )}
 

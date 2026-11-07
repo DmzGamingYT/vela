@@ -26,6 +26,8 @@ export type ThemeId =
 export type ThemePresetId = Exclude<ThemeId, 'custom'>
 export type GlassIntensity = 'light' | 'normal' | 'strong'
 export type HomeBackground = 'gradient' | 'sky' | 'plain' | 'image'
+/** Présence du fond derrière l'accueil : discret, normal, marqué. */
+export type HomeIntensity = 'discreet' | 'normal' | 'marked'
 export type ResolvedMode = 'light' | 'dark'
 /** Densité de l'interface : l'espace autour des rangées, pas la taille du texte. */
 export type Density = 'compact' | 'normal' | 'airy'
@@ -35,6 +37,15 @@ export type SidebarSide = 'left' | 'right'
 export type MotionPreference = 'system' | 'reduce' | 'full'
 /** Les deux ciels de l'accueil, réservés au thème Braise. */
 export type SkyVariant = 'braise' | 'nuit-etoilee'
+
+/**
+ * Portée d'une ambiance : « page » la laisse courir derrière l'accueil et le
+ * châssis, « chrome » la réserve au verre des barres et des panneaux.
+ */
+export type AmbienceScope = 'page' | 'chrome'
+export const DEFAULT_AMBIENCE_SCOPE: AmbienceScope = 'page'
+export const DEFAULT_AMBIENCE_INTENSITY = 80
+export const MAX_AMBIENCE_INTENSITY = 100
 
 /** Heures par défaut du thème automatique : clair de 7 h à 19 h. */
 export const HOUR_START = 7
@@ -199,6 +210,11 @@ export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && (value === 'custom' || Boolean(presetById(value)))
 }
 
+/** Valide le niveau du fond d'accueil relu depuis le disque ou l'IPC. */
+export function isHomeIntensity(value: unknown): value is HomeIntensity {
+  return value === 'discreet' || value === 'normal' || value === 'marked'
+}
+
 export function ambiencePreset(id: string): AmbiencePreset | undefined {
   return AMBIENCE_PRESETS.find((preset) => preset.id === id)
 }
@@ -216,6 +232,15 @@ export function ambienceColors(preset: AmbiencePreset, mode: ResolvedMode): [str
 export function sanitizeGlassBlur(value: unknown, fallback: number = DEFAULT_GLASS_BLUR): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
   return Math.max(0, Math.min(MAX_GLASS_BLUR, Math.round(value)))
+}
+
+/** Ramène une présence d'ambiance lue sur disque dans la plage du curseur. */
+export function sanitizeAmbienceIntensity(
+  value: unknown,
+  fallback: number = DEFAULT_AMBIENCE_INTENSITY
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  return Math.max(0, Math.min(MAX_AMBIENCE_INTENSITY, Math.round(value)))
 }
 
 /* ------------------------------------------------------------------ */
@@ -408,6 +433,10 @@ export interface AppearanceInput extends ThemeChoice {
   highContrast: boolean
   /** Optionnel : les appels historiques retombent sur le fond sobre. */
   ambience?: AmbienceId
+  /** Portée de l'ambiance ; « page » par défaut. */
+  ambienceScope?: AmbienceScope
+  /** Présence de l'ambiance, de 0 à 100. */
+  ambienceIntensity?: number
   /** Intensité du verre en pixels ; `glass` sert de repli. */
   glassBlur?: number
 }
@@ -503,6 +532,8 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
     '--amb-rgb-2': rgb(ambB),
     '--amb-line': alpha(ambMix, dark ? 0.42 : 0.3),
     '--amb-halo': alpha(ambMix, dark ? 0.22 : 0.16),
+    // Présence de la scène derrière la page, lue par `.ambience-chrome`.
+    '--amb-opacity': String(sanitizeAmbienceIntensity(input.ambienceIntensity) / 100),
     '--ink-strong': ink
   }
 }
@@ -562,7 +593,13 @@ export interface AppearancePrefs {
   glassBlur: number
   /** Ambiance animée du châssis ; `none` garde le fond sobre. */
   ambience: AmbienceId
+  /** Toute la page (défaut), ou le verre du châssis seul. */
+  ambienceScope: AmbienceScope
+  /** Présence de l'ambiance, de 0 à 100. */
+  ambienceIntensity: number
   homeBackground: HomeBackground
+  /** Intensité du fond de l'accueil, indépendante de son style. */
+  homeIntensity: HomeIntensity
   homeImage: string | null
   homeBlur: number
   /** Ciel de l'accueil, réservé au thème Braise. */
@@ -618,7 +655,13 @@ export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefi
       GLASS_BLUR[input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal']
     ),
     ambience: isAmbienceId(input.ambience) ? input.ambience : 'none',
+    ambienceScope: input.ambienceScope === 'chrome' ? 'chrome' : DEFAULT_AMBIENCE_SCOPE,
+    ambienceIntensity: sanitizeAmbienceIntensity(input.ambienceIntensity),
     homeBackground: migrateSky ? 'sky' : background,
+    homeIntensity:
+      input.homeIntensity === 'discreet' || input.homeIntensity === 'marked'
+        ? input.homeIntensity
+        : 'normal',
     homeImage:
       typeof input.homeImage === 'string' && input.homeImage.trim() && input.homeImage.length < 2000
         ? input.homeImage

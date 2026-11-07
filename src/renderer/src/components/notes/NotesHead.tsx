@@ -5,6 +5,8 @@ interface NotesHeadProps {
   onWidth(value: number): void
   onCommitWidth(): void
   noteCount: number
+  wide: boolean
+  onToggleWide(): void
   onNew(): void
   onClose(): void
 }
@@ -15,6 +17,8 @@ export default function NotesHead({
   onWidth,
   onCommitWidth,
   noteCount,
+  wide,
+  onToggleWide,
   onNew,
   onClose
 }: NotesHeadProps) {
@@ -58,6 +62,17 @@ export default function NotesHead({
           </div>
         </div>
         <div className="notes-head-actions">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={onToggleWide}
+            aria-pressed={wide}
+            data-active={wide}
+            title={wide ? 'Vue simple' : 'Vue large : liste et éditeur'}
+            aria-label={wide ? 'Revenir à la vue simple' : 'Afficher la liste et l’éditeur côte à côte'}
+          >
+            <Icon name="split" size={15} />
+          </button>
           <button
             type="button"
             className="icon-btn"

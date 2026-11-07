@@ -6,7 +6,7 @@ Vela est un navigateur de bureau pour macOS, Windows et Linux : des espaces isol
 
 Le site vitrine public se trouve dans [site/](site/).
 
-Construit avec Electron, React et TypeScript. Aucun compte, aucune télémétrie, aucun serveur Vela.
+Construit avec Electron, React et TypeScript. Aucun compte, aucune mesure d’usage, aucun serveur Vela.
 
 L’interface suit l’identité du site vitrine : papier chaud `#faf8f5` le jour et charbon `#151518` la nuit, un seul accent indigo (`#5b56d6` en clair, `#a8a3ff` en sombre), titres en Iowan Old Style / Georgia, contenu mat et verre réservé au chrome (rail, barre latérale, feuilles) et un lavis d’accent discret. Les réglages sont organisés en deux panneaux, et la page **Modèles** reprend la liste de fournisseurs et de clés.
 
@@ -68,25 +68,29 @@ lipo -archs release/mac/mac-universal/Vela.app/Contents/MacOS/Vela
 ```
 
 macOS est signé (Developer ID) et notarisé dès que les secrets de signature sont configurés — voir
-[Signature macOS](#signature-macos). À défaut, le build reste signé ad hoc : clic droit → Ouvrir au
-premier lancement, et l’installation macOS n’est pas silencieuse (Vela prépare le `.dmg`, un geste
-suffit ensuite). Windows affiche SmartScreen.
+[Signature macOS](#signature-macos). À défaut, le build reste signé ad hoc : sur macOS 15 et plus,
+ouvrir **Réglages Système → Confidentialité et sécurité → Ouvrir quand même** ; sur macOS 14 et
+moins, clic droit → **Ouvrir**. L’installation macOS n’est pas silencieuse (Vela prépare le `.dmg`,
+un geste suffit ensuite). Windows affiche SmartScreen.
 
-## Mises à jour automatiques
+## Mises à jour
 
-Vela se met à jour toute seule en arrière-plan via `electron-updater` et les releases GitHub
-(`DmzGamingYT/vela`). Rien à relancer à la main :
+Vela vérifie les releases GitHub (`DmzGamingYT/vela`). Le contrôle est automatique ; l’installation
+dépend du format :
 
 - Contrôle silencieux ~12 s après le démarrage, puis toutes les 3 h, au retour de veille et quand
-  la fenêtre reprend le focus (jamais plus d’une vérification toutes les 30 min).
-- Si une version existe : téléchargement automatique en arrière-plan, sans fenêtre ni son. Seule la
-  barre d’état montre la progression, et elle s’efface d’un clic.
-- **Windows et Linux** : installation silencieuse à la fermeture de Vela. `Redémarrer maintenant`
-  (barre d’état ou `Réglages → À propos`) l’applique tout de suite.
+  la fenêtre reprend le focus (jamais plus d’une vérification toutes les 30 min). Le rythme se
+  règle dans **Réglages › Mises à jour › Vérification automatique** : toutes les 3 h, une fois par
+  semaine, ou jamais ; le bouton manuel reste disponible dans les trois cas.
 - **macOS sans certificat Apple** : Squirrel refuse de remplacer un bundle non signé, donc Vela
-  télécharge le `.dmg` de la release en arrière-plan et la barre d’état propose `Installer`. Ce
-  bouton ouvre l’image : glissez Vela dans Applications, relancez. Un `.dmg` universel existe, plus
-  arm64 et x64 (Windows : NSIS ; Linux : AppImage, `.deb` à réinstaller à la main).
+  télécharge le `.dmg` de la release et vérifie son empreinte SHA-512. La barre d’état propose
+  `Installer` ; ce bouton ouvre l’image, glissez Vela dans Applications, puis relancez.
+- **Windows** : `electron-updater` télécharge l’installateur et l’installe à la fermeture.
+  `Redémarrer et installer` l’applique tout de suite.
+- **Linux AppImage** : l’AppImage est téléchargée et vérifiée ; Vela la remplace au redémarrage si
+  le fichier est accessible en écriture, sinon il l’affiche pour un remplacement manuel.
+- **Linux `.deb`** : la version est vérifiée, mais le paquet se remplace à la main
+  (`apt install ./Vela-….deb`).
 
 > macOS exige une signature Developer ID **et** une notarisation pour que ShipIt remplace le bundle
 > tout seul. Avec les secrets ci-dessous, l’installation redevient silencieuse : Vela télécharge le
@@ -185,28 +189,26 @@ l’espace actif, et la barre latérale les liste : on rouvre, on renomme, on du
 Les pages restent vivantes : on retrouve ses onglets intacts en revenant en Navigation.
 Chaque rapport rejoint la liste **Travaux** : on le rouvre tel quel, on le renomme, on l’archive.
 
-### Mini navigateur
+### Coup d’œil
 
-`⌘⇧N`, la palette (« Ouvrir dans le mini navigateur »), le clic droit sur un lien, ou le geste
-d’Arc — **`⌘⌥` + clic** — ouvrent la page dans une petite fenêtre séparée, **au milieu de l’écran**,
-et rien n’entre dans les onglets. `⇧` + clic fait la même chose : Vela n’a pas encore de volet
-d’aperçu dans la page, et c’est toujours mieux que la fenêtre popup que ce geste ouvrait avant.
+`⌘⌥N`, la palette (« Ouvrir dans un coup d’œil »), le clic droit sur un lien, ou le geste d’Arc —
+**`⌘⌥` + clic** — posent une carte **dans la fenêtre principale**, par-dessus la page en cours ; rien
+n’entre dans les onglets. `⇧` + clic fait la même chose.
 
 Les autres gestes gardent leur sens habituel : `⌘` + clic ouvre l’onglet **en arrière-plan** (la page
 que vous lisiez garde le focus), `⌥` + clic télécharge le lien comme dans Chromium, et une popup de
 site (fenêtre de connexion OAuth) reste une vraie fenêtre.
 
-Elle prend la moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre (690 × 792 sur
-une fenêtre de 1380 × 880, contre 560 × 660 avant), avec un plancher de 480 × 380 : une page de
-bureau reste lisible, et un petit écran la réduit au lieu de la faire déborder. Elle peut être
-redimensionnée comme n’importe quelle fenêtre.
+La carte reprend la largeur de la colonne de lecture et un peu plus de la moitié de la hauteur, avec
+un en-tête favicon, titre et domaine, la pastille de l’espace qui prête sa session — mêmes cookies,
+même filtre de traqueurs, même identité — et un pied qui rappelle que **aucun onglet n’a été créé**.
+Trois actions : **Épingler** le favori, **Scindée** (`⇧⏎`) pose la page en second volet, **Ouvrir**
+(`⏎`) l’installe dans un vrai onglet. Sans adresse, la carte s’ouvre sur son champ de saisie ; `⌘L`
+y revient à tout moment, et `Échap` referme.
 
-La petite fenêtre emprunte la session de l’espace — mêmes cookies, même filtre de traqueurs, même
-identité — et sa barre compacte montre l’espace qui la prête, l’adresse (modifiable), l’état de
-chargement (un filet court sous la barre) et les gestes utiles. Le bouton d’ouverture installe la page dans un vrai onglet et
-referme la petite fenêtre ; `Échap` et `⌘W` la referment aussi. À l’intérieur, les mêmes gestes de
-lien s’appliquent : elle se recharge elle-même plutôt que d’en ouvrir une seconde. La visite, elle,
-reste dans l’historique de l’espace.
+À l’intérieur, les gestes d’un onglet s’appliquent : `⌘W` ferme la carte, `⌘R` recharge, `⌘[` et `⌘]`
+naviguent, `⌘+`, `⌘−` et `⌘0` règlent le zoom. Un lien ouvert depuis la carte part dans un onglet
+plutôt que d’ouvrir une seconde carte. La visite, elle, reste dans l’historique de l’espace.
 
 ## Accueil
 
@@ -223,7 +225,7 @@ touche jamais le contenu des sites.
 L’horloge est locale. La météo ne demande **aucune** donnée tant que vous n’avez pas nommé une ville :
 en validant, le nom tapé part vers `geocoding-api.open-meteo.com` pour trouver la ville ; ensuite, seules
 ses coordonnées vont à `api.open-meteo.com`, au plus une fois par demi-heure, et le relevé reste sur
-l’appareil. Aucune clé, aucun compte, aucune télémétrie. « Retirer » coupe le flux et efface la ville.
+l’appareil. Aucune clé, aucun compte, aucune mesure d’usage. « Retirer » coupe le flux et efface la ville.
 
 La carte « À voir » peut importer le journal Letterboxd d’un espace : au clic sur « Importer », Vela
 demande le flux RSS public du profil (`letterboxd.com/<profil>/rss/`) — sans cookie, sans la session de
@@ -249,8 +251,8 @@ site manque ou invente un flux.
 | **Sites épinglés** | Chaque espace a sa barre de sites sur son accueil : cartes en verre avec favicon, ajout d’une adresse glissée depuis la page. Réorganisation au glisser ou par `Alt` + flèches (focus conservé, annonce lecteur d’écran), menu contextuel (clic droit, touche Menu ou `⇧F10`) avec renommage et adresse modifiables sur place, copie vers un autre espace ou déplacement, annulable. 200 sites au plus, la barre défile au-delà de quelques rangées. Enregistrée avec l’espace, restaurée au redémarrage. |
 | **Identité de navigation** | UA, client hints (`Sec-CH-UA`), langues et objet `window.chrome` alignés sur un Chrome officiel, onglets comme popups, pour la compatibilité des sites. Google peut malgré tout refuser une connexion : voir [Limites connues](#limites-connues). |
 | **Vue scindée** | Deux pages côte à côte, séparateur redimensionnable, largeur mémorisée. |
-| **Mini navigateur** | Une petite fenêtre jetable, au milieu de l’écran, pour regarder un lien ou une page sans créer d’onglet : `⌘⌥` + clic ou `⇧` + clic sur un lien, `⌘⇧N`, la palette ou le clic droit. Session de l’espace, barre compacte avec son adresse, bouton pour installer la page dans un vrai onglet. `Échap` ou `⌘W` referme. |
-| **Gestes de lien** | `⌘` + clic ouvre en arrière-plan (le focus reste où il est), `⇧` + clic et `⌘⌥` + clic ouvrent dans la petite fenêtre, `⌥` + clic télécharge, et les popups de site gardent leur vraie fenêtre. |
+| **Coup d’œil** | Une carte dans la fenêtre principale pour regarder un lien ou une page sans créer d’onglet : `⌘⌥` + clic ou `⇧` + clic sur un lien, `⌘⌥N`, la palette ou le clic droit. Session de l’espace, en-tête titre et domaine, adresse modifiable (`⌘L`), Épingler / Scindée / Ouvrir. `Échap` ou `⌘W` referme. |
+| **Gestes de lien** | `⌘` + clic ouvre en arrière-plan (le focus reste où il est), `⇧` + clic et `⌘⌥` + clic ouvrent dans le coup d’œil, `⌥` + clic télécharge, et les popups de site gardent leur vraie fenêtre. |
 | **Barre de commande** | `⌘K` : onglets, espaces, historique, actions et agent dans une seule palette. |
 | **Thèmes de couleur** | Dix teintes (indigo, rouge, orange, ambre, vert, turquoise, bleu, violet, rose, graphite) et une couleur personnalisée : tout le châssis suit, jamais le contenu des sites. Mode clair/sombre, verre réglable, thème par espace, contraste élevé. |
 | **Sessions** | Un ensemble d’onglets se garde sous un nom et se rouvre dans son espace d’origine. Stockage local, aucune requête réseau. |
@@ -288,14 +290,14 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘Y` | Historique |
 | `⌘P` | Imprimer |
 | `⌘⇧D` | Vue scindée |
-| `⌘⇧N` | Ouvrir la page courante dans le mini navigateur |
-| `⌘⌥` + clic | Ouvrir un lien dans le mini navigateur |
-| `⇧` + clic | Ouvrir un lien dans le mini navigateur |
+| `⌘⌥N` | Ouvrir le coup d’œil |
+| `⌘⌥` + clic | Ouvrir un lien dans le coup d’œil |
+| `⇧` + clic | Ouvrir un lien dans le coup d’œil |
 | `⌘E` | Notes |
 | `⌘J` | Agent |
 | `⌘⇧A` | Basculer Navigation / Atelier |
 | `⌘⇧B` | Sessions |
-| `⌘S` | Replier la barre latérale |
+| `⌘\` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |
 | `⌘,` | Réglages |
 | `⌘⇧Espace` | Vela et la palette depuis n’importe quelle app (global) |
@@ -309,7 +311,7 @@ src/
 │   ├── index.ts          fenêtre, cycle de vie, sécurité de la coque
 │   ├── browser.ts        état, espaces, IPC, sessions, notes
 │   ├── tabs.ts           un WebContentsView natif par onglet, layout et raccourcis
-│   ├── mini.ts           petite fenêtre jetable (façon Little Arc) et sa page
+│   ├── peek.ts           coup d’œil : une page native calée sur la carte de la coque
 │   ├── privacy.ts        filtre local par partition, permissions, user-agent
 │   ├── blocklist.ts      domaines publicitaires et de mesure
 │   ├── agent.ts          démo locale, OpenAI, Anthropic et Google en SSE
@@ -446,7 +448,7 @@ repeints au chargement suivant, uniquement sur la même URL.
 Cinq actions IA s’appliquent à la note ouverte — reformuler, résumer, traduire, corriger, embellir — et
 « Générer une note IA » lit la page active et propose points clés, synthèse et plan d’action. Sans modèle
 configuré, le repli est local et clairement étiqueté « Mode démo » ; avec une clé, l’appel passe par le
-fournisseur choisi dans Réglages › Modèles. Aucune télémétrie.
+fournisseur choisi dans Réglages › Modèles. Aucune mesure d’usage.
 
 Une note vocale s’enregistre depuis l’éditeur : l’autorisation du micro est expliquée avant la demande
 système, la durée et la pause sont visibles, et le fichier audio reste dans le dossier de données de
@@ -504,14 +506,23 @@ de Google.
   favoris peuvent être importés depuis Chrome, Brave, Edge, Chromium ou Safari, ou depuis un export
   HTML.
 
+### Reconnaissance de texte (planches)
+
+La traduction de planches ne fonctionne pas hors ligne : le moteur Tesseract.js et ses données de
+langue ne sont pas embarqués. Ils sont téléchargés depuis `cdn.jsdelivr.net` à la première
+traduction, puis mis en cache par le navigateur intégré. C’est le seul CDN tiers que Vela contacte ;
+la requête ne contient aucune donnée de la planche, mais expose l’adresse IP et les métadonnées de
+transport à jsDelivr. Sans traduction de planche, aucune requête n’a lieu.
+
 ### macOS sans signature
 
 Le build n’est pas notarié. Au premier lancement, macOS peut dire que Vela est endommagé ou d’un
 développeur non identifié :
 
 1. Ouvrez le `.dmg`, glissez **Vela** dans **Applications**.
-2. **Clic droit sur Vela → Ouvrir**, puis confirmez « Ouvrir ».
-3. Si le message persiste :
+2. **macOS 15 et plus** : lancez Vela depuis Applications, puis ouvrez **Réglages Système → Confidentialité et sécurité** et cliquez **Ouvrir quand même** à côté du message concernant Vela.
+3. **macOS 14 et moins** : dans le Finder, faites un clic droit sur Vela, choisissez **Ouvrir**, puis confirmez.
+4. Si le message persiste :
 
    ```bash
    xattr -cr /Applications/Vela.app

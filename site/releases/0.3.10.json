@@ -2,9 +2,9 @@
   "version": "0.3.10",
   "slug": "0-3-10",
   "date": "2026-10-27",
-  "headline": "La petite fenêtre à l’échelle de Vela",
-  "intro": "La moitié de la largeur et 90 % de la hauteur de la fenêtre qui l’ouvre, plus un filet de chargement sous la barre : les sites servent enfin leur mise en page bureau.",
-  "tags": ["petite fenêtre"],
+  "headline": "Le coup d’œil à l’échelle de Vela",
+  "intro": "Un lien s’ouvre dans une carte posée au-dessus de la page, sans nouvel onglet, avec un filet de chargement sous la barre : le coup d’œil montre le site dans sa mise en page bureau.",
+  "tags": ["coup d’œil"],
   "stats": {
     "commits": 2,
     "files": 10,

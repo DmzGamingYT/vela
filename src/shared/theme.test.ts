@@ -18,6 +18,7 @@ import {
   resolveMode,
   resolveMotion,
   resolveThemeId,
+  sanitizeAmbienceIntensity,
   sanitizeAppearance,
   sanitizeGlassBlur,
   type ResolvedMode,
@@ -250,6 +251,14 @@ describe('ambiances animées', () => {
     expect(sanitizeAppearance({ glassBlur: 96 }).glassBlur).toBe(40)
     expect(sanitizeAppearance({ glassBlur: -4 }).glassBlur).toBe(0)
     expect(sanitizeGlassBlur(Number.NaN, 12)).toBe(12)
+    // Portée et présence : « toute la page » par défaut, bornes 0–100.
+    expect(sanitizeAppearance({}).ambienceScope).toBe('page')
+    expect(sanitizeAppearance({ ambienceScope: 'autre' as never }).ambienceScope).toBe('page')
+    expect(sanitizeAppearance({ ambienceScope: 'chrome' }).ambienceScope).toBe('chrome')
+    expect(sanitizeAppearance({}).ambienceIntensity).toBe(80)
+    expect(sanitizeAppearance({ ambienceIntensity: 240 }).ambienceIntensity).toBe(100)
+    expect(sanitizeAppearance({ ambienceIntensity: -6 }).ambienceIntensity).toBe(0)
+    expect(sanitizeAmbienceIntensity(Number.NaN)).toBe(80)
     // Un fichier d’avant le curseur retrouve le flou de son cran.
     expect(sanitizeAppearance({ glass: 'strong' }).glassBlur).toBe(GLASS_BLUR.strong)
     expect(sanitizeAppearance({}).glassBlur).toBe(DEFAULT_GLASS_BLUR)
@@ -263,10 +272,12 @@ describe('ambiances animées', () => {
       glass: 'normal',
       highContrast: false,
       ambience: 'cyber-neon',
+      ambienceIntensity: 42,
       glassBlur: 26
     })
     expect(tokens['--amb-1']).toBe(AMBIENCE_PRESETS[6].dark[0])
     expect(tokens['--amb-2']).toBe(AMBIENCE_PRESETS[6].dark[1])
+    expect(tokens['--amb-opacity']).toBe('0.42')
     expect(tokens['--glass-blur']).toBe('26px')
     expect(tokens['--amb-rgb']).toMatch(/^\d+, \d+, \d+$/)
   })

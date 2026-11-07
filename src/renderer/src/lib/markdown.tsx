@@ -1,4 +1,5 @@
 import { createContext, createElement, useContext, type ReactNode } from 'react'
+import { normalizeSearchText, parseSearchQuery } from '@shared/search'
 import NoteAudio from '../components/NoteAudio'
 
 function safeUrl(value: string): string | null {
@@ -75,7 +76,45 @@ function AudioToken({ name, label }: { name: string; label?: string }) {
   )
 }
 
-function renderInline(text: string, prefix: string): ReactNode[] {
+/** Enveloppe les termes positifs de la recherche, sans casse ni accents. */
+function markMatches(text: string, highlight?: string, keyPrefix = 'hit'): ReactNode {
+  const terms = highlight ? parseSearchQuery(highlight).include : []
+  if (terms.length === 0) return text
+  const haystack = normalizeSearchText(text)
+  const ranges: { start: number; end: number }[] = []
+  for (const term of terms) {
+    let at = haystack.indexOf(term)
+    while (at !== -1) {
+      ranges.push({ start: at, end: at + term.length })
+      at = haystack.indexOf(term, at + 1)
+    }
+  }
+  if (ranges.length === 0) return text
+
+  ranges.sort((a, b) => a.start - b.start || b.end - a.end)
+  const merged: { start: number; end: number }[] = []
+  for (const range of ranges) {
+    const last = merged[merged.length - 1]
+    if (last && range.start < last.end) last.end = Math.max(last.end, range.end)
+    else merged.push({ ...range })
+  }
+
+  const parts: ReactNode[] = []
+  let cursor = 0
+  for (const range of merged) {
+    if (range.start > cursor) parts.push(text.slice(cursor, range.start))
+    parts.push(
+      <mark className="md-hit" key={`${keyPrefix}-hit-${range.start}`}>
+        {text.slice(range.start, range.end)}
+      </mark>
+    )
+    cursor = range.end
+  }
+  if (cursor < text.length) parts.push(text.slice(cursor))
+  return parts
+}
+
+function renderInline(text: string, prefix: string, highlight?: string): ReactNode[] {
   // `_italique_` et `__gras__` sont bornés aux mots : une regex nue avalait
   // les identifiants (`snake_case`) et les chemins d’URL.
   const tokens = text.split(
@@ -84,22 +123,22 @@ function renderInline(text: string, prefix: string): ReactNode[] {
   return tokens.filter(Boolean).map((token, index) => {
     const key = `${prefix}-${index}`
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
-      return <strong key={key}>{renderInline(token.slice(2, -2), key)}</strong>
+      return <strong key={key}>{renderInline(token.slice(2, -2), key, highlight)}</strong>
     }
     if (token.startsWith('__') && token.endsWith('__') && token.length > 4) {
-      return <strong key={key}>{renderInline(token.slice(2, -2), key)}</strong>
+      return <strong key={key}>{renderInline(token.slice(2, -2), key, highlight)}</strong>
     }
     if (token.startsWith('~~') && token.endsWith('~~') && token.length > 4) {
-      return <del key={key}>{renderInline(token.slice(2, -2), key)}</del>
+      return <del key={key}>{renderInline(token.slice(2, -2), key, highlight)}</del>
     }
     if (token.startsWith('`') && token.endsWith('`') && token.length > 2) {
-      return <code key={key}>{token.slice(1, -1)}</code>
+      return <code key={key}>{markMatches(token.slice(1, -1), highlight, key)}</code>
     }
     if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
-      return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
+      return <em key={key}>{renderInline(token.slice(1, -1), key, highlight)}</em>
     }
     if (token.startsWith('_') && token.endsWith('_') && token.length > 2) {
-      return <em key={key}>{renderInline(token.slice(1, -1), key)}</em>
+      return <em key={key}>{renderInline(token.slice(1, -1), key, highlight)}</em>
     }
     const wiki = token.match(/^\[\[([^[\]|\n]{1,120})(?:\|([^[\]\n]{1,120}))?\]\]$/)
     if (wiki) {
@@ -124,14 +163,14 @@ function renderInline(text: string, prefix: string): ReactNode[] {
     const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
     if (link) {
       const href = safeUrl(link[2])
-      if (!href) return link[1]
+      if (!href) return markMatches(link[1], highlight, key)
       return (
         <a key={key} href={href} target="_blank" rel="noreferrer">
-          {link[1]}
+          {markMatches(link[1], highlight, key)}
         </a>
       )
     }
-    return token
+    return markMatches(token, highlight, prefix)
   })
 }
 
@@ -159,11 +198,14 @@ function isBlockStart(line: string): boolean {
 /** Rendu Markdown minimal : titres, listes, tableaux, citations, code et liens. */
 export function Markdown({
   text,
+  highlight,
   sourceLinks = [],
   links,
   audio
 }: {
   text: string
+  /** Recherche active : surligne ses occurrences dans le rendu. */
+  highlight?: string
   sourceLinks?: { title: string; url: string; anchor?: string }[]
   /** Fourni dans les notes : liens cliquables et création d'une note manquante. */
   links?: NoteLinkContext
@@ -191,9 +233,10 @@ export function Markdown({
         index += 1
       }
       index += 1
+      const codeKey = key++
       blocks.push(
-        <pre key={key++} data-lang={language || undefined}>
-          <code>{code.join('\n')}</code>
+        <pre key={codeKey} data-lang={language || undefined}>
+          <code>{markMatches(code.join('\n'), highlight, `code-${codeKey}`)}</code>
         </pre>
       )
       continue
@@ -206,7 +249,7 @@ export function Markdown({
         createElement(
           `h${level}`,
           { key: key++ },
-          renderInline(heading[2], `h-${key}`)
+          renderInline(heading[2], `h-${key}`, highlight)
         )
       )
       index += 1
@@ -228,7 +271,7 @@ export function Markdown({
             <thead>
               <tr>
                 {header.map((cell, cellIndex) => (
-                  <th key={cellIndex}>{renderInline(cell, `th-${tableKey}-${cellIndex}`)}</th>
+                  <th key={cellIndex}>{renderInline(cell, `th-${tableKey}-${cellIndex}`, highlight)}</th>
                 ))}
               </tr>
             </thead>
@@ -236,7 +279,7 @@ export function Markdown({
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   {row.map((cell, cellIndex) => (
-                    <td key={cellIndex}>{renderInline(cell, `td-${tableKey}-${rowIndex}-${cellIndex}`)}</td>
+                    <td key={cellIndex}>{renderInline(cell, `td-${tableKey}-${rowIndex}-${cellIndex}`, highlight)}</td>
                   ))}
                 </tr>
               ))}
@@ -257,7 +300,7 @@ export function Markdown({
       blocks.push(
         <blockquote key={quoteKey}>
           {quote.map((entry, entryIndex) => (
-            <p key={entryIndex}>{renderInline(entry, `q-${quoteKey}-${entryIndex}`)}</p>
+            <p key={entryIndex}>{renderInline(entry, `q-${quoteKey}-${entryIndex}`, highlight)}</p>
           ))}
         </blockquote>
       )
@@ -283,7 +326,7 @@ export function Markdown({
                     {task[1].toLowerCase() === 'x' ? '✓' : ''}
                   </span>
                 )}
-                {renderInline(task ? task[2] : item, `ul-${listKey}-${itemIndex}`)}
+                {renderInline(task ? task[2] : item, `ul-${listKey}-${itemIndex}`, highlight)}
               </li>
             )
           })}
@@ -302,7 +345,7 @@ export function Markdown({
       blocks.push(
         <ol key={listKey}>
           {items.map((item, itemIndex) => (
-            <li key={itemIndex}>{renderInline(item, `ol-${listKey}-${itemIndex}`)}</li>
+            <li key={itemIndex}>{renderInline(item, `ol-${listKey}-${itemIndex}`, highlight)}</li>
           ))}
         </ol>
       )
@@ -337,7 +380,7 @@ export function Markdown({
       index += 1
     }
     const paragraphKey = key++
-    blocks.push(<p key={paragraphKey}>{renderInline(paragraph.join(' '), `p-${paragraphKey}`)}</p>)
+    blocks.push(<p key={paragraphKey}>{renderInline(paragraph.join(' '), `p-${paragraphKey}`, highlight)}</p>)
   }
 
   if (sourceLinks.length > 0) {

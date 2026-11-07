@@ -1060,216 +1060,6 @@
   }
 }
 
-/* ---------------------------------------------------------------
-   Petite fenêtre, façon Little Arc : une barre compacte, une page en dessous
-   --------------------------------------------------------------- */
-
-.mini-root {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--paper);
-  color: var(--ink);
-}
-
-.mini-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--line-soft);
-  background: var(--glass-strong);
-  box-shadow: var(--glass-highlight);
-  /* La fenêtre se déplace en attrapant sa barre, comme n'importe quel titre. */
-  -webkit-app-region: drag;
-}
-
-/* Filet de chargement, sous la barre : il occupe l'attente sans la commenter. */
-.mini-progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  overflow: hidden;
-  background: var(--accent-soft);
-}
-
-.mini-progress::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 38%;
-  background: var(--accent);
-  animation: mini-progress 1.1s var(--ease-in-out) infinite;
-}
-
-@keyframes mini-progress {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(265%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mini-progress::after {
-    animation: none;
-    width: 100%;
-    opacity: 0.55;
-  }
-}
-
-/* macOS : les feux de circulation gardent leur place à gauche. */
-.mini-root[data-platform='darwin'] .mini-bar {
-  padding-left: 78px;
-}
-
-.mini-bar button,
-.mini-bar input,
-.mini-address {
-  -webkit-app-region: no-drag;
-}
-
-.mini-space {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex: 0 1 auto;
-  max-width: 88px;
-  min-width: 0;
-  padding: 3px 8px 3px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  background: var(--surface-2);
-  color: var(--ink-soft);
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.mini-space i {
-  flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--mini-dot, var(--accent));
-}
-
-.mini-nav {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 1px;
-}
-
-.mini-btn {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  color: var(--ink-soft);
-  transition:
-    background var(--dur-2) var(--ease-standard),
-    color var(--dur-2) var(--ease-standard);
-}
-
-.mini-btn:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-.mini-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.mini-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.mini-close:hover:not(:disabled) {
-  background: var(--fill-2);
-}
-
-.mini-address {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 28px;
-  padding: 0 9px;
-  border-radius: 9px;
-  border: 1px solid var(--line-soft);
-  background: var(--surface-2);
-  transition:
-    border-color var(--dur-2) var(--ease-standard),
-    box-shadow var(--dur-2) var(--ease-standard);
-}
-
-.mini-address:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.mini-address input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: 0;
-  outline: none;
-  background: none;
-  color: var(--ink);
-  font-size: 12.5px;
-  user-select: text;
-}
-
-.mini-address input::placeholder {
-  color: var(--faint);
-}
-
-.mini-warn {
-  display: inline-flex;
-  flex: 0 0 auto;
-  color: var(--gold);
-}
-
-.mini-empty {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  flex: 1 1 auto;
-  gap: 10px;
-  padding: 24px;
-  text-align: center;
-  color: var(--muted);
-}
-
-.mini-empty p {
-  max-width: 330px;
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.mini-hint {
-  color: var(--faint);
-  font-size: 11.5px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mini-btn,
-  .mini-address {
-    transition: none;
-  }
-}
-
 /* --- Sites épinglés : rangée de vignettes (0.3.19) ------------------- */
 /* Une vignette fait la taille d'un favicon confortable, pas d'une carte : la
    rangée reste une barre d'accès, pas un tableau. La tuile pointillée ferme la
@@ -1284,11 +1074,15 @@
   scrollbar-width: thin;
 }
 
-.pin-card {
-  flex: 0 0 96px;
-  width: 96px;
-  height: 96px;
-  border-radius: 20px;
+/* Une tuile porte le nom du site : à 96 px sans texte, un favori isolé
+   ressemblait à une case vide. La puce garde la taille d'un favicon
+   confortable et le nom se lit à côté. */
+.home-favorites .pin-card {
+  flex: 0 0 auto;
+  min-width: 132px;
+  max-width: 190px;
+  height: 58px;
+  border-radius: 15px;
   align-items: center;
   justify-content: center;
 }
@@ -1299,37 +1093,43 @@
   height: auto;
 }
 
-.pin-open {
+.home-favorites .pin-open {
   width: 100%;
   height: 100%;
-  padding: 0;
-  flex-direction: column;
+  padding: 8px 12px 8px 9px;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  justify-content: flex-start;
+  gap: 9px;
 }
 
-.pin-icon {
+.home-favorites .pin-icon {
   flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
   background: none;
 }
 
-/* Le nom vit dans l'infobulle : à 16 px de largeur de texte, il ne serait
-   qu'une troncature. */
-.pin-copy {
-  display: none;
+.home-favorites .pin-copy {
+  display: grid;
 }
 
-.pin-add {
-  flex: 0 0 96px;
-  width: 96px;
-  height: 96px;
+.home-favorites .pin-copy strong {
+  font-size: 11.5px;
+}
+
+.home-favorites .pin-copy small {
+  font-size: 9.5px;
+}
+
+.home-favorites .pin-add {
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
-  border-radius: 20px;
+  border-radius: 15px;
   border: 1.5px dashed var(--line);
   color: var(--faint);
   transition:

@@ -447,8 +447,8 @@ export default function TunnelView() {
               Réinitialiser
             </button>
             <p className="tunnel-privacy">
-              <Icon name="lock" size={12} /> Analyse locale des pages récupérées. Aucune télémétrie : le contenu ne part
-              vers un modèle que si vous lancez une demande à l’agent.
+              <Icon name="lock" size={12} /> Analyse locale des pages récupérées. Aucune mesure d’usage : le contenu
+              ne part vers un modèle que si vous lancez une demande à l’agent.
             </p>
           </div>
         )}

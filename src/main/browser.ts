@@ -79,7 +79,7 @@ import { pruneAvatars, saveAvatarDataUrl } from './avatars'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
-import { MiniWindow } from './mini'
+import { Peek } from './peek'
 import { Store } from './store'
 import { canUseChannel, senderKindOf } from './ipcPolicy'
 import { TabManager, type TabHost } from './tabs'
@@ -111,7 +111,8 @@ const UI_SHORTCUTS: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
   'settings',
   'history',
   'bookmarks',
-  'sessions'
+  'sessions',
+  'notes-search'
 ])
 
 export class Browser {
@@ -124,7 +125,7 @@ export class Browser {
   readonly comic: ComicBridge
   readonly tunnel: TunnelService
   readonly thumbs: Thumbnails
-  readonly mini: MiniWindow
+  readonly peek: Peek
 
   private win: BrowserWindow | null = null
   private noteCache: NoteMeta[]
@@ -159,7 +160,7 @@ export class Browser {
     },
     selection: (payload) => this.send('selection', payload),
     isExempted: (host) => this.store.isExempted(host),
-    openMini: (url, spaceId) => this.openMini({ url, ...(spaceId ? { spaceId } : {}) }),
+    openPeek: (url, spaceId) => this.openPeek({ url, ...(spaceId ? { spaceId } : {}) }),
     highlightsFor: (url) => this.highlights.list(url).map((entry) => entry.text)
   }
 
@@ -188,15 +189,19 @@ export class Browser {
     this.noteAudio.prune(this.notes.audioNames())
     this.noteCache = this.notes.list()
     this.tabs = new TabManager(() => this.win, this.host)
-    this.mini = new MiniWindow({
+    this.peek = new Peek({
       parent: () => this.win,
-      space: (id) => this.store.get().spaces.find((space) => space.id === id),
+      // Sans espace demandé, la carte emprunte celui qui est ouvert.
+      space: (id) => {
+        const state = this.store.get()
+        return state.spaces.find((space) => space.id === (id ?? state.activeSpaceId))
+      },
       sessionFor: (space) => this.tabs.sessionFor(space),
       pageBackground: () => this.tabs.backgroundForPages(),
       visited: (spaceId, url, title) => this.host.visited(spaceId, url, title),
-      openTab: (spaceId, url, background) => {
-        this.createTab({ spaceId, url, activate: background !== true })
-      },
+      openTab: (spaceId, url, background) =>
+        this.createTab({ spaceId, url, activate: background !== true }).id,
+      splitTab: (id) => this.setSplitTab(id),
       focusMain: () => {
         const win = this.win
         if (!win || win.isDestroyed()) return
@@ -635,22 +640,12 @@ export class Browser {
   }
 
   /**
-   * Ouvre la petite fenêtre jetable. Sans adresse, elle prend la page courante ;
-   * l'espace qui prête sa session est l'espace actif, sauf précision contraire.
+   * Ouvre le coup d'œil dans la fenêtre principale. Sans adresse, la carte
+   * s'ouvre sur son champ d'adresse ; l'espace qui prête sa session est
+   * l'espace actif, sauf précision contraire.
    */
-  openMini(input: { url?: string; spaceId?: string } = {}): boolean {
-    const state = this.store.get()
-    const spaceId =
-      input.spaceId && state.spaces.some((space) => space.id === input.spaceId)
-        ? input.spaceId
-        : state.activeSpaceId
-    let url = (input.url ?? '').trim()
-    if (!url) {
-      const activeId = state.activeTabBySpace[spaceId] ?? ''
-      const tab = state.tabs.find((item) => item.id === activeId)
-      if (tab && !isHomeUrl(tab.url)) url = tab.url
-    }
-    return this.mini.open({ url, spaceId })
+  openPeek(input: { url?: string; spaceId?: string } = {}): boolean {
+    return this.peek.open(input)
   }
 
   createTab(input: CreateTabInput = {}): TabState {
@@ -1208,6 +1203,13 @@ export class Browser {
       ) {
         settings.homeBackground = input.homeBackground
       }
+      if (
+        input.homeIntensity === 'discreet' ||
+        input.homeIntensity === 'normal' ||
+        input.homeIntensity === 'marked'
+      ) {
+        settings.homeIntensity = input.homeIntensity
+      }
       if (input.homeImage === null) settings.homeImage = null
       else if (typeof input.homeImage === 'string' && input.homeImage.length < 2000) {
         settings.homeImage = input.homeImage
@@ -1250,6 +1252,13 @@ export class Browser {
         settings.blockLevel = input.blockLevel
       }
       if (typeof input.thumbnails === 'boolean') settings.thumbnails = input.thumbnails
+      if (
+        input.updateChecks === 'auto' ||
+        input.updateChecks === 'weekly' ||
+        input.updateChecks === 'off'
+      ) {
+        settings.updateChecks = input.updateChecks
+      }
       if (typeof input.sidebarCollapsed === 'boolean')
         settings.sidebarCollapsed = input.sidebarCollapsed
       if (typeof (input as { onboarded?: unknown }).onboarded === 'boolean') {
@@ -1307,10 +1316,34 @@ export class Browser {
       key
     }).probe()
     if (probe.availability === 'available') {
-      const message = definition.local ? 'Serveur local joignable.' : 'Clé acceptée.'
-      this.store.setKeyStatus(id, 'ok', message)
-      this.broadcast()
-      return { ok: true, message }
+      // Une clé valide ne suffit pas : le modèle doit répondre. Un aller-retour
+      // d'un mot vérifie d'un coup la clé, l'endpoint et le nom du modèle —
+      // c'est exactement ce que l'agent demandera ensuite.
+      try {
+        const session = await chatModel({
+          definition,
+          config: { baseUrl: state.baseUrl, model: state.model },
+          key,
+          timeoutMs: 20_000
+        }).create({ system: 'Réponds uniquement par le mot : ok' })
+        try {
+          await session.prompt('Réponds par le mot : ok')
+        } finally {
+          session.destroy()
+        }
+        const message = definition.local
+          ? 'Serveur local joignable, le modèle répond.'
+          : 'Clé acceptée, le modèle répond.'
+        this.store.setKeyStatus(id, 'ok', message)
+        this.broadcast()
+        return { ok: true, message }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Rien reçu.'
+        const message = `Clé acceptée, mais le modèle n’a pas répondu. ${detail}`.slice(0, 180)
+        this.store.setKeyStatus(id, 'error', message)
+        this.broadcast()
+        return { ok: false, message }
+      }
     }
     const message =
       probe.status === 401 || probe.status === 403
@@ -1398,6 +1431,7 @@ export class Browser {
       sources?: unknown
       spaceId?: unknown
       mode?: unknown
+      history?: unknown
     }
     const prompt = asString(payload.prompt).slice(0, 8000)
     this.tabs.markAgentSent(this.agentSentTabIds, false)
@@ -1414,6 +1448,22 @@ export class Browser {
             title: source.title.slice(0, 200),
             url: source.url.slice(0, 2000)
           }))
+      : []
+    const history = Array.isArray(payload.history)
+      ? payload.history
+          .filter(
+            (turn): turn is { role: 'user' | 'assistant'; content: string } =>
+              Boolean(
+                turn &&
+                  typeof turn === 'object' &&
+                  (turn as { role?: unknown }).role !== undefined &&
+                  ((turn as { role?: unknown }).role === 'user' ||
+                    (turn as { role?: unknown }).role === 'assistant') &&
+                  typeof (turn as { content?: unknown }).content === 'string'
+              )
+          )
+          .slice(-10)
+          .map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4000) }))
       : []
     const settings = this.store.get().settings.agent
     const provider = providerById(settings.provider)
@@ -1437,7 +1487,8 @@ export class Browser {
       prompt,
       sources,
       spaceId: asString(payload.spaceId) || this.store.get().activeSpaceId,
-      mode: payload.mode === 'act' ? 'act' : 'answer'
+      mode: payload.mode === 'act' ? 'act' : 'answer',
+      history
     })
   }
 
@@ -1480,10 +1531,7 @@ export class Browser {
       return false
     }
     const shellId = this.win && !this.win.isDestroyed() ? this.win.webContents.id : null
-    const kind = senderKindOf(event.sender.id, {
-      shell: shellId,
-      mini: this.mini.chromeContentsId()
-    })
+    const kind = senderKindOf(event.sender.id, { shell: shellId })
     return canUseChannel(kind, channel)
   }
 
@@ -1544,7 +1592,7 @@ export class Browser {
       agent: this.agent,
       tunnel: this.tunnel,
       thumbs: this.thumbs,
-      mini: this.mini,
+      peek: this.peek,
       view: () => this.view(),
       broadcast: () => this.broadcast(),
       send: (channel, payload) => this.send(channel, payload),
@@ -1589,7 +1637,7 @@ export class Browser {
         this.pendingHistory = value
       },
       commitPendingHistory: () => this.commitPendingHistory(),
-      openMini: (input) => this.openMini(input),
+      openPeek: (input) => this.openPeek(input),
       startSelectionDrag: (sender, selected) => this.startSelectionDrag(sender, selected)
     }
 

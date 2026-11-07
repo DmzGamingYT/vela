@@ -36,6 +36,21 @@
 }
 
 .work-split.is-split .work-stage {
+  flex: 1 1 0;
+}
+
+.work-split.is-split .pane[data-secondary='true'] {
+  flex: 0 0 calc(100% - var(--ratio) - 9px);
+  animation: vela-pane-in var(--dur-2) var(--ease-standard) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-split.is-split .pane[data-secondary='true'] {
+    animation: none;
+  }
+}
+
+.work-split.is-split .work-stage {
   flex: 0 0 var(--ratio);
   min-width: 0;
   overflow: hidden;
@@ -1075,6 +1090,57 @@
   color: var(--ink);
 }
 
+/* Échanges précédents : séparés du tour courant par un filet, sans prendre
+   la place des commandes de la dernière réponse. */
+.chat-archive {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--line-soft);
+}
+
+.chat-archive .msg-text {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.chat-archive .bubble {
+  opacity: 0.92;
+}
+
+.chat-followups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-followups > span {
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.chat-followups button {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 9.5px;
+  cursor: pointer;
+  transition: color var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard);
+}
+
+.chat-followups button:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--clay) 35%, var(--line));
+}
+
 /* --- Composeur ------------------------------------------------- */
 
 .chat-composer {
@@ -1210,6 +1276,57 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Actions rapides du composeur : six demandes prêtes, posées dans le champ
+   sans être envoyées. Le panneau s'ancre au-dessus de la ligne de pastilles. */
+.actions-pop {
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 208px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.actions-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 7px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.actions-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--ink);
+  text-align: left;
+}
+
+.actions-pop-row:hover,
+.actions-pop-row:focus-visible {
+  background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.actions-pop-row svg {
+  flex: none;
+  color: var(--clay);
 }
 
 .pages-pop {

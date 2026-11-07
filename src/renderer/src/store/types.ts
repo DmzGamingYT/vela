@@ -14,6 +14,9 @@ export type Overlay =
 
 export type WorkMode = 'browse' | 'work'
 
+/** Ordre de la liste des notes : dernière modification, ou titre. */
+export type NotesSort = 'updated' | 'title'
+
 export interface Toast {
   id: string
   text: string
@@ -28,8 +31,21 @@ export interface AgentStep {
   state: 'pending' | 'active' | 'done'
 }
 
+/** Un échange terminé, gardé au-dessus de la réponse en cours. */
+export interface AgentTurn {
+  id: string
+  prompt: string
+  markdown: string
+  mode: AgentMode
+  sources: { title: string; url: string; anchor?: string }[]
+  status: 'done' | 'error' | 'cancelled'
+  requestMode: 'answer' | 'act'
+}
+
 export interface AgentUi {
   runId: string | null
+  /** Conversation déjà échangée : le fil survit aux demandes suivantes. */
+  turns: AgentTurn[]
   title: string
   steps: AgentStep[]
   markdown: string

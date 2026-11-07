@@ -647,8 +647,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
               {onlyStarters ? (
                 <p className="home-hint">
-                  Quelques pages pour commencer. Vos recherches ne partent que vers le moteur
-                  choisi.
+                  Quelques pages pour commencer. Vos recherches partent vers le moteur choisi.
                 </p>
               ) : null}
 
@@ -718,7 +717,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
         <footer className="home-foot">
           <span className="home-foot-note">
             <Icon name="shield" size={12} />
-            Aucune télémétrie. Vos recherches ne partent que vers le moteur choisi.
+            Aucune mesure d’usage. Vos recherches partent vers le moteur choisi.
           </span>
           <button
             type="button"

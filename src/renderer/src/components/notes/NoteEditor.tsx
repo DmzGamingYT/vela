@@ -1,18 +1,26 @@
+import { useEffect, useRef, useState } from 'react'
 import type { NoteAiAction } from '@shared/api'
 import type { NoteGraph } from '@shared/noteLinks'
 import { hostOf } from '@shared/url'
-import { timeAgo } from '../../lib/format'
+import { shortcut, timeAgo } from '../../lib/format'
 import { Markdown, type NoteAudioContext, type NoteLinkContext } from '../../lib/markdown'
 import { Icon } from '../Icon'
+import { NOTE_AI_ACTIONS as AI_ACTIONS, NOTE_AI_SECONDARY_ACTIONS as SECONDARY_AI_ACTIONS } from './aiActions'
 import type { Draft } from './draft'
 
-const AI_ACTIONS: { id: NoteAiAction; label: string; hint: string }[] = [
-  { id: 'reformulate', label: 'Reformuler', hint: 'Phrases claires, même contenu' },
-  { id: 'summarize', label: 'Résumer', hint: 'Cinq points et une synthèse' },
-  { id: 'translate', label: 'Traduire', hint: 'En français, structure conservée' },
-  { id: 'correct', label: 'Corriger', hint: 'Orthographe et grammaire' },
-  { id: 'beautify', label: 'Embellir', hint: 'Mise en page Markdown' }
-]
+const LAST_SECONDARY_KEY = 'vela-notes-ai-last-secondary'
+
+/** Dernière action secondaire retenue, si elle existe encore dans le menu. */
+function readLastSecondary(): NoteAiAction | null {
+  try {
+    const stored = window.localStorage.getItem(LAST_SECONDARY_KEY)
+    return SECONDARY_AI_ACTIONS.some((action) => action.id === stored)
+      ? (stored as NoteAiAction)
+      : null
+  } catch {
+    return null
+  }
+}
 
 interface NoteEditorProps {
   draft: Draft
@@ -21,6 +29,8 @@ interface NoteEditorProps {
   dirty: boolean
   savedAt: number | null
   preview: boolean
+  /** Recherche qui a ouvert la note : ses occurrences sont marquées dans l'aperçu. */
+  highlight: string
   aiBusy: NoteAiAction | 'generate' | null
   aiMode: 'api' | 'demo' | null
   renameUndo: { id: string; from: string; updated: number } | null
@@ -37,6 +47,9 @@ interface NoteEditorProps {
   onPatch(patch: Partial<Draft>): void
   onTogglePin(): void
   onRemove(): void
+  onCopy(): void
+  onDuplicate(): void
+  onOpenSource(url: string): void
   onTagDraft(value: string): void
   onAddTag(): void
   onRemoveTag(tag: string): void
@@ -65,6 +78,7 @@ export default function NoteEditor({
   dirty,
   savedAt,
   preview,
+  highlight,
   aiBusy,
   aiMode,
   renameUndo,
@@ -81,6 +95,9 @@ export default function NoteEditor({
   onPatch,
   onTogglePin,
   onRemove,
+  onCopy,
+  onDuplicate,
+  onOpenSource,
   onTagDraft,
   onAddTag,
   onRemoveTag,
@@ -100,6 +117,51 @@ export default function NoteEditor({
   onOpenNote,
   onCreateLinked
 }: NoteEditorProps) {
+  const [aiMenuOpen, setAiMenuOpen] = useState(false)
+  const [lastSecondary, setLastSecondary] = useState<NoteAiAction | null>(readLastSecondary)
+  const aiMenuRef = useRef<HTMLDivElement | null>(null)
+  const previewRef = useRef<HTMLDivElement | null>(null)
+
+  const rememberSecondary = (action: NoteAiAction): void => {
+    setLastSecondary(action)
+    try {
+      window.localStorage.setItem(LAST_SECONDARY_KEY, action)
+    } catch {
+      /* stockage refusé : le choix vaut pour la session */
+    }
+  }
+
+  const runAction = (action: (typeof AI_ACTIONS)[number]): void => {
+    if (action.tier === 'secondary') rememberSecondary(action.id)
+    onRunAi(action.id)
+  }
+
+  const secondaryActions = lastSecondary
+    ? [...SECONDARY_AI_ACTIONS].sort((a, b) =>
+        a.id === lastSecondary ? -1 : b.id === lastSecondary ? 1 : 0
+      )
+    : SECONDARY_AI_ACTIONS
+  const lastSecondaryLabel = SECONDARY_AI_ACTIONS.find(
+    (action) => action.id === lastSecondary
+  )?.label
+
+  // Un clic hors du menu le referme ; Échap est traité depuis le menu lui-même
+  // pour ne pas fermer aussi le tiroir des notes.
+  useEffect(() => {
+    if (!aiMenuOpen) return
+    const closeOnOutside = (event: PointerEvent): void => {
+      if (!aiMenuRef.current?.contains(event.target as Node)) setAiMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutside)
+    return () => document.removeEventListener('pointerdown', closeOnOutside)
+  }, [aiMenuOpen])
+
+  // Le premier passage trouvé est amené au centre de l'aperçu.
+  useEffect(() => {
+    if (!preview || !highlight) return
+    previewRef.current?.querySelector('mark.md-hit')?.scrollIntoView({ block: 'center' })
+  }, [preview, highlight, draft.body])
+
   return (
     <div className="note-editor">
       <div className="note-editor-head">
@@ -125,7 +187,12 @@ export default function NoteEditor({
           onClick={onTogglePin}
           aria-pressed={draft.pinned}
           data-active={draft.pinned}
-          title={draft.pinned ? 'Désépingler' : 'Épingler en tête'}
+          title={
+            draft.pinned
+              ? `Désépingler (${shortcut('⇧P')})`
+              : `Épingler en tête (${shortcut('⇧P')})`
+          }
+          aria-keyshortcuts="Meta+Shift+P Control+Shift+P"
         >
           <Icon name="star" size={15} filled={draft.pinned} />
         </button>
@@ -150,6 +217,15 @@ export default function NoteEditor({
               <button
                 type="button"
                 className="text-btn"
+                onClick={() => onOpenSource(draft.url!)}
+                title="Ouvrir la source dans un onglet"
+              >
+                Ouvrir
+                <Icon name="external" size={10} />
+              </button>
+              <button
+                type="button"
+                className="text-btn"
                 onClick={() => onPatch({ url: undefined })}
                 title="Détacher la source"
               >
@@ -166,7 +242,7 @@ export default function NoteEditor({
                   onClick={() => onRemoveTag(tag)}
                   aria-label={`Retirer l’étiquette ${tag}`}
                 >
-                  ×
+                  <Icon name="close" size={10} />
                 </button>
               </span>
             ))}
@@ -236,6 +312,7 @@ export default function NoteEditor({
         >
           <span className="note-tool-brackets">[[ ]]</span>
         </button>
+        <span className="note-tool-sep" aria-hidden="true" />
         <button
           type="button"
           className="note-tool"
@@ -261,7 +338,12 @@ export default function NoteEditor({
       </div>
 
       <div className="note-ai-row">
-        <span className="note-ai-label">
+        <span
+          className="note-ai-label"
+          title={`Actions IA : ${AI_ACTIONS.map(
+            (action) => `${shortcut(action.key)} ${action.label}`
+          ).join(' · ')}`}
+        >
           <Icon name="sparkles" size={12} /> IA
         </span>
         {AI_ACTIONS.map((action) => (
@@ -269,13 +351,71 @@ export default function NoteEditor({
             key={action.id}
             type="button"
             className="note-ai"
-            onClick={() => onRunAi(action.id)}
+            data-secondary={action.tier === 'secondary'}
+            onClick={() => runAction(action)}
             disabled={aiBusy !== null}
-            title={action.hint}
+            title={`${action.hint} (${shortcut(action.key)})`}
+            aria-keyshortcuts={`Meta+Alt+${action.digit} Control+Alt+${action.digit}`}
           >
             {aiBusy === action.id ? '…' : action.label}
           </button>
         ))}
+        <div className="note-ai-more" ref={aiMenuRef}>
+          <button
+            type="button"
+            className="note-ai note-ai-toggle"
+            aria-haspopup="menu"
+            aria-expanded={aiMenuOpen}
+            disabled={aiBusy !== null}
+            onClick={() => setAiMenuOpen((open) => !open)}
+            title={
+              lastSecondaryLabel
+                ? `Autres actions IA · dernière : ${lastSecondaryLabel}`
+                : 'Autres actions IA'
+            }
+          >
+            {aiBusy && SECONDARY_AI_ACTIONS.some((action) => action.id === aiBusy) ? '…' : 'Plus'}
+            <Icon name="chevron-down" size={10} />
+          </button>
+          {aiMenuOpen && (
+            <div
+              className="note-ai-menu"
+              role="menu"
+              aria-label="Autres actions IA"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setAiMenuOpen(false)
+              }}
+            >
+              {secondaryActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  role="menuitem"
+                  autoFocus={action.id === (lastSecondary ?? SECONDARY_AI_ACTIONS[0]?.id)}
+                  data-last={action.id === lastSecondary}
+                  disabled={aiBusy !== null}
+                  onClick={() => {
+                    setAiMenuOpen(false)
+                    runAction(action)
+                  }}
+                  title={`${action.hint} (${shortcut(action.key)})`}
+                  aria-keyshortcuts={`Meta+Alt+${action.digit} Control+Alt+${action.digit}`}
+                >
+                  <strong>
+                    <span className="note-ai-name">
+                      {aiBusy === action.id ? '…' : action.label}
+                      {action.id === lastSecondary && (
+                        <span className="note-ai-last">Dernière</span>
+                      )}
+                    </span>
+                    <span className="note-ai-key">{shortcut(action.key)}</span>
+                  </strong>
+                  <small>{action.hint}</small>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {linkMenu && (
@@ -360,9 +500,9 @@ export default function NoteEditor({
       )}
 
       {preview ? (
-        <div className="note-preview">
+        <div className="note-preview" ref={previewRef}>
           {draft.body.trim() ? (
-            <Markdown text={draft.body} links={noteLinks} audio={noteAudio} />
+            <Markdown text={draft.body} highlight={highlight || undefined} links={noteLinks} audio={noteAudio} />
           ) : (
             <p className="note-empty-preview">Rien à prévisualiser.</p>
           )}
@@ -479,17 +619,38 @@ export default function NoteEditor({
         )}
 
       <footer className="note-foot">
-        <span>
-          {draft.body.length} caractères · {draft.body.split(/\s+/).filter(Boolean).length} mots
-        </span>
-        <button
-          type="button"
-          className="text-btn"
-          onClick={() => void window.vela.notes.openFolder()}
+        <span
+          title={`Raccourcis : ${shortcut('⇧F')} rechercher · ${shortcut('G')} résultat suivant · ${shortcut('⇧P')} épingler · ${shortcut('⇧C')} copier · ${shortcut('⌥↑')} / ${shortcut('⌥↓')} changer de note`}
         >
-          <Icon name="folder" size={13} />
-          Dossier
-        </button>
+          {draft.body.length} caractères · {draft.body.split(/\s+/).filter(Boolean).length} mots ·{' '}
+          {Math.max(1, Math.round(draft.body.split(/\s+/).filter(Boolean).length / 200))} min de
+          lecture
+        </span>
+        <div className="note-foot-actions">
+          <button
+            type="button"
+            className="text-btn"
+            onClick={onCopy}
+            disabled={!draft.body.trim()}
+            title={`Copier le Markdown (${shortcut('⇧C')})`}
+            aria-keyshortcuts="Meta+Shift+C Control+Shift+C"
+          >
+            <Icon name="copy" size={13} />
+            Copier
+          </button>
+          <button type="button" className="text-btn" onClick={onDuplicate} title="Dupliquer la note">
+            <Icon name="notes" size={13} />
+            Dupliquer
+          </button>
+          <button
+            type="button"
+            className="text-btn"
+            onClick={() => void window.vela.notes.openFolder()}
+          >
+            <Icon name="folder" size={13} />
+            Dossier
+          </button>
+        </div>
       </footer>
     </div>
   )

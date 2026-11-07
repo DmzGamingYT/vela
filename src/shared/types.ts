@@ -4,9 +4,11 @@
  */ import type { AgentActionEntry } from './agentLoop'
 import type {
   AmbienceId,
+  AmbienceScope,
   Density,
   GlassIntensity,
   HomeBackground,
+  HomeIntensity,
   MotionPreference,
   SidebarSide,
   SkyVariant,
@@ -148,6 +150,11 @@ export interface NoteMeta {
   updatedAt: number
 }
 
+/** Note passée par la corbeille, en attente d'être restaurée. */
+export interface TrashedNote extends NoteMeta {
+  deletedAt: number
+}
+
 /** Passage surligné sur une page, rattaché à son URL et à sa note. */
 export interface PageHighlight {
   id: string
@@ -176,6 +183,9 @@ export interface AgentSettings {
 
 /** Les deux ciels de l'ambiance Braise (voir shared/theme). */
 export type { SkyVariant }
+
+/** Rythme du contrôle automatique des mises à jour ; `off` garde le bouton manuel. */
+export type UpdateChecks = 'auto' | 'weekly' | 'off'
 
 export interface Settings {
   theme: Theme
@@ -216,8 +226,14 @@ export interface Settings {
   glassBlur: number
   /** Ambiance animée du châssis ; `none` garde le fond sobre. */
   ambience: AmbienceId
+  /** Portée de l'ambiance : toute la page, ou le châssis seul. */
+  ambienceScope: AmbienceScope
+  /** Présence de l'ambiance, de 0 à 100. */
+  ambienceIntensity: number
   /** Arrière-plan de la page d'accueil : dégradé, ciel, couleur unie, image. */
   homeBackground: HomeBackground
+  /** Présence du fond de l'accueil : discret, normal ou marqué. */
+  homeIntensity: HomeIntensity
   /** Image locale de l'accueil (chemin disque, jamais transmis aux sites). */
   homeImage: string | null
   /** Flou appliqué à l'image d'accueil, en pixels. */
@@ -249,6 +265,8 @@ export interface Settings {
   blockLevel: 'trackers' | 'strict'
   /** Capture une vignette des pages à la fermeture de l'onglet (désactivé par défaut). */
   thumbnails: boolean
+  /** Espacement du contrôle automatique des mises à jour (Réglages › Mises à jour). */
+  updateChecks: UpdateChecks
   sidebarCollapsed: boolean
   onboarded: boolean
   agent: AgentSettings
@@ -375,10 +393,10 @@ export interface TabView extends TabState {
 }
 
 /**
- * État de la petite fenêtre, poussé vers sa propre barre compacte. Elle ne
- * figure jamais dans les onglets : c’est une fenêtre jetable.
+ * État du coup d'œil, poussé vers la carte posée dans la fenêtre principale.
+ * La page ne figure jamais dans les onglets : c'est un aperçu jetable.
  */
-export interface MiniState {
+export interface PeekState {
   /** Page courante ; chaîne vide quand aucune adresse n’est encore ouverte. */
   url: string
   title: string
@@ -440,12 +458,20 @@ export interface AgentSource {
   anchor?: string
 }
 
+/** Un tour déjà échangé, renvoyé au modèle pour garder le fil. */
+export interface AgentHistoryTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface AgentRunRequest {
   prompt: string
   sources: AgentSource[]
   spaceId: string
   /** « answer » rédige un rapport ; « act » exécute des actions dans un onglet. */
   mode?: 'answer' | 'act'
+  /** Échanges précédents de la conversation, du plus ancien au plus récent. */
+  history?: AgentHistoryTurn[]
 }
 
 export interface AgentCitationSource {
@@ -474,13 +500,15 @@ export type ShortcutAction =
   | 'command'
   | 'address'
   | 'new-tab'
-  | 'mini'
+  | 'peek'
   | 'close-tab'
   | 'reopen-tab'
   | 'next-tab'
   | 'prev-tab'
   | 'split'
   | 'notes'
+  | 'notes-search'
+  | 'notes-search-next'
   | 'agent'
   | 'work'
   | 'sessions'

@@ -6,6 +6,7 @@ import {
   downloadUpdate,
   installUpdate,
   openReleases,
+  setUpdaterPolicy,
   updateStatus
 } from '../updater'
 import { readAvatarDataUrl } from '../avatars'
@@ -38,26 +39,27 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
   handle('app:platform', () => process.platform)
   handle('app:metrics', () => host.metrics())
 
-  // Petite fenêtre (façon Little Arc) : sa barre compacte est un renderer à
-  // nous, elle ne voit que ces quelques échanges.
-  handle('mini:open', (payload) => {
+  // Coup d'œil : la carte vit dans la coque, la page est une vue native.
+  // Seuls ces quelques échanges traversent l'IPC.
+  handle('peek:open', (payload) => {
     const input = (payload ?? {}) as { url?: unknown; spaceId?: unknown }
-    return host.openMini({
+    return host.openPeek({
       ...(typeof input.url === 'string' ? { url: input.url } : {}),
       ...(typeof input.spaceId === 'string' ? { spaceId: input.spaceId } : {})
     })
   })
-  handle('mini:close', () => host.mini.close())
-  handle('mini:navigate', (payload) => host.mini.navigate(typeof payload === 'string' ? payload : ''))
-  handle('mini:back', () => host.mini.back())
-  handle('mini:forward', () => host.mini.forward())
-  handle('mini:reload', () => host.mini.reload())
-  handle('mini:stop', () => host.mini.stop())
-  handle('mini:open-in-tab', () => host.mini.openInTab())
-  handle('mini:state', () => host.mini.current())
-  // La barre se présente par `send` : `handle` ne reçoit pas ces messages, et
-  // sans cette annonce l'état ne lui serait jamais poussé.
-  on('mini:ready', () => host.mini.ready())
+  handle('peek:close', () => host.peek.close())
+  handle('peek:navigate', (payload) => host.peek.navigate(typeof payload === 'string' ? payload : ''))
+  handle('peek:back', () => host.peek.back())
+  handle('peek:forward', () => host.peek.forward())
+  handle('peek:reload', () => host.peek.reload())
+  handle('peek:stop', () => host.peek.stop())
+  handle('peek:open-in-tab', () => host.peek.openInTab())
+  handle('peek:open-in-split', () => host.peek.openInSplit())
+  handle('peek:state', () => host.peek.current())
+  // La carte se présente par `send` : `handle` ne reçoit pas ces messages.
+  on('peek:ready', () => host.peek.ready())
+  on('peek:layout', (_event, payload) => host.peek.layout(payload))
 
   handle('avatar:read', (payload) => {
     const name = typeof payload === 'string' ? payload : ''
@@ -108,6 +110,9 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
   handle('settings:update', async (payload) => {
     if (!(await host.confirmRemoteEndpoint(payload))) return
     host.updateSettings(payload)
+    // Le rythme du contrôle des mises à jour s'applique sans redémarrer.
+    const checks = (payload as { updateChecks?: unknown } | null)?.updateChecks
+    if (checks === 'auto' || checks === 'weekly' || checks === 'off') setUpdaterPolicy(checks)
   })
   handle('settings:set-key', (payload) => {
     const input = (payload ?? {}) as { provider?: unknown; key?: unknown }

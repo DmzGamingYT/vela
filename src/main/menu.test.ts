@@ -85,6 +85,19 @@ describe('menu — accélérateurs sur les trois plateformes', () => {
     }
   })
 
+  it('déclare la recherche des notes et le résultat suivant', () => {
+    for (const platform of PLATFORMS) {
+      const rows = build(platform)
+      expect(
+        rows.find(({ entry }) => entry.label === 'Rechercher dans les notes')?.entry.accelerator
+      ).toBe('CmdOrCtrl+Shift+F')
+      expect(
+        rows.find(({ entry }) => entry.label === 'Résultat suivant dans les notes')?.entry
+          .accelerator
+      ).toBe('CmdOrCtrl+G')
+    }
+  })
+
   it('envoie l’action au clic sur chaque plateforme', () => {
     for (const platform of PLATFORMS) {
       const sent: string[] = []

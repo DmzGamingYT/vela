@@ -1,38 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vela">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vela">
+  <title>Vela</title>
   <defs>
-    <linearGradient id="paper" x1="16" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FCF7EE" />
-      <stop offset=".52" stop-color="#F1E5D4" />
-      <stop offset="1" stop-color="#E3D1B8" />
-    </linearGradient>
-    <linearGradient id="inkLeft" x1="18" y1="18" x2="32" y2="47" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3A342C" />
-      <stop offset="1" stop-color="#211D18" />
-    </linearGradient>
-    <linearGradient id="inkRight" x1="32" y1="32" x2="47" y2="18" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#211D18" />
-      <stop offset="1" stop-color="#15120F" />
-    </linearGradient>
-    <linearGradient id="glass" x1="32" y1="6" x2="32" y2="19" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" stop-opacity=".58" />
-      <stop offset=".55" stop-color="#FFFFFF" stop-opacity=".16" />
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity=".02" />
-    </linearGradient>
     <clipPath id="tile">
-      <rect x="6" y="6" width="52" height="52" rx="11.8" />
+      <rect width="200" height="200" rx="46" />
     </clipPath>
   </defs>
-
-  <rect x="6" y="6" width="52" height="52" rx="11.8" fill="url(#paper)" />
   <g clip-path="url(#tile)">
-    <path d="M6 13C13.75 8.5 21.875 14.75 31.25 11.625C40.625 8.625 48.125 10.125 58 15.25V6H6Z" fill="url(#glass)" />
-    <path d="M6 13C13.75 8.5 21.875 14.75 31.25 11.625C40.625 8.625 48.125 10.125 58 15.25" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width=".55" />
-
-    <path d="M17.5 18.25H26.875L32.75 32.75V47Z" fill="url(#inkLeft)" />
-    <path d="M32.75 47V32.75L37.125 18.25H46.5Z" fill="url(#inkRight)" />
-
-    <circle cx="46.5" cy="43.875" r="3.125" fill="#C46F4C" />
-    <circle cx="45.625" cy="42.9375" r=".875" fill="#E8A181" fill-opacity=".32" />
+    <rect width="200" height="200" fill="#1B2150" />
+    <circle cx="100" cy="98" r="52" fill="#E8805A" opacity=".28" />
+    <path d="M0 156 Q30 146 60 156 T120 156 T180 156 T200 154 L200 200 L0 200 Z" fill="#26307A" />
+    <path
+      d="M0 158 Q30 148 60 158 T120 158 T180 158 L200 156"
+      fill="none"
+      stroke="#3B4AA8"
+      stroke-width="2"
+    />
+    <path d="M96 38 L96 128 L46 128 Z" fill="#F6EFE4" />
+    <path d="M106 64 L106 128 L142 128 Z" fill="#B9BECB" />
+    <rect x="95" y="34" width="3" height="98" fill="#F6EFE4" />
+    <path d="M32 132 L168 132 L150 152 L50 152 Z" fill="#E8805A" />
+    <path d="M50 152 L150 152 L146 156 L54 156 Z" fill="#C4623F" />
   </g>
-  <rect x="6" y="6" width="52" height="52" rx="11.8" fill="none" stroke="#2A2520" stroke-opacity=".22" stroke-width=".6" />
 </svg>

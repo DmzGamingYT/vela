@@ -7,10 +7,10 @@ import AmbienceScene from './AmbienceScene'
 /**
  * Mini-fenêtre Vela de l'aperçu d'apparence.
  *
- * Elle ne duplique pas l'accueil réel : elle en garde la silhouette (rail,
- * barre latérale, mot d'accueil, recherche, tuiles) et rejoue les mêmes jetons
- * que le châssis. Tout est décoratif et `aria-hidden` : le texte de la section
- * décrit le résultat, l'aperçu ne parle pas aux lecteurs d'écran.
+ * Elle reprend la silhouette réelle du navigateur — rail, barre latérale
+ * Favoris/Onglets, reprise de session, recherche et carte Récemment — et
+ * rejoue les mêmes jetons que le châssis. Les données sont des exemples
+ * visibles ; l'ensemble est décoratif et `aria-hidden`.
  */
 export default function AppearancePreview({
   settings,
@@ -28,7 +28,9 @@ export default function AppearancePreview({
     glass: settings.glass,
     glassBlur: settings.glassBlur,
     highContrast: settings.highContrast,
-    ambience: settings.ambience
+    ambience: settings.ambience,
+    ambienceScope: settings.ambienceScope,
+    ambienceIntensity: settings.ambienceIntensity
   }) as CSSProperties
   const blur = Math.round(settings.glassBlur * 0.55)
   // L'horloge est lue une fois, au montage : lire l'heure pendant un rendu est
@@ -43,71 +45,70 @@ export default function AppearancePreview({
       data-preview-density={settings.density}
       data-preview-home={settings.homeBackground}
       data-preview-sky={settings.skyVariant}
+      data-preview-intensity={settings.homeIntensity}
       aria-hidden="true"
     >
       <div className="pv-window">
         <span className="pv-ambience-wrap">
           <AmbienceScene ambience={settings.ambience} className="pv-ambience" />
         </span>
+
         <div className="pv-rail">
           <span className="pv-rail-dot" />
           <span className="pv-rail-dot is-active" />
           <span className="pv-rail-dot" />
         </div>
+
         <div
           className="pv-side"
           style={{ backdropFilter: `blur(${blur}px)`, WebkitBackdropFilter: `blur(${blur}px)` }}
         >
           <span className="pv-brand">Vela.</span>
-          <span className="pv-nav is-active">
+          <span className="pv-side-label">Favoris</span>
+          <span className="pv-fav">
             <i /> Accueil
           </span>
-          <span className="pv-nav">
-            <i /> Atelier
+          <span className="pv-side-label pv-side-label--tabs">Onglets</span>
+          <span className="pv-tab is-active">
+            <i /> Accueil
           </span>
-          <span className="pv-nav">
+          <span className="pv-tab">
             <i /> Notes
           </span>
-          <span className="pv-side-foot">
-            <i /> Sessions
-          </span>
         </div>
+
         <div className="pv-home">
+          <div className="pv-home-bg" />
           <div className="pv-home-sky" />
+          <span className="pv-demo">Exemple</span>
+
           <div className="pv-home-copy">
-            {/* La date et le mot d’accueil viennent du même code que l’accueil
-                réel : l’aperçu ne peut pas annoncer un autre jour. */}
+            <span className="pv-session">
+              <span className="pv-session-copy">
+                <strong>Reprendre la session</strong>
+                <span>3 onglets · Accueil</span>
+              </span>
+              <span className="pv-session-mark">↗</span>
+            </span>
+
             <span className="pv-kicker">{weekdayLabel(today)}</span>
             <strong className="pv-word">{greeting()}.</strong>
+
             <span className="pv-search">
               <i />
               Rechercher ou saisir une adresse
             </span>
-            <div className="pv-tiles">
-              <span className="pv-tile" style={{ backdropFilter: `blur(${blur}px)` }} />
-              <span className="pv-tile" style={{ backdropFilter: `blur(${blur}px)` }} />
-              <span className="pv-tile" style={{ backdropFilter: `blur(${blur}px)` }} />
-            </div>
+
+            <span className="pv-recent">
+              <span className="pv-recent-label">Récemment</span>
+              <span className="pv-recent-card">
+                <strong>Le navigateur qui reste à vous</strong>
+                <span>vela.app · Aujourd’hui</span>
+              </span>
+            </span>
           </div>
         </div>
       </div>
-      <p className="pv-caption">
-        {settings.homeBackground === 'image' && settings.homeImage
-          ? 'Image locale, sur cet appareil'
-          : settings.homeBackground === 'sky'
-            ? settings.skyVariant === 'nuit-etoilee'
-              ? 'Ciel · nuit étoilée'
-              : 'Ciel · braises'
-            : settings.homeBackground === 'plain'
-              ? 'Fond uni'
-              : 'Dégradé du thème'}
-        {' · '}
-        {settings.density === 'compact'
-          ? 'compacte'
-          : settings.density === 'airy'
-            ? 'aérée'
-            : 'normale'}
-      </p>
     </div>
   )
 }

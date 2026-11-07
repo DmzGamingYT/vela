@@ -1,16 +1,9 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  renameSync,
-  unlinkSync,
-  writeFileSync
-} from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { newId } from '@shared/defaults'
 import { audioRefs, noteGraph, rewriteWikiTargets, type NoteGraph } from '@shared/noteLinks'
-import type { Note, NoteMeta, PageHighlight } from '@shared/types'
+import { matchesSearch, parseSearchQuery } from '@shared/search'
+import type { Note, NoteMeta, PageHighlight, TrashedNote } from '@shared/types'
 
 interface NoteIndexEntry {
   id: string
@@ -21,6 +14,10 @@ interface NoteIndexEntry {
   tags: string[]
   pinned: boolean
   updatedAt: number
+}
+
+interface TrashIndexEntry extends NoteIndexEntry {
+  deletedAt: number
 }
 
 /** Étiquettes courtes, sans doublon, dans l'ordre saisi. */
@@ -102,14 +99,22 @@ function previewOf(body: string, title = ''): string {
 export class NotesStore {
   readonly dir: string
   private readonly indexFile: string
+  private readonly trashDir: string
+  private readonly trashIndexFile: string
   private entries: NoteIndexEntry[]
+  private trashed: TrashIndexEntry[]
   private indexReadable = true
+  private trashReadable = true
 
   constructor(baseDir: string) {
     this.dir = join(baseDir, 'notes')
     mkdirSync(this.dir, { recursive: true })
     this.indexFile = join(this.dir, 'index.json')
+    this.trashDir = join(this.dir, 'corbeille')
+    mkdirSync(this.trashDir, { recursive: true })
+    this.trashIndexFile = join(this.trashDir, 'index.json')
     this.entries = this.readIndex()
+    this.trashed = this.readTrash()
   }
 
   private readIndex(): NoteIndexEntry[] {
@@ -169,14 +174,69 @@ export class NotesStore {
     renameSync(tmp, this.indexFile)
   }
 
-  private bodyOf(entry: NoteIndexEntry): string {
-    const file = join(this.dir, entry.file)
+  /** Index de la corbeille : les fichiers déplacés, avec leur date de suppression. */
+  private readTrash(): TrashIndexEntry[] {
+    if (!existsSync(this.trashIndexFile)) {
+      try {
+        if (readdirSync(this.trashDir).some((file) => file.endsWith('.md'))) this.trashReadable = false
+      } catch {
+        this.trashReadable = false
+      }
+      return []
+    }
+    try {
+      const raw = JSON.parse(readFileSync(this.trashIndexFile, 'utf8'))
+      if (
+        !Array.isArray(raw) ||
+        raw.some(
+          (entry) =>
+            !entry ||
+            typeof entry.id !== 'string' ||
+            typeof entry.file !== 'string' ||
+            typeof entry.title !== 'string'
+        )
+      ) {
+        this.trashReadable = false
+        return []
+      }
+      return (raw as TrashIndexEntry[]).map((entry) => ({
+        ...entry,
+        tags: normalizeTags((entry as { tags?: unknown }).tags),
+        pinned: (entry as { pinned?: unknown }).pinned === true,
+        deletedAt: Number((entry as { deletedAt?: unknown }).deletedAt) || 0
+      }))
+    } catch {
+      this.trashReadable = false
+      return []
+    }
+  }
+
+  private requireTrash(): void {
+    if (!this.trashReadable) {
+      throw new Error(
+        'La corbeille est illisible : ses fichiers ont été conservés. Restaurez son index avant de supprimer ou restaurer une note.'
+      )
+    }
+  }
+
+  private writeTrash(): void {
+    const tmp = `${this.trashIndexFile}.tmp`
+    writeFileSync(tmp, JSON.stringify(this.trashed, null, 2), 'utf8')
+    renameSync(tmp, this.trashIndexFile)
+  }
+
+  private bodyIn(dir: string, entry: NoteIndexEntry): string {
+    const file = join(dir, entry.file)
     if (!existsSync(file)) return ''
     try {
       return readFileSync(file, 'utf8')
     } catch {
       return ''
     }
+  }
+
+  private bodyOf(entry: NoteIndexEntry): string {
+    return this.bodyIn(this.dir, entry)
   }
 
   list(): NoteMeta[] {
@@ -193,6 +253,24 @@ export class NotesStore {
         pinned: entry.pinned,
         updatedAt: entry.updatedAt
       }))
+  }
+
+  /**
+   * Identifiants des notes dont le titre, les étiquettes ou le corps correspond
+   * à la recherche : mots tous présents, expressions entre guillemets et
+   * exclusions préfixées par `-`.
+   */
+  search(query: string): string[] {
+    const parsed = parseSearchQuery(query)
+    if (parsed.include.length === 0 && parsed.exclude.length === 0) return []
+    return this.entries
+      .filter((entry) =>
+        matchesSearch(
+          `${entry.title}\n${entry.tags.join(' ')}\n${this.bodyOf(entry)}`,
+          parsed
+        )
+      )
+      .map((entry) => entry.id)
   }
 
   get(id: string): Note | null {
@@ -338,21 +416,130 @@ export class NotesStore {
     )
   }
 
-  /** Enregistrements vocaux cités par au moins une note. */
+  /** Enregistrements vocaux cités par au moins une note, corbeille comprise. */
   audioNames(): Set<string> {
     const names = new Set<string>()
     for (const entry of this.entries) for (const name of audioRefs(this.bodyOf(entry))) names.add(name)
+    for (const entry of this.trashed) {
+      for (const name of audioRefs(this.bodyIn(this.trashDir, entry))) names.add(name)
+    }
     return names
   }
 
+  listTrash(): TrashedNote[] {
+    return this.trashed
+      .slice()
+      .sort((a, b) => b.deletedAt - a.deletedAt)
+      .map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        preview: previewOf(this.bodyIn(this.trashDir, entry), entry.title),
+        spaceId: entry.spaceId,
+        url: entry.url,
+        tags: entry.tags,
+        pinned: entry.pinned,
+        updatedAt: entry.updatedAt,
+        deletedAt: entry.deletedAt
+      }))
+  }
+
+  /** Remet une note de la corbeille dans la liste, avec son contenu et ses métadonnées. */
+  restore(id: string): Note | null {
+    this.requireReadableIndex()
+    this.requireTrash()
+    const entry = this.trashed.find((item) => item.id === id)
+    if (!entry) return null
+    // Une note déjà présente ne doit pas être dupliquée dans l’index.
+    if (this.entries.some((item) => item.id === id)) return null
+    const source = join(this.trashDir, entry.file)
+    if (!existsSync(source)) {
+      throw new Error('Le fichier de cette note est introuvable dans la corbeille.')
+    }
+    const base = entry.file.replace(/\.md$/i, '')
+    let file = entry.file
+    // Un fichier homonyme peut être réapparu pendant que la note était dans la corbeille.
+    if (existsSync(join(this.dir, file))) file = `${base}-${newId().slice(0, 4)}.md`
+    const target = join(this.dir, file)
+    const previousEntries = this.entries
+    const previousTrashed = this.trashed
+    renameSync(source, target)
+    const restored: NoteIndexEntry = {
+      id,
+      title: entry.title,
+      file,
+      spaceId: entry.spaceId,
+      url: entry.url,
+      tags: entry.tags,
+      pinned: entry.pinned,
+      updatedAt: Date.now()
+    }
+    this.entries = [restored, ...this.entries]
+    this.trashed = this.trashed.filter((item) => item.id !== id)
+    try {
+      this.writeIndex()
+      this.writeTrash()
+    } catch (error) {
+      this.entries = previousEntries
+      this.trashed = previousTrashed
+      try {
+        this.writeIndex()
+      } catch {
+        /* déjà signalé par l’erreur d’origine */
+      }
+      try {
+        this.writeTrash()
+      } catch {
+        /* déjà signalé par l’erreur d’origine */
+      }
+      try {
+        renameSync(target, source)
+      } catch {
+        /* le fichier reste dans les notes, l’index d’origine est rétabli */
+      }
+      throw error
+    }
+    return this.get(id)
+  }
+
+  /** Déplace la note vers la corbeille au lieu de l’effacer définitivement. */
   remove(id: string): void {
     this.requireReadableIndex()
+    this.requireTrash()
     const entry = this.entries.find((item) => item.id === id)
     if (!entry) return
+    const source = join(this.dir, entry.file)
+    const destination = join(this.trashDir, entry.file)
+    if (existsSync(destination)) {
+      throw new Error('Un fichier du même nom est déjà dans la corbeille.')
+    }
+    const moved = existsSync(source)
+    const previousEntries = this.entries
+    const previousTrashed = this.trashed
+    if (moved) renameSync(source, destination)
     this.entries = this.entries.filter((item) => item.id !== id)
-    const file = join(this.dir, entry.file)
-    if (existsSync(file)) unlinkSync(file)
-    this.writeIndex()
+    this.trashed = [{ ...entry, deletedAt: Date.now() }, ...this.trashed]
+    try {
+      // La corbeille est écrite avant l’index : une note encore listée mais
+      // déjà déplacée serait plus gênante qu’une entrée de corbeille en trop.
+      this.writeTrash()
+      this.writeIndex()
+    } catch (error) {
+      this.entries = previousEntries
+      this.trashed = previousTrashed
+      try {
+        this.writeTrash()
+      } catch {
+        /* déjà signalé par l’erreur d’origine */
+      }
+      if (moved) {
+        try {
+          renameSync(destination, source)
+        } catch {
+          /* le fichier reste dans la corbeille, l’index d’origine est rétabli */
+        }
+      }
+      throw error
+    }
   }
 
   /** Nettoie les fichiers orphelins (fichier supprimé à la main, index obsolète). */

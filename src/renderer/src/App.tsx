@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import AmbienceScene from './components/AmbienceScene'
 import Onboarding from './components/Onboarding'
+import PeekOverlay from './components/PeekOverlay'
 import Presence from './components/Presence'
 import Sidebar from './components/Sidebar'
 import SpaceRail from './components/SpaceRail'
@@ -49,6 +50,7 @@ export default function App() {
     applyAppearance(appearanceState(settings, space))
     const root = document.documentElement
     root.dataset.home = settings.homeBackground
+    root.dataset.homeIntensity = settings.homeIntensity
     root.style.setProperty('--home-blur', `${settings.homeBlur}px`)
     // Ambiance propre à l'espace : une couche derrière le châssis, jamais
     // au-dessus du contenu des pages.
@@ -199,6 +201,7 @@ export default function App() {
         {!onboarded && !overlay && <Onboarding />}
       </Suspense>
       <Toasts />
+      <PeekOverlay />
     </div>
   )
 }

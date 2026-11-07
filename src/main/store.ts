@@ -174,6 +174,10 @@ function mergeSettings(raw: unknown): Settings {
     // Anciens fichiers : pas de niveau → le filtre standard, jamais renforcé.
     blockLevel: input.blockLevel === 'strict' ? 'strict' : 'trackers',
     thumbnails: input.thumbnails === true,
+    updateChecks:
+      input.updateChecks === 'weekly' || input.updateChecks === 'off'
+        ? input.updateChecks
+        : 'auto',
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
     agent: { mode, provider, providers }

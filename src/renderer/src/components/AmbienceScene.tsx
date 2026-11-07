@@ -5,6 +5,9 @@ import type { AmbienceId } from '@shared/theme'
 function motionReduced(): boolean {
   if (typeof document === 'undefined') return false
   if (document.documentElement.dataset.motion === 'reduce') return true
+  // jsdom et certains hôtes n'implémentent pas matchMedia : sans cette garde,
+  // monter l'ambiance jette et emporte l'écran qui la contient.
+  if (typeof window.matchMedia !== 'function') return false
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 

@@ -1,0 +1,726 @@
+/* ---------------------------------------------------------------
+   Réglages › Apparence — cadre, navigation, sections et aperçu
+   --------------------------------------------------------------- */
+
+/* --- Cadre de la fenêtre --------------------------------------- */
+
+.settings-sheet {
+  width: min(960px, 100%);
+  height: min(780px, 90vh);
+  max-height: 90vh;
+  border-radius: 24px;
+  /* Inter est la police demandée ; le projet ne l'embarque pas, donc on
+     retombe sur la pile Geist existante si elle n'est pas installée. */
+  font-family: 'Inter', var(--sans);
+}
+
+.settings-layout {
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+
+.settings-nav {
+  padding: 16px 12px 12px;
+}
+
+.settings-nav-brand {
+  padding: 4px 10px 18px;
+}
+
+/* Le champ de recherche garde une vraie zone de 44 px, puis les groupes
+   commencent 16 px plus bas : le premier titre n'est plus collé au champ. */
+.settings-nav-search {
+  height: 44px;
+  margin: 0 0 16px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+
+.settings-nav-search input {
+  font-size: 13px;
+}
+
+.settings-nav-scroll {
+  gap: 22px;
+}
+
+.settings-nav-label {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.settings-nav-item {
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* L'ancienne barre latérale de sélection doublait le fond teinté. */
+.settings-nav-item::before {
+  display: none;
+}
+
+.settings-nav-item[aria-current='page'] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--ink);
+}
+
+.settings-nav-item[aria-current='page'] svg {
+  color: var(--accent-label);
+}
+
+.settings-nav-search:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.settings-nav-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* --- En-tête fixe ---------------------------------------------- */
+
+.settings-head {
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  z-index: 4;
+}
+
+.settings-head-copy {
+  min-width: 0;
+}
+
+.settings-head h1 {
+  margin: 0 0 4px;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.settings-head p {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.settings-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.settings-saved {
+  min-width: 76px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: right;
+}
+
+.settings-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background-color 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+}
+
+.settings-close:hover {
+  background: var(--fill);
+  color: var(--ink);
+}
+
+.settings-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Zone de contenu et aperçu collant -------------------------- */
+
+.settings-scroll {
+  padding: 0 32px 40px;
+}
+
+.appearance-page {
+  display: block;
+}
+
+.appearance-preview-block {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0 -32px;
+  padding: 18px 32px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+}
+
+.pv {
+  gap: 0;
+}
+
+.pv-window {
+  height: 180px;
+  min-height: 180px;
+  grid-template-columns: 18px 170px minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: none;
+}
+
+.pv-side {
+  gap: 3px;
+  padding: 10px 10px 8px;
+}
+
+.pv-brand {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.pv-side-label {
+  margin: 4px 4px 1px;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pv-fav,
+.pv-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 5px;
+  border-radius: 5px;
+  font-size: 9px;
+  color: var(--help);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pv-fav i,
+.pv-tab i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.pv-tab.is-active {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* Le fond est maintenant un calque à part : son opacité traduit le niveau
+   « Discret / Normal / Marqué » sans effacer le texte de l'aperçu. */
+.pv[data-preview-home] .pv-home,
+.pv[data-preview-home][data-preview-mode] .pv-home {
+  background: var(--paper);
+}
+
+.pv-home {
+  overflow: hidden;
+}
+
+.pv-home-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.pv[data-preview-intensity='discreet'] .pv-home-bg {
+  opacity: 0.35;
+}
+
+.pv[data-preview-intensity='marked'] .pv-home-bg {
+  opacity: 1;
+}
+
+.pv[data-preview-home='gradient'] .pv-home-bg {
+  background:
+    radial-gradient(
+      90% 70% at 18% 8%,
+      color-mix(in srgb, var(--amb-1) 26%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      80% 70% at 92% 30%,
+      color-mix(in srgb, var(--amb-2) 22%, transparent),
+      transparent 76%
+    ),
+    var(--paper);
+}
+
+.pv[data-preview-home='plain'] .pv-home-bg {
+  background: var(--paper);
+}
+
+.pv[data-preview-home='sky'] .pv-home-bg {
+  background:
+    radial-gradient(
+      70% 60% at 24% 100%,
+      color-mix(in srgb, #ff8f5e 30%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      90% 80% at 50% 0%,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 70%
+    ),
+    var(--paper);
+}
+
+.pv[data-preview-home='sky'][data-preview-sky='nuit-etoilee'] .pv-home-bg {
+  background:
+    radial-gradient(1.2px 1.2px at 22% 22%, rgba(255, 230, 194, 0.85), transparent 70%),
+    radial-gradient(1px 1px at 62% 14%, rgba(255, 230, 194, 0.7), transparent 70%),
+    radial-gradient(1.4px 1.4px at 82% 34%, rgba(255, 230, 194, 0.8), transparent 70%),
+    radial-gradient(1px 1px at 44% 42%, rgba(255, 230, 194, 0.6), transparent 70%),
+    radial-gradient(
+      70% 60% at 20% 100%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent 74%
+    ),
+    #101018;
+}
+
+.pv[data-preview-mode='light'][data-preview-home='sky'] .pv-home-bg {
+  background:
+    radial-gradient(
+      80% 70% at 26% 100%,
+      color-mix(in srgb, #b4451f 20%, transparent),
+      transparent 72%
+    ),
+    var(--paper);
+}
+
+.pv[data-preview-mode='light'][data-preview-home='sky'][data-preview-sky='nuit-etoilee'] .pv-home-bg {
+  background:
+    radial-gradient(1.2px 1.2px at 22% 22%, #8a5a34, transparent 70%),
+    radial-gradient(1px 1px at 62% 14%, #8a5a34, transparent 70%),
+    radial-gradient(1.4px 1.4px at 82% 34%, #8a5a34, transparent 70%),
+    radial-gradient(1px 1px at 44% 42%, #8a5a34, transparent 70%),
+    radial-gradient(
+      80% 70% at 26% 100%,
+      color-mix(in srgb, #b4451f 14%, transparent),
+      transparent 72%
+    ),
+    var(--paper);
+}
+
+.pv[data-preview-home='image'] .pv-home-bg {
+  background-color: var(--paper);
+  background-image: var(--home-image, none);
+  background-size: cover;
+  background-position: center;
+}
+
+.pv-home-sky {
+  z-index: 1;
+}
+
+.pv-demo {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 2;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  color: var(--muted);
+  font-size: 7.5px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.pv-home-copy {
+  position: relative;
+  z-index: 2;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 16px;
+}
+
+.pv-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+}
+
+.pv-session-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pv-session-copy strong {
+  font-size: 9px;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.pv-session-copy span {
+  font-size: 8px;
+  color: var(--help);
+}
+
+.pv-session-mark {
+  color: var(--accent-label);
+  font-size: 12px;
+}
+
+.pv-kicker {
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+}
+
+.pv-word {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pv-search {
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 9px;
+}
+
+.pv-search i {
+  width: 6px;
+  height: 6px;
+  flex-basis: 6px;
+}
+
+.pv-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pv-recent-label {
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pv-recent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+}
+
+.pv-recent-card strong {
+  overflow: hidden;
+  font-size: 8.5px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.pv-recent-card span {
+  font-size: 7.5px;
+  color: var(--help);
+}
+
+.pv-caption {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* --- Sections séparées par un filet ---------------------------- */
+
+.appearance-section {
+  padding: 32px 0;
+  border-bottom: 0.5px solid var(--line-soft);
+}
+
+.appearance-section:last-child {
+  border-bottom: none;
+}
+
+.appearance-section .setting-head {
+  margin: 0 0 16px;
+}
+
+.appearance-section .setting-head h2 {
+  margin: 0 0 4px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.appearance-section .setting-head p {
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.appearance-field {
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.appearance-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.appearance-section .app-help,
+.appearance-section .appearance-note {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.appearance-section .appearance-note {
+  margin-top: 12px;
+}
+
+.appearance-section .choice-segment .choice {
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+.appearance-section .choice-card .choice {
+  min-height: 88px;
+}
+
+.appearance-section .choice-name {
+  font-size: 13px;
+}
+
+.appearance-section .choice-hint {
+  font-size: 12px;
+}
+
+/* --- Mode : vraies cartes radio -------------------------------- */
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mode-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out);
+}
+
+.mode-card:hover {
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+}
+
+.mode-card[data-active='true'] {
+  padding: 8px;
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.mode-card-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-card:has(.mode-card-input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mode-card-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--paper);
+  opacity: 0;
+}
+
+.mode-card[data-active='true'] .mode-card-check {
+  opacity: 1;
+}
+
+.mode-card .mode-thumb {
+  width: 100%;
+}
+
+.mode-card-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.mode-card-hint {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+/* --- Couleur : la palette existante dans le nouveau gabarit ----- */
+
+.appearance-section .theme-grid {
+  margin-bottom: 16px;
+}
+
+.appearance-section .theme-dot {
+  min-height: 44px;
+}
+
+.appearance-section .theme-custom {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.appearance-section .theme-custom[data-active='true'] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+/* --- Niveau du fond : effet réel dans l'accueil ---------------- */
+
+:root[data-home-intensity='discreet'] .home-aurora {
+  opacity: 0.35;
+}
+
+:root[data-home-intensity='marked'] .home-aurora {
+  opacity: 0.95;
+}
+
+:root[data-mode='light'][data-home-intensity='discreet'] .home-aurora {
+  opacity: 0.3;
+}
+
+:root[data-mode='light'][data-home-intensity='marked'] .home-aurora {
+  opacity: 0.8;
+}
+
+:root[data-home-intensity='discreet'] .home-sky {
+  opacity: 0.6;
+}
+
+:root[data-home-intensity='marked'] .home-sky {
+  opacity: 1;
+}
+
+:root[data-home-intensity='discreet'] .start::before {
+  opacity: 0.35;
+}
+
+:root[data-home-intensity='marked'] .start::before {
+  opacity: 0.8;
+}
+
+/* --- Adaptations ------------------------------------------------ */
+
+@media (max-width: 760px) {
+  .settings-layout {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .settings-head {
+    padding: 20px 20px 14px;
+  }
+
+  .settings-scroll {
+    padding: 0 20px 32px;
+  }
+
+  .appearance-preview-block {
+    margin: 0 -20px;
+    padding: 16px 20px 8px;
+  }
+
+  .pv-window {
+    grid-template-columns: 14px 140px minmax(0, 1fr);
+  }
+
+  .mode-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-scroll {
+    animation: none;
+  }
+
+  .settings-close,
+  .settings-nav-item,
+  .mode-card,
+  .theme-dot-disc {
+    transition: none;
+  }
+}

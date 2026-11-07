@@ -5,12 +5,14 @@
    ========================================================================== */
 
 .page-head {
-  padding: 136px 0 60px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 12%, var(--bg)),
-    var(--bg) 88%
-  );
+  --ink: var(--cream);
+  --ink-2: #c6cad9;
+  --ink-3: #9aa0b8;
+  --line: rgba(246, 239, 228, 0.22);
+  --line-strong: rgba(246, 239, 228, 0.42);
+  padding: 128px 0 64px;
+  background: var(--navy);
+  color: var(--cream);
 }
 
 /* Première section après l’en-tête : le pas d’au-dessus vient d’ici, pas d’un
@@ -22,8 +24,8 @@
 .page-head h1 {
   max-width: 20ch;
   margin-top: 16px;
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: clamp(34px, 5vw, 56px);
   line-height: 1.05;
   letter-spacing: -0.025em;
@@ -57,15 +59,16 @@
 }
 
 .sommaire a {
-  padding: 7px 14px;
+  padding: 8px 15px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-2);
   font-size: 13px;
   transition:
     border-color 0.2s var(--ease),
-    color 0.2s var(--ease);
+    color 0.2s var(--ease),
+    background 0.2s var(--ease);
 }
 
 .sommaire a:hover {
@@ -73,22 +76,61 @@
   color: var(--ink);
 }
 
+/* Les huit flux de « Vers le réseau » : un second rang, plus discret. */
+.sommaire-sub {
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(246, 239, 228, 0.18);
+}
+
+.sommaire-sub-label {
+  align-self: center;
+  padding: 0 4px;
+  color: #cfd3e0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sommaire-sub a {
+  padding: 5px 11px;
+  font-size: 11.5px;
+}
+
+/* Sur la nuit, les puces du sommaire reprennent le crème de l’icône. */
+.page-head .sommaire a,
+.notfound .sommaire a {
+  border-color: rgba(246, 239, 228, 0.4);
+  background: transparent;
+  color: #e7e9f0;
+}
+
+.page-head .sommaire a:hover,
+.notfound .sommaire a:hover {
+  border-color: var(--coral);
+  color: var(--cream);
+}
+
 /* --- Page 404 ------------------------------------------------------------ */
 
 .notfound {
+  --ink: var(--cream);
+  --ink-2: #c6cad9;
+  --ink-3: #9aa0b8;
+  --line: rgba(246, 239, 228, 0.22);
+  --line-strong: rgba(246, 239, 228, 0.42);
   padding: 148px 0 96px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 10%, var(--bg)),
-    var(--bg) 70%
-  );
+  background: var(--navy);
+  color: var(--cream);
 }
 
 .notfound h1 {
   max-width: 24ch;
   margin-top: 16px;
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: clamp(36px, 5.4vw, 60px);
   line-height: 1.03;
   letter-spacing: -0.025em;
@@ -174,8 +216,8 @@
 }
 
 .chapter h2 {
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: clamp(26px, 3.4vw, 36px);
   line-height: 1.12;
   letter-spacing: -0.02em;
@@ -210,18 +252,16 @@
   top: 8px;
   width: 7px;
   height: 7px;
-  border-radius: 999px;
-  background: var(--accent);
+  background: var(--coral);
 }
 
 /* --- Captures ------------------------------------------------------------ */
 
 .capture {
   margin-top: 26px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   background: var(--surface);
-  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
@@ -242,11 +282,74 @@
   font-size: 12.5px;
 }
 
+/* --- En bref ------------------------------------------------------------- */
+
+.brief {
+  margin-top: 34px;
+  padding: 26px 28px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.brief h2 {
+  margin: 8px 0 0;
+  font-size: clamp(22px, 3.2vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.brief-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brief-list li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.brief-list li::before {
+  content: '';
+  position: absolute;
+  top: 0.62em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.brief-list strong {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.brief-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.brief-note code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
 /* --- Tableaux ------------------------------------------------------------ */
 
 .table-wrap {
   margin-top: 26px;
-  border: 1px solid var(--line);
+  border: 2px solid var(--ink);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -327,23 +430,48 @@
   font-size: 13px;
 }
 
-.table .hosts {
-  display: block;
-  margin-top: 4px;
+.table details.hosts {
+  margin-top: 5px;
   color: var(--ink-3);
   font-size: 10.5px;
   line-height: 1.45;
   letter-spacing: 0.01em;
 }
 
-.chapter h2.group-title {
+.table details.hosts summary {
+  width: fit-content;
+  border-bottom: 1px dotted var(--line-strong);
+  color: var(--ink-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.table details.hosts summary::-webkit-details-marker {
+  display: none;
+}
+
+.table details.hosts summary::after {
+  content: ' ▾';
+}
+
+.table details.hosts[open] summary::after {
+  content: ' ▴';
+}
+
+.table details.hosts > span {
+  display: block;
+  margin-top: 5px;
+}
+
+.chapter h3.group-title {
   margin: 40px 0 0;
+  color: var(--ink-3);
   font-family: var(--mono);
   font-size: 11.5px;
+  font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-3);
 }
 
 /* --- Pas-à-pas ----------------------------------------------------------- */
@@ -373,8 +501,8 @@
   place-items: center;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
   color: var(--ink);
   font-family: var(--mono);
   font-size: 11.5px;
@@ -391,8 +519,8 @@
 }
 
 .help-block h2 {
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: clamp(22px, 2.6vw, 28px);
   letter-spacing: -0.015em;
 }
@@ -404,11 +532,11 @@
   font-size: 15px;
 }
 
-.help-block .notice {
+.help-block .notice,
+.chapter .notice {
   margin-top: 16px;
   padding: 14px 18px;
-  border-left: 2px solid var(--accent);
-  border-radius: 0 12px 12px 0;
+  border-left: 4px solid var(--coral);
   background: var(--accent-soft);
   color: var(--ink-2);
   font-size: 14px;
@@ -418,6 +546,293 @@
 .keys-table td:first-child {
   color: var(--ink);
   width: 52%;
+}
+
+/* --- Commandes copiables ------------------------------------------------- */
+
+.cmd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 4px 0;
+  padding: 4px 5px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--accent-soft);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.cmd code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.cmd .copy {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-3);
+  transition: color 0.18s var(--ease), background 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+}
+
+.cmd .copy::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+
+.cmd .copy .ico {
+  width: 13px;
+  height: 13px;
+}
+
+.cmd .copy:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.cmd .copy.is-copied {
+  border-color: var(--coral);
+  background: var(--coral);
+  color: #12173b;
+}
+
+/* --- Schémas des dialogues système -------------------------------------- */
+
+.walkthrough {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  max-width: 760px;
+  margin-top: 20px;
+}
+
+.schema {
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.schema-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 10px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.schema-body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.schema-line {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.schema-btn {
+  justify-self: end;
+  padding: 4px 9px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.schema-btn.is-primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.schema-terminal {
+  margin: 0;
+  padding: 11px 12px;
+  background: #12173b;
+  color: #f6efe4;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.schema figcaption {
+  padding: 9px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.schema figcaption span {
+  margin-right: 6px;
+  color: var(--accent-ink);
+  font-family: var(--mono);
+}
+
+/* --- Ce que Vela ne fait pas, et ce qu’il ajoute ------------------------ */
+
+.limits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 20px;
+  border-top: 1.5px solid var(--ink);
+}
+
+.limits article {
+  padding: 18px 20px 4px 0;
+  border-left: 1px solid var(--line);
+}
+
+.limits article:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.limits h3,
+.also h3 {
+  font-family: var(--display);
+  font-weight: 650;
+  font-size: 17px;
+  letter-spacing: -0.015em;
+}
+
+.limits p,
+.also p {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.also {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.also article {
+  padding: 16px 16px 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface);
+}
+
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+@media (max-width: 760px) {
+  .limits,
+  .also {
+    grid-template-columns: 1fr;
+  }
+
+  .limits article {
+    padding: 16px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .limits article:first-child {
+    border-top: 0;
+  }
+
+  /* Les tableaux de flux à quatre colonnes deviennent des cartes : chaque
+     valeur garde son libellé, et rien ne se comprime dans 390 px. */
+  #reseau .table-wrap {
+    margin-top: 18px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  #reseau .table,
+  #reseau .table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  #reseau .table thead {
+    display: none;
+  }
+
+  #reseau .table tr {
+    display: block;
+    margin-top: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  #reseau .table tr:first-child {
+    margin-top: 0;
+  }
+
+  #reseau .table td {
+    display: block;
+    width: auto;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  #reseau .table td:last-child {
+    border-bottom: 0;
+  }
+
+  #reseau .table td::before {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  #reseau .table td:nth-child(1)::before {
+    content: 'Destination';
+  }
+
+  #reseau .table td:nth-child(2)::before {
+    content: 'Déclencheur';
+  }
+
+  #reseau .table td:nth-child(3)::before {
+    content: 'Ce qui part';
+  }
+
+  #reseau .table td:nth-child(4)::before {
+    content: 'Comment l’éviter';
+  }
 }
 
 /* --- Frise des versions -------------------------------------------------- */
@@ -468,8 +883,8 @@
 }
 
 .timeline h2 {
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: 21px;
   letter-spacing: -0.01em;
 }
@@ -491,7 +906,7 @@
 .timeline .tags span {
   padding: 3px 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: 10.5px;
@@ -543,8 +958,8 @@
   align-items: center;
   min-height: 40px;
   padding: 7px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
   color: var(--ink-2);
   font-family: var(--mono);
   font-size: 11.5px;
@@ -573,101 +988,18 @@
   font-size: 11px;
 }
 
-/* --- Schéma de la petite fenêtre ----------------------------------------- */
-
-.specimen {
-  margin-top: 26px;
-  padding: 46px 30px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background:
-    radial-gradient(120% 90% at 50% 0%, var(--accent-soft), transparent 70%), var(--surface-2);
-}
-
-.specimen-mini {
-  width: min(100%, 520px);
-  margin-inline: auto;
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.55);
-  overflow: hidden;
-}
-
-.specimen-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-
-.specimen-bar .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.specimen-bar .addr {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--surface);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.specimen-body {
-  padding: 22px 20px 26px;
-}
-
-.specimen-body .title {
-  font-family: var(--serif);
-  font-size: 19px;
-  color: var(--ink);
-}
-
-.specimen-body .line {
-  display: block;
-  height: 8px;
-  margin-top: 10px;
-  border-radius: 999px;
-  background: var(--line);
-}
-
-.specimen-body .line.short {
-  width: 62%;
-}
-
-.specimen-body .line.mid {
-  width: 82%;
-}
-
-.specimen figcaption {
-  margin-top: 18px;
-  color: var(--ink-3);
-  font-size: 12.5px;
-  text-align: center;
-}
-
 /* --- Appel de fin de page ------------------------------------------------ */
 
 .page-cta {
+  margin-top: 20px;
   padding: 76px 0 96px;
+  border-top: 2px solid var(--ink);
   text-align: center;
 }
 
 .page-cta h2 {
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: clamp(28px, 4vw, 42px);
   letter-spacing: -0.02em;
 }
@@ -689,12 +1021,6 @@
 
   .section-tete {
     padding-top: 28px;
-  }
-
-  /* La bande 01–05 du navigateur dit déjà les chapitres, avec celui qui est
-     sous les yeux : deux sommaires en puces à 150 px d’écart n’aident pas. */
-  .sommaire-doublon {
-    display: none;
   }
 
   .split {
@@ -726,7 +1052,7 @@
     padding: 8px 14px;
     border: 1px solid var(--line);
     border-left-width: 1px;
-    border-radius: 999px;
+    border-radius: var(--radius);
     font-size: 13px;
   }
 
@@ -795,7 +1121,7 @@
 .release-tags span {
   padding: 3px 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: 10.5px;
@@ -810,8 +1136,8 @@
 }
 
 .release-section h2 {
-  font-family: var(--serif);
-  font-weight: 400;
+  font-family: var(--display);
+  font-weight: 650;
   font-size: 24px;
   letter-spacing: -0.01em;
 }
@@ -825,8 +1151,8 @@
 
 .release-figure {
   margin: 22px 0 0;
-  border: 1px solid var(--line);
-  border-radius: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   background: var(--surface);
   overflow: hidden;
 }
@@ -860,7 +1186,7 @@
 .metric {
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--surface-2);
 }
 
@@ -903,8 +1229,8 @@
 .release-schema .etape {
   position: relative;
   padding: 10px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--ink-2);

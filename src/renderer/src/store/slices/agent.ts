@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand'
 import type { AgentEvent, SelectionPayload, WorkSummary } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
-import type { AgentUi, WorkMode } from '../types'
+import type { AgentTurn, AgentUi, WorkMode } from '../types'
 import type { BrowserState } from '../browser'
 
 export interface AgentSlice {
@@ -31,6 +31,7 @@ export interface AgentSlice {
 
 const EMPTY_AGENT: AgentUi = {
   runId: null,
+  turns: [],
   title: '',
   steps: [],
   markdown: '',
@@ -117,6 +118,34 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
     const sources = view.tabs
       .filter((tab) => tabIds.includes(tab.id) && !isHomeUrl(tab.url))
       .map((tab) => ({ tabId: tab.id, title: tab.title, url: tab.url }))
+    // La réponse précédente rejoint le fil, et les échanges repartent au modèle
+    // comme contexte : une question de suivi n'a plus à répéter les sources.
+    const previous = get().agent
+    const turns: AgentTurn[] =
+      previous.markdown.trim() && previous.prompt
+        ? [
+            ...previous.turns,
+            {
+              id: crypto.randomUUID(),
+              prompt: previous.prompt,
+              markdown: previous.markdown,
+              mode: previous.mode,
+              sources: previous.sources,
+              status:
+                previous.status === 'error' || previous.status === 'cancelled'
+                  ? previous.status
+                  : 'done',
+              requestMode: previous.requestMode
+            }
+          ]
+        : previous.turns
+    const history = turns
+      .flatMap((turn) => [
+        { role: 'user' as const, content: turn.prompt },
+        { role: 'assistant' as const, content: turn.markdown }
+      ])
+      .filter((turn) => turn.content.trim())
+      .slice(-10)
     set({
       agentOpen: get().workMode !== 'work',
       agentDraft: prompt,
@@ -126,6 +155,7 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
           : [],
       agent: {
         ...EMPTY_AGENT,
+        turns,
         status: 'running',
         mode: view.settings.agent.mode,
         prompt,
@@ -134,7 +164,7 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
       }
     })
     const result = await get().call(
-      () => window.vela.agent.run({ prompt, sources, spaceId: view.activeSpaceId, mode }),
+      () => window.vela.agent.run({ prompt, sources, spaceId: view.activeSpaceId, mode, history }),
       'L’agent n’a pas pu démarrer.'
     )
     if (result) {
@@ -177,6 +207,7 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
       agentDraft: full.prompt,
       agent: {
         runId: null,
+        turns: [],
         title: full.title,
         steps: [{ label: 'Rapport enregistré', state: 'done' }],
         markdown: full.markdown,

@@ -840,10 +840,12 @@ kbd {
   letter-spacing: -0.02em;
 }
 
+/* L'icône suivait un bleu très clair, illisible sur la pastille lavande en
+   mode clair. Elle prend l'accent lisible du thème, dans les deux modes. */
 .notes-mark {
   background: linear-gradient(120deg, rgba(var(--glow), 0.24), rgba(var(--glow), 0.24));
   border: 1px solid rgba(var(--glow), 0.35);
-  color: #dbebff;
+  color: var(--accent-label);
 }
 
 .notes-search,
@@ -1534,6 +1536,236 @@ kbd {
 
 .model-foot {
   margin-top: 12px;
+}
+
+/* --- Modèles : moteur actif puis cartes de fournisseurs (0.3.31) ----- */
+.models-hero {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.models-hero.is-ready {
+  border-color: rgba(var(--glow), 0.34);
+  background: rgba(var(--glow), 0.06);
+}
+
+.models-hero-mark {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--glow), 0.38);
+  background: rgba(var(--glow), 0.2);
+  color: #dbe9ff;
+}
+
+.models-hero-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.models-hero-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.models-hero-copy strong {
+  font-size: 15px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.models-hero-detail {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.models-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.models-mode {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.models-mode button {
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.models-mode button[data-active='true'] {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: 8px;
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: left;
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard);
+}
+
+.provider-card:hover {
+  border-color: color-mix(in srgb, var(--clay) 40%, var(--line));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.provider-card[data-active='true'] {
+  border-color: rgba(var(--glow), 0.44);
+  background: rgba(var(--glow), 0.1);
+}
+
+.provider-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.provider-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.provider-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.provider-detail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-detail[data-tone='ok'] {
+  color: var(--sage);
+}
+
+.provider-detail[data-tone='error'] {
+  color: #ffa79a;
+}
+
+.provider-tail {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+}
+
+.provider-card[data-active='true'] .provider-tail {
+  color: var(--ink);
+}
+
+.model-editor.is-standalone {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.model-editor-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0 0;
+}
+
+.model-editor-head strong {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.model-editor-head span {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+:root[data-mode='light'] .models-hero {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-mode='light'] .models-mode {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:root[data-mode='light'] .models-mode button[data-active='true'] {
+  background: #ffffff;
+}
+
+:root[data-mode='light'] .provider-card {
+  background: rgba(255, 255, 255, 0.66);
+}
+
+:root[data-mode='light'] .provider-card[data-active='true'] {
+  background: rgba(var(--glow), 0.1);
+}
+
+@media (max-width: 520px) {
+  .models-hero {
+    flex-wrap: wrap;
+  }
+
+  .models-hero-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* --- Apparence, agent, à propos ------------------------------- */

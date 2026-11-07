@@ -58,7 +58,7 @@ export default function ChatTranscript({
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const running = agent.status === 'running'
-  const empty = agent.status === 'idle' && !agent.markdown
+  const empty = agent.status === 'idle' && !agent.markdown && agent.turns.length === 0
   const failed = agent.journal.filter((entry) => !entry.ok).length
 
   // Le fil suit la réponse jusqu’au bout : sans cela, la ligne des actions
@@ -98,6 +98,33 @@ export default function ChatTranscript({
 
   return (
     <div className="chat-thread" aria-label="Conversation">
+      {agent.turns.map((turn) => (
+        <div className="chat-archive" key={turn.id}>
+          <div className="msg msg-user">
+            <div className="bubble">
+              <p>{turn.prompt}</p>
+              {turn.sources.length > 0 && (
+                <div className="bubble-src">
+                  {turn.sources.slice(0, 4).map((source, index) => (
+                    <span key={`${source.url}-${index}`}>
+                      {hostOf(source.url) || source.title}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="msg msg-agent">
+            <div className="msg-text">
+              <Markdown
+                text={turn.markdown}
+                sourceLinks={turn.mode === 'api' ? turn.sources : []}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+
       <div className="msg msg-user">
         <div className="bubble">
           <p>{agent.prompt}</p>
@@ -201,6 +228,36 @@ export default function ChatTranscript({
           />
         )}
 
+        {agent.status === 'done' && agent.markdown && (
+          <div className="chat-followups" aria-label="Questions de suivi">
+            <span>Continuer</span>
+            <button
+              type="button"
+              onClick={() =>
+                onPick('Approfondis le point le plus fragile de ta réponse, en citant les sources.')
+              }
+            >
+              Approfondir
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onPick('Donne le contre-argument principal à ta réponse, avec les sources jointes.')
+              }
+            >
+              Contre-argument
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onPick('Transforme ta réponse en plan d’action de trois étapes concrètes.')
+              }
+            >
+              Plan d’action
+            </button>
+          </div>
+        )}
+
         {agent.markdown.length > 0 && (
           <div className="msg-tools">
             <button type="button" className="msg-tool" onClick={onCopy} title="Copier la réponse">
@@ -221,7 +278,7 @@ export default function ChatTranscript({
             )}
             <button type="button" className="msg-tool" onClick={onReset}>
               <Icon name="plus" size={13} />
-              Nouveau
+              {agent.turns.length > 0 ? 'Nouvelle conversation' : 'Nouveau'}
             </button>
           </div>
         )}

@@ -49,31 +49,6 @@
   padding: 2px 0 4px;
 }
 
-/* Outils de l'application (notes, agent, réglages) : au pied de la barre
-   latérale, sous les onglets. Mêmes pastilles que le reste de la colonne
-   (30 px, rayon 9), et la marge gauche place le glyphe des icônes sur les
-   24 px du sélecteur d'espace, comme les onglets et l'en-tête. */
-.sidebar-tools {
-  position: relative;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 7px 10px 7px 18px;
-}
-
-/* Un filet court, posé sur les marges du contenu (24 px à gauche, 16 px à
-   droite) et évanoui vers la droite : il sépare sans barrer toute la colonne. */
-.sidebar-tools::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 24px;
-  right: 16px;
-  height: 1px;
-  background: linear-gradient(90deg, var(--line-soft), transparent);
-}
-
 /* Survol commun de la colonne : un seul voile, posé sur la barre latérale.
    Les outils du pied et les lignes d'onglets partagent ainsi la même teinte,
    la même lumière intérieure et le même rayon : le survol se lit pareil d'un
@@ -82,35 +57,6 @@
   --sidebar-veil: var(--fill);
   --sidebar-veil-light: var(--inner-light-soft);
   --sidebar-veil-radius: 9px;
-}
-
-/* Survol commun : la rangée s'allume d'un bloc derrière ses trois pastilles,
-   pour que Notes, Agent et Réglages se lisent comme un seul groupe. Le voile
-   s'arrête sur les mêmes marges que le filet (18 px / 10 px) et laisse passer
-   la souris : ce sont les pastilles qui gardent leur propre survol. */
-.sidebar-tools::after {
-  content: '';
-  position: absolute;
-  inset: 4px 10px 4px 18px;
-  z-index: 0;
-  border-radius: var(--sidebar-veil-radius);
-  background: var(--sidebar-veil);
-  box-shadow: var(--sidebar-veil-light);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--dur-2) var(--ease-standard);
-}
-
-.sidebar-tools:hover::after,
-.sidebar-tools:focus-within::after {
-  opacity: 1;
-}
-
-/* Les pastilles passent au-dessus du voile ; le focus clavier allume le
-   groupe comme la souris. */
-.sidebar-tools .icon-btn {
-  position: relative;
-  z-index: 1;
 }
 
 /* Les lignes d'onglets reprennent exactement ce voile. La ligne active garde
@@ -130,12 +76,6 @@
    reste visible au survol. */
 .sidebar .tab-new:hover {
   box-shadow: var(--sidebar-veil-light);
-}
-
-/* Les réglages restent à l'écart, à droite : le filet du rail séparait déjà
-   les outils de travail de la configuration de l'application. */
-.sidebar-tools-end {
-  margin-left: auto;
 }
 
 /* --- Panneau agent ancré ------------------------------------------- */

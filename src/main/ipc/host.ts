@@ -10,7 +10,7 @@ import type {
   TabState
 } from '@shared/types'
 import type { AgentRunner } from '../agent'
-import type { MiniWindow } from '../mini'
+import type { Peek } from '../peek'
 import type { HighlightsStore, NotesStore } from '../notes'
 import type { NoteAudioStore } from '../noteAudio'
 import type { Store } from '../store'
@@ -33,7 +33,7 @@ export interface IpcHost {
   readonly agent: AgentRunner
   readonly tunnel: TunnelService
   readonly thumbs: Thumbnails
-  readonly mini: MiniWindow
+  readonly peek: Peek
 
   view(): AppView
   broadcast(): void
@@ -76,6 +76,6 @@ export interface IpcHost {
   setPendingHistory(value: { entries: HistoryEntry[]; timer: NodeJS.Timeout } | null): void
   commitPendingHistory(): void
 
-  openMini(input: { url?: string; spaceId?: string }): boolean
+  openPeek(input: { url?: string; spaceId?: string }): boolean
   startSelectionDrag(sender: WebContents, selected: string): void
 }

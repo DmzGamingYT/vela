@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planDemoRun } from './agent'
+import { historyContext, planDemoRun } from './agent'
 
 const sources = [
   { title: 'Arc — a calmer internet', url: 'https://arc.net' },
@@ -27,5 +27,34 @@ describe('planDemoRun', () => {
     const plan = planDemoRun('', [])
     expect(plan.markdown).toContain('Aucun onglet joint')
     expect(plan.markdown).not.toContain('undefined')
+  })
+})
+
+describe('historyContext', () => {
+  it('met les tours dans l’ordre, sans garder les vides', () => {
+    const context = historyContext([
+      { role: 'user', content: 'Première question' },
+      { role: 'assistant', content: 'Première réponse' },
+      { role: 'user', content: '   ' }
+    ])
+    expect(context).toContain('Utilisateur : Première question')
+    expect(context).toContain('Vela : Première réponse')
+    expect(context.trim().endsWith('Vela : Première réponse')).toBe(true)
+  })
+
+  it('garde les tours les plus récents et borne chaque texte', () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({
+      role: index % 2 === 0 ? ('user' as const) : ('assistant' as const),
+      content: `Tour ${index} ${'x'.repeat(5000)}`
+    }))
+    const context = historyContext(many, 4)
+    expect(context).not.toContain('Tour 7 ')
+    expect(context).toContain('Tour 11 ')
+    expect(context.length).toBeLessThan(4 * 4100)
+  })
+
+  it('ne produit rien sans historique', () => {
+    expect(historyContext(undefined)).toBe('')
+    expect(historyContext([])).toBe('')
   })
 })

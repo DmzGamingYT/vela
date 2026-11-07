@@ -239,7 +239,7 @@ export default function PrivacyPage({
             <Icon name="check" size={11} /> Aucune synchronisation
           </span>
           <span>
-            <Icon name="check" size={11} /> Aucune télémétrie
+            <Icon name="check" size={11} /> Aucune mesure d’usage
           </span>
         </div>
         <button type="button" className="privacy-summary" onClick={() => setTab('flows')}>

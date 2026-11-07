@@ -15,7 +15,7 @@ import {
 import { appendFileSync, existsSync, statSync, writeFileSync } from 'node:fs'
 import { Browser } from './browser'
 import { installMenu } from './menu'
-import { initUpdater } from './updater'
+import { initUpdater, setUpdaterPolicy } from './updater'
 import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
 
 // Le nom du produit est fixé avant toute autre chose : `app.name` alimente le
@@ -275,6 +275,8 @@ function main(): void {
       if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
         win.webContents.send(channel, payload)
     })
+    // Le rythme enregistré s'applique dès le démarrage, avant le premier contrôle.
+    setUpdaterPolicy(browser?.store.get().settings.updateChecks ?? 'auto')
     createWindow()
     installStatusItem()
     // Fenêtres ouvertes par une page (connexion OAuth, popup d'un site) : elles

@@ -2,9 +2,9 @@
   "version": "0.3.9",
   "slug": "0-3-9",
   "date": "2026-10-27",
-  "headline": "La petite fenêtre, et des mises à jour qui ne demandent plus rien",
+  "headline": "Le coup d’œil, et des mises à jour qui ne demandent plus rien",
   "intro": "<kbd>⌘⌥</kbd> + clic ouvre un lien au centre, sans nouvel onglet. Les mises à jour se téléchargent en arrière-plan. Les onglets du tunnel se ferment et la vue scindée reste dans le tunnel.",
-  "tags": ["petite fenêtre", "mises à jour"],
+  "tags": ["coup d’œil", "mises à jour"],
   "stats": {
     "commits": 2,
     "files": 32,

@@ -283,13 +283,13 @@ export function describeZoom(value: number): string {
 
 export { isBuiltinEngine }
 
-/* Règle d'ouverture des demandes de fenêtres web, conservée pour tabs.ts et
-   mini.ts : une vraie popup de site arrive en `new-window` avec des features,
+/* Règle d'ouverture des demandes de fenêtres web, partagée par tabs.ts et
+   peek.ts : une vraie popup de site arrive en `new-window` avec des features,
    un ⇧ + clic en `new-window` vide, un ⌘⌥ + clic en `other`. */
 export function shouldOpenAsPopup(disposition: string, features = ''): boolean {
   return disposition === 'new-window' && features.trim() !== ''
 }
 
-export function opensMiniWindow(disposition: string, features = ''): boolean {
+export function opensPeek(disposition: string, features = ''): boolean {
   return disposition === 'other' || (disposition === 'new-window' && features.trim() === '')
 }

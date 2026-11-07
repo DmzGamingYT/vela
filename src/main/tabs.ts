@@ -23,7 +23,7 @@ import type {
   Space,
   TabState
 } from '@shared/types'
-import { opensMiniWindow, searchOptionsOf, shouldOpenAsPopup } from '@shared/navigation'
+import { opensPeek, searchOptionsOf, shouldOpenAsPopup } from '@shared/navigation'
 import { partitionFor } from '@shared/space'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
@@ -49,8 +49,8 @@ export interface TabHost {
   visited(spaceId: string, url: string, title: string): void
   selection(payload: SelectionPayload): void
   isExempted(host: string): boolean
-  /** Ouvre une page dans la petite fenêtre jetable, sans créer d'onglet. */
-  openMini?(url: string, spaceId?: string): void
+  /** Ouvre une page dans le coup d'œil, sans créer d'onglet. */
+  openPeek?(url: string, spaceId?: string): void
   /** Surlignages déjà enregistrés pour cette URL, repeints au chargement. */
   highlightsFor?(url: string): string[]
 }
@@ -282,10 +282,10 @@ export class TabManager {
       if (!/^https?:/i.test(details.url)) return { action: 'deny' }
       const tab = this.host.tab(tabId)
       if (!tab) return { action: 'deny' }
-      // Geste de lien (⌘⌥ + clic, ⇧ + clic) : la petite fenêtre jetable, comme
-      // Little Arc — aucun onglet créé, la carte du travail reste en place.
-      if (opensMiniWindow(details.disposition, details.features)) {
-        this.host.openMini?.(details.url, tab.spaceId)
+      // Geste de lien (⌘⌥ + clic, ⇧ + clic) : le coup d'œil, comme Little
+      // Arc — aucun onglet créé, la carte du travail reste en place.
+      if (opensPeek(details.disposition, details.features)) {
+        this.host.openPeek?.(details.url, tab.spaceId)
         return { action: 'deny' }
       }
       // Popups (window.open, OAuth « Se connecter avec Google »…) : vraie
@@ -457,8 +457,8 @@ export class TabManager {
             click: () => this.host.createTab(tab.spaceId, params.linkURL)
           },
           {
-            label: 'Ouvrir le lien dans le mini navigateur',
-            click: () => this.host.openMini?.(params.linkURL, tab.spaceId)
+            label: 'Ouvrir le lien dans un coup d’œil',
+            click: () => this.host.openPeek?.(params.linkURL, tab.spaceId)
           },
           {
             label: 'Copier l’adresse du lien',
@@ -483,8 +483,8 @@ export class TabManager {
         { label: 'Ajouter aux favoris', click: () => this.host.shortcut({ action: 'bookmark' }) },
         { label: 'Recharger', click: () => this.reload(tabId) },
         {
-          label: 'Ouvrir dans le mini navigateur',
-          click: () => this.host.openMini?.(tab.url, tab.spaceId)
+          label: 'Ouvrir dans un coup d’œil',
+          click: () => this.host.openPeek?.(tab.url, tab.spaceId)
         },
         { type: 'separator' },
         {
@@ -1153,6 +1153,16 @@ export class TabManager {
       this.host.shortcut({ action: 'prev-tab' })
       return
     }
+    if (key === 'f' && input.shift) {
+      event.preventDefault()
+      this.host.shortcut({ action: 'notes-search' })
+      return
+    }
+    if (key === 'g' && !input.shift) {
+      event.preventDefault()
+      this.host.shortcut({ action: 'notes-search-next' })
+      return
+    }
     if (key === 'f' && !input.shift) {
       event.preventDefault()
       this.host.shortcut({ action: 'find' })
@@ -1201,7 +1211,7 @@ export class TabManager {
     } else if (key === 'h') {
       action = 'home'
     } else if (key === 'n') {
-      action = 'mini'
+      action = 'peek'
     }
 
     if (!action) return

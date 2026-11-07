@@ -435,6 +435,51 @@
   transition: opacity var(--dur-1) var(--ease-standard);
 }
 
+/* La pastille de couleur est aussi le bouton qui change la couleur : le
+   dossier se distingue sans passer par une boîte de dialogue. */
+.group-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+}
+
+.group-dot:hover,
+.group-dot:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.group-colors {
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 18px;
+  z-index: 30;
+  display: flex;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.group-colors button {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.group-colors button[data-active='true'] {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--ink);
+}
+
+.group-head {
+  position: relative;
+}
+
 .group-head:hover .group-actions,
 .group-head:focus-within .group-actions {
   opacity: 1;

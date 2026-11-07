@@ -173,6 +173,7 @@ export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
   })
 
   handle('notes:get', (payload) => host.notes.get(asId(payload)))
+  handle('notes:search', (payload) => host.notes.search(asString(payload)))
   handle('notes:save', (payload) => host.saveNote(payload))
   handle('notes:patch', (payload) => {
     const input = (payload ?? {}) as {
@@ -200,6 +201,14 @@ export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
     if (host.notes.canReadIndex) host.noteAudio.prune(host.notes.audioNames())
     host.setNoteCache(host.notes.list())
     host.broadcast()
+  })
+  handle('notes:trash', () => host.notes.listTrash())
+  handle('notes:restore', (payload) => {
+    const note = host.notes.restore(asId(payload))
+    if (!note) return null
+    host.setNoteCache(host.notes.list())
+    host.broadcast()
+    return note
   })
   handle('notes:open-folder', async () => {
     await shell.openPath(host.notes.dir)

@@ -36,8 +36,26 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.92;
+  /* Présence réglée dans « Thèmes » (80 % par défaut). */
+  opacity: var(--amb-opacity, 0.92);
   transition: opacity var(--dur-ambience) var(--ease-lux);
+}
+
+/* Portée : « page » laisse l'ambiance courir sous l'accueil ; « chrome » rend
+   à l'accueil son fond opaque pour la garder dans le verre des barres. */
+:root[data-ambience-scope='chrome'] .start {
+  background: var(--paper);
+}
+
+.ambience-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 14px 0 18px;
+}
+
+.ambience-controls .appearance-field {
+  margin-bottom: 0;
 }
 
 .ambience-panel {

@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import type { NoteMeta, PageHighlight } from '@shared/types'
 import { hostOf } from '@shared/url'
-import { shortDate } from '../../lib/format'
+import type { NotesSort } from '../../store/types'
+import { shortDate, shortcut } from '../../lib/format'
 import { Icon } from '../Icon'
 
 interface NotesListProps {
@@ -9,10 +10,14 @@ interface NotesListProps {
   spaces: { id: string; color: string }[]
   filter: string
   onFilter(value: string): void
+  searchInputRef: RefObject<HTMLInputElement | null>
+  onNext(): void
   tagFilter: string | null
   onTagFilter(value: string | null): void
   onlyPinned: boolean
   onOnlyPinned(value: boolean): void
+  sort: NotesSort
+  onSort(value: NotesSort): void
   allTags: [string, number][]
   highlights: PageHighlight[]
   pageNote: NoteMeta | undefined
@@ -20,6 +25,8 @@ interface NotesListProps {
   spaceName: string | undefined
   onOpen(id: string): void
   onTogglePin(note: NoteMeta): void
+  trashCount: number
+  onTrash(): void
   renderActions(inEmpty?: boolean): ReactNode
 }
 
@@ -29,10 +36,14 @@ export default function NotesList({
   spaces,
   filter,
   onFilter,
+  searchInputRef,
+  onNext,
   tagFilter,
   onTagFilter,
   onlyPinned,
   onOnlyPinned,
+  sort,
+  onSort,
   allTags,
   highlights,
   pageNote,
@@ -40,18 +51,45 @@ export default function NotesList({
   spaceName,
   onOpen,
   onTogglePin,
+  trashCount,
+  onTrash,
   renderActions
 }: NotesListProps) {
+  const filtering = Boolean(filter.trim() || tagFilter || onlyPinned)
+  const resultLabel = `${notes.length} résultat${notes.length > 1 ? 's' : ''}`
+
   return (
     <div className="notes-list-wrap" data-empty={noNotes}>
       <div className="notes-search">
         <Icon name="search" size={14} />
         <input
+          ref={searchInputRef}
           value={filter}
           onChange={(event) => onFilter(event.target.value)}
-          placeholder="Rechercher une note, un tag…"
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return
+            if (event.key === 'Enter' || event.key === 'ArrowDown') {
+              event.preventDefault()
+              onNext()
+            }
+          }}
+          placeholder={'Rechercher — mots, "expression", -exclu…'}
           aria-label="Rechercher dans les notes"
+          aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
+          title={`Ouvrir la recherche (${shortcut('⇧F')}) · Résultat suivant (${shortcut('G')})`}
         />
+        {/* Le compteur accompagne la frappe : il dit combien de notes
+            répondent à la recherche et aux filtres actifs, sans qu'il faille
+            compter les cartes à l'œil. */}
+        <span
+          className="notes-search-count"
+          data-filtered={filtering}
+          role="status"
+          aria-label={resultLabel}
+          title={resultLabel}
+        >
+          {notes.length}
+        </span>
         {filter && (
           <button
             type="button"
@@ -96,6 +134,17 @@ export default function NotesList({
             <span className="notes-filter-count">{count}</span>
           </button>
         ))}
+        <label className="notes-sort" title="Ordre de la liste">
+          <Icon name="list" size={11} />
+          <select
+            value={sort}
+            onChange={(event) => onSort(event.target.value as NotesSort)}
+            aria-label="Trier les notes"
+          >
+            <option value="updated">Récentes</option>
+            <option value="title">Titre</option>
+          </select>
+        </label>
       </div>
 
       {!noNotes && renderActions()}
@@ -213,10 +262,21 @@ export default function NotesList({
 
       <footer className="note-foot note-foot-inset">
         <span>{spaceName ? `Espace ${spaceName}` : 'Vela'} · fichiers .md</span>
-        <button type="button" className="text-btn" onClick={() => void window.vela.notes.openFolder()}>
-          <Icon name="folder" size={13} />
-          Ouvrir le dossier
-        </button>
+        <div className="note-foot-actions">
+          <button
+            type="button"
+            className="text-btn"
+            onClick={onTrash}
+            title="Notes supprimées"
+          >
+            <Icon name="trash" size={13} />
+            Corbeille{trashCount > 0 ? ` (${trashCount})` : ''}
+          </button>
+          <button type="button" className="text-btn" onClick={() => void window.vela.notes.openFolder()}>
+            <Icon name="folder" size={13} />
+            Ouvrir le dossier
+          </button>
+        </div>
       </footer>
     </div>
   )

@@ -1,0 +1,365 @@
+/*
+ * Coup d'œil : la carte qui remplace le mini navigateur.
+ *
+ * Le cadre et les actions sont dessinés ici ; la page elle-même est une vue
+ * native posée sur `.peek-surface`, donc cette surface reste nue : aucun
+ * padding, aucun arrondi, sinon la page déborderait du cadre visible.
+ */
+
+.peek-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(9, 9, 12, 0.46);
+  backdrop-filter: blur(3px) saturate(92%);
+  -webkit-backdrop-filter: blur(3px) saturate(92%);
+  animation: peek-layer-in 140ms var(--ease-out, ease-out);
+}
+
+.peek-card {
+  width: min(840px, calc(100vw - 96px));
+  height: min(580px, calc(100vh - 96px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  border-radius: 18px;
+  background: var(--sheet, rgba(22, 22, 26, 0.97));
+  box-shadow:
+    0 42px 110px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: peek-card-in 160ms var(--ease-out, ease-out);
+}
+
+.peek-head {
+  height: 54px;
+  flex: 0 0 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+}
+
+.peek-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 0;
+  padding: 4px 6px;
+  margin-left: -6px;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: text;
+}
+
+.peek-meta:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.peek-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.peek-host {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--muted, #9b9ba9);
+}
+
+.peek-address {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.peek-address input {
+  width: 100%;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 10px;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.peek-address input:focus {
+  border-color: var(--accent, #6f6cf4);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.peek-space {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 11.5px;
+  color: var(--muted, #c9c9d6);
+  white-space: nowrap;
+}
+
+.peek-space i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--peek-dot, var(--accent, #6f6cf4));
+}
+
+.peek-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--page-bg, #101014);
+}
+
+/* La vue native se pose exactement ici : rien d'autre que le rectangle. */
+.peek-surface {
+  position: absolute;
+  inset: 0;
+}
+
+.peek-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.peek-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted, #9b9ba9);
+}
+
+.peek-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted, #b6b6c5);
+}
+
+.peek-empty-field {
+  display: flex;
+  gap: 8px;
+  width: min(440px, 100%);
+  margin-top: 2px;
+}
+
+.peek-empty-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 11px;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.peek-empty-field input:focus {
+  border-color: var(--accent, #6f6cf4);
+}
+
+.peek-empty-hint {
+  font-size: 11px;
+  color: var(--dim, #7a7a88);
+}
+
+.peek-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.peek-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: var(--accent, #6f6cf4);
+  animation: peek-progress 1.1s ease-in-out infinite;
+}
+
+.peek-foot {
+  height: 50px;
+  flex: 0 0 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.peek-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--dim, #7a7a88);
+}
+
+.peek-btn {
+  height: 30px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text, #dcdce7);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.peek-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.peek-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.peek-btn.is-primary {
+  background: var(--accent, #f1f0fa);
+  border-color: transparent;
+  color: var(--on-accent, #161619);
+  font-weight: 600;
+}
+
+.peek-btn kbd {
+  font: inherit;
+  font-size: 10.5px;
+  opacity: 0.55;
+}
+
+.peek-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted, #9b9ba9);
+  cursor: pointer;
+}
+
+.peek-icon:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text, #ececf3);
+}
+
+.peek-btn:focus-visible,
+.peek-icon:focus-visible,
+.peek-meta:focus-visible,
+.peek-empty-field input:focus-visible {
+  outline: 2px solid var(--accent, #6f6cf4);
+  outline-offset: 1px;
+}
+
+@keyframes peek-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes peek-layer-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes peek-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(280%);
+  }
+}
+
+@media (max-width: 760px) {
+  .peek-layer {
+    padding: 10px;
+  }
+  .peek-card {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+  }
+  .peek-space {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peek-layer,
+  .peek-card,
+  .peek-progress::after {
+    animation: none;
+  }
+}
+
+:root[data-motion='reduce'] .peek-layer,
+:root[data-motion='reduce'] .peek-card,
+:root[data-motion='reduce'] .peek-progress::after {
+  animation: none;
+}
+
+:root[data-contrast='high'] .peek-layer {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(0, 0, 0, 0.72);
+}

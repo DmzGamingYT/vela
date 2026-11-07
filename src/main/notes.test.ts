@@ -65,6 +65,48 @@ describe('NotesStore', () => {
     expect(store.get(note.id)?.pinned).toBe(true)
   })
 
+  it('retrouve une note par un mot du corps, sans casse ni accents', () => {
+    const store = new NotesStore(tempDir())
+    const match = store.save({
+      title: 'Veille',
+      body: 'Le résumé du chapitre sur les tunnels.',
+      spaceId: 'space'
+    })
+    store.save({ title: 'Autre', body: 'Rien ici.', spaceId: 'space' })
+    expect(store.search('resume')).toEqual([match.id])
+    expect(store.search('TUNNELS')).toEqual([match.id])
+    expect(store.search('chapitre')).toEqual([match.id])
+    expect(store.search('absent')).toEqual([])
+    expect(store.search('   ')).toEqual([])
+  })
+
+  it('combine plusieurs mots, expressions entre guillemets et exclusions', () => {
+    const store = new NotesStore(tempDir())
+    const match = store.save({
+      title: 'Projet',
+      body: 'La note vocale sur les tunnels.',
+      spaceId: 'space'
+    })
+    const excluded = store.save({
+      title: 'Projet',
+      body: 'La note vocale sur les tunnels, avec un brouillon.',
+      spaceId: 'space'
+    })
+    const unrelated = store.save({
+      title: 'Lecture',
+      body: 'Les tunnels seulement.',
+      spaceId: 'space'
+    })
+
+    expect(new Set(store.search('projet "note vocale" tunnels'))).toEqual(
+      new Set([match.id, excluded.id])
+    )
+    expect(store.search('projet "note vocale" tunnels -brouillon')).toEqual([match.id])
+    expect(store.search('"note vocale" -brouillon')).toEqual([match.id])
+    expect(new Set(store.search('-brouillon'))).toEqual(new Set([match.id, unrelated.id]))
+    expect(store.search('projet -"note vocale"')).toEqual([])
+  })
+
   it('retrouve la note rattachée à une URL', () => {
     const store = new NotesStore(tempDir())
     store.save({ title: 'A', body: 'a', spaceId: 'space', url: 'https://example.org/a' })
@@ -227,6 +269,38 @@ describe('liens entre notes dans le stockage', () => {
       spaceId: 'space-1'
     })
     expect([...store.audioNames()]).toEqual(['space-1/abcd1234.webm'])
+  })
+})
+
+describe('corbeille des notes', () => {
+  it('déplace la note et la restaure avec son contenu et ses métadonnées', () => {
+    const store = new NotesStore(tempDir())
+    const note = store.save({
+      title: 'Brouillon',
+      body: '# Brouillon\n\nÀ garder',
+      spaceId: 'space',
+      tags: ['projet'],
+      pinned: true
+    })
+
+    store.remove(note.id)
+    expect(store.get(note.id)).toBeNull()
+    expect(store.list().some((item) => item.id === note.id)).toBe(false)
+
+    const [trashed] = store.listTrash()
+    expect(trashed).toMatchObject({ id: note.id, title: 'Brouillon', tags: ['projet'], pinned: true })
+    expect(trashed.preview).toBe('À garder')
+
+    const restored = store.restore(note.id)
+    expect(restored?.body).toBe('# Brouillon\n\nÀ garder')
+    expect(store.get(note.id)?.pinned).toBe(true)
+    expect(store.get(note.id)?.tags).toEqual(['projet'])
+    expect(store.listTrash()).toEqual([])
+  })
+
+  it('ne restaure pas une note absente de la corbeille', () => {
+    const store = new NotesStore(tempDir())
+    expect(store.restore('inconnue')).toBeNull()
   })
 })
 

@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { PAGE_CHANNELS, canUseChannel, senderKindOf } from './ipcPolicy'
 
 describe('classification des émetteurs IPC', () => {
-  const ids = { shell: 1, mini: 2 }
+  const ids = { shell: 1 }
 
-  it('reconnaît la coque et la petite fenêtre', () => {
+  it('reconnaît la coque', () => {
     expect(senderKindOf(1, ids)).toBe('shell')
-    expect(senderKindOf(2, ids)).toBe('mini')
   })
 
   it('traite tout autre renderer comme une page', () => {
@@ -18,16 +17,9 @@ describe('classification des émetteurs IPC', () => {
 
 describe('canaux autorisés', () => {
   it('donne tous les canaux à la coque', () => {
-    for (const channel of ['settings:update', 'notes:save', 'tunnel:run', 'mini:open']) {
+    for (const channel of ['settings:update', 'notes:save', 'tunnel:run', 'peek:open']) {
       expect(canUseChannel('shell', channel), channel).toBe(true)
     }
-  })
-
-  it('ne donne à la petite fenêtre que ses canaux', () => {
-    expect(canUseChannel('mini', 'mini:navigate')).toBe(true)
-    expect(canUseChannel('mini', 'mini:ready')).toBe(true)
-    expect(canUseChannel('mini', 'settings:update')).toBe(false)
-    expect(canUseChannel('mini', 'notes:save')).toBe(false)
   })
 
   it('limite une page aux canaux de son preload', () => {
@@ -36,6 +28,13 @@ describe('canaux autorisés', () => {
     expect(canUseChannel('page', 'notes:save')).toBe(false)
     expect(canUseChannel('page', 'tunnel:run')).toBe(false)
     expect(canUseChannel('page', 'update:install')).toBe(false)
+  })
+
+  it('ne laisse pas une page ouvrir le coup d’œil', () => {
+    for (const channel of ['peek:open', 'peek:state', 'peek:layout']) {
+      expect(canUseChannel('page', channel), channel).toBe(false)
+      expect(canUseChannel('shell', channel), channel).toBe(true)
+    }
   })
 
   it('laisse le pilotage de la traduction BD à la seule coque', () => {
@@ -52,6 +51,6 @@ describe('canaux autorisés', () => {
 
   it('ne donne rien à un renderer inconnu', () => {
     expect(canUseChannel('unknown', 'settings:update')).toBe(false)
-    expect(canUseChannel('unknown', 'mini:state')).toBe(false)
+    expect(canUseChannel('unknown', 'peek:state')).toBe(false)
   })
 })

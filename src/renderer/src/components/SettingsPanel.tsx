@@ -1,34 +1,42 @@
 import { useRef, useState } from 'react'
-import {
-  PROVIDERS,
-  endpointHost,
-  isLoopbackEndpoint,
-  providerById,
-  providerReady
-} from '@shared/providers'
 import { useModalFocus } from '../lib/useModalFocus'
+import { useSystemDark } from '../lib/useSystemDark'
+import SavedIndicator from './SavedIndicator'
 import AboutPage from './AboutPage'
 import AmbienceScene from './AmbienceScene'
 import AppearancePage from './AppearancePage'
 import NavigationPage from './NavigationPage'
 import PrivacyPage from './PrivacyPage'
+import ThemesPage from './ThemesPage'
+import TweaksPage from './TweaksPage'
 import UpdatesPage from './UpdatesPage'
-import { BrandMark, PROVIDER_BRANDS, readableTint } from './BrandMark'
 import { resolveMode, resolveThemeId, type HomeBackground } from '@shared/theme'
-import type { AgentMode, ProviderId, ProviderSettings } from '@shared/types'
+import { APP_SHORTCUTS } from '@shared/shortcuts'
 import { plural, shortcut, spokenShortcut, timeAgo } from '../lib/format'
 import { useBrowser } from '../store/browser'
+import ModelsPage from './ModelsPage'
 import { Icon, type IconName } from './Icon'
 
 type Page =
-  'appearance' | 'navigation' | 'privacy' | 'models' | 'notes' | 'shortcuts' | 'updates' | 'about'
+  | 'appearance'
+  | 'tweaks'
+  | 'themes'
+  | 'navigation'
+  | 'privacy'
+  | 'models'
+  | 'notes'
+  | 'shortcuts'
+  | 'updates'
+  | 'about'
 
 const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[] }[] = [
   {
-    group: 'Navigateur',
+    group: 'Général',
     items: [
       { id: 'appearance', label: 'Apparence', icon: 'palette' },
-      { id: 'navigation', label: 'Navigation', icon: 'search' },
+      { id: 'tweaks', label: 'Tweaks', icon: 'settings' },
+      { id: 'themes', label: 'Thèmes', icon: 'sparkles' },
+      { id: 'navigation', label: 'Navigation', icon: 'compass' },
       { id: 'privacy', label: 'Confidentialité', icon: 'shield' }
     ]
   },
@@ -43,14 +51,19 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
     group: 'Application',
     items: [
       { id: 'shortcuts', label: 'Raccourcis', icon: 'keyboard' },
-      { id: 'updates', label: 'Mises à jour', icon: 'download' },
-      { id: 'about', label: 'À propos', icon: 'circle' }
+      { id: 'updates', label: 'Mises à jour', icon: 'arrow-down' },
+      { id: 'about', label: 'À propos', icon: 'info' }
     ]
   }
 ]
 
 const COPY: Record<Page, { title: string; lede: string }> = {
-  appearance: { title: 'Apparence', lede: 'Mode, couleur, fond de l’accueil et accessibilité.' },
+  appearance: {
+    title: 'Apparence',
+    lede: 'Mode, couleur, fond de l’accueil et accessibilité.'
+  },
+  tweaks: { title: 'Tweaks', lede: 'Accent, teinte libre et intensité du verre dépoli.' },
+  themes: { title: 'Thèmes', lede: 'Ambiances animées, portée et présence.' },
   navigation: {
     title: 'Navigation',
     lede: 'Recherche, démarrage, marque-pages, historique et téléchargements.'
@@ -122,13 +135,13 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
   {
     title: 'Surfaces',
     items: [
-      ['Notes', shortcut('E')],
-      ['Agent', shortcut('J')],
+      ['Notes', shortcut(APP_SHORTCUTS.notes.key)],
+      ['Agent', shortcut(APP_SHORTCUTS.agent.key)],
       ['Atelier', shortcut('⇧A')],
       ['Sessions', shortcut('⇧B')],
       ['Replier la barre latérale', shortcut('S')],
-      ['Petite fenêtre', shortcut('⇧N')],
-      ['Réglages', shortcut(',')]
+      ['Coup d’œil', shortcut('⌥N')],
+      ['Réglages', shortcut(APP_SHORTCUTS.settings.key)]
     ]
   },
   {
@@ -141,33 +154,10 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
   }
 ]
 
-interface Status {
-  tone: 'ok' | 'error' | 'idle' | 'none'
-  label: string
-}
-
-function statusOf(state: ProviderSettings, providerId: ProviderId): Status {
-  const definition = providerById(providerId)
-  if (state.status === 'ok' && (state.hasKey || definition.local)) {
-    return {
-      tone: 'ok',
-      label: definition.local ? 'Serveur local joignable.' : state.detail || 'Clé acceptée.'
-    }
-  }
-  if (state.status === 'error') {
-    return { tone: 'error', label: state.detail || 'Clé refusée par le fournisseur.' }
-  }
-  if (state.hasKey) return { tone: 'idle', label: 'Clé enregistrée · non testée' }
-  if (definition.local) return { tone: 'none', label: 'Serveur local · aucune clé requise' }
-  return { tone: 'none', label: definition.detail }
-}
-
 export default function SettingsPanel() {
   const view = useBrowser((state) => state.view)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const updateSettings = useBrowser((state) => state.updateSettings)
-  const setKey = useBrowser((state) => state.setKey)
-  const testKey = useBrowser((state) => state.testKey)
   const saveAgentNote = useBrowser((state) => state.saveAgentNote)
   const toggleNotes = useBrowser((state) => state.toggleNotes)
   const hasReport = useBrowser((state) => Boolean(state.agent.markdown))
@@ -175,14 +165,10 @@ export default function SettingsPanel() {
   const sheetRef = useModalFocus<HTMLDivElement>({ initialFocus: 'container' })
 
   const [page, setPage] = useState<Page>('appearance')
-  const [editing, setEditing] = useState<ProviderId | null>(null)
-  const [keyDraft, setKeyDraft] = useState('')
-  const [modelDraft, setModelDraft] = useState('')
-  const [urlDraft, setUrlDraft] = useState('')
-  const [testing, setTesting] = useState<ProviderId | null>(null)
   const [shortcutQuery, setShortcutQuery] = useState('')
   const [navQuery, setNavQuery] = useState('')
   const navInput = useRef<HTMLInputElement | null>(null)
+  const systemDark = useSystemDark()
   const navGroups = NAV.map((group) => ({
     group: group.group,
     items: group.items.filter(
@@ -198,7 +184,7 @@ export default function SettingsPanel() {
     hourTheme: settings.hourTheme,
     hourStart: settings.hourStart,
     hourEnd: settings.hourEnd,
-    systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches
+    systemDark
   })
   // L'aperçu suit le thème effectif : celui de l'espace s'il en porte un.
   const previewThemeId = resolveThemeId({
@@ -206,51 +192,27 @@ export default function SettingsPanel() {
     perSpace: settings.perSpaceThemes,
     spaceTheme: activeSpace?.theme ?? null
   })
-  const agent = settings.agent
-  const activeDefinition = providerById(agent.provider)
-  const apiReady = providerReady(settings)
-
-  const openEditor = (id: ProviderId): void => {
-    const state = agent.providers[id]
-    setEditing(id)
-    setKeyDraft('')
-    setModelDraft(state.model)
-    setUrlDraft(state.baseUrl)
-  }
-
-  const chooseProvider = (id: ProviderId): void => {
-    void updateSettings({ agent: { provider: id, mode: 'api' } })
-  }
-
-  const saveProvider = async (id: ProviderId): Promise<void> => {
-    const definition = providerById(id)
-    const url = urlDraft.trim()
-    if (!/^https?:\/\//i.test(url)) {
-      toast('L’endpoint doit commencer par http:// ou https://', 'error')
-      return
-    }
-    if (keyDraft.trim()) {
-      const saved = await setKey(id, keyDraft.trim())
-      if (!saved) return
-    }
-    await updateSettings({
-      providers: { [id]: { model: modelDraft.trim() || definition.model, baseUrl: url } }
-    })
-    setEditing(null)
-    setKeyDraft('')
-    toast('Fournisseur enregistré.')
-  }
-
-  const runTest = async (id: ProviderId): Promise<void> => {
-    setTesting(id)
-    const result = await testKey(id)
-    setTesting(null)
-    toast(result.message, result.ok ? 'info' : 'error')
-  }
-
-  const setMode = (mode: AgentMode): void => {
-    void updateSettings({ agent: { mode } })
-  }
+  // Seuls les réglages d'apparence réarment l'accusé : changer d'onglet ou
+  // recevoir un état sans rapport ne doit pas le faire clignoter.
+  const savedSignature = [
+    settings.theme,
+    settings.themeId,
+    settings.customAccent,
+    settings.homeBackground,
+    settings.homeIntensity,
+    settings.homeImage ?? '',
+    settings.homeBlur,
+    settings.skyVariant,
+    settings.density,
+    settings.textSize,
+    settings.sidebarSide,
+    settings.highContrast,
+    settings.reduceMotion,
+    settings.hourTheme,
+    settings.hourStart,
+    settings.hourEnd,
+    settings.perSpaceThemes
+  ].join('|')
 
   const chooseBackground = async (value: HomeBackground): Promise<void> => {
     if (value !== 'image') {
@@ -277,7 +239,10 @@ export default function SettingsPanel() {
       glass: 'normal',
       glassBlur: 18,
       ambience: 'none',
+      ambienceScope: 'page',
+      ambienceIntensity: 80,
       homeBackground: 'gradient',
+      homeIntensity: 'normal',
       homeImage: null,
       homeBlur: 18,
       skyVariant: 'braise',
@@ -294,233 +259,7 @@ export default function SettingsPanel() {
     toast('Apparence réinitialisée.')
   }
 
-  const renderModels = () => (
-    <>
-      <section className="setting-block">
-        <div className="setting-head">
-          <h2>Agent</h2>
-          <p>Un rapport simulé sans quitter la machine, ou un vrai modèle.</p>
-        </div>
-        <div className="model-list">
-          <div className="model-item">
-            <div className="model-row" data-active={agent.mode === 'demo'}>
-              <button
-                type="button"
-                className="model-select"
-                onClick={() => setMode('demo')}
-                aria-pressed={agent.mode === 'demo'}
-              >
-                <span className="model-mark" data-vela="true">
-                  <Icon name="sparkles" size={15} />
-                </span>
-                <span className="model-copy">
-                  <span className="model-name">
-                    Démo locale <em className="model-chip">Sans clé</em>
-                  </span>
-                  <span className="model-detail" data-tone="none">
-                    Rapports simulés à partir des titres de vos onglets. Aucune page ne quitte
-                    l’appareil.
-                  </span>
-                </span>
-              </button>
-              <div className="model-actions">
-                {agent.mode === 'demo' ? (
-                  <span className="model-state" data-tone="ok">
-                    <i /> Activé
-                  </span>
-                ) : (
-                  <button type="button" className="ghost-btn" onClick={() => setMode('demo')}>
-                    Activer
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {PROVIDERS.map((definition) => {
-            const state = agent.providers[definition.id]
-            const status = statusOf(state, definition.id)
-            const isActive = agent.mode === 'api' && agent.provider === definition.id
-            return (
-              <div
-                className="model-item"
-                key={definition.id}
-                role="group"
-                aria-label={`Fournisseur ${definition.label}`}
-              >
-                <div className="model-row" data-active={isActive} data-tone={status.tone}>
-                  <button
-                    type="button"
-                    className="model-select"
-                    onClick={() => chooseProvider(definition.id)}
-                    aria-pressed={isActive}
-                    // Le contenu du bouton ne dit que le nom du fournisseur :
-                    // le nom accessible annonce l'action et l'état de la clé.
-                    aria-label={`Utiliser ${definition.label} — ${status.label}`}
-                    title={`Utiliser ${definition.label}`}
-                  >
-                    <span
-                      className="model-mark"
-                      style={{
-                        color: readableTint(definition.color),
-                        background: `color-mix(in srgb, ${readableTint(definition.color)} 16%, transparent)`,
-                        borderColor: `color-mix(in srgb, ${readableTint(definition.color)} 30%, transparent)`
-                      }}
-                    >
-                      {PROVIDER_BRANDS[definition.id] ? (
-                        <BrandMark brand={PROVIDER_BRANDS[definition.id]} size={18} />
-                      ) : (
-                        definition.mark
-                      )}
-                    </span>
-                    <span className="model-copy">
-                      <span className="model-name">
-                        {definition.label}
-                        {isActive && (
-                          <em className="model-chip" data-accent="true">
-                            Actif
-                          </em>
-                        )}
-                      </span>
-                      <span className="model-detail" data-tone={status.tone}>
-                        {status.tone !== 'none' && <i className="model-dot" />}
-                        {status.label}
-                      </span>
-                    </span>
-                  </button>
-                  <div className="model-actions">
-                    {!state.hasKey && !definition.local && (
-                      <a
-                        className="ghost-btn"
-                        href={definition.keyUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Obtenir
-                      </a>
-                    )}
-                    {(state.hasKey || definition.local) && (
-                      <button
-                        type="button"
-                        className="ghost-btn"
-                        onClick={() => void runTest(definition.id)}
-                        disabled={testing !== null}
-                      >
-                        {testing === definition.id ? 'Test…' : 'Tester'}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="ghost-btn"
-                      onClick={() => openEditor(definition.id)}
-                    >
-                      {state.hasKey
-                        ? 'Modifier'
-                        : definition.local
-                          ? 'Configurer l’endpoint'
-                          : 'Ajouter une clé'}
-                    </button>
-                    {state.hasKey && (
-                      <button
-                        type="button"
-                        className="icon-btn danger"
-                        title="Supprimer la clé"
-                        onClick={() => void setKey(definition.id, null)}
-                      >
-                        <Icon name="trash" size={13} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {editing === definition.id && (
-                  <div className="model-editor">
-                    <div className="field-grid">
-                      <label className="field">
-                        <span>
-                          {definition.local ? 'Clé API (facultative)' : 'Clé API'}{' '}
-                          {state.hasKey && <em>· enregistrée</em>}
-                        </span>
-                        <input
-                          type="password"
-                          value={keyDraft}
-                          onChange={(event) => setKeyDraft(event.target.value)}
-                          placeholder={
-                            state.hasKey
-                              ? 'Nouvelle clé (laisser vide pour conserver)'
-                              : definition.keyLabel
-                          }
-                          spellCheck={false}
-                          autoFocus
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Modèle</span>
-                        <input
-                          value={modelDraft}
-                          onChange={(event) => setModelDraft(event.target.value)}
-                          placeholder={definition.model}
-                          spellCheck={false}
-                        />
-                      </label>
-                    </div>
-                    <label className="field model-endpoint">
-                      <span>Endpoint</span>
-                      <input
-                        value={urlDraft}
-                        onChange={(event) => setUrlDraft(event.target.value)}
-                        placeholder={definition.baseUrl}
-                        spellCheck={false}
-                      />
-                    </label>
-                    {definition.local && urlDraft.trim() && !isLoopbackEndpoint(urlDraft) && (
-                      <p className="setting-hint space-error" role="status">
-                        <Icon name="warning" size={12} /> Cet endpoint n’est pas sur votre machine :{' '}
-                        {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent et
-                        l’audio transcrit y seront envoyés.
-                      </p>
-                    )}
-                    <div className="model-editor-foot">
-                      <p className="setting-hint">
-                        Chiffrée par le trousseau du système, jamais exposée à l’interface.
-                      </p>
-                      <div className="model-editor-actions">
-                        <button
-                          type="button"
-                          className="action ghost"
-                          onClick={() => setEditing(null)}
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="button"
-                          className="action primary"
-                          onClick={() => void saveProvider(definition.id)}
-                        >
-                          Enregistrer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-        {agent.mode === 'api' && !apiReady && (
-          <div className="setting-warning">
-            <Icon name="warning" size={14} />
-            Sans clé pour {activeDefinition.label}, l’agent reste en mode démo.
-          </div>
-        )}
-        <p className="setting-hint model-foot">
-          Le comportement de l’agent suit toujours le modèle actif : il n’y a rien d’autre à régler
-          ici. Aucune télémétrie, et une clé n’est utilisée que par l’agent, vers l’endpoint que
-          vous voyez ci-dessus.
-        </p>
-      </section>
-    </>
-  )
+  const renderModels = () => <ModelsPage settings={settings} />
 
   const renderPage = () => {
     switch (page) {
@@ -532,9 +271,21 @@ export default function SettingsPanel() {
             previewThemeId={previewThemeId}
             updateSettings={updateSettings}
             chooseBackground={chooseBackground}
+          />
+        )
+
+      case 'tweaks':
+        return (
+          <TweaksPage
+            settings={settings}
+            mode={mode}
+            updateSettings={updateSettings}
             resetAppearance={resetAppearance}
           />
         )
+
+      case 'themes':
+        return <ThemesPage settings={settings} mode={mode} updateSettings={updateSettings} />
 
       case 'navigation':
         return (
@@ -723,6 +474,12 @@ export default function SettingsPanel() {
         aria-label="Réglages"
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
+          if (event.key === 'Escape' && !event.defaultPrevented) {
+            event.preventDefault()
+            event.stopPropagation()
+            setOverlay(null)
+            return
+          }
           if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'f') return
           event.preventDefault()
           navInput.current?.focus()
@@ -765,6 +522,7 @@ export default function SettingsPanel() {
                       key={item.id}
                       className="settings-nav-item"
                       data-active={page === item.id}
+                      aria-current={page === item.id ? 'page' : undefined}
                       onClick={() => setPage(item.id)}
                     >
                       <Icon name={item.icon} size={14} />
@@ -778,18 +536,22 @@ export default function SettingsPanel() {
 
           <div className="settings-pane">
             <header className="settings-head">
-              <div>
+              <div className="settings-head-copy">
                 <h1>{COPY[page].title}</h1>
                 <p>{COPY[page].lede}</p>
               </div>
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => setOverlay(null)}
-                title="Fermer"
-              >
-                <Icon name="close" size={17} />
-              </button>
+              <div className="settings-head-actions">
+                <SavedIndicator value={savedSignature} />
+                <button
+                  type="button"
+                  className="settings-close"
+                  onClick={() => setOverlay(null)}
+                  aria-label="Fermer"
+                  title="Fermer"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              </div>
             </header>
             {/* La clé change la courbe d’entrée à chaque section : le panneau
                 glisse sans faire sauter le défilement du parent. */}

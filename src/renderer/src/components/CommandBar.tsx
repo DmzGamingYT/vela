@@ -3,6 +3,7 @@ import { THEME_PRESETS, type ThemeId } from '@shared/theme'
 import { isHomeUrl, normalizeInput, prettyUrl } from '@shared/url'
 import { searchOptionsOf } from '@shared/navigation'
 import { appearanceState, applyAppearance } from '../lib/appearance'
+import { APP_SHORTCUTS } from '@shared/shortcuts'
 import { normalize, rankItems } from '../lib/commandRank'
 import { shortcut } from '../lib/format'
 import { useModalFocus } from '../lib/useModalFocus'
@@ -150,13 +151,13 @@ export default function CommandBar() {
         run: run(() => navigate(view.activeTabId, query.trim()))
       })
       all.push({
-        id: 'open-mini',
+        id: 'open-peek',
         group: 'Aller',
         generated: true,
-        label: `Ouvrir « ${query.trim()} » dans le mini navigateur`,
-        hint: 'Petite fenêtre jetable',
+        label: `Ouvrir « ${query.trim()} » dans un coup d’œil`,
+        hint: 'Aperçu jetable, aucun onglet',
         icon: 'external',
-        run: run(() => void window.vela.mini.open({ url: query.trim() }))
+        run: run(() => void window.vela.peek.open({ url: query.trim() }))
       })
       all.push({
         id: 'agent-query',
@@ -179,12 +180,12 @@ export default function CommandBar() {
         run: run(() => newTab())
       },
       {
-        id: 'action-mini',
+        id: 'action-peek',
         group: 'Actions',
-        label: 'Ouvrir dans le mini navigateur',
-        hint: shortcut('⇧N'),
+        label: 'Ouvrir dans un coup d’œil',
+        hint: shortcut('⌥N'),
         icon: 'external',
-        run: run(() => void window.vela.mini.open({}))
+        run: run(() => void window.vela.peek.open({}))
       },
       {
         id: 'action-new-space',
@@ -206,7 +207,7 @@ export default function CommandBar() {
         id: 'action-notes',
         group: 'Actions',
         label: 'Ouvrir les notes',
-        hint: shortcut('E'),
+        hint: shortcut(APP_SHORTCUTS.notes.key),
         icon: 'notes',
         run: run(() => toggleNotes(true))
       },
@@ -214,7 +215,7 @@ export default function CommandBar() {
         id: 'action-agent',
         group: 'Actions',
         label: 'Ouvrir l’agent',
-        hint: shortcut('J'),
+        hint: shortcut(APP_SHORTCUTS.agent.key),
         icon: 'sparkles',
         run: run(() => openAgent())
       },
@@ -311,7 +312,7 @@ export default function CommandBar() {
         id: 'action-settings',
         group: 'Actions',
         label: 'Réglages',
-        hint: shortcut(','),
+        hint: shortcut(APP_SHORTCUTS.settings.key),
         icon: 'settings',
         run: run(() => setOverlay('settings'))
       },

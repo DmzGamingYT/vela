@@ -8,6 +8,7 @@ import { shortcut, weekdayLabel } from '../lib/format'
 import { useSessionCount } from '../lib/sessions'
 import { useBrowser } from '../store/browser'
 import Favicon from './Favicon'
+import SidebarDock from './SidebarDock'
 import SidebarHeader from './SidebarHeader'
 import { Icon } from './Icon'
 import TabContextMenu from './TabContextMenu'
@@ -29,6 +30,9 @@ type MenuState = { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
 
 /** Au-delà, une tuile « +N » ouvre la liste complète plutôt que de tronquer. */
 const FAVORITE_LIMIT = 12
+
+/** Couleurs proposées pour un dossier, lisibles sur les deux thèmes. */
+const GROUP_COLORS = ['#e0574f', '#e0913f', '#d9b64a', '#4fae7a', '#4f8fd0', '#7a6fd0']
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const view = useBrowser((state) => state.view)
@@ -62,6 +66,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [confirmGroup, setConfirmGroup] = useState<string | null>(null)
+  const [colorGroup, setColorGroup] = useState<string | null>(null)
   // Infobulle des cases compactes : positionnée en `fixed` pour ne pas être
   // rognée par la liste qui défile.
   const [tip, setTip] = useState<{
@@ -989,7 +994,36 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                   >
                     <Icon name="chevron-down" size={12} />
                   </button>
-                  <span className="group-dot" style={{ background: group.color }} />
+                  <button
+                    type="button"
+                    className="group-dot"
+                    style={{ background: group.color }}
+                    title="Changer la couleur du dossier"
+                    aria-label={`Changer la couleur de ${group.name}`}
+                    aria-expanded={colorGroup === group.id}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setColorGroup((current) => (current === group.id ? null : group.id))
+                    }}
+                  />
+                  {colorGroup === group.id && (
+                    <span className="group-colors" role="group" aria-label="Couleur du dossier">
+                      {GROUP_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          style={{ background: color }}
+                          data-active={color === group.color}
+                          aria-label={`Couleur ${color}`}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setColorGroup(null)
+                            void updateGroup(group.id, { color })
+                          }}
+                        />
+                      ))}
+                    </span>
+                  )}
                   {renamingId === group.id ? (
                     <input
                       className="group-name-input"
@@ -1123,37 +1157,16 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
         </div>
       )}
 
-      {/* Notes, Agent et Réglages vivent au pied de la colonne : le rail ne
-          porte plus que les modes et les espaces. */}
-      <div className="sidebar-tools" role="group" aria-label="Outils">
-        <button
-          type="button"
-          className="icon-btn"
-          data-active={notesOpen}
-          onClick={() => toggleNotes()}
-          title={`Notes (${shortcut('E')})`}
-        >
-          <Icon name="notes" size={18} />
-        </button>
-        <button
-          type="button"
-          className="icon-btn"
-          data-active={agentOpen}
-          aria-pressed={agentOpen}
-          onClick={() => openAgent()}
-          title={`Agent (${shortcut('J')})`}
-        >
-          <Icon name="sparkles" size={18} />
-        </button>
-        <button
-          type="button"
-          className="icon-btn sidebar-tools-end"
-          onClick={() => setOverlay('settings')}
-          title={`Réglages (${shortcut(',')})`}
-        >
-          <Icon name="settings" size={18} />
-        </button>
-      </div>
+      {/* Le dock vit au pied de la colonne ; replié, le rail en reprend la
+          version en icônes seules pour que les trois actions restent visibles. */}
+      <SidebarDock
+        notesOpen={notesOpen}
+        agentOpen={agentOpen}
+        settingsOpen={overlay === 'settings'}
+        onNotes={() => toggleNotes()}
+        onAgent={() => openAgent()}
+        onSettings={() => setOverlay('settings')}
+      />
 
       <p
         className="sr-only"

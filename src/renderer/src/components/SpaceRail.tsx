@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { shortcut } from '../lib/format'
 import { useBrowser } from '../store/browser'
 import { Icon } from './Icon'
+import SidebarDock from './SidebarDock'
 import SpaceAvatar from './SpaceAvatar'
 
 export default function SpaceRail() {
@@ -13,6 +14,12 @@ export default function SpaceRail() {
   const activateSpace = useBrowser((state) => state.activateSpace)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const updateSettings = useBrowser((state) => state.updateSettings)
+  const notesOpen = useBrowser((state) => state.notesOpen)
+  const agentOpen = useBrowser((state) => state.agentOpen)
+  const overlay = useBrowser((state) => state.overlay)
+  const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const openAgent = useBrowser((state) => state.openAgent)
+  const setOverlay = useBrowser((state) => state.setOverlay)
 
   if (!view) return <aside className="rail" aria-label="Espaces" />
 
@@ -89,6 +96,20 @@ export default function SpaceRail() {
           <Icon name="plus" size={16} />
         </button>
       </div>
+
+      {/* La barre latérale repliée ne laisse que le rail : le dock y garde les
+          trois actions, en icônes seules. */}
+      {view.settings.sidebarCollapsed && (
+        <SidebarDock
+          compact
+          notesOpen={notesOpen}
+          agentOpen={agentOpen}
+          settingsOpen={overlay === 'settings'}
+          onNotes={() => toggleNotes()}
+          onAgent={() => openAgent()}
+          onSettings={() => setOverlay('settings')}
+        />
+      )}
     </aside>
   )
 }

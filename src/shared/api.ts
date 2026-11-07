@@ -8,7 +8,7 @@ import type {
   BookmarkImportSource,
   HistoryEntry,
   LayoutRequest,
-  MiniState,
+  PeekState,
   Note,
   PageHighlight,
   PaneSnapshot,
@@ -118,6 +118,7 @@ export interface SettingsPatch {
   startupUrl?: string
   newTabBlank?: boolean
   historyRetention?: Settings['historyRetention']
+  updateChecks?: Settings['updateChecks']
   downloadDir?: string | null
   askDownloadLocation?: boolean
   openAfterDownload?: boolean
@@ -128,7 +129,10 @@ export interface SettingsPatch {
   glass?: Settings['glass']
   glassBlur?: Settings['glassBlur']
   ambience?: Settings['ambience']
+  ambienceScope?: Settings['ambienceScope']
+  ambienceIntensity?: Settings['ambienceIntensity']
   homeBackground?: Settings['homeBackground']
+  homeIntensity?: Settings['homeIntensity']
   homeImage?: string | null
   homeBlur?: number
   skyVariant?: Settings['skyVariant']
@@ -326,11 +330,11 @@ export interface VelaApi {
      */
     snapshot(tabIds: string[]): Promise<PaneSnapshot[]>
   }
-  mini: {
+  peek: {
     /**
-     * Ouvre la petite fenêtre, ou recharge celle qui existe déjà. Sans adresse,
-     * elle prend la page courante ; l’espace actif prête sa session.
-     * `false` si aucun espace ne peut l’accueillir.
+     * Ouvre le coup d'œil dans la fenêtre principale. Sans adresse, la carte
+     * s'ouvre sur son champ d'adresse ; l'espace actif prête sa session.
+     * `false` si aucun espace ne peut l'accueillir.
      */
     open(input?: { url?: string; spaceId?: string }): Promise<boolean>
     close(): Promise<void>
@@ -339,16 +343,20 @@ export interface VelaApi {
     forward(): Promise<void>
     reload(): Promise<void>
     stop(): Promise<void>
-    /** Installe la page courante dans un vrai onglet, puis referme. */
+    /** Installe la page courante dans un vrai onglet, puis referme la carte. */
     openInTab(): Promise<boolean>
-    /** État courant, demandé au montage de la barre. */
-    state(): Promise<MiniState>
-    /** La barre annonce qu’elle est prête : la fenêtre peut alors la piloter. */
+    /** Ouvre la page dans un onglet posé en second volet, puis referme. */
+    openInSplit(): Promise<boolean>
+    /** État courant, demandé au montage de la carte. */
+    state(): Promise<PeekState | null>
+    /** La carte annonce qu'elle est prête : on lui pousse l'état et le focus. */
     ready(): void
-    onState(callback: (state: MiniState) => void): () => void
-    /** Demande de focus sur la barre d’adresse (ouverture, ⌘L). */
+    /** Rectangle mesuré de la surface de page ; `null` retire la vue. */
+    layout(rect: import('./types').Rect | null): void
+    onState(callback: (state: PeekState | null) => void): () => void
+    /** Demande de focus sur le champ d'adresse (ouverture, ⌘L). */
     onFocusAddress(callback: () => void): () => void
-  }
+  },
   history: {
     list(): Promise<HistoryEntry[]>
     remove(url: string): Promise<void>
@@ -396,10 +404,19 @@ export interface VelaApi {
   }
   notes: {
     get(id: string): Promise<Note | null>
+    /**
+     * Identifiants des notes qui correspondent à la recherche : mots tous
+     * présents, `"expression exacte"`, et `-mot` / `-"expression"` exclus.
+     */
+    search(query: string): Promise<string[]>
     save(input: SaveNoteInput): Promise<Note>
     /** Change le titre, les étiquettes ou l'épinglage sans réécrire le corps. */
     patch(input: { id: string; title?: string; pinned?: boolean; tags?: string[] }): Promise<Note | null>
     remove(id: string): Promise<void>
+    /** Notes passées par la corbeille, les plus récentes d'abord. */
+    trash(): Promise<import('./types').TrashedNote[]>
+    /** Remet une note de la corbeille dans la liste ; null si introuvable. */
+    restore(id: string): Promise<Note | null>
     openFolder(): Promise<void>
     /** Capture la sélection de la page active avec sa source et la date. */
     captureSelection(): Promise<Note | null>

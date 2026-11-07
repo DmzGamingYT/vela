@@ -67,7 +67,10 @@ export const DEFAULT_SETTINGS: Settings = {
   glass: 'normal',
   glassBlur: DEFAULT_GLASS_BLUR,
   ambience: 'none',
+  ambienceScope: 'page',
+  ambienceIntensity: 80,
   homeBackground: 'gradient',
+  homeIntensity: 'normal',
   homeImage: null,
   homeBlur: 18,
   skyVariant: 'braise',
@@ -84,6 +87,7 @@ export const DEFAULT_SETTINGS: Settings = {
   blockTrackers: true,
   blockLevel: 'trackers',
   thumbnails: false,
+  updateChecks: 'auto',
   sidebarCollapsed: false,
   onboarded: false,
   agent: {

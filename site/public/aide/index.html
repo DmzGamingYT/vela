@@ -9,8 +9,8 @@
       content="Installer Vela sur macOS, Windows ou Linux, ouvrir un build non signé, se connecter à Google, comprendre les mises à jour et les raccourcis."
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151518" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6efe4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#12173b" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/aide/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Aide — Vela" />
@@ -49,6 +49,10 @@
       </symbol>
       <symbol id="i-menu" viewBox="0 0 24 24">
         <path d="M4 8h16M4 16h16" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8.5" y="8.5" width="11" height="11" rx="2.2" />
+        <path d="M15.5 8.5v-2a2.2 2.2 0 0 0-2.2-2.2h-7.1a2.2 2.2 0 0 0-2.2 2.2v7.1a2.2 2.2 0 0 0 2.2 2.2h2" />
       </symbol>
     </svg>
 
@@ -90,9 +94,15 @@
           <p class="eyebrow">Aide</p>
           <h1>Installer, ouvrir, comprendre.</h1>
           <p class="lede">
-            Les builds sont signés par personne : ni certificat Apple, ni certificat Windows. Cela
-            change la première ouverture, et rien d’autre. Voici les étapes exactes.
+            Les builds ne sont signés par aucun certificat Apple ou Windows. Voici ce que chaque
+            système demande au premier lancement, et ce que l’installation fait.
           </p>
+          <div class="keys-switch" data-keys-switch role="group" aria-label="Afficher l’aide pour">
+            <span class="keys-switch-label">Système</span>
+            <button type="button" data-os="mac" aria-pressed="true">macOS</button>
+            <button type="button" data-os="win" aria-pressed="false">Windows</button>
+            <button type="button" data-os="linux" aria-pressed="false">Linux</button>
+          </div>
           <nav class="sommaire" aria-label="Sections">
             <a href="#macos">macOS</a>
             <a href="#windows">Windows</a>
@@ -106,10 +116,10 @@
       </section>
 
       <div class="wrap section section-tete">
-        <section class="help-block" id="macos">
+        <section class="help-block" id="macos" data-os-block="mac">
           <h2>macOS — ouvrir un build non signé</h2>
           <p>
-            Le fichier <code>Vela-0.3.22-universal.dmg</code> est universel : il couvre Apple silicon
+            Le fichier <code>Vela-0.3.31-universal.dmg</code> est universel : il couvre Apple silicon
             et Intel dans un seul <code>.dmg</code>. Gatekeeper refuse la première ouverture parce que
             l’application n’est ni signée ni notarisée : aucun certificat Developer ID n’est acheté,
             et il n’existe pas de notarisation Apple. Le build universel est publié ; l’essai sur une
@@ -117,54 +127,111 @@
           </p>
           <ol class="steps">
             <li>Ouvrir le <code>.dmg</code>, puis glisser Vela dans le dossier Applications.</li>
-            <li>Dans le Finder, faire un clic droit sur Vela et choisir « Ouvrir ».</li>
-            <li>Confirmer « Ouvrir » dans la boîte de dialogue. Les fois suivantes, un double-clic suffit.</li>
+            <li>macOS 15 et plus : lancer Vela depuis Applications, puis ouvrir Réglages Système › Confidentialité et sécurité et cliquer « Ouvrir quand même » à côté du message concernant Vela.</li>
+            <li>macOS 14 et moins : dans le Finder, faire un clic droit sur Vela, choisir « Ouvrir », puis confirmer.</li>
           </ol>
+          <div class="walkthrough">
+            <figure class="schema">
+              <p class="schema-bar">Confidentialité et sécurité</p>
+              <div class="schema-body">
+                <p class="schema-line">« Vela » a été bloqué car il provient d’un développeur non identifié.</p>
+                <span class="schema-btn is-primary">Ouvrir quand même</span>
+              </div>
+              <figcaption><span>2</span>Réglages Système › Confidentialité et sécurité</figcaption>
+            </figure>
+            <figure class="schema">
+              <p class="schema-bar">Finder</p>
+              <div class="schema-body">
+                <p class="schema-line">Vela — clic droit</p>
+                <span class="schema-btn">Ouvrir</span>
+              </div>
+              <figcaption><span>3</span>macOS 14 et moins : clic droit › Ouvrir</figcaption>
+            </figure>
+          </div>
           <p class="notice">
-            Si macOS refuse encore : Réglages › Confidentialité et sécurité, puis « Ouvrir quand
-            même » à côté du message concernant Vela. En dernier recours, dans le Terminal :
-            <code>xattr -cr /Applications/Vela.app</code>. Une installation silencieuse n’est pas
-            possible sans signature.
+            Si macOS refuse encore, vérifier le message dans Réglages Système › Confidentialité et
+            sécurité. En dernier recours, dans le Terminal :
+          </p>
+          <div class="cmd"><code>xattr -cr /Applications/Vela.app</code><button class="copy" type="button" data-copy="xattr -cr /Applications/Vela.app" aria-label="Copier la commande xattr"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <p class="notice">
+            Une installation silencieuse n’est pas possible sans signature : macOS ne remplace pas
+            un bundle non signé à la place de l’ancien ; chaque version passe par son <code>.dmg</code>.
           </p>
         </section>
 
-        <section class="help-block" id="windows">
+        <section class="help-block" id="windows" data-os-block="win">
           <h2>Windows — SmartScreen</h2>
           <p>
             L’installateur <code>.exe</code> n’est pas signé par un certificat commercial. SmartScreen
-            affiche donc un avertissement au premier lancement.
+            affiche donc un avertissement au premier lancement, avant même l’installation.
           </p>
           <ol class="steps">
-            <li>Lancer <code>Vela-0.3.22-x64.exe</code>.</li>
+            <li>Lancer <code>Vela-0.3.31-x64.exe</code>.</li>
             <li>Dans la fenêtre bleue, cliquer « Informations complémentaires ».</li>
             <li>Cliquer « Exécuter quand même », puis suivre l’installation.</li>
           </ol>
+          <div class="walkthrough">
+            <figure class="schema">
+              <p class="schema-bar">Windows a protégé votre PC</p>
+              <div class="schema-body">
+                <p class="schema-line">Application inconnue : SmartScreen a bloqué le démarrage.</p>
+                <span class="schema-btn">Informations complémentaires</span>
+                <span class="schema-btn is-primary">Exécuter quand même</span>
+              </div>
+              <figcaption><span>2</span>SmartScreen › Informations complémentaires › Exécuter quand même</figcaption>
+            </figure>
+          </div>
         </section>
 
-        <section class="help-block" id="linux">
+        <section class="help-block" id="linux" data-os-block="linux">
           <h2>Linux — AppImage ou .deb</h2>
           <p>
-            L’AppImage se lance sans installation. Le paquet Debian convient à Debian, Ubuntu et
-            leurs dérivés.
+            L’AppImage se lance sans installation ; le paquet Debian convient à Debian, Ubuntu et
+            leurs dérivés. L’AppImage de cette version utilise encore le runtime FUSE 2 : sur
+            Ubuntu 22.04 et plus récent, la bibliothèque peut manquer.
           </p>
           <ol class="steps">
-            <li>AppImage : rendre le fichier exécutable, puis le lancer.</li>
-            <li>Debian : <code>sudo apt install ./Vela-0.3.22-amd64.deb</code>.</li>
-            <li>Les mises à jour automatiques concernent l’AppImage et les builds macOS et Windows ; un paquet <code>.deb</code> se remplace à la main.</li>
+            <li>Rendre l’AppImage exécutable, puis la lancer.</li>
+            <li>Si le message « AppImages require FUSE to run » apparaît, installer la bibliothèque FUSE 2 : <code>libfuse2</code> sur Ubuntu 22.04, <code>libfuse2t64</code> sur Ubuntu 24.04 et plus. Ne jamais installer le paquet nommé <code>fuse</code>, qui casse GNOME.</li>
+            <li>Debian et Ubuntu : installer le paquet <code>.deb</code>, qui n’a pas besoin de FUSE.</li>
+            <li>L’AppImage, macOS et Windows préparent la mise à jour ; le paquet <code>.deb</code> se remplace à la main. Le tableau des mises à jour détaille chaque format.</li>
           </ol>
+          <div class="cmd"><code>chmod +x Vela-0.3.31-x86_64.AppImage</code><button class="copy" type="button" data-copy="chmod +x Vela-0.3.31-x86_64.AppImage" aria-label="Copier la commande chmod"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <div class="cmd"><code>./Vela-0.3.31-x86_64.AppImage</code><button class="copy" type="button" data-copy="./Vela-0.3.31-x86_64.AppImage" aria-label="Copier la commande de lancement"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <div class="cmd"><code>sudo apt install libfuse2</code><button class="copy" type="button" data-copy="sudo apt install libfuse2" aria-label="Copier la commande libfuse2"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <div class="cmd"><code>sudo apt install libfuse2t64</code><button class="copy" type="button" data-copy="sudo apt install libfuse2t64" aria-label="Copier la commande libfuse2t64"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <div class="cmd"><code>sudo apt install ./Vela-0.3.31-amd64.deb</code><button class="copy" type="button" data-copy="sudo apt install ./Vela-0.3.31-amd64.deb" aria-label="Copier la commande d’installation du paquet deb"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg></button></div>
+          <div class="walkthrough">
+            <figure class="schema">
+              <p class="schema-bar">Terminal</p>
+              <pre class="schema-terminal">$ chmod +x Vela-0.3.31-x86_64.AppImage
+$ ./Vela-0.3.31-x86_64.AppImage</pre>
+              <figcaption><span>1</span>Deux commandes, sans droits d’administration</figcaption>
+            </figure>
+          </div>
+          <p class="notice">
+            Les commandes ci-dessus se copient d’un clic. Le <code>.deb</code> demande les droits
+            d’administration ; l’AppImage non.
+          </p>
         </section>
 
         <section class="help-block" id="google">
           <h2>Connexion Google</h2>
           <p>
-            Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. Ce n’est pas un
-            réglage à activer : la parade est de reprendre une session existante.
+            Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. Vela n’imite pas
+            Chrome au-delà du nécessaire : la connexion passe par le navigateur système, et Vela
+            n’importe jamais de cookies.
           </p>
-          <ul class="ticks">
-            <li>Importer une session depuis Chrome ou Safari, puis ouvrir Google dans l’espace concerné.</li>
-            <li>Pour un « Se connecter avec Google » sur un site tiers, ouvrir cette connexion dans le navigateur système.</li>
-            <li>Vela n’imite pas Chrome au-delà de ce qui est nécessaire : se faire passer pour un autre navigateur casse d’autres sites.</li>
-          </ul>
+          <ol class="steps">
+            <li>Dans Vela, clic droit sur le lien › « Copier l’adresse du lien ».</li>
+            <li>Ouvrir Chrome ou Safari, coller l’adresse, puis se connecter à Google.</li>
+            <li>Revenir à Vela : la session Google reste celle du navigateur système.</li>
+          </ol>
+          <p>
+            Les marque-pages, eux, s’importent. Dans Chrome : menu ⋮ › Favoris et listes ›
+            Gestionnaire de favoris › ⋮ › Importer des favoris. Dans Safari : Fichier › Importer
+            depuis › Google Chrome. Aucune session ni aucun cookie n’est transféré.
+          </p>
         </section>
 
         <section class="help-block" id="extensions">
@@ -180,31 +247,74 @@
         <section class="help-block" id="mises-a-jour">
           <h2>Mises à jour</h2>
           <p>
-            Vela vérifie les versions douze secondes après le démarrage, puis toutes les trois heures,
-            au retour de veille et au retour du focus. Sur macOS, l’installateur de la nouvelle
-            version est téléchargé en arrière-plan. Rien ne s’installe sans que la version soit
-            téléchargée en entier.
+            Tous les formats vérifient les versions douze secondes après le démarrage, puis toutes
+            les trois heures, au retour de veille et au retour du focus (au plus toutes les trente
+            minutes). Ce qui est téléchargé et installé dépend ensuite du format.
           </p>
+          <div class="table-wrap">
+            <table class="table">
+              <caption>Mises à jour par plateforme</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Format</th>
+                  <th scope="col">Téléchargement</th>
+                  <th scope="col">Installation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dest"><strong>macOS</strong> <code>.dmg</code></td>
+                  <td>Le <code>.dmg</code> de la nouvelle version est téléchargé en arrière-plan et son empreinte SHA-512 est vérifiée.</td>
+                  <td>Le bouton Installer ouvre l’image ; glisser Vela dans Applications. macOS n’installe pas un bundle non signé à votre place.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><strong>Windows</strong> <code>.exe</code></td>
+                  <td>L’installateur est téléchargé en arrière-plan.</td>
+                  <td>Il s’installe à la fermeture de Vela. « Redémarrer et installer » le lance tout de suite.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><strong>Linux</strong> <code>AppImage</code></td>
+                  <td>L’AppImage est téléchargée et son empreinte est vérifiée.</td>
+                  <td>Vela remplace l’AppImage au redémarrage si le fichier est accessible en écriture ; sinon il l’affiche pour un remplacement manuel.</td>
+                </tr>
+                <tr>
+                  <td class="dest"><strong>Linux</strong> <code>.deb</code></td>
+                  <td>La version est vérifiée, mais aucun paquet n’est installé automatiquement.</td>
+                  <td>Le <code>.deb</code> se remplace à la main avec <code>apt</code> ; les données de Vela restent en place.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <p>
             Depuis la 0.3.22, sur macOS, le manifeste qui annonce une version doit être signé :
             Vela vérifie sa signature Ed25519 avec la clé publique épinglée dans son code, puis
             compare l’empreinte SHA-512 du <code>.dmg</code> téléchargé. Un manifeste non signé est
             refusé ; l’installateur reste disponible sur la page Releases.
           </p>
+          <p>
+            Le rythme du contrôle se règle dans <strong>Réglages › Mises à jour › Vérification
+            automatique</strong> : au démarrage et toutes les trois heures par défaut, une fois par
+            semaine, ou jamais. Le bouton « Vérifier les mises à jour » reste disponible dans les
+            trois cas.
+          </p>
           <p class="notice">
-            Depuis la 0.3.9, une installation existante reçoit les versions suivantes sans
-            réinstallation. Le contrôle auprès de GitHub est décrit ligne par ligne sur la page
-            Confidentialité.
+            Le contrôle auprès de GitHub est décrit ligne par ligne sur la page Confidentialité.
           </p>
         </section>
 
         <section class="help-block" id="raccourcis">
           <h2>Raccourcis</h2>
           <p>
-            Sur Windows et Linux, <kbd>⌘</kbd> devient <kbd>Ctrl</kbd> et <kbd>⇧</kbd> devient
-            <kbd>Maj</kbd> : <kbd>⌘⇧T</kbd> se tape <kbd>Ctrl+Maj+T</kbd>. Ces raccourcis sont écrits
-            en clair dans le menu de l’application, sur les trois plateformes.
+            Ils sont écrits en clair dans le menu de l’application. Le sélecteur règle l’affichage
+            pour macOS, Windows ou Linux : <kbd>Ctrl</kbd>, <kbd>Maj</kbd> et <kbd>Alt</kbd>
+            remplacent <kbd>⌘</kbd>, <kbd>⇧</kbd> et <kbd>⌥</kbd>.
           </p>
+          <div class="keys-switch" data-keys-switch role="group" aria-label="Afficher les raccourcis pour">
+            <span class="keys-switch-label">Afficher pour</span>
+            <button type="button" data-os="mac" aria-pressed="true">macOS</button>
+            <button type="button" data-os="win" aria-pressed="false">Windows</button>
+            <button type="button" data-os="linux" aria-pressed="false">Linux</button>
+          </div>
           <div class="table-wrap">
             <table class="table keys-table">
               <caption>Raccourcis de l’application</caption>
@@ -215,44 +325,48 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Barre de commande</td><td><kbd>⌘K</kbd></td></tr>
-                <tr><td>Barre d’adresse</td><td><kbd>⌘L</kbd></td></tr>
-                <tr><td>Précédente</td><td><kbd>⌘[</kbd></td></tr>
-                <tr><td>Suivante</td><td><kbd>⌘]</kbd></td></tr>
-                <tr><td>Recharger</td><td><kbd>⌘R</kbd></td></tr>
-                <tr><td>Rechercher dans la page</td><td><kbd>⌘F</kbd></td></tr>
-                <tr><td>Imprimer</td><td><kbd>⌘P</kbd></td></tr>
-                <tr><td>Nouvel onglet</td><td><kbd>⌘T</kbd></td></tr>
-                <tr><td>Fermer l’onglet</td><td><kbd>⌘W</kbd></td></tr>
-                <tr><td>Rouvrir l’onglet</td><td><kbd>⌘⇧T</kbd></td></tr>
-                <tr><td>Onglets 1 à 9</td><td><kbd>⌘1</kbd> … <kbd>⌘9</kbd></td></tr>
-                <tr><td>Vue scindée</td><td><kbd>⌘⇧D</kbd></td></tr>
-                <tr><td>Garder cette page</td><td><kbd>⌘D</kbd></td></tr>
-                <tr><td>Historique</td><td><kbd>⌘Y</kbd></td></tr>
-                <tr><td>Marque-pages</td><td><kbd>⌘⇧O</kbd></td></tr>
-                <tr><td>Accueil</td><td><kbd>⌘⇧H</kbd></td></tr>
-                <tr><td>Notes</td><td><kbd>⌘E</kbd></td></tr>
-                <tr><td>Agent</td><td><kbd>⌘J</kbd></td></tr>
-                <tr><td>Atelier</td><td><kbd>⌘⇧A</kbd></td></tr>
-                <tr><td>Sessions</td><td><kbd>⌘⇧B</kbd></td></tr>
-                <tr><td>Replier la barre latérale</td><td><kbd>⌘S</kbd></td></tr>
-                <tr><td>Petite fenêtre</td><td><kbd>⌘⇧N</kbd></td></tr>
-                <tr><td>Réglages</td><td><kbd>⌘,</kbd></td></tr>
-                <tr><td>Zoom avant</td><td><kbd>⌘+</kbd></td></tr>
-                <tr><td>Zoom arrière</td><td><kbd>⌘−</kbd></td></tr>
-                <tr><td>Taille normale</td><td><kbd>⌘0</kbd></td></tr>
-                <tr><td>Ouvrir un lien dans la petite fenêtre</td><td><kbd>⌘⌥</kbd> + clic</td></tr>
+                <tr><td>Barre de commande</td><td><kbd data-key="mod+k">⌘K</kbd></td></tr>
+                <tr><td>Barre d’adresse</td><td><kbd data-key="mod+l">⌘L</kbd></td></tr>
+                <tr><td>Précédente</td><td><kbd data-key="mod+[">⌘[</kbd></td></tr>
+                <tr><td>Suivante</td><td><kbd data-key="mod+]">⌘]</kbd></td></tr>
+                <tr><td>Recharger</td><td><kbd data-key="mod+r">⌘R</kbd></td></tr>
+                <tr><td>Rechercher dans la page</td><td><kbd data-key="mod+f">⌘F</kbd></td></tr>
+                <tr><td>Imprimer</td><td><kbd data-key="mod+p">⌘P</kbd></td></tr>
+                <tr><td>Nouvel onglet</td><td><kbd data-key="mod+t">⌘T</kbd></td></tr>
+                <tr><td>Fermer l’onglet</td><td><kbd data-key="mod+w">⌘W</kbd></td></tr>
+                <tr><td>Rouvrir l’onglet</td><td><kbd data-key="mod+shift+t">⌘⇧T</kbd></td></tr>
+                <tr><td>Onglets 1 à 9</td><td><kbd data-key="mod+1">⌘1</kbd> … <kbd data-key="mod+9">⌘9</kbd></td></tr>
+                <tr><td>Vue scindée</td><td><kbd data-key="mod+shift+d">⌘⇧D</kbd></td></tr>
+                <tr><td>Ajouter aux marque-pages</td><td><kbd data-key="mod+d">⌘D</kbd></td></tr>
+                <tr><td>Afficher les marque-pages</td><td><kbd data-key="mod+shift+o">⌘⇧O</kbd></td></tr>
+                <tr><td>Historique</td><td><kbd data-key="mod+y">⌘Y</kbd></td></tr>
+                <tr><td>Accueil</td><td><kbd data-key="mod+shift+h">⌘⇧H</kbd></td></tr>
+                <tr><td>Notes</td><td><kbd data-key="mod+e">⌘E</kbd></td></tr>
+                <tr><td>Agent</td><td><kbd data-key="mod+j">⌘J</kbd></td></tr>
+                <tr><td>Mode Atelier</td><td><kbd data-key="mod+shift+a">⌘⇧A</kbd></td></tr>
+                <tr><td>Sessions</td><td><kbd data-key="mod+shift+b">⌘⇧B</kbd></td></tr>
+                <tr><td>Replier la barre latérale</td><td><kbd>⌘\</kbd></td></tr>
+                <tr><td>Coup d’œil</td><td><kbd data-key="mod+alt+n">⌘⌥N</kbd></td></tr>
+                <tr><td>Ouvrir un lien dans le coup d’œil</td><td><kbd data-key="mod+alt">⌘⌥</kbd> + clic</td></tr>
+                <tr><td>Réglages</td><td><kbd data-key="mod+,">⌘,</kbd></td></tr>
+                <tr><td>Zoom avant</td><td><kbd data-key="mod+plus">⌘+</kbd></td></tr>
+                <tr><td>Zoom arrière</td><td><kbd data-key="mod+-">⌘−</kbd></td></tr>
+                <tr><td>Taille normale</td><td><kbd data-key="mod+0">⌘0</kbd></td></tr>
               </tbody>
             </table>
           </div>
         </section>
       </div>
 
-      <section class="page-cta">
+      <section class="page-cta" id="bloque">
         <div class="wrap">
           <h2>Encore bloqué ?</h2>
-          <p>Le dépôt public accepte les rapports de bug.</p>
-          <a class="btn btn-ghost btn-big" href="https://github.com/DmzGamingYT/vela/issues">Ouvrir un rapport</a>
+          <p>Ouvrez un rapport sur GitHub — ou copiez les informations de diagnostic et joignez-les.</p>
+          <div class="cta-actions">
+            <a class="btn btn-ghost btn-big" href="https://github.com/DmzGamingYT/vela/issues">Ouvrir un rapport</a>
+            <button class="btn btn-solid btn-big" type="button" data-diagnostics>Copier les informations de diagnostic</button>
+          </div>
+          <p class="sr-only" aria-live="polite" data-copy-status></p>
         </div>
       </section>
     </main>
@@ -272,7 +386,6 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version 0.3.30 · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

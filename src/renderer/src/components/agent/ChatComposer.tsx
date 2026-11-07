@@ -2,6 +2,7 @@ import { useState, type RefObject } from 'react'
 import { hostOf } from '@shared/url'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
+import { AGENT_QUICK_ACTIONS } from './quickActions'
 
 export interface ComposerTab {
   id: string
@@ -29,6 +30,7 @@ export default function ChatComposer({
   selected,
   onToggle,
   onJoinAll,
+  onAction,
   inputRef
 }: {
   value: string
@@ -42,14 +44,18 @@ export default function ChatComposer({
   selected: string[]
   onToggle: (id: string) => void
   onJoinAll: (join: boolean) => void
+  /** Pose une demande prête dans le champ, sans l'envoyer. */
+  onAction: (prompt: string) => void
   inputRef: RefObject<HTMLTextAreaElement | null>
 }) {
   const [pagesOpen, setPagesOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
   const attached = tabs.filter((tab) => selected.includes(tab.id))
   const canSend = value.trim().length > 0 && (mode === 'act' || selected.length > 0)
   const send = (): void => {
     if (running || !canSend) return
     setPagesOpen(false)
+    setActionsOpen(false)
     onSend()
   }
   const hint = running
@@ -62,6 +68,30 @@ export default function ChatComposer({
 
   return (
     <div className="chat-composer">
+      {actionsOpen && (
+        <div className="actions-pop" role="dialog" aria-label="Actions rapides">
+          <p className="actions-pop-head">
+            <Icon name="sparkles" size={12} /> Actions rapides
+          </p>
+          {AGENT_QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              className="actions-pop-row"
+              title={action.hint}
+              onClick={() => {
+                setActionsOpen(false)
+                setPagesOpen(false)
+                onAction(action.prompt)
+              }}
+            >
+              <Icon name={action.icon} size={13} />
+              <span>{action.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {pagesOpen && (
         <div className="pages-pop" role="dialog" aria-label="Joindre des pages">
           <div className="pages-head">
@@ -136,6 +166,20 @@ export default function ChatComposer({
         />
 
         <div className="composer-row">
+          <button
+            type="button"
+            className="composer-chip"
+            data-active={actionsOpen}
+            aria-expanded={actionsOpen}
+            onClick={() => {
+              setPagesOpen(false)
+              setActionsOpen((open) => !open)
+            }}
+            title="Résumer, traduire, expliquer…"
+          >
+            <Icon name="sparkles" size={13} />
+            <span>Actions</span>
+          </button>
           <button
             type="button"
             className="composer-chip"

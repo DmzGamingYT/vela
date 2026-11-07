@@ -9,6 +9,8 @@ export interface NotesSlice {
   voiceNoteSpaceId: string | null
   /** Demande d'ouverture d'une note précise, depuis la palette. */
   noteRequest: { id: string; nonce: number } | null
+  /** Demande d'ouverture ou de progression dans la recherche des notes. */
+  notesSearchRequest: { mode: 'focus' | 'next'; nonce: number } | null
   toggleNotes(open?: boolean): void
   requestVoiceNote(spaceId?: string): void
   consumeVoiceNoteRequest(): void
@@ -20,6 +22,8 @@ export interface NotesSlice {
   captureSelection(): Promise<void>
   requestNote(id: string): void
   consumeNoteRequest(): void
+  requestNotesSearch(mode?: 'focus' | 'next'): void
+  consumeNotesSearchRequest(): void
 }
 
 /** Notes, enregistrements vocaux et tâches du jour. */
@@ -28,6 +32,7 @@ export const createNotesSlice: StateCreator<BrowserState, [], [], NotesSlice> = 
   voiceNoteRequest: 0,
   voiceNoteSpaceId: null,
   noteRequest: null,
+  notesSearchRequest: null,
 
   toggleNotes(open) {
     // Les notes et l'agent sont deux surfaces de travail ancrées à droite :
@@ -56,7 +61,7 @@ export const createNotesSlice: StateCreator<BrowserState, [], [], NotesSlice> = 
 
   async deleteNote(id) {
     await get().call(() => window.vela.notes.remove(id), 'La note n’a pas été supprimée.')
-    get().toast('Note supprimée.')
+    get().toast('Note déplacée dans la corbeille.')
   },
 
   async createTask(title, dueToday = true) {
@@ -100,5 +105,18 @@ export const createNotesSlice: StateCreator<BrowserState, [], [], NotesSlice> = 
 
   consumeNoteRequest() {
     set({ noteRequest: null })
+  },
+
+  /** Ouvre le tiroir Notes et demande le focus ou le résultat suivant. */
+  requestNotesSearch(mode = 'focus') {
+    set((state) => ({
+      notesSearchRequest: { mode, nonce: (state.notesSearchRequest?.nonce ?? 0) + 1 },
+      notesOpen: true,
+      agentOpen: false
+    }))
+  },
+
+  consumeNotesSearchRequest() {
+    set({ notesSearchRequest: null })
   }
 })

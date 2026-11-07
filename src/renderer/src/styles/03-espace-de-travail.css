@@ -25,7 +25,32 @@
 }
 
 .panes.is-split .pane[data-primary='true'] {
-  flex: 0 0 var(--ratio);
+  /* Le volet principal remplit ce que le second laisse : il n'a pas besoin
+     de connaître le ratio, et se referme donc sans saut. */
+  flex: 1 1 0;
+}
+
+/* Ouverture de la vue scindée. La mise en page est posée d'un coup : la vue
+   native du second volet n'entre en scène qu'à sa taille définitive, sinon
+   elle se posait pleine taille par-dessus un volet encore en mouvement. Seule
+   la coque s'efface d'un souffle — animer la largeur des volets reviendrait à
+   animer les pages, ce qu'Electron ne sait pas faire. */
+.panes.is-split .pane[data-secondary='true'] {
+  flex: 0 0 calc(100% - var(--ratio) - 9px);
+  animation: vela-pane-in var(--dur-2) var(--ease-standard) both;
+}
+
+@keyframes vela-pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panes.is-split .pane[data-secondary='true'] {
+    animation: none;
+  }
 }
 
 .pane-head {

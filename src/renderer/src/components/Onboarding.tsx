@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { presetById, THEME_PRESETS } from '@shared/theme'
 import { NETWORK_FLOWS } from '@shared/network'
+import { APP_SHORTCUTS } from '@shared/shortcuts'
 import { searxBase } from '@shared/url'
 import type { BookmarkImportSource } from '@shared/types'
 import { shortcut } from '../lib/format'
@@ -23,11 +24,11 @@ interface Step {
  * elle liste les étapes et permet d'y revenir.
  */
 const STEPS: Step[] = [
-  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Vos recherches ne vont qu’au moteur que vous choisissez.' },
+  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Vos recherches vont au moteur que vous choisissez.' },
   { kicker: 'Bruit', title: 'Moins de bruit, tout de suite.', lede: 'Le filtre tourne en local, et vos favoris existants vous suivent.' },
   { kicker: 'Habitués', title: 'Vos habitués, un clic plus loin.', lede: 'Épinglés dans l’espace, ouverts seulement quand vous cliquez.' },
   { kicker: 'Teinte', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.' },
-  { kicker: 'Chez vous', title: 'Rien ne sort d’ici.', lede: 'Aucun compte, aucun serveur Vela. Voilà les seules sorties, et comment les couper.' }
+  { kicker: 'Chez vous', title: 'Ce qui sort, et quand.', lede: 'Aucun compte, aucun serveur Vela, aucune mesure d’usage. Voici les requêtes que Vela déclenche lui-même.' }
 ]
 
 const ESSENTIALS: { name: string; url: string; brand?: SiteBrand }[] = [
@@ -44,7 +45,7 @@ const ESSENTIALS: { name: string; url: string; brand?: SiteBrand }[] = [
 const DEFAULT_ESSENTIALS = ['https://github.com', 'https://www.notion.so']
 
 /** Les flux que l'écran final montre, avec leur propre mécanisme d'arrêt. */
-const FLOW_IDS = ['moteur-recherche', 'mises-a-jour', 'modeles'] as const
+const FLOW_IDS = ['moteur-recherche', 'mises-a-jour', 'modeles', 'tunnel-fournisseurs', 'bd-ocr'] as const
 
 function extractBookmarkEntries(html: string): { title: string; url: string }[] {
   const entries = new Map<string, string>()
@@ -439,14 +440,15 @@ export default function Onboarding() {
 
                 <p className="onboarding-note">
                   <Icon name="lock" size={13} />
-                  Le détail, flux par flux, est dans Réglages › Confidentialité.
+                  Les pages et leurs icônes sortent aussi vers les sites que vous ouvrez. Le détail,
+                  flux par flux, est dans Réglages › Confidentialité.
                 </p>
 
                 <div className="onboarding-keys">
                   {[
                     [shortcut('K'), 'Lanceur'],
-                    [shortcut('J'), 'Agent'],
-                    [shortcut('E'), 'Notes'],
+                    [shortcut(APP_SHORTCUTS.agent.key), 'Agent'],
+                    [shortcut(APP_SHORTCUTS.notes.key), 'Notes'],
                     [shortcut('F'), 'Chercher']
                   ].map(([keys, label]) => (
                     <span key={keys}>

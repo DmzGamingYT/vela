@@ -477,7 +477,7 @@ export default function NavigationPage({
         )}
 
         <p className="nav-audit">
-          Vos recherches partent uniquement vers le moteur choisi.{' '}
+          Vos recherches partent vers le moteur choisi, pas vers un serveur Vela.{' '}
           <button type="button" className="link-btn" onClick={onOpenPrivacy}>
             Ce qui reste local, ce qui sort
           </button>

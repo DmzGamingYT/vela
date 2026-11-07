@@ -199,6 +199,10 @@ export default function AgentCanvas({
           value={prompt}
           onChange={setPrompt}
           onSend={run}
+          onAction={(text) => {
+            setPrompt(text)
+            inputRef.current?.focus()
+          }}
           running={running}
           onCancel={() => cancelAgent()}
           mode={mode}

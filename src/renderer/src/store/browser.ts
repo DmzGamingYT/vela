@@ -263,9 +263,9 @@ function createCoreSlice(
         case 'new-tab':
           state.newTab()
           break
-        case 'mini':
-          // Petite fenêtre jetable : la page courante, sans nouvel onglet.
-          void window.vela.mini.open({})
+        case 'peek':
+          // Coup d'œil : une carte dans la fenêtre, sans nouvel onglet.
+          void window.vela.peek.open({})
           break
         case 'close-tab':
           if (active) state.closeTab(active.id)
@@ -278,6 +278,17 @@ function createCoreSlice(
           break
         case 'notes':
           state.toggleNotes()
+          break
+        case 'notes-search':
+          state.requestNotesSearch()
+          break
+        case 'notes-search-next':
+          // La recherche dans la page garde la priorité quand elle est ouverte.
+          if (state.findOpen) {
+            if (state.findQuery) void state.findInPage(state.findQuery, true)
+            break
+          }
+          if (state.notesOpen) state.requestNotesSearch('next')
           break
         case 'agent':
           state.toggleAgent()

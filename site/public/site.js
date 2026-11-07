@@ -27,35 +27,6 @@
   }
   paintTheme()
 
-  /* --- Teinte d’accent --------------------------------------------------- */
-
-  const swatches = [...document.querySelectorAll('[data-accent]')]
-  const stored = root.style.getPropertyValue('--accent').trim().toLowerCase()
-  const markAccent = () => {
-    const current = root.style.getPropertyValue('--accent').trim().toLowerCase()
-    for (const swatch of swatches) {
-      swatch.setAttribute('aria-pressed', String(swatch.dataset.accent === current))
-    }
-  }
-
-  if (swatches.length) {
-    if (stored) {
-      root.style.setProperty('--accent', stored)
-    }
-    markAccent()
-    for (const swatch of swatches) {
-      swatch.addEventListener('click', () => {
-        root.style.setProperty('--accent', swatch.dataset.accent)
-        try {
-          localStorage.setItem('vela-site-accent', swatch.dataset.accent)
-        } catch {
-          /* stockage indisponible : le choix vaut pour la page */
-        }
-        markAccent()
-      })
-    }
-  }
-
   /* --- Menu des petites largeurs ----------------------------------------- */
 
   const nav = document.querySelector('.nav')
@@ -106,39 +77,45 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.30/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.31/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon et Intel · 224,1 Mo',
-      href: download('Vela-0.3.30-universal.dmg')
+      file: 'Vela-0.3.31-universal.dmg',
+      size: 'Apple silicon et Intel · 224,2 Mo',
+      href: download('Vela-0.3.31-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      size: 'Apple silicon · 120,3 Mo',
-      href: download('Vela-0.3.30-arm64.dmg')
+      file: 'Vela-0.3.31-arm64.dmg',
+      size: 'Apple silicon · 120,5 Mo',
+      href: download('Vela-0.3.31-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      size: 'Intel · 127,7 Mo',
-      href: download('Vela-0.3.30-x64.dmg')
+      file: 'Vela-0.3.31-x64.dmg',
+      size: 'Intel non testé · 127,8 Mo',
+      href: download('Vela-0.3.31-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
+      file: 'Vela-0.3.31-x64.exe',
       size: 'x64 · 122,1 Mo',
-      href: download('Vela-0.3.30-x64.exe')
+      href: download('Vela-0.3.31-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
+      file: 'Vela-0.3.31-x86_64.AppImage',
       size: 'AppImage · 126,8 Mo',
-      href: download('Vela-0.3.30-x86_64.AppImage')
+      href: download('Vela-0.3.31-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
+      file: 'Vela-0.3.31',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.30`
+      href: `${RELEASE}/tag/v0.3.31`
     }
   }
 
@@ -151,6 +128,9 @@
     }
     for (const size of document.querySelectorAll('[data-platform-size]')) {
       size.textContent = choice.size
+    }
+    for (const file of document.querySelectorAll('[data-platform-file]')) {
+      file.textContent = choice.file
     }
   }
 
@@ -169,6 +149,80 @@
         /* architecture inconnue : le DMG universel convient */
       })
   }
+
+  /* --- Raccourcis : un affichage par système ------------------------------ */
+
+  const SYSTEMES = ['mac', 'win', 'linux']
+  const TOUCHES = {
+    mac: { mod: '⌘', shift: '⇧', alt: '⌥', plus: '+', sep: '' },
+    win: { mod: 'Ctrl', shift: 'Maj', alt: 'Alt', plus: '+', sep: '+' },
+    linux: { mod: 'Ctrl', shift: 'Maj', alt: 'Alt', plus: '+', sep: '+' }
+  }
+
+  // Le visiteur voit d’abord les touches de son système ; le sélecteur garde
+  // son choix d’une page à l’autre, pour lire les raccourcis d’un autre poste.
+  const systemeDetecte = platform === 'mac' || platform === 'win' || platform === 'linux' ? platform : 'mac'
+  let systeme = systemeDetecte
+  try {
+    const garde = localStorage.getItem('vela-keys')
+    if (SYSTEMES.includes(garde)) systeme = garde
+  } catch {
+    /* stockage indisponible : le système détecté suffit */
+  }
+
+  const rendreTouche = (jeton, os) => {
+    const touches = TOUCHES[os]
+    return jeton
+      .split('+')
+      .map((part) => touches[part] ?? (part.length === 1 ? part.toUpperCase() : part))
+      .join(touches.sep)
+  }
+
+  const peindreTouches = () => {
+    root.dataset.os = systeme
+    for (const element of document.querySelectorAll('[data-key]')) {
+      element.textContent = rendreTouche(element.dataset.key, systeme)
+    }
+    for (const bouton of document.querySelectorAll('[data-keys-switch] [data-os]')) {
+      bouton.setAttribute('aria-pressed', String(bouton.dataset.os === systeme))
+    }
+    // L’aide ne garde que le pas-à-pas du système choisi.
+    for (const bloc of document.querySelectorAll('[data-os-block]')) {
+      bloc.hidden = bloc.dataset.osBlock !== systeme
+    }
+  }
+
+  for (const bouton of document.querySelectorAll('[data-keys-switch] [data-os]')) {
+    bouton.addEventListener('click', () => {
+      if (!SYSTEMES.includes(bouton.dataset.os)) return
+      systeme = bouton.dataset.os
+      try {
+        localStorage.setItem('vela-keys', systeme)
+      } catch {
+        /* stockage indisponible : le choix vaut pour la page */
+      }
+      peindreTouches()
+    })
+  }
+
+  // Les liens du sommaire de l’aide choisissent le système avant de défiler :
+  // sinon ils viseraient un bloc masqué.
+  for (const lien of document.querySelectorAll('a[href="#macos"], a[href="#windows"], a[href="#linux"]')) {
+    lien.addEventListener('click', (event) => {
+      const ancre = lien.getAttribute('href').slice(1)
+      event.preventDefault()
+      systeme = ancre === 'macos' ? 'mac' : ancre === 'windows' ? 'win' : 'linux'
+      try {
+        localStorage.setItem('vela-keys', systeme)
+      } catch {
+        /* stockage indisponible : le choix vaut pour la page */
+      }
+      peindreTouches()
+      document.getElementById(ancre)?.scrollIntoView({ block: 'start' })
+    })
+  }
+
+  peindreTouches()
 
   /* --- Empreintes SHA-256 ------------------------------------------------ */
 
@@ -213,6 +267,36 @@
         button.classList.remove('is-copied')
         if (original) button.setAttribute('aria-label', original)
       }, 1800)
+    })
+  }
+
+  /* --- Informations de diagnostic ---------------------------------------- */
+
+  const diagnostic = document.querySelector('[data-diagnostics]')
+
+  if (diagnostic) {
+    diagnostic.addEventListener('click', async () => {
+      const texte = [
+        'Vela 0.3.31',
+        `Système : ${navigator.userAgentData?.platform || navigator.platform || 'inconnu'}`,
+        `Langue : ${navigator.language}`,
+        `Page : ${location.href}`,
+        `Navigateur : ${navigator.userAgent}`,
+        `Date : ${new Date().toISOString()}`
+      ].join('\n')
+      try {
+        await copy(texte)
+      } catch {
+        if (copyStatus) copyStatus.textContent = 'Copie impossible : sélectionnez le texte à la main.'
+        return
+      }
+      diagnostic.classList.add('is-copied')
+      diagnostic.textContent = 'Informations copiées'
+      if (copyStatus) copyStatus.textContent = 'Informations de diagnostic copiées dans le presse-papiers.'
+      setTimeout(() => {
+        diagnostic.classList.remove('is-copied')
+        diagnostic.textContent = 'Copier les informations de diagnostic'
+      }, 2200)
     })
   }
 
@@ -334,13 +418,23 @@
     target.classList.add('is-in')
   }
 
-  if (!targets.length || reduced || !('IntersectionObserver' in window)) {
+  // Un onglet masqué (aperçu intégré, arrière-plan) est throttlé par le
+  // navigateur : ses transitions seraient saccadées ou jamais terminées.
+  // On affiche alors le contenu directement, sans armer les blocs.
+  if (
+    !targets.length ||
+    reduced ||
+    document.visibilityState === 'hidden' ||
+    !('IntersectionObserver' in window)
+  ) {
     for (const target of targets) show(target)
   } else {
+    let hasIntersected = false
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue
+          hasIntersected = true
           show(entry.target)
           observer.unobserve(entry.target)
         }
@@ -349,55 +443,24 @@
     )
 
     // Seuls les blocs sous la ligne de flottaison sont armés : ceux déjà
-    // visibles s'affichent tout de suite, et un filet de sécurité rend la
-    // page entière lisible si l'observateur ne se déclenche jamais.
+    // visibles s'affichent tout de suite.
     for (const target of targets) {
       if (target.getBoundingClientRect().top > innerHeight * 0.9) target.classList.add('is-armed')
       else show(target)
       observer.observe(target)
     }
 
+    // Filet de sécurité si l'observateur n'a jamais rien révélé. Il affiche
+    // sans transition : animer dix grosses sections hors écran d'un coup
+    // produisait une rafale de peinture au chargement.
     setTimeout(() => {
-      for (const target of targets) if (target.classList.contains('is-armed')) show(target)
+      if (hasIntersected) return
+      for (const target of targets) {
+        if (!target.classList.contains('is-armed')) continue
+        target.style.transition = 'none'
+        show(target)
+      }
     }, 2600)
   }
 
-  /* --- La fenêtre prend la lumière --------------------------------------- */
-
-  // Trois degrés au plus, seulement sur un vrai pointeur : au doigt il n’y a
-  // pas de survol, et sous « Réduire les animations » la capture reste droite.
-  const fenetre = document.querySelector('.window')
-  const immobile = matchMedia('(prefers-reduced-motion: reduce)')
-  const pointeurFin = matchMedia('(pointer: fine)')
-
-  if (fenetre && !immobile.matches && pointeurFin.matches) {
-    let x = 0
-    let y = 0
-    let cadre = 0
-
-    const poser = () => {
-      cadre = 0
-      fenetre.style.setProperty('--ty', `${(x * 5).toFixed(2)}deg`)
-      fenetre.style.setProperty('--tx', `${(-y * 3.4).toFixed(2)}deg`)
-    }
-
-    const suivre = (event) => {
-      if (event.pointerType !== 'mouse') return
-      const boite = fenetre.getBoundingClientRect()
-      x = (event.clientX - boite.left) / boite.width - 0.5
-      y = (event.clientY - boite.top) / boite.height - 0.5
-      fenetre.classList.add('is-tilting')
-      if (!cadre) cadre = requestAnimationFrame(poser)
-    }
-
-    const reposer = () => {
-      x = 0
-      y = 0
-      fenetre.classList.remove('is-tilting')
-      if (!cadre) cadre = requestAnimationFrame(poser)
-    }
-
-    fenetre.addEventListener('pointermove', suivre, { passive: true })
-    fenetre.addEventListener('pointerleave', reposer)
-  }
 })()

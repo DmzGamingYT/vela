@@ -9,29 +9,28 @@
       content="Toutes les destinations que Vela contacte d’elle-même : météo, moteur de recherche, tunnel, modèles, mises à jour, icônes. Et tout ce qui reste sur l’appareil."
     />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6efe4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#12173b" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Confidentialité — Vela" />
-    <meta property="og:description" content="Ce qui reste sur l’appareil, ce qui sort, et comment couper chaque flux." />
+    <meta property="og:description" content="Ce qui reste sur l’appareil, ce qui sort, et ce que chaque réglage change." />
+    <link rel="canonical" href="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
+    <meta property="og:site_name" content="Vela" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/confidentialite/" />
+    <meta property="og:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Confidentialité de Vela : ce qui reste sur l’appareil et ce qui sort." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Confidentialité — Vela" />
+    <meta name="twitter:description" content="Les {{FLOW_COUNT}} flux que Vela contacte, ce qu’ils envoient et comment les éviter." />
+    <meta name="twitter:image" content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-vela.jpg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      ;(() => {
-        let theme = 'light'
-        let accent = '#5b5bd6'
-        try {
-          const stored = localStorage.getItem('vela-theme')
-          if (stored === 'light' || stored === 'dark') theme = stored
-          else if (matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark'
-          const storedAccent = localStorage.getItem('vela-site-accent')
-          if (storedAccent && /^#[0-9a-f]{6}$/i.test(storedAccent)) accent = storedAccent
-        } catch (error) {
-          /* stockage indisponible */
-        }
-        document.documentElement.dataset.theme = theme
-        document.documentElement.style.setProperty('--accent', accent)
-      })()
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
   </head>
@@ -97,7 +96,7 @@
           <p class="eyebrow">Confidentialité</p>
           <h1>Ce qui reste ici, ce qui sort.</h1>
           <p class="lede">
-            Aucun compte Vela, aucun serveur Vela, aucune mesure d’audience. Cette page liste les
+            Aucun compte Vela, aucun serveur Vela, aucune mesure d’usage. Cette page liste les
             destinations que Vela contacte d’elle-même, et ce qu’elle envoie à chacune. La liste est
             celle du code : le test d’audit échoue dès qu’une adresse apparaît sans y figurer.
           </p>
@@ -107,15 +106,56 @@
             <span>Sources du code</span>
           </p>
           <nav class="sommaire" aria-label="Sections">
+            <a href="#en-bref">En bref</a>
             <a href="#appareil">Sur l’appareil</a>
             <a href="#reseau">Vers le réseau</a>
             <a href="#cles">Clés et comptes</a>
             <a href="#jamais">Ce qui ne sort jamais</a>
           </nav>
+          <nav class="sommaire sommaire-sub" aria-label="Flux réseau">
+            <span class="sommaire-sub-label">Flux</span>
+            <a href="#meteo">Météo</a>
+            <a href="#moteur">Recherche</a>
+            <a href="#tunnel">Tunnel</a>
+            <a href="#modeles">Modèles</a>
+            <a href="#letterboxd">Letterboxd</a>
+            <a href="#mises-a-jour">Mises à jour</a>
+            <a href="#pages">Pages et icônes</a>
+            <a href="#planches">Planches</a>
+          </nav>
         </div>
       </section>
 
       <div class="wrap section" style="padding-top: 56px">
+        <section class="brief" id="en-bref" aria-labelledby="en-bref-title">
+          <p class="eyebrow">En bref</p>
+          <h2 id="en-bref-title">Ce qui part sans action de votre part.</h2>
+          <ul class="brief-list">
+            <li>
+              <strong>La vérification des mises à jour.</strong>
+              Douze secondes après le démarrage, puis au rythme réglé dans Réglages › Mises à jour :
+              toutes les trois heures par défaut (et au retour de veille ou de focus), une fois par
+              semaine, ou jamais. GitHub reçoit la version installée et la plateforme.
+            </li>
+            <li>
+              <strong>La connexion au moteur de recherche.</strong>
+              Une connexion TLS est ouverte au démarrage vers le moteur choisi, sans terme
+              recherché.
+            </li>
+            <li>
+              <strong>La météo de l’accueil, si une ville est réglée.</strong>
+              À l’ouverture de l’accueil, puis au plus une fois par demi-heure : la latitude et la
+              longitude de la ville.
+            </li>
+          </ul>
+          <p class="brief-note">
+            Toute requête, même sans donnée applicative, expose votre adresse IP et les métadonnées
+            de transport à sa destination. Rien d’autre ne part sans une action de votre part. La
+            traduction de planches charge son moteur de reconnaissance de texte depuis
+            <code>cdn.jsdelivr.net</code> : c’est le seul CDN tiers, et seulement à ce moment-là.
+          </p>
+        </section>
+
         <section class="chapter" id="appareil" style="border-bottom: 0">
           <h2>Sur votre appareil</h2>
           <p class="lede">
@@ -136,7 +176,7 @@
               <tbody>
                 <tr>
                   <td class="dest">vela.json</td>
-                  <td>Espaces, onglets, historique, favoris, réglages, cartes du tunnel et journal Letterboxd importé.</td>
+                  <td>Espaces, onglets, historique, marque-pages, réglages, cartes du tunnel et journal Letterboxd importé.</td>
                   <td>Réglages › Données, ou supprimer le fichier.</td>
                 </tr>
                 <tr>
@@ -173,7 +213,9 @@
           <h2>Vers le réseau</h2>
           <p class="lede">
             Chaque ligne dit la destination, ce qui déclenche la requête, les données réellement
-            envoyées et le moyen de l’éviter. Aucune ligne n’est omise.
+            envoyées et le moyen de l’éviter. Aucune ligne n’est omise. Toute requête, même sans
+            donnée applicative, expose votre adresse IP et les métadonnées de transport à sa
+            destination.
           </p>
           {{FLOWS}}
         </section>
@@ -193,10 +235,14 @@
         </section>
 
         <section class="chapter" id="jamais" style="padding-top: 56px">
-          <h2>Ce qui ne sort jamais</h2>
+          <h2>Ce qui ne sort jamais de lui-même</h2>
+          <p class="lede">
+            Vela ne collecte rien. Les seules données qui peuvent quitter l’appareil sont celles que
+            vous envoyez à un modèle, et seulement après une action de votre part.
+          </p>
           <ul class="ticks">
-            <li>Vos onglets, votre historique et vos espaces, sauf la page que vous ouvrez elle-même.</li>
-            <li>Vos notes, vos surlignages et vos enregistrements, hors transcription demandée.</li>
+            <li>Vos onglets, votre historique et vos espaces — sauf la page que vous ouvrez, et les onglets que vous joignez à une demande.</li>
+            <li>Vos notes, vos surlignages et vos enregistrements — sauf le texte d’une note que vous faites réécrire, les bulles d’une planche que vous traduisez ou l’audio d’une note que vous transcrivez, envoyés au modèle que vous choisissez.</li>
             <li>Un identifiant d’utilisateur : il n’y en a pas.</li>
             <li>Des mesures d’audience : aucun script de mesure n’est chargé par Vela.</li>
             <li>Les icônes des sites ne passent jamais par un service tiers : la requête va au site concerné.</li>
@@ -234,7 +280,6 @@
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
         </div>
-        <p class="foot-note">Version {{VERSION}} · logiciel libre sous licence MIT · aucun compte, aucune mesure d’audience.</p>
       </div>
     </footer>
 

@@ -57,6 +57,7 @@ export default function TabContextMenu({
   const reopen = useBrowser((state) => state.reopen)
   const sleep = useBrowser((state) => state.sleep)
   const toggleAgent = useBrowser((state) => state.toggleAgent)
+  const startAgent = useBrowser((state) => state.startAgent)
   const createGroup = useBrowser((state) => state.createGroup)
   const moveTabToGroup = useBrowser((state) => state.moveTabToGroup)
   const reorderTab = useBrowser((state) => state.reorderTab)
@@ -88,6 +89,12 @@ export default function TabContextMenu({
     // ajouté aux sources, puis consommé par le panneau à son ouverture.
     useBrowser.setState({ agentSourceTab: tab.id })
     toggleAgent(true)
+  }
+
+  /** Demande prête, envoyée tout de suite : la page est la seule source. */
+  const askAgent = (prompt: string): void => {
+    toggleAgent(true)
+    void startAgent(prompt, [tab.id], 'answer')
   }
 
   const movingToFolder: TileMenuItem[] = [
@@ -188,6 +195,22 @@ export default function TabContextMenu({
         onSelect: joinAgent
       },
       {
+        id: 'summarize',
+        label: 'Résumer cette page',
+        icon: 'list',
+        hint: 'L’agent lit la page et répond dans le fil.',
+        onSelect: () =>
+          askAgent('Résume cette page en cinq points clés, puis une synthèse de trois lignes.')
+      },
+      {
+        id: 'translate',
+        label: 'Traduire cette page',
+        icon: 'translate',
+        hint: 'En français, titres et structure conservés.',
+        onSelect: () =>
+          askAgent('Traduis cette page en français, en gardant les titres et la structure.')
+      },
+      {
         id: 'capture',
         label: 'Capturer dans les notes',
         icon: 'notes',
@@ -281,6 +304,22 @@ export default function TabContextMenu({
         icon: 'sparkles',
         hint: 'Ajoute cette page aux onglets lus par l’agent.',
         onSelect: joinAgent
+      },
+      {
+        id: 'summarize',
+        label: 'Résumer cette page',
+        icon: 'list',
+        hint: 'L’agent lit la page et répond dans le fil.',
+        onSelect: () =>
+          askAgent('Résume cette page en cinq points clés, puis une synthèse de trois lignes.')
+      },
+      {
+        id: 'translate',
+        label: 'Traduire cette page',
+        icon: 'translate',
+        hint: 'En français, titres et structure conservés.',
+        onSelect: () =>
+          askAgent('Traduis cette page en français, en gardant les titres et la structure.')
       },
       {
         id: 'capture',

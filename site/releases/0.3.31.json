@@ -1,0 +1,77 @@
+{
+  "version": "0.3.31",
+  "slug": "0-3-31",
+  "date": "2026-11-07",
+  "headline": "Le coup d’œil, la carte calée et un site aux couleurs de l’icône",
+  "intro": "Le mini navigateur séparé devient un coup d’œil posé sur la page en cours, la carte du tunnel cale son sujet au milieu de la colonne d’angles et retient ses textes dans les cartes, les mises à jour disent enfin ce qu’elles font selon la plateforme, et le site vitrine reprend la palette de l’icône.",
+  "tags": [
+    "coup d’œil",
+    "carte",
+    "mises à jour",
+    "site"
+  ],
+  "stats": {
+    "commits": 1,
+    "files": 214,
+    "insertions": 10710,
+    "deletions": 4602
+  },
+  "sections": [
+    {
+      "title": "La carte du tunnel se cale sur ses angles",
+      "body": [
+        "Le sujet flottait au milieu de ses sous-arbres : un angle très fourni le tirait vers le bas, et son titre ne se lisait plus en face de la colonne d’angles. Il se pose maintenant au milieu exact de cette colonne. Mesuré dans le SVG, le centre du sujet tombe sur le centre de la colonne, au pixel.",
+        "Les titres de sources ne peuvent plus sortir de leur carte : les sept gabarits (sujet, angle, sous-angle, détail, concept, site, tension) servent de limite de découpe, et l’ellipse tombe à l’intérieur. Une carte déplacée à la main garde la place choisie — le calage ne touche qu’aux cartes laissées à la disposition automatique."
+      ],
+      "figure": {
+        "type": "metrics",
+        "caption": "Deux réglages d’épure sur une carte qui garde sa base : arbre, légende, zoom, minimap.",
+        "items": [
+          {
+            "before": "milieu des sous-arbres",
+            "after": "milieu de la colonne",
+            "label": "position du sujet"
+          },
+          {
+            "before": "débordement possible",
+            "after": "7 gabarits découpés",
+            "label": "texte contenu dans sa carte"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Le coup d’œil remplace le mini navigateur",
+      "body": [
+        "Un lien ne s’ouvre plus au centre de l’écran dans une fenêtre volante : il se pose dans une carte, par-dessus la page en cours, avec son favicon, son titre et son domaine. Aucun onglet n’est créé, et le pied de la carte le rappelle.",
+        "Trois gestes en sortent : <strong>Épingler</strong> le favori, <strong>Scindée</strong> (<kbd>⇧⏎</kbd>) pour poser la page en second volet, <strong>Ouvrir</strong> (<kbd>⏎</kbd>) pour l’installer dans un vrai onglet. <kbd>⌘L</kbd> revient à l’adresse, <kbd>Échap</kbd> referme, et la visite reste dans l’historique de l’espace."
+      ]
+    },
+    {
+      "title": "Les mises à jour disent ce qu’elles font",
+      "body": [
+        "Le rythme de vérification se règle dans <strong>Réglages › Mises à jour</strong> — toutes les 3 h, une fois par semaine, ou jamais — et le bouton manuel reste disponible dans les trois cas.",
+        "Chaque plateforme suit sa propre voie : macOS télécharge le <code>.dmg</code> et vérifie son empreinte SHA-512 avant de le proposer, Windows installe l’installateur à la fermeture, Linux remplace l’AppImage au redémarrage si le fichier est accessible en écriture et laisse le <code>.deb</code> se réinstaller à la main. Sur macOS 15 et plus, une app non notariée s’ouvre par <strong>Réglages Système › Confidentialité et sécurité › Ouvrir quand même</strong>."
+      ]
+    },
+    {
+      "title": "Les notes gagnent des modèles et une corbeille",
+      "body": [
+        "Une note neuve part d’un modèle au lieu d’une page blanche, les notes supprimées passent par une corbeille, et les actions de l’agent restent au clavier. Le champ de recherche affiche le nombre de résultats, teinté seulement quand une recherche ou un filtre est actif."
+      ]
+    },
+    {
+      "title": "Le site prend les couleurs de l’icône",
+      "body": [
+        "La vitrine abandonne le papier chaud et l’indigo pour la palette du voilier : nuit, mer, voiles crème et coque corail, à-plats, règles de 2 px. Les captures passent en WebP et AVIF, et deux pages suivent l’application de plus près : Sessions et Coup d’œil."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir un tunnel, puis l’onglet Carte : le sujet se lit au milieu de la colonne d’angles, et une source au titre long s’arrête sur une ellipse à l’intérieur de sa carte.",
+    "⌘⌥ + clic sur un lien : le coup d’œil s’ouvre par-dessus la page, avec Épingler, Scindée et Ouvrir ; Échap le referme sans créer d’onglet.",
+    "Réglages › Mises à jour : le rythme se choisit, et la vérification manuelle reste possible quand la vérification automatique est coupée.",
+    "Ouvrir le site : il annonce la version 0.3.31 et les six empreintes de cette release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.30...v0.3.31"
+}

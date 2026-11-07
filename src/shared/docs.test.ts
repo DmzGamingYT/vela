@@ -36,7 +36,7 @@ describe('limites documentées dans l’aide et sur le site', () => {
     ] as const) {
       expect(text, name).toMatch(/Google peut[^.]{0,60}refuser/i)
       expect(text, name).toMatch(/navigateur système/i)
-      expect(text, name).toMatch(/(importer (une|votre) session|import de session) depuis Chrome ou Safari/i)
+      expect(text, name).toMatch(/(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i)
     }
     expect(home + aide).not.toMatch(/Connexion Google garantie/i)
   })

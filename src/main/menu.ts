@@ -1,5 +1,6 @@
 import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import { ISSUES_URL, RELEASES_URL, SITE_FAQ_URL, SITE_URL } from '@shared/site'
+import { APP_SHORTCUTS } from '@shared/shortcuts'
 import type { ShortcutAction } from '@shared/types'
 
 /**
@@ -44,7 +45,7 @@ export function buildMenuTemplate(
             submenu: [
               { role: 'about' as const, label: 'À propos de Vela' },
               { type: 'separator' as const },
-              item('Réglages…', 'settings', send, 'CmdOrCtrl+,'),
+              item('Réglages…', 'settings', send, APP_SHORTCUTS.settings.accelerator),
               { type: 'separator' as const },
               { role: 'services' as const },
               { type: 'separator' as const },
@@ -61,7 +62,7 @@ export function buildMenuTemplate(
       label: 'Fichier',
       submenu: [
         item('Nouvel onglet', 'new-tab', send, 'CmdOrCtrl+T'),
-        item('Ouvrir dans le mini navigateur', 'mini', send, 'CmdOrCtrl+Shift+N'),
+        item('Ouvrir dans un coup d’œil', 'peek', send, 'CmdOrCtrl+Alt+N'),
         item('Rouvrir l’onglet fermé', 'reopen-tab', send, 'CmdOrCtrl+Shift+T'),
         { type: 'separator' },
         item('Fermer l’onglet', 'close-tab', send, 'CmdOrCtrl+W'),
@@ -72,7 +73,7 @@ export function buildMenuTemplate(
           ? []
           : [
               { type: 'separator' as const },
-              item('Réglages…', 'settings', send, 'CmdOrCtrl+,'),
+              item('Réglages…', 'settings', send, APP_SHORTCUTS.settings.accelerator),
               { role: 'quit' as const, label: 'Quitter' }
             ])
       ]
@@ -95,17 +96,19 @@ export function buildMenuTemplate(
         item('Barre de commande', 'command', send, 'CmdOrCtrl+K'),
         item('Barre d’adresse', 'address', send, 'CmdOrCtrl+L'),
         item('Rechercher dans la page', 'find', send, 'CmdOrCtrl+F'),
+        item('Rechercher dans les notes', 'notes-search', send, 'CmdOrCtrl+Shift+F'),
+        item('Résultat suivant dans les notes', 'notes-search-next', send, 'CmdOrCtrl+G'),
         { type: 'separator' },
         item('Onglet suivant', 'next-tab', send, 'CmdOrCtrl+Shift+]'),
         item('Onglet précédent', 'prev-tab', send, 'CmdOrCtrl+Shift+['),
         { type: 'separator' },
         item('Vue scindée', 'split', send, 'CmdOrCtrl+Shift+D'),
-        item('Notes', 'notes', send, 'CmdOrCtrl+E'),
-        item('Agent', 'agent', send, 'CmdOrCtrl+J'),
+        item('Notes', 'notes', send, APP_SHORTCUTS.notes.accelerator),
+        item('Agent', 'agent', send, APP_SHORTCUTS.agent.accelerator),
         item('Atelier', 'work', send, 'CmdOrCtrl+Shift+A'),
         item('Sessions', 'sessions', send, 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
-        item('Masquer la barre latérale', 'sidebar', send, 'CmdOrCtrl+S'),
+        item('Masquer la barre latérale', 'sidebar', send, 'CmdOrCtrl+\\'),
         { type: 'separator' },
         item('Agrandir le texte', 'zoom-in', send, 'CmdOrCtrl+Plus'),
         item('Réduire le texte', 'zoom-out', send, 'CmdOrCtrl+-'),

@@ -19,6 +19,8 @@ export interface AppearanceState {
   glass: Settings['glass']
   glassBlur: number
   ambience: Settings['ambience']
+  ambienceScope: Settings['ambienceScope']
+  ambienceIntensity: number
   highContrast: boolean
   density: Settings['density']
   textSize: Settings['textSize']
@@ -60,6 +62,8 @@ export function appearanceState(settings: Settings, space?: Space | null): Appea
     glass: settings.glass,
     glassBlur: settings.glassBlur,
     ambience: settings.ambience,
+    ambienceScope: settings.ambienceScope,
+    ambienceIntensity: settings.ambienceIntensity,
     highContrast: settings.highContrast,
     density: settings.density,
     textSize: settings.textSize,
@@ -79,6 +83,7 @@ export function applyAppearance(state: AppearanceState, options: { cache?: boole
   root.dataset.theme = state.themeId
   root.dataset.glass = state.glass
   root.dataset.ambience = state.ambience
+  root.dataset.ambienceScope = state.ambienceScope
   root.dataset.contrast = state.highContrast ? 'high' : 'normal'
   root.dataset.density = state.density
   root.dataset.text = state.textSize
@@ -112,6 +117,7 @@ export function applyCachedAppearance(): void {
     root.dataset.theme = cached.themeId ?? 'indigo'
     root.dataset.glass = cached.glass ?? 'normal'
     root.dataset.ambience = cached.ambience ?? 'none'
+    root.dataset.ambienceScope = cached.ambienceScope ?? 'page'
     root.dataset.contrast = cached.highContrast ? 'high' : 'normal'
     root.dataset.density = cached.density ?? 'normal'
     root.dataset.text = cached.textSize ?? 'normal'

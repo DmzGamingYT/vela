@@ -58,11 +58,16 @@ function Pane({
       className="pane"
       aria-label={primary ? 'Panneau principal' : 'Panneau secondaire'}
       data-primary={primary}
+      data-secondary={secondary ? 'true' : undefined}
       data-resizing={resizing}
     >
       <PaneHeader tab={tab} primary={primary} secondary={secondary} />
       {tab.loading && <span className="load-line" />}
-      <div className="pane-body" data-pane-tab={home ? undefined : tab.id}>
+      <div
+        className="pane-body"
+        data-pane-tab={home ? undefined : tab.id}
+        data-pane-primary={primary ? 'true' : 'false'}
+      >
         {home ? (
           <StartPage tabId={tab.id} />
         ) : (
@@ -120,8 +125,9 @@ export default function Workspace() {
   const resizingRef = useRef(false)
   const [resizing, setResizing] = useState(false)
   const [shots, setShots] = useState<Record<string, string>>({})
-
   const ratio = liveRatio ?? view?.splitRatio ?? 0.5
+  const secondTab = view?.tabs.find((tab) => tab.id === view.secondTabId)
+  const splitNow = Boolean(view?.split && secondTab)
   const errorKey = view?.tabs.map((tab) => (tab.error ? '1' : '0')).join('') ?? ''
   // Les onglets d'accueil n'ont pas de page native : quand un onglet passe de
   // l'accueil à une page (ou l'inverse), la scène change de contenu sans que
@@ -198,8 +204,8 @@ export default function Workspace() {
   if (!view) return <main className="workspace" />
 
   const active = view.tabs.find((tab) => tab.id === view.activeTabId)
-  const second = view.secondTabId ? view.tabs.find((tab) => tab.id === view.secondTabId) : undefined
-  const split = Boolean(view.split && second)
+  const second = secondTab
+  const split = splitNow
 
   if (!active) return <main className="workspace" />
 
@@ -349,8 +355,12 @@ export default function Workspace() {
             }}
           />
           <span aria-live="polite">{findResult.matches ? `${findResult.activeMatchOrdinal} / ${findResult.matches}` : findQuery ? 'Aucun résultat' : ''}</span>
-          <button type="button" className="icon-btn" aria-label="Correspondance précédente" onClick={() => void findInPage(findQuery, false)}>↑</button>
-          <button type="button" className="icon-btn" aria-label="Correspondance suivante" onClick={() => void findInPage(findQuery, true)}>↓</button>
+          <button type="button" className="icon-btn" aria-label="Correspondance précédente" onClick={() => void findInPage(findQuery, false)}>
+            <Icon name="arrow-up" size={14} />
+          </button>
+          <button type="button" className="icon-btn" aria-label="Correspondance suivante" onClick={() => void findInPage(findQuery, true)}>
+            <Icon name="arrow-down" size={14} />
+          </button>
           <button type="button" className="icon-btn" aria-label="Fermer la recherche" onClick={closeFind}><Icon name="close" size={14} /></button>
         </div>
       )}

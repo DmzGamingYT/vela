@@ -10,13 +10,17 @@
       }
 
       :root {
-        --paper: #faf8f5;
-        --surface: #fffdfa;
-        --ink: #1b1a18;
-        --ink-2: #5d574f;
-        --ink-3: #6f6860;
-        --accent: #5b5bd6;
-        --line: rgba(27, 26, 24, 0.12);
+        --navy: #1b2150;
+        --night: #12173b;
+        --sea: #26307a;
+        --coral: #e8805a;
+        --cream: #f6efe4;
+        --paper: #f6efe4;
+        --ink: #161b3f;
+        --ink-2: #41476a;
+        --ink-3: #5a6078;
+        --shell: #b9becb;
+        --line: rgba(22, 27, 63, 0.18);
       }
 
       body {
@@ -25,105 +29,120 @@
         overflow: hidden;
         background: var(--paper);
         color: var(--ink);
-        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+          Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
 
       .frame {
-        position: relative;
+        display: grid;
+        grid-template-columns: 660px 1fr;
         width: 100%;
         height: 100%;
-        padding: 58px 64px;
-        display: grid;
-        grid-template-columns: 470px 1fr;
-        gap: 46px;
-        align-items: center;
-        background:
-          radial-gradient(620px 420px at 96% 4%, rgba(91, 91, 214, 0.16), transparent 68%),
-          radial-gradient(520px 360px at 2% 100%, rgba(91, 91, 214, 0.07), transparent 70%),
-          var(--paper);
+        background: var(--paper);
       }
 
-      .frame::after {
-        content: "";
-        position: absolute;
-        inset: 18px;
-        border: 1px solid var(--line);
-        border-radius: 26px;
-        pointer-events: none;
-      }
-
-      .copy {
+      .panel {
         position: relative;
-        z-index: 2;
+        overflow: hidden;
+        padding: 54px 52px;
+        background: var(--night);
+        color: var(--cream);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sun {
+        position: absolute;
+        top: -190px;
+        right: -170px;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        background: var(--coral);
+        opacity: 0.16;
+      }
+
+      .icon {
+        position: relative;
+        width: 82px;
+        height: 82px;
+        border-radius: 19px;
+        outline: 2px solid rgba(246, 239, 228, 0.3);
+        outline-offset: 5px;
       }
 
       .kicker {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 9px;
-        color: var(--ink-3);
+        margin-top: 34px;
+        color: #c6cad9;
         font-family: ui-monospace, Menlo, monospace;
-        font-size: 13px;
-        letter-spacing: 0.16em;
+        font-size: 12.5px;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
       }
 
       .kicker i {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--accent);
+        width: 8px;
+        height: 8px;
+        background: var(--coral);
       }
 
       h1 {
-        margin-top: 24px;
-        font-family: "Iowan Old Style", Palatino, Georgia, serif;
-        font-size: 76px;
-        font-weight: 400;
-        line-height: 0.98;
-        letter-spacing: -0.025em;
-      }
-
-      h1 em {
-        color: var(--accent);
-        font-style: italic;
+        position: relative;
+        margin-top: 18px;
+        font-size: 70px;
+        font-weight: 650;
+        line-height: 0.94;
+        letter-spacing: -0.045em;
       }
 
       .sub {
-        margin-top: 24px;
-        max-width: 24ch;
-        color: var(--ink-2);
-        font-size: 20px;
+        position: relative;
+        max-width: 17ch;
+        margin-top: 22px;
+        color: #c6cad9;
+        font-size: 19px;
         line-height: 1.5;
       }
 
       .foot {
-        margin-top: 34px;
-        color: var(--ink-3);
+        position: relative;
+        margin-top: auto;
+        padding-top: 26px;
+        border-top: 1px solid rgba(246, 239, 228, 0.22);
+        color: #9aa0b8;
         font-family: ui-monospace, Menlo, monospace;
-        font-size: 13px;
+        font-size: 12.5px;
         letter-spacing: 0.02em;
       }
 
+      .stage {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+        padding: 52px 48px;
+        min-width: 0;
+      }
+
       .shot {
-        position: relative;
-        z-index: 1;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        background: var(--surface);
-        box-shadow: 0 44px 80px -34px rgba(48, 38, 24, 0.55);
+        border: 2px solid var(--ink);
+        border-radius: 4px;
+        background: var(--night);
         overflow: hidden;
       }
 
       .bar {
         display: flex;
         align-items: center;
-        gap: 12px;
-        height: 38px;
-        padding: 0 14px;
-        border-bottom: 1px solid var(--line);
-        background: #f6f2ea;
+        gap: 10px;
+        height: 34px;
+        padding: 0 12px;
+        border-bottom: 2px solid rgba(246, 239, 228, 0.22);
       }
 
       .dots {
@@ -135,21 +154,27 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: rgba(27, 26, 24, 0.16);
+        background: var(--shell);
+      }
+
+      .dots span:first-child {
+        background: var(--coral);
+      }
+
+      .dots span:last-child {
+        background: var(--cream);
       }
 
       .addr {
         flex: 1;
-        height: 20px;
+        height: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: var(--surface);
-        color: var(--ink-3);
+        border: 1px solid rgba(246, 239, 228, 0.22);
+        color: #c6cad9;
         font-family: ui-monospace, Menlo, monospace;
-        font-size: 10.5px;
+        font-size: 10px;
       }
 
       .shot img {
@@ -157,24 +182,42 @@
         width: 100%;
         height: auto;
       }
+
+      .caption {
+        padding-top: 14px;
+        border-top: 2px solid var(--ink);
+        color: var(--ink-3);
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
     </style>
   </head>
   <body>
     <div class="frame">
-      <div class="copy">
-        <p class="kicker"><i></i> Vela · v0.3.24</p>
-        <h1>Le web,<br /><em>votre atelier.</em></h1>
-        <p class="sub">Onglets verticaux, espaces isolés, notes locales. L’atelier s’ouvre quand vous en avez besoin.</p>
+      <section class="panel">
+        <span class="sun"></span>
+        <img class="icon" src="../public/favicon.svg" alt="" />
+        <p class="kicker"><i></i> Navigateur de travail · v0.3.30</p>
+        <h1>Le web,<br />votre atelier.</h1>
+        <p class="sub">
+          Onglets verticaux, espaces isolés, notes locales. L’atelier s’ouvre quand vous en avez
+          besoin.
+        </p>
         <p class="foot">macOS · Windows · Linux — gratuit, MIT, sans compte</p>
-      </div>
+      </section>
 
-      <div class="shot">
-        <div class="bar">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span class="addr">vela.local — Accueil</span>
-        </div>
-        <img src="../public/captures/accueil-clair-1080.jpg" alt="" />
-      </div>
+      <section class="stage">
+        <figure class="shot">
+          <div class="bar">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span class="addr">vela.local — Accueil</span>
+          </div>
+          <img src="../public/captures/accueil-clair-1080.jpg" alt="" />
+        </figure>
+        <p class="caption">Vela 0.3.30 — l’accueil, ses espaces et sa palette</p>
+      </section>
     </div>
   </body>
 </html>

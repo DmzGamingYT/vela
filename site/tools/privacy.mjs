@@ -39,6 +39,17 @@ const GROUP_LABELS = {
 
 const ORDER = ['meteo', 'recherche', 'tunnel', 'modeles', 'journal', 'mises-a-jour', 'pages', 'extensions']
 
+const GROUP_IDS = {
+  meteo: 'meteo',
+  recherche: 'moteur',
+  tunnel: 'tunnel',
+  modeles: 'modeles',
+  journal: 'letterboxd',
+  'mises-a-jour': 'mises-a-jour',
+  pages: 'pages',
+  extensions: 'planches'
+}
+
 const esc = (value) =>
   String(value)
     .replace(/&/g, '&amp;')
@@ -53,7 +64,9 @@ const row = (flow) => {
   // qui ajoutent une information : inutile de répéter la destination quand
   // elle est déjà écrite en clair au-dessus.
   const extra = flow.hosts.filter((host) => !flow.target.toLowerCase().includes(host.toLowerCase()))
-  const hosts = extra.length ? `<span class="hosts">${extra.map(esc).join(' · ')}</span>` : ''
+  const hosts = extra.length
+    ? `<details class="hosts"><summary>${extra.length} domaines</summary><span>${extra.map(esc).join(' · ')}</span></details>`
+    : ''
   // Un endpoint dit « local » peut viser un hôte distant : l'étiquette ne
   // promet donc plus que la requête reste sur la machine.
   const note = flow.local ? '<span class="off">Selon l’endpoint</span>' : ''
@@ -68,7 +81,7 @@ const row = (flow) => {
 const block = (category) => {
   const flows = NETWORK_FLOWS.filter((flow) => flow.category === category)
   if (!flows.length) return ''
-  return `          <h2 class="group-title">${esc(GROUP_LABELS[category] || category)}</h2>
+  return `          <h3 class="group-title" id="${GROUP_IDS[category] || category}">${esc(GROUP_LABELS[category] || category)}</h3>
           <div class="table-wrap">
             <table class="table">
               <thead>

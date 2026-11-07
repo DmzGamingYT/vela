@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { version } from '../../package.json'
@@ -26,6 +26,23 @@ const PAGES = [
 
 const read = (file: string) => readFileSync(join(siteDir, file), 'utf8')
 const texts = PAGES.map((page) => ({ ...page, html: read(page.file) }))
+
+/** Tous les HTML réellement servis depuis site/public, pages générées comprises. */
+const publishedHtml = (dir = siteDir): string[] =>
+  readdirSync(dir, { withFileTypes: true }).reduce<string[]>((files, entry) => {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) files.push(...publishedHtml(full))
+    else if (entry.name.endsWith('.html')) files.push(full)
+    return files
+  }, [])
+
+const ANCIEN_NOM = /\bpetite\s+fen[eê]tre\b/i
+
+/** Décode les entités qui peuvent couper le nom dans une page HTML. */
+const normaliser = (texte: string): string =>
+  texte
+    .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
+    .replace(/&ecirc;|&#234;|&#xea;/gi, 'ê')
 
 /** Résout une adresse interne vers le fichier qui la sert. */
 const resolveInternal = (path: string): string | null => {
@@ -130,7 +147,10 @@ describe('site — structure des cinq pages', () => {
         expect(tag, `${page.file} : image sans texte alternatif`).toMatch(/alt="[^"]+"/)
         const [, src] = tag.match(/src="([^"]+)"/) || []
         expect(src, `${page.file} : source absente`).toBeTruthy()
-        expect(resolveInternal(src as string), `${page.file} : image absente ${src}`).not.toBeNull()
+        expect(
+          resolveInternal((src as string).split('?')[0]),
+          `${page.file} : image absente ${src}`
+        ).not.toBeNull()
       }
     }
   })
@@ -199,7 +219,7 @@ describe('site — version et téléchargements', () => {
     ).toBeLessThanOrEqual(0)
     // Toutes les mentions du site disent la même version que le tableau.
     expect(home).toContain(`Vela ${announced}, pour les trois plateformes`)
-    expect(home).toContain(`v0.${announced.split('.').slice(1).join('.')} · macOS, Windows, Linux`)
+    expect(home).toContain(`Version ${announced}`)
   })
 
   it('liste les six installateurs avec leur lien de release', () => {
@@ -304,7 +324,7 @@ describe('site — promesses cohérentes avec l’aide', () => {
     for (const text of [readme, aide]) {
       expect(text).toMatch(/Google peut[^.]{0,60}refuser/i)
       expect(text).toMatch(/navigateur système/i)
-      expect(text).toMatch(/importer (une|votre) session depuis Chrome ou Safari/i)
+      expect(text).toMatch(/(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i)
     }
     expect(all).not.toMatch(/Connexion Google garantie/i)
   })
@@ -335,5 +355,25 @@ describe('site — promesses cohérentes avec l’aide', () => {
   it('ne renvoie pas le build universel à une version future', () => {
     expect(all).not.toMatch(/prochaine version/)
     expect(all).toMatch(/Apple silicon et Intel/)
+  })
+})
+
+describe('site — vocabulaire des nouveautés', () => {
+  it('ne laisse pas revenir « petite fenêtre » dans les pages publiées ni les notes de version', () => {
+    const notes = readdirSync(join(root, 'site', 'releases'))
+      .filter((fichier) => fichier.endsWith('.json'))
+      .map((fichier) => join(root, 'site', 'releases', fichier))
+    const coupables = [...publishedHtml(), ...notes].filter((fichier) => {
+      const brut = readFileSync(fichier, 'utf8')
+      const texte = normaliser(
+        fichier.endsWith('.json') ? JSON.stringify(JSON.parse(brut)) : brut
+      )
+      return ANCIEN_NOM.test(texte)
+    })
+
+    expect(
+      coupables.map((fichier) => relative(root, fichier)),
+      '« petite fenêtre » ne doit plus apparaître dans le site publié ni dans site/releases'
+    ).toEqual([])
   })
 })

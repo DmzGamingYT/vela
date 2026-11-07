@@ -17,6 +17,7 @@ import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
 import { autoUpdater, CancellationToken } from 'electron-updater'
 import type { UpdateChannel } from '@shared/api'
+import type { UpdateChecks } from '@shared/types'
 import {
   isNewerVersion,
   latestAssetUrl,
@@ -90,6 +91,8 @@ const CHECK_INTERVAL = 3 * 60 * 60 * 1000
 const MIN_GAP = 30 * 60 * 1000
 /** Un installateur de 150 Mo ne doit pas rester bloqué indéfiniment. */
 const DOWNLOAD_TIMEOUT = 20 * 60 * 1000
+/** Rythme espacé choisi dans les réglages. */
+const WEEKLY_INTERVAL = 7 * 24 * 60 * 60 * 1000
 
 let snapshot: UpdateInfo = {
   state: 'idle',
@@ -107,6 +110,10 @@ let emit: ((info: UpdateInfo) => void) | null = null
 let started = false
 let inFlight = false
 let lastCheck = 0
+/** Rythme du contrôle automatique, réglé depuis les préférences. */
+let policy: UpdateChecks = 'auto'
+let firstTimer: NodeJS.Timeout | null = null
+let intervalTimer: NodeJS.Timeout | null = null
 /** Chemin du .dmg téléchargé (macOS), prêt pour le bouton Installer. */
 let installerPath: string | null = null
 let installing = false
@@ -148,6 +155,40 @@ function versionOf(info: unknown): string | null {
 
 export function updateStatus(): UpdateInfo {
   return { ...snapshot }
+}
+
+function clearSchedule(): void {
+  if (firstTimer) clearTimeout(firstTimer)
+  if (intervalTimer) clearInterval(intervalTimer)
+  firstTimer = null
+  intervalTimer = null
+}
+
+/**
+ * (Re)programme le contrôle silencieux. « Jamais » ne supprime pas le bouton
+ * manuel : seul le contrôle automatique s'arrête.
+ */
+function scheduleUpdates(): void {
+  clearSchedule()
+  if (!started || !app.isPackaged || policy === 'off') return
+  firstTimer = setTimeout(() => {
+    void checkForUpdates(false)
+  }, FIRST_CHECK_DELAY)
+  firstTimer.unref?.()
+  intervalTimer = setInterval(
+    () => {
+      void checkForUpdates(false)
+    },
+    policy === 'weekly' ? WEEKLY_INTERVAL : CHECK_INTERVAL
+  )
+  intervalTimer.unref?.()
+}
+
+/** Changement de réglage à chaud : le nouveau rythme s'applique sans redémarrer. */
+export function setUpdaterPolicy(next: UpdateChecks): void {
+  if (next === policy) return
+  policy = next
+  scheduleUpdates()
 }
 
 /** Passe par une fonction : le narrowing de TypeScript ne voit pas les set() imbriqués. */
@@ -708,25 +749,17 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
 
   if (!app.isPackaged) return
 
-  // Contrôle silencieux au démarrage, puis toutes les 3 h…
-  setTimeout(() => {
-    void checkForUpdates(false)
-  }, FIRST_CHECK_DELAY).unref?.()
-
-  const timer = setInterval(() => {
-    void checkForUpdates(false)
-  }, CHECK_INTERVAL)
-  timer.unref?.()
-
-  // …et quand la machine ou l'app reprennent la main (retour de veille, focus).
+  // Contrôle silencieux au démarrage, puis selon le rythme réglé. Un rythme
+  // espacé ou coupé ne relance rien au retour de veille ou de focus.
+  scheduleUpdates()
   try {
     powerMonitor.on('resume', () => {
-      void checkForUpdates(false)
+      if (policy === 'auto') void checkForUpdates(false)
     })
   } catch {
     /* powerMonitor indisponible */
   }
   app.on('browser-window-focus', () => {
-    void checkForUpdates(false)
+    if (policy === 'auto') void checkForUpdates(false)
   })
 }

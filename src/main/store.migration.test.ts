@@ -343,6 +343,8 @@ describe('migration des réglages d’apparence 0.3.24', () => {
       glass: 'strong',
       glassBlur: 33,
       ambience: 'reve-etolie',
+      ambienceScope: 'chrome',
+      ambienceIntensity: 55,
       homeBackground: 'gradient',
       homeImage: '/Users/alex/Images/fond.png',
       homeBlur: 11,
@@ -361,6 +363,8 @@ describe('migration des réglages d’apparence 0.3.24', () => {
     expect(settings.glass).toBe('strong')
     expect(settings.glassBlur).toBe(33)
     expect(settings.ambience).toBe('reve-etolie')
+    expect(settings.ambienceScope).toBe('chrome')
+    expect(settings.ambienceIntensity).toBe(55)
     expect(settings.skyVariant).toBe('nuit-etoilee')
     // La 0.3.24 montrait le ciel dès que le thème Braise était actif : le
     // convertir en « Ciel » garde ce que l’utilisateur voyait.
