@@ -61,6 +61,8 @@ export interface TunnelMapSummary {
   query: string
   title: string
   sourceCount: number
+  /** Angles et sous-angles de la carte, pour la liste « Reprendre ». */
+  angleCount?: number
   updatedAt: number
 }
 
@@ -74,6 +76,8 @@ export interface TunnelFilters {
   tags: string[]
   /** Longueur minimale de l’extrait : niveau de détail de la page. */
   minExcerpt: number
+  /** Ne garder que les pages réellement récupérées. */
+  reachableOnly?: boolean
 }
 
 export const DEFAULT_FILTERS: TunnelFilters = {
@@ -82,7 +86,8 @@ export const DEFAULT_FILTERS: TunnelFilters = {
   from: null,
   lang: 'all',
   tags: [],
-  minExcerpt: 0
+  minExcerpt: 0,
+  reachableOnly: false
 }
 
 /** Étiquettes proposées dans l’entonnoir, alignées sur les affinages du tunnel. */
@@ -345,6 +350,10 @@ export function filterMap(
       continue
     }
     if (site.relevance < filters.minRelevance) {
+      hiddenSites += 1
+      continue
+    }
+    if (filters.reachableOnly && site.reachable === false) {
       hiddenSites += 1
       continue
     }
@@ -944,6 +953,7 @@ export function summarizeMap(map: TunnelMap): TunnelMapSummary {
     query: map.query,
     title: tunnelMapTitle(map),
     sourceCount: map.nodes.filter((node) => node.kind === 'site').length,
+    angleCount: map.nodes.filter((node) => node.kind === 'angle' || node.kind === 'subangle').length,
     updatedAt: map.updatedAt
   }
 }

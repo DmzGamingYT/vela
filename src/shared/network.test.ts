@@ -107,7 +107,7 @@ describe('audit des destinations réseau', () => {
       'src/main/updater.ts',
       // Façade d'inférence : mêmes destinations que Réglages › Modèles.
       'src/shared/agentModel.ts',
-      'src/renderer/src/components/HomeWeather.tsx',
+      'src/renderer/src/components/start/HomeWeather.tsx',
       // Script injecté dans les pages de BD : modèles et CDN OCR documentés.
       'userscripts/comic-translate.user.js'
     ])

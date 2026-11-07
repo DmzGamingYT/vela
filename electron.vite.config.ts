@@ -49,6 +49,20 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
-    plugins: [react(), devWebSocket()]
+    plugins: [react(), devWebSocket()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+              return 'vendor-react'
+            }
+            if (id.includes('node_modules/zustand')) {
+              return 'vendor-zustand'
+            }
+          }
+        }
+      }
+    }
   }
 })

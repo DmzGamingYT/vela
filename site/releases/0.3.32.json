@@ -1,0 +1,72 @@
+{
+  "version": "0.3.32",
+  "slug": "0-3-32",
+  "date": "2026-11-07",
+  "headline": "Le tunnel se traverse en quatre temps",
+  "intro": "Le tunnel de recherche n’arrive plus d’un bloc : il s’ouvre sur la question, range les pages par angle avec un entonnoir qui dit ce qu’il masque, laisse la carte à la main, et finit sur une synthèse dont chaque paragraphe cite les pages qui le fondent.",
+  "tags": [
+    "tunnel",
+    "recherche",
+    "synthèse",
+    "carte"
+  ],
+  "stats": {
+    "commits": 1,
+    "files": 89,
+    "insertions": 3263,
+    "deletions": 940
+  },
+  "sections": [
+    {
+      "title": "La question d’abord",
+      "body": [
+        "L’Atelier ne tombait plus sur un champ perdu dans une carte : il s’ouvre sur une question, avec les cartes déjà écrites juste en dessous. La phrase saisie lance le tunnel ; les cartes précédentes se reprennent d’un clic, avec leur nombre de sources et d’angles.",
+        "Rien n’est envoyé à un moteur : le tunnel interroge des sources publiques, mesure la correspondance localement et garde la trace de chaque page."
+      ]
+    },
+    {
+      "title": "L’exploration range et compte",
+      "body": [
+        "Le rail garde le large spectre, les angles, les pages retenues et la part de la synthèse ; les stations du haut disent où en est le tunnel. Les pages se lisent par angle, chaque colonne annonçant ses retenues et ses écartées, et les cartes se gardent (<kbd>K</kbd>) ou s’écartent (<kbd>X</kbd>) au clavier.",
+        "Trois filtres se sont ajoutés à l’entonnoir : les pages accessibles, une publication de moins de cinq ans, l’origine académique ou de presse, et un extrait d’au moins 600 caractères. Un filtre ne supprime rien : le compteur du bas sépare toujours les pages retenues de toutes celles qui ont été explorées."
+      ],
+      "figure": {
+        "type": "metrics",
+        "caption": "Le même tunnel, relu en quatre temps plutôt qu’en un seul écran.",
+        "items": [
+          {
+            "before": "un formulaire",
+            "after": "4 temps",
+            "label": "traversée du tunnel"
+          },
+          {
+            "before": "un compteur",
+            "after": "retenues · explorées",
+            "label": "ce que le filtre masque"
+          }
+        ]
+      }
+    },
+    {
+      "title": "La carte reste à la main",
+      "body": [
+        "Rien n’a été retiré à la carte : le sujet se lit au milieu de la colonne d’angles, les cartes se déplacent, se renomment, s’ajoutent, se relient et se suppriment avec leur descendance, et le zoom, la minimap et la légende restent en place. La note sous le titre rappelle les sources écartées par l’entonnoir ou la pertinence."
+      ]
+    },
+    {
+      "title": "La synthèse ne dit rien de plus",
+      "body": [
+        "Une section par angle, les pages numérotées à côté de chaque paragraphe, et les citations prises dans les extraits réellement récupérés — jamais une reformulation présentée comme une citation. Quand deux pages se contredisent, le nœud de tension remonte dans <strong>À vérifier</strong>.",
+        "Le document se copie en Markdown ou se garde dans les notes ; le rail de droite garde la liste des sources, chaque numéro ramenant à sa page."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir l’Atelier : le tunnel démarre sur la question, et les cartes déjà écrites se reprennent juste en dessous.",
+    "Lancer un tunnel : l’exploration montre les angles, les retenues et les écartées, et le compteur du bas sépare « retenues » et « explorées ».",
+    "Cocher un filtre : les branches se replient et le nombre de pages masquées s’écrit sous les filtres.",
+    "Passer à la synthèse : chaque section renvoie à ses pages numérotées, et chaque citation est un extrait de la page.",
+    "Ouvrir le site : il annonce la version 0.3.32 et les six empreintes de cette release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.31...v0.3.32"
+}

@@ -1,28 +1,28 @@
 import { Suspense, lazy, useEffect } from 'react'
 import AmbienceScene from './components/AmbienceScene'
-import Onboarding from './components/Onboarding'
-import PeekOverlay from './components/PeekOverlay'
+import Onboarding from './components/chrome/Onboarding'
+import PeekOverlay from './components/chrome/PeekOverlay'
 import Presence from './components/Presence'
-import Sidebar from './components/Sidebar'
-import SpaceRail from './components/SpaceRail'
+import Sidebar from './components/chrome/Sidebar'
+import SpaceRail from './components/chrome/SpaceRail'
 import Toasts from './components/Toasts'
-import Workspace from './components/Workspace'
+import Workspace from './components/chrome/Workspace'
 import { useBrowser } from './store/browser'
 import { appearanceState, applyAppearance } from './lib/appearance'
 
 // Les panneaux ne sont chargés qu'à leur première ouverture : le démarrage ne
 // paie plus l'analyse des réglages, des notes, de l'agent et des overlays
 // (plus de la moitié du bundle) et la mémoire du renderer reste plus basse.
-const AgentCanvas = lazy(() => import('./components/AgentCanvas'))
-const BookmarksPanel = lazy(() => import('./components/BookmarksPanel'))
-const SessionsPanel = lazy(() => import('./components/SessionsPanel'))
-const HistoryPanel = lazy(() => import('./components/HistoryPanel'))
-const CommandBar = lazy(() => import('./components/CommandBar'))
-const DownloadsPanel = lazy(() => import('./components/DownloadsPanel'))
-const ProcessManager = lazy(() => import('./components/ProcessManager'))
-const NotesDrawer = lazy(() => import('./components/NotesDrawer'))
-const SettingsPanel = lazy(() => import('./components/SettingsPanel'))
-const SpaceDialog = lazy(() => import('./components/SpaceDialog'))
+const AgentCanvas = lazy(() => import('./components/agent/AgentCanvas'))
+const BookmarksPanel = lazy(() => import('./components/panels/BookmarksPanel'))
+const SessionsPanel = lazy(() => import('./components/panels/SessionsPanel'))
+const HistoryPanel = lazy(() => import('./components/panels/HistoryPanel'))
+const CommandBar = lazy(() => import('./components/chrome/CommandBar'))
+const DownloadsPanel = lazy(() => import('./components/panels/DownloadsPanel'))
+const ProcessManager = lazy(() => import('./components/panels/ProcessManager'))
+const NotesDrawer = lazy(() => import('./components/panels/NotesDrawer'))
+const SettingsPanel = lazy(() => import('./components/settings/SettingsPanel'))
+const SpaceDialog = lazy(() => import('./components/space/SpaceDialog'))
 
 export default function App() {
   const ready = useBrowser((state) => state.ready)

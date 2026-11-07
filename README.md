@@ -258,7 +258,7 @@ site manque ou invente un flux.
 | **Sessions** | Un ensemble d’onglets se garde sous un nom et se rouvre dans son espace d’origine. Stockage local, aucune requête réseau. |
 | **Agent** | Rapports en Markdown à partir des onglets joints. Démo locale, ou dix fournisseurs avec votre clé. |
 | **Travaux** | Chaque rapport de l’atelier est conservé : liste consultable, renommage, archivage, réouverture. |
-| **Tunnel de recherche** | Sujet → angle → sous-angle → site : carte de sources réellement récupérées, tensions détectées, entonnoir par pertinence, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
+| **Tunnel de recherche** | Quatre temps — question, exploration, carte, synthèse — sur des sources réellement récupérées : angles, tensions citées, entonnoir par pertinence, accessibilité, période, langue, type, étiquette et niveau de détail. Cartes déplaçables, renommables, ajoutées, reliées ou supprimées à la main. Synthèse en sections citées, export Markdown, PDF, PNG, SVG, JSON, OPML et rapport en note. |
 | **Clés API** | OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Groq, Cerebras, OpenRouter ou serveur local. Trousseau système, test de clé en un clic. |
 | **Notes** | Panneau en verre, notes Markdown en fichiers `.md` avec étiquettes, épinglage et recherche ; extraction par glisser-déposer depuis la page, surlignage synchronisé, croquis, liens `[[note]]`, notes vocales locales et réécriture par le modèle. |
 | **Recherche dans la page** | `⌘F` : compteur de correspondances, résultat suivant/précédent, sans quitter l’onglet. |
@@ -394,8 +394,11 @@ Les raccourcis clavier par espace et les extensions ne sont pas gérés par cett
 
 ### Tunnel de recherche
 
-Le mode **Atelier** ne démarre pas par un formulaire mais par un tunnel : le sujet saisi devient la racine
-d’une carte où chaque niveau affine la recherche (angles, sous-angles, puis pages). Les fournisseurs sont
+Le mode **Atelier** ouvre le tunnel en quatre temps, lisibles dans la barre du haut : **Question**,
+**Exploration**, **Carte**, **Synthèse**. La question saisie devient la racine ; l’exploration range les pages
+réellement récupérées par angle et garde l’entonnoir visible ; la carte reste éditable ; la synthèse
+assemble une section par angle où chaque paragraphe renvoie aux pages numérotées qui le fondent.
+Le sujet saisi devient la racine d’une carte où chaque niveau affine la recherche (angles, sous-angles, puis pages). Les fournisseurs sont
 remplaçables (`src/main/tunnel.ts`) : DuckDuckGo (HTML, sans clé), Wikipédia, arXiv, Hacker News et GDELT.
 Chaque nœud *Site* correspond à une page effectivement récupérée ; une page inaccessible est marquée comme
 telle. Les résultats sous 35 % de pertinence ne créent aucun nœud, deux pages maximum viennent d’un même
@@ -403,8 +406,10 @@ domaine, et le seuil de l’entonnoir (60 % par défaut) masque le reste. Les so
 communs aux pages (« Outils », « Comparatifs », « Guides », « Limites »), jamais des noms de domaine.
 Les tensions s’appuient uniquement sur des phrases citées, jamais sur une déduction.
 L’entonnoir agit en direct sur la carte : il se combine selon le type de source, la pertinence, la période,
-la langue, une étiquette (« histoire », « technique »…) et le niveau de détail de la page (longueur de
-l’extrait). Les cartes survivent à l’entonnoir dès qu’elles sont écrites à la main : on peut les déplacer,
+la langue, une étiquette (« histoire », « technique »…), le niveau de détail de la page (longueur de
+l’extrait), l’accessibilité de la page, une publication de moins de cinq ans, l’origine académique ou de
+presse et un extrait d’au moins 600 caractères. L’exploration affiche deux compteurs distincts — les pages
+retenues après l’entonnoir et toutes celles qui ont été explorées — et le masquage est toujours chiffré. Les cartes survivent à l’entonnoir dès qu’elles sont écrites à la main : on peut les déplacer,
 les renommer, en ajouter sous n’importe quel nœud, en relier ou en supprimer, y compris avec leur descendance.
 Le fond de la carte est un canvas animé (constellation qui suit le pointeur), désactivé avec « Réduire les
 animations » ; les cartes sont en verre dépoli avec un liseré d’accent au survol et un badge de catégorie.

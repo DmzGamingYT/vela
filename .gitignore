@@ -12,6 +12,7 @@ build/update-signing.key
 *.tsbuildinfo
 .freebuff/
 *.blockmap
+.scratch/
 .audit-build/
 .audit-lot5/
 .audit-npm-result.json

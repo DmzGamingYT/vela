@@ -1,7 +1,7 @@
 import { SPACE_BACKGROUNDS, SPACE_PRESETS, shortcutsForSet, type SpacePreset } from '@shared/space'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
-import SpaceAvatar from '../SpaceAvatar'
+import SpaceAvatar from './SpaceAvatar'
 import { countLabel, rovingKeyDown, SectionTitle } from './spaceParts'
 
 interface SpaceTemplatesProps {

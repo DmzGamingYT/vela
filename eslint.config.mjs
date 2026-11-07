@@ -24,6 +24,8 @@ export default tseslint.config(
       'release/**',
       'build/**',
       'rust/**',
+      '.scratch/**',
+      'docs/maquettes/**',
       '.audit-*/**',
       '.cloud-attachments/**',
       '.freebuff/**',

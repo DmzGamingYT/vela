@@ -25,6 +25,9 @@ import {
 
 export type TunnelLevel = 1 | 2 | 3 | 4
 
+/** Les quatre temps de la refonte : poser, explorer, voir la carte, écrire. */
+export type TunnelStep = 'question' | 'explore' | 'map' | 'synthesis'
+
 interface TunnelState {
   active: TunnelMap | null
   maps: TunnelMapSummary[]
@@ -36,6 +39,7 @@ interface TunnelState {
   error: string | null
   filters: TunnelFilters
   level: TunnelLevel
+  step: TunnelStep
   viewMode: 'map' | 'list'
   selectedId: string | null
   checkedIds: string[]
@@ -60,6 +64,7 @@ interface TunnelState {
   toggleTag(tag: string): void
   resetFilters(): void
   setLevel(level: TunnelLevel): void
+  setStep(step: TunnelStep): void
   setViewMode(mode: 'map' | 'list'): void
   select(id: string | null, options?: { toggle?: boolean }): void
   setHover(id: string | null): void
@@ -149,6 +154,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   error: null,
   filters: { ...DEFAULT_FILTERS },
   level: 4,
+  step: 'question',
   viewMode: 'map',
   selectedId: null,
   checkedIds: [],
@@ -234,7 +240,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     if (!sameMap) {
       set({ active: null, selectedId: null, checkedIds: [], error: null })
     }
-    set({ running: true, query: trimmed, error: null, phase: 'Préparation…', suggested: null })
+    set({ running: true, query: trimmed, error: null, phase: 'Préparation…', suggested: null, step: 'explore' })
     try {
       const { runId } = await window.vela.tunnel.run({
         query: trimmed,
@@ -268,6 +274,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       checkedIds: [],
       projectsOpen: false,
       error: null,
+      step: 'explore',
       viewMode: 'map',
       running: false,
       phase: ''
@@ -286,7 +293,8 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     await window.vela.tunnel.remove(id)
     set((state) => ({
       maps: state.maps.filter((map) => map.id !== id),
-      active: state.active?.id === id ? null : state.active
+      active: state.active?.id === id ? null : state.active,
+      step: state.active?.id === id ? 'question' : state.step
     }))
   },
 
@@ -297,7 +305,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       notify(`Copie impossible : ${TUNNEL_MAP_LIMIT} cartes au maximum. Supprimez-en une.`, 'error')
       return
     }
-    set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null })
+    set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null, step: 'explore' })
   },
 
   async renameMap(id, title) {
@@ -318,11 +326,12 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       checkedIds: [],
       running: false,
       phase: '',
+      step: 'question',
       viewMode: 'map',
       projectsOpen: false
     })
     setTimeout(() => {
-      document.querySelector<HTMLInputElement>('.tunnel-search input')?.focus()
+      document.querySelector<HTMLInputElement>('.tw-field input')?.focus()
     }, 30)
   },
 
@@ -360,6 +369,10 @@ export const useTunnel = create<TunnelState>((set, get) => ({
 
   setLevel(level) {
     set({ level })
+  },
+
+  setStep(step) {
+    set({ step, filtersOpen: false, exportOpen: false })
   },
 
   setViewMode(viewMode) {

@@ -15,8 +15,17 @@ import { initials, tintFor } from '../lib/format'
  * manifeste. Une petite icône n'est jamais agrandie au-delà de sa taille native.
  */
 
+const MAX_MEMO_ENTRIES = 256
 const memo = new Map<string, Promise<string | null>>()
 const memoCached = new Map<string, Promise<string | null>>()
+
+function setBounded(store: Map<string, Promise<string | null>>, key: string, value: Promise<string | null>): void {
+  if (store.size >= MAX_MEMO_ENTRIES) {
+    const oldestKey = store.keys().next().value
+    if (oldestKey) store.delete(oldestKey)
+  }
+  store.set(key, value)
+}
 
 export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promise<string | null> {
   const host = hostOf(url)
@@ -28,7 +37,7 @@ export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promi
   const task = (
     cacheOnly ? window.vela.favicons.peek(host, spaceId) : window.vela.favicons.get(host, spaceId)
   ).catch(() => null)
-  store.set(key, task)
+  setBounded(store, key, task)
   return task
 }
 

@@ -6,7 +6,7 @@ import {
   SPACE_BACKGROUNDS,
   type SpaceBackground
 } from '@shared/space'
-import GalleryAvatar from '../GalleryAvatar'
+import GalleryAvatar from './GalleryAvatar'
 import { Icon } from '../Icon'
 import { rovingKeyDown, SectionTitle, type AvatarSource } from './spaceParts'
 
