@@ -84,7 +84,7 @@
     mac: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.31-universal.dmg',
-      size: 'Apple silicon et Intel · 224,2 Mo',
+      size: 'Apple silicon et Intel · 224,3 Mo',
       href: download('Vela-0.3.31-universal.dmg')
     },
     macArm: {
