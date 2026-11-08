@@ -183,15 +183,27 @@ export const createTabsSlice: StateCreator<BrowserState, [], [], TabsSlice> = (s
   },
 
   splitToggle() {
+    if (!get().splitAllowed) {
+      get().toast('Élargissez la fenêtre pour afficher deux pages côte à côte.')
+      return
+    }
     void get().call(() => window.vela.tabs.splitToggle(), 'Vue scindée indisponible.')
   },
 
   splitWith(id) {
+    if (!get().splitAllowed) {
+      get().toast('Élargissez la fenêtre pour afficher deux pages côte à côte.')
+      return
+    }
     void get().call(() => window.vela.tabs.splitSet(id), 'Vue scindée indisponible.')
   },
 
   /** Ouvre une adresse dans un nouvel onglet, puis la place en vue scindée. */
   openSplit(url) {
+    if (!get().splitAllowed) {
+      get().toast('Élargissez la fenêtre pour afficher deux pages côte à côte.')
+      return
+    }
     void (async () => {
       const created = await get().call(() => window.vela.tabs.create({ url }), 'Onglet non ouvert.')
       if (created) get().splitWith(created.id)

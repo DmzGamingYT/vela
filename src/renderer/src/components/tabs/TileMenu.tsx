@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { spokenShortcut } from '../../lib/format'
@@ -129,7 +129,25 @@ export default function TileMenu({
   const menuHeight =
     items.reduce((total, item) => total + height(item), 12) + (header ? HEADER_HEIGHT : 0)
   const left = Math.max(8, Math.min(x, window.innerWidth - width - 8))
-  const top = Math.max(8, Math.min(y, window.innerHeight - menuHeight - 8))
+  const top = Math.max(8, Math.min(y, window.innerHeight - Math.min(menuHeight, window.innerHeight - 16) - 8))
+
+  // Le calcul ci-dessus est une estimation (lignes, séparateurs, en-tête). Une
+  // fois la liste posée, sa hauteur réelle corrige le placement : le menu ne
+  // mord jamais le bas de la fenêtre, même d'une dizaine de pixels.
+  const [pos, setPos] = useState({ left, top })
+  useLayoutEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const h = Math.min(element.offsetHeight, window.innerHeight - 16)
+    const w = element.offsetWidth || width
+    setPos((current) => {
+      const next = {
+        left: Math.max(8, Math.min(x, window.innerWidth - w - 8)),
+        top: Math.max(8, Math.min(y, window.innerHeight - h - 8))
+      }
+      return current.left === next.left && current.top === next.top ? current : next
+    })
+  }, [x, y, items, header, width])
   const subWidth = 216
   const side = left + width + subWidth + 8 <= window.innerWidth ? 'right' : 'left'
   const subTop = Math.max(
@@ -236,7 +254,7 @@ export default function TileMenu({
       className="tile-menu"
       role="menu"
       aria-label={label}
-      style={{ left, top, width }}
+      style={{ left: pos.left, top: pos.top, width }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault()
@@ -295,7 +313,11 @@ export default function TileMenu({
           role="menu"
           aria-label={current.label}
           data-side={side}
-          style={{ top: subTop, width: subWidth }}
+          style={{
+            top: subTop,
+            width: subWidth,
+            maxHeight: Math.max(140, window.innerHeight - pos.top - 16)
+          }}
         >
           {submenu.map((item) => renderItem(item, 1))}
         </div>

@@ -910,6 +910,7 @@ export default function NotesDrawer() {
       allTags={allTags}
       highlights={highlights}
       pageNote={pageNote}
+      hasPage={Boolean(activeUrl)}
       noNotes={noNotes}
       spaceName={space?.name}
       onOpen={(id) => void openNote(id, filter.trim())}

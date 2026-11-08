@@ -474,6 +474,8 @@ export interface VelaApi {
     update(patch: SettingsPatch): Promise<void>
     setKey(input: SetKeyInput): Promise<boolean>
     testKey(provider: ProviderId): Promise<KeyTestResult>
+    /** Oublie le zoom d'un domaine ; false s'il n'était pas mémorisé. */
+    forgetZoom(host: string): Promise<boolean>
   }
   appearance: {
     /** Ouvre un sélecteur d'image ; le chemin est enregistré dans les réglages. */

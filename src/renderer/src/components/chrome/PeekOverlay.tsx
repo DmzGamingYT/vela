@@ -49,6 +49,9 @@ export default function PeekOverlay() {
       if (!alive) return
       stateRef.current = next
       setState(next)
+      // La carte est du DOM : tant qu'elle est ouverte, les vues natives des
+      // onglets doivent quitter la scène, sinon elles la recouvrent.
+      useBrowser.getState().setPeekOpen(Boolean(next))
       if (!editingRef.current) setDraft(next?.url ?? '')
       if (!next) {
         editingRef.current = false
@@ -63,6 +66,7 @@ export default function PeekOverlay() {
       alive = false
       offState()
       offFocus()
+      useBrowser.getState().setPeekOpen(false)
     }
   }, [startEdit])
 

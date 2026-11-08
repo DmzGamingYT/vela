@@ -23,7 +23,7 @@ import type {
   Space,
   TabState
 } from '@shared/types'
-import { opensPeek, searchOptionsOf, shouldOpenAsPopup } from '@shared/navigation'
+import { opensPeek, searchOptionsOf, shouldOpenAsPopup, zoomHostOf } from '@shared/navigation'
 import { partitionFor } from '@shared/space'
 import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
@@ -49,6 +49,10 @@ export interface TabHost {
   visited(spaceId: string, url: string, title: string): void
   selection(payload: SelectionPayload): void
   isExempted(host: string): boolean
+  /** Niveau de zoom mémorisé pour un domaine, ou null s'il n'y en a pas. */
+  zoomFor?(host: string): number | null
+  /** Retient le niveau choisi pour ce domaine. */
+  rememberZoom?(host: string, level: number): void
   /** Ouvre une page dans le coup d'œil, sans créer d'onglet. */
   openPeek?(url: string, spaceId?: string): void
   /** Surlignages déjà enregistrés pour cette URL, repeints au chargement. */
@@ -373,12 +377,21 @@ export class TabManager {
     })
 
     wc.on('did-navigate', (_event, url) => {
+      if (!wc.isDestroyed()) this.applyStoredZoom(wc, url)
       this.record(tabId, url)
       this.host.changed()
     })
 
+    // Chromium restaure le zoom de l'origine au commit : on repose le niveau
+    // mémorisé une fois le document prêt, puis à la fin du chargement.
+    wc.on('dom-ready', () => {
+      const tab = this.host.tab(tabId)
+      if (tab && !wc.isDestroyed()) this.applyStoredZoom(wc, tab.url)
+    })
+
     wc.on('did-finish-load', () => {
       const tab = this.host.tab(tabId)
+      if (tab && !wc.isDestroyed()) this.applyStoredZoom(wc, tab.url)
       const saved = tab ? (this.host.highlightsFor?.(tab.url) ?? []) : []
       if (saved.length > 0) void this.paintHighlights(tabId, saved)
       void this.readPageLanguage(tabId, wc)
@@ -427,6 +440,9 @@ export class TabManager {
       if (selection) {
         const send = (action: SelectionPayload['action']): void =>
           this.host.selection({ action, text: selection, url: tab.url, title: tab.title, tabId })
+        // « Copier » d'abord : la sélection est mise au presse-papiers sans
+        // traverser les actions de l'agent, comme dans tout navigateur.
+        items.push({ role: 'copy', label: 'Copier' }, { type: 'separator' })
         items.push(
           { label: 'Résumer la sélection', click: () => send('summarize') },
           { label: 'Expliquer', click: () => send('explain') },
@@ -434,12 +450,14 @@ export class TabManager {
           { label: 'Simplifier', click: () => send('simplify') },
           { type: 'separator' },
           { label: 'Surligner et annoter', click: () => send('highlight') },
-          { label: 'Ajouter à une note', click: () => send('note') },
-          { type: 'separator' },
-          { role: 'copy', label: 'Copier' }
+          { label: 'Ajouter à une note', click: () => send('note') }
         )
         if (params.isEditable) {
-          items.push({ role: 'cut', label: 'Couper' }, { role: 'paste', label: 'Coller' })
+          items.push(
+            { type: 'separator' },
+            { role: 'cut', label: 'Couper' },
+            { role: 'paste', label: 'Coller' }
+          )
         }
       } else if (params.isEditable) {
         items.push(
@@ -639,7 +657,19 @@ export class TabManager {
         ? 0
         : Math.min(4, Math.max(-3, current + (direction === 'in' ? 0.5 : -0.5)))
     view.webContents.setZoomLevel(next)
+    // Le choix vaut pour le domaine, pas seulement pour cet onglet.
+    const tab = this.host.tab(tabId)
+    const host = tab ? zoomHostOf(tab.url) : null
+    if (host) this.host.rememberZoom?.(host, next)
     return next
+  }
+
+  /** Réapplique le niveau mémorisé du domaine, s'il existe. */
+  private applyStoredZoom(wc: Electron.WebContents, url: string): void {
+    const host = zoomHostOf(url)
+    if (!host) return
+    const level = this.host.zoomFor?.(host)
+    if (typeof level === 'number' && Number.isFinite(level)) wc.setZoomLevel(level)
   }
 
   /**
@@ -802,6 +832,17 @@ export class TabManager {
     }
     this.capCache = cap
     return cap
+  }
+
+  /** PID système du renderer d'un onglet vivant, pour les métriques mémoire. */
+  pidOf(tabId: string): number | null {
+    const view = this.views.get(tabId)
+    try {
+      if (!view || view.webContents.isDestroyed()) return null
+      return view.webContents.getOSProcessId()
+    } catch {
+      return null
+    }
   }
 
   liveIds(): Set<string> {

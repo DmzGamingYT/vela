@@ -73,7 +73,9 @@
 .dock-button--agent {
   border-color: color-mix(in srgb, var(--clay) 40%, transparent);
   background: color-mix(in srgb, var(--clay) 10%, var(--surface));
-  color: var(--clay);
+  /* `--clay` est calibré sur le papier nu : sur le verre teinté du dock il
+     tombait à 3,9:1. `--wordmark-accent` est calibré sur ce même verre. */
+  color: var(--wordmark-accent, var(--clay));
 }
 
 .dock-button--agent:hover {
@@ -90,24 +92,29 @@
   background: color-mix(in srgb, var(--clay) 20%, var(--surface));
 }
 
+/* Réglages ferme la pile : même hauteur, même rayon, même surface que Notes
+   et Agent. Il reste neutre — l’agent demeure la seule action colorée. */
 .dock-button--settings {
-  height: 40px;
+  height: 44px;
   margin-top: 8px;
-  padding: 0 10px;
-  border-color: transparent;
-  background: transparent;
-  color: var(--muted);
-}
-
-.dock-button--settings:hover {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  padding: 0 12px;
+  border-color: var(--line);
+  background: var(--surface);
   color: var(--ink);
 }
 
-.dock-button--settings:active,
+.dock-button--settings:hover {
+  border-color: var(--hairline-strong);
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+}
+
+.dock-button--settings:active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--surface));
+}
+
 .dock-button--settings[data-active='true'] {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  border-color: var(--hairline-strong);
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
   color: var(--ink);
 }
 
@@ -117,15 +124,10 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--faint);
+  color: var(--muted);
   font-family: inherit;
   font-size: 11px;
   line-height: 1;
-}
-
-.dock-button--settings:hover .dock-key,
-.dock-button--settings[data-active='true'] .dock-key {
-  color: var(--muted);
 }
 
 /* Infobulle : fond sombre et texte clair dans les deux thèmes, pour rester

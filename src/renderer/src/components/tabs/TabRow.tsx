@@ -53,8 +53,10 @@ export default function TabRow({
       data-asleep={tab.asleep && !home ? 'true' : undefined}
       data-dragging={dragging}
       data-drop={dropEdge ?? undefined}
-      role="tab"
-      aria-selected={active}
+      role="group"
+      aria-roledescription="onglet"
+      aria-label={`${home ? 'Accueil' : tab.title}${active ? ', page courante' : ''}`}
+      aria-current={active ? 'page' : undefined}
       tabIndex={0}
       draggable
       onClick={() => selectTab(tab.id)}
@@ -64,7 +66,10 @@ export default function TabRow({
         setMenu({ x: event.clientX, y: event.clientY, keyboard: false })
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (
+          event.target === event.currentTarget &&
+          (event.key === 'Enter' || event.key === ' ')
+        ) {
           event.preventDefault()
           selectTab(tab.id)
         }
@@ -113,8 +118,13 @@ export default function TabRow({
       )}
 
       {tab.asleep && !home && (
-        <span className="tab-asleep" title="En veille : la page se recharge à l’ouverture">
-          <Icon name="moon" size={11} />
+        <span
+          className="tab-asleep"
+          role="img"
+          aria-label="En veille : la page se recharge à l’ouverture"
+          title="En veille : la page se recharge à l’ouverture"
+        >
+          <Icon name="moon" size={12} />
         </span>
       )}
       {secondary && (
@@ -128,6 +138,7 @@ export default function TabRow({
           <button
             type="button"
             className="tab-action"
+            data-extra="true"
             title={tab.pinned ? 'Désépingler' : 'Épingler'}
             onClick={(event) => {
               event.stopPropagation()
@@ -141,6 +152,7 @@ export default function TabRow({
           <button
             type="button"
             className="tab-action"
+            data-extra="true"
             title="Ouvrir en vue scindée"
             onClick={(event) => {
               event.stopPropagation()

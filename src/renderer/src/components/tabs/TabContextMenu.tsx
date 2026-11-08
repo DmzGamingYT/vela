@@ -97,6 +97,42 @@ export default function TabContextMenu({
     void startAgent(prompt, [tab.id], 'answer')
   }
 
+  /** Les actions de l'agent tiennent dans un sous-menu : le menu de l'onglet
+   *  reste assez court pour ne pas couvrir la page ni frôler le bas de la
+   *  fenêtre. Chaque entrée garde son icône et son explication. */
+  const agentItems: TileMenuItem[] = [
+    {
+      id: 'agent',
+      label: 'Joindre à l’agent',
+      icon: 'sparkles',
+      hint: 'Ajoute cette page aux onglets lus par l’agent.',
+      onSelect: joinAgent
+    },
+    {
+      id: 'summarize',
+      label: 'Résumer cette page',
+      icon: 'list',
+      hint: 'L’agent lit la page et répond dans le fil.',
+      onSelect: () =>
+        askAgent('Résume cette page en cinq points clés, puis une synthèse de trois lignes.')
+    },
+    {
+      id: 'translate',
+      label: 'Traduire cette page',
+      icon: 'translate',
+      hint: 'En français, titres et structure conservés.',
+      onSelect: () =>
+        askAgent('Traduis cette page en français, en gardant les titres et la structure.')
+    },
+    {
+      id: 'capture',
+      label: 'Capturer dans les notes',
+      icon: 'notes',
+      hint: 'Ajoute la sélection de la page aux notes de l’espace.',
+      onSelect: () => void captureSelection()
+    }
+  ]
+
   const movingToFolder: TileMenuItem[] = [
     ...(tab.groupId
       ? [{ id: 'ungroup', label: 'Sortir du dossier', icon: 'folder' as const, onSelect: () => moveTabToGroup(tab.id, null) }]
@@ -187,36 +223,7 @@ export default function TabContextMenu({
         hint: 'Ouvre la même adresse dans un onglet de cet espace, sans reprendre l’historique.',
         onSelect: () => newTab(tab.url)
       },
-      {
-        id: 'agent',
-        label: 'Joindre à l’agent',
-        icon: 'sparkles',
-        hint: 'Ajoute cette page aux onglets lus par l’agent.',
-        onSelect: joinAgent
-      },
-      {
-        id: 'summarize',
-        label: 'Résumer cette page',
-        icon: 'list',
-        hint: 'L’agent lit la page et répond dans le fil.',
-        onSelect: () =>
-          askAgent('Résume cette page en cinq points clés, puis une synthèse de trois lignes.')
-      },
-      {
-        id: 'translate',
-        label: 'Traduire cette page',
-        icon: 'translate',
-        hint: 'En français, titres et structure conservés.',
-        onSelect: () =>
-          askAgent('Traduis cette page en français, en gardant les titres et la structure.')
-      },
-      {
-        id: 'capture',
-        label: 'Capturer dans les notes',
-        icon: 'notes',
-        hint: 'Ajoute la sélection de la page aux notes de l’espace.',
-        onSelect: () => void captureSelection()
-      },
+      { id: 'agent-menu', label: 'Agent', icon: 'sparkles', submenu: agentItems },
       sep('sep-organise'),
       { id: 'unpin', label: 'Désépingler', icon: 'pin', onSelect: () => pin(tab.id, false) },
       ...(left
@@ -298,36 +305,7 @@ export default function TabContextMenu({
         keys: shortcut('⇧D'),
         onSelect: () => splitWith(tab.id)
       },
-      {
-        id: 'agent',
-        label: 'Joindre à l’agent',
-        icon: 'sparkles',
-        hint: 'Ajoute cette page aux onglets lus par l’agent.',
-        onSelect: joinAgent
-      },
-      {
-        id: 'summarize',
-        label: 'Résumer cette page',
-        icon: 'list',
-        hint: 'L’agent lit la page et répond dans le fil.',
-        onSelect: () =>
-          askAgent('Résume cette page en cinq points clés, puis une synthèse de trois lignes.')
-      },
-      {
-        id: 'translate',
-        label: 'Traduire cette page',
-        icon: 'translate',
-        hint: 'En français, titres et structure conservés.',
-        onSelect: () =>
-          askAgent('Traduis cette page en français, en gardant les titres et la structure.')
-      },
-      {
-        id: 'capture',
-        label: 'Capturer dans les notes',
-        icon: 'notes',
-        hint: 'Ajoute la sélection de la page aux notes de l’espace.',
-        onSelect: () => void captureSelection()
-      },
+      { id: 'agent-menu', label: 'Agent', icon: 'sparkles', submenu: agentItems },
       ...(tab.audible || tab.muted
         ? [
             {

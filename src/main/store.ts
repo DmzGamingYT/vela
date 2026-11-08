@@ -19,6 +19,7 @@ import {
 import { createDefaultState, createTab, defaultProviders, SPACE_COLORS } from '@shared/defaults'
 import { isProviderId, PROVIDERS, providerDefaults } from '@shared/providers'
 import {
+  HOST_ZOOM_LIMIT,
   isHistoryRetention,
   isStartupBehavior,
   isWebLanguage,
@@ -26,7 +27,8 @@ import {
   sanitizeCustomEngines,
   sanitizeDefaultZoom,
   sanitizeKeywords,
-  sanitizeStartupUrl
+  sanitizeStartupUrl,
+  sanitizeZoomByHost
 } from '@shared/navigation'
 import type {
   Bookmark,
@@ -169,6 +171,7 @@ function mergeSettings(raw: unknown): Settings {
     openAfterDownload: input.openAfterDownload === true,
     webLanguage: isWebLanguage(input.webLanguage) ? input.webLanguage : 'fr',
     defaultZoom: sanitizeDefaultZoom(input.defaultZoom),
+    zoomByHost: sanitizeZoomByHost(input.zoomByHost),
     ...sanitizeAppearance(input),
     blockTrackers: input.blockTrackers !== false,
     // Anciens fichiers : pas de niveau → le filtre standard, jamais renforcé.
@@ -578,6 +581,37 @@ export class Store {
     } catch (error) {
       console.error('[vela] sauvegarde impossible', error)
     }
+  }
+
+  /**
+   * Mémorise le zoom d'un domaine. Le niveau 0 (100 %) est conservé : un ⌘0
+   * donné sur un site doit rester vrai à la visite suivante. Les domaines les
+   * plus anciens sortent au-delà de la limite, sans toucher au reste.
+   */
+  setHostZoom(host: string, level: number): void {
+    const clean = sanitizeZoomByHost({ [host]: level })
+    const key = Object.keys(clean)[0]
+    if (!key) return
+    this.update((state) => {
+      const map = { ...state.settings.zoomByHost, [key]: clean[key] }
+      const keys = Object.keys(map)
+      for (const old of keys.slice(0, Math.max(0, keys.length - HOST_ZOOM_LIMIT))) {
+        if (old !== key) delete map[old]
+      }
+      state.settings.zoomByHost = map
+    })
+  }
+
+  /** Oublie le zoom d'un domaine ; false s'il n'y en avait pas. */
+  forgetHostZoom(host: string): boolean {
+    const key = host.trim().toLowerCase()
+    if (!key || !(key in this.state.settings.zoomByHost)) return false
+    this.update((state) => {
+      const map = { ...state.settings.zoomByHost }
+      delete map[key]
+      state.settings.zoomByHost = map
+    })
+    return true
   }
 
   pushHistory(entry: HistoryEntry): void {

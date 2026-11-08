@@ -49,6 +49,15 @@
   padding: 2px 0 4px;
 }
 
+/* Trait de séparation entre les modes et la pile des espaces. */
+.rail-sep {
+  width: 22px;
+  height: 1px;
+  flex: none;
+  margin: 0 auto 2px;
+  background: var(--line);
+}
+
 /* Survol commun de la colonne : un seul voile, posé sur la barre latérale.
    Les outils du pied et les lignes d'onglets partagent ainsi la même teinte,
    la même lumière intérieure et le même rayon : le survol se lit pareil d'un
@@ -281,14 +290,17 @@
 
 /* --- Lisibilité ---------------------------------------------------- */
 
-html[data-mode='light'] {
-  --muted: rgba(27, 26, 24, 0.7);
-  --faint: rgba(27, 26, 24, 0.6);
+/* Même sélecteur que le socle (`:root[data-mode=…]`) : avec `html[data-mode=…]`
+   la règle était moins spécifique et ne s'appliquait jamais. Les libellés
+   secondaires restaient donc à 0,62 sur du verre teinté, sous 4,5:1. */
+:root[data-mode='light'] {
+  --muted: rgba(27, 26, 24, 0.8);
+  --faint: rgba(27, 26, 24, 0.74);
 }
 
-html[data-mode='dark'] {
-  --muted: rgba(243, 241, 238, 0.66);
-  --faint: rgba(243, 241, 238, 0.55);
+:root[data-mode='dark'] {
+  --muted: rgba(243, 241, 238, 0.78);
+  --faint: rgba(243, 241, 238, 0.7);
 }
 
 .sr-only {
@@ -316,6 +328,15 @@ html[data-mode='dark'] {
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
+  /* Monogramme de secours : la teinte brute (or, bleu…) descendait à 1,95:1
+     sur le fond sombre. On la ramène vers l'encre du thème, ce qui garde la
+     couleur du site tout en assurant le contraste dans les deux modes. */
+  color: color-mix(in srgb, var(--favicon-tint, var(--clay)) 72%, var(--ink));
+  background: color-mix(in srgb, var(--favicon-tint, var(--clay)) 12%, transparent);
+}
+
+:root[data-mode='dark'] .favicon {
+  color: color-mix(in srgb, var(--favicon-tint, var(--clay)) 55%, var(--ink));
 }
 
 .favicon img {
@@ -323,6 +344,12 @@ html[data-mode='dark'] {
   height: 15px;
   object-fit: contain;
   display: block;
+}
+
+/* Un logo quasi monochrome sombre (GitHub, Notion…) disparaît sur une tuile
+   sombre : on l'inverse, sans toucher aux icônes colorées ni au thème clair. */
+:root[data-mode='dark'] .favicon img[data-dark-mono='true'] {
+  filter: invert(0.92);
 }
 
 .library-sheet {
@@ -1157,22 +1184,58 @@ html[data-mode='dark'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-  color: var(--faint);
-}
-
-.tab-row[data-active='true'] .tab-asleep {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
   color: var(--muted);
 }
 
-.tabs-savings {
-  margin-left: 6px;
-  font-size: 9px;
-  letter-spacing: 0.02em;
-  color: var(--faint);
+.tab-row[data-active='true'] .tab-asleep {
+  color: var(--ink);
 }
+
+/* Le badge mémoire ne doit jamais se replier : « 65 Mo » sur deux lignes
+   cassait la rangée de l'en-tête en trois hauteurs différentes. */
+.tabs-savings {
+  margin-left: 0;
+  /* Toute la ligne : sur la ligne du titre, le libellé chassait les actions. */
+  flex: 0 0 100%;
+  margin-top: -2px;
+  white-space: nowrap;
+  text-transform: none;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* « libérés » appartient au nombre : il dit ce que les mégaoctets
+   représentent, sans dépendre de l’infobulle. */
+.tabs-savings-unit {
+  color: var(--muted);
+}
+
+/* --- Gestionnaire de processus -------------------------------- */
+
+.process-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  /* La colonne d'actions reste collée au bord droit, même quand la ligne
+     n'a qu'une pastille à montrer. */
+  margin-left: auto;
+  gap: 8px;
+}
+
+/* Colonne chiffrée stable : la mémoire se compare d’une ligne à l’autre. */
+.process-mem {
+  min-width: 46px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--muted);
+}
+
 
 /* Les réglages à plusieurs choix gardent le libellé au-dessus du contrôle. */
 .setting-row-top {
@@ -1253,7 +1316,8 @@ html[data-mode='dark'] {
 }
 
 .home-chip-flat {
-  padding: 3px 7px;
+  padding: 5px 9px;
+  min-height: 28px;
   border-color: transparent;
   background: transparent;
   color: var(--muted);
@@ -1265,9 +1329,9 @@ html[data-mode='dark'] {
 }
 
 .home-foot-customize {
-  height: 22px;
-  padding: 0 8px;
-  font-size: 10px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
 }
 
 .home-go {

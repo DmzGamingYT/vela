@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { shortcut, timeAgo } from '../../lib/format'
+import { plural, shortcut, timeAgo } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 
@@ -53,7 +53,7 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
       <div className="home-card-head">
         <div className="quicknotes-heading">
           <h2>Mémoire de l’espace</h2>
-          <span className="quicknotes-scope">{spaceNotes.length} note{spaceNotes.length === 1 ? '' : 's'} · sur cet appareil</span>
+          <span className="quicknotes-scope">{plural(spaceNotes.length, 'note')} · sur cet appareil</span>
         </div>
         <div className="home-card-tools">
           <button

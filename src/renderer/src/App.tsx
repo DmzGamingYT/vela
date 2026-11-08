@@ -29,6 +29,7 @@ export default function App() {
   const onboarded = useBrowser((state) => state.view?.settings.onboarded ?? true)
   const overlay = useBrowser((state) => state.overlay)
   const collapsed = useBrowser((state) => state.view?.settings.sidebarCollapsed ?? false)
+  const compact = useBrowser((state) => state.compactViewport)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
   const settings = useBrowser((state) => state.view?.settings ?? null)
@@ -42,6 +43,16 @@ export default function App() {
   useEffect(() => {
     void useBrowser.getState().init()
   }, [])
+
+  // Largeur de la coque : le repli automatique de la barre latérale et la garde
+  // de la vue scindée en dépendent. `ready` relance la mesure une fois l'état
+  // diffusé, sinon une fenêtre étroite ouverte au démarrage restait dépliée.
+  useEffect(() => {
+    const sync = (): void => useBrowser.getState().syncViewport(window.innerWidth)
+    sync()
+    window.addEventListener('resize', sync)
+    return () => window.removeEventListener('resize', sync)
+  }, [ready])
 
   // Mode, thème de couleur et intensité du verre : un seul passage pose tous
   // les jetons. L'espace actif peut fournir son propre thème.
@@ -157,7 +168,13 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      data-compact={compact}
+      // Un tiroir ancré à droite retire ~340 px à l'accueil : la grille doit
+      // le savoir, sinon elle garde deux colonnes trop étroites.
+      data-drawer={notesOpen || agentOpen ? 'true' : undefined}
+    >
       {/* L’ambiance habille le châssis : un calque fixe derrière le verre,
           jamais au-dessus du contenu des pages (WebContentsView séparées). */}
       <AmbienceScene ambience={ambience} className="ambience-chrome" />

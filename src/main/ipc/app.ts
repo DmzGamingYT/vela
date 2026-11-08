@@ -125,6 +125,15 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
     return ok
   })
   handle('settings:test-key', (payload) => host.testKey(payload))
+  // Oublier le zoom d'un seul domaine : la carte reste bornée côté store.
+  handle('settings:forget-zoom', (payload) => {
+    const input = (payload ?? {}) as { host?: unknown }
+    const name = typeof input.host === 'string' ? input.host.trim().toLowerCase() : ''
+    if (!name) return false
+    const removed = host.store.forgetHostZoom(name)
+    if (removed) host.broadcast()
+    return removed
+  })
 
   // L'image d'accueil reste un chemin local : on ne renvoie son contenu au
   // châssis que sur demande, pour ne pas alourdir chaque état diffusé.

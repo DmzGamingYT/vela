@@ -17,14 +17,15 @@ const ROOT = path.resolve(__dirname, '..')
 const REPO = process.env.GITHUB_REPOSITORY || 'DmzGamingYT/vela'
 const TOKEN = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || ''
 
-// La page d’accueil est la seule à porter le tableau des fichiers.
+// La page d’accueil est la seule à porter la fiche des fichiers.
+// Chaque ligne annonce son fichier dans `data-file` et son empreinte dans le
+// bouton de copie : on apparie les deux dans la même ligne, sans dépendre de la
+// forme exacte du HTML (le balisage peut changer, pas le fichier ni son hash).
 const lireSite = (fichier) => {
   const html = fs.readFileSync(fichier, 'utf8')
   const version = (html.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1]
   const fichiers = [
-    ...html.matchAll(
-      /releases\/download\/v[\d.]+\/([^"]+)">[^<]*<\/a>[\s\S]{0,600}?data-copy="([0-9a-f]{64})"/g
-    )
+    ...html.matchAll(/data-file="([^"]+)"[\s\S]{0,900}?data-copy="([0-9a-f]{64})"/g)
   ].map((m) => ({ nom: m[1], empreinte: m[2] }))
   return { version, fichiers }
 }

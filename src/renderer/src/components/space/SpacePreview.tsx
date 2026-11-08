@@ -4,6 +4,7 @@ import Favicon from '../Favicon'
 import { Icon } from '../Icon'
 import SpaceAvatar from './SpaceAvatar'
 import SpaceAvatarEditor from './SpaceAvatarEditor'
+import { greeting } from '../../lib/format'
 import { countLabel } from './spaceParts'
 
 export type PreviewMode = 'light' | 'dark'
@@ -136,8 +137,10 @@ export default function SpacePreview({
                   </div>
                 </div>
                 <div className="preview-page">
+                  {/* Même salutation que l'accueil : l'aperçu n'annonce plus
+                      « Bonsoir » en plein matin. */}
                   <span className="preview-hello">
-                    Bonsoir<span>.</span>
+                    {greeting()}<span>.</span>
                   </span>
                   <span className="preview-search">
                     <Icon name="search" size={9} />

@@ -204,7 +204,8 @@ const api: VelaApi = {
   settings: {
     update: (patch: SettingsPatch) => ipcRenderer.invoke('settings:update', patch),
     setKey: (input: SetKeyInput) => ipcRenderer.invoke('settings:set-key', input),
-    testKey: (provider) => ipcRenderer.invoke('settings:test-key', { provider })
+    testKey: (provider) => ipcRenderer.invoke('settings:test-key', { provider }),
+    forgetZoom: (host: string) => ipcRenderer.invoke('settings:forget-zoom', { host })
   },
   appearance: {
     pickImage: () => ipcRenderer.invoke('appearance:pick-image'),

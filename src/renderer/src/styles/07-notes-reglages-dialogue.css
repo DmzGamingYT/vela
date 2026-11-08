@@ -446,12 +446,18 @@
    l'encre pleine, les captures restent des puces discrètes à côté. */
 /* Les actions passent à la ligne : une barre qui défile sans barre visible
    rognait « Surligner » dès que le tiroir était étroit. */
+/* Cinq actions, deux colonnes : « Nouvelle note » en pleine largeur, puis
+   deux rangées régulières. Le flex laissait « Surligner » seul sur une
+   troisième ligne, collé à gauche. */
 .notes-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  row-gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   padding: 10px 14px 8px;
+}
+
+.notes-actions > .action:first-child {
+  grid-column: 1 / -1;
 }
 
 .notes-actions .action {
@@ -460,7 +466,8 @@
   gap: 5px;
   padding: 0 10px;
   border-radius: 8px;
-  font-size: 10.5px;
+  font-size: 11px;
+  justify-content: center;
   white-space: nowrap;
 }
 
@@ -542,6 +549,18 @@
   height: 34px;
   border-radius: 9px;
   font-size: 11.5px;
+}
+
+/* État de départ sans page ouverte : les quatre captures sont masquées. Cette
+   ligne dit où les retrouver, au lieu de laisser quatre boutons grisés sans
+   explication (ça ressemblait à un bug). */
+.notes-actions[data-no-page='true'] .notes-actions-hint {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .notes-actions .action[aria-disabled="true"] {
@@ -634,7 +653,7 @@
   height: 30px;
   padding: 0 12px;
   border-radius: 8px;
-  font-size: 10.5px;
+  font-size: 11px;
 }
 
 .notes-empty-mark {

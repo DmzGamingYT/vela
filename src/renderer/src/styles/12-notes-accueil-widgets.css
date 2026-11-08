@@ -1183,7 +1183,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1385,7 +1385,7 @@
 
 .home-engine {
   margin-left: auto;
-  font-size: 9.5px;
+  font-size: 11px;
   color: var(--faint);
 }
 
@@ -1602,9 +1602,16 @@
 
 .tile-badge {
   flex: 0 0 auto;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
+}
+
+/* Dans une tuile de 165 px, l'hôte et le badge ne tiennent pas ensemble :
+   « github.com » devenait « github.c… ». Le badge passe en infobulle de la
+   tuile, l'hôte garde toute la ligne. */
+.recent-tile .tile-badge {
+  display: none;
 }
 
 .tile-title {
@@ -1676,10 +1683,12 @@
 
 .day-zone {
   padding-top: 4px;
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--faint);
+  /* Capitales fines et espacées : le jeton `--faint` les rendait illisibles
+     en thème sombre (3,66:1). */
+  color: var(--muted);
   white-space: nowrap;
 }
 
@@ -1969,6 +1978,10 @@
   background: var(--fill);
   font-size: 10.5px;
   outline: none;
+}
+
+.home-tasks .tasks-add input::placeholder {
+  color: var(--faint);
 }
 
 .home-tasks .tasks-add input:focus {

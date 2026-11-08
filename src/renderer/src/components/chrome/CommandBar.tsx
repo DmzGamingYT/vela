@@ -84,6 +84,7 @@ export default function CommandBar() {
   const undoGrouping = useBrowser((state) => state.undoGrouping)
   const lastGrouping = useBrowser((state) => state.lastGrouping)
   const updateSettings = useBrowser((state) => state.updateSettings)
+  const toggleSidebar = useBrowser((state) => state.toggleSidebar)
   const workMode = useBrowser((state) => state.workMode)
   const setWorkMode = useBrowser((state) => state.setWorkMode)
 
@@ -306,7 +307,7 @@ export default function CommandBar() {
           : 'Replier la barre latérale',
         hint: shortcut('S'),
         icon: 'panel',
-        run: run(() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed }))
+        run: run(() => toggleSidebar())
       },
       {
         id: 'action-settings',
@@ -480,6 +481,7 @@ export default function CommandBar() {
     toggleTask,
     reload,
     updateSettings,
+    toggleSidebar,
     workMode,
     setWorkMode,
     groupTabsBySite,

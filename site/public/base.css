@@ -3,17 +3,21 @@
    L’icône de l’app donne tout : nuit #1B2150, mer #26307A, voiles crème
    #F6EFE4, coque corail #E8805A, voile d’ombre #B9BECB. Aucun dégradé, aucune
    ombre floue, aucun verre : des à-plats, des règles franches, des angles
-   courts. La structure se voit, comme sur une carte marine.
+   courts. La structure se voit, comme sur une carte marine. Une seule
+   exception, décrite dans home.css : l’ombre sous l’écran du héros.
    ========================================================================== */
 
 :root {
-  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
   /* Les titres sont la même famille système, très serrée et très grasse : le
      dessin plat de l’icône tient mieux sans empattements. */
   --display: var(--sans);
+  /* Une seule italique sur tout le site : le mot accentué du héros. */
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
 
   --wrap: 1120px;
   --narrow: 760px;
@@ -46,7 +50,7 @@
   color-scheme: light;
 }
 
-html[data-theme="dark"] {
+html[data-theme='dark'] {
   --bg: #12173b;
   --bg-deep: #0e1233;
   --surface: #1b2150;
@@ -284,11 +288,13 @@ kbd {
   font-size: 11.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+  transition:
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 
 .nav a:hover,
-.nav a[aria-current="page"] {
+.nav a[aria-current='page'] {
   color: var(--ink);
   border-bottom-color: var(--coral);
 }
@@ -313,13 +319,15 @@ kbd {
   border-radius: var(--radius);
   color: var(--ink-2);
   position: relative;
-  transition: color 0.2s var(--ease), background 0.2s var(--ease),
+  transition:
+    color 0.2s var(--ease),
+    background 0.2s var(--ease),
     border-color 0.2s var(--ease);
 }
 
 /* Zone cliquable de 44 px sans épaissir la bande de l’en-tête. */
 .icon-btn::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: -4px;
 }
@@ -333,11 +341,11 @@ kbd {
   display: none;
 }
 
-html[data-theme="dark"] .ico-sun {
+html[data-theme='dark'] .ico-sun {
   display: none;
 }
 
-html[data-theme="dark"] .ico-moon {
+html[data-theme='dark'] .ico-moon {
   display: block;
 }
 
@@ -359,8 +367,11 @@ html[data-theme="dark"] .ico-moon {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  transition: transform 0.2s var(--ease), background 0.2s var(--ease),
-    color 0.2s var(--ease), border-color 0.2s var(--ease);
+  transition:
+    transform 0.2s var(--ease),
+    background 0.2s var(--ease),
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 
 .btn:hover {
@@ -445,7 +456,7 @@ html[data-theme="dark"] .ico-moon {
 }
 
 .eyebrow::before {
-  content: "";
+  content: '';
   width: 8px;
   height: 8px;
   background: var(--coral);
@@ -596,7 +607,7 @@ h2.sec-title {
   }
 
   .nav.is-open a:hover,
-  .nav.is-open a[aria-current="page"] {
+  .nav.is-open a[aria-current='page'] {
     border-bottom-color: var(--coral);
   }
 
@@ -643,7 +654,9 @@ h2.sec-title {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.02em;
-  transition: border-color 0.18s var(--ease), background 0.18s var(--ease),
+  transition:
+    border-color 0.18s var(--ease),
+    background 0.18s var(--ease),
     color 0.18s var(--ease);
 }
 
@@ -652,7 +665,7 @@ h2.sec-title {
   color: var(--ink);
 }
 
-.keys-switch button[aria-pressed="true"] {
+.keys-switch button[aria-pressed='true'] {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--bg);

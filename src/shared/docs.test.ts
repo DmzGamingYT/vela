@@ -71,9 +71,10 @@ describe('limites documentées dans l’aide et sur le site', () => {
 
   it('garde le site sur une seule version, jamais en avance sur l’app', () => {
     // Le site ne peut pas annoncer une version dont les installateurs ne sont
-    // pas encore construits : leurs empreintes n'existent pas. Il suit donc la
-    // publication d'au plus une version, et chaque mention dit la même chose.
-    const announced = (home.match(/Fichiers de la version ([\d.]+)/) || [])[1] || ''
+    // pas encore construits : leurs empreintes n'existent pas. Depuis la
+    // refonte de la fiche de téléchargement, la version de référence se lit
+    // dans le JSON-LD (comme dans scripts/check-site-release.cjs).
+    const announced = (home.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1] || ''
     expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
     const site = announced.split('.').map(Number)
     const app = version.split('.').map(Number)

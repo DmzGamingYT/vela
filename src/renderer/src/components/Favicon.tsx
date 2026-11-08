@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import type { SyntheticEvent } from 'react'
+import type { CSSProperties, SyntheticEvent } from 'react'
 import { hostOf } from '@shared/url'
-import { domainLetter, needsUpgrade } from '../lib/favicon'
+import { domainLetter, isDarkMonoLogo, needsUpgrade } from '../lib/favicon'
 import { initials, tintFor } from '../lib/format'
 
 /**
@@ -19,7 +19,7 @@ const MAX_MEMO_ENTRIES = 256
 const memo = new Map<string, Promise<string | null>>()
 const memoCached = new Map<string, Promise<string | null>>()
 
-function setBounded(store: Map<string, Promise<string | null>>, key: string, value: Promise<string | null>): void {
+function setBounded<T>(store: Map<string, T>, key: string, value: T): void {
   if (store.size >= MAX_MEMO_ENTRIES) {
     const oldestKey = store.keys().next().value
     if (oldestKey) store.delete(oldestKey)
@@ -41,10 +41,39 @@ export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promi
   return task
 }
 
+const memoDark = new Map<string, boolean>()
+
 /** Après une purge du cache, les prochains montages redemandent l'icône. */
 export function clearFaviconMemo(): void {
   memo.clear()
   memoCached.clear()
+  memoDark.clear()
+}
+
+/**
+ * Un logo sombre quasi monochrome est invisible sur une tuile sombre : le
+ * canvas tranche une seule fois par source, puis le CSS l'inverse en sombre.
+ * Une image distante sans CORS teint le canvas : on garde l'icône telle quelle.
+ */
+function detectDarkMono(image: HTMLImageElement, src: string): boolean {
+  const known = memoDark.get(src)
+  if (known !== undefined) return known
+  let dark = false
+  try {
+    const side = 24
+    const canvas = document.createElement('canvas')
+    canvas.width = side
+    canvas.height = side
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (context) {
+      context.drawImage(image, 0, 0, side, side)
+      dark = isDarkMonoLogo(context.getImageData(0, 0, side, side).data)
+    }
+  } catch {
+    dark = false
+  }
+  setBounded(memoDark, src, dark)
+  return dark
 }
 
 export default function Favicon({
@@ -72,6 +101,7 @@ export default function Favicon({
   const [failed, setFailed] = useState<string[]>([])
   const [better, setBetter] = useState<string | null>(null)
   const [cached, setCached] = useState<string | null>(null)
+  const [darkMono, setDarkMono] = useState<{ src: string; dark: boolean } | null>(null)
   const upgraded = useRef(false)
   const tint = tintFor(label || hostOf(url ?? '') || 'vela')
 
@@ -90,8 +120,10 @@ export default function Favicon({
   // La page fournit souvent un 16 ou 32 px. On ne l'agrandit pas : on demande
   // une fois la meilleure icône du site, qui remplacera celle de la page.
   const onLoad = (event: SyntheticEvent<HTMLImageElement>): void => {
+    const image = event.currentTarget
+    setDarkMono({ src: image.src, dark: detectDarkMono(image, image.src) })
     if (!upgrade || !url || cacheOnly || upgraded.current) return
-    const natural = event.currentTarget.naturalWidth
+    const natural = image.naturalWidth
     if (!needsUpgrade(natural, size)) return
     upgraded.current = true
     void iconRequest(url, spaceId).then((data) => {
@@ -107,7 +139,9 @@ export default function Favicon({
   return (
     <span
       className="favicon"
-      style={{ color: tint, background: `${tint}1c` }}
+      // La teinte sert de graine : la feuille de style la ramène vers l'encre
+      // du thème pour que la lettre de secours reste lisible sur les deux fonds.
+      style={{ '--favicon-tint': tint } as CSSProperties}
       data-fallback={image ? undefined : 'true'}
       data-native={upgrade ? 'true' : undefined}
       aria-hidden="true"
@@ -121,6 +155,7 @@ export default function Favicon({
           loading="lazy"
           referrerPolicy="no-referrer"
           draggable={false}
+          data-dark-mono={darkMono?.src === image && darkMono.dark ? 'true' : undefined}
           onLoad={onLoad}
           onError={() => setFailed((current) => (image ? [...current, image] : current))}
         />

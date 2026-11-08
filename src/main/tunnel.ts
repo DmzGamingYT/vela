@@ -41,6 +41,7 @@ interface RawSource {
 
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+const MAX_PROVIDER_RESPONSE_BYTES = 2 * 1024 * 1024
 
 async function fetchText(url: string, signal: AbortSignal): Promise<string> {
   const response = await net.fetch(url, {
@@ -48,7 +49,7 @@ async function fetchText(url: string, signal: AbortSignal): Promise<string> {
     headers: { 'user-agent': UA, accept: 'text/html,application/json,application/atom+xml,*/*' }
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  return response.text()
+  return readLimited(response, MAX_PROVIDER_RESPONSE_BYTES)
 }
 
 async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
@@ -277,7 +278,7 @@ const ddg: TunnelProvider = {
       body: new URLSearchParams({ q: query, kl: looksFrench(query) ? 'fr-fr' : 'wt-wt' }).toString()
     })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    return ddgResults(await response.text())
+    return ddgResults(await readLimited(response, MAX_PROVIDER_RESPONSE_BYTES))
   }
 }
 
@@ -385,24 +386,27 @@ export function mainParagraphs(html: string): string {
  * Lit au plus `limit` octets du corps. `response.text()` chargeait la page
  * entière avant que le plafond ne s'applique : une réponse de 80 Mo passait.
  */
-async function readLimited(
-  response: { body: ReadableStream<Uint8Array> | null; text(): Promise<string> },
+export async function readLimited(
+  response: { body: ReadableStream<Uint8Array> | null },
   limit: number
 ): Promise<string> {
-  const reader = response.body?.getReader()
-  if (!reader) return (await response.text()).slice(0, limit)
+  if (!response.body) throw new Error('Réponse sans flux lisible')
+  const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let received = 0
   let text = ''
   while (received < limit) {
     const { done, value } = await reader.read()
     if (done) break
-    received += value.byteLength
-    text += decoder.decode(value, { stream: true })
+    const remaining = limit - received
+    const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value
+    received += chunk.byteLength
+    text += decoder.decode(chunk, { stream: true })
+    if (value.byteLength > remaining) break
   }
   text += decoder.decode()
   await reader.cancel().catch(() => undefined)
-  return text.slice(0, limit)
+  return text
 }
 
 async function snapshotPage(url: string, signal: AbortSignal): Promise<PageSnapshot> {

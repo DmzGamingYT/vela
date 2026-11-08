@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vela — maquette · Tweaks & Thèmes sur toute la page</title>
+<style>
+  /* ============================================================
+     Cadre de la maquette
+     ============================================================ */
+  :root { --board: #0d0d10; --board-ink: #e8e6e3; --board-muted: #8f8b86; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--board); color: var(--board-ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .bar {
+    height: 52px; display: flex; align-items: center; gap: 14px;
+    /* Dégage la pastille du client, posée en haut à gauche du panneau. */
+    padding: 0 18px 0 160px; border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .bar-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .bar-title b { font-size: 12.5px; font-weight: 600; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-title span { font-size: 11px; color: var(--board-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-grow { flex: 1; }
+  .bar-tag {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+    color: var(--board-muted); border: 1px solid rgba(255,255,255,.09);
+    padding: 4px 9px; border-radius: 999px;
+  }
+  .board-mode { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); flex: 0 0 auto; }
+  .board-mode button {
+    height: 24px; padding: 0 11px; border: 0; border-radius: 999px; background: none;
+    color: #a4a09b; font: inherit; font-size: 11px; cursor: pointer;
+  }
+  .board-mode button[aria-pressed="true"] { background: #efece7; color: #17161a; font-weight: 600; }
+
+  .board { position: absolute; inset: 52px 0 0; padding: 14px; }
+  .stage {
+    position: absolute; inset: 14px; overflow: hidden; border-radius: 16px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08);
+    isolation: isolate;
+  }
+
+  /* ============================================================
+     Jetons Vela
+     ============================================================ */
+  .stage {
+    --paper: #faf8f5;
+    --paper-deep: #f2ede5;
+    --surface: rgba(255,253,250,.78);
+    --surface-2: rgba(255,253,250,.6);
+    --ink: #1b1a18;
+    --ink-soft: #45413c;
+    --muted: rgba(27,26,24,.62);
+    --faint: rgba(27,26,24,.48);
+    --line: rgba(27,26,22,.11);
+    --line-soft: rgba(27,26,22,.06);
+    --edge: rgba(27,26,22,.12);
+    --fill: rgba(255,255,255,.5);
+    --accent: #5b5bd6;
+    --accent-soft: rgba(91,91,214,.13);
+    --glass-blur: 18px;
+    --amb-strength: .8;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: "SF Mono", ui-monospace, Menlo, monospace;
+    background: var(--paper); color: var(--ink); font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage[data-mode="dark"] {
+    --paper: #151518;
+    --paper-deep: #101013;
+    --surface: rgba(28,28,33,.78);
+    --surface-2: rgba(255,255,255,.06);
+    --ink: #f3f1ee;
+    --ink-soft: #cbc6bf;
+    --muted: rgba(243,241,238,.6);
+    --faint: rgba(243,241,238,.48);
+    --line: rgba(255,255,255,.11);
+    --line-soft: rgba(255,255,255,.06);
+    --edge: rgba(255,255,255,.08);
+    --fill: rgba(255,255,255,.05);
+    --accent-soft: rgba(179,174,255,.18);
+  }
+  .stage button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .stage input { font: inherit; color: inherit; }
+
+  /* ============================================================
+     Couche d'ambiance — elle couvre toute la page
+     ============================================================ */
+  .amb {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    opacity: var(--amb-strength);
+    transition: opacity .45s cubic-bezier(.16,1,.3,1);
+  }
+  .stage[data-amb="none"] > .amb { opacity: 0; }
+  .amb-layer {
+    position: absolute; inset: -18%; display: block; pointer-events: none;
+    transform: translateZ(0); will-change: transform, opacity;
+  }
+  .amb-base { inset: 0; opacity: .72; }
+  .amb-sheen { mix-blend-mode: screen; }
+  .stage[data-mode="light"] .amb-sheen { mix-blend-mode: multiply; }
+
+  [data-amb="glace-feu"] .amb-base {
+    background:
+      radial-gradient(58% 62% at 22% 34%, color-mix(in srgb, var(--amb-1) 44%, transparent), transparent 72%),
+      radial-gradient(52% 58% at 78% 66%, color-mix(in srgb, var(--amb-2) 40%, transparent), transparent 74%);
+    animation: amb-flux 19s ease-in-out infinite alternate;
+  }
+  [data-amb="glace-feu"] .amb-clouds {
+    opacity: .5; filter: blur(26px);
+    background: radial-gradient(46% 46% at 50% 52%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 70%);
+    animation: amb-breathe 15s ease-in-out infinite alternate;
+  }
+  [data-amb="glace-feu"] .amb-particles {
+    opacity: .8; background-repeat: repeat; background-size: 230px 270px;
+    background-image:
+      radial-gradient(1.6px 1.6px at 30% 80%, color-mix(in srgb, var(--amb-2) 92%, transparent), transparent 70%),
+      radial-gradient(1.2px 1.2px at 68% 62%, color-mix(in srgb, var(--amb-1) 85%, transparent), transparent 70%),
+      radial-gradient(1.8px 1.8px at 82% 88%, color-mix(in srgb, var(--amb-2) 68%, transparent), transparent 70%),
+      radial-gradient(1px 1px at 48% 44%, color-mix(in srgb, var(--amb-1) 80%, transparent), transparent 70%);
+    animation: amb-rise 32s linear infinite;
+  }
+
+  [data-amb="multivers"] .amb-base {
+    opacity: .78;
+    background:
+      radial-gradient(42% 48% at 24% 26%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
+      radial-gradient(44% 50% at 76% 74%, color-mix(in srgb, var(--amb-2) 33%, transparent), transparent 74%);
+  }
+  [data-amb="multivers"] .amb-particles {
+    opacity: .5;
+    background-image: radial-gradient(circle at center, color-mix(in srgb, var(--amb-1) 66%, transparent) 1.15px, transparent 1.7px);
+    background-size: 10px 10px;
+  }
+  [data-amb="multivers"] .amb-clouds {
+    opacity: .55;
+    background: repeating-linear-gradient(42deg, transparent 0 26px, color-mix(in srgb, var(--amb-2) 16%, transparent) 26px 27px);
+  }
+  [data-amb="multivers"] .amb-sheen {
+    opacity: .4;
+    background: repeating-linear-gradient(90deg, transparent 0 120px, color-mix(in srgb, var(--amb-2) 10%, transparent) 120px 121px);
+  }
+
+  [data-amb="reve-etolie"] .amb-base {
+    opacity: .7;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 64%),
+      radial-gradient(52% 46% at 72% 16%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 70%),
+      radial-gradient(60% 60% at 20% 76%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 74%);
+  }
+  [data-amb="reve-etolie"] .amb-clouds {
+    opacity: .55; filter: blur(22px);
+    background: radial-gradient(40% 34% at 62% 30%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 70%);
+    animation: amb-breathe 13s ease-in-out infinite alternate;
+  }
+  [data-amb="reve-etolie"] .amb-particles {
+    opacity: .85; background-size: 190px 210px;
+    background-image:
+      radial-gradient(1.4px 1.4px at 26% 32%, color-mix(in srgb, var(--amb-2) 95%, transparent), transparent 70%),
+      radial-gradient(1px 1px at 58% 72%, #fff, transparent 70%),
+      radial-gradient(1.6px 1.6px at 78% 24%, color-mix(in srgb, var(--amb-2) 88%, transparent), transparent 70%),
+      radial-gradient(1px 1px at 44% 54%, color-mix(in srgb, var(--amb-2) 70%, transparent), transparent 70%);
+    animation: amb-twinkle 9s ease-in-out infinite alternate;
+  }
+
+  [data-amb="voie-lactee"] .amb-base {
+    opacity: .82;
+    background:
+      conic-gradient(from 210deg at 62% 42%, color-mix(in srgb, var(--amb-1) 34%, transparent), transparent 38%, color-mix(in srgb, var(--amb-2) 30%, transparent) 62%, transparent 82%),
+      radial-gradient(70% 60% at 30% 80%, color-mix(in srgb, var(--amb-1) 32%, transparent), transparent 76%);
+    animation: amb-pan 72s ease-in-out infinite alternate;
+  }
+  [data-amb="voie-lactee"] .amb-clouds {
+    opacity: .55; filter: blur(20px);
+    background:
+      radial-gradient(38% 44% at 54% 46%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 72%),
+      radial-gradient(30% 36% at 66% 54%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%);
+    animation: amb-pan 96s ease-in-out infinite alternate-reverse;
+  }
+  [data-amb="voie-lactee"] .amb-particles {
+    opacity: .4; background-size: 240px 240px;
+    background-image:
+      radial-gradient(1.2px 1.2px at 22% 44%, #fff, transparent 70%),
+      radial-gradient(1px 1px at 64% 26%, color-mix(in srgb, var(--amb-2) 90%, transparent), transparent 70%),
+      radial-gradient(1.4px 1.4px at 48% 78%, #fff, transparent 70%);
+    animation: amb-twinkle 12s ease-in-out infinite alternate;
+  }
+
+  [data-amb="horizon-martien"] .amb-base {
+    opacity: .76;
+    background:
+      radial-gradient(58% 44% at 50% 88%, color-mix(in srgb, var(--amb-2) 38%, transparent), transparent 70%),
+      linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 24%, transparent), transparent 58%);
+  }
+  [data-amb="horizon-martien"] .amb-clouds {
+    opacity: .5; filter: blur(10px);
+    background: linear-gradient(92deg, transparent 0 18%, color-mix(in srgb, var(--amb-2) 22%, transparent) 38%, transparent 62%);
+    animation: amb-mirage 11s ease-in-out infinite alternate;
+  }
+  [data-amb="horizon-martien"] .amb-sheen {
+    opacity: .32;
+    background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--amb-2) 14%, transparent) 100%);
+  }
+
+  [data-amb="aura-tech"] .amb-base {
+    opacity: .44;
+    background:
+      radial-gradient(58% 48% at 50% 8%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 72%),
+      radial-gradient(44% 40% at 84% 86%, color-mix(in srgb, var(--amb-2) 20%, transparent), transparent 76%);
+    animation: amb-halo 20s ease-in-out infinite alternate;
+  }
+  [data-amb="aura-tech"] .amb-clouds {
+    opacity: .3; filter: blur(30px);
+    background: radial-gradient(50% 44% at 34% 42%, color-mix(in srgb, var(--amb-1) 22%, transparent), transparent 72%);
+  }
+  [data-amb="aura-tech"] .amb-sheen {
+    opacity: .4;
+    background: linear-gradient(112deg, transparent 26%, color-mix(in srgb, var(--amb-1) 14%, transparent) 46%, transparent 66%);
+    animation: amb-sweep 24s ease-in-out infinite;
+  }
+
+  [data-amb="cyber-neon"] .amb-base {
+    opacity: .8;
+    background:
+      radial-gradient(46% 54% at 12% 18%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
+      radial-gradient(46% 54% at 88% 82%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 72%);
+    animation: amb-neon 10s ease-in-out infinite alternate;
+  }
+  [data-amb="cyber-neon"] .amb-clouds {
+    opacity: .4; filter: blur(24px);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--amb-2) 18%, transparent), transparent 38%, color-mix(in srgb, var(--amb-1) 16%, transparent));
+  }
+  [data-amb="cyber-neon"] .amb-particles {
+    opacity: .34;
+    background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--amb-2) 40%, transparent) 0 1px, transparent 1px 4px);
+    animation: amb-scan 18s linear infinite;
+  }
+  [data-amb="cyber-neon"] .amb-sheen {
+    opacity: .35;
+    background: linear-gradient(76deg, transparent 0 44%, color-mix(in srgb, var(--amb-1) 18%, transparent) 50%, transparent 56%);
+    animation: amb-sweep 16s linear infinite;
+  }
+
+  [data-amb="sanctuaire-zen"] .amb-base {
+    opacity: .56;
+    background:
+      radial-gradient(56% 54% at 24% 30%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%),
+      radial-gradient(48% 50% at 78% 72%, color-mix(in srgb, var(--amb-2) 24%, transparent), transparent 76%);
+    animation: amb-drift 58s ease-in-out infinite alternate;
+  }
+  [data-amb="sanctuaire-zen"] .amb-clouds {
+    opacity: .24;
+    background-image: repeating-radial-gradient(circle at 32% 24%, rgba(255,255,255,.05) 0 1px, transparent 1px 3px);
+  }
+  [data-amb="sanctuaire-zen"] .amb-particles {
+    opacity: .22; background-size: 260px 260px;
+    background-image:
+      radial-gradient(1.4px 1.4px at 30% 62%, color-mix(in srgb, var(--amb-2) 80%, transparent), transparent 70%),
+      radial-gradient(1px 1px at 72% 34%, color-mix(in srgb, var(--amb-1) 70%, transparent), transparent 70%);
+    animation: amb-drift 74s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes amb-flux { 0% { opacity: .55; transform: scale(1); } 50% { opacity: .92; } 100% { opacity: .66; transform: scale(1.06); } }
+  @keyframes amb-breathe { from { opacity: .28; transform: scale(.94); } to { opacity: .62; transform: scale(1.05); } }
+  @keyframes amb-rise { from { transform: translate3d(0, 8%, 0); } to { transform: translate3d(0, -26%, 0); } }
+  @keyframes amb-twinkle { 0% { opacity: .4; transform: translate3d(0, 2%, 0); } 55% { opacity: .9; } 100% { opacity: .62; transform: translate3d(0, -2%, 0); } }
+  @keyframes amb-pan { from { transform: translate3d(-4%, 2%, 0) scale(1.18); } to { transform: translate3d(4%, -2%, 0) scale(1.26); } }
+  @keyframes amb-mirage { from { transform: translate3d(-1%, 0, 0) skewY(0); } to { transform: translate3d(1%, -1.2%, 0) skewY(.7deg); } }
+  @keyframes amb-halo { from { opacity: .3; transform: scale(1); } to { opacity: .52; transform: scale(1.05); } }
+  @keyframes amb-sweep { 0% { transform: translate3d(-14%, 0, 0); } 60%, 100% { transform: translate3d(14%, 0, 0); } }
+  @keyframes amb-neon { from { opacity: .62; } to { opacity: .9; } }
+  @keyframes amb-scan { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 12%, 0); } }
+  @keyframes amb-drift { from { transform: translate3d(-1.5%, 1%, 0) scale(1.02); } to { transform: translate3d(1.5%, -1%, 0) scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) { .amb-layer { animation: none !important; } }
+
+  /* ============================================================
+     La page de Vela, sous les réglages
+     ============================================================ */
+  .app { position: absolute; inset: 0; z-index: 1; display: flex; }
+  .rail {
+    width: 46px; flex: 0 0 46px; display: flex; flex-direction: column; align-items: center;
+    gap: 9px; padding: 13px 0; background: color-mix(in srgb, var(--paper-deep) 82%, transparent);
+    border-right: 1px solid var(--edge);
+  }
+  .rail-dot { width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .rail-dot.is-active { width: 11px; height: 11px; background: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .rail-add { margin-top: 4px; width: 18px; height: 18px; border-radius: 6px; display: grid; place-items: center; border: 1px solid var(--edge); color: var(--muted); font-size: 12px; }
+
+  .sidebar {
+    width: 200px; flex: 0 0 200px; display: flex; flex-direction: column; gap: 4px;
+    padding: 14px 11px 12px; border-right: 1px solid var(--edge);
+    background: color-mix(in srgb, var(--paper) 24%, transparent);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  }
+  .brand { font-family: var(--serif); font-size: 20px; letter-spacing: -.01em; margin: 2px 4px 12px; }
+  .brand b { color: var(--accent); font-weight: 400; }
+  .side-nav { display: flex; align-items: center; gap: 8px; height: 27px; padding: 0 8px; border-radius: 7px; color: var(--muted); font-size: 11.5px; }
+  .side-nav.is-active { color: var(--ink); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .side-nav i { width: 7px; height: 7px; border-radius: 2px; background: currentColor; opacity: .55; }
+  .side-label { margin: 13px 8px 4px; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--faint); }
+  .side-foot { margin-top: auto; display: flex; align-items: center; gap: 7px; padding: 0 8px; color: var(--muted); font-size: 11px; }
+  .side-foot i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--edge); }
+
+  .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar { height: 46px; flex: 0 0 46px; display: flex; align-items: center; gap: 7px; padding: 0 11px; border-bottom: 1px solid var(--line-soft); }
+  .nb { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+  .addr {
+    flex: 1; min-width: 0; height: 29px; display: flex; align-items: center; gap: 7px;
+    padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 11.5px;
+    border: 1px solid transparent;
+  }
+  .addr i { width: 8px; height: 8px; border-radius: 3px; border: 1px solid var(--muted); }
+  .addr span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .addr kbd { margin-left: auto; }
+
+  .home { flex: 1; min-height: 0; overflow: hidden; position: relative; background: var(--paper); transition: background .4s ease; }
+  .stage[data-scope="page"]:not([data-amb="none"]) .workspace,
+  .stage[data-scope="page"]:not([data-amb="none"]) .topbar { background: transparent; }
+  .stage[data-scope="page"]:not([data-amb="none"]) .home {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 34%, transparent), color-mix(in srgb, var(--paper) 14%, transparent));
+  }
+  .home-inner { padding: 34px 30px; max-width: 620px; }
+  .kicker { font-size: 9px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  .home h1 { font-family: var(--serif); font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: -.02em; margin: 10px 0 10px; }
+  .home .lede { font-size: 12px; line-height: 1.6; color: var(--ink-soft); max-width: 300px; margin: 0; }
+  .search {
+    margin-top: 22px; height: 40px; display: flex; align-items: center; gap: 9px;
+    padding: 0 13px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--surface); backdrop-filter: blur(var(--glass-blur)); color: var(--muted); font-size: 12px;
+  }
+  .search i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid currentColor; }
+  .search kbd { margin-left: auto; }
+  .home-actions { display: flex; gap: 7px; margin-top: 10px; }
+  .pill { height: 28px; padding: 0 11px; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 11px; }
+  .pill.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 26px; }
+  .tile {
+    height: 74px; border-radius: 11px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px;
+    border: 1px solid var(--line-soft); background: var(--surface); backdrop-filter: blur(var(--glass-blur));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+  }
+  .tile b { font-size: 10.5px; font-weight: 550; }
+  .tile span { font-size: 9.5px; color: var(--muted); }
+  .tile i { width: 16px; height: 16px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 20%, transparent); margin-bottom: 2px; }
+
+  /* ============================================================
+     Feuille des réglages
+     ============================================================ */
+  .sheet {
+    position: absolute; z-index: 5; top: 12px; right: 12px; bottom: 12px; width: min(778px, calc(100% - 24px));
+    display: flex; border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--edge);
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: blur(24px) saturate(130%);
+    box-shadow: 0 40px 100px rgba(20,14,6,.3), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  .stage[data-mode="dark"] .sheet { box-shadow: 0 40px 110px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08); }
+
+  .snav {
+    width: 188px; flex: 0 0 188px; display: flex; flex-direction: column; gap: 3px;
+    padding: 14px 10px; border-right: 1px solid var(--line-soft);
+    background: color-mix(in srgb, var(--paper-deep) 58%, transparent);
+  }
+  .snav .brand { font-size: 17px; margin: 0 6px 10px; }
+  .search-mini {
+    height: 27px; display: flex; align-items: center; gap: 6px; padding: 0 8px; margin-bottom: 10px;
+    border-radius: 7px; border: 1px solid var(--line-soft); background: var(--fill); color: var(--faint); font-size: 10.5px;
+  }
+  .search-mini kbd { margin-left: auto; }
+  .snav-group { margin-top: 8px; }
+  .snav-label { margin: 0 6px 3px; font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .snav-item {
+    width: 100%; display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px;
+    border-radius: 7px; color: var(--muted); font-size: 11.5px; text-align: left; white-space: nowrap;
+  }
+  .snav-item:hover { background: var(--fill); color: var(--ink-soft); }
+  .snav-item[aria-current="page"] { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--ink); font-weight: 550; }
+  .snav-item svg { width: 13px; height: 13px; flex: 0 0 13px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .snav-badge {
+    margin-left: auto; font-size: 8px; letter-spacing: .06em; text-transform: uppercase;
+    padding: 1.5px 5px; border-radius: 999px; color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  .spane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .shead {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 15px 18px 12px; border-bottom: 1px solid var(--line-soft);
+  }
+  .shead h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; letter-spacing: -.01em; margin: 0 0 3px; }
+  .mock-tag {
+    display: inline-block; margin-bottom: 5px; padding: 1.5px 6px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted);
+    font-size: 8px; letter-spacing: .12em; text-transform: uppercase;
+  }
+  .shead p { margin: 0; font-size: 11px; color: var(--muted); max-width: 440px; line-height: 1.5; }
+  .close { width: 24px; height: 24px; flex: 0 0 24px; display: grid; place-items: center; border-radius: 7px; color: var(--muted); font-size: 14px; }
+  .close:hover { background: var(--fill); color: var(--ink); }
+
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 15px 18px 22px; }
+  .scroll::-webkit-scrollbar { width: 8px; }
+  .scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink) 16%, transparent); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+
+  .block + .block { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+  .block-head { margin-bottom: 10px; }
+  .block-head h3 { margin: 0 0 3px; font-size: 12px; font-weight: 600; letter-spacing: .005em; }
+  .block-head p { margin: 0; font-size: 10.5px; line-height: 1.5; color: var(--muted); }
+  .block-head .row { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+  /* --- Pages non dessinées ---------------------------------- */
+  .stub { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px; border-radius: 12px; border: 1px dashed var(--line); background: var(--fill); }
+  .stub b { font-size: 12px; }
+  .stub p { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.55; max-width: 380px; }
+
+  /* --- Tweaks ------------------------------------------------ */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); gap: 6px; }
+  .swatch {
+    display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 2px 5px;
+    border-radius: 9px; border: 1px solid transparent; min-width: 0;
+  }
+  .swatch:hover { background: var(--fill); }
+  .swatch[data-active="true"] { border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); background: var(--accent-soft); }
+  .disc {
+    width: 26px; height: 26px; flex: 0 0 26px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0,0,0,.14), 0 4px 10px -6px var(--sw);
+    color: var(--sw-ink); font-size: 11px; font-weight: 700;
+  }
+  .swatch .name { font-size: 9px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .swatch[data-active="true"] .name { color: var(--ink); }
+
+  .free-color { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-soft); background: var(--fill); }
+  .free-color .disc { width: 22px; height: 22px; flex-basis: 22px; }
+  .free-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .free-copy b { font-size: 11px; font-weight: 550; }
+  .free-copy span { font-size: 9.5px; color: var(--muted); }
+  .free-fields { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hex {
+    width: 74px; height: 26px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--paper); font-family: var(--mono); font-size: 10.5px; letter-spacing: .02em;
+  }
+  .rgb { display: flex; gap: 4px; }
+  .rgb label {
+    display: inline-flex; align-items: center; gap: 3px; padding: 3px 6px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--paper); font-size: 8.5px; color: var(--muted);
+  }
+  .rgb input { width: 25px; border: 0; background: none; padding: 0; font-family: var(--mono); font-size: 10px; color: var(--ink); }
+
+  .slider-head { display: flex; align-items: baseline; justify-content: space-between; font-size: 11.5px; font-weight: 500; }
+  .slider-value { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .range { width: 100%; height: 20px; appearance: none; background: transparent; margin: 7px 0 3px; cursor: pointer; }
+  .range::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--amb-2, transparent)));
+    box-shadow: inset 0 0 0 1px var(--line-soft);
+  }
+  .range::-webkit-slider-thumb {
+    appearance: none; width: 15px; height: 15px; margin-top: -5.5px; border-radius: 50%;
+    background: var(--paper); border: 1px solid var(--edge);
+    box-shadow: 0 2px 8px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .scale { display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); }
+
+  .glass-demo {
+    position: relative; overflow: hidden; margin-top: 11px; padding: 14px; border-radius: 13px;
+    border: 1px solid var(--line); background: linear-gradient(150deg, var(--accent-soft), transparent 62%), var(--paper-deep);
+  }
+  .orb {
+    position: absolute; right: -24px; top: -34px; width: 132px; height: 132px; border-radius: 50%;
+    background: conic-gradient(from 140deg, var(--amb-1, var(--accent)), var(--amb-2, var(--accent)), var(--amb-1, var(--accent)));
+    filter: blur(9px); opacity: .55;
+  }
+  .stack { position: relative; z-index: 1; }
+  .slab {
+    display: block; height: 24px; border-radius: 7px; border: 1px solid var(--line);
+    background: rgba(255,255,255,.06); backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  }
+  .slab.raised { margin-top: 7px; margin-left: 12px; background: var(--surface); }
+  .slab.top { margin-top: 7px; margin-left: 24px; background: linear-gradient(150deg, rgba(255,255,255,.1), rgba(255,255,255,0)), var(--surface); }
+  .reset {
+    width: 100%; height: 32px; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 8px; border: 1px solid var(--line); background: var(--fill); color: var(--ink-soft); font-size: 11px;
+  }
+  .reset:hover { border-color: var(--muted); color: var(--ink); }
+
+  /* --- Aperçu de la page (mini fenêtre) ---------------------- */
+  .mini {
+    position: relative; height: 146px; border-radius: 13px; overflow: hidden; isolation: isolate;
+    border: 1px solid var(--line); margin-bottom: 12px; background: var(--paper-deep);
+  }
+  .mini-app { position: absolute; inset: 0; display: flex; }
+  .mini-rail { width: 16px; flex: 0 0 16px; padding: 9px 0 0; display: flex; flex-direction: column; align-items: center; gap: 6px; background: color-mix(in srgb, var(--paper-deep) 70%, transparent); border-right: 1px solid var(--line-soft); }
+  .mini-rail i { width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 20%, transparent); }
+  .mini-rail i.on { width: 6px; height: 6px; background: var(--accent); }
+  .mini-side { width: 60px; flex: 0 0 60px; padding: 8px 6px; display: flex; flex-direction: column; gap: 5px; background: color-mix(in srgb, var(--paper) 26%, transparent); border-right: 1px solid var(--line-soft); backdrop-filter: blur(8px); }
+  .mini-side b { font-family: var(--serif); font-weight: 400; font-size: 11px; margin-bottom: 3px; }
+  .mini-side span { display: block; height: 5px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 16%, transparent); }
+  .mini-side span.on { background: var(--accent); width: 76%; }
+  .mini-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mini-top { height: 18px; flex: 0 0 18px; display: flex; align-items: center; padding: 0 6px; border-bottom: 1px solid var(--line-soft); }
+  .mini-top span { height: 7px; flex: 1; border-radius: 3px; background: color-mix(in srgb, var(--ink) 9%, transparent); }
+  .mini-home { flex: 1; padding: 10px 12px; background: var(--paper); transition: background .35s ease; }
+  .mini[data-scope="page"] .mini-home { background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 30%, transparent), color-mix(in srgb, var(--paper) 12%, transparent)); }
+  .mini[data-scope="page"] .mini-main { background: transparent; }
+  .mini-kicker { display: block; font-size: 5.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .mini-home strong { display: block; font-family: var(--serif); font-weight: 400; font-size: 21px; letter-spacing: -.02em; margin: 3px 0 6px; }
+  .mini-search { display: flex; align-items: center; height: 16px; max-width: 190px; padding: 0 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); color: var(--faint); font-size: 6px; }
+  .mini-tiles { display: flex; gap: 5px; margin-top: 7px; }
+  .mini-tiles i { flex: 1; height: 22px; border-radius: 5px; border: 1px solid var(--line-soft); background: var(--surface); }
+  .mini-chip {
+    position: absolute; right: 8px; bottom: 8px; z-index: 2;
+    padding: 3px 7px; border-radius: 999px; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--paper) 80%, transparent); color: var(--muted);
+    font-size: 8px; letter-spacing: .04em;
+  }
+
+  /* --- Thèmes ------------------------------------------------ */
+  .new-note { display: flex; gap: 7px; align-items: flex-start; margin: 0 0 10px; font-size: 9.5px; line-height: 1.5; color: var(--muted); }
+  .new-note b {
+    flex: 0 0 auto; font-size: 8px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 999px; color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  .seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; border: 1px solid var(--line); background: var(--fill); }
+  .seg button { height: 22px; padding: 0 9px; border-radius: 999px; font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); font-weight: 550; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+  .none-row {
+    width: 100%; display: flex; align-items: center; gap: 9px; margin: 12px 0;
+    padding: 9px 10px; border-radius: 11px; border: 1px solid var(--line-soft); background: var(--fill); text-align: left;
+  }
+  .none-row[data-active="true"] { border-color: color-mix(in srgb, var(--accent) 44%, var(--line)); background: var(--accent-soft); }
+  .none-mark { width: 24px; height: 24px; flex: 0 0 24px; display: grid; place-items: center; border-radius: 7px; border: 1px solid var(--edge); color: var(--muted); }
+  .none-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .none-copy b { font-size: 11px; font-weight: 550; }
+  .none-copy span { font-size: 9.5px; color: var(--muted); }
+  .none-check { margin-left: auto; color: var(--accent); font-size: 12px; }
+
+  .amb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 9px; }
+  .amb-card {
+    display: flex; flex-direction: column; align-items: stretch; gap: 7px; padding: 8px; text-align: left;
+    border-radius: 14px; border: 1px solid var(--line-soft);
+    background: linear-gradient(155deg, rgba(255,255,255,.07), rgba(255,255,255,0) 46%), var(--surface);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 18px 40px -34px rgba(0,0,0,.55);
+    transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .25s;
+  }
+  .amb-card:hover { transform: translateY(-2px); border-color: var(--line); }
+  .amb-card[data-active="true"] { border-color: color-mix(in srgb, var(--accent) 52%, var(--line)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 0 0 1px var(--accent-soft), 0 22px 46px -34px var(--accent); }
+  .thumb { display: block; width: 100%; position: relative; height: 64px; border-radius: 9px; overflow: hidden; isolation: isolate; background: var(--paper-deep); border: 1px solid rgba(255,255,255,.09); }
+  .thumb .amb-layer { inset: -30%; }
+  .thumb .amb-base { inset: 0; }
+  .card-copy { display: flex; flex-direction: column; gap: 1px; padding: 0 2px 1px; min-width: 0; }
+  .card-name { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
+  .card-name .tick { margin-left: auto; color: var(--accent); font-size: 11px; }
+  .card-tagline { font-size: 9.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-motion { font-size: 8.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .foot-note { margin: 11px 0 0; font-size: 9px; line-height: 1.55; color: var(--faint); }
+  .stage kbd {
+    font-family: inherit; font-size: 8.5px; line-height: 1.2; color: var(--muted);
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 4px;
+  }
+
+  /* ============================================================
+     Adaptation : panneau étroit, tablette, large
+     ============================================================ */
+  @media (max-width: 1010px) {
+    .sheet { left: 12px; width: auto; bottom: 12px; }
+    /* Le panneau occupe la place : l'aperçu de page prend le relais dans Thèmes. */
+    .app { display: none; }
+  }
+  @media (max-width: 880px) {
+    .bar { height: 48px; padding: 0 12px; gap: 10px; }
+    .bar-title { display: none; }
+    .board { inset: 48px 0 0; padding: 10px; }
+    .stage { inset: 10px; }
+    .bar-title span { display: none; }
+    .bar-tag { display: none; }
+    .sheet { top: 8px; right: 8px; bottom: 8px; left: 8px; width: auto; flex-direction: column; border-radius: 16px; }
+    .snav {
+      width: auto; flex: 0 0 auto; flex-direction: row; flex-wrap: wrap; gap: 3px;
+      padding: 8px; border-right: 0; border-bottom: 1px solid var(--line-soft);
+    }
+    .snav .brand, .snav .search-mini, .snav-label { display: none; }
+    .snav-item { width: auto; height: 26px; padding: 0 9px; font-size: 10.5px; }
+    .snav-item svg { display: none; }
+    .snav-badge { display: none; }
+    .shead { padding: 12px 14px 10px; }
+    .shead h2 { font-size: 20px; }
+    .shead p { font-size: 10.5px; }
+    .scroll { padding: 13px 14px 20px; }
+  }
+  @media (max-width: 470px) {
+    .bar-title b { font-size: 11px; }
+    .board-mode button { height: 22px; padding: 0 9px; font-size: 10px; }
+    .free-fields { margin-left: 0; width: 100%; }
+    .hex { flex: 1; width: auto; }
+    .rgb { flex: 1; }
+    .rgb label { flex: 1; }
+    .rgb input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-title">
+    <b>Vela — maquette · Tweaks &amp; Thèmes</b>
+    <span>Les deux sections reviennent, et l’ambiance couvre toute la page. Rien n’est encore installé.</span>
+  </div>
+  <span class="bar-grow"></span>
+  <span class="bar-tag">Proposition</span>
+  <div class="board-mode" role="group" aria-label="Mode de la maquette">
+    <button type="button" data-mode="light" aria-pressed="true">Clair</button>
+    <button type="button" data-mode="dark" aria-pressed="false">Sombre</button>
+  </div>
+</header>
+
+<div class="board">
+  <div class="stage" id="stage" data-mode="light" data-amb="reve-etolie" data-scope="page">
+
+    <!-- L'ambiance : le calque qui passe sous toute la page -->
+    <div class="amb" id="amb" data-amb="reve-etolie" aria-hidden="true">
+      <span class="amb-layer amb-base"></span>
+      <span class="amb-layer amb-clouds"></span>
+      <span class="amb-layer amb-particles"></span>
+      <span class="amb-layer amb-sheen"></span>
+    </div>
+
+    <!-- La page de Vela, derrière -->
+    <div class="app" aria-hidden="true">
+      <div class="rail">
+        <span class="rail-dot is-active"></span>
+        <span class="rail-dot"></span>
+        <span class="rail-dot"></span>
+        <span class="rail-add">+</span>
+      </div>
+      <aside class="sidebar">
+        <div class="brand">Vela<b>.</b></div>
+        <div class="side-nav is-active"><i></i>Accueil</div>
+        <div class="side-nav"><i></i>Atelier</div>
+        <div class="side-nav"><i></i>Notes</div>
+        <p class="side-label">Espaces</p>
+        <div class="side-nav"><i></i>Personnel</div>
+        <div class="side-nav"><i></i>Veille</div>
+        <div class="side-foot"><i></i>Sessions</div>
+      </aside>
+      <div class="workspace">
+        <div class="topbar">
+          <span class="nb">‹</span><span class="nb">›</span><span class="nb">↻</span>
+          <span class="addr"><i></i><span>vela://home</span><kbd>⌘L</kbd></span>
+          <span class="nb">☰</span>
+        </div>
+        <div class="home">
+          <div class="home-inner">
+            <div class="kicker">Samedi 7 novembre</div>
+            <h1>Bonjour.</h1>
+            <p class="lede">Vos pages, vos notes et votre agent, dans un seul espace qui reste calme.</p>
+            <div class="search"><i></i>Rechercher ou saisir une adresse<kbd>⌘K</kbd></div>
+            <div class="home-actions">
+              <span class="pill primary">Nouvel onglet</span>
+              <span class="pill">Agent</span>
+            </div>
+            <div class="tiles">
+              <div class="tile"><i></i><b>GitHub</b><span>Vos projets</span></div>
+              <div class="tile"><i></i><b>Hacker News</b><span>La tech du jour</span></div>
+              <div class="tile"><i></i><b>Le Monde</b><span>L’actualité</span></div>
+              <div class="tile"><i></i><b>Wikipédia</b><span>La référence libre</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Les réglages -->
+    <div class="sheet" role="dialog" aria-label="Réglages — maquette">
+      <aside class="snav">
+        <div class="brand">Vela<b>.</b></div>
+        <div class="search-mini">⌕ Chercher<kbd>⌘F</kbd></div>
+        <p class="snav-label">Navigateur</p>
+        <button type="button" class="snav-item" data-page="appearance">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><circle cx="12" cy="16" r="1.2"/></svg>
+          Apparence
+        </button>
+        <button type="button" class="snav-item" data-page="tweaks">
+          <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+          Tweaks <span class="snav-badge">retour</span>
+        </button>
+        <button type="button" class="snav-item" data-page="themes" aria-current="page">
+          <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18 16l.8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8z"/></svg>
+          Thèmes <span class="snav-badge">retour</span>
+        </button>
+        <button type="button" class="snav-item" data-page="other">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/></svg>
+          Navigation
+        </button>
+        <button type="button" class="snav-item" data-page="other">
+          <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 9-4.1-.8-7-4.6-7-9V6z"/></svg>
+          Confidentialité
+        </button>
+        <p class="snav-label">Application</p>
+        <button type="button" class="snav-item" data-page="other">
+          <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h6M7 14h3"/></svg>
+          Raccourcis
+        </button>
+        <button type="button" class="snav-item" data-page="other">
+          <svg viewBox="0 0 24 24"><path d="M12 4v9M8 11l4 4 4-4M5 19h14"/></svg>
+          Mises à jour
+        </button>
+      </aside>
+
+      <div class="spane">
+        <header class="shead">
+          <div>
+            <span class="mock-tag">Maquette</span>
+            <h2 id="page-title">Thèmes</h2>
+            <p id="page-lede">Huit ambiances animées. Elles couvrent maintenant toute la page, pas seulement le verre.</p>
+          </div>
+          <button type="button" class="close" aria-label="Fermer">×</button>
+        </header>
+
+        <div class="scroll" id="scroll">
+          <!-- ================= THÈMES ================= -->
+          <section class="page" data-page="themes">
+            <p class="new-note">
+              <b>Nouveau</b>
+              <span>L’ambiance passe derrière l’accueil, la barre d’adresse et le verre, comme la teinte d’accent.
+              Le contenu des sites ouverts reste intact : il vit dans des vues séparées.</span>
+            </p>
+
+            <div class="mini" id="mini" data-amb="reve-etolie" data-scope="page">
+              <div class="amb" id="miniAmb" data-amb="reve-etolie" aria-hidden="true">
+                <span class="amb-layer amb-base"></span>
+                <span class="amb-layer amb-clouds"></span>
+                <span class="amb-layer amb-particles"></span>
+                <span class="amb-layer amb-sheen"></span>
+              </div>
+              <div class="mini-app" aria-hidden="true">
+                <div class="mini-rail"><i class="on"></i><i></i><i></i></div>
+                <div class="mini-side">
+                  <b>Vela.</b>
+                  <span class="on"></span><span></span><span></span><span></span>
+                </div>
+                <div class="mini-main">
+                  <div class="mini-top"><span></span></div>
+                  <div class="mini-home">
+                    <span class="mini-kicker">Samedi 7 novembre</span>
+                    <strong>Bonjour.</strong>
+                    <span class="mini-search">Rechercher ou saisir une adresse</span>
+                    <div class="mini-tiles"><i></i><i></i><i></i></div>
+                  </div>
+                </div>
+              </div>
+              <span class="mini-chip" id="mini-chip">Toute la page</span>
+            </div>
+
+            <div class="block-head">
+              <div class="row">
+                <div>
+                  <h3>Portée de l’ambiance</h3>
+                  <p>Où la teinte et le mouvement se posent.</p>
+                </div>
+                <div class="seg" role="group" aria-label="Portée de l’ambiance">
+                  <button type="button" data-scope="page" aria-pressed="true">Toute la page</button>
+                  <button type="button" data-scope="chrome" aria-pressed="false">Châssis seul</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="block-head" style="margin-top:14px">
+              <div class="slider-head">
+                <span>Présence de l’ambiance</span>
+                <span class="slider-value" id="amb-value">80 %</span>
+              </div>
+              <input class="range" id="amb-range" type="range" min="0" max="100" step="5" value="80" aria-label="Présence de l’ambiance">
+              <div class="scale"><span>Discrète</span><span>Affirmée</span></div>
+            </div>
+
+            <button type="button" class="none-row" id="amb-none" data-active="false" aria-pressed="false">
+              <span class="none-mark">○</span>
+              <span class="none-copy">
+                <b>Aucune ambiance</b>
+                <span>Le fond sobre d’origine, zéro animation de fond.</span>
+              </span>
+              <span class="none-check" hidden>✓</span>
+            </button>
+
+            <div class="amb-grid" id="amb-grid" role="radiogroup" aria-label="Ambiances animées"></div>
+
+            <p class="foot-note">
+              Les animations ne touchent que des calques composés (transform, opacité). « Réduire les animations »
+              les fige, le contraste élevé les atténue, et le contenu des pages n’est jamais recoloré.
+            </p>
+          </section>
+
+          <!-- ================= TWEAKS ================= -->
+          <section class="page" data-page="tweaks" hidden>
+            <div class="block">
+              <div class="block-head">
+                <h3>Accent</h3>
+                <p>Une seule teinte, déclinée sur tout le châssis et l’accueil. Le contenu des sites n’est jamais recoloré.</p>
+              </div>
+              <div class="swatches" id="swatches" role="group" aria-label="Palette d’accentuation"></div>
+
+              <div class="free-color">
+                <span class="disc" id="free-disc" aria-hidden="true"></span>
+                <span class="free-copy">
+                  <b>Teinte libre</b>
+                  <span>HEX ou RVB, elle prend la case « Personnalisée ».</span>
+                </span>
+                <span class="free-fields">
+                  <input class="hex" id="hex" value="#5B5BD6" aria-label="Code hexadécimal de l’accent" spellcheck="false">
+                  <span class="rgb" aria-label="Teinte en rouge, vert, bleu">
+                    <label>R <input id="r" type="number" min="0" max="255" value="91"></label>
+                    <label>V <input id="g" type="number" min="0" max="255" value="91"></label>
+                    <label>B <input id="b" type="number" min="0" max="255" value="214"></label>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="block-head">
+                <h3>Verre dépoli</h3>
+                <p>Intensité du flou des panneaux. Zéro rend le verre net, quarante le rend laiteux.</p>
+              </div>
+              <div class="slider-head">
+                <span>Intensité</span>
+                <span class="slider-value" id="glass-value">18 px</span>
+              </div>
+              <input class="range" id="glass-range" type="range" min="0" max="40" step="1" value="18" aria-label="Intensité du verre">
+              <div class="scale"><span>Net</span><span>Laiteux</span></div>
+
+              <div class="glass-demo" aria-hidden="true">
+                <span class="orb"></span>
+                <div class="stack">
+                  <span class="slab"></span>
+                  <span class="slab raised"></span>
+                  <span class="slab top"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="block">
+              <button type="button" class="reset" id="reset">↻ Réinitialiser l’apparence</button>
+            </div>
+          </section>
+
+          <!-- ================= AUTRES PAGES ================= -->
+          <section class="page" data-page="appearance" hidden>
+            <div class="stub">
+              <b>Déjà en place</b>
+              <p>Mode, fond de l’accueil, densité, taille du texte, contraste élevé et thème selon l’heure restent
+              dans Apparence. La proposition ne les déplace pas : elle sort seulement l’accent et les ambiances.</p>
+            </div>
+          </section>
+          <section class="page" data-page="other" hidden>
+            <div class="stub">
+              <b>Hors maquette</b>
+              <p>Cette section reste telle quelle. Seules « Tweaks » et « Thèmes » sont redessinées ici.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const THEMES = [
+    { id: 'indigo', label: 'Indigo', light: '#5B5BD6', dark: '#B3AEFF' },
+    { id: 'rouge', label: 'Rouge', light: '#E5484D', dark: '#FF6369' },
+    { id: 'orange', label: 'Orange', light: '#F76B15', dark: '#FF8B3E' },
+    { id: 'ambre', label: 'Ambre', light: '#E5A100', dark: '#FFC53D' },
+    { id: 'vert', label: 'Vert', light: '#30A46C', dark: '#3DD68C' },
+    { id: 'turquoise', label: 'Turquoise', light: '#12A594', dark: '#0BD8B6' },
+    { id: 'bleu', label: 'Bleu', light: '#0091FF', dark: '#52A9FF' },
+    { id: 'violet', label: 'Violet', light: '#8E4EC6', dark: '#BF7AF0' },
+    { id: 'rose', label: 'Rose', light: '#E93D82', dark: '#FF6BA7' },
+    { id: 'graphite', label: 'Graphite', light: '#6E6E73', dark: '#A1A1A6' }
+  ]
+
+  const AMB = [
+    { id: 'glace-feu', label: 'Givre & Braise', tagline: 'Le froid et la lueur, côte à côte.', motion: 'Pulsation lente · braises et givre', light: ['#2d6fa8', '#c0392b'], dark: ['#7fb6e8', '#ff6b4a'] },
+    { id: 'multivers', label: 'Multivers', tagline: 'Pop art, cases nettes.', motion: 'Trame en parallaxe · contours francs', light: ['#f0357e', '#f5b700'], dark: ['#ff5c9e', '#ffd23f'] },
+    { id: 'reve-etolie', label: 'Rêve Étoilé', tagline: 'Poussière d’étoiles dorée.', motion: 'Scintillement organique · flou gaussien', light: ['#7b61c9', '#e0a93b'], dark: ['#b49bff', '#f7d98b'] },
+    { id: 'voie-lactee', label: 'Voie Lactée', tagline: 'Nébuleuse en dérive.', motion: 'Pan lent · profondeur infinie', light: ['#6e52c9', '#2c6fd6'], dark: ['#9d7bff', '#5c8dff'] },
+    { id: 'horizon-martien', label: 'Horizon Martien', tagline: 'Cuivre et air chaud.', motion: 'Mirage atmosphérique · teintes cuivrées', light: ['#b4632f', '#d9915a'], dark: ['#ff9a5c', '#ffd3a8'] },
+    { id: 'aura-tech', label: 'Aura', tagline: 'Ivoire, silence, précision.', motion: 'Lumière ultra-douce · ondulation au clic', light: ['#8c8474', '#c7bea9'], dark: ['#f4efe4', '#cfc4ae'] },
+    { id: 'cyber-neon', label: 'Cyber-Néon', tagline: 'Balayages magenta et cyan.', motion: 'Scanlines · bordures néon pulsantes', light: ['#d3007c', '#00939c'], dark: ['#ff2fb5', '#2be6f0'] },
+    { id: 'sanctuaire-zen', label: 'Sanctuaire Zen', tagline: 'Soie mate, minéral.', motion: 'Dérive très lente · matière papier', light: ['#7c8c6d', '#b7a992'], dark: ['#a9c09a', '#d6c8ae'] }
+  ]
+
+  const state = {
+    mode: 'light',
+    themeId: 'indigo',
+    custom: '#5b5bd6',
+    amb: 'reve-etolie',
+    scope: 'page',
+    intensity: 80,
+    glass: 18
+  }
+
+  const stage = document.getElementById('stage')
+  const amb = document.getElementById('amb')
+  const mini = document.getElementById('mini')
+  const miniAmb = document.getElementById('miniAmb')
+  const miniChip = document.getElementById('mini-chip')
+  const grid = document.getElementById('amb-grid')
+  const swatches = document.getElementById('swatches')
+  const freeDisc = document.getElementById('free-disc')
+  const hexInput = document.getElementById('hex')
+  const rInput = document.getElementById('r')
+  const gInput = document.getElementById('g')
+  const bInput = document.getElementById('b')
+  const glassRange = document.getElementById('glass-range')
+  const glassValue = document.getElementById('glass-value')
+  const ambRange = document.getElementById('amb-range')
+  const ambValue = document.getElementById('amb-value')
+  const noneBtn = document.getElementById('amb-none')
+  const noneCheck = noneBtn.querySelector('.none-check')
+
+  const pageMeta = {
+    appearance: { title: 'Apparence', lede: 'Mode, fond de l’accueil, interface et accessibilité. Inchangée.' },
+    tweaks: { title: 'Tweaks', lede: 'La teinte d’accent, la teinte libre et l’intensité du verre. Rien qui touche au contenu des pages.' },
+    themes: { title: 'Thèmes', lede: 'Huit ambiances animées. Elles couvrent maintenant toute la page, pas seulement le verre.' },
+    other: { title: 'Réglages', lede: 'Section existante, non redessinée dans cette maquette.' }
+  }
+
+  const layers = () =>
+    '<span class="amb-layer amb-base"></span><span class="amb-layer amb-clouds"></span>' +
+    '<span class="amb-layer amb-particles"></span><span class="amb-layer amb-sheen"></span>'
+
+  grid.innerHTML = AMB.map((p) => `
+    <button type="button" class="amb-card" role="radio" aria-checked="false" data-amb-id="${p.id}" data-amb="${p.id}">
+      <span class="thumb" data-amb="${p.id}" aria-hidden="true">${layers()}</span>
+      <span class="card-copy">
+        <span class="card-name">${p.label}<span class="tick" hidden>✓</span></span>
+        <span class="card-tagline">${p.tagline}</span>
+        <span class="card-motion">${p.motion}</span>
+      </span>
+    </button>
+  `).join('')
+
+  swatches.innerHTML = THEMES.map((t) => `
+    <button type="button" class="swatch" data-theme="${t.id}" aria-pressed="false" aria-label="${t.label}">
+      <span class="disc"></span><span class="name">${t.label}</span>
+    </button>
+  `).join('') + `
+    <button type="button" class="swatch" data-theme="custom" aria-pressed="false" aria-label="Personnalisée">
+      <span class="disc"></span><span class="name">Personnalisée</span>
+    </button>
+  `
+
+  function currentTheme() {
+    if (state.themeId === 'custom') return { light: state.custom, dark: state.custom }
+    const t = THEMES.find((x) => x.id === state.themeId)
+    return { light: t.light, dark: t.dark }
+  }
+
+  function hexToRgb(hex) {
+    const clean = hex.replace('#', '')
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16)
+    }
+  }
+
+  const INK_ON_LIGHT = new Set(['#E5A100', '#3DD68C', '#FFC53D', '#FFD23F', '#F7D98B', '#FFD3A8'])
+
+  function paint() {
+    const dark = state.mode === 'dark'
+    const theme = currentTheme()
+    const accent = dark ? theme.dark : theme.light
+    const preset = AMB.find((a) => a.id === state.amb)
+
+    stage.dataset.mode = state.mode
+    stage.dataset.amb = state.amb
+    stage.dataset.scope = state.scope
+    stage.style.setProperty('--accent', accent)
+    stage.style.setProperty('--amb-strength', state.intensity / 100)
+    stage.style.setProperty('--glass-blur', state.glass + 'px')
+
+    amb.dataset.amb = state.amb
+    mini.dataset.amb = state.amb
+    mini.dataset.scope = state.scope
+    miniAmb.dataset.amb = state.amb
+    miniChip.textContent = state.scope === 'page' ? 'Toute la page' : 'Châssis seul'
+
+    if (preset) {
+      const [a, b] = dark ? preset.dark : preset.light
+      amb.style.setProperty('--amb-1', a)
+      amb.style.setProperty('--amb-2', b)
+      miniAmb.style.setProperty('--amb-1', a)
+      miniAmb.style.setProperty('--amb-2', b)
+    }
+
+    grid.querySelectorAll('.amb-card').forEach((card) => {
+      const p = AMB.find((x) => x.id === card.dataset.ambId)
+      const active = state.amb === card.dataset.ambId
+      card.dataset.active = active ? 'true' : 'false'
+      card.setAttribute('aria-checked', active ? 'true' : 'false')
+      card.querySelector('.tick').hidden = !active
+      const [a, b] = dark ? p.dark : p.light
+      card.style.setProperty('--amb-1', a)
+      card.style.setProperty('--amb-2', b)
+    })
+
+    noneBtn.dataset.active = state.amb === 'none' ? 'true' : 'false'
+    noneBtn.setAttribute('aria-pressed', state.amb === 'none' ? 'true' : 'false')
+    noneCheck.hidden = state.amb !== 'none'
+
+    swatches.querySelectorAll('.swatch').forEach((button) => {
+      const id = button.dataset.theme
+      const active = state.themeId === id
+      button.dataset.active = active ? 'true' : 'false'
+      button.setAttribute('aria-pressed', active ? 'true' : 'false')
+      const disc = button.querySelector('.disc')
+      const t = id === 'custom' ? { light: state.custom, dark: state.custom } : THEMES.find((x) => x.id === id)
+      const color = dark ? t.dark : t.light
+      disc.style.setProperty('--sw', color)
+      disc.style.setProperty('--sw-ink', INK_ON_LIGHT.has(color.toUpperCase()) ? '#1b1a18' : '#fff')
+      disc.textContent = active ? '✓' : ''
+    })
+
+    const { r, g, b } = hexToRgb(state.custom)
+    freeDisc.style.setProperty('--sw', state.custom)
+    freeDisc.style.setProperty('--sw-ink', '#fff')
+
+    glassValue.textContent = state.glass + ' px'
+    ambValue.textContent = state.intensity + ' %'
+    ambRange.value = state.intensity
+    glassRange.value = state.glass
+    document.querySelectorAll('.seg button').forEach((button) => {
+      button.setAttribute('aria-pressed', button.dataset.scope === state.scope ? 'true' : 'false')
+    })
+    document.querySelectorAll('.board-mode button').forEach((button) => {
+      button.setAttribute('aria-pressed', button.dataset.mode === state.mode ? 'true' : 'false')
+    })
+    hexInput.value = state.custom.toUpperCase()
+    rInput.value = r
+    gInput.value = g
+    bInput.value = b
+  }
+
+  // --- Navigation des réglages ---
+  document.querySelectorAll('.snav-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      const page = item.dataset.page
+      document.querySelectorAll('.snav-item').forEach((x) => x.removeAttribute('aria-current'))
+      item.setAttribute('aria-current', 'page')
+      document.querySelectorAll('.page').forEach((section) => {
+        section.hidden = section.dataset.page !== page
+      })
+      const meta = pageMeta[page]
+      document.getElementById('page-title').textContent = meta.title
+      document.getElementById('page-lede').textContent = meta.lede
+      document.getElementById('scroll').scrollTop = 0
+    })
+  })
+
+  // --- Actions ---
+  document.querySelectorAll('.board-mode button').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.mode = button.dataset.mode
+      paint()
+    })
+  })
+
+  swatches.addEventListener('click', (event) => {
+    const button = event.target.closest('.swatch')
+    if (!button) return
+    state.themeId = button.dataset.theme
+    paint()
+  })
+
+  grid.addEventListener('click', (event) => {
+    const card = event.target.closest('.amb-card')
+    if (!card) return
+    state.amb = card.dataset.ambId
+    paint()
+  })
+
+  noneBtn.addEventListener('click', () => {
+    state.amb = 'none'
+    paint()
+  })
+
+  document.querySelectorAll('.seg button').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.scope = button.dataset.scope
+      paint()
+    })
+  })
+
+  ambRange.addEventListener('input', () => {
+    state.intensity = Number(ambRange.value)
+    paint()
+  })
+
+  glassRange.addEventListener('input', () => {
+    state.glass = Number(glassRange.value)
+    paint()
+  })
+
+  const applyCustom = () => {
+    let value = hexInput.value.trim()
+    if (!value.startsWith('#')) value = '#' + value
+    if (!/^#[0-9a-f]{6}$/i.test(value)) return
+    state.custom = value.toLowerCase()
+    state.themeId = 'custom'
+    paint()
+  }
+  hexInput.addEventListener('change', applyCustom)
+  hexInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); applyCustom() }
+  })
+
+  const applyRgb = () => {
+    const clamp = (v) => Math.max(0, Math.min(255, Number(v) || 0))
+    state.custom = '#' + [rInput, gInput, bInput]
+      .map((input) => clamp(input.value).toString(16).padStart(2, '0'))
+      .join('')
+    state.themeId = 'custom'
+    paint()
+  }
+  ;[rInput, gInput, bInput].forEach((input) => {
+    input.addEventListener('change', applyRgb)
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); applyRgb() }
+    })
+  })
+
+  document.getElementById('reset').addEventListener('click', () => {
+    state.themeId = 'indigo'
+    state.custom = '#5b5bd6'
+    state.amb = 'reve-etolie'
+    state.scope = 'page'
+    state.intensity = 80
+    state.glass = 18
+    paint()
+  })
+
+  paint()
+</script>
+</body>
+</html>

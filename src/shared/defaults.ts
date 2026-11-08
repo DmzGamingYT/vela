@@ -62,6 +62,7 @@ export const DEFAULT_SETTINGS: Settings = {
   openAfterDownload: false,
   webLanguage: 'fr',
   defaultZoom: 1,
+  zoomByHost: {},
   themeId: 'indigo',
   customAccent: '#5b5bd6',
   glass: 'normal',

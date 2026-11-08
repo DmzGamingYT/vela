@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { SettingsPatch } from '@shared/api'
+import { AUTO_COLLAPSE_WIDTH, SPLIT_MIN_WIDTH, panesCanSplit } from '@shared/layout'
 import type { AppView, ProviderId, ShortcutEvent } from '@shared/types'
 import { updateReadyMessage } from '@shared/update'
 import { createAgentSlice, type AgentSlice } from './slices/agent'
@@ -69,18 +70,45 @@ export interface CoreSlice {
    * est affiché, sinon elles en recouvrent la moitié droite.
    */
   menuOpen: number
+  /**
+   * Coup d'œil ouvert : sa carte est du DOM alors que la page est une vue
+   * native, toujours au-dessus. Les onglets doivent donc quitter la scène.
+   */
+  peekOpen: boolean
   toasts: Toast[]
   /** Niveau de zoom à annoncer, en pourcentage ; s'efface seul. */
   zoomNotice: number | null
+  /** Largeur de la coque, suivie au redimensionnement. */
+  viewportWidth: number
+  /** Largeur du conteneur des volets, mesurée (0 avant le premier rendu). */
+  panesWidth: number
+  /** Deux volets de 320 px tiennent-ils dans `panesWidth` ? */
+  panesFit: boolean
+  /** Fenêtre étroite : barre latérale repliée automatiquement. */
+  compactViewport: boolean
+  /** Fenêtre assez large **et** volets assez larges pour une vue scindée. */
+  splitAllowed: boolean
+  /** Valeur persistée avant le repli automatique, à restaurer en s'élargissant. */
+  sidebarAutoValue: boolean | null
+  /** L'utilisateur a repris la main sur la barre latérale en fenêtre étroite. */
+  sidebarOverride: boolean
+  syncViewport(width: number): void
+  /** Mesure des volets : un tiroir ouvert retire de la place sans `resize`. */
+  syncPanesWidth(width: number): void
+  /** Repli/dépli explicite : annule la restauration automatique. */
+  toggleSidebar(): void
   init(): Promise<void>
   call<T>(task: () => Promise<T>, fallback: string): Promise<T | null>
   toast(text: string, tone?: Toast['tone'], action?: Toast['action'], duration?: number): void
   dismissToast(id: string): void
   setOverlay(overlay: Overlay): void
+  setPeekOpen(open: boolean): void
   beginMenu(): void
   endMenu(): void
   focusAddress(): void
   updateSettings(patch: SettingsPatch): Promise<void>
+  /** Oublie le zoom mémorisé d'un domaine. */
+  forgetZoom(host: string): Promise<void>
   setKey(provider: ProviderId, key: string | null): Promise<boolean>
   testKey(provider: ProviderId): Promise<{ ok: boolean; message: string }>
   completeOnboarding(): Promise<void>
@@ -117,8 +145,74 @@ function createCoreSlice(
     view: null,
     overlay: null,
     menuOpen: 0,
+    peekOpen: false,
     toasts: [],
     zoomNotice: null,
+    viewportWidth: Number.POSITIVE_INFINITY,
+    panesWidth: 0,
+    panesFit: true,
+    compactViewport: false,
+    splitAllowed: true,
+    sidebarAutoValue: null,
+    sidebarOverride: false,
+
+    syncViewport(width) {
+      const compact = width < AUTO_COLLAPSE_WIDTH
+      const previous = get()
+      set({
+        viewportWidth: width,
+        compactViewport: compact,
+        // La fenêtre a une largeur minimale, mais un tiroir ouvert ne la fait
+        // pas bouger : la mesure des volets reste la seconde condition.
+        splitAllowed: width >= SPLIT_MIN_WIDTH && panesCanSplit(previous.panesWidth)
+      })
+      if (!compact) {
+        // La place revient : on remet la barre là où l'utilisateur l'avait
+        // laissée, sauf s'il a choisi autrement pendant la phase étroite.
+        if (previous.sidebarOverride) set({ sidebarOverride: false })
+        if (previous.sidebarAutoValue === null) return
+        set({ sidebarAutoValue: null })
+        const view = get().view
+        if (view && view.settings.sidebarCollapsed !== previous.sidebarAutoValue) {
+          void get().updateSettings({ sidebarCollapsed: previous.sidebarAutoValue })
+        }
+        return
+      }
+      const view = get().view
+      if (!view) return
+      // Un repli automatique déjà en cours, une barre déjà repliée ou un choix
+      // explicite : rien à écrire. On n'insiste donc pas à chaque pixel.
+      if (
+        previous.sidebarOverride ||
+        previous.sidebarAutoValue !== null ||
+        view.settings.sidebarCollapsed
+      ) {
+        return
+      }
+      set({ sidebarAutoValue: view.settings.sidebarCollapsed })
+      void get().updateSettings({ sidebarCollapsed: true })
+    },
+
+    syncPanesWidth(width) {
+      const measured = Math.round(width)
+      const previous = get()
+      if (Math.abs(previous.panesWidth - measured) < 1) return
+      const fits = panesCanSplit(measured)
+      set({
+        panesWidth: measured,
+        panesFit: fits,
+        splitAllowed: previous.viewportWidth >= SPLIT_MIN_WIDTH && fits
+      })
+    },
+
+    toggleSidebar() {
+      const view = get().view
+      if (!view) return
+      // Un choix explicite en fenêtre étroite vaut pour toute la phase étroite :
+      // on oublie l'état mémorisé, sinon le prochain élargissement le remettrait.
+      if (get().compactViewport) set({ sidebarAutoValue: null, sidebarOverride: true })
+      void get().updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })
+    },
 
     async init() {
       if (get().initialized) return
@@ -194,6 +288,10 @@ function createCoreSlice(
       set({ overlay, spaceEditId: overlay === 'space' ? get().spaceEditId : null })
     },
 
+    setPeekOpen(open) {
+      set({ peekOpen: open })
+    },
+
     // Un compteur : un sous-menu peut s'ouvrir par-dessus le menu principal sans
     // que l'on rende la page avant la fermeture du dernier.
     beginMenu() {
@@ -219,6 +317,14 @@ function createCoreSlice(
 
     async updateSettings(patch) {
       await get().call(() => window.vela.settings.update(patch), 'Réglages non enregistrés.')
+    },
+
+    async forgetZoom(host) {
+      const removed = await get().call(
+        () => window.vela.settings.forgetZoom(host),
+        'Zoom non oublié.'
+      )
+      if (removed) get().toast(`Zoom oublié pour ${host}.`)
     },
 
     async setKey(provider, key) {
@@ -303,7 +409,7 @@ function createCoreSlice(
           state.setOverlay(state.overlay === 'settings' ? null : 'settings')
           break
         case 'sidebar':
-          void state.updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })
+          state.toggleSidebar()
           break
         case 'reload':
           if (active) state.reload(active.id)

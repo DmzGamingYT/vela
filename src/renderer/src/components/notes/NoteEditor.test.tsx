@@ -17,6 +17,10 @@ const graph: NoteGraph = { outgoing: [], incoming: [], missing: [] }
 
 function setup() {
   const onRunAi = vi.fn()
+  const onPatch = vi.fn()
+  const onInsert = vi.fn()
+  const onTogglePin = vi.fn()
+  const onPreview = vi.fn()
   const view = render(
     <NoteEditor
       draft={draft}
@@ -39,8 +43,8 @@ function setup() {
       textareaRef={{ current: null }}
       hasPage={false}
       onBack={vi.fn()}
-      onPatch={vi.fn()}
-      onTogglePin={vi.fn()}
+      onPatch={onPatch}
+      onTogglePin={onTogglePin}
       onRemove={vi.fn()}
       onCopy={vi.fn()}
       onDuplicate={vi.fn()}
@@ -48,7 +52,7 @@ function setup() {
       onTagDraft={vi.fn()}
       onAddTag={vi.fn()}
       onRemoveTag={vi.fn()}
-      onInsert={vi.fn()}
+      onInsert={onInsert}
       onPrefix={vi.fn()}
       onRecorder={vi.fn()}
       onSketch={vi.fn()}
@@ -56,7 +60,7 @@ function setup() {
       onRunAi={onRunAi}
       onUndoRename={vi.fn()}
       onDismissRename={vi.fn()}
-      onPreview={vi.fn()}
+      onPreview={onPreview}
       onLinkMenu={vi.fn()}
       onApplyLink={vi.fn()}
       onUpdateLink={vi.fn()}
@@ -65,7 +69,7 @@ function setup() {
       onCreateLinked={vi.fn()}
     />
   )
-  return { ...view, onRunAi }
+  return { ...view, onRunAi, onPatch, onInsert, onTogglePin, onPreview }
 }
 
 beforeEach(() => {
@@ -73,6 +77,39 @@ beforeEach(() => {
 })
 
 afterEach(cleanup)
+
+describe('éditeur de note', () => {
+  it('remonte les changements de titre et de corps au brouillon', () => {
+    const { onPatch } = setup()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Titre de la note' }), {
+      target: { value: 'Titre modifié' }
+    })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Texte de la note' }), {
+      target: { value: 'Corps modifié' }
+    })
+
+    expect(onPatch).toHaveBeenNthCalledWith(1, { title: 'Titre modifié' })
+    expect(onPatch).toHaveBeenNthCalledWith(2, { body: 'Corps modifié' })
+  })
+
+  it('déclenche le formatage Markdown et expose l’action d’épinglage', () => {
+    const { container, onInsert, onTogglePin } = setup()
+
+    fireEvent.click(container.querySelector('.note-toolbar button[title="Gras"]')!)
+    expect(onInsert).toHaveBeenCalledWith('**', '**')
+
+    fireEvent.click(container.querySelector('[aria-keyshortcuts="Meta+Shift+P Control+Shift+P"]')!)
+    expect(onTogglePin).toHaveBeenCalledOnce()
+  })
+
+  it('demande à afficher l’aperçu Markdown', () => {
+    const { onPreview } = setup()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aperçu' }))
+    expect(onPreview).toHaveBeenCalledWith(true)
+  })
+})
 
 describe('menu IA', () => {
   it('remonte la dernière action secondaire et la marque', () => {

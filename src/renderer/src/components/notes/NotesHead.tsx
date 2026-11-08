@@ -1,3 +1,4 @@
+import { plural } from '../../lib/format'
 import { Icon } from '../Icon'
 
 interface NotesHeadProps {
@@ -57,7 +58,7 @@ export default function NotesHead({
           <div>
             <h2>Notes</h2>
             <p>
-              {noteCount} note{noteCount > 1 ? 's' : ''} · Markdown local
+              {plural(noteCount, 'note')} · Markdown local
             </p>
           </div>
         </div>

@@ -134,16 +134,20 @@
     }
   }
 
-  applyChoice(FILES[platform] || FILES.other)
+  // L’architecture ne pilote pas le bouton : elle dit seulement quelle ligne de
+  // la fiche téléchargement est la bonne. Le reste est peint plus bas, quand
+  // l’état de plateforme est réuni (bouton, onglets, raccourcis).
+  let architecture = null
 
   // Sur un Mac, distinguer Apple silicon d’Intel évite 100 Mo de téléchargement.
   // L’API n’existe que dans les navigateurs Chromium : ailleurs, le DMG universel reste.
   if (platform === 'mac' && navigator.userAgentData?.getHighEntropyValues) {
     navigator.userAgentData
       .getHighEntropyValues(['architecture'])
-      .then(({ architecture }) => {
-        if (architecture === 'arm') applyChoice(FILES.macArm)
-        else if (architecture === 'x86') applyChoice(FILES.macIntel)
+      .then(({ architecture: arch }) => {
+        if (arch !== 'arm' && arch !== 'x86') return
+        architecture = arch
+        peindrePlateforme()
       })
       .catch(() => {
         /* architecture inconnue : le DMG universel convient */
@@ -161,7 +165,8 @@
 
   // Le visiteur voit d’abord les touches de son système ; le sélecteur garde
   // son choix d’une page à l’autre, pour lire les raccourcis d’un autre poste.
-  const systemeDetecte = platform === 'mac' || platform === 'win' || platform === 'linux' ? platform : 'mac'
+  const systemeDetecte =
+    platform === 'mac' || platform === 'win' || platform === 'linux' ? platform : 'mac'
   let systeme = systemeDetecte
   try {
     const garde = localStorage.getItem('vela-keys')
@@ -192,37 +197,92 @@
     }
   }
 
+  /* Un seul état de plateforme : il peint les raccourcis, les onglets de la
+     fiche de téléchargement et le bouton. Choisir Windows ici change les trois,
+     sinon la page promet macOS trois écrans après qu’on a demandé Windows. */
+
+  const choixDePlateforme = () => {
+    if (systeme === 'win') return FILES.win
+    if (systeme === 'linux') return FILES.linux
+    if (architecture === 'arm') return FILES.macArm
+    if (architecture === 'x86') return FILES.macIntel
+    return FILES.mac
+  }
+
+  const peindrePlateforme = () => {
+    const choix = choixDePlateforme()
+    applyChoice(choix)
+
+    for (const onglet of document.querySelectorAll('[data-dl-tab]')) {
+      const actif = onglet.dataset.dlTab === systeme
+      onglet.setAttribute('aria-selected', String(actif))
+      onglet.tabIndex = actif ? 0 : -1
+    }
+    for (const panneau of document.querySelectorAll('[data-dl-panel]')) {
+      panneau.hidden = panneau.dataset.dlPanel !== systeme
+    }
+    // Une seule pastille : elle désigne le fichier que le bouton propose.
+    for (const ligne of document.querySelectorAll('.dl-row[data-file]')) {
+      ligne.classList.toggle('is-match', ligne.dataset.file === choix.file)
+    }
+  }
+
+  const choisirOs = (os) => {
+    if (!SYSTEMES.includes(os)) return
+    systeme = os
+    try {
+      localStorage.setItem('vela-keys', os)
+    } catch {
+      /* stockage indisponible : le choix vaut pour la page */
+    }
+    peindreTouches()
+    peindrePlateforme()
+  }
+
   for (const bouton of document.querySelectorAll('[data-keys-switch] [data-os]')) {
-    bouton.addEventListener('click', () => {
-      if (!SYSTEMES.includes(bouton.dataset.os)) return
-      systeme = bouton.dataset.os
-      try {
-        localStorage.setItem('vela-keys', systeme)
-      } catch {
-        /* stockage indisponible : le choix vaut pour la page */
-      }
-      peindreTouches()
+    bouton.addEventListener('click', () => choisirOs(bouton.dataset.os))
+  }
+
+  // Les onglets de la fiche suivent le même état, et les flèches les parcourent.
+  const onglets = [...document.querySelectorAll('[data-dl-tab]')]
+
+  for (const onglet of onglets) {
+    onglet.addEventListener('click', () => choisirOs(onglet.dataset.dlTab))
+    onglet.addEventListener('keydown', (event) => {
+      const rang = onglets.indexOf(onglet)
+      let cible = null
+      if (event.key === 'ArrowRight') cible = onglets[(rang + 1) % onglets.length]
+      else if (event.key === 'ArrowLeft')
+        cible = onglets[(rang + onglets.length - 1) % onglets.length]
+      else if (event.key === 'Home') cible = onglets[0]
+      else if (event.key === 'End') cible = onglets[onglets.length - 1]
+      if (!cible) return
+      event.preventDefault()
+      choisirOs(cible.dataset.dlTab)
+      cible.focus()
     })
+  }
+
+  // La bande corail choisit la plateforme avant de descendre à la fiche.
+  for (const lien of document.querySelectorAll('[data-set-os]')) {
+    lien.addEventListener('click', () => choisirOs(lien.dataset.setOs))
   }
 
   // Les liens du sommaire de l’aide choisissent le système avant de défiler :
   // sinon ils viseraient un bloc masqué.
-  for (const lien of document.querySelectorAll('a[href="#macos"], a[href="#windows"], a[href="#linux"]')) {
+  for (const lien of document.querySelectorAll(
+    'a[href="#macos"], a[href="#windows"], a[href="#linux"]'
+  )) {
     lien.addEventListener('click', (event) => {
       const ancre = lien.getAttribute('href').slice(1)
       event.preventDefault()
-      systeme = ancre === 'macos' ? 'mac' : ancre === 'windows' ? 'win' : 'linux'
-      try {
-        localStorage.setItem('vela-keys', systeme)
-      } catch {
-        /* stockage indisponible : le choix vaut pour la page */
-      }
-      peindreTouches()
+      choisirOs(ancre === 'macos' ? 'mac' : ancre === 'windows' ? 'win' : 'linux')
       document.getElementById(ancre)?.scrollIntoView({ block: 'start' })
     })
   }
 
   peindreTouches()
+  peindrePlateforme()
 
   /* --- Empreintes SHA-256 ------------------------------------------------ */
 
@@ -287,12 +347,14 @@
       try {
         await copy(texte)
       } catch {
-        if (copyStatus) copyStatus.textContent = 'Copie impossible : sélectionnez le texte à la main.'
+        if (copyStatus)
+          copyStatus.textContent = 'Copie impossible : sélectionnez le texte à la main.'
         return
       }
       diagnostic.classList.add('is-copied')
       diagnostic.textContent = 'Informations copiées'
-      if (copyStatus) copyStatus.textContent = 'Informations de diagnostic copiées dans le presse-papiers.'
+      if (copyStatus)
+        copyStatus.textContent = 'Informations de diagnostic copiées dans le presse-papiers.'
       setTimeout(() => {
         diagnostic.classList.remove('is-copied')
         diagnostic.textContent = 'Copier les informations de diagnostic'
@@ -462,5 +524,4 @@
       }
     }, 2600)
   }
-
 })()

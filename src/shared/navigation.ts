@@ -277,6 +277,53 @@ export function sanitizeDefaultZoom(raw: unknown): number {
   return typeof raw === 'number' && (ZOOM_LEVELS as readonly number[]).includes(raw) ? raw : 1
 }
 
+/** Bornes du zoom mémorisé (niveau Chromium : 0 = 100 %). */
+export const MIN_HOST_ZOOM = -3
+export const MAX_HOST_ZOOM = 4
+/** Domaines retenus ; au-delà, les plus anciens sortent. */
+export const HOST_ZOOM_LIMIT = 200
+
+/**
+ * Niveaux de zoom mémorisés par domaine. Un fichier abîmé ne doit jamais
+ * empêcher le démarrage : tout ce qui n'est pas un nombre fini dans les
+ * bornes est ignoré, et les clés sont ramenées en minuscules.
+ */
+export function sanitizeZoomByHost(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: Record<string, number> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const host = key.trim().toLowerCase()
+    if (!host || host.length > 253) continue
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      value < MIN_HOST_ZOOM ||
+      value > MAX_HOST_ZOOM
+    ) {
+      continue
+    }
+    out[host] = Math.round(value * 100) / 100
+    if (Object.keys(out).length >= HOST_ZOOM_LIMIT) break
+  }
+  return out
+}
+
+/** Niveau Chromium → pourcentage affiché (même échelle que la barre de statut). */
+export function zoomPercentOfLevel(level: number): number {
+  return Math.round(1.2 ** level * 100)
+}
+
+/** Hôte d'une URL web, ou null pour l'accueil et les schémas internes. */
+export function zoomHostOf(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.host.toLowerCase() || null
+  } catch {
+    return null
+  }
+}
+
 export function describeZoom(value: number): string {
   return `${Math.round(value * 100)} %`
 }

@@ -13,7 +13,7 @@ export default function SpaceRail() {
   const setWorkMode = useBrowser((state) => state.setWorkMode)
   const activateSpace = useBrowser((state) => state.activateSpace)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
-  const updateSettings = useBrowser((state) => state.updateSettings)
+  const toggleSidebar = useBrowser((state) => state.toggleSidebar)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
   const overlay = useBrowser((state) => state.overlay)
@@ -34,7 +34,7 @@ export default function SpaceRail() {
           type="button"
           className="rail-ghost"
           aria-expanded={!view.settings.sidebarCollapsed}
-          onClick={() => updateSettings({ sidebarCollapsed: !view.settings.sidebarCollapsed })}
+          onClick={() => toggleSidebar()}
           title={`${view.settings.sidebarCollapsed ? 'Afficher' : 'Replier'} la barre latérale (${shortcut('S')})`}
         >
           <Icon name="panel" size={17} />
@@ -67,6 +67,10 @@ export default function SpaceRail() {
           <span className="sr-only">Atelier</span>
         </button>
       </div>
+
+      {/* Deux groupes d’actions distincts : le trait empêche de lire les
+          modes et les espaces comme une seule pile d’icônes. */}
+      <div className="rail-sep" aria-hidden="true" />
 
       <div className="rail-spaces">
         {view.spaces.map((space) => {

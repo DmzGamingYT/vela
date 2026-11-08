@@ -677,7 +677,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
                       const rect = event.currentTarget.getBoundingClientRect()
                       setMenu({ tile, x: rect.left, y: rect.bottom })
                     }}
-                    title={tile.title}
+                    title={tile.meta ? `${tile.title} · ${tile.meta}` : tile.title}
                   >
                     {thumbs[tile.url] && (
                       <span className="tile-thumb" aria-hidden="true">

@@ -35,12 +35,16 @@
   min-width: 0;
 }
 
+.work-split.is-split .pane {
+  min-width: 320px;
+}
+
 .work-split.is-split .work-stage {
   flex: 1 1 0;
 }
 
 .work-split.is-split .pane[data-secondary='true'] {
-  flex: 0 0 calc(100% - var(--ratio) - 9px);
+  flex: 0 0 clamp(320px, calc(100% - var(--ratio) - 9px), calc(100% - 329px));
   animation: vela-pane-in var(--dur-2) var(--ease-standard) both;
 }
 
@@ -51,7 +55,8 @@
 }
 
 .work-split.is-split .work-stage {
-  flex: 0 0 var(--ratio);
+  /* Un ratio enregistré en fenêtre large doit rester lisible après réduction. */
+  flex: 0 0 clamp(320px, var(--ratio), calc(100% - 329px));
   min-width: 0;
   overflow: hidden;
 }

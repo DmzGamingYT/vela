@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TabView } from '@shared/types'
-import { isHomeUrl, prettyUrl } from '@shared/url'
+import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { WEB_LANGUAGES } from '@shared/navigation'
 import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
@@ -23,6 +23,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const reload = useBrowser((state) => state.reload)
   const stop = useBrowser((state) => state.stop)
   const splitToggle = useBrowser((state) => state.splitToggle)
+  const splitAllowed = useBrowser((state) => state.splitAllowed)
   const toggleBookmark = useBrowser((state) => state.toggleBookmark)
   const toast = useBrowser((state) => state.toast)
   const beginMenu = useBrowser((state) => state.beginMenu)
@@ -92,10 +93,14 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
     queueMicrotask(() => setDraft(home ? '' : tab.url))
   }, [tab.url, home, focused])
 
-  // Façon Dia/Zephium : au repos on lit le nom de la page, au survol l'adresse,
-  // au focus l'URL complète éditable.
+  // L'origine reste lisible au repos. Le titre d'une page est écrit par la
+  // page elle-même : l'afficher seul permet à un site d'imiter un autre
+  // domaine, et il se tronquait en « Vela — Accue » dans un volet étroit.
+  // L'hôte vient de l'URL effective ; le titre reste dans l'infobulle, le
+  // chemin au survol et l'URL complète, éditable, au focus.
+  const host = home ? '' : hostOf(tab.url)
   const pageName = (tab.title || '').trim() || prettyUrl(tab.url)
-  const resting = hovered ? prettyUrl(tab.url) : pageName
+  const resting = hovered ? prettyUrl(tab.url) : host || pageName
   const display = focused ? draft : home ? '' : resting
   const canClear = focused && draft.trim().length > 0
 
@@ -140,6 +145,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
         aria-label={primary ? 'Adresse de l’onglet' : 'Adresse de l’onglet secondaire'}
         data-focused={focused}
         data-home={home}
+        title={home ? undefined : `${tab.title || prettyUrl(tab.url)} — ${tab.url}`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onSubmit={(event) => {
@@ -247,6 +253,15 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       </form>
 
       <div className="pane-tools">
+        {/* Entrée visible de la palette : sans elle, ⌘K, l'historique et les
+            favoris n'existent qu'au clavier ou depuis l'accueil. */}
+        {primary && (
+          <BarButton
+            icon="search"
+            label={`Barre de commande (${shortcut('K')})`}
+            onClick={() => setOverlay('command')}
+          />
+        )}
         {primary && (
           <button
             type="button"
@@ -286,11 +301,15 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
             {downloads > 0 && !downloading && <span className="bar-count">{downloads}</span>}
           </button>
         )}
-        <BarButton
-          icon={secondary ? 'close' : 'split'}
-          label={secondary ? 'Fermer la vue scindée' : `Vue scindée (${shortcut('⇧D')})`}
-          onClick={() => splitToggle()}
-        />
+        {/* Sous le seuil, la commande disparaît : elle laisse la place à
+            l'adresse et n'ouvre pas deux panneaux de 180 px. */}
+        {(secondary || splitAllowed) && (
+          <BarButton
+            icon={secondary ? 'close' : 'split'}
+            label={secondary ? 'Fermer la vue scindée' : `Vue scindée (${shortcut('⇧D')})`}
+            onClick={() => splitToggle()}
+          />
+        )}
       </div>
     </div>
   )

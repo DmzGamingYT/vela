@@ -34,7 +34,10 @@
   border-radius: 9px;
   border: 1px solid var(--line);
   background: var(--fill);
-  color: var(--ink-soft);
+  /* Texte fin sur un bouton clair : l'encre douce se lisait à 3:1 seulement.
+     On passe en encre pleine et demi-gras pour garder le libellé lisible. */
+  color: var(--ink);
+  font-weight: 600;
   font-size: 11px;
 }
 
@@ -51,16 +54,16 @@
 
 .day-info {
   position: relative;
-  flex: 0 0 15px;
-  width: 15px;
-  height: 15px;
-  margin-top: 1px;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin-top: -2px;
   display: grid;
   place-items: center;
   border-radius: 999px;
   border: 1px solid var(--line);
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1;
 }
 

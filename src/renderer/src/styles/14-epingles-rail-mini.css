@@ -231,10 +231,11 @@
 
 .pin-remove {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  top: 2px;
+  right: 2px;
+  /* Cible de 24 × 24 px (WCAG 2.2) sans agrandir l'icône. */
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   border-radius: 6px;
@@ -875,8 +876,12 @@
 .tile-menu {
   position: fixed;
   z-index: 100;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1px;
+  /* Un menu ne dépasse jamais la fenêtre : au-delà, la liste défile. Pas de
+     débordement masqué ici, le sous-menu s'ouvre hors du cadre. */
+  max-height: calc(100vh - 16px);
   padding: 5px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -897,7 +902,12 @@
 
 .tile-menu-list {
   display: grid;
+  align-content: start;
   gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   outline: none;
 }
 
@@ -911,6 +921,10 @@
 .tile-submenu {
   position: absolute;
   z-index: 101;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   display: grid;
   gap: 1px;
   padding: 5px;
@@ -969,6 +983,7 @@
 
 /* En-tête informatif d'un menu : logo, titre nettoyé, domaine. */
 .tile-menu-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;

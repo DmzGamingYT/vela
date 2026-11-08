@@ -12,10 +12,12 @@ function rule(selector: string): string {
 }
 
 describe('barre d’actions des notes', () => {
-  it('passe à la ligne au lieu de rogner la dernière action', () => {
+  it('range les cinq actions en deux colonnes, sans rogner la dernière', () => {
     const actions = rule('.notes-actions')
-    expect(actions).toContain('flex-wrap: wrap')
+    expect(actions).toContain('display: grid')
+    expect(actions).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
     expect(actions).not.toContain('overflow-x: auto')
+    expect(rule('.notes-actions > .action:first-child')).toContain('grid-column: 1 / -1')
   })
 
   it('ne cache plus un défilement horizontal invisible', () => {

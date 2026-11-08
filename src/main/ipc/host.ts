@@ -41,6 +41,8 @@ export interface IpcHost {
   metrics(): { live: number; processes: ProcessInfo[] }
   win(): BrowserWindow | null
   setOverlay(value: boolean): void
+  /** Place réellement disponible pour deux volets, mesurée par la coque. */
+  setSplitPanesFit(fits: boolean): void
 
   createTab(input: CreateTabInput): TabState
   closeTab(id: string): Promise<void>

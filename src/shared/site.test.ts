@@ -186,14 +186,16 @@ describe('site — navigation entre les pages', () => {
 describe('site — version et téléchargements', () => {
   const home = texts[0].html
   /**
-   * La version annoncée par la page, lue sur la page elle-même.
+   * La version annoncée par la page, lue dans sa fiche JSON-LD (la seule
+   * mention machine de la version depuis la refonte de la fiche de
+   * téléchargement). `scripts/check-site-release.cjs` lit la même valeur.
    *
    * Le site ne peut pas annoncer la version en cours avant sa publication :
    * les empreintes SHA-256 des installateurs n'existent qu'une fois les
    * fichiers construits. Il a donc le droit de retarder d'une version, jamais
    * de prendre de l'avance, et chaque mention doit dire la même chose.
    */
-  const announced = (home.match(/Fichiers de la version ([\d.]+)/) || [])[1] || ''
+  const announced = (home.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1] || ''
   const files = [
     `Vela-${announced}-universal.dmg`,
     `Vela-${announced}-arm64.dmg`,
@@ -202,6 +204,16 @@ describe('site — version et téléchargements', () => {
     `Vela-${announced}-x86_64.AppImage`,
     `Vela-${announced}-amd64.deb`
   ]
+
+  /**
+   * Une ligne de la fiche : `data-file` nomme l'installateur, `<code>` affiche
+   * l'empreinte en entier, `data-copy` la donne au bouton « copier ». Le
+   * balisage a remplacé l'ancien tableau `<td class="file">` : on s'appuie sur
+   * ces attributs de données, pas sur la mise en forme.
+   */
+  const rows = [
+    ...home.matchAll(/<li class="dl-row" data-file="([^"]+)">([\s\S]*?)<\/li>/g)
+  ].map((match) => ({ file: match[1], html: match[2] }))
 
   it('annonce une seule version, et jamais celle d’une version à venir', () => {
     expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
@@ -222,27 +234,30 @@ describe('site — version et téléchargements', () => {
     expect(home).toContain(`Version ${announced}`)
   })
 
-  it('liste les six installateurs avec leur lien de release', () => {
+  it('liste les six installateurs avec leur ligne et leur lien de release', () => {
+    expect(rows.map((row) => row.file), 'fiche de téléchargement').toEqual(files)
     for (const file of files) {
       expect(home, file).toContain(file)
       expect(home, `${file} : lien`).toContain(`releases/download/v${announced}/${file}`)
+      const row = rows.find((item) => item.file === file)
+      expect(row?.html, `${file} : lien de la ligne`).toContain(
+        `releases/download/v${announced}/${file}`
+      )
     }
   })
 
-  it('donne une empreinte SHA-256 par installateur, toutes différentes', () => {
-    // Une ligne du tableau de téléchargement : son fichier, l'aperçu tronqué et
-    // l'empreinte complète que le bouton « copier » met dans le presse-papier.
-    const rows = [...home.matchAll(/<td class="file">[\s\S]*?<\/tr>/g)].map((match) => match[0])
-    expect(rows.length).toBe(files.length)
-    const sums = rows.map((row) => {
-      const shown = ((row.match(/<code>([0-9a-f ]{8,})…<\/code>/) || [])[1] || '').replace(
-        /\s/g,
-        ''
-      )
+  it('donne une empreinte SHA-256 entière par installateur, toutes différentes', () => {
+    expect(rows.length, 'six lignes').toBe(files.length)
+    const sums = rows.map(({ file, html: row }) => {
+      // L'empreinte n'est plus tronquée : ce qu'on lit est exactement ce que le
+      // bouton copie. Les deux doivent rester un vrai SHA-256 de 64 caractères.
+      const shown = ((row.match(/<code>\s*([0-9a-f]{64})\s*<\/code>/) || [])[1] || '').trim()
       const full = (row.match(/data-copy="([0-9a-f]{64})"/) || [])[1] || ''
-      expect(full, 'empreinte complète').toMatch(/^[0-9a-f]{64}$/)
-      // L'aperçu affiché doit bien être le début de l'empreinte copiée.
-      expect(full.startsWith(shown), 'aperçu conforme à l’empreinte').toBe(true)
+      expect(full, `${file} : empreinte copiée`).toMatch(/^[0-9a-f]{64}$/)
+      expect(shown, `${file} : empreinte affichée`).toBe(full)
+      expect(row, `${file} : bouton copier`).toContain(
+        `aria-label="Copier l’empreinte SHA-256 de ${file}"`
+      )
       return full
     })
     expect(new Set(sums).size).toBe(sums.length)

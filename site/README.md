@@ -7,9 +7,11 @@ réseau, aucune police distante : le site fonctionne hors ligne.
 - **Palette** : celle de l’icône, sans rien ajouter — nuit `#1b2150`, mer `#26307a`, voiles crème
   `#f6efe4`, coque corail `#e8805a`, voile d’ombre `#b9becb`. Le thème sombre prend la nuit.
 - **Typographie** : sans-serif système, très grasse et très serrée pour les titres, monospace pour
-  les étiquettes, les fichiers et les empreintes.
-- **Matière** : à-plats uniquement — aucun dégradé, aucune ombre floue, aucun verre. Des règles de
-  2 px et des angles de 2 à 6 px portent la structure, comme sur une carte marine.
+  les étiquettes, les fichiers et les empreintes. Une seule entorse, sur l’accueil : le mot
+  accentué du héros (« atelier ») est en italique serif, sans police distante.
+- **Matière** : à-plats — aucun dégradé, aucun verre. Des règles de 2 px et des angles de 2 à
+  6 px portent la structure, comme sur une carte marine. Une seule ombre sur tout le site : celle
+  qui décolle l’écran du héros de la nuit.
 - **Mouvement** : les blocs `.reveal` apparaissent au défilement, jamais avant, et
   `prefers-reduced-motion` les affiche d’emblée.
 
@@ -135,6 +137,9 @@ npm run site:check                      # compare version et empreintes à la re
   (aucun décalage de mise en page).
 - CTA qui suit la plateforme **et l’architecture** : Apple silicon reçoit le DMG `arm64` (123 Mo),
   Intel le `x64`, le reste le DMG universel.
+- **Un seul état de plateforme** (`vela-keys`) : le choix fait dans la bande corail, dans les
+  raccourcis ou dans les onglets de la fiche téléchargement change le bouton du héros, la ligne de
+  fichier, le panneau affiché et les touches — sur toutes les pages.
 - Empreintes SHA-256 complètes au presse-papiers, vérifiables avec `shasum -a 256`.
 - Menu mobile : ouverture, `Échap`, clic extérieur, retour du focus sur le bouton.
 - Cibles tactiles portées à 40–42 px sans épaissir l’en-tête (débord du pseudo-élément).

@@ -204,6 +204,57 @@
   font-size: 11.5px;
 }
 
+/* Zooms retenus par domaine : une ligne par site, bornée en hauteur. */
+.zoom-sites {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 50%, transparent);
+}
+
+.zoom-sites li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 4px 10px;
+}
+
+.zoom-sites li + li {
+  border-top: 1px solid var(--line-soft);
+}
+
+.zoom-site-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.zoom-site-level {
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.zoom-site-forget {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--faint);
+}
+
+.zoom-site-forget:hover {
+  color: var(--ink);
+  background: var(--fill-2);
+}
+
 .nav-add-grid {
   display: grid;
   grid-template-columns: 1fr 1.6fr auto;

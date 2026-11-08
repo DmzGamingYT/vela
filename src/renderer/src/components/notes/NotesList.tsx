@@ -21,6 +21,8 @@ interface NotesListProps {
   allTags: [string, number][]
   highlights: PageHighlight[]
   pageNote: NoteMeta | undefined
+  /** Une page web est-elle ouverte ? Les captures du carnet en dépendent. */
+  hasPage: boolean
   noNotes: boolean
   spaceName: string | undefined
   onOpen(id: string): void
@@ -47,6 +49,7 @@ export default function NotesList({
   allTags,
   highlights,
   pageNote,
+  hasPage,
   noNotes,
   spaceName,
   onOpen,
@@ -177,7 +180,9 @@ export default function NotesList({
             <span>
               {filter || tagFilter || onlyPinned
                 ? 'Videz la recherche ou revenez à toutes les notes.'
-                : 'Glissez un passage depuis la page, ou écrivez à côté d’elle.'}
+                : hasPage
+                  ? 'Glissez un passage depuis la page, ou écrivez à côté d’elle.'
+                  : 'Écrivez votre première note, puis ouvrez une page pour en garder des passages.'}
             </span>
             {noNotes
               ? renderActions(true)

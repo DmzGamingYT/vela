@@ -33,6 +33,7 @@ import {
   SPACE_COLORS
 } from '@shared/defaults'
 import { moveTab } from '@shared/ordering'
+import { SPLIT_MIN_WIDTH } from '@shared/layout'
 import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
 import { chatModel } from '@shared/agentModel'
 import { engineHost, SEARCH_ENGINES } from '@shared/url'
@@ -138,6 +139,10 @@ export class Browser {
   private workPreviews = new Map<string, { updatedAt: number; preview: string }>()
   private overlay = false
   private registered = false
+  /** Split mis en veille (fenêtre trop étroite ou tiroir ouvert), à restaurer dès que la place revient. */
+  private splitSuspended = false
+  /** Deux volets tiennent-ils dans la largeur mesurée par la coque ? */
+  private splitPanesFit = true
 
   private readonly host: TabHost = {
     tab: (id) => this.store.get().tabs.find((tab) => tab.id === id),
@@ -160,6 +165,16 @@ export class Browser {
     },
     selection: (payload) => this.send('selection', payload),
     isExempted: (host) => this.store.isExempted(host),
+    zoomFor: (host) => {
+      const value = this.store.get().settings.zoomByHost[host]
+      return typeof value === 'number' ? value : null
+    },
+    rememberZoom: (host, level) => {
+      this.store.setHostZoom(host, level)
+      // La liste des réglages lit la vue diffusée : sans cela, un site
+      // nouvellement mémorisé n'y apparaît qu'au prochain changement d'état.
+      this.broadcast()
+    },
     openPeek: (url, spaceId) => this.openPeek({ url, ...(spaceId ? { spaceId } : {}) }),
     highlightsFor: (url) => this.highlights.list(url).map((entry) => entry.text)
   }
@@ -354,9 +369,65 @@ export class Browser {
     nativeTheme.themeSource = this.store.get().settings.theme
     this.preconnectSearch()
     win.webContents.on('before-input-event', (event, input) => this.tabs.handleInput(event, input))
+    // Deux panneaux de 320 px ne tiennent pas dans une fenêtre étroite — ni
+    // quand un tiroir ouvert mange la place disponible. Le split est suspendu
+    // (jamais supprimé) puis restauré dès que la place revient.
+    win.on('resize', () => this.syncSplit())
+    this.syncSplit()
     win.on('closed', () => {
       if (this.win === win) this.win = null
     })
+  }
+
+  /** Largeur utile de la fenêtre ; 0 quand aucune fenêtre n'est attachée. */
+  private windowWidth(): number {
+    const win = this.win
+    if (!win || win.isDestroyed()) return 0
+    try {
+      return win.getContentBounds().width
+    } catch {
+      return 0
+    }
+  }
+
+  /** Vrai quand la fenêtre ou le conteneur des volets est trop étroit. */
+  private splitBlocked(): boolean {
+    const width = this.windowWidth()
+    return (width > 0 && width < SPLIT_MIN_WIDTH) || !this.splitPanesFit
+  }
+
+  /**
+   * La coque mesure la place réellement disponible : un tiroir (Notes/Agent)
+   * retire ~340 px au workspace sans que la fenêtre bouge, donc sans `resize`.
+   * On applique la même suspension que pour une fenêtre étroite, afin que la
+   * barre latérale et l'Atelier ne croient pas le split encore actif.
+   */
+  setSplitPanesFit(fits: boolean): void {
+    if (this.splitPanesFit === fits) return
+    this.splitPanesFit = fits
+    this.syncSplit()
+  }
+
+  /**
+   * Range la vue scindée quand la place manque et la remet exactement là où
+   * elle était dès que la place revient. L'état `split` reste la source de
+   * vérité unique pour la coque, la barre latérale et l'Atelier.
+   */
+  private syncSplit(): void {
+    const state = this.store.get()
+    if (this.splitBlocked()) {
+      if (!state.split) return
+      this.splitSuspended = true
+      state.split = false
+    } else {
+      if (!this.splitSuspended) return
+      this.splitSuspended = false
+      const second = state.secondTabBySpace[state.activeSpaceId]
+      if (!second || !state.tabs.some((tab) => tab.id === second)) return
+      state.split = true
+    }
+    this.store.schedule()
+    this.broadcast()
   }
 
   private send(channel: string, payload: unknown): void {
@@ -547,29 +618,42 @@ export class Browser {
   metrics(): { live: number; processes: ProcessInfo[] } {
     const state = this.store.get()
     const live = this.tabs.liveIds()
-    const processes: ProcessInfo[] = state.tabs.map((tab) => ({
-      tabId: tab.id,
-      title: tab.title,
-      url: tab.url,
-      live: live.has(tab.id),
-      blocked: this.tabs.runtimeOf(tab.id).blocked,
-      type: 'tab'
-    }))
+    // Une seule lecture des métriques : chaque renderer est ensuite rattaché à
+    // son onglet par son PID système, et l'application a la sienne.
+    const byPid = new Map<number, number>()
+    let appMb: number | null = null
     try {
-      const metrics = app.getAppMetrics()
-      const mem = metrics.find((m) => m.type === 'Browser')
-      if (mem) {
-        processes.unshift({
-          tabId: null,
-          title: `Vela — ${(mem.memory.workingSetSize / 1024).toFixed(0)} Mo`,
-          url: '',
-          live: true,
-          blocked: this.tabs.blockedTotal(),
-          type: 'app'
-        })
+      for (const metric of app.getAppMetrics()) {
+        const mb = metric.memory.workingSetSize / 1024
+        byPid.set(metric.pid, mb)
+        if (metric.type === 'Browser') appMb = mb
       }
     } catch {
       /* métriques indisponibles en dev */
+    }
+    const processes: ProcessInfo[] = state.tabs.map((tab) => {
+      const alive = live.has(tab.id)
+      const pid = alive ? this.tabs.pidOf(tab.id) : null
+      return {
+        tabId: tab.id,
+        title: tab.title,
+        url: tab.url,
+        live: alive,
+        blocked: this.tabs.runtimeOf(tab.id).blocked,
+        type: 'tab',
+        memoryMb: pid === null ? null : (byPid.get(pid) ?? null)
+      }
+    })
+    if (appMb !== null) {
+      processes.unshift({
+        tabId: null,
+        title: 'Vela',
+        url: '',
+        live: true,
+        blocked: this.tabs.blockedTotal(),
+        type: 'app',
+        memoryMb: appMb
+      })
     }
     return { live: live.size, processes: processes.slice(0, 60) }
   }
@@ -816,6 +900,9 @@ export class Browser {
   }
 
   private toggleSplit(): void {
+    // Garde-fou : la coque prévient déjà l'utilisateur, mais un raccourci,
+    // un menu ou le coup d'œil peut aussi demander le split par IPC.
+    if (this.splitBlocked()) return
     const state = this.store.get()
     const spaceId = state.activeSpaceId
     const activeId = state.activeTabBySpace[spaceId]
@@ -838,6 +925,7 @@ export class Browser {
   }
 
   private setSplitTab(id: string): void {
+    if (this.splitBlocked()) return
     const state = this.store.get()
     const tab = state.tabs.find((item) => item.id === id)
     if (!tab) return
@@ -1601,6 +1689,7 @@ export class Browser {
       setOverlay: (value) => {
         this.overlay = value
       },
+      setSplitPanesFit: (fits) => this.setSplitPanesFit(fits),
       createTab: (input) => this.createTab(input),
       closeTab: (id) => this.closeTab(id),
       activateTab: (id) => this.activateTab(id),

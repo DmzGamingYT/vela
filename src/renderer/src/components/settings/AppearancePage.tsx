@@ -15,10 +15,13 @@ import AppearancePreview from './AppearancePreview'
 import RadioCards, { type ChoiceOption } from '../RadioCards'
 import { useBrowser } from '../../store/browser'
 
-const MODES: { value: Settings['theme']; label: string; hint?: string }[] = [
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
-  { value: 'system', label: 'Système', hint: 'Suit votre système' }
+/* Les trois cartes portent une ligne d'explication : sans elle, « Système »
+   était la seule à en avoir une et les trois libellés tombaient à des hauteurs
+   différentes. `ariaLabel` garde le nom court attendu au clavier et aux tests. */
+const MODES: ChoiceOption<Settings['theme']>[] = [
+  { value: 'light', label: 'Clair', hint: 'Toujours clair', ariaLabel: 'Clair' },
+  { value: 'dark', label: 'Sombre', hint: 'Toujours sombre', ariaLabel: 'Sombre' },
+  { value: 'system', label: 'Système', hint: 'Suit votre système', ariaLabel: 'Système' }
 ]
 
 const DENSITIES: ChoiceOption<'compact' | 'normal' | 'airy'>[] = [
@@ -171,6 +174,10 @@ function ModeCards({
               className="mode-card-input"
               type="radio"
               name="appearance-mode"
+              // Le libellé visible contient aussi la ligne d'explication :
+              // sans ce nom court, le bouton radio s'annoncerait « Clair
+              // Toujours clair » aux lecteurs d'écran et aux tests.
+              aria-label={mode.ariaLabel ?? mode.label}
               value={mode.value}
               checked={active}
               onChange={() => onChange(mode.value)}

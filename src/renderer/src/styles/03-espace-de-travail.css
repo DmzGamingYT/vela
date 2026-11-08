@@ -13,6 +13,8 @@
   min-height: 0;
   display: flex;
   position: relative;
+  /* Un volet trop étroit ne doit jamais pousser l'autre hors de la fenêtre. */
+  overflow: hidden;
 }
 
 .pane {
@@ -22,6 +24,15 @@
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* Largeur de sécurité : en dessous de 320 px la barre d'adresse devient
+   « V… », les contrôles débordent et l'accueil n'est plus lisible. Le split
+   est suspendu avant d'en arriver là (côté fenêtre et côté DOM), cette borne
+   empêche les derniers pixels de le faire quand même. */
+.panes.is-split .pane,
+.work-split.is-split .pane {
+  min-width: 320px;
 }
 
 .panes.is-split .pane[data-primary='true'] {
@@ -36,7 +47,9 @@
    la coque s'efface d'un souffle — animer la largeur des volets reviendrait à
    animer les pages, ce qu'Electron ne sait pas faire. */
 .panes.is-split .pane[data-secondary='true'] {
-  flex: 0 0 calc(100% - var(--ratio) - 9px);
+  /* Un ratio mémorisé sur une grande fenêtre peut devenir impossible à tenir
+     après réduction : borne le second volet sans modifier ce ratio enregistré. */
+  flex: 0 0 clamp(320px, calc(100% - var(--ratio) - 9px), calc(100% - 329px));
   animation: vela-pane-in var(--dur-2) var(--ease-standard) both;
 }
 
@@ -112,8 +125,8 @@
   cursor: pointer;
 }
 
-/* Au repos la pilule affiche un nom de page, pas une URL : il se centre dans
-   la barre. Au focus le champ redevient une adresse éditable, alignée à
+/* Au repos la pilule affiche l'hôte (court, jamais tronqué) : il se centre
+   dans la barre. Au focus le champ redevient une adresse éditable, alignée à
    gauche, sinon le curseur saute au milieu du texte. */
 .address:not([data-focused='true']) .address-input {
   text-align: center;
@@ -125,9 +138,9 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 11%, transparent);
 }
 
-/* Le cadenas, le préfixe « https » et le nom d’hôte ont quitté la pilule :
-   la pastille de confidentialité dit ce qui est bloqué, le champ porte le nom
-   de la page au repos et l’adresse au survol. */
+/* Pas de cadenas ni de préfixe « https » : le champ porte l'hôte au repos,
+   l'adresse lisible au survol, l'URL complète au focus. Le titre de la page
+   et l'URL sont dans l'infobulle de la pilule. */
 
 .address-input {
   flex: 1;

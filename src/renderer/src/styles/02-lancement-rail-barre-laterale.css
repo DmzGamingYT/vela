@@ -217,6 +217,18 @@
   opacity: 1;
 }
 
+/* Les outils de l'en-tête des onglets portaient aussi `subtle`, mais la règle
+   de révélation ne visait que `.space-head` : « Nouveau dossier » et « Nouvel
+   onglet » restaient invisibles en permanence tout en restant cliquables.
+   Ici c'est le conteneur qui gère l'effacement (0,4 au repos, 1 au survol). */
+.tabs-tools .icon-btn.subtle {
+  opacity: 1;
+}
+
+.tabs-tools:focus-within {
+  opacity: 1;
+}
+
 .icon-btn.danger:hover {
   color: var(--clay);
   background: color-mix(in srgb, var(--clay) 12%, transparent);
@@ -239,6 +251,10 @@
 .space-name {
   flex: 1;
   min-width: 0;
+  /* Cible cliquable (double-clic = modifier l'espace) : 17 px de haut était
+     sous le minimum WCAG 2.2 de 24 px. La hauteur de ligne garde le texte centré. */
+  min-height: 24px;
+  line-height: 24px;
   text-align: left;
   font-size: 15px;
   font-weight: 600;
@@ -303,8 +319,10 @@
 
 .tabs-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  row-gap: 0;
   padding: 12px 6px 6px 10px;
   font-size: 9.5px;
   font-weight: 600;
@@ -321,7 +339,8 @@
   margin-left: auto;
   display: flex;
   gap: 1px;
-  opacity: 0.4;
+  /* 0,4 rendait les seules actions de la section presque invisibles. */
+  opacity: 0.65;
   transition: opacity var(--dur-1) var(--ease-standard);
 }
 
@@ -330,10 +349,12 @@
 }
 
 .tabs-tools .icon-btn {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  border-radius: 5px;
+  /* 20 × 20 px était trop petit pour une cible WCAG 2.2 (24 × 24 px minimum).
+     L'icône reste à 14 px : seule la zone cliquable grandit. */
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 6px;
 }
 
 .tab-group {
@@ -361,10 +382,11 @@
 }
 
 .group-chevron {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin: -3px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   color: var(--muted);
@@ -380,10 +402,22 @@
 }
 
 .group-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin: -8px;
   border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.group-dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--group-color);
 }
 
 .group-name {
@@ -438,12 +472,9 @@
 /* La pastille de couleur est aussi le bouton qui change la couleur : le
    dossier se distingue sans passer par une boîte de dialogue. */
 .group-dot {
-  flex: 0 0 8px;
-  width: 8px;
-  height: 8px;
   padding: 0;
-  border-radius: 999px;
   border: none;
+  background: transparent !important;
 }
 
 .group-dot:hover,
@@ -679,6 +710,7 @@
 }
 
 .tab-action {
+  position: relative;
   width: 24px;
   height: 24px;
   border-radius: 6px;
@@ -687,8 +719,28 @@
   color: var(--muted);
 }
 
+/* 24 px de dessin, 28 px de clic : la fenêtre d'un onglet ne laisse pas de
+   place à un bouton plus large. */
+.tab-action::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+}
+
 .tab-action svg {
   transition: transform var(--dur-2) var(--ease-out);
+}
+
+/* Le titre d'onglet garde sa place : seules les actions secondaires
+   disparaissent au repos. La fermeture reste visible ; le survol et le focus
+   clavier ramènent les autres. */
+.tab-action[data-extra] {
+  display: none;
+}
+
+.tab-row:hover .tab-action[data-extra],
+.tab-row:focus-within .tab-action[data-extra] {
+  display: grid;
 }
 
 .tab-action:hover {

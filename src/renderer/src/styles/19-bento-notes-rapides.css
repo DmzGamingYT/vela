@@ -16,7 +16,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
+  height: 28px;
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid var(--line);

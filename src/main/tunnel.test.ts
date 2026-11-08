@@ -4,7 +4,29 @@ import { describe, expect, it, vi } from 'vitest'
 // sont purs et n'ouvrent aucune connexion.
 vi.mock('electron', () => ({ net: { fetch: vi.fn() } }))
 
-const { ANGLES, mainParagraphs, metaContent } = await import('./tunnel')
+const { ANGLES, mainParagraphs, metaContent, readLimited } = await import('./tunnel')
+
+describe('lecture bornée des réponses réseau', () => {
+  it('ne décode pas plus d’octets que la limite puis annule le flux', async () => {
+    let cancelled = false
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('123456'))
+        controller.enqueue(new TextEncoder().encode('789'))
+      },
+      cancel() {
+        cancelled = true
+      }
+    })
+
+    await expect(readLimited({ body }, 5)).resolves.toBe('12345')
+    expect(cancelled).toBe(true)
+  })
+
+  it('refuse une réponse sans flux au lieu de charger tout son texte', async () => {
+    await expect(readLimited({ body: null }, 10)).rejects.toThrow('Réponse sans flux lisible')
+  })
+})
 
 describe('extraction du texte d’une page', () => {
   it('n’extrait pas un paragraphe caché dans un script', () => {

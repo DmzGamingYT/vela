@@ -53,5 +53,22 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.0.0",
     "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@electron/universal": {
+      "minimatch@^9.0.3": "^11.0.1"
+    },
+    "app-builder-lib": {
+      "minimatch@^10.2.5": "^11.0.1"
+    },
+    "@eslint/config-array": {
+      "minimatch@^10.2.4": "^11.0.1"
+    },
+    "eslint": {
+      "minimatch@^10.2.6": "^11.0.1"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch@^10.2.2": "^11.0.1"
+    }
   }
 }

@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react'
 import type { ProcessInfo } from '@shared/types'
+import { isHomeUrl } from '@shared/url'
 import { useModalFocus } from '../../lib/useModalFocus'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
+
+/** « aucune requête bloquée », « 1 requête bloquée », « 3 requêtes bloquées ». */
+function blockedLabel(count: number): string {
+  if (count === 0) return 'aucune requête bloquée'
+  return `${count} requête${count > 1 ? 's' : ''} bloquée${count > 1 ? 's' : ''}`
+}
+
+/** Nom de la ligne : l'accueil garde son nom, jamais son titre d'onglet. */
+function rowLabel(row: ProcessInfo): string {
+  if (row.type === 'app') return 'Vela'
+  if (isHomeUrl(row.url)) return 'Accueil'
+  return row.title || row.url || 'Onglet'
+}
 
 export default function ProcessManager() {
   const setOverlay = useBrowser((s) => s.setOverlay)
@@ -34,6 +48,13 @@ export default function ProcessManager() {
     void refresh()
   }
 
+  // Le compteur ne compte que les onglets vivants — l'application a toujours
+  // la sienne — et la phrase s'accorde avec zéro, un ou plusieurs.
+  const liveLabel =
+    live === 0
+      ? 'aucun onglet vif'
+      : `${live} onglet${live > 1 ? 's' : ''} vif${live > 1 ? 's' : ''}`
+
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
       <div
@@ -46,7 +67,7 @@ export default function ProcessManager() {
       >
         <header className="settings-head">
           <div>
-            <h1>Processus · {live} vifs</h1>
+            <h1>Processus · {liveLabel}</h1>
             <p>Chaque onglet non suspendu garde un renderer. Déchargez pour libérer la RAM.</p>
           </div>
           <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer"><Icon name="close" size={17} /></button>
@@ -55,15 +76,46 @@ export default function ProcessManager() {
           {rows.map((row) => (
             <div key={row.tabId ?? 'app'} className="setting-row">
               <div>
-                <label>{row.title || row.url || 'App'}</label>
-                <p className="setting-hint">{row.live ? `Vif · ${row.blocked} bloquées` : 'Suspendu · recharge au focus'} {row.url}</p>
+                <label>{rowLabel(row)}</label>
+                <p className="setting-hint">
+                  {row.type === 'app'
+                    ? `Application · ${blockedLabel(row.blocked)}`
+                    : row.live
+                      ? `Vif · ${blockedLabel(row.blocked)}`
+                      : 'Suspendu · recharge à l’ouverture'}
+                  {row.url && !isHomeUrl(row.url) ? ` · ${row.url}` : ''}
+                </p>
               </div>
-              {row.tabId && row.live ? (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" className="ghost-btn" onClick={() => { selectTab(row.tabId!); setOverlay(null) }}>Aller</button>
-                  <button type="button" className="ghost-btn" onClick={() => void discard(row.tabId)}>Décharger</button>
-                </div>
-              ) : <span className="tag">{row.live ? 'App' : 'En pause'}</span>}
+              <div className="process-actions">
+                {row.memoryMb !== null && (
+                  <span className="process-mem" title="Mémoire vive du processus">
+                    {Math.round(row.memoryMb)} Mo
+                  </span>
+                )}
+                {row.tabId && row.live ? (
+                  <>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => {
+                        selectTab(row.tabId!)
+                        setOverlay(null)
+                      }}
+                    >
+                      Aller
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => void discard(row.tabId)}
+                    >
+                      Décharger
+                    </button>
+                  </>
+                ) : (
+                  <span className="tag">{row.type === 'app' ? 'App' : 'En pause'}</span>
+                )}
+              </div>
             </div>
           ))}
         </div>

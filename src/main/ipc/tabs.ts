@@ -93,8 +93,13 @@ export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
   on('views:layout', (_event, payload) => {
     const request = payload as LayoutRequest
     const panes = Array.isArray(request?.panes) ? request.panes.filter(isPane).slice(0, 4) : []
-    host.setOverlay(Boolean(request?.overlay))
-    host.tabs.layout({ panes, overlay: Boolean(request?.overlay) })
+    const overlay = Boolean(request?.overlay)
+    // Un tiroir ouvert à droite retire de la place sans redimensionner la
+    // fenêtre : seule la coque peut le savoir. Les appels qui ne mesurent rien
+    // laissent la suspension telle quelle.
+    if (typeof request?.splitFits === 'boolean') host.setSplitPanesFit(request.splitFits)
+    host.setOverlay(overlay)
+    host.tabs.layout({ panes, overlay })
   })
 
   // Épreuves des volets pour le glissement du séparateur. Demandé avant que

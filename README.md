@@ -140,16 +140,15 @@ Le certificat est importé dans un trousseau temporaire du runner, `electron-bui
 agrafe le ticket (`xcrun stapler`). Le job vérifie ensuite les trois bundles, `codesign --verify
 --deep --strict`, `spctl --assess` et `stapler validate` avant de publier.
 
-Pour Windows, le certificat de signature de code se prépare de la même façon, mais **le workflow ne
-l’utilise pas encore** : c’est le second point de blocage.
+Pour Windows, le workflow lit le certificat de signature de code avec les deux secrets suivants :
 
 | Secret Windows | Contenu |
 |---|---|
-| `WIN_CERT_P12` | certificat de signature de code (`.pfx`) encodé en base64 |
-| `WIN_CERT_PASSWORD` | mot de passe du `.pfx` |
+| `WIN_CSC_LINK` | certificat de signature de code (`.pfx`), fourni comme chemin/URL ou contenu encodé en base64 accepté par electron-builder |
+| `WIN_CSC_KEY_PASSWORD` | mot de passe du `.pfx` |
 
-`electron-builder` lit aussi `CSC_LINK` / `CSC_KEY_PASSWORD` pour les deux plateformes ; n’utiliser
-qu’un seul couple à la fois, sinon le certificat chargé n’est pas celui qu’on croit.
+Sans ces secrets, le build Windows reste non signé et SmartScreen avertit l’utilisateur. Le workflow
+les transmet à electron-builder sous les noms `CSC_LINK` et `CSC_KEY_PASSWORD`.
 
 ### Ce qui bloque aujourd’hui
 

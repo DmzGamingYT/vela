@@ -811,8 +811,9 @@
 }
 
 .tw-src-do button {
-  width: 20px;
-  height: 20px;
+  /* 24 × 24 px : cible minimale WCAG 2.2, l'icône garde sa taille. */
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   border-radius: 5px;

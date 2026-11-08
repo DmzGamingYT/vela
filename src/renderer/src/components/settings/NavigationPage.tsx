@@ -23,6 +23,7 @@ import { useBrowser } from '../../store/browser'
 import { BrandMark, ENGINE_BRANDS } from '../BrandMark'
 import { Icon } from '../Icon'
 import RadioCards from '../RadioCards'
+import ZoomSitesList from './ZoomSitesList'
 
 interface Props {
   settings: Settings
@@ -838,6 +839,8 @@ export default function NavigationPage({
             ))}
           </select>
         </div>
+
+        <ZoomSitesList />
       </section>
     </>
   )

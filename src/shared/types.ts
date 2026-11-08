@@ -216,6 +216,11 @@ export interface Settings {
   webLanguage: string
   /** Zoom appliqué aux pages à l'ouverture (1 = taille réelle). */
   defaultZoom: number
+  /**
+   * Niveau de zoom retenu par domaine (`exemple.fr` → niveau Chromium).
+   * 0 vaut 100 % ; un domaine absent garde le zoom courant.
+   */
+  zoomByHost: Record<string, number>
   /** Thème de couleur du châssis (indigo, rouge, custom…). */
   themeId: ThemeId
   /** Teinte utilisée quand themeId vaut « custom ». */
@@ -350,6 +355,8 @@ export interface ProcessInfo {
   live: boolean
   blocked: number
   type: 'tab' | 'app'
+  /** Mémoire du renderer, en Mo. `null` quand la page est en veille. */
+  memoryMb: number | null
 }
 
 export interface PersistedState {
@@ -551,6 +558,13 @@ export interface SelectionPayload {
 export interface LayoutRequest {
   panes: PaneRect[]
   overlay: boolean
+  /**
+   * Deux volets tiennent-ils dans la largeur mesurée par la coque ? Seule la
+   * coque connaît la place réellement disponible : un tiroir ouvert la réduit
+   * sans que la fenêtre bouge, donc sans événement `resize` côté principal.
+   * Absent = appel qui ne mesure rien, la suspension reste inchangée.
+   */
+  splitFits?: boolean
 }
 
 /** Épreuve figée d’un volet, prise juste avant de le retirer de la scène. */

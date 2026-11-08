@@ -159,6 +159,12 @@
 
 .settings-scroll {
   padding: 0 32px 40px;
+  /* La seconde rangée de pastilles était coupée net au bas du panneau, sans
+     rien qui dise qu'il reste à défiler. Le fondu sur les derniers 26 px sert
+     d'indice ; comme le contenu se termine par 40 px de marge, il ne masque
+     aucun contrôle une fois arrivé en bas. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
 }
 
 .appearance-page {

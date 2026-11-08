@@ -1,8 +1,8 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import type { PaneSnapshot, TabView } from '@shared/types'
+import { clampSplitRatio, panesCanSplit } from '@shared/layout'
 import { hostOf, isHomeUrl } from '@shared/url'
-import { clamp } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 import StatusBar from './StatusBar'
@@ -95,8 +95,11 @@ function Pane({
 
 export default function Workspace() {
   const view = useBrowser((state) => state.view)
+  const splitAllowed = useBrowser((state) => state.splitAllowed)
+  const compactViewport = useBrowser((state) => state.compactViewport)
   const overlay = useBrowser((state) => state.overlay)
   const menuOpen = useBrowser((state) => state.menuOpen)
+  const peekOpen = useBrowser((state) => state.peekOpen)
   const workMode = useBrowser((state) => state.workMode)
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
@@ -125,9 +128,17 @@ export default function Workspace() {
   const resizingRef = useRef(false)
   const [resizing, setResizing] = useState(false)
   const [shots, setShots] = useState<Record<string, string>>({})
+  // Largeur mesurée, partagée avec le store : la barre d'adresse, la palette
+  // et le processus principal prennent la même décision que ce composant.
+  const panesWidth = useBrowser((state) => state.panesWidth)
   const ratio = liveRatio ?? view?.splitRatio ?? 0.5
   const secondTab = view?.tabs.find((tab) => tab.id === view.secondTabId)
-  const splitNow = Boolean(view?.split && secondTab)
+  // Le processus principal suspend déjà le split sous le seuil ; cette garde
+  // évite un panneau minuscule le temps que l'état diffusé arrive. La largeur
+  // réellement mesurée couvre aussi le cas d'un tiroir ouvert à droite, qui
+  // retire de la place sans que la fenêtre ait bougé.
+  const splitFits = panesCanSplit(panesWidth)
+  const splitNow = Boolean(view?.split && secondTab && splitAllowed && splitFits)
   const errorKey = view?.tabs.map((tab) => (tab.error ? '1' : '0')).join('') ?? ''
   // Les onglets d'accueil n'ont pas de page native : quand un onglet passe de
   // l'accueil à une page (ou l'inverse), la scène change de contenu sans que
@@ -140,16 +151,23 @@ export default function Workspace() {
   const sendLayout = useCallback(() => {
     const state = useBrowser.getState()
     if (!state.view) return
+    // Le principal ne voit pas les tiroirs : on lui redit à chaque disposition
+    // si deux volets tiennent encore. Il suspend (sans effacer) le split quand
+    // la réponse devient négative, et le restaure quand la place revient.
+    const splitFits = panesCanSplit(state.panesWidth)
     // En mode Work, l’atelier couvre la scène : aucune page native visible —
     // sauf lorsqu’une vue scindée y installe une source à côté de la carte.
-    const workSplit = Boolean(state.workMode === 'work' && state.view.split && state.view.secondTabId)
+    const workSplit = Boolean(
+      state.workMode === 'work' && state.view.split && state.view.secondTabId && state.splitAllowed
+    )
     if (
       (state.workMode === 'work' && !workSplit) ||
       state.overlay ||
+      state.peekOpen ||
       state.menuOpen > 0 ||
       resizingRef.current
     ) {
-      window.vela.views.layout({ panes: [], overlay: true })
+      window.vela.views.layout({ panes: [], overlay: true, splitFits })
       return
     }
     const nodes = document.querySelectorAll<HTMLElement>('[data-pane-tab]')
@@ -166,7 +184,7 @@ export default function Workspace() {
         }
       ]
     })
-    window.vela.views.layout({ panes, overlay: false })
+    window.vela.views.layout({ panes, overlay: false, splitFits })
   }, [])
 
   useEffect(() => {
@@ -176,7 +194,11 @@ export default function Workspace() {
       frame = requestAnimationFrame(sendLayout)
     }
     schedule()
-    const observer = new ResizeObserver(schedule)
+    const observer = new ResizeObserver(() => {
+      const width = panesRef.current?.clientWidth ?? 0
+      useBrowser.getState().syncPanesWidth(width)
+      schedule()
+    })
     if (panesRef.current) observer.observe(panesRef.current)
     window.addEventListener('resize', schedule)
     return () => {
@@ -189,11 +211,15 @@ export default function Workspace() {
     view?.activeTabId,
     view?.secondTabId,
     view?.split,
+    splitAllowed,
+    splitFits,
+    compactViewport,
     ratio,
     errorKey,
     notesOpen,
     agentOpen,
     overlay,
+    peekOpen,
     menuOpen,
     workMode,
     resizing,
@@ -214,7 +240,8 @@ export default function Workspace() {
     const container = panesRef.current
     if (!container || !view) return
     const rect = container.getBoundingClientRect()
-    const apply = (clientX: number): number => clamp((clientX - rect.left) / rect.width, 0.25, 0.75)
+    const apply = (clientX: number): number =>
+      clampSplitRatio((clientX - rect.left) / rect.width, rect.width)
 
     // Les deux pages restent sous les yeux, en épreuve figée. Leurs vues
     // natives, elles, quittent la scène : posées au-dessus de la coque, elles
@@ -236,7 +263,11 @@ export default function Workspace() {
       begun = true
       resizingRef.current = true
       setResizing(true)
-      window.vela.views.layout({ panes: [], overlay: true })
+      window.vela.views.layout({
+        panes: [],
+        overlay: true,
+        splitFits: panesCanSplit(useBrowser.getState().panesWidth)
+      })
     }
     const guard = setTimeout(() => begin([]), 120)
     void (ids.length ? window.vela.views.snapshot(ids) : Promise.resolve<PaneSnapshot[]>([]))
@@ -296,6 +327,7 @@ export default function Workspace() {
         className="workspace work"
         data-resizing={resizing}
         data-split={split}
+        data-compact={compactViewport}
         data-collapsed={view.settings.sidebarCollapsed}
       >
         <div
@@ -334,6 +366,8 @@ export default function Workspace() {
     <main
       className="workspace"
       data-resizing={resizing}
+      data-compact={compactViewport}
+      data-split={split}
       data-collapsed={view.settings.sidebarCollapsed}
     >
       {findOpen && (

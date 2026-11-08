@@ -688,11 +688,14 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
         <span className="sessions-kicker">
           <Icon name="clock" size={13} />
           Sessions
+          {sessionCount > 0 && (
+            <span className="sessions-count">
+              {sessionCount}
+              <span className="sr-only"> gardée{sessionCount > 1 ? 's' : ''}</span>
+            </span>
+          )}
         </span>
-        <span className="sessions-date">
-          {weekdayLabel(today)}
-          {sessionCount > 0 ? ` · ${sessionCount} gardée${sessionCount > 1 ? 's' : ''}` : ''}
-        </span>
+        <span className="sessions-date">{weekdayLabel(today)}</span>
         <span className="sessions-arrow">
           <Icon name="arrow-right" size={14} />
         </span>
@@ -931,14 +934,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           <div className="tabs-head">
             <span>Onglets</span>
             <span className="tabs-count">{unpinned.length}</span>
-            {view.memoryFreed > 0 && (
-              <span
-                className="tabs-savings"
-                title="Mémoire rendue par les onglets en veille depuis le lancement"
-              >
-                {view.memoryFreed} Mo
-              </span>
-            )}
             <span className="tabs-tools">
               <button
                 type="button"
@@ -957,6 +952,17 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                 <Icon name="plus" size={14} />
               </button>
             </span>
+            {/* Le libellé complet ne tient pas sur la ligne du titre : il
+                occupe sa propre ligne, sous les actions de la section. */}
+            {view.memoryFreed > 0 && (
+              <span
+                className="tabs-savings"
+                title={`Mémoire rendue par les onglets en veille depuis le lancement : ${view.memoryFreed} Mo`}
+              >
+                {view.memoryFreed} Mo
+                <span className="tabs-savings-unit">{' libérés'}</span>
+              </span>
+            )}
           </div>
 
           {groups.map((group) => {
@@ -997,7 +1003,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                   <button
                     type="button"
                     className="group-dot"
-                    style={{ background: group.color }}
+                    style={{ '--group-color': group.color } as CSSProperties}
                     title="Changer la couleur du dossier"
                     aria-label={`Changer la couleur de ${group.name}`}
                     aria-expanded={colorGroup === group.id}
