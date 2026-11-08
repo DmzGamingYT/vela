@@ -90,13 +90,13 @@
     macArm: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.33-arm64.dmg',
-      size: 'Apple silicon · 120,5 Mo',
+      size: 'Apple silicon · 120,6 Mo',
       href: download('Vela-0.3.33-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.33-x64.dmg',
-      size: 'Intel non testé · 127,8 Mo',
+      size: 'Intel non testé · 127,9 Mo',
       href: download('Vela-0.3.33-x64.dmg')
     },
     win: {
