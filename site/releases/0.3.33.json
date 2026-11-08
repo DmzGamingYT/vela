@@ -1,0 +1,71 @@
+{
+  "version": "0.3.33",
+  "slug": "0-3-33",
+  "date": "2026-11-08",
+  "headline": "Le gestionnaire lit la mémoire, le menu tient dans la fenêtre",
+  "intro": "Le gestionnaire de processus donne la mémoire réelle de chaque onglet, accorde son compteur et nomme l’onglet d’accueil. Le menu d’un onglet ne mord plus le bas de la fenêtre : il regroupe les actions de l’agent dans un sous-menu, et « Copier » passe en tête du menu de page.",
+  "tags": [
+    "processus",
+    "menus",
+    "colonne latérale",
+    "accessibilité"
+  ],
+  "stats": {
+    "commits": 2,
+    "files": 134,
+    "insertions": 8270,
+    "deletions": 1121
+  },
+  "sections": [
+    {
+      "title": "La mémoire se lit onglet par onglet",
+      "body": [
+        "Le gestionnaire ne dit plus seulement qu’une page est vivante : chaque ligne porte sa mémoire réelle, lue dans les métriques du processus principal et rattachée à l’onglet par son identifiant de processus. La ligne de l’application, elle, ne duplique plus son chiffre dans son titre.",
+        "Un onglet suspendu n’affiche aucune valeur plutôt qu’un zéro trompeur, et le panneau garde ses trois colonnes alignées : mémoire, état, puis actions."
+      ],
+      "figure": {
+        "type": "metrics",
+        "caption": "Le même panneau, avant et après la lecture des métriques.",
+        "items": [
+          {
+            "before": "un titre « Nouvel onglet »",
+            "after": "« Accueil »",
+            "label": "nom de l’onglet d’accueil"
+          },
+          {
+            "before": "« 1 vifs »",
+            "after": "« 1 onglet vif »",
+            "label": "compteur accordé"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Le menu tient dans la fenêtre",
+      "body": [
+        "Sur un onglet chargé, le menu mesurait plus de cinq cents pixels et venait s’écraser contre le bas de la fenêtre : la dernière action restait à moitié coupée. Il mesure maintenant sa hauteur réelle et se replace pour garder huit pixels de marge, avec un défilement interne quand la fenêtre est courte."
+      ]
+    },
+    {
+      "title": "L’agent range ses actions",
+      "body": [
+        "Les quatre gestes de l’agent — joindre la page, la résumer, la traduire, capturer la sélection dans les notes — tiennent dans un sous-menu « Agent ». Le menu de l’onglet passe de quatorze à onze entrées et garde toutes ses actions, chacune avec son icône et son explication.",
+        "Dans la page, « Copier » remonte en première ligne dès qu’il y a une sélection : la copie ne se cherche plus sous les actions de l’agent."
+      ]
+    },
+    {
+      "title": "La colonne latérale se range",
+      "body": [
+        "Le badge de mémoire libérée a sa propre ligne, le compteur de sessions s’affiche dans l’en-tête des onglets, le rail gagne un trait de séparation fin et le dock retrouve des surfaces identiques d’un bouton à l’autre."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir le gestionnaire de processus : chaque onglet vif affiche sa mémoire, la ligne Vela la sienne, et un onglet suspendu n’affiche aucun chiffre.",
+    "Vérifier le titre du panneau : « Processus · 1 onglet vif », puis « Processus · aucun onglet vif » après déchargement.",
+    "Clic droit sur un onglet : le menu garde une marge en bas de la fenêtre, et « Agent » ouvre ses quatre actions dans un sous-menu.",
+    "Clic droit dans la page avec du texte sélectionné : « Copier » est la première entrée.",
+    "Ouvrir le site : il annonce la version 0.3.33 et les six empreintes de cette release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.32...v0.3.33"
+}
