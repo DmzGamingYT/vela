@@ -84,25 +84,25 @@
     mac: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.35-universal.dmg',
-      size: 'Apple silicon et Intel · 224,3 Mo',
+      size: 'Apple silicon et Intel · 226,1 Mo',
       href: download('Vela-0.3.35-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.35-arm64.dmg',
-      size: 'Apple silicon · 120,6 Mo',
+      size: 'Apple silicon · 122,4 Mo',
       href: download('Vela-0.3.35-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.35-x64.dmg',
-      size: 'Intel non testé · 127,9 Mo',
+      size: 'Intel non testé · 129,7 Mo',
       href: download('Vela-0.3.35-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
       file: 'Vela-0.3.35-x64.exe',
-      size: 'x64 · 122,2 Mo',
+      size: 'x64 · 122,3 Mo',
       href: download('Vela-0.3.35-x64.exe')
     },
     linux: {
