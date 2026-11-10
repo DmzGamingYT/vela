@@ -1,0 +1,148 @@
+/* ------------------------------------------------------------------
+   Bouclier — détail des requêtes arrêtées
+   ------------------------------------------------------------------
+   Le panneau suit le gabarit des feuilles (`.sheet`) : en-tête, chiffres
+   en serif, puis une liste de domaines séparés par des filets. Aucun
+   carton : le filet suffit, comme sur l'accueil.
+   ------------------------------------------------------------------ */
+
+.shield-sheet {
+  width: min(640px, 100%);
+}
+
+.shield-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.shield-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 16px 22px;
+  border-right: 1px solid var(--line-soft);
+}
+
+.shield-stats > div:last-child {
+  border-right: none;
+}
+
+.shield-stats strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.shield-stats .shield-state {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.shield-stats span {
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Le bandeau d'exemption : un fond teinté très clair, jamais une alerte. */
+.shield-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 22px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+.shield-banner span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.shield-banner b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.shield-rows {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 22px 14px;
+}
+
+.shield-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.shield-row:last-child {
+  border-bottom: 0;
+}
+
+.shield-host {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shield-count {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.shield-action {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.shield-exempt {
+  padding-top: 4px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.shield-exempt h2 {
+  margin: 14px 22px 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.shield-empty {
+  margin: 0;
+  padding: 22px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}

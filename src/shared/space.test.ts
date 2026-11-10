@@ -26,13 +26,15 @@ import {
   suggestSpaceName
 } from './space'
 
-const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+const PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
 describe('avatars d’espace', () => {
   it('accepte le monogramme et les marques connues', () => {
     expect(sanitizeSpaceAvatar('monogram')).toBe('monogram')
     expect(sanitizeSpaceAvatar('icon:leaf')).toBe('icon:leaf')
-    for (const mark of SPACE_AVATARS) expect(sanitizeSpaceAvatar(`icon:${mark.id}`)).toBe(`icon:${mark.id}`)
+    for (const mark of SPACE_AVATARS)
+      expect(sanitizeSpaceAvatar(`icon:${mark.id}`)).toBe(`icon:${mark.id}`)
   })
 
   it('refuse une marque inconnue, une URL distante ou du HTML', () => {
@@ -90,7 +92,9 @@ describe('modèles d’espace', () => {
 
   it('couvre les usages proposés', () => {
     const labels = SPACE_PRESETS.map((preset) => preset.label)
-    expect(labels).toEqual(expect.arrayContaining(['Travail', 'Vie personnelle', 'Gaming', 'Études', 'Cinéma']))
+    expect(labels).toEqual(
+      expect.arrayContaining(['Travail', 'Vie personnelle', 'Gaming', 'Études', 'Cinéma'])
+    )
   })
 
   it('livre un espace cinéma complet, avec ses six sites', () => {
@@ -135,7 +139,9 @@ describe('liste à voir', () => {
   it('borne un titre très long et la taille de la liste', () => {
     const long = sanitizeWatchlist([{ title: 'a'.repeat(400) }])
     expect(long[0].title.length).toBe(120)
-    const many = sanitizeWatchlist(Array.from({ length: 260 }, (_, index) => ({ title: `Film ${index}` })))
+    const many = sanitizeWatchlist(
+      Array.from({ length: 260 }, (_, index) => ({ title: `Film ${index}` }))
+    )
     expect(many).toHaveLength(200)
   })
 })
@@ -190,13 +196,18 @@ describe('sites épinglés', () => {
   })
 
   it('borne la longueur de la barre', () => {
-    const many = Array.from({ length: MAX_SHORTCUTS + 5 }, (_, index) => ({ url: `site${index}.fr` }))
+    const many = Array.from({ length: MAX_SHORTCUTS + 5 }, (_, index) => ({
+      url: `site${index}.fr`
+    }))
     expect(sanitizeSpaceShortcuts(many)).toHaveLength(MAX_SHORTCUTS)
     expect(sanitizeSpaceShortcuts('nope')).toEqual([])
   })
 
   it('garde quarante sites, tous utilisables', () => {
-    const many = Array.from({ length: 40 }, (_, index) => ({ url: `site${index}.fr`, title: `Site ${index}` }))
+    const many = Array.from({ length: 40 }, (_, index) => ({
+      url: `site${index}.fr`,
+      title: `Site ${index}`
+    }))
     const list = sanitizeSpaceShortcuts(many)
     expect(list).toHaveLength(40)
     expect(new Set(list.map((item) => item.id)).size).toBe(40)
@@ -204,7 +215,10 @@ describe('sites épinglés', () => {
 
   it('reste rapide sur une barre très chargée (test de performance)', () => {
     // 600 entrées : le plafond doit couper avant, sans ralentir la lecture.
-    const many = Array.from({ length: 600 }, (_, index) => ({ url: `site${index}.fr`, title: `Site ${index}` }))
+    const many = Array.from({ length: 600 }, (_, index) => ({
+      url: `site${index}.fr`,
+      title: `Site ${index}`
+    }))
     const start = performance.now()
     const list = sanitizeSpaceShortcuts(many)
     const elapsed = performance.now() - start
@@ -255,7 +269,13 @@ describe('nom, modèles et ordre des sites', () => {
 
   it('applique un modèle sans écraser un nom déjà saisi', () => {
     const preset = SPACE_PRESETS.find((item) => item.id === 'work')!
-    const blank = { name: '  ', color: '#000000', avatar: null, background: 'none' as const, shortcuts: [] }
+    const blank = {
+      name: '  ',
+      color: '#000000',
+      avatar: null,
+      background: 'none' as const,
+      shortcuts: []
+    }
     const filled = applySpaceTemplate(blank, preset)
     expect(filled.name).toBe(preset.name)
     expect(filled.color).toBe(preset.color)
@@ -269,11 +289,23 @@ describe('nom, modèles et ordre des sites', () => {
 
   it('annule un modèle en revenant au brouillon précédent', () => {
     const preset = SPACE_PRESETS.find((item) => item.id === 'cinema')!
-    const before = { name: '', color: '#5b5bd6', avatar: 'monogram', background: 'none' as const, shortcuts: [] }
+    const before = {
+      name: '',
+      color: '#5b5bd6',
+      avatar: 'monogram',
+      background: 'none' as const,
+      shortcuts: []
+    }
     const after = applySpaceTemplate(before, preset)
     // L'instantané n'est jamais modifié : le restaurer rend l'état exact.
     const restored = { ...before }
-    expect(restored).toEqual({ name: '', color: '#5b5bd6', avatar: 'monogram', background: 'none', shortcuts: [] })
+    expect(restored).toEqual({
+      name: '',
+      color: '#5b5bd6',
+      avatar: 'monogram',
+      background: 'none',
+      shortcuts: []
+    })
     expect(after).not.toEqual(restored)
     expect(after.shortcuts.length).toBeGreaterThan(0)
   })
@@ -294,7 +326,9 @@ describe('nom, modèles et ordre des sites', () => {
 
 describe('partition d’un espace', () => {
   it('garde une partition valide telle quelle', () => {
-    expect(partitionFor({ id: 'space-1', partition: 'persist:vela-space-1' })).toBe('persist:vela-space-1')
+    expect(partitionFor({ id: 'space-1', partition: 'persist:vela-space-1' })).toBe(
+      'persist:vela-space-1'
+    )
     expect(partitionFor({ id: 'space-1', partition: '  persist:perso  ' })).toBe('persist:perso')
   })
 

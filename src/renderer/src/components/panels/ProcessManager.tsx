@@ -70,7 +70,14 @@ export default function ProcessManager() {
             <h1>Processus · {liveLabel}</h1>
             <p>Chaque onglet non suspendu garde un renderer. Déchargez pour libérer la RAM.</p>
           </div>
-          <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer"><Icon name="close" size={17} /></button>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setOverlay(null)}
+            title="Fermer"
+          >
+            <Icon name="close" size={17} />
+          </button>
         </header>
         <div className="settings-scroll">
           {rows.map((row) => (

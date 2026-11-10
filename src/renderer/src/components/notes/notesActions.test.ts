@@ -2,7 +2,10 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const css = readFileSync(join(process.cwd(), 'src/renderer/src/styles/07-notes-reglages-dialogue.css'), 'utf8')
+const css = readFileSync(
+  join(process.cwd(), 'src/renderer/src/styles/07-notes-reglages-dialogue.css'),
+  'utf8'
+)
 
 function rule(selector: string): string {
   const start = css.indexOf(`${selector} {`)

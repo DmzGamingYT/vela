@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom'
 import type { CSSProperties, DragEvent, KeyboardEvent } from 'react'
 import { pinnedNeighbour } from '@shared/pinnedTabMenu'
 import type { Bookmark, TabGroup, TabView } from '@shared/types'
-import { displayTitle, hostOf } from '@shared/url'
-import { shortcut, weekdayLabel } from '../../lib/format'
-import { useSessionCount } from '../../lib/sessions'
+import { GROUP_COLORS, GROUP_ICONS } from '@shared/groupColors'
+import { displayTitle, hostOf, isHomeUrl } from '@shared/url'
+import { shortcut } from '../../lib/format'
+import { saveSession, useSessionCount } from '../../lib/sessions'
 import { useBrowser } from '../../store/browser'
 import Favicon from '../Favicon'
-import SidebarDock from './SidebarDock'
+import SidebarFoot from './SidebarFoot'
 import SidebarHeader from './SidebarHeader'
-import { Icon } from '../Icon'
+import { Icon, type IconName } from '../Icon'
 import TabContextMenu from '../tabs/TabContextMenu'
 import TabRow from '../tabs/TabRow'
 import PinnedTabTile from '../tabs/PinnedTabTile'
@@ -31,19 +32,12 @@ type MenuState = { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
 /** Au-delà, une tuile « +N » ouvre la liste complète plutôt que de tronquer. */
 const FAVORITE_LIMIT = 12
 
-/** Couleurs proposées pour un dossier, lisibles sur les deux thèmes. */
-const GROUP_COLORS = ['#e0574f', '#e0913f', '#d9b64a', '#4fae7a', '#4f8fd0', '#7a6fd0']
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
-  const notesOpen = useBrowser((state) => state.notesOpen)
-  const agentOpen = useBrowser((state) => state.agentOpen)
-  const toggleNotes = useBrowser((state) => state.toggleNotes)
-  const openAgent = useBrowser((state) => state.openAgent)
   const sessionCount = useSessionCount()
-  const [today] = useState(() => Date.now())
   const selectTab = useBrowser((state) => state.selectTab)
   const toggleMute = useBrowser((state) => state.toggleMute)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
@@ -58,6 +52,8 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const createGroup = useBrowser((state) => state.createGroup)
   const updateGroup = useBrowser((state) => state.updateGroup)
   const removeGroup = useBrowser((state) => state.removeGroup)
+  const sleepTab = useBrowser((state) => state.sleep)
+  const closeTab = useBrowser((state) => state.closeTab)
 
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const draggingRef = useRef<string | null>(null)
@@ -65,8 +61,18 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const [drop, setDrop] = useState<DropTarget>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
-  const [confirmGroup, setConfirmGroup] = useState<string | null>(null)
   const [colorGroup, setColorGroup] = useState<string | null>(null)
+  // Menu d'un dossier : clic droit sur l'en-tête ou bouton « … ».
+  const [groupMenu, setGroupMenu] = useState<{ group: TabGroup; x: number; y: number } | null>(
+    null
+  )
+  // Dernier dossier supprimé : ⌘Z et le bouton du toast le remettent en place.
+  const lastDeletedGroup = useRef<{
+    name: string
+    color: string
+    icon?: string
+    tabIds: string[]
+  } | null>(null)
   // Infobulle des cases compactes : positionnée en `fixed` pour ne pas être
   // rognée par la liste qui défile.
   const [tip, setTip] = useState<{
@@ -77,6 +83,8 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     y: number
   } | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
+  // Filtre des onglets, saisi dans le pied de la colonne.
+  const [query, setQuery] = useState('')
   // Onglet visé par un clic droit (ligne ou case épinglée), et fond de liste.
   const [tabMenu, setTabMenu] = useState<{
     tab: TabView
@@ -117,6 +125,8 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       setMenu(null)
       setTabMenu(null)
       setEmptyMenu(null)
+      setGroupMenu(null)
+      setColorGroup(null)
     })
   }, [overlay, collapsed])
 
@@ -197,17 +207,52 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     )
   }
 
+  const pin = useBrowser((state) => state.pin)
+  // Zone des épinglés repliée : le choix survit au redémarrage.
+  const [pinsCollapsed, setPinsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('vela.sidebar.pins.collapsed') === '1'
+    } catch {
+      return false
+    }
+  })
+  const togglePins = (): void => {
+    setPinsCollapsed((previous) => {
+      const next = !previous
+      try {
+        localStorage.setItem('vela.sidebar.pins.collapsed', next ? '1' : '0')
+      } catch {
+        /* stockage indisponible : le choix vaut pour la session */
+      }
+      return next
+    })
+  }
   const space = view.spaces.find((item) => item.id === view.activeSpaceId) ?? view.spaces[0]
   const spaceTabs = view.tabs.filter((tab) => tab.spaceId === space.id)
   const pinned = spaceTabs.filter((tab) => tab.pinned)
-  const unpinned = spaceTabs.filter((tab) => !tab.pinned)
+  // L'accueil n'est pas un onglet comme les autres : il vit dans sa propre
+  // zone, en haut, et ne compte donc pas dans le compteur « Onglets ».
+  const homeTabs = spaceTabs.filter((tab) => !tab.pinned && isHomeUrl(tab.url))
+  const unpinned = spaceTabs.filter((tab) => !tab.pinned && !isHomeUrl(tab.url))
   const groups = view.groups
     .filter((group) => group.spaceId === space.id)
     .slice()
     .sort((a, b) => a.createdAt - b.createdAt)
   const groupIds = new Set(groups.map((group) => group.id))
-  const loose = unpinned.filter((tab) => !tab.groupId || !groupIds.has(tab.groupId))
+  // Les onglets en veille ferment la liste : ils ne se mêlent plus aux pages
+  // vivantes. Le tri est stable, l'ordre voulu est conservé à l'intérieur.
+  const loose = unpinned
+    .filter((tab) => !tab.groupId || !groupIds.has(tab.groupId))
+    .sort((a, b) => Number(a.asleep) - Number(b.asleep))
   const pinnedCount = pinned.length
+  // Le compteur de la section sert de bouton : il épingle la page ouverte.
+  const pinnable = spaceTabs.find(
+    (tab) => tab.id === view.activeTabId && !tab.pinned && !isHomeUrl(tab.url)
+  )
+  // Les cases vides complètent la rangée de quatre, jamais la dernière.
+  const pinSlots = Math.max(0, Math.ceil(Math.max(pinnedCount, 1) / 4) * 4 - pinnedCount)
+  // Tous les onglets ouverts de l'espace, épinglés et dossiers compris.
+  const openTabCount = pinnedCount + unpinned.length
   const visibleBookmarks =
     favExpanded || favMode === 'list'
       ? view.bookmarks
@@ -612,7 +657,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const startRename = (group: TabGroup): void => {
     setRenamingId(group.id)
     setRenameValue(group.name)
-    setConfirmGroup(null)
+    setColorGroup(null)
   }
 
   const commitRename = (): void => {
@@ -626,19 +671,147 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     setRenamingId(null)
   }
 
-  const requestDelete = (group: TabGroup): void => {
-    if (confirmGroup === group.id) {
-      setConfirmGroup(null)
-      void removeGroup(group.id)
-      return
-    }
-    setConfirmGroup(group.id)
-    setTimeout(() => {
-      setConfirmGroup((current) => (current === group.id ? null : current))
-    }, 3500)
+  /** Onglets d'un dossier, dans l'ordre de la liste. */
+  const groupTabsOf = (group: TabGroup): TabView[] =>
+    unpinned.filter((tab) => tab.groupId === group.id)
+
+  const undoGroupDelete = async (): Promise<void> => {
+    const saved = lastDeletedGroup.current
+    if (!saved) return
+    lastDeletedGroup.current = null
+    const group = await createGroup()
+    if (!group) return
+    await updateGroup(group.id, {
+      name: saved.name,
+      color: saved.color,
+      icon: saved.icon
+    } as unknown as Parameters<typeof updateGroup>[1])
+    for (const id of saved.tabIds) moveTabToGroup(id, group.id)
   }
 
-  const renderTab = (tab: TabView) => (
+  /**
+   * Suppression directe, sans demande de confirmation : le toast porte
+   * l’annulation. Les onglets du dossier ne sont jamais fermés, ils
+   * réintègrent simplement la liste.
+   */
+  const deleteGroup = (group: TabGroup): void => {
+    const saved = {
+      name: group.name,
+      color: group.color,
+      icon: group.icon,
+      tabIds: groupTabsOf(group).map((tab) => tab.id)
+    }
+    lastDeletedGroup.current = saved
+    void removeGroup(group.id)
+    toast(`Dossier « ${group.name} » supprimé`, 'info', {
+      label: 'Annuler',
+      run: () => void undoGroupDelete()
+    }, 8000)
+    window.setTimeout(() => {
+      if (lastDeletedGroup.current === saved) lastDeletedGroup.current = null
+    }, 8000)
+  }
+
+  const sleepGroup = (group: TabGroup): void => {
+    const tabs = groupTabsOf(group).filter((tab) => !tab.asleep)
+    if (tabs.length === 0) {
+      toast('Ce dossier est déjà en veille')
+      return
+    }
+    for (const tab of tabs) sleepTab(tab.id)
+    toast(`${tabs.length} onglet${tabs.length > 1 ? 's' : ''} en veille`)
+  }
+
+  const closeGroup = (group: TabGroup): void => {
+    const tabs = groupTabsOf(group)
+    if (tabs.length === 0) return
+    for (const tab of tabs) closeTab(tab.id)
+    toast(`${tabs.length} onglet${tabs.length > 1 ? 's' : ''} fermé${tabs.length > 1 ? 's' : ''}`)
+  }
+
+  /** Le dossier part dans Sessions tel quel, pour le rouvrir plus tard. */
+  const keepGroup = (group: TabGroup): void => {
+    const tabs = groupTabsOf(group).filter((tab) => /^https?:/i.test(tab.url))
+    if (tabs.length === 0) {
+      toast('Aucune page à garder dans ce dossier', 'error')
+      return
+    }
+    saveSession({
+      name: group.name,
+      spaceId: space.id,
+      spaceName: space.name,
+      tabs: tabs.map((tab) => ({ url: tab.url, title: tab.title }))
+    })
+    toast(`« ${group.name} » gardé dans Sessions`, 'info', {
+      label: 'Ouvrir',
+      run: () => setOverlay('sessions')
+    })
+  }
+
+  const groupMenuItems = (group: TabGroup): TileMenuItem[] => [
+    {
+      id: 'open',
+      label: 'Nouvel onglet dans ce dossier',
+      icon: 'plus',
+      onSelect: () => newTab(undefined, group.id)
+    },
+    { id: 'rename', label: 'Renommer', icon: 'edit', onSelect: () => startRename(group) },
+    {
+      id: 'color',
+      label: 'Changer la couleur',
+      icon: 'palette',
+      onSelect: () => setColorGroup(group.id)
+    },
+    {
+      id: 'sleep',
+      label: 'Mettre tout en veille',
+      icon: 'moon',
+      hint: 'Décharge les pages du dossier sans fermer les onglets.',
+      onSelect: () => sleepGroup(group)
+    },
+    { id: 'close', label: 'Fermer le groupe', icon: 'close', onSelect: () => closeGroup(group) },
+    {
+      id: 'keep',
+      label: 'Garder dans Sessions',
+      icon: 'clock',
+      onSelect: () => keepGroup(group)
+    },
+    { id: 'sep', label: '', separator: true },
+    {
+      id: 'delete',
+      label: 'Supprimer le dossier',
+      icon: 'trash',
+      danger: true,
+      hint: 'Les onglets restent ouverts.',
+      onSelect: () => deleteGroup(group)
+    }
+  ]
+
+  // ⌘Z remet le dossier supprimé, tant que son toast est affiché.
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
+      if (!lastDeletedGroup.current) return
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
+      if (event.key.toLowerCase() !== 'z') return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return
+      event.preventDefault()
+      void undoGroupDelete()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // Une recherche vide laisse tout passer ; sinon le titre et l'adresse
+  // suffisent à retrouver un onglet, sans toucher à l'ordre ni aux dossiers.
+  const matches = (tab: TabView): boolean => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return true
+    return `${tab.title} ${tab.url}`.toLowerCase().includes(needle)
+  }
+
+  const renderTab = (tab: TabView) =>
+    !matches(tab) ? null : (
     <TabRow
       key={tab.id}
       tab={tab}
@@ -661,26 +834,26 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       aria-label="Barre latérale"
       data-collapsed={collapsed ? 'true' : undefined}
       aria-hidden={collapsed || undefined}
-      style={{ '--space': space.color } as CSSProperties}
+      // `--space-color` est éclairci en mode sombre par App.tsx : la teinte
+      // d'un espace ne doit pas disparaître sur le noir.
+      style={{ '--space': 'var(--space-color)' } as CSSProperties}
     >
       <SidebarHeader />
 
+      {/* Le chevron annonce que ce nom est un contrôle ; le crayon séparé
+          faisait trois cibles pour une seule action. Le rail de gauche change
+          d'espace, ce bouton ouvre la fiche de l'espace courant. */}
       <div className="space-head">
         <SpaceAvatar space={space} size={18} />
         <button
           type="button"
           className="space-name"
-          onDoubleClick={() => openSpaceDialog(space.id)}
-        >
-          {space.name}
-        </button>
-        <button
-          type="button"
-          className="icon-btn subtle"
-          title="Modifier l’espace"
           onClick={() => openSpaceDialog(space.id)}
+          title={`Espace « ${space.name} » — modifier`}
+          aria-haspopup="dialog"
         >
-          <Icon name="edit" size={13} />
+          <span className="space-name-text">{space.name}</span>
+          <Icon name="chevron-down" size={13} />
         </button>
       </div>
 
@@ -695,7 +868,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
             </span>
           )}
         </span>
-        <span className="sessions-date">{weekdayLabel(today)}</span>
         <span className="sessions-arrow">
           <Icon name="arrow-right" size={14} />
         </span>
@@ -721,14 +893,52 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
             setEmptyMenu({ x: event.clientX, y: event.clientY })
           }}
         >
+          {homeTabs.length > 0 && (
+            <div className="home-zone" role="group" aria-label="Accueil">
+              {homeTabs.map(renderTab)}
+            </div>
+          )}
+
           {pinnedCount > 0 && (
             <>
               <div className="tabs-head">
+                <button
+                  type="button"
+                  className="tabs-fold"
+                  aria-expanded={!pinsCollapsed}
+                  title={pinsCollapsed ? 'Déplier les épinglés' : 'Replier les épinglés'}
+                  onClick={togglePins}
+                >
+                  <Icon name={pinsCollapsed ? 'chevron-right' : 'chevron-down'} size={11} />
+                </button>
                 <span>Épinglés</span>
-                <span className="tabs-count">{pinnedCount}</span>
+                <button
+                  type="button"
+                  className="tabs-count tabs-pin-add"
+                  disabled={!pinnable}
+                  onClick={() => pinnable && pin(pinnable.id, true)}
+                  title={
+                    pinnable
+                      ? 'Épingler la page ouverte'
+                      : `${pinnedCount} site${pinnedCount > 1 ? 's' : ''} épinglé${
+                          pinnedCount > 1 ? 's' : ''
+                        }`
+                  }
+                  aria-label={
+                    pinnable
+                      ? 'Épingler la page ouverte'
+                      : `${pinnedCount} site${pinnedCount > 1 ? 's' : ''} épinglé${
+                          pinnedCount > 1 ? 's' : ''
+                        }`
+                  }
+                >
+                  <Icon name="pin" size={11} />
+                  {pinnedCount}
+                </button>
               </div>
               <div
                 className="pin-tiles"
+                data-collapsed={pinsCollapsed ? 'true' : undefined}
                 role="group"
                 aria-label={`Sites épinglés de ${space.name} — Alt + flèches pour réordonner`}
                 data-drop={drop?.kind === 'pinned-end'}
@@ -771,6 +981,21 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                       openTabMenu(tab, rect.left, rect.bottom, true, rect)
                     }}
                   />
+                ))}
+                {/* Un emplacement vide reste un emplacement : au survol, un
+                    « + » discret montre à quoi il sert. */}
+                {Array.from({ length: pinSlots }).map((_, index) => (
+                  <button
+                    key={`pin-slot-${index}`}
+                    type="button"
+                    className="pin-slot"
+                    disabled={!pinnable}
+                    onClick={() => pinnable && pin(pinnable.id, true)}
+                    title={pinnable ? 'Épingler la page ouverte' : 'Emplacement épinglé libre'}
+                    aria-label={pinnable ? 'Épingler la page ouverte' : 'Emplacement épinglé libre'}
+                  >
+                    <Icon name="plus" size={13} />
+                  </button>
                 ))}
               </div>
             </>
@@ -933,7 +1158,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
 
           <div className="tabs-head">
             <span>Onglets</span>
-            <span className="tabs-count">{unpinned.length}</span>
+            <span className="tabs-count">{openTabCount}</span>
             <span className="tabs-tools">
               <button
                 type="button"
@@ -991,6 +1216,11 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                     )
                   }}
                   onDrop={(event) => dropOnGroup(event, group)}
+                  onContextMenu={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setGroupMenu({ group, x: event.clientX, y: event.clientY })
+                  }}
                 >
                   <button
                     type="button"
@@ -1011,7 +1241,11 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                       event.stopPropagation()
                       setColorGroup((current) => (current === group.id ? null : group.id))
                     }}
-                  />
+                  >
+                    {group.icon ? (
+                      <Icon name={group.icon as IconName} size={12} className="group-dot-glyph" />
+                    ) : null}
+                  </button>
                   {colorGroup === group.id && (
                     <span className="group-colors" role="group" aria-label="Couleur du dossier">
                       {GROUP_COLORS.map((color) => (
@@ -1028,6 +1262,27 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                           }}
                         />
                       ))}
+                      <span className="group-icons" role="group" aria-label="Icône du dossier">
+                        {GROUP_ICONS.map((name) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="group-icon"
+                            data-active={group.icon === name}
+                            aria-label={`Icône ${name}`}
+                            title={name}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setColorGroup(null)
+                              void updateGroup(group.id, {
+                                icon: name
+                              } as unknown as Parameters<typeof updateGroup>[1])
+                            }}
+                          >
+                            <Icon name={name} size={12} />
+                          </button>
+                        ))}
+                      </span>
                     </span>
                   )}
                   {renamingId === group.id ? (
@@ -1066,7 +1321,26 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                       {group.name}
                     </button>
                   )}
-                  <span className="group-count">{groupTabs.length}</span>
+                  {groupTabs.length > 0 && (
+                    <span className="group-count">{groupTabs.length}</span>
+                  )}
+                  {group.collapsed && groupTabs.length > 0 && (
+                    <span className="group-peek" aria-hidden="true">
+                      {groupTabs.slice(0, 3).map((tab) => (
+                        <Favicon
+                          key={tab.id}
+                          src={tab.favicon}
+                          url={tab.url}
+                          label={tab.title}
+                          size={12}
+                          spaceId={space.id}
+                        />
+                      ))}
+                      {groupTabs.length > 3 && (
+                        <span className="group-peek-more">+{groupTabs.length - 3}</span>
+                      )}
+                    </span>
+                  )}
                   {group.collapsed && live && (
                     <span className="group-live" title="Contient l’onglet actif" />
                   )}
@@ -1085,29 +1359,15 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                     <button
                       type="button"
                       className="tab-action"
-                      title="Renommer"
+                      title="Actions du dossier"
+                      aria-haspopup="menu"
                       onClick={(event) => {
                         event.stopPropagation()
-                        startRename(group)
+                        const rect = event.currentTarget.getBoundingClientRect()
+                        setGroupMenu({ group, x: rect.left - 150, y: rect.bottom + 4 })
                       }}
                     >
-                      <Icon name="edit" size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      className="tab-action"
-                      data-confirming={confirmGroup === group.id}
-                      title={
-                        confirmGroup === group.id
-                          ? 'Cliquer à nouveau pour supprimer'
-                          : 'Supprimer le dossier'
-                      }
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        requestDelete(group)
-                      }}
-                    >
-                      <Icon name={confirmGroup === group.id ? 'warning' : 'trash'} size={12} />
+                      <Icon name="more" size={12} />
                     </button>
                   </span>
                 </div>
@@ -1115,8 +1375,13 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                 {!group.collapsed && (
                   <div className="group-tabs" role="group" aria-label={`Onglets de ${group.name}`}>
                     {groupTabs.map(renderTab)}
+                    <span
+                      className="group-drop-line"
+                      data-active={drop?.kind === 'group' && drop.id === group.id}
+                      aria-hidden="true"
+                    />
                     {groupTabs.length === 0 && (
-                      <p className="group-empty">Glissez un onglet ici.</p>
+                      <p className="group-empty">Glissez un onglet ici</p>
                     )}
                   </div>
                 )}
@@ -1133,7 +1398,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
             onDrop={dropOnLoose}
           >
             {loose.map(renderTab)}
-            {loose.length === 0 && groups.length === 0 && (
+            {loose.length === 0 && groups.length === 0 && homeTabs.length === 0 && (
               <p className="tabs-empty">Aucun onglet ouvert.</p>
             )}
             <button
@@ -1163,17 +1428,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
         </div>
       )}
 
-      {/* Le dock vit au pied de la colonne ; replié, le rail en reprend la
-          version en icônes seules pour que les trois actions restent visibles. */}
-      <SidebarDock
-        notesOpen={notesOpen}
-        agentOpen={agentOpen}
-        settingsOpen={overlay === 'settings'}
-        onNotes={() => toggleNotes()}
-        onAgent={() => openAgent()}
-        onSettings={() => setOverlay('settings')}
-      />
-
       <p
         className="sr-only"
         role="status"
@@ -1192,6 +1446,12 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           </div>,
           document.body
         )}
+
+      <SidebarFoot
+        query={query}
+        onQuery={setQuery}
+        asleep={spaceTabs.filter((tab) => tab.asleep).length}
+      />
 
       {tabMenu && (
         <TabContextMenu
@@ -1222,6 +1482,16 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           label={displayTitle(menu.bookmark.title)}
           items={menuItems(menu)}
           onClose={() => closeMenu(menu.bookmark.id)}
+        />
+      )}
+
+      {groupMenu && (
+        <TileMenu
+          x={groupMenu.x}
+          y={groupMenu.y}
+          label={`Dossier ${groupMenu.group.name}`}
+          items={groupMenuItems(groupMenu.group)}
+          onClose={() => setGroupMenu(null)}
         />
       )}
     </aside>

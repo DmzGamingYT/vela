@@ -55,7 +55,8 @@ describe('extraction du texte d’une page', () => {
   })
 
   it('lit og:description quel que soit l’ordre des attributs', () => {
-    const before = '<meta content="Résumé de partage, écrit par la page." property="og:description">'
+    const before =
+      '<meta content="Résumé de partage, écrit par la page." property="og:description">'
     const after = '<meta property="og:description" content="Résumé de partage, écrit par la page.">'
     expect(metaContent(before, 'og:description')).toBe('Résumé de partage, écrit par la page.')
     expect(metaContent(after, 'og:description')).toBe('Résumé de partage, écrit par la page.')
@@ -74,7 +75,8 @@ describe('extraction du texte d’une page', () => {
   })
 
   it('ne confond pas une autre balise meta avec la description', () => {
-    const html = '<meta property="og:title" content="Un titre"><meta name="viewport" content="width=device-width">'
+    const html =
+      '<meta property="og:title" content="Un titre"><meta name="viewport" content="width=device-width">'
     expect(metaContent(html, 'og:description')).toBeUndefined()
   })
 })

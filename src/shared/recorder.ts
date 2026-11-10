@@ -19,7 +19,8 @@ export interface MicProblem {
  * erreur n'est propagée : l'interface affiche ce texte et s'arrête là.
  */
 export function describeMicError(error: unknown): MicProblem {
-  const name = typeof error === 'object' && error && 'name' in error ? String((error as Error).name) : ''
+  const name =
+    typeof error === 'object' && error && 'name' in error ? String((error as Error).name) : ''
   if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
     return {
       reason: 'denied',
@@ -43,7 +44,11 @@ export function describeMicError(error: unknown): MicProblem {
     }
   }
   if (name === 'OverconstrainedError') {
-    return { reason: 'missing', message: 'Ce micro ne peut pas être ouvert par Vela.', system: true }
+    return {
+      reason: 'missing',
+      message: 'Ce micro ne peut pas être ouvert par Vela.',
+      system: true
+    }
   }
   return {
     reason: 'unknown',
@@ -58,11 +63,18 @@ export function formatDuration(totalSeconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const rest = seconds % 60
-  if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
+  if (hours > 0)
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
   return `${minutes}:${String(rest).padStart(2, '0')}`
 }
 
-const CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/mpeg']
+const CANDIDATES = [
+  'audio/webm;codecs=opus',
+  'audio/webm',
+  'audio/ogg;codecs=opus',
+  'audio/mp4',
+  'audio/mpeg'
+]
 
 /**
  * Type d'enregistrement accepté par le moteur, ou chaîne vide s'il n'en
@@ -83,7 +95,9 @@ export function pickAudioMime(supported: (mime: string) => boolean): string {
 export const MAX_RECORDING_BYTES = 25 * 1024 * 1024
 
 /** Message d'état de l'enregistreur, lisible par un lecteur d'écran. */
-export function recorderStatus(stage: 'intro' | 'recording' | 'paused' | 'saving' | 'error'): string {
+export function recorderStatus(
+  stage: 'intro' | 'recording' | 'paused' | 'saving' | 'error'
+): string {
   switch (stage) {
     case 'recording':
       return 'Enregistrement en cours'

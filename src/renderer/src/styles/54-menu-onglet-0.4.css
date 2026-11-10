@@ -1,0 +1,21 @@
+/* Tranche 54 — menu d’un onglet.
+   Les raccourcis forment une colonne : même bord droit pour tous, que la ligne
+   en porte un ou pas. */
+
+/* Le libellé prend la place restante ; les touches ne grandissent jamais.
+   `(0,2,0)` passe devant `.tile-menu-item > span` (`0,1,1`). */
+.tile-menu-item .tile-menu-keys {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 14px;
+}
+
+.tile-menu-item > span:not(.tile-menu-keys) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Les touches d'une même colonne gardent la même hauteur de ligne. */
+.tile-menu-keys kbd.tile-menu-key {
+  font-variant-numeric: tabular-nums;
+}

@@ -91,6 +91,7 @@ export default function PinnedTabTile({
       data-dragging={dragging ? 'true' : undefined}
       data-drop={drop ?? undefined}
       data-sound={sound ?? undefined}
+      data-asleep={tab.asleep ? 'true' : undefined}
       draggable
       onMouseEnter={showTip}
       onMouseLeave={() => setTipOpen(false)}
@@ -167,7 +168,8 @@ export default function PinnedTabTile({
             className="pin-tip"
             style={{ left: tipAt.x, top: tipAt.y }}
           >
-            {title}
+            <span className="pin-tip-title">{title}</span>
+            {host && host !== title ? <span className="pin-tip-host">{host}</span> : null}
           </div>,
           document.body
         )}

@@ -1,0 +1,97 @@
+/* Tranche 58 — mode sombre (0.4).
+   Trois niveaux d'élévation, deux niveaux de texte, des bordures visibles, et
+   plus de texte posé en opacité. Le clair ne bouge pas. */
+
+/* ── Trois niveaux, pas cinq ────────────────────────────────────────────
+   page (`--paper`) → bloc (`--block`) → élément survolé (`--hover`).
+   Plus clair = plus haut : les blocs se détachent, rien ne flotte au hasard. */
+:root[data-mode='dark'] {
+  --block: rgba(255, 255, 255, 0.035);
+  --block-hover: rgba(255, 255, 255, 0.055);
+  /* Bordure des blocs : 1 px à 8 % de blanc. */
+  --block-edge: rgba(255, 255, 255, 0.08);
+  /* Texte : deux niveaux seulement. Le second reste au-dessus de 4,5:1. */
+  --ink-1: #ecece8;
+  --ink-2: #a8a8a3;
+  --ink-3: #a8a8a3;
+  --fill-1: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-mode='light'] {
+  --block: var(--fill);
+  --block-hover: var(--hover);
+  --block-edge: var(--edge);
+  --ink-1: var(--ink);
+  --ink-2: var(--muted);
+  --ink-3: var(--muted);
+  --fill-1: var(--fill);
+}
+
+/* ── Titres : blanc cassé, jamais #fff ────────────────────────────────── */
+:root[data-mode='dark'] .home-hello,
+:root[data-mode='dark'] .home-title,
+:root[data-mode='dark'] .home-card h2,
+:root[data-mode='dark'] .home-pins h2,
+:root[data-mode='dark'] .day-time {
+  color: var(--ink-1);
+}
+
+/* ── Blocs de contenu : même fond, même bordure ───────────────────────── */
+:root[data-mode='dark'] .home-card,
+:root[data-mode='dark'] .home-recent {
+  background: var(--block);
+  border: 1px solid var(--block-edge);
+}
+
+/* Favoris n'est plus le bloc le plus clair : il prend le même niveau que les
+   autres. */
+:root[data-mode='dark'] .home-pins {
+  background: var(--block);
+  border: 1px solid var(--block-edge);
+}
+
+/* ── Survol des lignes : 5 % de blanc, et un focus clavier visible ────── */
+.recent-tile:hover,
+.recent-open:hover {
+  background: var(--block-hover);
+}
+
+.recent-tile:focus-within {
+  background: var(--block-hover);
+}
+
+.recent-open:focus-visible,
+.pin-slot:focus-visible,
+.home-resume:focus-visible,
+.tasks-add button:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
+/* ── Halo d'ambiance : atténué derrière le contenu ────────────────────── */
+:root[data-mode='dark'] .home-aurora {
+  opacity: 0.28;
+}
+
+/* ── Pastilles de couleur : désaturées la nuit ──────────────────────────
+   Une teinte saturée sur du noir vibre, surtout en petit. Le rouge de
+   YouTube reste la couleur du site, les repères de dossiers se calment. */
+:root[data-mode='dark'] .group-dot,
+:root[data-mode='dark'] .group-colors button,
+:root[data-mode='dark'] .group-tab-count,
+:root[data-mode='dark'] .tab-group[data-color] {
+  filter: saturate(0.7);
+}
+
+/* ── Texte en opacité : interdit pour les libellés ────────────────────── */
+.home-pins-count,
+.quicknotes-scope,
+.task-row .task-title,
+.day-note,
+.recent-meta,
+.tasks-empty,
+.home-favorites-empty {
+  opacity: 1;
+  color: var(--ink-2);
+}

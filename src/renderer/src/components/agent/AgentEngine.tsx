@@ -38,12 +38,7 @@ export default function AgentEngine({
     : 'rapport simulé'
 
   return (
-    <button
-      type="button"
-      className="engine-line"
-      onClick={onConfigure}
-      title="Réglages › Modèles"
-    >
+    <button type="button" className="engine-line" onClick={onConfigure} title="Réglages › Modèles">
       <Icon name={ready && !local ? 'cloud' : 'monitor'} size={11} />
       <span className="engine-name">{label}</span>
       <span className="engine-detail">{detail}</span>

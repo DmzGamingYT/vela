@@ -115,13 +115,13 @@ describe('menu IA', () => {
   it('remonte la dernière action secondaire et la marque', () => {
     const { onRunAi } = setup()
 
-    fireEvent.click(screen.getByRole('button', { name: /Plus/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Actions IA/ }))
     fireEvent.click(screen.getByRole('menuitem', { name: /Corriger/ }))
     expect(onRunAi).toHaveBeenCalledWith('correct')
     expect(window.localStorage.getItem('vela-notes-ai-last-secondary')).toBe('correct')
 
-    fireEvent.click(screen.getByRole('button', { name: /Plus/ }))
-    const first = screen.getAllByRole('menuitem')[0]
+    fireEvent.click(screen.getByRole('button', { name: /Actions IA/ }))
+    const first = screen.getByRole('menuitem', { name: /Corriger/ })
     expect(within(first).getByText('Corriger')).toBeTruthy()
     expect(within(first).getByText('Dernière')).toBeTruthy()
     expect(first.getAttribute('data-last')).toBe('true')
@@ -129,12 +129,12 @@ describe('menu IA', () => {
 
   it('retrouve la dernière action après un remontage', () => {
     const first = setup()
-    fireEvent.click(screen.getByRole('button', { name: /Plus/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Actions IA/ }))
     fireEvent.click(screen.getByRole('menuitem', { name: /Embellir/ }))
     first.unmount()
 
     setup()
-    fireEvent.click(screen.getByRole('button', { name: /Plus/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Actions IA/ }))
     expect(screen.getAllByRole('menuitem')[0].textContent).toContain('Embellir')
   })
 })

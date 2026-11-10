@@ -26,43 +26,56 @@ export function attachPrivacy(
   if (attached.has(ses)) return
   attached.add(ses)
 
-  ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (details, callback) => {
-    if (!isEnabled()) return callback({})
-    if (details.resourceType === 'mainFrame') return callback({})
-    const level = levelOf()
-    const tracker = isTracker(details.url)
-    // Test le moins cher d'abord : la quasi-totalité des requêtes d'une page
-    // n'est ni un traqueur ni une ressource tierce active, et repart ici sans
-    // toucher à webContents.
-    if (!tracker && (level !== 'strict' || !isStrictType(details.resourceType))) return callback({})
-    const owner = details.webContentsId && details.webContentsId > 0 ? details.webContentsId : 0
-    let pageUrl = ''
-    if (owner) {
-      try {
-        pageUrl = webContents.fromId(owner)?.getURL() ?? ''
-      } catch {
-        /* doute sur la page : on applique le filtrage normal */
+  // Les WebSockets sont visés eux aussi : le mode renforcé liste la ressource
+  // « websocket », mais un filtre limité à http/https ne les voyait jamais.
+  ses.webRequest.onBeforeRequest(
+    { urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] },
+    (details, callback) => {
+      if (!isEnabled()) return callback({})
+      if (details.resourceType === 'mainFrame') return callback({})
+      const level = levelOf()
+      const tracker = isTracker(details.url)
+      // Test le moins cher d'abord : la quasi-totalité des requêtes d'une page
+      // n'est ni un traqueur ni une ressource tierce active, et repart ici sans
+      // toucher à webContents.
+      if (!tracker && (level !== 'strict' || !isStrictType(details.resourceType)))
+        return callback({})
+      const owner = details.webContentsId && details.webContentsId > 0 ? details.webContentsId : 0
+      let pageUrl = ''
+      if (owner) {
+        try {
+          pageUrl = webContents.fromId(owner)?.getURL() ?? ''
+        } catch {
+          /* doute sur la page : on applique le filtrage normal */
+        }
       }
+      // Pages d'auth : aucune interférence, même sur les requêtes tierces.
+      if (pageUrl && isAuthPage(pageUrl)) return callback({})
+      // Site exempté par l'utilisateur depuis le bouclier.
+      if (pageUrl && isExempt(pageUrl)) return callback({})
+      // En mode renforcé, seules les ressources actives d'un autre site tombent.
+      if (!tracker && !isThirdParty(details.url, pageUrl)) return callback({})
+      if (owner) onBlocked(owner, blockedHost(details.url))
+      callback({ cancel: true })
     }
-    // Pages d'auth : aucune interférence, même sur les requêtes tierces.
-    if (pageUrl && isAuthPage(pageUrl)) return callback({})
-    // Site exempté par l'utilisateur depuis le bouclier.
-    if (pageUrl && isExempt(pageUrl)) return callback({})
-    // En mode renforcé, seules les ressources actives d'un autre site tombent.
-    if (!tracker && !isThirdParty(details.url, pageUrl)) return callback({})
-    if (owner) onBlocked(owner, blockedHost(details.url))
-    callback({ cancel: true })
-  })
+  )
 
+  attachPermissions(ses)
+}
+
+/**
+ * Permissions d'une session : plein écran et écriture dans le presse-papier,
+ * rien d'autre. Sans gestionnaire, Electron accorde tout — caméra, micro,
+ * position, notifications.
+ */
+export function attachPermissions(ses: Session, extra: string[] = []): void {
+  const allowed = new Set(['fullscreen', 'clipboard-sanitized-write', ...extra])
   ses.setPermissionRequestHandler((_contents, permission, callback) => {
     // Par défaut : la navigation n’obtient jamais caméra, micro, position ni notifications.
-    const allowed = permission === 'fullscreen' || permission === 'clipboard-sanitized-write'
-    callback(allowed)
+    callback(allowed.has(permission))
   })
 
-  ses.setPermissionCheckHandler((_contents, permission) => {
-    return permission === 'fullscreen' || permission === 'clipboard-sanitized-write'
-  })
+  ses.setPermissionCheckHandler((_contents, permission) => allowed.has(permission))
 }
 
 function blockedHost(url: string): string {

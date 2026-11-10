@@ -122,7 +122,8 @@ let activeDownload: AbortController | null = null
 /** Téléchargement electron-updater sous Windows, annulable par jeton. */
 let windowsCancellation: CancellationToken | null = null
 /** AppImage Linux proposée par la dernière release lue. */
-let linuxRelease: { version: string; file: { url: string; sha512: string; size: number } } | null = null
+let linuxRelease: { version: string; file: { url: string; sha512: string; size: number } } | null =
+  null
 let linuxDownloading = false
 /** Manifeste d'une version déjà lu : une seule requête par version. */
 const manifests = new Map<string, MacManifest | null>()
@@ -501,8 +502,7 @@ async function downloadLinuxUpdate(): Promise<void> {
     if (downloadCancelled()) return
     set({
       state: 'error',
-      message:
-        error instanceof Error ? error.message.slice(0, 220) : 'Téléchargement impossible.'
+      message: error instanceof Error ? error.message.slice(0, 220) : 'Téléchargement impossible.'
     })
   } finally {
     linuxDownloading = false

@@ -1,0 +1,396 @@
+/* Tranche 53 — panneau Protection, en popover sous l’icône du rail.
+   Pas de voile flouté : un coup d’œil rapide, posé près du bouton qui l’ouvre. */
+
+/* ── Le calque : transparent, ferme au clic extérieur ──────────────────── */
+.shield-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: transparent;
+}
+
+.shield-pop {
+  position: fixed;
+  width: 400px;
+  max-width: calc(100vw - 20px);
+  max-height: min(74vh, 660px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: rise var(--dur-2) var(--ease-standard);
+}
+
+.shield-pop:focus {
+  outline: none;
+}
+
+.shield-pop-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+}
+
+.shield-pop-head .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: flex-start;
+  margin: 0;
+  text-align: left;
+}
+
+.shield-pop-head h1 {
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Croix ronde et discrète : le panneau garde son focus. */
+.shield-pop-head .shield-close {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+}
+
+.shield-pop-head .shield-close:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.shield-pop-head .shield-close:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+/* ── Corps ─────────────────────────────────────────────────────────────── */
+.shield-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px 6px;
+  overflow-y: auto;
+}
+
+/* L’action la plus cherchée : la protection du site, en haut. */
+.shield-site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.shield-site-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shield-site-name b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Trois portées : page, jour, semaine ───────────────────────────────── */
+.shield-tally {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.shield-tally b {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.shield-tally span {
+  color: var(--faint);
+}
+
+/* ── Répartition par usage ─────────────────────────────────────────────── */
+.shield-mix {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  margin: 2px 0 4px;
+}
+
+.shield-mix span {
+  min-width: 3px;
+  border-radius: 3px;
+}
+
+.shield-mix span[data-cat='ad'] {
+  background: #c98a5a;
+}
+
+.shield-mix span[data-cat='track'] {
+  background: #7a6fd0;
+}
+
+.shield-mix span[data-cat='analytics'] {
+  background: #4f8fd0;
+}
+
+.shield-mix span[data-cat='social'] {
+  background: #4fae7a;
+}
+
+.shield-mix span[data-cat='other'] {
+  background: var(--faint);
+}
+
+/* ── Liste : domaine, usage, requêtes, action ──────────────────────────── */
+.shield-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.shield-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 44px 82px;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.shield-row:last-child {
+  border-bottom: 0;
+}
+
+.shield-list-head {
+  min-height: 0;
+  padding: 0 0 5px;
+}
+
+.shield-list-head span {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.shield-list-head .shield-head-count {
+  text-align: right;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.shield-host {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shield-row[data-child='true'] .shield-host {
+  padding-left: 16px;
+  color: var(--ink-soft);
+}
+
+/* Ligne parente : le chevron et le domaine forment un seul bouton. */
+.shield-parent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  text-align: left;
+}
+
+.shield-parent:hover .shield-host {
+  color: var(--ink);
+}
+
+.shield-parent .shield-host {
+  color: var(--ink);
+}
+
+.shield-cat {
+  overflow: hidden;
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shield-cat[data-cat='ad'] {
+  color: #a86b3a;
+}
+
+.shield-cat[data-cat='track'] {
+  color: #6b5fc4;
+}
+
+.shield-cat[data-cat='analytics'] {
+  color: #3f79b4;
+}
+
+.shield-cat[data-cat='social'] {
+  color: #3f8c62;
+}
+
+.shield-count {
+  font-size: 10px;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Action de ligne ───────────────────────────────────────────────────── */
+.shield-action {
+  width: 82px;
+  max-width: 82px;
+  min-height: 24px;
+  padding: 0 6px;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.shield-action[data-confirming='true'] {
+  color: var(--clay);
+}
+
+/* ── Bandeau d’exemption ───────────────────────────────────────────────── */
+.shield-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.shield-banner span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.shield-banner b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.shield-banner .action {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+/* ── État calme : une icône, une phrase, aucun zéro ────────────────────── */
+.shield-calm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+}
+
+.shield-calm-mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.shield-calm p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.shield-empty {
+  margin: 0;
+  padding: 14px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Sites exemptés ────────────────────────────────────────────────────── */
+.shield-exempt h2 {
+  margin: 6px 0 2px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ── Pied : un lien discret, pas un bouton ─────────────────────────────── */
+.shield-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.shield-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.shield-link:hover {
+  color: var(--ink);
+}
+
+.shield-foot-total {
+  font-size: 9.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}

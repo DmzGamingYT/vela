@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  HOST_ZOOM_LIMIT,
-  sanitizeZoomByHost,
-  zoomHostOf,
-  zoomPercentOfLevel
-} from './navigation'
+import { HOST_ZOOM_LIMIT, sanitizeZoomByHost, zoomHostOf, zoomPercentOfLevel } from './navigation'
 
 describe('zoom mémorisé par domaine', () => {
   it('normalise l’hôte et garde un niveau valide', () => {

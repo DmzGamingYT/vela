@@ -97,7 +97,9 @@
   opacity: 0;
   transform: translateY(3px);
   pointer-events: none;
-  transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-standard);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-standard);
 }
 
 .day-info:hover::after,
@@ -282,22 +284,33 @@ button.action[aria-disabled='true']:hover {
 }
 
 .background-card[data-bg='aurora'] .background-swatch {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 100% at 8% 0%,
       color-mix(in srgb, var(--space-color) 82%, transparent),
       transparent 66%
     ),
-    radial-gradient(120% 100% at 96% 100%, color-mix(in srgb, var(--space-color) 58%, transparent), transparent 70%),
+    radial-gradient(
+      120% 100% at 96% 100%,
+      color-mix(in srgb, var(--space-color) 58%, transparent),
+      transparent 70%
+    ),
     var(--paper);
 }
 
 .background-card[data-bg='mist'] .background-swatch {
-  background: linear-gradient(175deg, color-mix(in srgb, var(--space-color) 70%, transparent), transparent 68%),
+  background:
+    linear-gradient(
+      175deg,
+      color-mix(in srgb, var(--space-color) 70%, transparent),
+      transparent 68%
+    ),
     var(--paper);
 }
 
 .background-card[data-bg='ember'] .background-swatch {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       130% 110% at 14% 104%,
       color-mix(in srgb, var(--space-color) 86%, transparent),
       transparent 72%
@@ -310,12 +323,17 @@ button.action[aria-disabled='true']:hover {
 }
 
 .space-stage[data-bg='aurora'] {
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(
       120% 90% at 6% 0%,
       color-mix(in srgb, var(--space-color) 52%, transparent),
       transparent 62%
     ),
-    radial-gradient(110% 90% at 96% 100%, color-mix(in srgb, var(--space-color) 38%, transparent), transparent 68%);
+    radial-gradient(
+      110% 90% at 96% 100%,
+      color-mix(in srgb, var(--space-color) 38%, transparent),
+      transparent 68%
+    );
 }
 
 /* Les avatars de l'espace gardent tous la même tuile et la même épaisseur. */
@@ -342,4 +360,3 @@ button.action[aria-disabled='true']:hover {
 .agent-run {
   margin-top: 8px;
 }
-

@@ -1,0 +1,20 @@
+/* Tranche 50 — la bascule de la barre latérale redevient cliquable.
+
+   `.rail-drag` couvre toute la rangée du titre avec `-webkit-app-region: drag`.
+   `.rail-head` est posé au-dessus, transparent : Chromium teste la région de
+   glissement sur les pixels peints, donc le bouton restait dans la zone de
+   déplacement de la fenêtre et le clic faisait glisser la fenêtre au lieu de
+   replier la barre. `no-drag` sur la rangée règle le clic ; la zone de
+   glissement du rail garde ses 68 px de large, moins la colonne du bouton. */
+.rail-head,
+.rail-head .rail-ghost {
+  -webkit-app-region: no-drag;
+}
+
+/* Même précaution pour les deux modes, qui vivent sous l'en-tête mais dans la
+   colonne du rail. */
+.rail-mode,
+.rail-spaces button,
+.rail-settings {
+  -webkit-app-region: no-drag;
+}

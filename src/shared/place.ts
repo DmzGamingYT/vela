@@ -29,7 +29,9 @@ function storage(): StorageLike | null {
 export function readWeatherPlace(store: StorageLike | null = storage()): WeatherPlace | null {
   if (!store) return null
   try {
-    const raw = JSON.parse(store.getItem(WEATHER_PLACE_KEY) ?? 'null') as Partial<WeatherPlace> | null
+    const raw = JSON.parse(
+      store.getItem(WEATHER_PLACE_KEY) ?? 'null'
+    ) as Partial<WeatherPlace> | null
     if (!raw || typeof raw.name !== 'string') return null
     if (typeof raw.latitude !== 'number' || typeof raw.longitude !== 'number') return null
     return {

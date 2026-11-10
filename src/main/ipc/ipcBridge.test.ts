@@ -58,7 +58,9 @@ function bridgeChannels(): Set<string> {
   const channels = new Set<string>()
   for (const file of ['../../preload/index.ts', '../../preload/page.ts']) {
     const source = preloadSource(file)
-    for (const match of source.matchAll(/ipcRenderer\.(?:invoke|send)\(\s*(['"])([^'"]+)\1/g)) {
+    for (const match of source.matchAll(
+      /ipcRenderer\.(?:invoke|send|sendSync)\(\s*(['"])([^'"]+)\1/g
+    )) {
       channels.add(match[2])
     }
   }
@@ -105,6 +107,12 @@ describe('pont IPC — chaque canal a un gestionnaire', () => {
     const registered = registeredChannels()
     const missing = [...bridgeChannels()].filter((channel) => !registered.has(channel)).sort()
     expect(missing).toEqual([])
+  })
+
+  it('ne laisse aucun canal mort : le pont appelle chacun d’eux', () => {
+    const registered = registeredChannels()
+    const dead = [...registered].filter((channel) => !bridgeChannels().has(channel)).sort()
+    expect(dead, 'Canal enregistré mais jamais appelé : à supprimer.').toEqual([])
   })
 
   it('lit bien les canaux du pont — le test ne passe pas à vide', () => {

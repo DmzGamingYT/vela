@@ -264,17 +264,23 @@ export class PageDriver {
   }
 
   private missing(): DriveResult {
-    const observation = 'Aucune page n’est ouverte dans l’onglet de travail : commence par « open ».'
+    const observation =
+      'Aucune page n’est ouverte dans l’onglet de travail : commence par « open ».'
     return { ok: false, detail: 'Aucune page ouverte.', observation }
   }
 
   private async open(url: string): Promise<DriveResult> {
     if (!url) return { ok: false, detail: 'Adresse vide.', observation: 'Adresse vide.' }
     try {
-      if (this.tabId && this.workspace.contents(this.tabId)) await this.workspace.go(this.tabId, url)
+      if (this.tabId && this.workspace.contents(this.tabId))
+        await this.workspace.go(this.tabId, url)
       else this.tabId = await this.workspace.open(this.spaceId, url)
     } catch {
-      return { ok: false, detail: 'Ouverture impossible.', observation: `Impossible d’ouvrir ${url}.` }
+      return {
+        ok: false,
+        detail: 'Ouverture impossible.',
+        observation: `Impossible d’ouvrir ${url}.`
+      }
     }
     const wc = this.active()
     if (!wc) {
@@ -302,7 +308,9 @@ export class PageDriver {
       text: action.args.text
     })) as LookupHit | null
     if (!hit || !hit.found) {
-      const candidates = (hit?.candidates ?? []).map((entry) => `${entry.role} : ${entry.name}`).join(' · ')
+      const candidates = (hit?.candidates ?? [])
+        .map((entry) => `${entry.role} : ${entry.name}`)
+        .join(' · ')
       const detail = candidates ? `Introuvable. Présents : ${candidates}` : 'Élément introuvable.'
       return { ok: false, detail: detail.slice(0, 240), observation: detail }
     }
@@ -328,7 +336,10 @@ export class PageDriver {
     let target: LookupHit | null = null
     // Le texte à saisir n'est pas une cible : seul le nom (ou le rôle) du champ l'est.
     if (action.args.name || action.args.role) {
-      const hit = (await this.lookup(wc, { role: action.args.role, name: action.args.name })) as LookupHit | null
+      const hit = (await this.lookup(wc, {
+        role: action.args.role,
+        name: action.args.name
+      })) as LookupHit | null
       if (!hit || !hit.found) {
         const detail = hit?.candidates?.length
           ? `Champ introuvable. Présents : ${hit.candidates.map((c) => c.name).join(' · ')}`
@@ -398,7 +409,8 @@ export class PageDriver {
     const wc = this.active()
     if (!wc) return this.missing()
     const hit = (await this.evaluate(wc, { mode: 'read' })) as ReadHit | null
-    if (!hit) return { ok: false, detail: 'Lecture impossible.', observation: 'Lecture impossible.' }
+    if (!hit)
+      return { ok: false, detail: 'Lecture impossible.', observation: 'Lecture impossible.' }
     const elements = hit.elements.slice(0, 24).join('\n')
     const observation = [
       `Titre : ${hit.title || '(sans titre)'}`,
@@ -421,10 +433,15 @@ export class PageDriver {
       what: action.args.what ?? 'links',
       limit: action.args.limit ?? 12
     })) as ExtractHit | null
-    if (!hit) return { ok: false, detail: 'Extraction impossible.', observation: 'Extraction impossible.' }
+    if (!hit)
+      return { ok: false, detail: 'Extraction impossible.', observation: 'Extraction impossible.' }
     const items = hit.items.filter((item) => item.trim())
     if (items.length === 0) {
-      return { ok: false, detail: 'Rien à relever.', observation: 'Cette page ne contient rien à relever.' }
+      return {
+        ok: false,
+        detail: 'Rien à relever.',
+        observation: 'Cette page ne contient rien à relever.'
+      }
     }
     return {
       ok: true,
@@ -449,10 +466,7 @@ export class PageDriver {
 
   private async evaluate(wc: WebContents, input: Record<string, unknown>): Promise<unknown> {
     try {
-      return await wc.executeJavaScript(
-        `(${PAGE_SCRIPT})(${JSON.stringify(input)})`,
-        true
-      )
+      return await wc.executeJavaScript(`(${PAGE_SCRIPT})(${JSON.stringify(input)})`, true)
     } catch {
       return null
     }

@@ -105,7 +105,8 @@ export function searchUrl(
   if (engine === 'custom') {
     return renderTemplate(customTemplate, query) ?? SEARCH_ENGINES.duckduckgo.build(query)
   }
-  if (engine === 'searxng') return `${searxBase(searxInstance)}/search?q=${encodeURIComponent(query)}`
+  if (engine === 'searxng')
+    return `${searxBase(searxInstance)}/search?q=${encodeURIComponent(query)}`
   return (SEARCH_ENGINES[engine as BuiltinSearchEngineId] ?? SEARCH_ENGINES.duckduckgo).build(query)
 }
 
@@ -116,7 +117,9 @@ export function engineHost(
   customTemplate?: string | null
 ): string {
   try {
-    return new URL(searchUrl('test', engine, searxInstance, customTemplate)).hostname || 'duckduckgo.com'
+    return (
+      new URL(searchUrl('test', engine, searxInstance, customTemplate)).hostname || 'duckduckgo.com'
+    )
   } catch {
     return 'duckduckgo.com'
   }
@@ -127,7 +130,8 @@ export function engineHost(
 /* ------------------------------------------------------------------ */
 
 const TITLE_URL = /^(?:[a-z][a-z0-9+.-]*:\/\/|www\.)/i
-const TITLE_BARE_HOST = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?$/i
+const TITLE_BARE_HOST =
+  /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?$/i
 
 /**
  * Clé de dédoublonnage : même page = même hôte et même chemin, quels que
@@ -150,7 +154,9 @@ export function canonicalUrl(url: string): string {
  */
 export function readableTitle(raw: string | null | undefined, url: string): string {
   // Même règle que la pastille des cases : un compteur part, une année reste.
-  const text = stripCounters(raw ?? '').replace(/\s+/g, ' ').trim()
+  const text = stripCounters(raw ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
   const host = hostOf(url)
   if (!text) return host || url
   if (TITLE_URL.test(text) || (TITLE_BARE_HOST.test(text) && !/\s/.test(text))) {
@@ -167,12 +173,71 @@ export function readableTitle(raw: string | null | undefined, url: string): stri
   return text
 }
 
-const HOST_LIKE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?(?:[/?#]|$)/i
+const HOST_LIKE =
+  /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?(?:[/?#]|$)/i
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?(?:[/?#]|$)/i
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i
 
 export function isHomeUrl(url: string | null | undefined): boolean {
   return !url || url === HOME_URL
+}
+
+/**
+ * Schémas qu'une vue native peut charger : le web, la page blanche et
+ * l'accueil interne.
+ *
+ * Tout le reste — `file:`, `data:`, `chrome:`, `devtools:` — est refusé. Une
+ * adresse peut venir d'une page visitée ou d'un modèle, pas seulement de
+ * l'utilisateur : la charger dans une vue donnerait au contenu un accès au
+ * disque que la barre d'adresse, elle, ne permet jamais.
+ */
+export function isLoadableUrl(url: string | null | undefined): boolean {
+  const value = (url ?? '').trim()
+  if (!value) return false
+  if (isHomeUrl(value)) return true
+  const lower = value.toLowerCase()
+  if (lower === 'about:blank') return true
+  return lower.startsWith('http://') || lower.startsWith('https://')
+}
+
+/**
+ * Hôte public : ni adresse IP, ni nom de machine locale.
+ *
+ * Une requête partie du processus principal (icône d'un site, planche d'une
+ * bande dessinée) ne doit jamais atteindre la box, le NAS ou le service de
+ * métadonnées du fournisseur — même si la page visitée le demande.
+ */
+export function isPublicHost(host: string | null | undefined): boolean {
+  const name = (host ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+  if (!name) return false
+  if (name === 'localhost' || name.endsWith('.localhost')) return false
+  if (name.endsWith('.local') || name.endsWith('.internal') || name.endsWith('.home.arpa'))
+    return false
+
+  // IPv6 : boucle locale, adresses uniques locales, lien local.
+  if (name.includes(':')) {
+    if (name === '::1' || name === '::') return false
+    if (/^f[cd][0-9a-f]{2}:/.test(name)) return false
+    if (/^fe[89ab][0-9a-f]:/.test(name)) return false
+    return true
+  }
+
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(name)
+  if (!ipv4) return true
+  const [a, b] = [Number(ipv4[1]), Number(ipv4[2])]
+  if ([a, b, Number(ipv4[3]), Number(ipv4[4])].some((part) => part > 255)) return false
+  if (a === 0 || a === 10 || a === 127) return false
+  if (a === 169 && b === 254) return false
+  if (a === 172 && b >= 16 && b <= 31) return false
+  if (a === 192 && b === 168) return false
+  if (a === 100 && b >= 64 && b <= 127) return false
+  if (a === 192 && b === 0) return false
+  if (a === 198 && (b === 18 || b === 19)) return false
+  if (a >= 224) return false
+  return true
 }
 
 export function hostOf(url: string): string {
@@ -201,7 +266,10 @@ export interface Target {
 }
 
 /** Réglage de mot-clé : « g verre » part sur Google, sans toucher au reste. */
-function keywordTarget(input: string, keywords?: KeywordRule[]): { rule: KeywordRule; query: string } | null {
+function keywordTarget(
+  input: string,
+  keywords?: KeywordRule[]
+): { rule: KeywordRule; query: string } | null {
   if (!keywords || keywords.length === 0) return null
   const match = input.match(/^([a-z0-9]{1,12})\s+(.+)$/i)
   if (!match) return null
@@ -248,7 +316,12 @@ export function normalizeInput(
   const shortcut = keywordTarget(input, options.keywords)
   if (shortcut) {
     return {
-      url: searchUrl(shortcut.query, shortcut.rule.engine, options.searxInstance, shortcut.rule.customTemplate),
+      url: searchUrl(
+        shortcut.query,
+        shortcut.rule.engine,
+        options.searxInstance,
+        shortcut.rule.customTemplate
+      ),
       kind: 'search'
     }
   }

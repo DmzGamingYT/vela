@@ -20,12 +20,20 @@ const ids = (tabs: TabState[]): string[] => tabs.map((item) => item.id)
 describe('moveTab', () => {
   it('place un onglet avant sa cible', () => {
     const tabs = [tab('a'), tab('b'), tab('c')]
-    expect(ids(moveTab(tabs, { id: 'c', targetId: 'a', position: 'before' }))).toEqual(['c', 'a', 'b'])
+    expect(ids(moveTab(tabs, { id: 'c', targetId: 'a', position: 'before' }))).toEqual([
+      'c',
+      'a',
+      'b'
+    ])
   })
 
   it('place un onglet après sa cible', () => {
     const tabs = [tab('a'), tab('b'), tab('c')]
-    expect(ids(moveTab(tabs, { id: 'a', targetId: 'b', position: 'after' }))).toEqual(['b', 'a', 'c'])
+    expect(ids(moveTab(tabs, { id: 'a', targetId: 'b', position: 'after' }))).toEqual([
+      'b',
+      'a',
+      'c'
+    ])
   })
 
   it('refuse de mélanger espaces ou épinglés', () => {

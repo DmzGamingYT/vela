@@ -43,8 +43,10 @@
   background: var(--fill);
   font-size: 9.5px;
   color: var(--ink-soft);
-  transition: background var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-link:hover {
@@ -91,8 +93,10 @@
   background: var(--fill);
   font-size: 9.5px;
   color: var(--ink-soft);
-  transition: background var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-import:hover:not(:disabled) {
@@ -222,8 +226,10 @@
   border: 1px solid var(--line);
   background: transparent;
   color: transparent;
-  transition: background var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-check svg {
@@ -273,7 +279,9 @@
   place-items: center;
   color: var(--faint);
   opacity: 0;
-  transition: opacity var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-row:hover .watch-remove,
@@ -304,8 +312,10 @@
   background: var(--fill);
   font-size: 10.5px;
   color: var(--ink-soft);
-  transition: background var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-draw:hover:not(:disabled) {
@@ -385,7 +395,9 @@
   border-radius: 9px;
   border: 1px solid var(--line);
   color: var(--muted);
-  transition: background var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard);
 }
 
 .watch-add button:hover:not(:disabled) {
@@ -420,4 +432,3 @@
   background: transparent;
   box-shadow: none;
 }
-

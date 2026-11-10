@@ -30,14 +30,24 @@ export default function TunnelProjects() {
   })
 
   return (
-    <div className="tunnel-pop" role="dialog" aria-label="Cartes enregistrées" onMouseDown={() => setOpen(false)}>
+    <div
+      className="tunnel-pop"
+      role="dialog"
+      aria-label="Cartes enregistrées"
+      onMouseDown={() => setOpen(false)}
+    >
       <div className="tunnel-pop-card" onMouseDown={(event) => event.stopPropagation()}>
         <header>
           <div>
             <h2>Cartes enregistrées</h2>
             <p>Chaque tunnel lancé est conservé dans cet espace.</p>
           </div>
-          <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Fermer">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setOpen(false)}
+            aria-label="Fermer"
+          >
             <Icon name="close" size={16} />
           </button>
         </header>
@@ -79,10 +89,15 @@ export default function TunnelProjects() {
                   </button>
                 </form>
               ) : (
-                <button type="button" className="tunnel-project-main" onClick={() => void loadMap(map.id)}>
+                <button
+                  type="button"
+                  className="tunnel-project-main"
+                  onClick={() => void loadMap(map.id)}
+                >
                   <strong>{map.title}</strong>
                   <span>
-                    {map.sourceCount} source{map.sourceCount > 1 ? 's' : ''} · {timeAgo(map.updatedAt)}
+                    {map.sourceCount} source{map.sourceCount > 1 ? 's' : ''} ·{' '}
+                    {timeAgo(map.updatedAt)}
                   </span>
                 </button>
               )}

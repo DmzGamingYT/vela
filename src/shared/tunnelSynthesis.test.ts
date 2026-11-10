@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { MapNode, TunnelMap } from './tunnel'
-import { angleGroups, buildTunnelSynthesis, queryMatches, synthesisMarkdown } from './tunnelSynthesis'
+import {
+  angleGroups,
+  buildTunnelSynthesis,
+  queryMatches,
+  synthesisMarkdown
+} from './tunnelSynthesis'
 
-function node(partial: Partial<MapNode> & { id: string; kind: MapNode['kind']; title: string }): MapNode {
+function node(
+  partial: Partial<MapNode> & { id: string; kind: MapNode['kind']; title: string }
+): MapNode {
   return {
     summary: '',
     relevance: 70,
@@ -18,7 +25,13 @@ function node(partial: Partial<MapNode> & { id: string; kind: MapNode['kind']; t
 const nodes: MapNode[] = [
   node({ id: 'sujet', kind: 'subject', title: 'Héberger des images', relevance: 100 }),
   node({ id: 'a1', kind: 'angle', title: 'Licences', summary: 'Licences', parentId: 'sujet' }),
-  node({ id: 'a2', kind: 'angle', title: 'Coût réel', summary: 'La facture suit la diffusion.', parentId: 'sujet' }),
+  node({
+    id: 'a2',
+    kind: 'angle',
+    title: 'Coût réel',
+    summary: 'La facture suit la diffusion.',
+    parentId: 'sujet'
+  }),
   node({
     id: 's1',
     kind: 'site',
@@ -122,7 +135,7 @@ describe('synthèse', () => {
     expect(markdown).toContain('## Licences')
     expect(markdown).toMatch(/\[1\]/)
     expect(markdown).toContain('https://commons.wikimedia.org/wiki/Licences')
-    expect(markdown).toContain('À trancher')
+    expect(markdown).toContain('Où les sources divergent')
   })
 
   it('mesure les mots de la question retrouvés', () => {

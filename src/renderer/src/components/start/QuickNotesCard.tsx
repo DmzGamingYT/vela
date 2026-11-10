@@ -29,15 +29,25 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
     if (!clean || saving) return
     setSaving(true)
     try {
-      const firstLine = clean.split('\n')[0].replace(/^#+\s*/, '').trim()
+      const firstLine = clean
+        .split('\n')[0]
+        .replace(/^#+\s*/, '')
+        .trim()
       const title = (firstLine.slice(0, 60) || 'Note rapide').trim()
-      await saveNote({
+      // `saveNote` avale l'erreur et rend `null` : sans ce test, le champ
+      // se vidait et l'app annonçait « Note enregistrée » alors que rien
+      // n'avait été écrit — le texte saisi était perdu.
+      const saved = await saveNote({
         title,
         body: clean,
         spaceId,
         tags: ['rapide'],
         pinned: false
       })
+      if (!saved) {
+        toast('Erreur lors de l’enregistrement de la note.', 'error')
+        return
+      }
       setText('')
       setExpanded(false)
       toast('Note enregistrée.')
@@ -53,7 +63,9 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
       <div className="home-card-head">
         <div className="quicknotes-heading">
           <h2>Mémoire de l’espace</h2>
-          <span className="quicknotes-scope">{plural(spaceNotes.length, 'note')} · sur cet appareil</span>
+          <span className="quicknotes-scope">
+            {plural(spaceNotes.length, 'note')} · sur cet appareil
+          </span>
         </div>
         <div className="home-card-tools">
           <button

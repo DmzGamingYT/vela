@@ -120,7 +120,8 @@
 .amb-base {
   inset: 0;
   opacity: 0.72;
-  transition: opacity var(--dur-ambience) var(--ease-lux),
+  transition:
+    opacity var(--dur-ambience) var(--ease-lux),
     background-color var(--dur-ambience) var(--ease-lux);
 }
 
@@ -136,14 +137,26 @@
 
 [data-ambience='glace-feu'] .amb-base {
   background:
-    radial-gradient(58% 62% at 22% 34%, color-mix(in srgb, var(--amb-1) 44%, transparent), transparent 72%),
-    radial-gradient(52% 58% at 78% 66%, color-mix(in srgb, var(--amb-2) 40%, transparent), transparent 74%);
+    radial-gradient(
+      58% 62% at 22% 34%,
+      color-mix(in srgb, var(--amb-1) 44%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      52% 58% at 78% 66%,
+      color-mix(in srgb, var(--amb-2) 40%, transparent),
+      transparent 74%
+    );
   animation: amb-flux 19s var(--ease-glide) infinite alternate;
 }
 
 [data-ambience='glace-feu'] .amb-clouds {
   opacity: 0.5;
-  background: radial-gradient(46% 46% at 50% 52%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 70%);
+  background: radial-gradient(
+    46% 46% at 50% 52%,
+    color-mix(in srgb, var(--amb-1) 26%, transparent),
+    transparent 70%
+  );
   filter: blur(26px);
   animation: amb-breathe 15s var(--ease-glide) infinite alternate;
 }
@@ -151,10 +164,26 @@
 [data-ambience='glace-feu'] .amb-particles {
   opacity: 0.8;
   background-image:
-    radial-gradient(1.6px 1.6px at 30% 80%, color-mix(in srgb, var(--amb-2) 92%, transparent), transparent 70%),
-    radial-gradient(1.2px 1.2px at 68% 62%, color-mix(in srgb, var(--amb-1) 85%, transparent), transparent 70%),
-    radial-gradient(1.8px 1.8px at 82% 88%, color-mix(in srgb, var(--amb-2) 68%, transparent), transparent 70%),
-    radial-gradient(1px 1px at 48% 44%, color-mix(in srgb, var(--amb-1) 80%, transparent), transparent 70%);
+    radial-gradient(
+      1.6px 1.6px at 30% 80%,
+      color-mix(in srgb, var(--amb-2) 92%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1.2px 1.2px at 68% 62%,
+      color-mix(in srgb, var(--amb-1) 85%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1.8px 1.8px at 82% 88%,
+      color-mix(in srgb, var(--amb-2) 68%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1px 1px at 48% 44%,
+      color-mix(in srgb, var(--amb-1) 80%, transparent),
+      transparent 70%
+    );
   background-size: 230px 270px;
   animation: amb-rise 32s linear infinite;
 }
@@ -198,8 +227,16 @@
 [data-ambience='multivers'] .amb-base {
   opacity: 0.78;
   background:
-    radial-gradient(42% 48% at 24% 26%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
-    radial-gradient(44% 50% at 76% 74%, color-mix(in srgb, var(--amb-2) 33%, transparent), transparent 74%);
+    radial-gradient(
+      42% 48% at 24% 26%,
+      color-mix(in srgb, var(--amb-1) 36%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      44% 50% at 76% 74%,
+      color-mix(in srgb, var(--amb-2) 33%, transparent),
+      transparent 74%
+    );
 }
 
 [data-ambience='multivers'] .amb-particles {
@@ -221,7 +258,11 @@
     transparent 0 26px,
     color-mix(in srgb, var(--amb-2) 16%, transparent) 26px 27px
   );
-  transform: translate3d(calc(var(--parallax-x, 0px) * -0.6), calc(var(--parallax-y, 0px) * -0.6), 0);
+  transform: translate3d(
+    calc(var(--parallax-x, 0px) * -0.6),
+    calc(var(--parallax-y, 0px) * -0.6),
+    0
+  );
   transition: transform 420ms var(--ease-out);
 }
 
@@ -240,13 +281,25 @@
   opacity: 0.7;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 64%),
-    radial-gradient(52% 46% at 72% 16%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 70%),
-    radial-gradient(60% 60% at 20% 76%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 74%);
+    radial-gradient(
+      52% 46% at 72% 16%,
+      color-mix(in srgb, var(--amb-2) 30%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 60% at 20% 76%,
+      color-mix(in srgb, var(--amb-1) 30%, transparent),
+      transparent 74%
+    );
 }
 
 [data-ambience='reve-etolie'] .amb-clouds {
   opacity: 0.55;
-  background: radial-gradient(40% 34% at 62% 30%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 70%);
+  background: radial-gradient(
+    40% 34% at 62% 30%,
+    color-mix(in srgb, var(--amb-2) 34%, transparent),
+    transparent 70%
+  );
   filter: blur(22px);
   animation: amb-glow 13s var(--ease-glide) infinite alternate;
 }
@@ -254,10 +307,22 @@
 [data-ambience='reve-etolie'] .amb-particles {
   opacity: 0.85;
   background-image:
-    radial-gradient(1.4px 1.4px at 26% 32%, color-mix(in srgb, var(--amb-2) 95%, transparent), transparent 70%),
+    radial-gradient(
+      1.4px 1.4px at 26% 32%,
+      color-mix(in srgb, var(--amb-2) 95%, transparent),
+      transparent 70%
+    ),
     radial-gradient(1px 1px at 58% 72%, #ffffff, transparent 70%),
-    radial-gradient(1.6px 1.6px at 78% 24%, color-mix(in srgb, var(--amb-2) 88%, transparent), transparent 70%),
-    radial-gradient(1px 1px at 44% 54%, color-mix(in srgb, var(--amb-2) 70%, transparent), transparent 70%);
+    radial-gradient(
+      1.6px 1.6px at 78% 24%,
+      color-mix(in srgb, var(--amb-2) 88%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1px 1px at 44% 54%,
+      color-mix(in srgb, var(--amb-2) 70%, transparent),
+      transparent 70%
+    );
   background-size: 190px 210px;
   animation: amb-twinkle 9s var(--ease-in-out) infinite alternate;
 }
@@ -299,7 +364,11 @@
       color-mix(in srgb, var(--amb-2) 30%, transparent) 62%,
       transparent 82%
     ),
-    radial-gradient(70% 60% at 30% 80%, color-mix(in srgb, var(--amb-1) 32%, transparent), transparent 76%);
+    radial-gradient(
+      70% 60% at 30% 80%,
+      color-mix(in srgb, var(--amb-1) 32%, transparent),
+      transparent 76%
+    );
   transform: translateZ(0) scale(1.18);
   animation: amb-pan 72s var(--ease-glide) infinite alternate;
 }
@@ -307,8 +376,16 @@
 [data-ambience='voie-lactee'] .amb-clouds {
   opacity: 0.55;
   background:
-    radial-gradient(38% 44% at 54% 46%, color-mix(in srgb, var(--amb-2) 30%, transparent), transparent 72%),
-    radial-gradient(30% 36% at 66% 54%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%);
+    radial-gradient(
+      38% 44% at 54% 46%,
+      color-mix(in srgb, var(--amb-2) 30%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 36% at 66% 54%,
+      color-mix(in srgb, var(--amb-1) 26%, transparent),
+      transparent 74%
+    );
   filter: blur(20px);
   animation: amb-pan 96s var(--ease-glide) infinite alternate-reverse;
 }
@@ -317,7 +394,11 @@
   opacity: 0.4;
   background-image:
     radial-gradient(1.2px 1.2px at 22% 44%, #ffffff, transparent 70%),
-    radial-gradient(1px 1px at 64% 26%, color-mix(in srgb, var(--amb-2) 90%, transparent), transparent 70%),
+    radial-gradient(
+      1px 1px at 64% 26%,
+      color-mix(in srgb, var(--amb-2) 90%, transparent),
+      transparent 70%
+    ),
     radial-gradient(1.4px 1.4px at 48% 78%, #ffffff, transparent 70%);
   background-size: 240px 240px;
   animation: amb-twinkle 12s var(--ease-in-out) infinite alternate;
@@ -337,7 +418,11 @@
 [data-ambience='horizon-martien'] .amb-base {
   opacity: 0.76;
   background:
-    radial-gradient(58% 44% at 50% 88%, color-mix(in srgb, var(--amb-2) 38%, transparent), transparent 70%),
+    radial-gradient(
+      58% 44% at 50% 88%,
+      color-mix(in srgb, var(--amb-2) 38%, transparent),
+      transparent 70%
+    ),
     linear-gradient(180deg, color-mix(in srgb, var(--amb-1) 24%, transparent), transparent 58%);
 }
 
@@ -355,7 +440,11 @@
 
 [data-ambience='horizon-martien'] .amb-sheen {
   opacity: 0.32;
-  background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--amb-2) 14%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 40%,
+    color-mix(in srgb, var(--amb-2) 14%, transparent) 100%
+  );
   animation: amb-haze 7s var(--ease-glide) infinite alternate;
 }
 
@@ -382,14 +471,26 @@
 [data-ambience='aura-tech'] .amb-base {
   opacity: 0.44;
   background:
-    radial-gradient(58% 48% at 50% 8%, color-mix(in srgb, var(--amb-1) 30%, transparent), transparent 72%),
-    radial-gradient(44% 40% at 84% 86%, color-mix(in srgb, var(--amb-2) 20%, transparent), transparent 76%);
+    radial-gradient(
+      58% 48% at 50% 8%,
+      color-mix(in srgb, var(--amb-1) 30%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      44% 40% at 84% 86%,
+      color-mix(in srgb, var(--amb-2) 20%, transparent),
+      transparent 76%
+    );
   animation: amb-halo 20s var(--ease-glide) infinite alternate;
 }
 
 [data-ambience='aura-tech'] .amb-clouds {
   opacity: 0.3;
-  background: radial-gradient(50% 44% at 34% 42%, color-mix(in srgb, var(--amb-1) 22%, transparent), transparent 72%);
+  background: radial-gradient(
+    50% 44% at 34% 42%,
+    color-mix(in srgb, var(--amb-1) 22%, transparent),
+    transparent 72%
+  );
   filter: blur(30px);
 }
 
@@ -430,8 +531,16 @@
 [data-ambience='cyber-neon'] .amb-base {
   opacity: 0.8;
   background:
-    radial-gradient(46% 54% at 12% 18%, color-mix(in srgb, var(--amb-1) 36%, transparent), transparent 72%),
-    radial-gradient(46% 54% at 88% 82%, color-mix(in srgb, var(--amb-2) 34%, transparent), transparent 72%);
+    radial-gradient(
+      46% 54% at 12% 18%,
+      color-mix(in srgb, var(--amb-1) 36%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      46% 54% at 88% 82%,
+      color-mix(in srgb, var(--amb-2) 34%, transparent),
+      transparent 72%
+    );
   animation: amb-neon 10s var(--ease-in-out) infinite alternate;
 }
 
@@ -490,8 +599,16 @@
 [data-ambience='sanctuaire-zen'] .amb-base {
   opacity: 0.56;
   background:
-    radial-gradient(56% 54% at 24% 30%, color-mix(in srgb, var(--amb-1) 26%, transparent), transparent 74%),
-    radial-gradient(48% 50% at 78% 72%, color-mix(in srgb, var(--amb-2) 24%, transparent), transparent 76%);
+    radial-gradient(
+      56% 54% at 24% 30%,
+      color-mix(in srgb, var(--amb-1) 26%, transparent),
+      transparent 74%
+    ),
+    radial-gradient(
+      48% 50% at 78% 72%,
+      color-mix(in srgb, var(--amb-2) 24%, transparent),
+      transparent 76%
+    );
   animation: amb-drift 58s var(--ease-in-out) infinite alternate;
 }
 
@@ -508,8 +625,16 @@
 [data-ambience='sanctuaire-zen'] .amb-particles {
   opacity: 0.22;
   background-image:
-    radial-gradient(1.4px 1.4px at 30% 62%, color-mix(in srgb, var(--amb-2) 80%, transparent), transparent 70%),
-    radial-gradient(1px 1px at 72% 34%, color-mix(in srgb, var(--amb-1) 70%, transparent), transparent 70%);
+    radial-gradient(
+      1.4px 1.4px at 30% 62%,
+      color-mix(in srgb, var(--amb-2) 80%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1px 1px at 72% 34%,
+      color-mix(in srgb, var(--amb-1) 70%, transparent),
+      transparent 70%
+    );
   background-size: 260px 260px;
   animation: amb-drift 74s var(--ease-in-out) infinite alternate-reverse;
 }
@@ -537,7 +662,8 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 28px 60px -42px rgb(var(--amb-rgb, var(--glow)));
-  transition: border-color var(--dur-ambience) var(--ease-lux),
+  transition:
+    border-color var(--dur-ambience) var(--ease-lux),
     box-shadow var(--dur-ambience) var(--ease-lux);
 }
 
@@ -571,8 +697,8 @@
   padding: 16px 18px 18px;
   border-radius: 16px;
   border: 1px solid var(--glass-border, var(--line));
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 52%),
-    var(--surface);
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 52%), var(--surface);
   backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 140%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(var(--glass-sat, 140%));
   box-shadow:
@@ -635,7 +761,9 @@
   text-align: left;
   border: 1px solid var(--line-soft);
   background: var(--fill);
-  transition: border-color var(--dur-3) var(--ease-lux), background var(--dur-3) var(--ease-lux);
+  transition:
+    border-color var(--dur-3) var(--ease-lux),
+    background var(--dur-3) var(--ease-lux);
 }
 
 .ambience-off:hover {
@@ -729,12 +857,14 @@
   text-align: left;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--amb-line, var(--line)) 62%, var(--line));
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 46%),
-    var(--surface);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 46%), var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 20px 44px -34px rgba(0, 0, 0, 0.6);
-  transition: transform var(--dur-3) var(--ease-lux), border-color var(--dur-3) var(--ease-lux),
+  transition:
+    transform var(--dur-3) var(--ease-lux),
+    border-color var(--dur-3) var(--ease-lux),
     box-shadow var(--dur-3) var(--ease-lux);
   will-change: transform;
 }
@@ -928,7 +1058,9 @@
   height: 26px;
   border-radius: 50%;
   background: var(--swatch);
-  box-shadow: inset 0 0 0 2px var(--surface), 0 6px 14px -10px var(--swatch);
+  box-shadow:
+    inset 0 0 0 2px var(--surface),
+    0 6px 14px -10px var(--swatch);
 }
 
 .tweak-slider {
@@ -977,8 +1109,12 @@
   border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--hairline-strong);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: transform var(--dur-2) var(--ease-lux), box-shadow var(--dur-2) var(--ease-lux);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition:
+    transform var(--dur-2) var(--ease-lux),
+    box-shadow var(--dur-2) var(--ease-lux);
 }
 
 .tweak-range:hover::-webkit-slider-thumb {
@@ -1014,8 +1150,8 @@
   padding: 18px;
   border-radius: 18px;
   border: 1px solid var(--glass-border, var(--line));
-  background: linear-gradient(150deg, var(--amb-halo, var(--accent-soft)), transparent 62%),
-    var(--paper-deep);
+  background:
+    linear-gradient(150deg, var(--amb-halo, var(--accent-soft)), transparent 62%), var(--paper-deep);
 }
 
 .glass-demo-orb {
@@ -1072,7 +1208,8 @@
 .glass-slab.is-top {
   margin-top: 8px;
   margin-left: 28px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0)), var(--surface);
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0)), var(--surface);
 }
 
 .tweak-reset {
@@ -1109,13 +1246,18 @@
 .tweak-reset,
 .ambience-off {
   will-change: transform;
-  transition: transform var(--dur-2) var(--ease-lux), border-color var(--dur-3) var(--ease-lux),
-    background var(--dur-3) var(--ease-lux), box-shadow var(--dur-3) var(--ease-lux);
+  transition:
+    transform var(--dur-2) var(--ease-lux),
+    border-color var(--dur-3) var(--ease-lux),
+    background var(--dur-3) var(--ease-lux),
+    box-shadow var(--dur-3) var(--ease-lux);
 }
 
 .tweak-reset:hover {
   border-color: var(--amb-line, var(--hairline-strong));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 14px 30px -24px rgb(var(--amb-rgb, var(--glow)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 14px 30px -24px rgb(var(--amb-rgb, var(--glow)));
 }
 
 /* --- Ergonomie du panneau de réglages -------------------------

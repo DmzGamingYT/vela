@@ -42,7 +42,8 @@ export default function AccentColorSection({
   const [colorNote, setColorNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
   const [draft, setDraft] = useState<{ from: string; rgb: Rgb } | null>(null)
   const [rgbNote, setRgbNote] = useState<string | null>(null)
-  const rgb = draft && draft.from === settings.customAccent ? draft.rgb : hexToRgb(settings.customAccent)
+  const rgb =
+    draft && draft.from === settings.customAccent ? draft.rgb : hexToRgb(settings.customAccent)
 
   const applyCustom = (value: string): void => {
     const parsed = parseHex(value)
@@ -70,7 +71,11 @@ export default function AccentColorSection({
 
   const commitRgb = (): void => {
     const next = rgbToHex(rgb)
-    setRgbNote(next.toUpperCase() === settings.customAccent.toUpperCase() ? null : `Appliqué : ${next.toUpperCase()}`)
+    setRgbNote(
+      next.toUpperCase() === settings.customAccent.toUpperCase()
+        ? null
+        : `Appliqué : ${next.toUpperCase()}`
+    )
     applyCustom(next)
   }
 

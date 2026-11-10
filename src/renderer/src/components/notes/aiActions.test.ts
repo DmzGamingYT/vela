@@ -8,12 +8,8 @@ describe('raccourcis des actions IA', () => {
   })
 
   it('reconnaît la rangée numérique et le pavé numérique', () => {
-    expect(aiActionForEvent({ altKey: true, shiftKey: false, code: 'Digit1' })).toBe(
-      'reformulate'
-    )
-    expect(aiActionForEvent({ altKey: true, shiftKey: false, code: 'Numpad5' })).toBe(
-      'beautify'
-    )
+    expect(aiActionForEvent({ altKey: true, shiftKey: false, code: 'Digit1' })).toBe('reformulate')
+    expect(aiActionForEvent({ altKey: true, shiftKey: false, code: 'Numpad5' })).toBe('beautify')
     expect(aiActionForEvent({ altKey: true, shiftKey: false, code: 'Digit4' })).toBe('correct')
   })
 

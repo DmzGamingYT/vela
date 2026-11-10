@@ -104,12 +104,32 @@ export interface SynthesisSource {
   relevance: number
 }
 
+/** Une option citée par des pages, avec les thèmes qu'elles abordent. */
+export interface SynthesisOption {
+  id: string
+  label: string
+  /** Numéros de sources qui la citent. */
+  citations: number[]
+  /** Titres des thèmes sous lesquels ces pages sont rangées. */
+  themes: string[]
+}
+
+/** Un écart entre ce qui est demandé et ce que les pages traitent. */
+export interface SynthesisDivergence {
+  asked: string
+  found: string
+  text: string
+  citations: number[]
+}
+
 export interface TunnelSynthesis {
   title: string
   lede: string
   generatedAt: number
   sections: SynthesisSection[]
   decisions: SynthesisDecision[]
+  options: SynthesisOption[]
+  divergences: SynthesisDivergence[]
   sources: SynthesisSource[]
   angles: number
   explored: number
@@ -151,7 +171,9 @@ export function queryMatches(
   const domain = new Set(tokenize(domainOf(node)))
   const inTitle = wanted.filter((word) => title.has(word)).length
   const inText = wanted.filter((word) => !title.has(word) && text.has(word)).length
-  const inDomain = wanted.filter((word) => !title.has(word) && !text.has(word) && domain.has(word)).length
+  const inDomain = wanted.filter(
+    (word) => !title.has(word) && !text.has(word) && domain.has(word)
+  ).length
   return {
     total: wanted.length,
     title: inTitle,
@@ -171,6 +193,20 @@ function sourceLine(node: MapNode): string {
   const year = siteYear(node)
   const domain = domainOf(node)
   return [domain, year].filter(Boolean).join(' · ')
+}
+
+/** Le thème (angle ou sous-angle) auquel une page se rattache. */
+function themeOf(nodes: MapNode[], node: MapNode): string {
+  let current = node.parentId
+  let guard = 0
+  while (current && guard < 12) {
+    const parent = nodes.find((entry) => entry.id === current)
+    if (!parent) return ''
+    if (parent.kind === 'angle' || parent.kind === 'subangle') return parent.title
+    current = parent.parentId
+    guard += 1
+  }
+  return ''
 }
 
 /**
@@ -199,7 +235,9 @@ export function buildTunnelSynthesis(map: TunnelMap, visible?: Set<string>): Tun
       const titles = top.map((site) => `« ${site.title} »`).join(', ')
       paragraphs.push({
         text: `${top.length} page${top.length > 1 ? 's' : ''} retenue${top.length > 1 ? 's' : ''} portent cet angle : ${titles}${
-          group.hidden > 0 ? `, ${group.hidden} autre${group.hidden > 1 ? 's' : ''} écartée${group.hidden > 1 ? 's' : ''}` : ''
+          group.hidden > 0
+            ? `, ${group.hidden} autre${group.hidden > 1 ? 's' : ''} écartée${group.hidden > 1 ? 's' : ''}`
+            : ''
         }.`,
         citations
       })
@@ -237,6 +275,55 @@ export function buildTunnelSynthesis(map: TunnelMap, visible?: Set<string>): Tun
       }
     })
 
+  // Tableau des options : seuls les concepts reliés à des pages retenues y
+  // figurent. Chaque cellule est vérifiable — un concept sans citation ne
+  // devient pas une ligne.
+  const concepts = map.nodes.filter(
+    (node) => node.kind === 'concept' && (!visible || visible.has(node.id))
+  )
+  const options: SynthesisOption[] = concepts
+    .map((concept) => {
+      const related = (concept.relatedIds ?? [])
+        .map((id) => map.nodes.find((entry) => entry.id === id))
+        .filter((entry): entry is MapNode => Boolean(entry) && entry?.kind === 'site')
+        .filter((entry) => !visible || visible.has(entry.id))
+      return {
+        id: concept.id,
+        label: concept.title,
+        citations: Array.from(
+          new Set(related.map((site) => index.get(site.id) ?? 0).filter((value) => value > 0))
+        ),
+        themes: Array.from(
+          new Set(related.map((site) => themeOf(map.nodes, site)).filter(Boolean))
+        )
+      }
+    })
+    .filter((option) => option.citations.length > 0)
+    .sort((a, b) => b.citations.length - a.citations.length)
+    .slice(0, 8)
+
+  // Alerte de malentendu : « libres » demandé, « gratuits » traité. La règle
+  // reste factuelle — elle compte des pages, elle ne devine pas l'intention.
+  const divergences: SynthesisDivergence[] = []
+  const query = map.query.toLowerCase()
+  if (/\blibres?\b/.test(query)) {
+    const texts = sources.map((site) =>
+      `${site.title} ${site.summary} ${site.excerpt ?? ''}`.toLowerCase()
+    )
+    const free = sources.filter((_, position) => /\bgratuit/.test(texts[position]))
+    const open = sources.filter((_, position) =>
+      /open[- ]source|\blibres?\b/.test(texts[position])
+    )
+    if (free.length >= 2 && open.length * 2 < free.length) {
+      divergences.push({
+        asked: 'libres',
+        found: 'gratuits',
+        text: `Vous demandez « libres » ; ${free.length} pages retenues sur ${sources.length} parlent de « gratuit » et ${open.length === 0 ? 'aucune ne mentionne open source' : `seulement ${open.length} mentionnent open source`}. Précisez « open source », ou assumez de comparer des hébergeurs gratuits.`,
+        citations: free.map((site) => index.get(site.id) ?? 0).filter((value) => value > 0)
+      })
+    }
+  }
+
   const title = tunnelMapTitle(map)
   const lede = sources.length
     ? `${sources.length} page${sources.length > 1 ? 's' : ''} retenue${sources.length > 1 ? 's' : ''} sur ${explored} lue${explored > 1 ? 's' : ''}, rangée${sources.length > 1 ? 's' : ''} en ${groups.length} angle${groups.length > 1 ? 's' : ''}. Chaque paragraphe renvoie à la page dont il vient ; la synthèse ne dit rien de plus.`
@@ -248,6 +335,8 @@ export function buildTunnelSynthesis(map: TunnelMap, visible?: Set<string>): Tun
     generatedAt: map.updatedAt,
     sections,
     decisions,
+    options,
+    divergences,
     sources: sources.map((site, position) => ({
       id: site.id,
       index: position + 1,
@@ -268,6 +357,26 @@ export function synthesisMarkdown(synthesis: TunnelSynthesis): string {
   lines.push('')
   lines.push(synthesis.lede)
   lines.push('')
+  if (synthesis.divergences.length > 0) {
+    lines.push('## La demande et les sources divergent')
+    lines.push('')
+    for (const divergence of synthesis.divergences) {
+      const markers = divergence.citations.map((citation) => `[${citation}]`).join('')
+      lines.push(`${divergence.text}${markers ? ` ${markers}` : ''}`)
+    }
+    lines.push('')
+  }
+  if (synthesis.options.length > 0) {
+    lines.push('## Options mentionnées')
+    lines.push('')
+    lines.push('| Option | Pages | Thèmes |')
+    lines.push('| --- | --- | --- |')
+    for (const option of synthesis.options) {
+      const pages = option.citations.map((citation) => `[${citation}]`).join(' ')
+      lines.push(`| ${option.label} | ${pages} | ${option.themes.join(', ')} |`)
+    }
+    lines.push('')
+  }
   for (const section of synthesis.sections) {
     lines.push(`## ${section.heading}`)
     lines.push('')
@@ -283,7 +392,7 @@ export function synthesisMarkdown(synthesis: TunnelSynthesis): string {
     }
   }
   if (synthesis.decisions.length > 0) {
-    lines.push('## À trancher')
+    lines.push('## Où les sources divergent')
     lines.push('')
     for (const decision of synthesis.decisions) {
       const markers = decision.citations.map((citation) => `[${citation}]`).join('')
@@ -294,8 +403,12 @@ export function synthesisMarkdown(synthesis: TunnelSynthesis): string {
   lines.push('## Sources')
   lines.push('')
   for (const source of synthesis.sources) {
-    lines.push(`${source.index}. ${source.title}${source.domain ? ` — ${source.domain}` : ''}${source.url ? ` — ${source.url}` : ''}`)
+    lines.push(
+      `${source.index}. ${source.title}${source.domain ? ` — ${source.domain}` : ''}${source.url ? ` — ${source.url}` : ''}`
+    )
   }
+  lines.push('')
+  lines.push('Extraits d’origine, jamais reformulés.')
   lines.push('')
   lines.push(
     `Synthèse du ${new Date(synthesis.generatedAt).toLocaleDateString('fr-FR')} · ${synthesis.kept} sources retenues sur ${synthesis.explored} lues · Vela`

@@ -45,7 +45,17 @@ const FLOW_GROUPS = groupedFlows()
 /** État réel d'un flux : le même calcul que la page d'audit, sans le réécrire. */
 function stateOf(
   flow: NetworkFlow,
-  context: { place: string | null; engine: string; agentMode: AgentMode; providerReady: boolean; providerLabel: string; providerLocal: boolean; providerLoopback: boolean; tabs: number; letterboxd: string }
+  context: {
+    place: string | null
+    engine: string
+    agentMode: AgentMode
+    providerReady: boolean
+    providerLabel: string
+    providerLocal: boolean
+    providerLoopback: boolean
+    tabs: number
+    letterboxd: string
+  }
 ): Tone {
   switch (flow.id) {
     case 'meteo-ville':
@@ -110,13 +120,18 @@ export default function PrivacyPage({
 
   if (!view) return null
   const enabled = settings.blockTrackers
-  const level: 'off' | 'trackers' | 'strict' = !enabled ? 'off' : settings.blockLevel === 'strict' ? 'strict' : 'trackers'
+  const level: 'off' | 'trackers' | 'strict' = !enabled
+    ? 'off'
+    : settings.blockLevel === 'strict'
+      ? 'strict'
+      : 'trackers'
   const activeTab = view.tabs.find((item) => item.id === view.activeTabId)
   // L'accueil n'est pas un site : aucune exception à proposer dessus.
   const pageHost = activeTab && !isHomeUrl(activeTab.url) ? hostOf(activeTab.url) : ''
   const exempt = (host: string): boolean =>
     view.privacyExemptions.some((entry) => host === entry || host.endsWith(`.${entry}`))
-  const domains = new Set(view.tabs.flatMap((entry) => entry.blockedHosts.map((item) => item.host))).size
+  const domains = new Set(view.tabs.flatMap((entry) => entry.blockedHosts.map((item) => item.host)))
+    .size
   const protectedTabs = view.tabs.filter((entry) => {
     const owner = view.spaces.find((item) => item.id === entry.spaceId)
     return settings.blockTrackers && owner?.blockTrackers !== false && owner?.private !== true
@@ -152,7 +167,9 @@ export default function PrivacyPage({
     if (filter !== 'all' && tone !== filter) return false
     const needle = query.trim().toLowerCase()
     if (!needle) return true
-    return `${flow.label} ${flow.target} ${flow.trigger} ${flow.data}`.toLowerCase().includes(needle)
+    return `${flow.label} ${flow.target} ${flow.trigger} ${flow.data}`
+      .toLowerCase()
+      .includes(needle)
   })
 
   const chooseTab = (next: Tab): void => {
@@ -161,7 +178,12 @@ export default function PrivacyPage({
   }
 
   const tabKeys = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
-    const moves: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, Home: 0, End: TABS.length - 1 }
+    const moves: Record<string, number> = {
+      ArrowRight: 1,
+      ArrowLeft: -1,
+      Home: 0,
+      End: TABS.length - 1
+    }
     if (!(event.key in moves)) return
     event.preventDefault()
     const next = (index + moves[event.key] + TABS.length) % TABS.length
@@ -203,12 +225,19 @@ export default function PrivacyPage({
     // Vignettes et icônes ne sont pas réversibles : elles partent seulement si
     // l'annulation n'est pas demandée.
     undoTimer.current = setTimeout(() => {
-      void window.vela.thumbs.purge().then(() => setThumbs(0))
-      void window.vela.favicons.purge()
+      void window.vela.thumbs
+        .purge()
+        .then(() => setThumbs(0))
+        .catch(() => undefined)
+      void window.vela.favicons.purge().catch(() => undefined)
       setUndo(null)
     }, 8000)
     setUndo({ count: removed, pending: true })
-    toast(removed > 0 ? plural(removed, 'entrée retirée', 'entrées retirées') : 'Aucune entrée sur cette période.')
+    toast(
+      removed > 0
+        ? plural(removed, 'entrée retirée', 'entrées retirées')
+        : 'Aucune entrée sur cette période.'
+    )
   }
 
   const undoClear = async (): Promise<void> => {
@@ -216,13 +245,21 @@ export default function PrivacyPage({
     undoTimer.current = null
     const restored = await window.vela.history.undo().catch(() => 0)
     setUndo(null)
-    toast(restored > 0 ? plural(restored, 'entrée rétablie', 'entrées rétablies') : 'Rien à rétablir.')
+    toast(
+      restored > 0 ? plural(restored, 'entrée rétablie', 'entrées rétablies') : 'Rien à rétablir.'
+    )
   }
 
   const purgeThumbsNow = async (): Promise<void> => {
-    const removed = await window.vela.thumbs.purge()
+    // Un refus de l'IPC laissait le compteur figé et une rejection non gérée
+    // dans la console : le nettoyage reste un geste muet.
+    const removed = await window.vela.thumbs.purge().catch(() => 0)
     setThumbs(0)
-    toast(removed > 0 ? plural(removed, 'vignette retirée', 'vignettes retirées') : 'Aucune vignette à retirer.')
+    toast(
+      removed > 0
+        ? plural(removed, 'vignette retirée', 'vignettes retirées')
+        : 'Aucune vignette à retirer.'
+    )
   }
 
   return (
@@ -276,12 +313,33 @@ export default function PrivacyPage({
       </div>
 
       {tab === 'protection' && (
-        <div role="tabpanel" id="privacy-panel-protection" aria-labelledby="privacy-tab-protection" className="privacy-panel">
+        <div
+          role="tabpanel"
+          id="privacy-panel-protection"
+          aria-labelledby="privacy-tab-protection"
+          className="privacy-panel"
+        >
           <div className="privacy-levels" role="radiogroup" aria-label="Niveau de blocage">
             {[
-              { id: 'off' as const, label: 'Aucun', detail: 'Rien n’est filtré.', risk: 'Publicités, traqueurs et contenus tiers passent.' },
-              { id: 'trackers' as const, label: 'Traqueurs', detail: 'Publicités et mesure d’audience.', risk: 'Page cassée : rare.', recommended: true },
-              { id: 'strict' as const, label: 'Renforcé', detail: 'En plus : scripts et cadres d’un autre site.', risk: 'Page cassée : possible sur les lecteurs intégrés.' }
+              {
+                id: 'off' as const,
+                label: 'Aucun',
+                detail: 'Rien n’est filtré.',
+                risk: 'Publicités, traqueurs et contenus tiers passent.'
+              },
+              {
+                id: 'trackers' as const,
+                label: 'Traqueurs',
+                detail: 'Publicités et mesure d’audience.',
+                risk: 'Page cassée : rare.',
+                recommended: true
+              },
+              {
+                id: 'strict' as const,
+                label: 'Renforcé',
+                detail: 'En plus : scripts et cadres d’un autre site.',
+                risk: 'Page cassée : possible sur les lecteurs intégrés.'
+              }
             ].map((entry) => (
               <button
                 key={entry.id}
@@ -312,9 +370,21 @@ export default function PrivacyPage({
 
           <div className="privacy-stats" role="group" aria-label="Compteurs de la session">
             {[
-              { value: view.blockedTotal, label: 'Requêtes bloquées', hint: 'Requêtes arrêtées depuis le lancement.' },
-              { value: domains, label: 'Sites concernés', hint: 'Domaines distincts qui ont tenté une requête bloquée.' },
-              { value: protectedTabs, label: 'Onglets protégés', hint: 'Onglets ouverts dont la session applique le filtre.' }
+              {
+                value: view.blockedTotal,
+                label: 'Requêtes bloquées',
+                hint: 'Requêtes arrêtées depuis le lancement.'
+              },
+              {
+                value: domains,
+                label: 'Sites concernés',
+                hint: 'Domaines distincts qui ont tenté une requête bloquée.'
+              },
+              {
+                value: protectedTabs,
+                label: 'Onglets protégés',
+                hint: 'Onglets ouverts dont la session applique le filtre.'
+              }
             ].map((stat) => (
               <div key={stat.label} title={stat.hint}>
                 <span className="privacy-stat-value">{stat.value}</span>
@@ -328,7 +398,8 @@ export default function PrivacyPage({
             <div>
               <label>Liste de blocage</label>
               <p className="setting-hint">
-                Embarquée dans l’application et mise à jour avec chaque version : aucun abonnement distant.
+                Embarquée dans l’application et mise à jour avec chaque version : aucun abonnement
+                distant.
               </p>
             </div>
             <span className="tag">Locale</span>
@@ -342,9 +413,17 @@ export default function PrivacyPage({
             <div className="setting-row">
               <div>
                 <label>{pageHost}</label>
-                <p className="setting-hint">{exempt(pageHost) ? 'Blocage désactivé pour ce site.' : 'Blocage actif sur ce site.'}</p>
+                <p className="setting-hint">
+                  {exempt(pageHost)
+                    ? 'Blocage désactivé pour ce site.'
+                    : 'Blocage actif sur ce site.'}
+                </p>
               </div>
-              <button type="button" className="action" onClick={() => void toggleSiteProtection(pageHost)}>
+              <button
+                type="button"
+                className="action"
+                onClick={() => void toggleSiteProtection(pageHost)}
+              >
                 {exempt(pageHost) ? 'Réactiver le blocage' : 'Désactiver pour ce site'}
               </button>
             </div>
@@ -356,7 +435,12 @@ export default function PrivacyPage({
               {view.privacyExemptions.map((host) => (
                 <li key={host}>
                   <code>{host}</code>
-                  <button type="button" className="tab-action" onClick={() => void toggleSiteProtection(host)} title={`Retirer ${host}`}>
+                  <button
+                    type="button"
+                    className="tab-action"
+                    onClick={() => void toggleSiteProtection(host)}
+                    title={`Retirer ${host}`}
+                  >
                     <Icon name="trash" size={12} />
                   </button>
                 </li>
@@ -367,11 +451,19 @@ export default function PrivacyPage({
       )}
 
       {tab === 'local' && (
-        <div role="tabpanel" id="privacy-panel-local" aria-labelledby="privacy-tab-local" className="privacy-panel">
+        <div
+          role="tabpanel"
+          id="privacy-panel-local"
+          aria-labelledby="privacy-tab-local"
+          className="privacy-panel"
+        >
           <div className="setting-row">
             <div>
               <label htmlFor="thumbnails">Vignettes des pages récentes</label>
-              <p className="setting-hint" title="Capture réduite prise à la fermeture de l’onglet, gardée dans le dossier de données.">
+              <p
+                className="setting-hint"
+                title="Capture réduite prise à la fermeture de l’onglet, gardée dans le dossier de données."
+              >
                 Une capture par onglet fermé ; rien pour un espace privé.
                 {thumbs !== null ? ` ${plural(thumbs, 'vignette', 'vignettes')}.` : ''}
               </p>
@@ -387,7 +479,10 @@ export default function PrivacyPage({
                 aria-label="Vignettes des pages récentes"
                 onClick={() => {
                   void updateSettings({ thumbnails: !settings.thumbnails })
-                  void window.vela.thumbs.count().then(setThumbs)
+                  void window.vela.thumbs
+                    .count()
+                    .then(setThumbs)
+                    .catch(() => undefined)
                 }}
               >
                 <span />
@@ -404,7 +499,10 @@ export default function PrivacyPage({
           <div className="setting-row">
             <div>
               <label>Icônes de sites</label>
-              <p className="setting-hint" title="Une requête par domaine, gardée sept jours sur l’appareil.">
+              <p
+                className="setting-hint"
+                title="Une requête par domaine, gardée sept jours sur l’appareil."
+              >
                 Une requête par domaine, gardée sept jours.
               </p>
             </div>
@@ -412,8 +510,12 @@ export default function PrivacyPage({
               type="button"
               className="action"
               onClick={async () => {
-                const count = await window.vela.favicons.purge()
-                toast(count > 0 ? plural(count, 'icône retirée', 'icônes retirées') : 'Le cache est déjà vide.')
+                const count = await window.vela.favicons.purge().catch(() => 0)
+                toast(
+                  count > 0
+                    ? plural(count, 'icône retirée', 'icônes retirées')
+                    : 'Le cache est déjà vide.'
+                )
               }}
             >
               <Icon name="trash" size={13} /> Vider le cache
@@ -423,7 +525,9 @@ export default function PrivacyPage({
           <div className="setting-row">
             <div>
               <label>Historique</label>
-              <p className="setting-hint">Durée, consultation et effacement se règlent dans Navigation.</p>
+              <p className="setting-hint">
+                Durée, consultation et effacement se règlent dans Navigation.
+              </p>
             </div>
             <button type="button" className="action" onClick={onOpenNavigation}>
               <Icon name="history" size={13} /> Ouvrir Navigation
@@ -434,7 +538,8 @@ export default function PrivacyPage({
             <div>
               <label>Cookies et stockage des sites</label>
               <p className="setting-hint">
-                Isolés par espace : {plural(view.spaces.length, 'partition', 'partitions')} distinctes. Rien n’est partagé entre elles.
+                Isolés par espace : {plural(view.spaces.length, 'partition', 'partitions')}{' '}
+                distinctes. Rien n’est partagé entre elles.
               </p>
             </div>
             <span className="tag">{plural(view.spaces.length, 'espace', 'espaces')}</span>
@@ -442,7 +547,9 @@ export default function PrivacyPage({
 
           <div className="privacy-subhead">
             <h3>Effacer des données</h3>
-            <p>L’historique part tout de suite ; vignettes et icônes suivent après huit secondes.</p>
+            <p>
+              L’historique part tout de suite ; vignettes et icônes suivent après huit secondes.
+            </p>
           </div>
           {!confirming ? (
             <button type="button" className="action danger" onClick={() => setConfirming(true)}>
@@ -452,7 +559,10 @@ export default function PrivacyPage({
             <div className="privacy-confirm" role="group" aria-label="Confirmer l’effacement">
               <label>
                 <span>Période</span>
-                <select value={range} onChange={(event) => setRange(event.target.value as HistoryRange)}>
+                <select
+                  value={range}
+                  onChange={(event) => setRange(event.target.value as HistoryRange)}
+                >
                   {HISTORY_RANGES.map((entry) => (
                     <option key={entry.id} value={entry.id}>
                       {entry.label}
@@ -470,7 +580,10 @@ export default function PrivacyPage({
           )}
           {undo && (
             <div className="privacy-undo" role="status" aria-live="polite">
-              <span>{plural(undo.count, 'entrée effacée', 'entrées effacées')}. Vignettes et icônes partiront à la fin du délai.</span>
+              <span>
+                {plural(undo.count, 'entrée effacée', 'entrées effacées')}. Vignettes et icônes
+                partiront à la fin du délai.
+              </span>
               <button type="button" className="link-btn" onClick={() => void undoClear()}>
                 Rétablir
               </button>
@@ -488,15 +601,27 @@ export default function PrivacyPage({
       )}
 
       {tab === 'permissions' && (
-        <div role="tabpanel" id="privacy-panel-permissions" aria-labelledby="privacy-tab-permissions" className="privacy-panel">
+        <div
+          role="tabpanel"
+          id="privacy-panel-permissions"
+          aria-labelledby="privacy-tab-permissions"
+          className="privacy-panel"
+        >
           <p className="setting-hint">
-            Aucune page n’obtient caméra, micro, position ni notifications : Vela refuse par défaut, sans demande.
+            Aucune page n’obtient caméra, micro, position ni notifications : Vela refuse par défaut,
+            sans demande.
           </p>
           {[
             { label: 'Caméra', detail: 'Refusée à chaque demande de page.' },
             { label: 'Micro', detail: 'Refusé, y compris pour les pages de réunion.' },
-            { label: 'Position', detail: 'Refusée ; l’accueil utilise la ville que vous saisissez.' },
-            { label: 'Notifications', detail: 'Refusées ; aucune notification de site ne s’affiche.' }
+            {
+              label: 'Position',
+              detail: 'Refusée ; l’accueil utilise la ville que vous saisissez.'
+            },
+            {
+              label: 'Notifications',
+              detail: 'Refusées ; aucune notification de site ne s’affiche.'
+            }
           ].map((permission) => (
             <div key={permission.label} className="setting-row">
               <div>
@@ -513,7 +638,12 @@ export default function PrivacyPage({
       )}
 
       {tab === 'flows' && (
-        <div role="tabpanel" id="privacy-panel-flows" aria-labelledby="privacy-tab-flows" className="privacy-panel">
+        <div
+          role="tabpanel"
+          id="privacy-panel-flows"
+          aria-labelledby="privacy-tab-flows"
+          className="privacy-panel"
+        >
           <div className="privacy-flow-tools">
             <div className="privacy-filters" role="group" aria-label="Filtrer les flux">
               {[
@@ -542,7 +672,11 @@ export default function PrivacyPage({
               aria-label="Chercher un flux"
               spellCheck={false}
             />
-            <button type="button" className="action" onClick={() => void copy(flowText(), 'Liste des flux copiée.')}>
+            <button
+              type="button"
+              className="action"
+              onClick={() => void copy(flowText(), 'Liste des flux copiée.')}
+            >
               Copier la liste
             </button>
             <button type="button" className="action" onClick={() => void exportMarkdown()}>
@@ -551,11 +685,14 @@ export default function PrivacyPage({
           </div>
 
           <p className="setting-hint" role="status">
-            {visible.length} flux affichés sur {rows.length}. Même source que l’audit : rien n’est masqué.
+            {visible.length} flux affichés sur {rows.length}. Même source que l’audit : rien n’est
+            masqué.
           </p>
 
           {FLOW_GROUPS.map((group) => {
-            const items = visible.filter((row) => group.flows.some((flow) => flow.id === row.flow.id))
+            const items = visible.filter((row) =>
+              group.flows.some((flow) => flow.id === row.flow.id)
+            )
             if (items.length === 0) return null
             return (
               <section key={group.id} className="privacy-group">
@@ -570,7 +707,9 @@ export default function PrivacyPage({
                           className="privacy-flow-head"
                           aria-expanded={expanded}
                           aria-controls={`flow-${flow.id}`}
-                          onClick={() => setOpen((current) => ({ ...current, [flow.id]: !expanded }))}
+                          onClick={() =>
+                            setOpen((current) => ({ ...current, [flow.id]: !expanded }))
+                          }
                         >
                           <span className="privacy-flow-name">{flow.label}</span>
                           <span className="privacy-flow-state" data-tone={tone}>
@@ -588,7 +727,8 @@ export default function PrivacyPage({
                               <strong>Ce qui est envoyé.</strong> {flow.data}
                             </p>
                             <p>
-                              <strong>Pour l’éviter.</strong> {flow.off ?? 'Aucun réglage ne coupe ce flux pour l’instant.'}
+                              <strong>Pour l’éviter.</strong>{' '}
+                              {flow.off ?? 'Aucun réglage ne coupe ce flux pour l’instant.'}
                             </p>
                             {flow.hosts.length > 0 && (
                               <div className="privacy-flow-address">
@@ -596,7 +736,9 @@ export default function PrivacyPage({
                                 <button
                                   type="button"
                                   className="action ghost"
-                                  onClick={() => void copy(flow.hosts.join(', '), 'Adresse copiée.')}
+                                  onClick={() =>
+                                    void copy(flow.hosts.join(', '), 'Adresse copiée.')
+                                  }
                                 >
                                   Copier
                                 </button>

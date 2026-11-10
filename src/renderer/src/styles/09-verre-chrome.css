@@ -92,8 +92,16 @@ body {
      sur le verre nu. */
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
-    radial-gradient(95% 44% at 100% 2%, color-mix(in srgb, var(--amb-mix) 10%, transparent), transparent 72%),
-    radial-gradient(120% 52% at 50% 104%, color-mix(in srgb, var(--accent-b) 15%, transparent), transparent 74%),
+    radial-gradient(
+      95% 44% at 100% 2%,
+      color-mix(in srgb, var(--amb-mix) 10%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      120% 52% at 50% 104%,
+      color-mix(in srgb, var(--accent-b) 15%, transparent),
+      transparent 74%
+    ),
     var(--glass);
   /* Le flou suit le réglage « Intensité du verre » : à 34 px fixes, le thème
      et l'ambiance se noyaient dans une plaque uniforme. */
@@ -2899,23 +2907,6 @@ kbd {
 }
 .status-item strong {
   font-weight: 600;
-}
-/* Pourcentage de zoom : chiffres alignés, il change de largeur sans danser. */
-.status-zoom strong {
-  font-variant-numeric: tabular-nums;
-}
-.status-zoom {
-  animation: zoomNoticeIn 0.16s ease both;
-}
-@keyframes zoomNoticeIn {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 .command-filters {
   flex: 0 0 auto;

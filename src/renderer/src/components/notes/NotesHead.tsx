@@ -57,23 +57,23 @@ export default function NotesHead({
           </span>
           <div>
             <h2>Notes</h2>
-            <p>
-              {plural(noteCount, 'note')} · Markdown local
-            </p>
+            <p>{plural(noteCount, 'note')} · Markdown local</p>
           </div>
         </div>
         <div className="notes-head-actions">
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={onToggleWide}
-            aria-pressed={wide}
-            data-active={wide}
-            title={wide ? 'Vue simple' : 'Vue large : liste et éditeur'}
-            aria-label={wide ? 'Revenir à la vue simple' : 'Afficher la liste et l’éditeur côte à côte'}
-          >
-            <Icon name="split" size={15} />
-          </button>
+          {noteCount > 1 && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={onToggleWide}
+              aria-pressed={wide}
+              data-active={wide}
+              title={wide ? 'Masquer la liste' : 'Afficher la liste'}
+              aria-label={wide ? 'Masquer la liste des notes' : 'Afficher la liste des notes'}
+            >
+              <Icon name="panel" size={15} />
+            </button>
+          )}
           <button
             type="button"
             className="icon-btn"

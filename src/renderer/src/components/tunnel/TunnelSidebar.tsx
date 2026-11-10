@@ -128,7 +128,9 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
                   : `Supprimer la carte « ${map.title} »`
               }
               title={confirmId === map.id ? 'Confirmer la suppression' : 'Supprimer cette carte'}
-              onClick={() => (confirmId === map.id ? void remove(map.id, index) : setConfirmId(map.id))}
+              onClick={() =>
+                confirmId === map.id ? void remove(map.id, index) : setConfirmId(map.id)
+              }
               onKeyDown={(event) => {
                 if (event.key === 'Escape') setConfirmId(null)
               }}
@@ -138,7 +140,9 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
             </button>
           </div>
         ))}
-        {visible.length === 0 && !live && <p className="tabs-empty">Aucune carte pour l’instant.</p>}
+        {visible.length === 0 && !live && (
+          <p className="tabs-empty">Aucune carte pour l’instant.</p>
+        )}
       </div>
 
       <p className="work-hint">

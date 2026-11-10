@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { buildChatRequest, endpointHost, isLoopbackEndpoint, providerById } from '@shared/providers'
+import { isPublicHost } from '@shared/url'
 import type { ProviderId, Settings } from '@shared/types'
 import type { ComicRunResult } from '@shared/api'
 import type { TabManager } from './tabs'
@@ -66,7 +67,10 @@ export class ComicBridge {
   ) {}
 
   registerIpc(): void {
-    const handle = (channel: string, run: (event: IpcMainInvokeEvent, payload: unknown) => unknown): void => {
+    const handle = (
+      channel: string,
+      run: (event: IpcMainInvokeEvent, payload: unknown) => unknown
+    ): void => {
       ipcMain.handle(channel, (event, payload) => {
         if (!this.allow(event, channel)) throw new Error(`Canal IPC refusé : ${channel}`)
         return run(event, payload)
@@ -76,9 +80,13 @@ export class ComicBridge {
     handle('comic:run', (_event, payload) =>
       this.run(String((payload as { tabId?: unknown })?.tabId ?? ''))
     )
-    handle('comic:clear', (_event, payload) => this.clear(String((payload as { tabId?: unknown })?.tabId ?? '')))
+    handle('comic:clear', (_event, payload) =>
+      this.clear(String((payload as { tabId?: unknown })?.tabId ?? ''))
+    )
     handle('comic:image', (event, payload) =>
-      this.withGrant(event, payload, (grant) => this.image(grant, String((payload as ComicRequest).url ?? '')))
+      this.withGrant(event, payload, (grant) =>
+        this.image(grant, String((payload as ComicRequest).url ?? ''))
+      )
     )
     handle('comic:translate', (event, payload) =>
       this.withGrant(event, payload, () =>
@@ -86,7 +94,9 @@ export class ComicBridge {
       )
     )
     handle('comic:vision', (event, payload) =>
-      this.withGrant(event, payload, () => this.vision(String((payload as ComicRequest).dataUrl ?? '')))
+      this.withGrant(event, payload, () =>
+        this.vision(String((payload as ComicRequest).dataUrl ?? ''))
+      )
     )
     handle('comic:edits', (event, payload) =>
       this.withGrant(event, payload, async () =>
@@ -94,7 +104,9 @@ export class ComicBridge {
       )
     )
     handle('comic:load-edits', (event, payload) =>
-      this.withGrant(event, payload, async () => this.loadEdits(String((payload as ComicRequest).key ?? '')))
+      this.withGrant(event, payload, async () =>
+        this.loadEdits(String((payload as ComicRequest).key ?? ''))
+      )
     )
   }
 
@@ -112,14 +124,27 @@ export class ComicBridge {
     return run(grant)
   }
 
+  /**
+   * Retire les sessions de traduction périmées. Sans passage, la table
+   * grossissait à chaque traduction et les jetons restaient valables.
+   */
+  private purgeGrants(): void {
+    const now = Date.now()
+    for (const [token, grant] of this.grants) {
+      if (grant.expiresAt < now) this.grants.delete(token)
+    }
+  }
+
   private script(): string {
     return readFileSync(join(app.getAppPath(), SCRIPT_FILE), 'utf8')
   }
 
   async run(tabId: string): Promise<ComicRunResult> {
     const view = this.tabs.ensure(tabId, false)
-    if (!view || view.webContents.isDestroyed()) return { ok: false, reason: 'ouvrez une page de lecture' }
+    if (!view || view.webContents.isDestroyed())
+      return { ok: false, reason: 'ouvrez une page de lecture' }
 
+    this.purgeGrants()
     const contents = view.webContents
     const token = randomBytes(24).toString('hex')
     this.grants.set(token, {
@@ -131,7 +156,10 @@ export class ComicBridge {
 
     try {
       const script = this.script()
-      const result = (await contents.executeJavaScript(this.wrap(script, token))) as { ok?: boolean; reason?: string }
+      const result = (await contents.executeJavaScript(this.wrap(script, token))) as {
+        ok?: boolean
+        reason?: string
+      }
       if (!result?.ok) {
         this.grants.delete(token)
         return { ok: false, reason: result?.reason ?? 'script refusé par la page' }
@@ -247,14 +275,27 @@ export class ComicBridge {
     process.stdout.write(`[BD][main] ${line}\n`)
   }
 
-  private async image(grant: Grant, url: string): Promise<{ ok: boolean; base64?: string; type?: string; error?: string }> {
+  private async image(
+    grant: Grant,
+    url: string
+  ): Promise<{ ok: boolean; base64?: string; type?: string; error?: string }> {
     if (/^data:/i.test(url)) {
       const match = /^data:([^;,]+)?(?:;base64)?,(.*)$/i.exec(url)
       if (!match) return { ok: false, error: 'image illisible' }
       this.diag(`url=data: type=${match[1] || 'image/png'} octets=${match[2].length}`)
       return { ok: true, base64: match[2], type: match[1] || 'image/png' }
     }
-    if (!/^https?:\/\//i.test(url)) return { ok: false, error: 'source refusée — URL ni http ni data' }
+    if (!/^https?:\/\//i.test(url))
+      return { ok: false, error: 'source refusée — URL ni http ni data' }
+    // La planche vient d'un CDN, pas du site de la page : on vérifie donc le
+    // réseau plutôt que l'hôte, pour ne pas casser la traduction. En
+    // revanche, la box ou le service de métadonnées ne sont jamais contactés.
+    try {
+      if (!isPublicHost(new URL(url).hostname))
+        return { ok: false, error: 'source refusée — adresse réseau privée' }
+    } catch {
+      return { ok: false, error: 'source refusée — adresse illisible' }
+    }
 
     // Essais de Referer, dans l'ordre : sans Referer, puis avec le « Referer
     // racine » du site de la page. Mesuré sur Electron : dès que le Referer
@@ -279,7 +320,9 @@ export class ComicBridge {
         })
         const type = response.headers.get('content-type') ?? ''
         const length = response.headers.get('content-length') ?? ''
-        this.diag(`url=${url} referer=${essai.label} statut=${response.status} content-type=${type || '(vide)'} content-length=${length || '?'}`)
+        this.diag(
+          `url=${url} referer=${essai.label} statut=${response.status} content-type=${type || '(vide)'} content-length=${length || '?'}`
+        )
         if (!response.ok) {
           tentatives.push(`${essai.label} → HTTP ${response.status}`)
           continue
@@ -311,7 +354,9 @@ export class ComicBridge {
           buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))
         }
         if (buffer.byteLength > MAX_IMAGE_BYTES) return { ok: false, error: 'image trop lourde' }
-        this.diag(`ok ${buffer.byteLength} octets base64=${Math.round((buffer.byteLength * 4) / 3)} pour ${url}`)
+        this.diag(
+          `ok ${buffer.byteLength} octets base64=${Math.round((buffer.byteLength * 4) / 3)} pour ${url}`
+        )
         return {
           ok: true,
           base64: buffer.toString('base64'),
@@ -326,10 +371,9 @@ export class ComicBridge {
     }
     return {
       ok: false,
-      error:
-        tentatives.some((line) => /HTTP \d+/.test(line))
-          ? `image HTTP ${tentatives.join(' · ')}`
-          : `image inaccessible — ${tentatives.join(' · ')}`
+      error: tentatives.some((line) => /HTTP \d+/.test(line))
+        ? `image HTTP ${tentatives.join(' · ')}`
+        : `image inaccessible — ${tentatives.join(' · ')}`
     }
   }
 
@@ -355,7 +399,8 @@ export class ComicBridge {
    * sans changer de forme de requête.
    */
   private async vision(dataUrl: string): Promise<{ ok: boolean; texte?: string; error?: string }> {
-    if (!/^data:image\/(png|jpeg|webp);base64,/.test(dataUrl)) return { ok: false, error: 'image illisible' }
+    if (!/^data:image\/(png|jpeg|webp);base64,/.test(dataUrl))
+      return { ok: false, error: 'image illisible' }
     const settings = this.getSettings()
     const definition = providerById(settings.agent.provider)
     const key = definition.local ? null : this.getSecret(definition.id)
@@ -372,13 +417,21 @@ export class ComicBridge {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.' },
+          {
+            type: 'text',
+            text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.'
+          },
           { type: 'image_url', image_url: { url: dataUrl } }
         ]
       }
     ] as unknown as Parameters<typeof buildChatRequest>[3]
     try {
-      const request = buildChatRequest(definition, { baseUrl: provider.baseUrl, model: provider.model }, key, messages)
+      const request = buildChatRequest(
+        definition,
+        { baseUrl: provider.baseUrl, model: provider.model },
+        key,
+        messages
+      )
       const payload = JSON.parse(request.body) as Record<string, unknown>
       payload.stream = false
       const response = await net.fetch(request.url, {
@@ -431,7 +484,8 @@ export class ComicBridge {
     texts: unknown,
     contexte?: unknown
   ): Promise<{ ok: boolean; translations?: { id: number; texte: string }[]; error?: string }> {
-    if (!Array.isArray(texts) || !texts.length) return { ok: false, error: 'aucun texte à traduire' }
+    if (!Array.isArray(texts) || !texts.length)
+      return { ok: false, error: 'aucun texte à traduire' }
     const clean = texts
       .slice(0, MAX_TEXTS)
       .map((text) => String(text ?? '').slice(0, MAX_TEXT_LENGTH))
@@ -469,7 +523,12 @@ export class ComicBridge {
     ]
 
     try {
-      const request = buildChatRequest(definition, { baseUrl: provider.baseUrl, model: provider.model }, key, messages)
+      const request = buildChatRequest(
+        definition,
+        { baseUrl: provider.baseUrl, model: provider.model },
+        key,
+        messages
+      )
       const payload = JSON.parse(request.body) as Record<string, unknown>
       let url = request.url
       if (definition.protocol === 'google') {
@@ -492,7 +551,10 @@ export class ComicBridge {
       const list = Array.isArray(parsed.traductions) ? parsed.traductions : []
       const translations = clean.map((text, index) => {
         const found = list.find((item) => Number(item.id) === index)
-        return { id: index, texte: typeof found?.texte === 'string' && found.texte ? found.texte : text }
+        return {
+          id: index,
+          texte: typeof found?.texte === 'string' && found.texte ? found.texte : text
+        }
       })
       return { ok: true, translations }
     } catch (error) {
@@ -500,13 +562,17 @@ export class ComicBridge {
     }
   }
 
-  private contentOf(protocol: 'openai' | 'anthropic' | 'google', body: Record<string, unknown>): string {
+  private contentOf(
+    protocol: 'openai' | 'anthropic' | 'google',
+    body: Record<string, unknown>
+  ): string {
     if (protocol === 'anthropic') {
       const parts = Array.isArray(body.content) ? (body.content as { text?: string }[]) : []
       return parts.map((part) => part.text ?? '').join('')
     }
     if (protocol === 'google') {
-      const candidates = body.candidates as { content?: { parts?: { text?: string }[] } }[] | undefined
+      const candidates = body.candidates as
+        { content?: { parts?: { text?: string }[] } }[] | undefined
       const parts = candidates?.[0]?.content?.parts
       return Array.isArray(parts) ? parts.map((part) => part.text ?? '').join('') : ''
     }

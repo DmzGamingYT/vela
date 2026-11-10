@@ -137,6 +137,7 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
     items: [
       ['Notes', shortcut(APP_SHORTCUTS.notes.key)],
       ['Agent', shortcut(APP_SHORTCUTS.agent.key)],
+      ['Protection de la page', shortcut(APP_SHORTCUTS.shield.key)],
       ['Atelier', shortcut('⇧A')],
       ['Sessions', shortcut('⇧B')],
       ['Replier la barre latérale', shortcut('S')],
@@ -321,7 +322,9 @@ export default function SettingsPanel() {
               <div className="setting-row">
                 <div>
                   <label>Dossier des notes</label>
-                  <p className="setting-hint">Du Markdown lisible par n’importe quelle autre app.</p>
+                  <p className="setting-hint">
+                    Du Markdown lisible par n’importe quelle autre app.
+                  </p>
                 </div>
                 <button
                   type="button"

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { TabView } from '@shared/types'
-import { pinnedNeighbour, pinnedTitle, canSleep, canToggleSound } from '@shared/pinnedTabMenu'
+import { pinnedNeighbour, pinnedTitle, canSleep } from '@shared/pinnedTabMenu'
 import { displayTitle, hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
@@ -18,10 +18,12 @@ function altArrow(arrow: string): string {
 /**
  * Menu d'un onglet, partagé par la ligne de la liste et la case épinglée.
  *
- * Rien n'est proposé au clic droit qui ne soit réellement câblé : une action
- * sans objet dans l'état courant est absente du menu, jamais grisée pour rien.
- * Un onglet épinglé a son propre ordre : en-tête, page, son, Vela, rangement,
- * fermeture — et sa fermeture s'annule pendant huit secondes.
+ * Ordre par fréquence : recharger, copier, vue scindée, dupliquer, agent, puis
+ * l'organisation, et la fermeture en dernier. Les actions longues (copie,
+ * fermeture) tiennent dans un sous-menu pour que la liste reste courte.
+ *
+ * Rien n'est proposé qui ne soit réellement câblé : une action sans objet dans
+ * l'état courant est absente, jamais grisée pour rien.
  */
 export default function TabContextMenu({
   tab,
@@ -29,7 +31,6 @@ export default function TabContextMenu({
   y,
   anchor,
   onMove,
-  keyboard,
   onClose
 }: {
   tab: TabView
@@ -39,7 +40,7 @@ export default function TabContextMenu({
   anchor?: { left: number; top: number; right: number; bottom: number }
   /** Déplacement dans la rangée des épinglés, annoncé par la barre latérale. */
   onMove?: (step: -1 | 1) => void
-  /** Ouverture au clavier : la première action est focalisée. */
+  /** Conservé pour les appelants : la première entrée est toujours focalisée. */
   keyboard?: boolean
   onClose: () => void
 }) {
@@ -51,6 +52,7 @@ export default function TabContextMenu({
   const reload = useBrowser((state) => state.reload)
   const newTab = useBrowser((state) => state.newTab)
   const splitWith = useBrowser((state) => state.splitWith)
+  const selectTab = useBrowser((state) => state.selectTab)
   const toggleMute = useBrowser((state) => state.toggleMute)
   const toggleBookmark = useBrowser((state) => state.toggleBookmark)
   const captureSelection = useBrowser((state) => state.captureSelection)
@@ -65,6 +67,7 @@ export default function TabContextMenu({
 
   const home = isHomeUrl(tab.url)
   const host = hostOf(tab.url)
+  const title = displayTitle(tab.title) || prettyUrl(tab.url)
   const bookmarked = Boolean(view?.bookmarks.some((bookmark) => bookmark.url === tab.url))
   const groups = (view?.groups ?? [])
     .filter((group) => group.spaceId === tab.spaceId)
@@ -74,6 +77,22 @@ export default function TabContextMenu({
     .filter((item) => item.spaceId === tab.spaceId && item.pinned)
     .map((item) => item.id)
 
+  // Les autres onglets du même domaine : « couper le son du site » agit sur
+  // tous, pas seulement sur celui qui joue.
+  const sameSite = (view?.tabs ?? []).filter(
+    (item) => item.spaceId === tab.spaceId && !isHomeUrl(item.url) && hostOf(item.url) === host
+  )
+  const siteMuted = sameSite.length > 0 && sameSite.every((item) => item.muted)
+  const siteAudible = tab.audible || tab.muted || sameSite.some((item) => item.audible)
+
+  // Onglets ouverts après celui-ci dans la liste, hors épinglés.
+  const ordered = (view?.tabs ?? [])
+    .filter((item) => item.spaceId === tab.spaceId && !item.pinned && !isHomeUrl(item.url))
+    .slice()
+    .sort((a, b) => a.createdAt - b.createdAt)
+  const position = ordered.findIndex((item) => item.id === tab.id)
+  const belowIds = position >= 0 ? ordered.slice(position + 1).map((item) => item.id) : []
+
   const copy = (text: string, message: string): void => {
     void navigator.clipboard
       .writeText(text)
@@ -82,7 +101,7 @@ export default function TabContextMenu({
   }
 
   /** Lien Markdown : l'adresse seule, avec le titre de la page pour l'étiquette. */
-  const markdownLink = `[${(displayTitle(tab.title) || prettyUrl(tab.url)).replace(/([[\]])/g, '\\$1')}](${tab.url})`
+  const markdownLink = `[${(displayTitle(tab.title) || prettyUrl(tab.url)).replace(/([[\\]])/g, '\\\\$1')}](${tab.url})`
 
   const joinAgent = (): void => {
     // Même chemin que « Joindre l'actuel » dans le panneau : l'onglet est
@@ -97,9 +116,6 @@ export default function TabContextMenu({
     void startAgent(prompt, [tab.id], 'answer')
   }
 
-  /** Les actions de l'agent tiennent dans un sous-menu : le menu de l'onglet
-   *  reste assez court pour ne pas couvrir la page ni frôler le bas de la
-   *  fenêtre. Chaque entrée garde son icône et son explication. */
   const agentItems: TileMenuItem[] = [
     {
       id: 'agent',
@@ -135,7 +151,14 @@ export default function TabContextMenu({
 
   const movingToFolder: TileMenuItem[] = [
     ...(tab.groupId
-      ? [{ id: 'ungroup', label: 'Sortir du dossier', icon: 'folder' as const, onSelect: () => moveTabToGroup(tab.id, null) }]
+      ? [
+          {
+            id: 'ungroup',
+            label: 'Sortir du dossier',
+            icon: 'folder' as const,
+            onSelect: () => moveTabToGroup(tab.id, null)
+          }
+        ]
       : []),
     ...groups
       .filter((group) => group.id !== tab.groupId)
@@ -153,22 +176,139 @@ export default function TabContextMenu({
     }
   ]
 
+  /** Trois formats sous un seul libellé : le menu garde sa longueur. */
+  const copyItem: TileMenuItem = {
+    id: 'copy-link',
+    label: 'Copier le lien',
+    icon: 'copy',
+    submenu: [
+      {
+        id: 'copy-url',
+        label: 'Adresse',
+        icon: 'copy',
+        keys: shortcut('⇧C'),
+        onSelect: () => copy(tab.url, 'Adresse copiée.')
+      },
+      {
+        id: 'copy-markdown',
+        label: 'Lien Markdown',
+        icon: 'link',
+        onSelect: () => copy(markdownLink, 'Lien Markdown copié.')
+      },
+      {
+        id: 'copy-title-url',
+        label: 'Titre et adresse',
+        icon: 'list',
+        onSelect: () => copy(`${title} — ${tab.url}`, 'Titre et adresse copiés.')
+      }
+    ]
+  }
+
+  const closeItems: TileMenuItem[] = [
+    {
+      id: 'close-others',
+      label: 'Fermer les autres onglets',
+      icon: 'trash',
+      onSelect: () => void closeOthers(tab.id)
+    },
+    ...(belowIds.length > 0
+      ? [
+          {
+            id: 'close-below',
+            label: `Fermer les ${belowIds.length} onglets en dessous`,
+            icon: 'arrow-down' as const,
+            onSelect: () => {
+              for (const id of belowIds) closeTab(id)
+            }
+          }
+        ]
+      : [])
+  ]
+
+  const soundItems: TileMenuItem[] = siteAudible
+    ? [
+        {
+          id: 'mute-site',
+          label: siteMuted ? 'Rétablir le son du site' : 'Couper le son du site',
+          icon: siteMuted ? ('volume-off' as const) : ('volume' as const),
+          hint: `Tous les onglets de ${host}.`,
+          onSelect: () => {
+            const next = !siteMuted
+            for (const item of sameSite) if (item.muted !== next) toggleMute(item.id, next)
+          }
+        }
+      ]
+    : []
+
+  /** Le haut du menu est le même partout : on agit d'abord sur la page. */
+  const leadItems: TileMenuItem[] = [
+    ...(tab.asleep
+      ? [
+          {
+            id: 'wake',
+            label: 'Réveiller',
+            icon: 'sun' as const,
+            hint: 'La page se recharge, son état est conservé.',
+            onSelect: () => selectTab(tab.id)
+          }
+        ]
+      : [
+          {
+            id: 'reload',
+            label: 'Recharger',
+            icon: 'reload' as const,
+            keys: shortcut('R'),
+            onSelect: () => reload(tab.id)
+          }
+        ]),
+    copyItem,
+    {
+      id: 'split',
+      label: 'Ouvrir en vue scindée',
+      icon: 'split',
+      keys: shortcut('⇧D'),
+      onSelect: () => splitWith(tab.id)
+    },
+    {
+      id: 'duplicate',
+      label: 'Dupliquer',
+      icon: 'external',
+      keys: shortcut('⇧K'),
+      hint: 'Ouvre la même adresse dans un onglet de cet espace, sans reprendre l’historique.',
+      onSelect: () => newTab(tab.url)
+    },
+    { id: 'agent-menu', label: 'Demander à l’Agent', icon: 'sparkles', submenu: agentItems },
+    ...soundItems
+  ]
+
   let items: TileMenuItem[]
   let header: ReactNode
 
   if (home) {
     // Un onglet d'accueil n'a ni adresse à copier ni place dans un dossier.
     items = [
-      { id: 'close', label: 'Fermer l’onglet', icon: 'close', keys: shortcut('W'), onSelect: () => closeTab(tab.id) },
       {
-        id: 'close-others',
-        label: 'Fermer les autres onglets',
-        icon: 'trash',
+        id: 'close',
+        label: 'Fermer l’onglet',
+        icon: 'close',
         danger: true,
-        onSelect: () => void closeOthers(tab.id)
+        keys: shortcut('W'),
+        onSelect: () => closeTab(tab.id)
+      },
+      {
+        id: 'close-menu',
+        label: 'Fermer…',
+        icon: 'trash',
+        submenu: closeItems
       },
       sep('sep-home'),
-      { id: 'new', label: 'Nouvel onglet', icon: 'plus', keys: shortcut('T'), onSelect: () => newTab() }
+      {
+        id: 'new',
+        label: 'Nouvel onglet',
+        icon: 'plus',
+        keys: shortcut('T'),
+        onSelect: () => newTab()
+      }
     ]
   } else if (tab.pinned) {
     const left = pinnedNeighbour(pinnedIds, tab.id, -1)
@@ -180,7 +320,13 @@ export default function TabContextMenu({
 
     header = (
       <>
-        <Favicon src={tab.favicon} url={tab.url} label={tab.title} size={16} spaceId={tab.spaceId} />
+        <Favicon
+          src={tab.favicon}
+          url={tab.url}
+          label={tab.title}
+          size={16}
+          spaceId={tab.spaceId}
+        />
         <span className="tile-menu-head-copy">
           <span className="tile-menu-head-title">{pinnedTitle(tab.title, host)}</span>
           <span className="tile-menu-head-host">{host}</span>
@@ -189,43 +335,27 @@ export default function TabContextMenu({
     )
 
     items = [
-      { id: 'reload', label: 'Recharger', icon: 'reload', keys: shortcut('R'), onSelect: () => reload(tab.id) },
-      { id: 'copy-url', label: 'Copier l’adresse', icon: 'link', onSelect: () => copy(tab.url, 'Adresse copiée.') },
+      ...leadItems,
+      sep('sep-organise'),
       {
-        id: 'copy-markdown',
-        label: 'Copier comme lien Markdown',
-        icon: 'code',
-        onSelect: () => copy(markdownLink, 'Lien Markdown copié.')
+        id: 'unpin',
+        label: 'Désépingler',
+        icon: 'pin',
+        keys: shortcut('⇧E'),
+        onSelect: () => pin(tab.id, false)
       },
-      ...(canToggleSound(tab)
+      ...(canSleep(tab)
         ? [
-            sep('sep-sound'),
             {
-              id: 'mute',
-              label: tab.muted ? 'Réactiver le son' : 'Couper le son',
-              icon: tab.muted ? ('volume-off' as const) : ('volume' as const),
-              onSelect: () => toggleMute(tab.id, !tab.muted)
+              id: 'sleep',
+              label: 'Mettre en veille',
+              icon: 'moon' as const,
+              keys: shortcut('⇧S'),
+              hint: 'Décharge la page sans retirer l’épingle ; elle se recharge au prochain clic.',
+              onSelect: () => sleep(tab.id)
             }
           ]
         : []),
-      sep('sep-vela'),
-      {
-        id: 'split',
-        label: 'Ouvrir en vue scindée',
-        icon: 'split',
-        keys: shortcut('⇧D'),
-        onSelect: () => splitWith(tab.id)
-      },
-      {
-        id: 'duplicate',
-        label: 'Dupliquer dans un nouvel onglet',
-        icon: 'copy',
-        hint: 'Ouvre la même adresse dans un onglet de cet espace, sans reprendre l’historique.',
-        onSelect: () => newTab(tab.url)
-      },
-      { id: 'agent-menu', label: 'Agent', icon: 'sparkles', submenu: agentItems },
-      sep('sep-organise'),
-      { id: 'unpin', label: 'Désépingler', icon: 'pin', onSelect: () => pin(tab.id, false) },
       ...(left
         ? [
             {
@@ -248,48 +378,44 @@ export default function TabContextMenu({
             }
           ]
         : []),
-      sep('sep-fermer'),
-      ...(canSleep(tab)
-        ? [
-            {
-              id: 'sleep',
-              label: 'Mettre en veille',
-              icon: 'moon' as const,
-              hint: 'Décharge la page sans retirer l’épingle ; elle se recharge au prochain clic.',
-              onSelect: () => sleep(tab.id)
-            }
-          ]
-        : []),
       sep('sep-danger'),
       {
         id: 'close',
-        label: 'Fermer',
+        label: 'Fermer l’onglet',
         icon: 'close',
         danger: true,
         keys: shortcut('W'),
         onSelect: () => closeWithUndo(tab.id)
-      }
+      },
+      { id: 'close-menu', label: 'Fermer…', icon: 'trash', submenu: closeItems }
     ]
   } else {
+    header = (
+      <>
+        <Favicon
+          src={tab.favicon}
+          url={tab.url}
+          label={tab.title}
+          size={16}
+          spaceId={tab.spaceId}
+        />
+        <span className="tile-menu-head-copy">
+          <span className="tile-menu-head-title">{title}</span>
+          <span className="tile-menu-head-host">{host}</span>
+        </span>
+      </>
+    )
+
     items = [
-      { id: 'reload', label: 'Recharger', icon: 'reload', keys: shortcut('R'), onSelect: () => reload(tab.id) },
-      {
-        id: 'duplicate',
-        label: 'Dupliquer l’onglet',
-        icon: 'copy',
-        hint: 'Ouvre la même adresse dans un nouvel onglet, sans reprendre l’historique.',
-        onSelect: () => newTab(tab.url)
-      },
-      { id: 'copy-url', label: 'Copier l’adresse', icon: 'link', onSelect: () => copy(tab.url, 'Adresse copiée.') },
-      {
-        id: 'copy-markdown',
-        label: 'Copier comme lien Markdown',
-        icon: 'code',
-        onSelect: () => copy(markdownLink, 'Lien Markdown copié.')
-      },
+      ...leadItems,
       sep('sep-page'),
       { id: 'pin', label: 'Épingler', icon: 'pin', onSelect: () => pin(tab.id, true) },
-      { id: 'group', label: 'Mettre dans un dossier', icon: 'folder', submenu: movingToFolder },
+      {
+        id: 'group',
+        label: 'Ajouter à un dossier',
+        icon: 'folder',
+        submenu: movingToFolder
+      },
       {
         id: 'bookmark',
         label: bookmarked ? 'Retirer des marque-pages' : 'Ajouter aux marque-pages',
@@ -298,33 +424,6 @@ export default function TabContextMenu({
         onSelect: () => void toggleBookmark(tab.id)
       },
       sep('sep-organise'),
-      {
-        id: 'split',
-        label: 'Ouvrir en vue scindée',
-        icon: 'split',
-        keys: shortcut('⇧D'),
-        onSelect: () => splitWith(tab.id)
-      },
-      { id: 'agent-menu', label: 'Agent', icon: 'sparkles', submenu: agentItems },
-      ...(tab.audible || tab.muted
-        ? [
-            {
-              id: 'mute',
-              label: tab.muted ? 'Réactiver le son' : 'Couper le son',
-              icon: tab.muted ? ('volume-off' as const) : ('volume' as const),
-              onSelect: () => toggleMute(tab.id, !tab.muted)
-            }
-          ]
-        : []),
-      sep('sep-vela'),
-      { id: 'close', label: 'Fermer l’onglet', icon: 'close', keys: shortcut('W'), onSelect: () => closeTab(tab.id) },
-      {
-        id: 'close-others',
-        label: 'Fermer les autres onglets',
-        icon: 'trash',
-        danger: true,
-        onSelect: () => void closeOthers(tab.id)
-      },
       ...(view?.canReopen
         ? [
             {
@@ -335,7 +434,16 @@ export default function TabContextMenu({
               onSelect: () => reopen()
             }
           ]
-        : [])
+        : []),
+      {
+        id: 'close',
+        label: 'Fermer l’onglet',
+        icon: 'close',
+        danger: true,
+        keys: shortcut('W'),
+        onSelect: () => closeTab(tab.id)
+      },
+      { id: 'close-menu', label: 'Fermer…', icon: 'trash', submenu: closeItems }
     ]
   }
 
@@ -354,10 +462,9 @@ export default function TabContextMenu({
     <TileMenu
       x={menuX}
       y={menuY}
-      label={home ? 'Onglet Accueil' : displayTitle(tab.title)}
+      label={home ? 'Onglet Accueil' : title}
       header={header}
       items={items}
-      keyboard={keyboard}
       onClose={onClose}
     />
   )

@@ -16,7 +16,14 @@ import {
   orderBookmarks,
   reorderBookmarks as reorderBookmarkList
 } from '@shared/bookmarkOrder'
-import { createDefaultState, createTab, defaultProviders, SPACE_COLORS } from '@shared/defaults'
+import {
+  createDefaultState,
+  createTab,
+  dayKey,
+  defaultProviders,
+  SPACE_COLORS,
+  weekKey
+} from '@shared/defaults'
 import { isProviderId, PROVIDERS, providerDefaults } from '@shared/providers'
 import {
   HOST_ZOOM_LIMIT,
@@ -36,6 +43,7 @@ import type {
   PersistedState,
   ProviderId,
   ProviderSettings,
+  PrivacyStats,
   ProviderStatus,
   SearchEngineId,
   Settings,
@@ -66,24 +74,48 @@ import { saveAvatarDataUrl } from './avatars'
 
 function isSpace(value: unknown): value is Space {
   const space = value as Space
-  return Boolean(space && typeof space.id === 'string' && typeof space.name === 'string' && typeof space.color === 'string')
+  return Boolean(
+    space &&
+    typeof space.id === 'string' &&
+    typeof space.name === 'string' &&
+    typeof space.color === 'string'
+  )
+}
+
+/** Compteurs du bouclier : remis à zéro si le jour ou la semaine a changé. */
+function sanitizePrivacyStats(raw: unknown): PrivacyStats {
+  const value = (raw ?? {}) as Partial<PrivacyStats>
+  const now = Date.now()
+  const day = dayKey(now)
+  const currentWeek = weekKey(now)
+  const count = (input: unknown): number =>
+    typeof input === 'number' && Number.isFinite(input) ? Math.max(0, Math.floor(input)) : 0
+  return {
+    day,
+    today: value.day === day ? count(value.today) : 0,
+    weekStart: currentWeek,
+    week: value.weekStart === currentWeek ? count(value.week) : 0
+  }
 }
 
 function isTab(value: unknown): value is TabState {
   const tab = value as TabState
   return Boolean(
     tab &&
-      typeof tab.id === 'string' &&
-      typeof tab.spaceId === 'string' &&
-      typeof tab.url === 'string' &&
-      typeof tab.title === 'string'
+    typeof tab.id === 'string' &&
+    typeof tab.spaceId === 'string' &&
+    typeof tab.url === 'string' &&
+    typeof tab.title === 'string'
   )
 }
 
 function isGroup(value: unknown): value is TabGroup {
   const group = value as TabGroup
   return Boolean(
-    group && typeof group.id === 'string' && typeof group.spaceId === 'string' && typeof group.name === 'string'
+    group &&
+    typeof group.id === 'string' &&
+    typeof group.spaceId === 'string' &&
+    typeof group.name === 'string'
   )
 }
 
@@ -112,10 +144,16 @@ function mergeProvider(raw: unknown, id: ProviderId): ProviderSettings {
   const defaults = providerDefaults(id)
   const input = (raw ?? {}) as Partial<ProviderSettings>
   const status: ProviderStatus =
-    input.status === 'ok' || input.status === 'error' || input.status === 'stored' ? input.status : 'none'
+    input.status === 'ok' || input.status === 'error' || input.status === 'stored'
+      ? input.status
+      : 'none'
   return {
-    model: typeof input.model === 'string' && input.model.trim() ? input.model.trim() : defaults.model,
-    baseUrl: typeof input.baseUrl === 'string' && input.baseUrl.trim() ? input.baseUrl.trim() : defaults.baseUrl,
+    model:
+      typeof input.model === 'string' && input.model.trim() ? input.model.trim() : defaults.model,
+    baseUrl:
+      typeof input.baseUrl === 'string' && input.baseUrl.trim()
+        ? input.baseUrl.trim()
+        : defaults.baseUrl,
     hasKey: Boolean(input.hasKey),
     status: input.hasKey ? status : 'none',
     detail: typeof input.detail === 'string' ? input.detail.slice(0, 160) : undefined
@@ -124,7 +162,11 @@ function mergeProvider(raw: unknown, id: ProviderId): ProviderSettings {
 
 function mergeSettings(raw: unknown): Settings {
   const input = (raw ?? {}) as Partial<Settings>
-  const agent = (input.agent ?? {}) as Partial<Settings['agent']> & { baseUrl?: string; model?: string; hasKey?: boolean }
+  const agent = (input.agent ?? {}) as Partial<Settings['agent']> & {
+    baseUrl?: string
+    model?: string
+    hasKey?: boolean
+  }
   const mode = agent.mode === 'api' ? 'api' : 'demo'
   const provider = isProviderId(agent.provider) ? agent.provider : 'openai'
   const rawProviders = (agent.providers ?? {}) as Partial<Record<ProviderId, unknown>>
@@ -158,11 +200,14 @@ function mergeSettings(raw: unknown): Settings {
     customEngineId,
     customEngines,
     searchKeywords: sanitizeKeywords(input.searchKeywords, customEngines),
-    searxInstance: typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
+    searxInstance:
+      typeof input.searxInstance === 'string' ? input.searxInstance.trim().slice(0, 200) : '',
     startupBehavior: isStartupBehavior(input.startupBehavior) ? input.startupBehavior : 'restore',
     startupUrl: sanitizeStartupUrl(input.startupUrl),
     newTabBlank: input.newTabBlank === true,
-    historyRetention: isHistoryRetention(input.historyRetention) ? input.historyRetention : 'forever',
+    historyRetention: isHistoryRetention(input.historyRetention)
+      ? input.historyRetention
+      : 'forever',
     downloadDir:
       typeof input.downloadDir === 'string' && input.downloadDir.trim()
         ? input.downloadDir.trim().slice(0, 1000)
@@ -178,9 +223,7 @@ function mergeSettings(raw: unknown): Settings {
     blockLevel: input.blockLevel === 'strict' ? 'strict' : 'trackers',
     thumbnails: input.thumbnails === true,
     updateChecks:
-      input.updateChecks === 'weekly' || input.updateChecks === 'off'
-        ? input.updateChecks
-        : 'auto',
+      input.updateChecks === 'weekly' || input.updateChecks === 'off' ? input.updateChecks : 'auto',
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
     agent: { mode, provider, providers }
@@ -241,7 +284,9 @@ export function normalizeState(raw: unknown): PersistedState {
   }
 
   const activeSpaceId =
-    typeof input.activeSpaceId === 'string' && spaceIds.has(input.activeSpaceId) ? input.activeSpaceId : spaces[0].id
+    typeof input.activeSpaceId === 'string' && spaceIds.has(input.activeSpaceId)
+      ? input.activeSpaceId
+      : spaces[0].id
 
   const activeTabBySpace: Record<string, string> = {}
   const secondTabBySpace: Record<string, string | null> = {}
@@ -251,7 +296,8 @@ export function normalizeState(raw: unknown): PersistedState {
     const active = own.find((tab) => tab.id === wanted) ?? own[0]
     activeTabBySpace[space.id] = active.id
     const second = input.secondTabBySpace?.[space.id]
-    secondTabBySpace[space.id] = second && own.some((tab) => tab.id === second) && second !== active.id ? second : null
+    secondTabBySpace[space.id] =
+      second && own.some((tab) => tab.id === second) && second !== active.id ? second : null
   }
 
   const history = (Array.isArray(input.history) ? input.history.filter(isHistory) : [])
@@ -259,9 +305,12 @@ export function normalizeState(raw: unknown): PersistedState {
     .slice(0, 2000)
 
   const bookmarks = (Array.isArray(input.bookmarks) ? input.bookmarks : [])
-    .filter(
-      (entry): entry is Bookmark =>
-        Boolean(entry && typeof (entry as Bookmark).id === 'string' && typeof (entry as Bookmark).url === 'string')
+    .filter((entry): entry is Bookmark =>
+      Boolean(
+        entry &&
+        typeof (entry as Bookmark).id === 'string' &&
+        typeof (entry as Bookmark).url === 'string'
+      )
     )
     .map((entry, index) => ({
       id: entry.id,
@@ -289,89 +338,117 @@ export function normalizeState(raw: unknown): PersistedState {
     })
     .slice(0, 25)
 
-    const tasks = (Array.isArray((input as { tasks?: unknown }).tasks) ? (input as { tasks: unknown[] }).tasks : [])
-      .filter(
-        (entry): entry is { id: string; title: string; done?: unknown; createdAt?: unknown; dueAt?: unknown } =>
-          Boolean(entry && typeof (entry as { id?: unknown }).id === 'string' && typeof (entry as { title?: unknown }).title === 'string')
-      )
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title.slice(0, 200),
-        done: Boolean(entry.done),
-        createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
-        dueAt: typeof entry.dueAt === 'number' ? entry.dueAt : null
-      }))
-      .slice(0, 200)
+  const tasks = (
+    Array.isArray((input as { tasks?: unknown }).tasks) ? (input as { tasks: unknown[] }).tasks : []
+  )
+    .filter(
+      (
+        entry
+      ): entry is {
+        id: string
+        title: string
+        done?: unknown
+        createdAt?: unknown
+        dueAt?: unknown
+      } =>
+        Boolean(
+          entry &&
+          typeof (entry as { id?: unknown }).id === 'string' &&
+          typeof (entry as { title?: unknown }).title === 'string'
+        )
+    )
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.title.slice(0, 200),
+      done: Boolean(entry.done),
+      createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
+      dueAt: typeof entry.dueAt === 'number' ? entry.dueAt : null
+    }))
+    .slice(0, 200)
 
-    const works = (Array.isArray((input as { works?: unknown }).works) ? (input as { works: unknown[] }).works : [])
-      .filter(
-        (entry): entry is {
-          id: string
-          title: string
-          prompt?: unknown
-          markdown?: unknown
-          preview?: unknown
-          mode?: unknown
-          sources?: unknown
-          spaceId?: unknown
-          createdAt?: unknown
-          updatedAt?: unknown
-          archived?: unknown
-        } => Boolean(entry && typeof (entry as { id?: unknown }).id === 'string' && typeof (entry as { title?: unknown }).title === 'string')
-      )
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title.slice(0, 160),
-        prompt: typeof entry.prompt === 'string' ? entry.prompt.slice(0, 2000) : '',
-        markdown: typeof entry.markdown === 'string' ? entry.markdown.slice(0, 200_000) : '',
-        preview: typeof entry.preview === 'string' ? entry.preview.slice(0, 180) : '',
-        mode: entry.mode === 'api' ? ('api' as const) : ('demo' as const),
-        sources: (Array.isArray(entry.sources) ? entry.sources : [])
-          .filter((source): source is { title?: unknown; url?: unknown } => Boolean(source && typeof (source as { url?: unknown }).url === 'string'))
-          .map((source) => ({
-            title: typeof source.title === 'string' ? source.title.slice(0, 200) : '',
-            url: String(source.url).slice(0, 2000)
-          }))
-          .slice(0, 12),
-        spaceId: typeof entry.spaceId === 'string' ? entry.spaceId : '',
-        createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
-        updatedAt: typeof entry.updatedAt === 'number' ? entry.updatedAt : now,
-        archived: Boolean(entry.archived)
-      }))
-      .slice(0, 120)
+  const works = (
+    Array.isArray((input as { works?: unknown }).works) ? (input as { works: unknown[] }).works : []
+  )
+    .filter(
+      (
+        entry
+      ): entry is {
+        id: string
+        title: string
+        prompt?: unknown
+        markdown?: unknown
+        preview?: unknown
+        mode?: unknown
+        sources?: unknown
+        spaceId?: unknown
+        createdAt?: unknown
+        updatedAt?: unknown
+        archived?: unknown
+      } =>
+        Boolean(
+          entry &&
+          typeof (entry as { id?: unknown }).id === 'string' &&
+          typeof (entry as { title?: unknown }).title === 'string'
+        )
+    )
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.title.slice(0, 160),
+      prompt: typeof entry.prompt === 'string' ? entry.prompt.slice(0, 2000) : '',
+      markdown: typeof entry.markdown === 'string' ? entry.markdown.slice(0, 200_000) : '',
+      preview: typeof entry.preview === 'string' ? entry.preview.slice(0, 180) : '',
+      mode: entry.mode === 'api' ? ('api' as const) : ('demo' as const),
+      sources: (Array.isArray(entry.sources) ? entry.sources : [])
+        .filter((source): source is { title?: unknown; url?: unknown } =>
+          Boolean(source && typeof (source as { url?: unknown }).url === 'string')
+        )
+        .map((source) => ({
+          title: typeof source.title === 'string' ? source.title.slice(0, 200) : '',
+          url: String(source.url).slice(0, 2000)
+        }))
+        .slice(0, 12),
+      spaceId: typeof entry.spaceId === 'string' ? entry.spaceId : '',
+      createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : now,
+      updatedAt: typeof entry.updatedAt === 'number' ? entry.updatedAt : now,
+      archived: Boolean(entry.archived)
+    }))
+    .slice(0, 120)
 
-    const tunnelMaps = (Array.isArray((input as { tunnelMaps?: unknown }).tunnelMaps)
-      ? ((input as { tunnelMaps: unknown[] }).tunnelMaps)
-      : [])
-      .map((entry) => sanitizeMap(entry))
-      .filter((entry): entry is TunnelMap => Boolean(entry))
-      .slice(0, TUNNEL_MAP_LIMIT)
+  const tunnelMaps = (
+    Array.isArray((input as { tunnelMaps?: unknown }).tunnelMaps)
+      ? (input as { tunnelMaps: unknown[] }).tunnelMaps
+      : []
+  )
+    .map((entry) => sanitizeMap(entry))
+    .filter((entry): entry is TunnelMap => Boolean(entry))
+    .slice(0, TUNNEL_MAP_LIMIT)
 
-    return {
-      version: 1,
-      spaces,
-      tabs,
-      groups,
-      activeSpaceId,
-      activeTabBySpace,
-      secondTabBySpace,
-      split: Boolean(input.split),
-      splitRatio:
-        typeof input.splitRatio === 'number' && input.splitRatio >= 0.25 && input.splitRatio <= 0.75
-          ? input.splitRatio
-          : 0.5,
-      settings: mergeSettings(input.settings),
-      history,
-      closed,
-      bookmarks,
-      privacyExemptions: (Array.isArray(input.privacyExemptions) ? input.privacyExemptions : [])
-        .filter((host): host is string => typeof host === 'string' && /^[a-z0-9.-]+$/i.test(host))
-        .map((host) => host.toLowerCase())
-        .slice(0, 200),
-      tasks,
-      works,
-      tunnelMaps
-    }
+  return {
+    version: 1,
+    spaces,
+    tabs,
+    groups,
+    activeSpaceId,
+    activeTabBySpace,
+    secondTabBySpace,
+    split: Boolean(input.split),
+    splitRatio:
+      typeof input.splitRatio === 'number' && input.splitRatio >= 0.25 && input.splitRatio <= 0.75
+        ? input.splitRatio
+        : 0.5,
+    settings: mergeSettings(input.settings),
+    privacyStats: sanitizePrivacyStats(input.privacyStats),
+    history,
+    closed,
+    bookmarks,
+    privacyExemptions: (Array.isArray(input.privacyExemptions) ? input.privacyExemptions : [])
+      .filter((host): host is string => typeof host === 'string' && /^[a-z0-9.-]+$/i.test(host))
+      .map((host) => host.toLowerCase())
+      .slice(0, 200),
+    tasks,
+    works,
+    tunnelMaps
+  }
 }
 
 export class Store {
@@ -399,9 +476,13 @@ export class Store {
     if (existsSync(this.file)) {
       try {
         raw = JSON.parse(readFileSync(this.file, 'utf8'))
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Format de données invalide')
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+          throw new Error('Format de données invalide')
       } catch (error) {
-        this.journal('Données illisibles : le fichier original est conservé et les écritures sont suspendues.', error)
+        this.journal(
+          'Données illisibles : le fichier original est conservé et les écritures sont suspendues.',
+          error
+        )
         throw new Error(
           'Les données de Vela sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.',
           { cause: error }
@@ -447,7 +528,10 @@ export class Store {
     try {
       result = migrateBookmarkOrder(raw)
     } catch (error) {
-      this.journal('Migration de l’ordre des favoris impossible : fichier conservé tel quel.', error)
+      this.journal(
+        'Migration de l’ordre des favoris impossible : fichier conservé tel quel.',
+        error
+      )
       return raw
     }
     if (!result.changed) return raw
@@ -496,7 +580,8 @@ export class Store {
     })
 
     if (!changed) {
-      if (kept > 0) this.journal(`${kept} photo(s) d’avatar non converties : format ou taille refusés.`)
+      if (kept > 0)
+        this.journal(`${kept} photo(s) d’avatar non converties : format ou taille refusés.`)
       return raw
     }
 
@@ -508,7 +593,10 @@ export class Store {
         copyFileSync(this.file, backup)
       }
     } catch (error) {
-      this.journal('Sauvegarde impossible avant conversion des avatars : conversion reportée.', error)
+      this.journal(
+        'Sauvegarde impossible avant conversion des avatars : conversion reportée.',
+        error
+      )
       return raw
     }
 
@@ -623,7 +711,10 @@ export class Store {
         previous.title = entry.title || previous.title
         return
       }
-      state.history = [entry, ...state.history.filter((item) => item.url !== entry.url)].slice(0, 2000)
+      state.history = [entry, ...state.history.filter((item) => item.url !== entry.url)].slice(
+        0,
+        2000
+      )
     })
   }
 
@@ -672,7 +763,9 @@ export class Store {
     const retention = this.state.settings.historyRetention
     const before = this.state.history.length
     this.update((state) => {
-      state.history = state.history.filter((entry) => keepByRetention(entry.visitedAt, retention, now))
+      state.history = state.history.filter((entry) =>
+        keepByRetention(entry.visitedAt, retention, now)
+      )
     })
     return before - this.state.history.length
   }

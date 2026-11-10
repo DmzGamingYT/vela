@@ -90,10 +90,16 @@ export default function NoteRecorder({
     const mime = pickAudioMime((type) => MediaRecorder.isTypeSupported(type))
     let next: MediaRecorder
     try {
-      next = mime ? new MediaRecorder(stream.current, { mimeType: mime }) : new MediaRecorder(stream.current)
+      next = mime
+        ? new MediaRecorder(stream.current, { mimeType: mime })
+        : new MediaRecorder(stream.current)
     } catch {
       releaseStream()
-      setProblem({ reason: 'unsupported', message: 'Ce micro ne peut pas être enregistré par Vela.', system: false })
+      setProblem({
+        reason: 'unsupported',
+        message: 'Ce micro ne peut pas être enregistré par Vela.',
+        system: false
+      })
       return
     }
 
@@ -173,7 +179,11 @@ export default function NoteRecorder({
     })
     if (!dataUrl) {
       setStage('intro')
-      setProblem({ reason: 'unknown', message: 'L’enregistrement n’a pas pu être lu.', system: false })
+      setProblem({
+        reason: 'unknown',
+        message: 'L’enregistrement n’a pas pu être lu.',
+        system: false
+      })
       return
     }
     try {
@@ -225,12 +235,12 @@ export default function NoteRecorder({
         {stage === 'intro' && (
           <div className="note-recorder-intro">
             <p>
-              Le micro ne s’ouvre qu’après votre accord, et seulement pendant l’enregistrement. macOS affichera
-              ensuite sa propre demande d’autorisation.
+              Le micro ne s’ouvre qu’après votre accord, et seulement pendant l’enregistrement.
+              macOS affichera ensuite sa propre demande d’autorisation.
             </p>
             <p className="note-recorder-hint">
-              <Icon name="lock" size={12} /> L’audio est écrit dans le dossier de l’espace, sur cet appareil. Rien
-              n’est envoyé tant que vous ne demandez pas la transcription.
+              <Icon name="lock" size={12} /> L’audio est écrit dans le dossier de l’espace, sur cet
+              appareil. Rien n’est envoyé tant que vous ne demandez pas la transcription.
             </p>
             {problem && (
               <p className="note-recorder-problem" role="alert">
@@ -251,10 +261,18 @@ export default function NoteRecorder({
 
         {(stage === 'recording' || stage === 'paused') && (
           <div className="note-recorder-live">
-            <span className="note-recorder-dot" data-paused={stage === 'paused'} aria-hidden="true" />
+            <span
+              className="note-recorder-dot"
+              data-paused={stage === 'paused'}
+              aria-hidden="true"
+            />
             <span className="note-recorder-time">{formatDuration(seconds)}</span>
             <div className="note-recorder-actions">
-              <button type="button" className="action" onClick={() => (stage === 'paused' ? resume() : pause())}>
+              <button
+                type="button"
+                className="action"
+                onClick={() => (stage === 'paused' ? resume() : pause())}
+              >
                 <Icon name={stage === 'paused' ? 'play' : 'pause'} size={13} />
                 {stage === 'paused' ? 'Reprendre' : 'Pause'}
               </button>

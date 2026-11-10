@@ -9,9 +9,24 @@ interface Item {
   generated?: boolean
 }
 
-const note: Item = { id: 'note', group: 'Notes', label: 'Hébergement statique', hint: 'Notes de mise en ligne' }
-const command: Item = { id: 'command', group: 'Actions', label: 'Gestionnaire de processus', hint: 'Hébergement des processus' }
-const tab: Item = { id: 'tab', group: 'Onglets', label: 'Hébergement', hint: 'Espace travail · example.com' }
+const note: Item = {
+  id: 'note',
+  group: 'Notes',
+  label: 'Hébergement statique',
+  hint: 'Notes de mise en ligne'
+}
+const command: Item = {
+  id: 'command',
+  group: 'Actions',
+  label: 'Gestionnaire de processus',
+  hint: 'Hébergement des processus'
+}
+const tab: Item = {
+  id: 'tab',
+  group: 'Onglets',
+  label: 'Hébergement',
+  hint: 'Espace travail · example.com'
+}
 
 describe('scoreOf', () => {
   it('classe le titre exact avant tout le reste', () => {
@@ -63,7 +78,13 @@ describe('rankItems', () => {
     const action = { id: 'history', group: 'Actions', label: 'Afficher l’historique', hint: '⌘Y' }
     expect(rankItems([search, action], 'historique')[0]?.id).toBe('history')
     // Une recherche reste le seul résultat quand rien d'autre ne correspond.
-    const alone = { id: 'only', group: 'Aller', generated: true, label: 'Ouvrir « zzz »', hint: 'Recherche' }
+    const alone = {
+      id: 'only',
+      group: 'Aller',
+      generated: true,
+      label: 'Ouvrir « zzz »',
+      hint: 'Recherche'
+    }
     expect(rankItems([alone], 'zzz')[0]?.id).toBe('only')
   })
 

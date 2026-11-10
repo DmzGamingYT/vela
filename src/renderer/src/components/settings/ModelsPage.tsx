@@ -223,7 +223,11 @@ export default function ModelsPage({ settings }: { settings: Settings }) {
                 <span className="provider-copy">
                   <span className="provider-name">
                     {definition.label}
-                    {isActive && <em className="model-chip" data-accent="true">Actif</em>}
+                    {isActive && (
+                      <em className="model-chip" data-accent="true">
+                        Actif
+                      </em>
+                    )}
                   </span>
                   <span className="provider-detail" data-tone={status.tone}>
                     {status.tone !== 'none' && <i className="model-dot" />}
@@ -285,8 +289,7 @@ export default function ModelsPage({ settings }: { settings: Settings }) {
             {editorDefinition.local && urlDraft.trim() && !isLoopbackEndpoint(urlDraft) && (
               <p className="setting-hint space-error" role="status">
                 <Icon name="warning" size={12} /> Cet endpoint n’est pas sur votre machine :{' '}
-                {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent y seront
-                envoyés.
+                {endpointHost(urlDraft) ?? urlDraft}. Les textes confiés à l’agent y seront envoyés.
               </p>
             )}
             <div className="model-editor-foot">

@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { NoteAiAction } from '@shared/api'
 import type { NoteGraph } from '@shared/noteLinks'
 import { hostOf } from '@shared/url'
-import { shortcut, timeAgo } from '../../lib/format'
+import { shortcut } from '../../lib/format'
 import { Markdown, type NoteAudioContext, type NoteLinkContext } from '../../lib/markdown'
 import { Icon } from '../Icon'
-import { NOTE_AI_ACTIONS as AI_ACTIONS, NOTE_AI_SECONDARY_ACTIONS as SECONDARY_AI_ACTIONS } from './aiActions'
+import {
+  NOTE_AI_ACTIONS as AI_ACTIONS,
+  NOTE_AI_SECONDARY_ACTIONS as SECONDARY_AI_ACTIONS
+} from './aiActions'
 import type { Draft } from './draft'
 
 const LAST_SECONDARY_KEY = 'vela-notes-ai-last-secondary'
@@ -181,6 +184,36 @@ export default function NoteEditor({
           placeholder="Titre de la note"
           onChange={(event) => onPatch({ title: event.target.value })}
         />
+        <span
+          className="note-head-state"
+          data-dirty={dirty ? 'true' : undefined}
+          role="status"
+          aria-live="polite"
+        >
+          {aiBusy
+            ? aiBusy === 'generate'
+              ? 'Génération…'
+              : 'Réécriture…'
+            : saving
+              ? 'Enregistrement…'
+              : dirty
+                ? 'Modifications…'
+                : savedAt
+                  ? <>
+                      <Icon name="check" size={10} /> Enregistré
+                    </>
+                  : ''}
+        </span>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => onPreview(!preview)}
+          aria-pressed={preview}
+          aria-label={preview ? 'Écrire' : 'Aperçu'}
+          title={preview ? 'Revenir à l’écriture' : 'Aperçu Markdown'}
+        >
+          <Icon name={preview ? 'edit' : 'eye'} size={15} />
+        </button>
         <button
           type="button"
           className="icon-btn"
@@ -267,13 +300,28 @@ export default function NoteEditor({
       )}
 
       <div className="note-toolbar" role="toolbar" aria-label="Mise en forme">
-        <button type="button" className="note-tool" onClick={() => onInsert('## ')} title="Titre de section">
+        <button
+          type="button"
+          className="note-tool"
+          onClick={() => onInsert('## ')}
+          title="Titre de section"
+        >
           H2
         </button>
-        <button type="button" className="note-tool" onClick={() => onInsert('**', '**')} title="Gras">
+        <button
+          type="button"
+          className="note-tool"
+          onClick={() => onInsert('**', '**')}
+          title="Gras"
+        >
           <b>B</b>
         </button>
-        <button type="button" className="note-tool" onClick={() => onPrefix('- ')} title="Liste à puces">
+        <button
+          type="button"
+          className="note-tool"
+          onClick={() => onPrefix('- ')}
+          title="Liste à puces"
+        >
           <Icon name="list" size={14} />
         </button>
         <button
@@ -335,63 +383,41 @@ export default function NoteEditor({
             <Icon name="sparkles" size={14} />
           </button>
         )}
-      </div>
-
-      <div className="note-ai-row">
-        <span
-          className="note-ai-label"
-          title={`Actions IA : ${AI_ACTIONS.map(
-            (action) => `${shortcut(action.key)} ${action.label}`
-          ).join(' · ')}`}
-        >
-          <Icon name="sparkles" size={12} /> IA
-        </span>
-        {AI_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            className="note-ai"
-            data-secondary={action.tier === 'secondary'}
-            onClick={() => runAction(action)}
-            disabled={aiBusy !== null}
-            title={`${action.hint} (${shortcut(action.key)})`}
-            aria-keyshortcuts={`Meta+Alt+${action.digit} Control+Alt+${action.digit}`}
-          >
-            {aiBusy === action.id ? '…' : action.label}
-          </button>
-        ))}
+        <span className="note-tool-sep" aria-hidden="true" />
         <div className="note-ai-more" ref={aiMenuRef}>
           <button
             type="button"
-            className="note-ai note-ai-toggle"
+            className="note-ai-trigger"
+            aria-label="Actions IA"
             aria-haspopup="menu"
             aria-expanded={aiMenuOpen}
             disabled={aiBusy !== null}
             onClick={() => setAiMenuOpen((open) => !open)}
             title={
               lastSecondaryLabel
-                ? `Autres actions IA · dernière : ${lastSecondaryLabel}`
-                : 'Autres actions IA'
+                ? `Actions IA · dernière : ${lastSecondaryLabel}`
+                : 'Actions IA : reformuler, résumer, traduire…'
             }
           >
-            {aiBusy && SECONDARY_AI_ACTIONS.some((action) => action.id === aiBusy) ? '…' : 'Plus'}
+            <Icon name="sparkles" size={12} />
+            IA
             <Icon name="chevron-down" size={10} />
           </button>
           {aiMenuOpen && (
             <div
               className="note-ai-menu"
               role="menu"
-              aria-label="Autres actions IA"
+              aria-label="Actions IA"
               onKeyDown={(event) => {
                 if (event.key === 'Escape') setAiMenuOpen(false)
               }}
             >
-              {secondaryActions.map((action) => (
+              {[...secondaryActions, ...AI_ACTIONS.filter((action) => action.tier === 'primary')].map((action) => (
                 <button
                   key={action.id}
                   type="button"
                   role="menuitem"
-                  autoFocus={action.id === (lastSecondary ?? SECONDARY_AI_ACTIONS[0]?.id)}
+                  autoFocus={action.id === (lastSecondary ?? secondaryActions[0]?.id)}
                   data-last={action.id === lastSecondary}
                   disabled={aiBusy !== null}
                   onClick={() => {
@@ -453,30 +479,11 @@ export default function NoteEditor({
         </div>
       )}
 
-      <div className="note-modes">
-        <button type="button" className="seg" data-active={!preview} onClick={() => onPreview(false)}>
-          Écrire
-        </button>
-        <button type="button" className="seg" data-active={preview} onClick={() => onPreview(true)}>
-          Aperçu
-        </button>
-        <span className="note-saved" role="status">
-          {aiBusy
-            ? aiBusy === 'generate'
-              ? 'Génération…'
-              : 'Réécriture…'
-            : saving
-              ? 'Enregistrement…'
-              : dirty
-                ? 'Modifié'
-                : savedAt
-                  ? `Enregistré · ${timeAgo(savedAt)}`
-                  : 'Brouillon'}
-        </span>
-      </div>
 
       {aiMode === 'demo' && !aiBusy && (
-        <p className="note-ai-note">Repli local : aucun modèle n’est configuré (Réglages › Modèles).</p>
+        <p className="note-ai-note">
+          Repli local : aucun modèle n’est configuré (Réglages › Modèles).
+        </p>
       )}
 
       {renameUndo && (
@@ -502,7 +509,12 @@ export default function NoteEditor({
       {preview ? (
         <div className="note-preview" ref={previewRef}>
           {draft.body.trim() ? (
-            <Markdown text={draft.body} highlight={highlight || undefined} links={noteLinks} audio={noteAudio} />
+            <Markdown
+              text={draft.body}
+              highlight={highlight || undefined}
+              links={noteLinks}
+              audio={noteAudio}
+            />
           ) : (
             <p className="note-empty-preview">Rien à prévisualiser.</p>
           )}
@@ -619,13 +631,17 @@ export default function NoteEditor({
         )}
 
       <footer className="note-foot">
-        <span
-          title={`Raccourcis : ${shortcut('⇧F')} rechercher · ${shortcut('G')} résultat suivant · ${shortcut('⇧P')} épingler · ${shortcut('⇧C')} copier · ${shortcut('⌥↑')} / ${shortcut('⌥↓')} changer de note`}
-        >
-          {draft.body.length} caractères · {draft.body.split(/\s+/).filter(Boolean).length} mots ·{' '}
-          {Math.max(1, Math.round(draft.body.split(/\s+/).filter(Boolean).length / 200))} min de
-          lecture
-        </span>
+        {draft.body.trim() ? (
+          <span
+            title={`Raccourcis : ${shortcut('⇧F')} rechercher · ${shortcut('G')} résultat suivant · ${shortcut('⇧P')} épingler · ${shortcut('⇧C')} copier · ${shortcut('⌥↑')} / ${shortcut('⌥↓')} changer de note`}
+          >
+            {draft.body.length} caractères · {draft.body.split(/\s+/).filter(Boolean).length} mots ·{' '}
+            {Math.max(1, Math.round(draft.body.split(/\s+/).filter(Boolean).length / 200))} min de
+            lecture
+          </span>
+        ) : (
+          <span />
+        )}
         <div className="note-foot-actions">
           <button
             type="button"
@@ -638,7 +654,12 @@ export default function NoteEditor({
             <Icon name="copy" size={13} />
             Copier
           </button>
-          <button type="button" className="text-btn" onClick={onDuplicate} title="Dupliquer la note">
+          <button
+            type="button"
+            className="text-btn"
+            onClick={onDuplicate}
+            title="Dupliquer la note"
+          >
             <Icon name="notes" size={13} />
             Dupliquer
           </button>
@@ -646,9 +667,10 @@ export default function NoteEditor({
             type="button"
             className="text-btn"
             onClick={() => void window.vela.notes.openFolder()}
+            title="Afficher le fichier dans le Finder"
           >
             <Icon name="folder" size={13} />
-            Dossier
+            Finder
           </button>
         </div>
       </footer>

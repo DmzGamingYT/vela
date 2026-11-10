@@ -43,7 +43,9 @@
 }
 
 .space-chip[data-avatar='true'] .space-avatar {
-  transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-standard);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-standard);
 }
 
 .space-chip[data-avatar='true']:hover .space-avatar {
@@ -51,17 +53,21 @@
 }
 
 .space-chip[data-avatar='true'][data-active='true'] .space-avatar {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--space) 40%, transparent),
+  box-shadow:
+    0 6px 16px color-mix(in srgb, var(--space) 40%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Ambiances d'espace : une seule couche derrière le châssis. */
 .app::before {
-  transition: background var(--dur-3) var(--ease-standard), opacity var(--dur-3) var(--ease-standard);
+  transition:
+    background var(--dur-3) var(--ease-standard),
+    opacity var(--dur-3) var(--ease-standard);
 }
 
 :root[data-space-bg='aurora'] .app::before {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       780px 560px at 10% 2%,
       color-mix(in srgb, var(--space-color) 24%, transparent),
       transparent 70%
@@ -83,20 +89,33 @@
 }
 
 :root[data-space-bg='ember'] .app::before {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       720px 520px at 12% 102%,
       color-mix(in srgb, var(--space-color) 26%, transparent),
       transparent 70%
     ),
-    radial-gradient(520px 380px at 96% 100%, color-mix(in srgb, #e07a5f 12%, transparent), transparent 74%);
+    radial-gradient(
+      520px 380px at 96% 100%,
+      color-mix(in srgb, #e07a5f 12%, transparent),
+      transparent 74%
+    );
 }
 
 :root[data-space-bg='night'] .app::before {
-  background: linear-gradient(180deg, transparent 24%, color-mix(in srgb, #0a0a12 42%, transparent));
+  background: linear-gradient(
+    180deg,
+    transparent 24%,
+    color-mix(in srgb, #0a0a12 42%, transparent)
+  );
 }
 
 :root[data-mode='light'][data-space-bg='night'] .app::before {
-  background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, #4a4658 12%, transparent));
+  background: linear-gradient(
+    180deg,
+    transparent 30%,
+    color-mix(in srgb, #4a4658 12%, transparent)
+  );
 }
 
 :root[data-contrast='high'] .app::before {
@@ -226,7 +245,8 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--line-soft);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       140% 90% at 8% 0%,
       color-mix(in srgb, var(--space-color) 16%, transparent),
       transparent 64%
@@ -241,17 +261,23 @@
 }
 
 .space-stage[data-bg='aurora'] {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 90% at 6% 0%,
       color-mix(in srgb, var(--space-color) 36%, transparent),
       transparent 68%
     ),
-    radial-gradient(110% 90% at 96% 100%, color-mix(in srgb, var(--space-color) 24%, transparent), transparent 70%),
+    radial-gradient(
+      110% 90% at 96% 100%,
+      color-mix(in srgb, var(--space-color) 24%, transparent),
+      transparent 70%
+    ),
     var(--paper);
 }
 
 .space-stage[data-bg='mist'] {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       color-mix(in srgb, var(--space-color) 28%, transparent),
       transparent 58%
@@ -260,7 +286,8 @@
 }
 
 .space-stage[data-bg='ember'] {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 100% at 10% 104%,
       color-mix(in srgb, var(--space-color) 38%, transparent),
       transparent 70%
@@ -509,8 +536,10 @@
   border: 1px solid var(--line-soft);
   background: var(--fill);
   text-align: left;
-  transition: border-color var(--dur-2) var(--ease-standard),
-    background var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out);
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .preset-card:hover {
@@ -584,7 +613,9 @@
   place-items: center;
   border-radius: 9px;
   border: 1px solid transparent;
-  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-standard);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-standard);
 }
 
 .avatar-gallery-choice:hover {
@@ -622,7 +653,9 @@
   background: var(--fill);
   color: var(--ink-soft);
   overflow: hidden;
-  transition: border-color var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out),
     background var(--dur-2) var(--ease-standard);
 }
 
@@ -672,7 +705,8 @@
   border-radius: 8px;
   font-size: 11px;
   color: var(--ink-soft);
-  transition: background-color var(--dur-2) var(--ease-standard),
+  transition:
+    background-color var(--dur-2) var(--ease-standard),
     color var(--dur-2) var(--ease-standard);
 }
 
@@ -804,7 +838,8 @@
   background: var(--surface);
   font-size: 11px;
   color: var(--ink);
-  transition: border-color var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
     background-color var(--dur-2) var(--ease-standard);
 }
 
@@ -846,7 +881,9 @@
   background: var(--fill);
   font-size: 8.5px;
   color: var(--muted);
-  transition: border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard),
     transform var(--dur-2) var(--ease-out);
 }
 
@@ -871,7 +908,8 @@
 
 /* « Aucune » : le papier du thème, hachuré pour montrer qu’il est vide. */
 .background-card[data-bg='none'] .background-swatch {
-  background: repeating-linear-gradient(
+  background:
+    repeating-linear-gradient(
       135deg,
       color-mix(in srgb, var(--ink) 7%, transparent) 0 1px,
       transparent 1px 6px
@@ -881,22 +919,33 @@
 }
 
 .background-card[data-bg='aurora'] .background-swatch {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       110% 90% at 10% 4%,
       color-mix(in srgb, var(--space-color) 55%, transparent),
       transparent 68%
     ),
-    radial-gradient(110% 90% at 92% 96%, color-mix(in srgb, var(--space-color) 34%, transparent), transparent 70%),
+    radial-gradient(
+      110% 90% at 92% 96%,
+      color-mix(in srgb, var(--space-color) 34%, transparent),
+      transparent 70%
+    ),
     var(--paper);
 }
 
 .background-card[data-bg='mist'] .background-swatch {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--space-color) 46%, transparent), transparent 62%),
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--space-color) 46%, transparent),
+      transparent 62%
+    ),
     var(--paper);
 }
 
 .background-card[data-bg='ember'] .background-swatch {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 100% at 12% 100%,
       color-mix(in srgb, var(--space-color) 56%, transparent),
       transparent 70%
@@ -1076,4 +1125,3 @@
     transition: none;
   }
 }
-

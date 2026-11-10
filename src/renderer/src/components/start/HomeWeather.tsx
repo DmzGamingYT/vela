@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { WEATHER_PLACE_KEY as PLACE_KEY, readWeatherPlace, type WeatherPlace as Place } from '@shared/place'
+import {
+  WEATHER_PLACE_KEY as PLACE_KEY,
+  readWeatherPlace,
+  type WeatherPlace as Place
+} from '@shared/place'
 import { Icon, type IconName } from '../Icon'
 
 /**
@@ -34,7 +38,8 @@ function readCache(place: Place): Weather | null {
   try {
     const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as Cached | null
     if (!raw || Date.now() - raw.at > TTL) return null
-    if (raw.place?.latitude !== place.latitude || raw.place?.longitude !== place.longitude) return null
+    if (raw.place?.latitude !== place.latitude || raw.place?.longitude !== place.longitude)
+      return null
     return raw.weather ?? null
   } catch {
     return null
@@ -60,7 +65,11 @@ function temperature(value: number): string {
   return `${Math.round(value)}°`
 }
 
-export default function HomeWeather({ onEditingChange }: { onEditingChange?: (editing: boolean) => void }) {
+export default function HomeWeather({
+  onEditingChange
+}: {
+  onEditingChange?: (editing: boolean) => void
+}) {
   const [now, setNow] = useState(() => new Date())
   const [place, setPlace] = useState<Place | null>(() => readWeatherPlace())
   const [weather, setWeather] = useState<Weather | null>(null)
@@ -144,7 +153,8 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
       })
       .then((json) => {
         const current = json?.current
-        if (!current || typeof current.temperature_2m !== 'number') throw new Error('Réponse inattendue')
+        if (!current || typeof current.temperature_2m !== 'number')
+          throw new Error('Réponse inattendue')
         const next: Weather = {
           temperature: current.temperature_2m,
           code: Number(current.weather_code ?? 3),
@@ -235,13 +245,29 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
   const detail = place
     ? 'Open-Meteo reçoit seulement les coordonnées de cette ville, une fois par demi-heure ; le relevé reste sur l’appareil.'
     : 'Aucune requête avant votre choix. En validant, le nom tapé part vers geocoding-api.open-meteo.com ; ensuite, seules les coordonnées vont à api.open-meteo.com, une fois par demi-heure.'
-  const shortNote = message ?? (place ? 'Coordonnées seules, une fois par demi-heure.' : 'Aucune requête avant votre choix.')
+  const shortNote =
+    message ??
+    (place ? 'Coordonnées seules, une fois par demi-heure.' : 'Aucune requête avant votre choix.')
 
   return (
     <section className="home-card home-day" aria-label="Heure et météo">
       <div className="day-clock">
         <p className="day-time">{hours}</p>
-        <span className="day-zone">Heure locale</span>
+        {place ? <span className="day-zone">Heure locale</span> : null}
+        {/* Au repos, un « + » lisible ; au survol, le geste s'écrit en toutes
+            lettres. Un signe de 20 px ne disait pas qu'il ajoutait une ville. */}
+        {!place && !editing ? (
+          <button
+            type="button"
+            className="day-add-mini"
+            onClick={() => setEditing(true)}
+            title="Ajouter une ville pour la météo"
+            aria-label="Ajouter une ville pour la météo"
+          >
+            <Icon name="plus" size={12} />
+            <span className="day-add-label">Ajouter une ville</span>
+          </button>
+        ) : null}
       </div>
 
       {editing ? (
@@ -268,12 +294,7 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
             Annuler
           </button>
         </form>
-      ) : !place ? (
-        <button type="button" className="day-add" onClick={() => setEditing(true)}>
-          <Icon name="plus" size={13} />
-          Ajouter une ville
-        </button>
-      ) : (
+      ) : !place ? null : (
         <div className="day-weather">
           <span className="day-icon">
             <Icon name={condition?.icon ?? 'cloud'} size={18} />
@@ -292,7 +313,9 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
                 </p>
               </>
             ) : (
-              <p className="day-meta">{status === 'error' ? 'Météo indisponible' : 'Relevé en cours…'}</p>
+              <p className="day-meta">
+                {status === 'error' ? 'Météo indisponible' : 'Relevé en cours…'}
+              </p>
             )}
             <p className="day-city">
               {place.name}
@@ -300,7 +323,11 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
               <button type="button" onClick={() => setEditing(true)} title="Changer de ville">
                 Changer
               </button>
-              <button type="button" onClick={forgetPlace} title="Retirer la ville et couper la météo">
+              <button
+                type="button"
+                onClick={forgetPlace}
+                title="Retirer la ville et couper la météo"
+              >
                 Retirer
               </button>
             </p>
@@ -308,20 +335,10 @@ export default function HomeWeather({ onEditingChange }: { onEditingChange?: (ed
         </div>
       )}
 
-      <p className="day-note">
+      {/* Le détail tient dans l'infobulle de la ligne : le (i) cerclé,
+          isolé à côté du texte, se lisait comme un bouton sans action. */}
+      <p className="day-note" title={detail}>
         <span>{shortNote}</span>
-        <button
-          type="button"
-          className="day-info"
-          data-tip={detail}
-          aria-label="Détail de la météo"
-          aria-describedby="day-weather-detail"
-        >
-          <span aria-hidden="true">i</span>
-        </button>
-        <span id="day-weather-detail" className="sr-only">
-          {detail}
-        </span>
       </p>
     </section>
   )

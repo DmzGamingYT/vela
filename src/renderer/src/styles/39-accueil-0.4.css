@@ -1,0 +1,175 @@
+/* ------------------------------------------------------------------
+   0.4 — l'accueil, sans cartons
+   ------------------------------------------------------------------
+   La maquette garde le contenu et retire les cadres : l'écran se lit
+   comme une page (date, titre, champ, sections séparées par des filets)
+   au lieu d'une planche de cartes flottantes. Le relief vient de la
+   typographie et de l'espace, plus des ombres et du verre.
+   ------------------------------------------------------------------ */
+
+.start-inner.home {
+  max-width: 1060px;
+  padding: 46px 44px 34px;
+  gap: 26px;
+}
+
+/* --- En-tête ---------------------------------------------------- */
+
+.home-date {
+  margin-bottom: 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+}
+
+.home-title {
+  font-size: clamp(40px, 4.6vw, 58px);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+
+.home-lede {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* --- Champ unique -------------------------------------------------
+   58 px, un cheveu de bord, aucune ombre : le champ est une ligne de la
+   page, pas un objet posé dessus. Son mode et sa touche restent lisibles. */
+
+.home-field {
+  height: 58px;
+  padding: 0 10px 0 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--fill);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.home-field:hover {
+  border-color: var(--hairline-strong);
+  background: var(--fill-2);
+}
+
+.home-field:focus-within {
+  transform: none;
+  border-color: color-mix(in srgb, var(--accent) 52%, transparent);
+  background: var(--fill-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.home-field-text {
+  font-size: 14.5px;
+}
+
+/* Le bouton d'envoi redevient une icône : l'accent suffit à le désigner,
+   le fond plein en faisait le seul objet lourd de l'écran. */
+.home-go {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: none;
+  color: var(--accent);
+}
+
+.home-go:hover {
+  transform: none;
+  opacity: 1;
+  background: var(--hover);
+}
+
+/* --- Sections ------------------------------------------------------
+   Un filet en haut de chaque section, un titre en petites capitales :
+   c'est le seul séparateur. Plus de fond, plus de bord, plus d'ombre. */
+
+.home-card {
+  padding: 0;
+  padding-top: 14px;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.home-card:hover {
+  border-color: var(--line-soft);
+}
+
+.home-card-head {
+  margin-bottom: 12px;
+}
+
+.home-card-head h2 {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+}
+
+/* --- Tuiles --------------------------------------------------------
+   Une tuile est une ligne de la page : un cheveu, aucun fond au repos,
+   le voile au survol. La lueur qui suivait le pointeur est retirée —
+   elle ajoutait une couleur que l'écran n'utilise plus. */
+
+.recent-tile {
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard);
+}
+
+.recent-tile::after {
+  content: none;
+}
+
+.recent-tile:hover {
+  border-color: var(--line);
+  background: var(--hover);
+  box-shadow: none;
+}
+
+.recent-tile[data-thumb='true'] {
+  background: transparent;
+}
+
+/* --- Fond ----------------------------------------------------------
+   Une lueur d'accent en haut à gauche ; les deux autres nappes tombent
+   à un tiers d'opacité pour ne plus laver la page entière. */
+
+.home-aurora {
+  opacity: 0.5;
+}
+
+.aurora-blob[data-i='1'] {
+  left: 2%;
+  top: -18%;
+  width: 48%;
+}
+
+.aurora-blob[data-i='2'] {
+  opacity: 0.3;
+}
+
+.aurora-blob[data-i='3'] {
+  opacity: 0.22;
+}
+
+/* --- Pied ----------------------------------------------------------- */
+
+.home-foot {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--faint);
+}
+
+.home-foot-customize {
+  color: var(--muted);
+}

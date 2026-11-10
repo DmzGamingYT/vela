@@ -1,0 +1,174 @@
+/* ------------------------------------------------------------------
+   0.4 — corrections de l'accueil
+   ------------------------------------------------------------------
+   Quatre défauts vus sur l'écran réel : des blocs dont le contenu touchait
+   le bord, quatre rayons différents, une section « Récemment » trop haute
+   qui laissait la colonne de droite à mi-chemin, et deux puces détachées
+   sous le champ de recherche.
+
+   Un seul rayon (13 px) pour tous les blocs, 16 à 18 px de padding, des
+   tuiles compactes de 78 px, et les puces ramenées dans le champ.
+   ------------------------------------------------------------------ */
+
+.start-inner.home {
+  --home-radius: 13px;
+}
+
+/* --- Padding intérieur -------------------------------------------- */
+
+.home-card {
+  padding: 16px 18px;
+  border-radius: var(--home-radius);
+}
+
+.home-card-head {
+  margin-bottom: 10px;
+}
+
+/* --- Un seul rayon ------------------------------------------------ */
+
+.home-field,
+.home-card,
+.recent-tile,
+.home-day,
+.home-pins,
+.home-chip,
+.customize-chip,
+.tasks-input,
+.quicknotes-input,
+.home-customize-bar {
+  border-radius: var(--home-radius);
+}
+
+/* Favoris : la pilule cède la place au même rayon que les autres blocs. */
+.home-pins {
+  border-radius: var(--home-radius);
+}
+
+/* --- Récemment : cartes compactes ---------------------------------
+   La vignette ne descend plus sur 200 px de vide : une ligne d'hôte, un
+   titre, 78 px de haut. La capture reste l'illustration de fond quand elle
+   existe, très effacée, au lieu de tenir la mise en page. */
+
+/* Le sélecteur reprend le parent : la grille d'origine est plus spécifique
+   que `.recent-grid` seul et gardait ses trois colonnes serrées. */
+.home-grid .recent-grid,
+.recent-grid {
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 8px;
+}
+
+.recent-tile {
+  height: 78px;
+  min-height: 0;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.recent-tile .tile-thumb {
+  display: none;
+}
+
+.recent-tile[data-thumb='true'] .tile-thumb {
+  display: block;
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.recent-tile[data-thumb='true'] .tile-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recent-tile .tile-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.recent-tile .tile-host {
+  font-size: 10px;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-tile .tile-badge {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.recent-tile .tile-title {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-tile .tile-arrow {
+  display: none;
+}
+
+/* --- Colonnes alignées -------------------------------------------- */
+
+.home-grid {
+  align-items: start;
+}
+
+.home-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Puces dans le champ ------------------------------------------ */
+
+.home-field {
+  gap: 8px;
+  padding: 0 8px 0 16px;
+}
+
+.home-field .home-chips-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.home-field .home-engine {
+  font-size: 10px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.home-field .home-chip {
+  height: 26px;
+  padding: 0 9px;
+  font-size: 10.5px;
+  border-radius: 9px;
+  background: var(--fill-2);
+  color: var(--muted);
+}
+
+.home-field .home-chip:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+/* Sous 900 px, les puces quittent le champ : elles le rendraient illisible. */
+@media (max-width: 900px) {
+  .home-field .home-chips-meta {
+    display: none;
+  }
+}

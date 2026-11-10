@@ -5,6 +5,8 @@ import {
   engineHost,
   hostOf,
   isHomeUrl,
+  isLoadableUrl,
+  isPublicHost,
   normalizeInput,
   prettyUrl,
   searchUrl,
@@ -45,14 +47,20 @@ describe('normalizeInput', () => {
     })
   })
 
-  it.each(['duckduckgo', 'brave', 'startpage', 'google', 'bing', 'ecosia', 'qwant', 'searxng'] as const)(
-    'construit une recherche pour %s',
-    (engine) => {
-      const result = normalizeInput('Bruxelles Charleroi', engine)
-      expect(result.kind).toBe('search')
-      expect(result.url).toBe(searchUrl('Bruxelles Charleroi', engine))
-    }
-  )
+  it.each([
+    'duckduckgo',
+    'brave',
+    'startpage',
+    'google',
+    'bing',
+    'ecosia',
+    'qwant',
+    'searxng'
+  ] as const)('construit une recherche pour %s', (engine) => {
+    const result = normalizeInput('Bruxelles Charleroi', engine)
+    expect(result.kind).toBe('search')
+    expect(result.url).toBe(searchUrl('Bruxelles Charleroi', engine))
+  })
 
   it('ne laisse pas passer les schémas dangereux', () => {
     const result = normalizeInput('javascript:alert(1)')
@@ -76,6 +84,50 @@ describe('helpers', () => {
   it('affiche une adresse courte', () => {
     expect(prettyUrl('https://www.notion.so/page/')).toBe('notion.so/page')
     expect(prettyUrl(HOME_URL)).toBe('Nouvel onglet')
+  })
+})
+
+describe('isPublicHost', () => {
+  it('accepte les hôtes du web', () => {
+    expect(isPublicHost('example.com')).toBe(true)
+    expect(isPublicHost('cdn.jsdelivr.net')).toBe(true)
+    expect(isPublicHost('8.8.8.8')).toBe(true)
+  })
+
+  it('refuse les adresses du réseau local', () => {
+    expect(isPublicHost('localhost')).toBe(false)
+    expect(isPublicHost('app.localhost')).toBe(false)
+    expect(isPublicHost('box.local')).toBe(false)
+    expect(isPublicHost('127.0.0.1')).toBe(false)
+    expect(isPublicHost('10.0.0.5')).toBe(false)
+    expect(isPublicHost('172.16.4.2')).toBe(false)
+    expect(isPublicHost('192.168.1.1')).toBe(false)
+    expect(isPublicHost('169.254.169.254')).toBe(false)
+    expect(isPublicHost('::1')).toBe(false)
+    expect(isPublicHost('fd00::1')).toBe(false)
+    expect(isPublicHost('fe80::1')).toBe(false)
+  })
+})
+
+describe('isLoadableUrl', () => {
+  it('accepte le web, la page blanche et l’accueil', () => {
+    expect(isLoadableUrl('https://example.com')).toBe(true)
+    expect(isLoadableUrl('http://example.com')).toBe(true)
+    expect(isLoadableUrl('about:blank')).toBe(true)
+    expect(isLoadableUrl(HOME_URL)).toBe(true)
+  })
+
+  it('refuse les schémas qui ouvriraient le disque ou le navigateur', () => {
+    expect(isLoadableUrl('file:///Users/velo/.ssh/id_rsa')).toBe(false)
+    expect(isLoadableUrl('data:text/html,<h1>salut</h1>')).toBe(false)
+    expect(isLoadableUrl('devtools://devtools/bundled/inspector.html')).toBe(false)
+    expect(isLoadableUrl('javascript:alert(1)')).toBe(false)
+    expect(isLoadableUrl('')).toBe(false)
+  })
+
+  it('ne se laisse pas tromper par la casse ni par les espaces', () => {
+    expect(isLoadableUrl('  HTTPS://example.com  ')).toBe(true)
+    expect(isLoadableUrl('FILE:///etc/passwd')).toBe(false)
   })
 })
 

@@ -46,7 +46,25 @@ describe('raccourcis selon la plateforme', () => {
       expect(shortcut(',')).toBe('Ctrl+,')
       expect(shortcut('↵')).toBe('Ctrl+↵')
       // Aucun glyphe de clavier Apple ne doit rester à l'écran.
-      for (const key of ['K', 'L', 'T', 'W', '⇧T', '⇧D', '⇧O', '⇧H', '⇧A', '⇧B', '[', ']', ',', '↵', '0', '+', '-']) {
+      for (const key of [
+        'K',
+        'L',
+        'T',
+        'W',
+        '⇧T',
+        '⇧D',
+        '⇧O',
+        '⇧H',
+        '⇧A',
+        '⇧B',
+        '[',
+        ']',
+        ',',
+        '↵',
+        '0',
+        '+',
+        '-'
+      ]) {
         expect(shortcut(key)).not.toMatch(/[⌘⇧⌥⌫]/)
       }
       expect(spokenShortcut('Ctrl+Shift+T')).toBe('Contrôle Maj T')

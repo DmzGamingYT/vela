@@ -30,7 +30,9 @@ describe('import de favoris HTML', () => {
     const html = `
       <A HREF="https://exemple.fr/">Un &amp;lt; deux</A>
       <A HREF="https://exemple.fr/">Doublon</A>`
-    expect(parseBookmarksHtml(html)).toEqual([{ title: 'Un &lt; deux', url: 'https://exemple.fr/' }])
+    expect(parseBookmarksHtml(html)).toEqual([
+      { title: 'Un &lt; deux', url: 'https://exemple.fr/' }
+    ])
   })
 
   it('tolère un fichier vide ou bricolé', () => {

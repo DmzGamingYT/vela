@@ -8,7 +8,9 @@ import { hostOf } from '@shared/url'
 
 /** Première lettre du domaine, sans « www. » ; `·` si l'adresse est vide. */
 export function domainLetter(url: string): string {
-  const host = hostOf(url).replace(/^www\./i, '').trim()
+  const host = hostOf(url)
+    .replace(/^www\./i, '')
+    .trim()
   const match = /[a-z0-9]/i.exec(host)
   return (match?.[0] ?? '·').toUpperCase()
 }

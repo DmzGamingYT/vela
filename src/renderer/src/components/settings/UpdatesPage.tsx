@@ -38,7 +38,13 @@ export default function UpdatesPage() {
   const platform = window.vela.platform
   const channel: UpdateChannel =
     update?.channel ??
-    (platform === 'linux' ? 'linux-package' : platform === 'darwin' ? 'mac' : platform === 'win32' ? 'windows' : 'other')
+    (platform === 'linux'
+      ? 'linux-package'
+      : platform === 'darwin'
+        ? 'mac'
+        : platform === 'win32'
+          ? 'windows'
+          : 'other')
   const isAppImage = channel === 'appimage'
   const busy = update?.state === 'checking' || update?.state === 'downloading'
   const downloaded = update?.state === 'downloaded'
@@ -159,8 +165,16 @@ export default function UpdatesPage() {
         <div className="update-channel">
           <div className="update-channel-head">
             <Icon name={isAppImage ? 'download' : 'shield'} size={15} />
-            <strong>{isAppImage ? 'Lancement depuis une AppImage' : 'Lancement hors AppImage'}</strong>
-            <span className="tag">{isAppImage ? (update?.appImageWritable ? 'Inscriptible' : 'Lecture seule') : 'Paquet'}</span>
+            <strong>
+              {isAppImage ? 'Lancement depuis une AppImage' : 'Lancement hors AppImage'}
+            </strong>
+            <span className="tag">
+              {isAppImage
+                ? update?.appImageWritable
+                  ? 'Inscriptible'
+                  : 'Lecture seule'
+                : 'Paquet'}
+            </span>
           </div>
           {isAppImage ? (
             <p className="setting-hint">

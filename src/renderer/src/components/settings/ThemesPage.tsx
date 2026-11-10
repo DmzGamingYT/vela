@@ -127,7 +127,9 @@ export default function ThemesPage({
         </span>
         <span className="ambience-off-copy">
           <span className="ambience-off-name">Aucune ambiance</span>
-          <span className="ambience-off-hint">Le fond sobre d’origine, zéro animation de fond.</span>
+          <span className="ambience-off-hint">
+            Le fond sobre d’origine, zéro animation de fond.
+          </span>
         </span>
         {settings.ambience === 'none' && <Icon name="check" size={14} />}
       </button>
@@ -172,9 +174,8 @@ export default function ThemesPage({
       </div>
 
       <p className="setting-hint ambience-note">
-        Les animations ne déplacent et ne font varier que des calques composés (transform,
-        opacité). « Réduire les animations » dans le système les fige, et le contraste élevé les
-        atténue.
+        Les animations ne déplacent et ne font varier que des calques composés (transform, opacité).
+        « Réduire les animations » dans le système les fige, et le contraste élevé les atténue.
       </p>
     </section>
   )

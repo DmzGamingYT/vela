@@ -77,7 +77,9 @@ export default function AmbienceScene({
       ref={ref}
       className={`ambience-scene ${className}`.trim()}
       data-ambience={ambience}
-      style={colors ? ({ '--amb-1': colors[0], '--amb-2': colors[1], ...style } as CSSProperties) : style}
+      style={
+        colors ? ({ '--amb-1': colors[0], '--amb-2': colors[1], ...style } as CSSProperties) : style
+      }
       aria-hidden="true"
     >
       <span className="amb-layer amb-base" />

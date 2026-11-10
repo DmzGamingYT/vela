@@ -42,10 +42,22 @@ export default function WorkList({ onOpen }: Props) {
         </div>
         <div className="work-list-actions">
           <div className="work-filter" role="tablist" aria-label="Filtrer les rapports">
-            <button type="button" role="tab" aria-selected={!archived} data-active={!archived} onClick={() => setArchived(false)}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!archived}
+              data-active={!archived}
+              onClick={() => setArchived(false)}
+            >
               En cours<span className="work-filter-count">{openCount}</span>
             </button>
-            <button type="button" role="tab" aria-selected={archived} data-active={archived} onClick={() => setArchived(true)}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={archived}
+              data-active={archived}
+              onClick={() => setArchived(true)}
+            >
               Archivés<span className="work-filter-count">{archivedCount}</span>
             </button>
           </div>
@@ -55,9 +67,15 @@ export default function WorkList({ onOpen }: Props) {
       <div className="work-scroll">
         {visible.length === 0 && (
           <div className="work-empty">
-            <span className="work-empty-icon"><Icon name="inbox" size={22} /></span>
+            <span className="work-empty-icon">
+              <Icon name="inbox" size={22} />
+            </span>
             <strong>{archived ? 'Aucun rapport archivé.' : 'Aucun rapport pour l’instant.'}</strong>
-            <p>{archived ? 'Les rapports que vous archivez vivent ici.' : 'Lancez l’agent : chaque rapport rejoint cette liste.'}</p>
+            <p>
+              {archived
+                ? 'Les rapports que vous archivez vivent ici.'
+                : 'Lancez l’agent : chaque rapport rejoint cette liste.'}
+            </p>
           </div>
         )}
 
@@ -73,19 +91,40 @@ export default function WorkList({ onOpen }: Props) {
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') commit(work)
-                    if (event.key === 'Escape') { setEditing(null); setDraft('') }
+                    if (event.key === 'Escape') {
+                      setEditing(null)
+                      setDraft('')
+                    }
                   }}
                 />
-                <button type="button" className="icon-btn" onClick={() => commit(work)} title="Enregistrer le titre">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => commit(work)}
+                  title="Enregistrer le titre"
+                >
                   <Icon name="check" size={15} />
                 </button>
-                <button type="button" className="icon-btn" onClick={() => { setEditing(null); setDraft('') }} title="Annuler">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => {
+                    setEditing(null)
+                    setDraft('')
+                  }}
+                  title="Annuler"
+                >
                   <Icon name="close" size={15} />
                 </button>
               </div>
             ) : (
               <>
-                <button type="button" className="work-open" onClick={() => onOpen(work)} title="Rouvrir ce rapport">
+                <button
+                  type="button"
+                  className="work-open"
+                  onClick={() => onOpen(work)}
+                  title="Rouvrir ce rapport"
+                >
                   <span className="work-icon">
                     <Icon name="notes" size={14} />
                   </span>
@@ -104,7 +143,10 @@ export default function WorkList({ onOpen }: Props) {
                     type="button"
                     className="icon-btn"
                     title="Renommer"
-                    onClick={() => { setEditing(work.id); setDraft(work.title) }}
+                    onClick={() => {
+                      setEditing(work.id)
+                      setDraft(work.title)
+                    }}
                   >
                     <Icon name="edit" size={15} />
                   </button>

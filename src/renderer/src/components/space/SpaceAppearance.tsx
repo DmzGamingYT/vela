@@ -1,11 +1,7 @@
 import type { CSSProperties, RefObject } from 'react'
 import { GALLERY_AVATARS } from '@shared/avatarGallery'
 import { SPACE_TINTS } from '@shared/defaults'
-import {
-  SPACE_AVATARS,
-  SPACE_BACKGROUNDS,
-  type SpaceBackground
-} from '@shared/space'
+import { SPACE_AVATARS, SPACE_BACKGROUNDS, type SpaceBackground } from '@shared/space'
 import GalleryAvatar from './GalleryAvatar'
 import { Icon } from '../Icon'
 import { rovingKeyDown, SectionTitle, type AvatarSource } from './spaceParts'
@@ -227,7 +223,11 @@ export default function SpaceAppearance({
                 <strong>{storedImage ? 'Photo importée' : 'Déposez une photo'}</strong>
                 <small>PNG, JPEG ou WebP, 8 Mo au plus — recadrée en carré</small>
               </span>
-              <button type="button" className="space-small-btn" onClick={() => fileRef.current?.click()}>
+              <button
+                type="button"
+                className="space-small-btn"
+                onClick={() => fileRef.current?.click()}
+              >
                 <Icon name="image" size={12} />
                 {storedImage ? 'Remplacer' : 'Importer'}
               </button>

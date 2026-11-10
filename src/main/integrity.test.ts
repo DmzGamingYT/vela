@@ -46,23 +46,41 @@ describe('empreintes de téléchargement', () => {
   it('accepte une taille et une empreinte exactes', () => {
     const data = Buffer.from('installateur')
     const base64 = sha512Base64(data)
-    expect(verifyDownload({ base64, bytes: data.length, expected: { sha512: base64, size: data.length } })).toBe(true)
+    expect(
+      verifyDownload({
+        base64,
+        bytes: data.length,
+        expected: { sha512: base64, size: data.length }
+      })
+    ).toBe(true)
   })
 
   it('rejette une taille différente ou une empreinte remplacée', () => {
     const data = Buffer.from('installateur')
     const base64 = sha512Base64(data)
-    expect(verifyDownload({ base64, bytes: data.length + 1, expected: { sha512: base64, size: data.length } })).toBe(false)
+    expect(
+      verifyDownload({
+        base64,
+        bytes: data.length + 1,
+        expected: { sha512: base64, size: data.length }
+      })
+    ).toBe(false)
     const other = sha512Base64(Buffer.from('autre'))
-    expect(verifyDownload({ base64, bytes: data.length, expected: { sha512: other, size: data.length } })).toBe(false)
+    expect(
+      verifyDownload({ base64, bytes: data.length, expected: { sha512: other, size: data.length } })
+    ).toBe(false)
     expect(digestEquals('', '')).toBe(false)
   })
 })
 
 describe('signature du manifeste de mise à jour', () => {
   const pair = generateKeyPairSync('ed25519')
-  const pinned = pair.publicKey.export({ format: 'der', type: 'spki' }).subarray(-32).toString('base64')
-  const sign = (bytes: Buffer): string => ed25519Sign(null, bytes, pair.privateKey).toString('base64')
+  const pinned = pair.publicKey
+    .export({ format: 'der', type: 'spki' })
+    .subarray(-32)
+    .toString('base64')
+  const sign = (bytes: Buffer): string =>
+    ed25519Sign(null, bytes, pair.privateKey).toString('base64')
   const manifest = Buffer.from(MANIFEST, 'utf8')
 
   it('accepte la signature de la clé épinglée', () => {

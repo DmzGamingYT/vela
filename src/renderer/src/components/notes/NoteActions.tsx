@@ -71,7 +71,9 @@ export default function NoteActions({
               onCapture()
             }}
             aria-disabled={!hasPage}
-            title={hasPage ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'}
+            title={
+              hasPage ? 'Garder le texte de la page affichée' : 'Ouvrez une page pour la capturer'
+            }
           >
             <Icon name="globe" size={13} />
             Page

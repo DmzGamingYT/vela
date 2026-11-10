@@ -68,8 +68,10 @@
   background: var(--surface);
   color: var(--ink-soft);
   font-size: 12.5px;
-  transition: transform var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), background var(--dur-2) var(--ease-standard),
+  transition:
+    transform var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
     color var(--dur-2) var(--ease-standard);
 }
 
@@ -116,7 +118,7 @@
   cursor: default;
 }
 
-.action[data-danger="true"] {
+.action[data-danger='true'] {
   color: var(--clay);
   border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
 }

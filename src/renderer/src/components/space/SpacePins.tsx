@@ -88,7 +88,10 @@ export default function SpacePins({
         ) : null}
 
         {shortcuts.length > 0 ? (
-          <ul className="space-pins" aria-label="Sites épinglés, réordonnables avec Alt et les flèches">
+          <ul
+            className="space-pins"
+            aria-label="Sites épinglés, réordonnables avec Alt et les flèches"
+          >
             {shortcuts.map((shortcut, index) => (
               <li
                 key={shortcut.id}
@@ -125,9 +128,7 @@ export default function SpacePins({
                     onDropTarget(shortcut.id)
                   }
                 }}
-                onDragLeave={() =>
-                  onDropTarget(dropTarget === shortcut.id ? null : dropTarget)
-                }
+                onDragLeave={() => onDropTarget(dropTarget === shortcut.id ? null : dropTarget)}
                 onDrop={(event) => {
                   event.preventDefault()
                   event.stopPropagation()

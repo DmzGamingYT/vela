@@ -34,6 +34,22 @@ export const CHROME_UA = chromeUserAgent(CHROME_VERSION, process.platform)
 const appliedContents = new WeakSet<WebContents>()
 const appliedSessions = new WeakSet<Session>()
 
+/**
+ * Langue annoncée par requête, lue à chaque envoi : le réglage peut changer
+ * en cours de session.
+ *
+ * Chromium ne garde qu'un seul listener `onBeforeSendHeaders` par session :
+ * un second remplace le premier. La langue passe donc par ici, et non par un
+ * listener à elle, sinon l'identité réseau (UA, client hints) était
+ * silencieusement remplacée.
+ */
+const languageProviders = new WeakMap<Session, () => string>()
+
+/** Fixe la langue des requêtes d'une session. */
+export function setSessionLanguage(ses: Session, provider: () => string): void {
+  languageProviders.set(ses, provider)
+}
+
 function platformName(): string {
   if (process.platform === 'win32') return 'Windows'
   if (process.platform === 'linux') return 'Linux'
@@ -104,7 +120,7 @@ export function applySessionIdentity(ses: Session): void {
     (details, callback) => {
       const headers = details.requestHeaders
       headers['User-Agent'] = CHROME_UA
-      headers['Accept-Language'] = ACCEPT_LANGUAGE_HEADER
+      headers['Accept-Language'] = languageProviders.get(ses)?.() ?? ACCEPT_LANGUAGE_HEADER
 
       // Client hints : uniquement en HTTPS, comme Chromium.
       if (details.url.startsWith('https://')) {

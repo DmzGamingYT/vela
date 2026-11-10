@@ -125,7 +125,10 @@ describe('audit des destinations réseau', () => {
   it('n’oublie aucun hôte déclaré dans le code', () => {
     // Ces deux hôtes sont des cibles de redirection GitHub, pas des URL du
     // code : ils n'ont pas à apparaître littéralement dans les sources.
-    const redirectOnly = new Set(['objects.githubusercontent.com', 'release-assets.githubusercontent.com'])
+    const redirectOnly = new Set([
+      'objects.githubusercontent.com',
+      'release-assets.githubusercontent.com'
+    ])
     const all = files
       .filter((file) => !file.endsWith('network.ts'))
       .map((file) => readFileSync(file, 'utf8'))

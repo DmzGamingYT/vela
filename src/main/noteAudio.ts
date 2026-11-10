@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { newId } from '@shared/defaults'
 import { MAX_RECORDING_BYTES } from '@shared/recorder'
@@ -42,7 +51,9 @@ function spaceFolder(spaceId: unknown): string {
 }
 
 /** Décode une data URL audio ; `null` si le type ou la taille ne convient pas. */
-export function parseAudioDataUrl(value: unknown): { mime: string; ext: string; bytes: Buffer } | null {
+export function parseAudioDataUrl(
+  value: unknown
+): { mime: string; ext: string; bytes: Buffer } | null {
   if (typeof value !== 'string') return null
   const match = value.match(/^data:(audio\/[a-z0-9.+-]+);base64,([a-z0-9+/=]+)$/i)
   if (!match) return null
@@ -78,7 +89,9 @@ export class NoteAudioStore {
     const folder = spaceFolder(spaceId)
     const target = join(this.dir, folder)
     mkdirSync(target, { recursive: true })
-    const name = `${folder}/${newId().replace(/[^a-z0-9]/gi, '').slice(0, 24)}.${parsed.ext}`
+    const name = `${folder}/${newId()
+      .replace(/[^a-z0-9]/gi, '')
+      .slice(0, 24)}.${parsed.ext}`
     if (!isAudioName(name)) return null
     try {
       writeFileSync(this.pathOf(name), parsed.bytes)

@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type {
-  CSSProperties,
-  MouseEvent as ReactMouseEvent,
-  PointerEvent as ReactPointerEvent
-} from 'react'
-import { canonicalUrl, engineLabel, hostOf, isHomeUrl, readableTitle } from '@shared/url'
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
+import { engineLabel, hostOf, isHomeUrl, readableTitle } from '@shared/url'
 import { SKY_THEME, resolveThemeId } from '@shared/theme'
-import { greeting, shortcut, timeAgo, tintFor, weekdayLabel } from '../../lib/format'
+import { greeting, shortcut, weekdayLabel } from '../../lib/format'
+import { listSessions } from '../../lib/sessions'
 import { useBrowser } from '../../store/browser'
 import HomeFavorites from './HomeFavorites'
 import HomeSky from './HomeSky'
@@ -17,13 +14,6 @@ import TasksCard from './TasksCard'
 import TileMenu, { type TileMenuItem } from '../tabs/TileMenu'
 import WatchlistCard from './WatchlistCard'
 import QuickNotesCard from './QuickNotesCard'
-
-const STARTERS = [
-  { label: 'GitHub', detail: 'Vos projets', url: 'https://github.com' },
-  { label: 'Hacker News', detail: 'La tech du jour', url: 'https://news.ycombinator.com' },
-  { label: 'Le Monde', detail: 'L’actualité', url: 'https://www.lemonde.fr' },
-  { label: 'Wikipédia', detail: 'La référence libre', url: 'https://fr.wikipedia.org' }
-]
 
 export interface BentoModules {
   weather: boolean
@@ -82,14 +72,41 @@ function tileLabel(raw: string | null | undefined, url: string, host: string): s
   return host
 }
 
-interface Tile {
-  id: string
+interface RecentCard {
+  host: string
   url: string
   title: string
-  host: string
   favicon?: string
-  meta: string
-  kind: 'history' | 'bookmark' | 'starter'
+  spaceId: string
+  visitedAt: number
+  visits: number
+}
+
+/**
+ * Heure courte des cartes : « 2 min », « 1 h », « 2 j ». La forme longue
+ * (« il y a 2 minutes ») prenait le tiers de la ligne du haut.
+ */
+function compactAgo(timestamp: number, now: number): string {
+  const delta = Math.max(0, now - timestamp)
+  const minutes = Math.floor(delta / 60_000)
+  if (minutes < 1) return 'à l’instant'
+  if (minutes < 60) return `${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} h`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days} j`
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
+    new Date(timestamp)
+  )
+}
+
+/** Le moteur de recherche n'est pas le sujet de la page qu'il a trouvée. */
+function historyTitle(raw: string | null | undefined, url: string, host: string): string {
+  const title = (raw ?? '').trim()
+  const searched = title.match(/^(.*?)\s+(?:at|@|-)\s*DuckDuckGo$/i)
+  const terms = searched?.[1]?.trim()
+  if (terms) return `Recherche : ${terms}`
+  return tileLabel(raw, url, host)
 }
 
 export default function StartPage({ tabId }: { tabId: string }) {
@@ -101,11 +118,24 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const newTab = useBrowser((state) => state.newTab)
   const openSplit = useBrowser((state) => state.openSplit)
   const toast = useBrowser((state) => state.toast)
+  const removeHistory = useBrowser((state) => state.removeHistory)
   const updateSettings = useBrowser((state) => state.updateSettings)
+  const activateSpace = useBrowser((state) => state.activateSpace)
   const [today] = useState(() => Date.now())
+  // L'heure relative des cartes se rafraîchit toute seule : une page vue il y
+  // a 59 s doit dire « 1 min » sans qu'on recharge l'accueil.
+  const [now, setNow] = useState(() => Date.now())
+  // « Reprendre » : la session gardée la plus récente, sinon la dernière page
+  // de l'historique. Lue une fois au montage, comme dans le panneau Sessions.
+  const [lastSession] = useState(() => listSessions()[0] ?? null)
   const [modules, setModules] = useState<BentoModules>(readBentoModules)
   const [customizing, setCustomizing] = useState(false)
-  const [menu, setMenu] = useState<{ tile: Tile; x: number; y: number } | null>(null)
+  const [menu, setMenu] = useState<{ card: RecentCard; x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const toggleModule = (key: keyof BentoModules): void => {
     setModules((prev) => {
@@ -118,6 +148,21 @@ export default function StartPage({ tabId }: { tabId: string }) {
       return next
     })
   }
+
+  // Deux préréglages : « minimal » ne garde que la salutation et la recherche.
+  const applyPreset = (preset: 'minimal' | 'full'): void => {
+    const next: BentoModules =
+      preset === 'minimal'
+        ? { weather: false, shortcuts: false, recent: false, tasks: false, quickNotes: false }
+        : DEFAULT_BENTO_MODULES
+    setModules(next)
+    try {
+      localStorage.setItem(BENTO_STORAGE_KEY, JSON.stringify(next))
+    } catch {
+      /* localStorage indisponible */
+    }
+  }
+
   // Vrai pendant la saisie d'une ville : l'invite de recherche s'efface pour
   // qu'un seul champ à la fois soit en jeu.
   const [cityEditing, setCityEditing] = useState(false)
@@ -134,39 +179,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
     media.addEventListener('change', sync)
     return () => media.removeEventListener('change', sync)
   }, [])
-
-  // Vignettes des pages récentes : demandées seulement si le réglage est actif
-  // et seulement pour les adresses de l'historique affiché.
-  const [thumbs, setThumbs] = useState<Record<string, string>>({})
-  const thumbsEnabled = view?.settings.thumbnails === true
-  const historyKey = view
-    ? view.history
-        .slice(0, 12)
-        .map((entry) => entry.url)
-        .join('\n')
-    : ''
-
-  useEffect(() => {
-    if (!thumbsEnabled || !historyKey) {
-      queueMicrotask(() => setThumbs({}))
-      return
-    }
-    let alive = true
-    const urls = historyKey.split('\n')
-    void Promise.all(
-      urls.map(async (url) => [url, await window.vela.thumbs.get(url).catch(() => null)] as const)
-    ).then((entries) => {
-      if (!alive) return
-      const next: Record<string, string> = {}
-      for (const [url, data] of entries) if (data) next[url] = data
-      setThumbs(next)
-    })
-    return () => {
-      alive = false
-    }
-    // `view.history` change à chaque diffusion : après une purge des vignettes,
-    // l'accueil redemande donc les images au lieu de garder les anciennes.
-  }, [thumbsEnabled, historyKey, view?.history])
 
   const motion = view?.settings.reduceMotion ?? 'system'
   const calm = motion === 'reduce' || (motion === 'system' && systemCalm)
@@ -230,85 +242,32 @@ export default function StartPage({ tabId }: { tabId: string }) {
       spaceTheme: space?.theme ?? null
     }) === SKY_THEME
 
-  // Une tuile par page : la clé ignore la requête et l'ancre, donc
-  // « article/une-page » et « article/une-page?ref=home » ne font qu'une.
-  const tiles: Tile[] = []
-  const seen = new Set<string>()
-  // Deux tuiles par domaine au plus : une grille d'accueil ne doit pas être
-  // trois fois la même chaîne YouTube.
-  const perHost = new Map<string, number>()
+  // Une carte par domaine : cinq adresses du même site ne font pas cinq
+  // cartes. La plus récente porte le titre et l'heure, le compte dit la
+  // fréquence. Cinq cartes au plus, puis « Tout l'historique ».
+  const cards: RecentCard[] = []
+  const indexOfHost = new Map<string, number>()
   for (const entry of view.history) {
     if (!/^https?:/i.test(entry.url)) continue
-    const key = canonicalUrl(entry.url)
-    if (seen.has(key)) continue
     const host = hostOf(entry.url)
-    if ((perHost.get(host) ?? 0) >= 2) continue
-    seen.add(key)
-    perHost.set(host, (perHost.get(host) ?? 0) + 1)
-    tiles.push({
-      id: entry.id,
-      url: entry.url,
-      title: tileLabel(entry.title, entry.url, host),
-      host,
-      favicon: entry.favicon,
-      meta: timeAgo(entry.visitedAt),
-      kind: 'history'
-    })
-    if (tiles.length >= 6) break
-  }
-  if (tiles.length < 4) {
-    for (const bookmark of view.bookmarks) {
-      if (!/^https?:/i.test(bookmark.url)) continue
-      const key = canonicalUrl(bookmark.url)
-      if (seen.has(key)) continue
-      seen.add(key)
-      tiles.push({
-        id: bookmark.id,
-        url: bookmark.url,
-        title: readableTitle(bookmark.title, bookmark.url),
-        host: hostOf(bookmark.url),
-        favicon: bookmark.favicon,
-        meta: 'Favori',
-        kind: 'bookmark'
+    const index = indexOfHost.get(host)
+    if (index === undefined) {
+      indexOfHost.set(host, cards.length)
+      cards.push({
+        host,
+        url: entry.url,
+        title: historyTitle(entry.title, entry.url, host),
+        favicon: entry.favicon,
+        spaceId: entry.spaceId,
+        visitedAt: entry.visitedAt,
+        visits: 1
       })
-      if (tiles.length >= 6) break
+    } else {
+      cards[index].visits += 1
     }
   }
-  // Une grille pleine plutôt qu'une carte isolée : les raccourcis complètent
-  // l'historique jusqu'à trois ou six tuiles, sans jamais dépasser. Quand
-  // l'espace a ses propres sites, ce sont eux qui servent de départ — un
-  // espace cinéma ne propose pas GitHub.
-  const starters = space?.shortcuts?.length
-    ? space.shortcuts.slice(0, 4).map((shortcut) => ({
-        label: shortcut.title,
-        detail: hostOf(shortcut.url),
-        url: shortcut.url
-      }))
-    : STARTERS
-  if (tiles.length < 6) {
-    const target = tiles.length <= 3 ? 3 : 6
-    for (const starter of starters) {
-      if (tiles.length >= target) break
-      if (seen.has(starter.url)) continue
-      seen.add(starter.url)
-      tiles.push({
-        id: starter.url,
-        url: starter.url,
-        title: starter.label,
-        host: hostOf(starter.url),
-        meta: 'Raccourci',
-        kind: 'starter'
-      })
-    }
-  }
-  const onlyStarters = tiles.every((tile) => tile.kind === 'starter')
-  // Sans historique, la grille ne montre que des favoris : l'en-tête le dit
-  // plutôt que d'annoncer « Récemment » au-dessus de pages jamais visitées.
-  const recentLabel = onlyStarters
-    ? 'Pour commencer'
-    : tiles.some((tile) => tile.kind === 'history')
-      ? 'Récemment'
-      : 'Vos favoris'
+  cards.sort((a, b) => b.visitedAt - a.visitedAt)
+  const visibleCards = cards.slice(0, 5)
 
   // L'accueil ne compte pas comme une page : une fenêtre qui ne montre que son
   // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
@@ -365,7 +324,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
     if (calm || (event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return
     const target = event.target as HTMLElement | null
     pendingRef.current = {
-      tile: target?.closest<HTMLElement>('.recent-tile') ?? null,
+      tile: target?.closest<HTMLElement>('.recent-card') ?? null,
       x: event.clientX,
       y: event.clientY
     }
@@ -403,50 +362,75 @@ export default function StartPage({ tabId }: { tabId: string }) {
     })
   }
 
-  // Un clic ouvre ici, ⌘-clic ailleurs, ⌥-clic à côté : la tuile propose les
+  // Un clic ouvre ici, ⌘-clic ailleurs, ⌥-clic à côté : la carte propose les
   // trois gestes que le reste de l'application connaît déjà.
-  const openTile = (event: ReactMouseEvent<HTMLButtonElement>, tile: Tile): void => {
+  const openTile = (event: ReactMouseEvent<HTMLButtonElement>, card: RecentCard): void => {
     if (event.metaKey || event.ctrlKey) {
       event.preventDefault()
-      newTab(tile.url)
+      newTab(card.url)
       return
     }
     if (event.altKey) {
       event.preventDefault()
-      openSplit(tile.url)
+      openSplit(card.url)
       return
     }
-    navigate(tabId, tile.url)
+    navigate(tabId, card.url)
   }
 
-  const tileMenuItems = (tile: Tile): TileMenuItem[] => [
+  const cardMenuItems = (card: RecentCard): TileMenuItem[] => [
     {
       id: 'new-tab',
       label: 'Ouvrir dans un nouvel onglet',
       icon: 'external',
-      onSelect: () => newTab(tile.url)
-    },
-    {
-      id: 'split',
-      label: 'Ouvrir en vue scindée',
-      icon: 'split',
-      onSelect: () => openSplit(tile.url)
+      onSelect: () => newTab(card.url)
     },
     {
       id: 'copy',
-      label: 'Copier l’adresse',
+      label: 'Copier le lien',
       icon: 'copy',
       onSelect: () => {
-        void navigator.clipboard.writeText(tile.url).then(
-          () => toast('Adresse copiée.'),
+        void navigator.clipboard.writeText(card.url).then(
+          () => toast('Lien copié.'),
           () => toast('Copie impossible.', 'error')
         )
       }
+    },
+    {
+      id: 'remove',
+      label: 'Retirer de l’historique',
+      icon: 'trash',
+      onSelect: () => void removeHistory(card.url)
     }
   ]
 
-  const tileStyle = (tile: Tile): CSSProperties =>
-    ({ '--tile-tint': tintFor(tile.host || tile.title) }) as CSSProperties
+  // Reprendre : la session gardée la plus récente, sinon la dernière page vue.
+  const resume = async (): Promise<void> => {
+    if (lastSession) {
+      const target = view.spaces.some((item) => item.id === lastSession.spaceId)
+        ? lastSession.spaceId
+        : view.activeSpaceId
+      activateSpace(target)
+      for (const tab of lastSession.tabs) {
+        await window.vela.tabs
+          .create({ spaceId: target, url: tab.url, activate: false })
+          .catch(() => null)
+      }
+      toast(`« ${lastSession.name} » rouverte.`)
+      return
+    }
+    const last = view.history[0]
+    if (!last) {
+      toast('Rien à reprendre pour le moment.')
+      return
+    }
+    newTab(last.url)
+  }
+
+  // Le geste dit sur quoi il porte : « Reprendre YouTube » plutôt qu'un
+  // « Reprendre » qui laisse deviner ce qu'on rouvre.
+  const resumeTarget =
+    lastSession?.name ?? (view.history[0] ? hostOf(view.history[0].url) : '')
 
   return (
     <div
@@ -492,6 +476,22 @@ export default function StartPage({ tabId }: { tabId: string }) {
               </span>
             </h1>
             <p className="home-lede">{lede}</p>
+            <button
+              type="button"
+              className="home-resume"
+              onClick={() => void resume()}
+              title={
+                lastSession
+                  ? `Rouvrir « ${lastSession.name} » (${lastSession.tabs.length} onglets)`
+                  : 'Rouvrir la dernière page visitée'
+              }
+            >
+              <Icon name="history" size={12} />
+              <span>{resumeTarget ? `Reprendre ${resumeTarget}` : 'Reprendre'}</span>
+              {lastSession ? (
+                <span className="home-resume-count">{lastSession.tabs.length}</span>
+              ) : null}
+            </button>
           </div>
           {modules.weather && <HomeWeather onEditingChange={setCityEditing} />}
         </header>
@@ -550,6 +550,28 @@ export default function StartPage({ tabId }: { tabId: string }) {
             </div>
 
             <div className="customize-group">
+              <span className="customize-label">Préréglages :</span>
+              <div className="customize-chips">
+                <button
+                  type="button"
+                  className="customize-chip"
+                  onClick={() => applyPreset('minimal')}
+                  title="Salutation et recherche seulement"
+                >
+                  Minimal
+                </button>
+                <button
+                  type="button"
+                  className="customize-chip"
+                  onClick={() => applyPreset('full')}
+                  title="Rétablir tous les modules"
+                >
+                  Complet
+                </button>
+              </div>
+            </div>
+
+            <div className="customize-group">
               <span className="customize-label">Ambiance de fond :</span>
               <div className="customize-chips">
                 {(['gradient', 'plain'] as const).map((bg) => (
@@ -588,6 +610,42 @@ export default function StartPage({ tabId }: { tabId: string }) {
               </span>
             </button>
 
+            {/* Le moteur et les deux raccourcis vivent dans le champ : sous la
+                barre, ils flottaient à droite, détachés de ce qu'ils
+                commandent. */}
+            <div className="home-chips home-chips-meta">
+              {/* Le moteur rejoint les puces : il commande la même barre, il
+                  n'a pas à flotter en dessous, détaché de ce qu'il sert. */}
+              <button
+                type="button"
+                className="home-chip home-chip-flat home-engine-chip"
+                onClick={() => setOverlay('settings')}
+                title="Changer de moteur de recherche"
+              >
+                via {engine}
+                <span aria-hidden="true">▾</span>
+              </button>
+              <button
+                type="button"
+                className="home-chip home-chip-flat"
+                onClick={() => setOverlay('command')}
+                title={`Palette (${shortcut('K')})`}
+              >
+                <Icon name="command" size={12} />
+                Palette
+                <span className="home-chip-key">{shortcut('K')}</span>
+              </button>
+              <button
+                type="button"
+                className="home-chip home-chip-flat"
+                onClick={() => openAgent()}
+                title="Demander à l’agent"
+              >
+                <Icon name="sparkles" size={12} />
+                Agent
+              </button>
+            </div>
+
             <button
               type="button"
               className="home-go"
@@ -599,27 +657,6 @@ export default function StartPage({ tabId }: { tabId: string }) {
             </button>
           </div>
 
-          <div className="home-chips home-chips-meta">
-            <span className="home-engine">via {engine}</span>
-            <button
-              type="button"
-              className="home-chip home-chip-flat"
-              onClick={() => setOverlay('command')}
-              title={`Palette (${shortcut('K')})`}
-            >
-              <Icon name="command" size={12} />
-              Palette
-            </button>
-            <button
-              type="button"
-              className="home-chip home-chip-flat"
-              onClick={() => openAgent()}
-              title="Demander à l’agent"
-            >
-              <Icon name="sparkles" size={12} />
-              Agent
-            </button>
-          </div>
         </section>
 
         {modules.shortcuts && <HomeFavorites spaceId={spaceId} />}
@@ -631,9 +668,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
           }
         >
           {modules.recent && (
-            <section className="home-card home-recent" aria-label={recentLabel}>
+            <section className="home-card home-recent" aria-label="Récemment">
               <div className="home-card-head">
-                <h2>{recentLabel}</h2>
+                <h2>Récemment</h2>
                 <button
                   type="button"
                   className="home-card-action"
@@ -645,63 +682,80 @@ export default function StartPage({ tabId }: { tabId: string }) {
                 </button>
               </div>
 
-              {onlyStarters ? (
-                <p className="home-hint">
-                  Quelques pages pour commencer. Vos recherches partent vers le moteur choisi.
-                </p>
-              ) : null}
-
-              <div className="recent-grid">
-                {tiles.map((tile) => (
-                  <button
-                    key={`${tile.kind}-${tile.id}`}
-                    type="button"
-                    className="recent-tile"
-                    data-kind={tile.kind}
-                    data-thumb={thumbs[tile.url] ? 'true' : undefined}
-                    style={tileStyle(tile)}
-                    onClick={(event) => openTile(event, tile)}
+              {visibleCards.length === 0 ? (
+                <button
+                  type="button"
+                  className="recent-empty"
+                  onClick={() => setOverlay('history')}
+                >
+                  <Icon name="clock" size={14} />
+                  <span>Vos pages récentes apparaîtront ici.</span>
+                </button>
+              ) : (
+                <div className="recent-cards">
+                  {visibleCards.map((card) => (
+                  <div
+                    key={card.host}
+                    className="recent-card"
                     onAuxClick={(event) => {
                       if (event.button !== 1) return
                       event.preventDefault()
-                      newTab(tile.url)
+                      newTab(card.url)
                     }}
                     onContextMenu={(event) => {
                       event.preventDefault()
-                      setMenu({ tile, x: event.clientX, y: event.clientY })
+                      setMenu({ card, x: event.clientX, y: event.clientY })
                     }}
-                    onKeyDown={(event) => {
-                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
-                        return
-                      event.preventDefault()
-                      const rect = event.currentTarget.getBoundingClientRect()
-                      setMenu({ tile, x: rect.left, y: rect.bottom })
-                    }}
-                    title={tile.meta ? `${tile.title} · ${tile.meta}` : tile.title}
                   >
-                    {thumbs[tile.url] && (
-                      <span className="tile-thumb" aria-hidden="true">
-                        <img src={thumbs[tile.url]} alt="" draggable={false} loading="lazy" />
+                    <button
+                      type="button"
+                      className="recent-open"
+                      onClick={(event) => openTile(event, card)}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
+                          return
+                        event.preventDefault()
+                        const rect = event.currentTarget.getBoundingClientRect()
+                        setMenu({ card, x: rect.left, y: rect.bottom })
+                      }}
+                      title={card.url}
+                    >
+                      <span className="recent-card-top">
+                        <span className="recent-favicon" aria-hidden="true">
+                          <Favicon
+                            src={card.favicon}
+                            url={card.url}
+                            label={card.host}
+                            size={24}
+                            spaceId={card.spaceId}
+                          />
+                        </span>
+                        <span className="recent-card-time">
+                          {compactAgo(card.visitedAt, now)}
+                        </span>
                       </span>
-                    )}
-                    <span className="tile-top">
-                      <Favicon
-                        src={tile.favicon}
-                        url={tile.url}
-                        label={tile.host || tile.title}
-                        size={18}
-                        spaceId={spaceId}
-                      />
-                      <span className="tile-host">{tile.host}</span>
-                      <span className="tile-badge">{tile.meta}</span>
-                    </span>
-                    <span className="tile-title">{tile.title}</span>
-                    <span className="tile-arrow">
-                      <Icon name="arrow-right" size={13} />
-                    </span>
+                      <span className="recent-title">{card.title}</span>
+                      {/* Quand le titre est déjà le domaine, ne l'écrire
+                          qu'une fois. Le compte reste utile. */}
+                      {card.title !== card.host ? (
+                        <span className="recent-host">
+                          {card.visits > 1 ? `${card.host} · ${card.visits} visites` : card.host}
+                        </span>
+                      ) : null}
+                    </button>
+                  </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="recent-all"
+                    onClick={() => setOverlay('history')}
+                  >
+                    <Icon name="clock" size={14} />
+                    <span>Tout l’historique</span>
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -737,8 +791,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
         <TileMenu
           x={menu.x}
           y={menu.y}
-          label={menu.tile.title}
-          items={tileMenuItems(menu.tile)}
+          label={menu.card.title}
+          items={cardMenuItems(menu.card)}
           onClose={() => setMenu(null)}
         />
       )}

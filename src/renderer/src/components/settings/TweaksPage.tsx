@@ -41,7 +41,8 @@ export default function TweaksPage({
   // lui-même quand le thème change, sans effet de synchronisation.
   const [draft, setDraft] = useState<{ from: string; rgb: Rgb } | null>(null)
   const [rgbNote, setRgbNote] = useState<string | null>(null)
-  const rgb = draft && draft.from === settings.customAccent ? draft.rgb : hexToRgb(settings.customAccent)
+  const rgb =
+    draft && draft.from === settings.customAccent ? draft.rgb : hexToRgb(settings.customAccent)
 
   const applyCustom = (value: string): void => {
     const parsed = parseHex(value)
@@ -69,7 +70,11 @@ export default function TweaksPage({
 
   const commitRgb = (): void => {
     const next = rgbToHex(rgb)
-    setRgbNote(next.toUpperCase() === settings.customAccent.toUpperCase() ? null : `Appliqué : ${next.toUpperCase()}`)
+    setRgbNote(
+      next.toUpperCase() === settings.customAccent.toUpperCase()
+        ? null
+        : `Appliqué : ${next.toUpperCase()}`
+    )
     applyCustom(next)
   }
 
@@ -88,7 +93,8 @@ export default function TweaksPage({
           <div className="setting-head">
             <h2 id="tweaks-accent">Accent</h2>
             <p>
-              Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.
+              Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais
+              recoloré.
             </p>
           </div>
           <div className="theme-grid" role="group" aria-label="Palette d’accentuation">
@@ -103,10 +109,14 @@ export default function TweaksPage({
                   aria-label={preset.label}
                   className="theme-dot"
                   data-active={active}
-                  style={{ '--swatch': teinte, '--swatch-ink': readableOn(teinte) } as CSSProperties}
+                  style={
+                    { '--swatch': teinte, '--swatch-ink': readableOn(teinte) } as CSSProperties
+                  }
                   onClick={() => chooseTheme(preset.id)}
                 >
-                  <span className="theme-dot-disc">{active && <Icon name="check" size={15} />}</span>
+                  <span className="theme-dot-disc">
+                    {active && <Icon name="check" size={15} />}
+                  </span>
                   <span className="theme-dot-name">{preset.label}</span>
                 </button>
               )
@@ -246,7 +256,10 @@ export default function TweaksPage({
           <div className="glass-demo">
             <span className="glass-demo-orb" aria-hidden="true" />
             <div className="glass-demo-stack">
-              <span className="glass-slab" style={{ backdropFilter: `blur(${settings.glassBlur}px)` }} />
+              <span
+                className="glass-slab"
+                style={{ backdropFilter: `blur(${settings.glassBlur}px)` }}
+              />
               <span
                 className="glass-slab is-raised"
                 style={{ backdropFilter: `blur(${settings.glassBlur}px)` }}
@@ -262,7 +275,10 @@ export default function TweaksPage({
         <section className="setting-block" aria-labelledby="tweaks-reset">
           <div className="setting-head">
             <h2 id="tweaks-reset">Réinitialiser</h2>
-            <p>Couleur, verre, fond, ambiance et options d’interface reviennent aux valeurs d’origine.</p>
+            <p>
+              Couleur, verre, fond, ambiance et options d’interface reviennent aux valeurs
+              d’origine.
+            </p>
           </div>
           <button type="button" className="action wide tweak-reset" onClick={resetAppearance}>
             <Icon name="refresh" size={13} />

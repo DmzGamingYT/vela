@@ -38,18 +38,23 @@ describe('validation des actions de l’agent', () => {
     const events: string[] = []
     const contents = {
       isDestroyed: () => false,
-      executeJavaScript: vi.fn().mockResolvedValue({ found: true, x: 50, y: 60, name: 'Recherche' }),
+      executeJavaScript: vi
+        .fn()
+        .mockResolvedValue({ found: true, x: 50, y: 60, name: 'Recherche' }),
       focus: () => events.push('focus'),
       sendInputEvent: (event: { type: string }) => events.push(event.type),
       insertText: () => events.push('saisie'),
       getTitle: () => 'Page',
       getURL: () => 'https://example.org/'
     }
-    const driver = new PageDriver({
-      open: async () => 'onglet',
-      go: async () => {},
-      contents: () => contents as never
-    }, 'espace')
+    const driver = new PageDriver(
+      {
+        open: async () => 'onglet',
+        go: async () => {},
+        contents: () => contents as never
+      },
+      'espace'
+    )
     Object.assign(driver, { tabId: 'onglet' })
     await driver.run({ tool: 'type', args: { name: 'Recherche', text: 'Bonjour' } })
     expect(events).toEqual(['focus', 'mouseDown', 'mouseUp', 'saisie'])
@@ -57,17 +62,24 @@ describe('validation des actions de l’agent', () => {
 
   it('ne lance pas une navigation refusée', async () => {
     showMessageBox.mockResolvedValue({ response: 0 })
-    const reply = (): Response => new Response(
-      'data: {"choices":[{"delta":{"content":"{\\"tool\\":\\"open\\",\\"args\\":{\\"url\\":\\"https://example.org/\\"}}"}}]}\n\n',
-      { status: 200 }
-    )
+    const reply = (): Response =>
+      new Response(
+        'data: {"choices":[{"delta":{"content":"{\\"tool\\":\\"open\\",\\"args\\":{\\"url\\":\\"https://example.org/\\"}}"}}]}\n\n',
+        { status: 200 }
+      )
     // Un corps ne se lit qu'une fois : l'agent interroge le modèle deux fois
     // par action, donc chaque appel reçoit sa propre réponse.
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(reply())))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(reply()))
+    )
     const open = vi.fn()
     const send = vi.fn()
     const win = { isDestroyed: () => false, webContents: { isDestroyed: () => false, send } }
-    const settings = { ...DEFAULT_SETTINGS, agent: { mode: 'api' as const, provider: 'local' as const, providers: defaultProviders() } }
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      agent: { mode: 'api' as const, provider: 'local' as const, providers: defaultProviders() }
+    }
     const runner = new AgentRunner(
       () => win as never,
       () => settings,
@@ -78,42 +90,68 @@ describe('validation des actions de l’agent', () => {
     )
     runner.start({ prompt: 'Ouvre une page', sources: [], spaceId: 'espace', mode: 'act' })
     await vi.waitFor(() => expect(showMessageBox).toHaveBeenCalledOnce())
-    await vi.waitFor(() => expect(send).toHaveBeenCalledWith('agent:event', expect.objectContaining({ type: 'cancelled' })))
+    await vi.waitFor(() =>
+      expect(send).toHaveBeenCalledWith(
+        'agent:event',
+        expect.objectContaining({ type: 'cancelled' })
+      )
+    )
     expect(open).not.toHaveBeenCalled()
     expect(showMessageBox.mock.calls[0][1].detail).toContain('https://example.org/')
   })
 
   it('exécute uniquement une action acceptée puis interrompt une action refusée', async () => {
     showMessageBox.mockResolvedValueOnce({ response: 1 }).mockResolvedValueOnce({ response: 0 })
-    const reply = (payload: object | string): Response => new Response(
-      `data: ${JSON.stringify({
-        choices: [{ delta: { content: typeof payload === 'string' ? payload : JSON.stringify(payload) } }]
-      })}\n\n`,
-      { status: 200 }
-    )
+    const reply = (payload: object | string): Response =>
+      new Response(
+        `data: ${JSON.stringify({
+          choices: [
+            { delta: { content: typeof payload === 'string' ? payload : JSON.stringify(payload) } }
+          ]
+        })}\n\n`,
+        { status: 200 }
+      )
     // Deux appels par action : l'outil, puis ses arguments.
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(reply('open'))
-      .mockResolvedValueOnce(reply({ url: 'https://example.org/' }))
-      .mockResolvedValueOnce(reply('click'))
-      .mockResolvedValueOnce(reply({ name: 'Envoyer' })))
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(reply('open'))
+        .mockResolvedValueOnce(reply({ url: 'https://example.org/' }))
+        .mockResolvedValueOnce(reply('click'))
+        .mockResolvedValueOnce(reply({ name: 'Envoyer' }))
+    )
     const send = vi.fn()
     const sendInputEvent = vi.fn()
     const contents = {
-      isDestroyed: () => false, isLoading: () => false,
-      getURL: () => 'https://example.org/', getTitle: () => 'Exemple', sendInputEvent
+      isDestroyed: () => false,
+      isLoading: () => false,
+      getURL: () => 'https://example.org/',
+      getTitle: () => 'Exemple',
+      sendInputEvent
     }
     const open = vi.fn().mockResolvedValue('onglet')
     const win = { isDestroyed: () => false, webContents: { isDestroyed: () => false, send } }
-    const settings = { ...DEFAULT_SETTINGS, agent: { mode: 'api' as const, provider: 'local' as const, providers: defaultProviders() } }
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      agent: { mode: 'api' as const, provider: 'local' as const, providers: defaultProviders() }
+    }
     const runner = new AgentRunner(
-      () => win as never, () => settings, () => null,
-      async () => ({ text: '', anchor: '' }), () => {},
+      () => win as never,
+      () => settings,
+      () => null,
+      async () => ({ text: '', anchor: '' }),
+      () => {},
       { open, go: vi.fn(), contents: () => contents as never }
     )
     runner.start({ prompt: 'Explore', sources: [], spaceId: 'espace', mode: 'act' })
     await vi.waitFor(() => expect(showMessageBox).toHaveBeenCalledTimes(2), { timeout: 3000 })
-    await vi.waitFor(() => expect(send).toHaveBeenCalledWith('agent:event', expect.objectContaining({ type: 'cancelled' })))
+    await vi.waitFor(() =>
+      expect(send).toHaveBeenCalledWith(
+        'agent:event',
+        expect.objectContaining({ type: 'cancelled' })
+      )
+    )
     expect(open).toHaveBeenCalledOnce()
     expect(sendInputEvent).not.toHaveBeenCalled()
   })

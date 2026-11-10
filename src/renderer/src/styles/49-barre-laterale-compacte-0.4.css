@@ -1,0 +1,245 @@
+/* Tranche 49 — barre latérale, deuxième passe.
+   Carte Sessions en une ligne, onglet actif plus sobre, ligne de chargement
+   au lieu de la roue, épinglés carrés et onglets en veille rangés en fin de
+   liste. */
+
+/* ── Sessions : une ligne de 40 px ─────────────────────────────────────── */
+.sessions-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 11px;
+}
+
+.sessions-card .sessions-kicker {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.sessions-card .sessions-date {
+  margin-left: auto;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sessions-card .sessions-arrow {
+  grid-column: auto;
+  grid-row: auto;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.sessions-card:hover {
+  transform: none;
+}
+
+/* ── Onglet actif : la barre reste, le reste s'efface ──────────────────── */
+.sidebar .tab-row[data-active='true'] {
+  background: var(--fill-1);
+  border-color: var(--line-soft);
+  box-shadow: 0 1px 2px rgba(3, 5, 12, 0.12);
+}
+
+:root[data-mode='light'] .sidebar .tab-row[data-active='true'] {
+  box-shadow: 0 1px 2px rgba(34, 48, 84, 0.06);
+}
+
+/* ── Chargement : un trait sous la ligne, pas une roue ─────────────────── */
+.sidebar .tab-row .tab-loading {
+  position: absolute;
+  right: 10px;
+  bottom: 2px;
+  left: 10px;
+  width: auto;
+  height: 2px;
+  border: 0;
+  border-radius: 2px;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--clay) 25%,
+    var(--clay) 45%,
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+  background-size: 45% 100%;
+  animation: tab-progress 1.15s var(--ease-standard) infinite;
+}
+
+@keyframes tab-progress {
+  from {
+    background-position: -45% 0;
+  }
+  to {
+    background-position: 145% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar .tab-row .tab-loading {
+    animation-duration: 3s;
+  }
+}
+
+/* ── Épinglés : icônes carrées ─────────────────────────────────────────── */
+.pin-tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  /* Aucun retrait horizontal : les tuiles s'alignent sur les lignes à 16 px. */
+  padding: 4px 0 12px;
+}
+
+/* Quatre colonnes dans la largeur disponible : 4 × 48 + 3 × 8 ferait 216 px
+   pour 212 disponibles, donc les cases prennent 1fr et mesurent 47 px. */
+.pin-tile {
+  aspect-ratio: 1;
+}
+
+.pin-tile-main {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+/* L'onglet actif n'a plus de contour : 2 px de bordure + 2 px d'ombre
+donnaient un trait de 4 px, plus lourd que la barre bleue des onglets. Un
+fond teinté et un point sous l'icône disent la même chose sans crier. */
+/* Actif : contour fin et fond clair. Le trait reste plus léger que la barre
+   des onglets (3 px). */
+.pin-tile[data-active='true'] .pin-tile-main {
+  border: 1px solid color-mix(in srgb, var(--pin-accent) 60%, transparent);
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(3, 5, 12, 0.1);
+}
+
+/* Ouvert en arrière-plan : un point sous l'icône. Un site fermé n'existe pas
+   ici — un épinglé est un onglet ouvert — donc l'absence de point dit déjà
+   « pas actif ». */
+.pin-tile:not([data-active='true'])::after {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--pin-accent);
+  content: '';
+}
+
+/* Les cases vides complètent la rangée de quatre : une seule icône laissait
+un grand vide sous l'en-tête. */
+.pin-slot {
+  aspect-ratio: 1;
+  width: auto;
+  height: auto;
+  border: 1px dashed var(--line-soft);
+  border-radius: 11px;
+  opacity: 0.55;
+}
+
+/* Le compteur de la section est un bouton d'épinglage. */
+.tabs-pin-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabs-pin-add:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.tabs-pin-add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Chevron de section : replier la grille des épinglés. */
+.tabs-fold {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-left: -2px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--faint);
+}
+
+.tabs-fold:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.pin-tiles[data-collapsed='true'] {
+  display: none;
+}
+
+/* Veille : l'icône s'efface comme la lune de la liste. */
+.pin-tile[data-asleep='true'] {
+  opacity: 0.6;
+}
+
+.pin-tile[data-asleep='true']:hover,
+.pin-tile[data-asleep='true']:focus-within {
+  opacity: 1;
+}
+
+.pin-tile[data-asleep='true']::after {
+  background: var(--faint);
+}
+
+/* L'infobulle nomme le site puis son domaine : les tuiles n'ont pas de texte. */
+.pin-tip-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pin-tip-host {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* Le compteur du titre prend une teinte douce : le rouge se lit comme une
+   erreur, pas comme « trois nouveautés ». */
+.pin-tile-count {
+  background: #4f7fd0;
+  color: #ffffff;
+}
+
+/* Le bord du carré s'aligne sur la lettre de l'intertitre. */
+.sidebar .tabs-scroll > .tabs-head {
+  padding-left: 0;
+}
+
+.pin-tiles {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+/* ── Accueil : hors de la liste, filet fin dessous ─────────────────────── */
+.home-zone {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}

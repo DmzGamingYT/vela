@@ -1,0 +1,198 @@
+/* Tranche 57 — ergonomie de l'accueil (0.4).
+   Dix défauts vus à l'usage : lignes centrées et espacées, doublons de
+   domaine, bouton qui ne ressemblait pas à un bouton, dates tronquées,
+   sélecteur de moteur détaché, aide éloignée de son titre, « + » illisible,
+   champ de tâche collé au titre, colonne droite courte, cases vides muettes. */
+
+/* ── Récemment : liste compacte, alignée à gauche, heure à droite ─────── */
+.recent-grid {
+  gap: 0;
+}
+
+.recent-tile {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  height: 46px;
+  min-height: 46px;
+  padding: 0 4px 0 8px;
+  gap: 8px;
+}
+
+.recent-open {
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0;
+}
+
+.recent-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recent-copy {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.recent-copy .tile-title {
+  font-size: 12.5px;
+}
+
+.recent-meta {
+  font-size: 10.5px;
+}
+
+.recent-time {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--faint);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Reprendre : un bouton, avec un contour et un fond ────────────────── */
+.home-resume {
+  height: 28px;
+  background: var(--fill-2);
+  border: 1px solid var(--line-3);
+  color: var(--ink-1);
+}
+
+.home-resume:hover {
+  border-color: color-mix(in srgb, var(--ink) 24%, transparent);
+  background: var(--fill-3, var(--fill-2));
+}
+
+/* ── Moteur ramené dans la barre, avant les puces ─────────────────────── */
+.home-engine-chip {
+  gap: 3px;
+}
+
+.home-engine-chip > span[aria-hidden='true'] {
+  color: var(--faint);
+}
+
+/* ── Favoris : l'aide suit son titre ──────────────────────────────────── */
+.home-pins-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-favorites-empty {
+  margin: 0;
+  text-align: left;
+}
+
+.home-pins[data-empty='true'] .home-pins-head {
+  justify-content: flex-start;
+}
+
+/* ── Horloge : « + » puis « Ajouter une ville » au survol ─────────────── */
+.day-add-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+.day-add-label {
+  display: none;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.day-add-mini:hover .day-add-label,
+.day-add-mini:focus-visible .day-add-label {
+  display: inline;
+}
+
+/* ── Tâches : champ pleine largeur sur sa propre ligne ────────────────── */
+.home-tasks .tasks-add {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0 10px;
+}
+
+.home-tasks .tasks-add input {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-tasks .tasks-add button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: var(--fill-2);
+  color: var(--ink-1);
+}
+
+.home-tasks .tasks-add button:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--ink) 24%, transparent);
+}
+
+.home-tasks .tasks-add button:disabled {
+  opacity: 0.45;
+}
+
+/* ── Colonnes : chacune sa hauteur, pas de vide étiré ─────────────────── */
+.home-grid {
+  align-items: start;
+}
+
+.home-grid > .home-recent,
+.home-grid > .home-side {
+  align-self: start;
+  height: auto;
+}
+
+/* ── Épinglés : un « + » dans chaque emplacement libre ────────────────── */
+.pin-slot {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px dashed var(--line-soft);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--faint);
+  opacity: 0.55;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+}
+
+.pin-slot > svg {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.pin-slot:hover,
+.pin-slot:focus-visible {
+  opacity: 0.95;
+  border-color: var(--line-2);
+}
+
+.pin-slot:hover > svg,
+.pin-slot:focus-visible > svg {
+  opacity: 0.9;
+}
+
+.pin-slot:disabled {
+  opacity: 0.3;
+}
+
+/* ── Sessions : plus de date tronquée, le nombre suffit ───────────────── */
+.sessions-card .sessions-date {
+  display: none;
+}

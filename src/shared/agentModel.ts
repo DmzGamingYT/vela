@@ -132,7 +132,11 @@ export function chatModel(options: ChatModelOptions): AgentModel {
       const messages: ChatMessage[] = []
       if (instruction) messages.push({ role: 'system', content: instruction })
       messages.push({ role: 'user', content: text })
-      const chat = constrained(buildChatRequest(definition, config, key, messages), schema, definition)
+      const chat = constrained(
+        buildChatRequest(definition, config, key, messages),
+        schema,
+        definition
+      )
 
       const controller = new AbortController()
       const relay = (): void => controller.abort()

@@ -29,9 +29,12 @@ import {
   createGroup as createGroupState,
   createSpace as createSpaceState,
   createTab as createTabState,
+  dayKey,
   newId,
-  SPACE_COLORS
+  SPACE_COLORS,
+  weekKey
 } from '@shared/defaults'
+import { GROUP_COLORS, isGroupIcon } from '@shared/groupColors'
 import { moveTab } from '@shared/ordering'
 import { SPLIT_MIN_WIDTH } from '@shared/layout'
 import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
@@ -72,10 +75,11 @@ import {
   type TabState,
   type TabView
 } from '@shared/types'
-import { isHomeUrl, titleFromUrl } from '@shared/url'
+import { isHomeUrl, isLoadableUrl, titleFromUrl } from '@shared/url'
 import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
+import { setSessionLanguage } from './identity'
 import { pruneAvatars, saveAvatarDataUrl } from './avatars'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
@@ -155,6 +159,9 @@ export class Browser {
       this.store.schedule()
     },
     changed: () => this.broadcast(),
+    noteBlocked: () => this.noteBlocked(),
+    freezeNotice: (shots) => this.send('views:frozen', shots),
+    scrollDirection: (direction) => this.send('scroll:direction', direction),
     createTab: (spaceId, url, background) =>
       this.createTab({ spaceId, url, activate: background !== true }).id,
     tabsOfSpace: (spaceId) => this.store.get().tabs.filter((tab) => tab.spaceId === spaceId),
@@ -528,14 +535,11 @@ export class Browser {
     const key = partition
     if (this.trackedSessions.has(key)) return
     this.trackedSessions.add(key)
-    // Langue des pages : un en-tête, aucune requête de plus. Le bloqueur écoute
-    // `onBeforeRequest`, un autre événement : les deux coexistent.
-    ses.webRequest.onBeforeSendHeaders((details, callback) => {
-      details.requestHeaders['Accept-Language'] = acceptLanguage(
-        this.store.get().settings.webLanguage
-      )
-      callback({ requestHeaders: details.requestHeaders })
-    })
+    // Langue des pages : un en-tête, aucune requête de plus. Elle est appliquée
+    // par le listener d'identité : Chromium ne garde qu'un seul
+    // `onBeforeSendHeaders` par session, et le second remplacerait le premier —
+    // l'UA et les client hints Chrome étaient alors perdus sans un bruit.
+    setSessionLanguage(ses, () => acceptLanguage(this.store.get().settings.webLanguage))
     ses.on('will-download', (_event, item) => {
       const id = newId()
       const name = item.getFilename() || 'Téléchargement'
@@ -710,7 +714,9 @@ export class Browser {
         }
       }),
       downloads: this.downloads.slice(0, 30),
-      blockedTotal
+      blockedTotal,
+      blockedToday: state.privacyStats.today,
+      blockedWeek: state.privacyStats.week
     }
   }
 
@@ -738,12 +744,13 @@ export class Browser {
       typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
         ? input.spaceId
         : state.activeSpaceId
-    const url =
-      typeof input.url === 'string' && input.url
-        ? input.url
-        : this.store.get().settings.newTabBlank
-          ? 'about:blank'
-          : HOME_URL
+    const requested = typeof input.url === 'string' ? input.url.trim() : ''
+    // Seules les adresses web entrent dans une vue : une URL `file:` ou
+    // `data:` venue d'une page ou d'un modèle ouvrirait le disque local.
+    if (requested && !isLoadableUrl(requested)) {
+      throw new Error('adresse refusée — seules les adresses http et https sont ouvertes')
+    }
+    const url = requested || (this.store.get().settings.newTabBlank ? 'about:blank' : HOME_URL)
     const pinned = Boolean(input.pinned)
     // Une seule page d'accueil par espace : ⌘T ramène à celle qui existe.
     // Le « + » d'un dossier la réclame ailleurs : elle le rejoint plutôt que
@@ -1165,8 +1172,10 @@ export class Browser {
     const name = asString(payload.name).trim().slice(0, 40) || `Dossier ${count + 1}`
     const color = /^#[0-9a-f]{6}$/i.test(asString(payload.color))
       ? asString(payload.color)
-      : SPACE_COLORS[(count + 1) % SPACE_COLORS.length]
+      : GROUP_COLORS[count % GROUP_COLORS.length]
     const group = createGroupState(state.activeSpaceId, name, color, Date.now())
+    const icon = (payload as { icon?: unknown }).icon
+    if (isGroupIcon(icon)) group.icon = icon
     state.groups.push(group)
 
     if (typeof payload.tabId === 'string') {
@@ -1191,6 +1200,9 @@ export class Browser {
       group.name = payload.name.trim().slice(0, 40)
     if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
       group.color = payload.color
+    const icon = (payload as { icon?: unknown }).icon
+    if (icon === null) group.icon = undefined
+    else if (isGroupIcon(icon)) group.icon = icon
     if (typeof payload.collapsed === 'boolean') group.collapsed = payload.collapsed
     this.store.schedule()
     this.broadcast()
@@ -1205,6 +1217,27 @@ export class Browser {
     state.groups = state.groups.filter((group) => group.id !== id)
     this.store.schedule()
     this.broadcast()
+  }
+
+  /** Une requête arrêtée : compteurs du jour et de la semaine, persistés. */
+  private noteBlocked(): void {
+    const now = Date.now()
+    const day = dayKey(now)
+    const week = weekKey(now)
+    this.store.update((state) => {
+      const stats = state.privacyStats
+      if (stats.day !== day) {
+        stats.day = day
+        stats.today = 0
+      }
+      if (stats.weekStart !== week) {
+        stats.weekStart = week
+        stats.week = 0
+      }
+      stats.today += 1
+      stats.week += 1
+    })
+    this.store.schedule()
   }
 
   private updateSettings(patch: unknown): void {
@@ -1453,10 +1486,7 @@ export class Browser {
    * sélectionné ; l'URL et le titre viennent de l'onglet réel.
    */
   private startSelectionDrag(sender: WebContents, selected: string): void {
-    const text = selected
-      .replaceAll('\u0000', '')
-      .trim()
-      .slice(0, 8000)
+    const text = selected.replaceAll('\u0000', '').trim().slice(0, 8000)
     if (!text) return
     const tabId = this.tabs.tabIdForWebContents(sender.id)
     if (!tabId) return
@@ -1539,16 +1569,15 @@ export class Browser {
       : []
     const history = Array.isArray(payload.history)
       ? payload.history
-          .filter(
-            (turn): turn is { role: 'user' | 'assistant'; content: string } =>
-              Boolean(
-                turn &&
-                  typeof turn === 'object' &&
-                  (turn as { role?: unknown }).role !== undefined &&
-                  ((turn as { role?: unknown }).role === 'user' ||
-                    (turn as { role?: unknown }).role === 'assistant') &&
-                  typeof (turn as { content?: unknown }).content === 'string'
-              )
+          .filter((turn): turn is { role: 'user' | 'assistant'; content: string } =>
+            Boolean(
+              turn &&
+              typeof turn === 'object' &&
+              (turn as { role?: unknown }).role !== undefined &&
+              ((turn as { role?: unknown }).role === 'user' ||
+                (turn as { role?: unknown }).role === 'assistant') &&
+              typeof (turn as { content?: unknown }).content === 'string'
+            )
           )
           .slice(-10)
           .map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4000) }))
@@ -1657,7 +1686,7 @@ export class Browser {
     const handle: Handle = (channel, handler) => {
       ipcMain.handle(channel, (event, payload: unknown) => {
         if (!this.allowIpc(event, channel)) throw new Error(`Canal IPC refusé : ${channel}`)
-        return handler(payload)
+        return handler(payload, event)
       })
     }
     const on: On = (channel, handler) => {
@@ -1739,5 +1768,4 @@ export class Browser {
     registerTunnelIpc(host, handle, on)
     registerAgentIpc(host, handle, on)
   }
-
 }

@@ -10,6 +10,7 @@ import {
   buildTunnelReport,
   exportFileName,
   filterMap,
+  queryVariants,
   toJsonExport,
   toOpmlExport,
   tunnelMapTitle,
@@ -18,6 +19,7 @@ import {
   type MapNodeKind,
   type NodeStatus,
   type SourceType,
+  type TunnelDepth,
   type TunnelFilters,
   type TunnelMap,
   type TunnelMapSummary
@@ -39,6 +41,9 @@ interface TunnelState {
   error: string | null
   filters: TunnelFilters
   level: TunnelLevel
+  depth: TunnelDepth
+  /** Variantes visibles et modifiables ; elles sont envoyées telles quelles. */
+  variants: string[]
   step: TunnelStep
   viewMode: 'map' | 'list'
   selectedId: string | null
@@ -50,7 +55,12 @@ interface TunnelState {
   subscribed: boolean
 
   subscribe(): void
-  runTunnel(query: string, options?: { parentId?: string }): Promise<void>
+  runTunnel(
+    query: string,
+    options?: { parentId?: string; depth?: TunnelDepth; variants?: string[]; more?: boolean }
+  ): Promise<void>
+  /** Relance une passe et ajoute les pages sans toucher aux statuts existants. */
+  findMore(): Promise<void>
   cancel(): void
   loadMap(id: string): Promise<void>
   refreshMaps(): Promise<void>
@@ -64,6 +74,8 @@ interface TunnelState {
   toggleTag(tag: string): void
   resetFilters(): void
   setLevel(level: TunnelLevel): void
+  setDepth(depth: TunnelDepth): void
+  setVariants(variants: string[]): void
   setStep(step: TunnelStep): void
   setViewMode(mode: 'map' | 'list'): void
   select(id: string | null, options?: { toggle?: boolean }): void
@@ -154,6 +166,8 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   error: null,
   filters: { ...DEFAULT_FILTERS },
   level: 4,
+  depth: 'standard',
+  variants: [],
   step: 'question',
   viewMode: 'map',
   selectedId: null,
@@ -180,17 +194,18 @@ export const useTunnel = create<TunnelState>((set, get) => ({
           query: event.query,
           selectedId: null,
           checkedIds: [],
-          active: state.active && state.active.id === event.mapId
-            ? state.active
-            : {
-                id: event.mapId,
-                spaceId,
-                query: event.query,
-                lang: 'fr',
-                nodes: [],
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-              }
+          active:
+            state.active && state.active.id === event.mapId
+              ? state.active
+              : {
+                  id: event.mapId,
+                  spaceId,
+                  query: event.query,
+                  lang: 'fr',
+                  nodes: [],
+                  createdAt: Date.now(),
+                  updatedAt: Date.now()
+                }
         })
         return
       }
@@ -236,15 +251,35 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     }
     const active = get().active
     const parentId = options?.parentId
-    const sameMap = Boolean(parentId && active)
+    const more = Boolean(options?.more)
+    const sameMap = Boolean((parentId || more) && active)
     if (!sameMap) {
       set({ active: null, selectedId: null, checkedIds: [], error: null })
     }
-    set({ running: true, query: trimmed, error: null, phase: 'Préparation…', suggested: null, step: 'explore' })
+    const depth = options?.depth ?? get().depth
+    const chosen = (
+      options?.variants ?? (more ? get().variants : queryVariants(trimmed))
+    )
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .slice(0, 8)
+    set({
+      running: true,
+      query: trimmed,
+      depth,
+      variants: chosen.length > 0 ? chosen : queryVariants(trimmed),
+      error: null,
+      phase: 'Préparation…',
+      suggested: null,
+      step: 'explore'
+    })
     try {
       const { runId } = await window.vela.tunnel.run({
         query: trimmed,
         parentId,
+        more,
+        depth,
+        variants: chosen,
         spaceId: currentSpace(),
         mapId: sameMap ? active?.id : undefined
       })
@@ -256,6 +291,14 @@ export const useTunnel = create<TunnelState>((set, get) => ({
         error: error instanceof Error ? error.message : 'Lancement impossible.'
       })
     }
+  },
+
+  async findMore() {
+    const { active, depth, variants } = get()
+    if (!active) return
+    const extras = ['forum', 'site:github.com', 'documentation officielle']
+    const next = [...variants, ...extras.filter((entry) => !variants.includes(entry))]
+    await get().runTunnel(active.query, { more: true, depth, variants: next.slice(0, 8) })
   },
 
   cancel() {
@@ -369,6 +412,14 @@ export const useTunnel = create<TunnelState>((set, get) => ({
 
   setLevel(level) {
     set({ level })
+  },
+
+  setDepth(depth) {
+    set({ depth })
+  },
+
+  setVariants(variants) {
+    set({ variants: variants.slice(0, 8) })
   },
 
   setStep(step) {
@@ -516,7 +567,11 @@ export const useTunnel = create<TunnelState>((set, get) => ({
     const { active } = get()
     if (!active) return
     const { visible } = get().visible()
-    download(buildTunnelReport(active, visible), exportFileName(active.query, 'md'), 'text/markdown')
+    download(
+      buildTunnelReport(active, visible),
+      exportFileName(active.query, 'md'),
+      'text/markdown'
+    )
     notify('Carte exportée en Markdown.')
   },
 
@@ -570,7 +625,10 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
       background.setAttribute('width', '100%')
       background.setAttribute('height', '100%')
-      background.setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--paper') || '#faf8f5')
+      background.setAttribute(
+        'fill',
+        getComputedStyle(document.documentElement).getPropertyValue('--paper') || '#faf8f5'
+      )
       background.setAttribute('x', '0')
       background.setAttribute('y', '0')
       clone.insertBefore(background, clone.firstChild)

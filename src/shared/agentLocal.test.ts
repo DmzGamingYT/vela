@@ -185,43 +185,41 @@ function record(bucket: Tally, task: Task, attempt: Attempt): void {
 }
 
 describe.skipIf(!RUN)('mesure réelle sur un modèle local', () => {
-  it(
-    `compare les deux protocoles (${MODEL})`,
-    async () => {
-      const total = TASKS.length * REPS
-      const oneShot = tally('une passe')
-      const prose = tally('deux temps, prose amorcée')
-      const strict = tally('deux temps, schéma strict')
+  it(`compare les deux protocoles (${MODEL})`, async () => {
+    const total = TASKS.length * REPS
+    const oneShot = tally('une passe')
+    const prose = tally('deux temps, prose amorcée')
+    const strict = tally('deux temps, schéma strict')
 
-      for (let rep = 0; rep < REPS; rep += 1) {
-        for (const task of TASKS) {
-          record(oneShot, task, await legacy(task))
-          record(prose, task, await split(task, false))
-          record(strict, task, await split(task, true))
-        }
+    for (let rep = 0; rep < REPS; rep += 1) {
+      for (const task of TASKS) {
+        record(oneShot, task, await legacy(task))
+        record(prose, task, await split(task, false))
+        record(strict, task, await split(task, true))
       }
+    }
 
-      const share = (value: number): number => Math.round((value / total) * 100)
-      console.warn(`[ollama ${MODEL}] ${TASKS.length} tâches × ${REPS} passes (${total} essais)`)
-      for (const bucket of [oneShot, prose, strict]) {
-        console.warn(
-          `[ollama ${MODEL}] ${bucket.label} : ${bucket.executable}/${total} exécutables (${share(
-            bucket.executable
-          )} %), ${bucket.right}/${total} bon outil (${share(bucket.right)} %) — outils : ${[...bucket.chosen]
-            .map(([tool, count]) => `${tool}:${count}`)
-            .join(' ')}`
-        )
+    const share = (value: number): number => Math.round((value / total) * 100)
+    console.warn(`[ollama ${MODEL}] ${TASKS.length} tâches × ${REPS} passes (${total} essais)`)
+    for (const bucket of [oneShot, prose, strict]) {
+      console.warn(
+        `[ollama ${MODEL}] ${bucket.label} : ${bucket.executable}/${total} exécutables (${share(
+          bucket.executable
+        )} %), ${bucket.right}/${total} bon outil (${share(bucket.right)} %) — outils : ${[
+          ...bucket.chosen
+        ]
+          .map(([tool, count]) => `${tool}:${count}`)
+          .join(' ')}`
+      )
+    }
+    for (const bucket of [prose, strict]) {
+      for (const miss of bucket.misses.slice(0, 3)) {
+        console.warn(`[ollama ${MODEL}] ${bucket.label} · ${miss}`)
       }
-      for (const bucket of [prose, strict]) {
-        for (const miss of bucket.misses.slice(0, 3)) {
-          console.warn(`[ollama ${MODEL}] ${bucket.label} · ${miss}`)
-        }
-      }
+    }
 
-      // La mesure doit avoir tourné : un modèle absent ou muet ne passe pas
-      // pour un zéro.
-      expect(oneShot.executable + prose.executable + strict.executable).toBeGreaterThan(0)
-    },
-    900_000
-  )
+    // La mesure doit avoir tourné : un modèle absent ou muet ne passe pas
+    // pour un zéro.
+    expect(oneShot.executable + prose.executable + strict.executable).toBeGreaterThan(0)
+  }, 900_000)
 })

@@ -18,7 +18,9 @@ vi.mock('electron', () => ({
 function translated(): Response {
   return {
     ok: true,
-    json: async () => ({ choices: [{ message: { content: '{"traductions":[{"id":0,"texte":"Bonjour."}]}' } }] })
+    json: async () => ({
+      choices: [{ message: { content: '{"traductions":[{"id":0,"texte":"Bonjour."}]}' } }]
+    })
   } as unknown as Response
 }
 
@@ -34,7 +36,13 @@ function bridge(baseUrl = 'http://localhost:11434/v1') {
     clone.agent.providers.local = { ...clone.agent.providers.local, baseUrl: state.baseUrl }
     return clone
   }
-  const comic = new ComicBridge({ ensure: () => null } as never, settings, () => null, () => true, confirmRemote)
+  const comic = new ComicBridge(
+    { ensure: () => null } as never,
+    settings,
+    () => null,
+    () => true,
+    confirmRemote
+  )
   return { comic, move: (next: string) => (state.baseUrl = next) }
 }
 
@@ -96,7 +104,10 @@ describe('accord avant que la planche ne quitte l’appareil', () => {
     await comic.translate(['Hello'])
     move('https://deux.example.org/v1')
     await comic.translate(['Hello'])
-    expect(confirmRemote.mock.calls.map((call) => call[0])).toEqual(['un.example.org', 'deux.example.org'])
+    expect(confirmRemote.mock.calls.map((call) => call[0])).toEqual([
+      'un.example.org',
+      'deux.example.org'
+    ])
   })
 
   it('un accord qui ne peut pas être demandé refuse la requête', async () => {

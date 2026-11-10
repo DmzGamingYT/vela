@@ -57,7 +57,9 @@ describe('contrastes des 10 couleurs et de Braise, × 2 modes', () => {
         expect(contrast(tokens['--link'], paper)).toBeGreaterThanOrEqual(4.5)
         expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(4.5)
         // Texte posé sur un bouton plein.
-        expect(contrast(tokens['--accent-contrast'], tokens['--accent'])).toBeGreaterThanOrEqual(4.5)
+        expect(contrast(tokens['--accent-contrast'], tokens['--accent'])).toBeGreaterThanOrEqual(
+          4.5
+        )
         // L'anneau de focus et la bordure de sélection restent visibles.
         expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(4.5)
       })
@@ -117,7 +119,8 @@ describe('contraste du wordmark dans la barre latérale', () => {
   }
 })
 
-describe('couleur personnalisée', () => {  it('assombrit une couleur trop claire en mode clair et l’explique', () => {
+describe('couleur personnalisée', () => {
+  it('assombrit une couleur trop claire en mode clair et l’explique', () => {
     const result = adjustAccent('#FFF3B0', 'light')
     expect(result.adjusted).toBe(true)
     expect(contrast(result.color, PAPER.light)).toBeGreaterThanOrEqual(4.5)
@@ -171,11 +174,15 @@ describe('thème par espace', () => {
   const global: ThemeId = 'indigo'
 
   it('garde le thème global si l’option est désactivée', () => {
-    expect(resolveThemeId({ globalTheme: global, perSpace: false, spaceTheme: 'rouge' })).toBe('indigo')
+    expect(resolveThemeId({ globalTheme: global, perSpace: false, spaceTheme: 'rouge' })).toBe(
+      'indigo'
+    )
   })
 
   it('utilise le thème de l’espace quand l’option est active', () => {
-    expect(resolveThemeId({ globalTheme: global, perSpace: true, spaceTheme: 'rouge' })).toBe('rouge')
+    expect(resolveThemeId({ globalTheme: global, perSpace: true, spaceTheme: 'rouge' })).toBe(
+      'rouge'
+    )
   })
 
   it('retombe sur le global quand l’espace n’a pas de thème', () => {
@@ -223,7 +230,9 @@ describe('persistance des réglages', () => {
   })
 
   it('refuse un chemin d’image démesuré', () => {
-    expect(sanitizeAppearance({ homeImage: `data:image/png;base64,${'a'.repeat(4000)}` }).homeImage).toBeNull()
+    expect(
+      sanitizeAppearance({ homeImage: `data:image/png;base64,${'a'.repeat(4000)}` }).homeImage
+    ).toBeNull()
   })
 })
 
@@ -345,15 +354,27 @@ describe('grille des couleurs', () => {
 
 describe('thème automatique par heures', () => {
   it('suit les heures choisies', () => {
-    expect(resolveMode('dark', { hourTheme: true, hour: 6, hourStart: 8, hourEnd: 18 })).toBe('dark')
-    expect(resolveMode('dark', { hourTheme: true, hour: 8, hourStart: 8, hourEnd: 18 })).toBe('light')
-    expect(resolveMode('light', { hourTheme: true, hour: 17, hourStart: 8, hourEnd: 18 })).toBe('light')
-    expect(resolveMode('light', { hourTheme: true, hour: 18, hourStart: 8, hourEnd: 18 })).toBe('dark')
+    expect(resolveMode('dark', { hourTheme: true, hour: 6, hourStart: 8, hourEnd: 18 })).toBe(
+      'dark'
+    )
+    expect(resolveMode('dark', { hourTheme: true, hour: 8, hourStart: 8, hourEnd: 18 })).toBe(
+      'light'
+    )
+    expect(resolveMode('light', { hourTheme: true, hour: 17, hourStart: 8, hourEnd: 18 })).toBe(
+      'light'
+    )
+    expect(resolveMode('light', { hourTheme: true, hour: 18, hourStart: 8, hourEnd: 18 })).toBe(
+      'dark'
+    )
   })
 
   it('gère une plage qui passe minuit', () => {
-    expect(resolveMode('dark', { hourTheme: true, hour: 23, hourStart: 22, hourEnd: 6 })).toBe('light')
-    expect(resolveMode('light', { hourTheme: true, hour: 12, hourStart: 22, hourEnd: 6 })).toBe('dark')
+    expect(resolveMode('dark', { hourTheme: true, hour: 23, hourStart: 22, hourEnd: 6 })).toBe(
+      'light'
+    )
+    expect(resolveMode('light', { hourTheme: true, hour: 12, hourStart: 22, hourEnd: 6 })).toBe(
+      'dark'
+    )
   })
 
   it('retombe sur 7 h – 19 h sans réglage', () => {
@@ -387,12 +408,20 @@ describe('migration de l’apparence 0.3.24', () => {
   it('ne rallume pas le ciel après un retour au dégradé', () => {
     const migrated = sanitizeAppearance({ themeId: 'braise', homeBackground: 'gradient' } as never)
     expect(migrated.homeBackground).toBe('sky')
-    const back = sanitizeAppearance({ ...migrated, homeBackground: 'gradient', dragonSky: true } as never)
+    const back = sanitizeAppearance({
+      ...migrated,
+      homeBackground: 'gradient',
+      dragonSky: true
+    } as never)
     expect(back.homeBackground).toBe('gradient')
   })
 
   it('laisse le ciel éteint s’il l’était', () => {
-    const off = sanitizeAppearance({ themeId: 'braise', homeBackground: 'gradient', dragonSky: false } as never)
+    const off = sanitizeAppearance({
+      themeId: 'braise',
+      homeBackground: 'gradient',
+      dragonSky: false
+    } as never)
     expect(off.homeBackground).toBe('gradient')
   })
 

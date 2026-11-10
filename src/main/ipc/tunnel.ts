@@ -13,8 +13,7 @@ export function registerTunnelIpc(host: IpcHost, handle: Handle, on: On): void {
     const input = (payload ?? {}) as TunnelRunInput
     const state = host.store.get()
     const spaceId =
-      typeof input.spaceId === 'string' &&
-      state.spaces.some((space) => space.id === input.spaceId)
+      typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
         ? input.spaceId
         : state.activeSpaceId
     const query = asString(input.query).slice(0, 300)
@@ -27,7 +26,13 @@ export function registerTunnelIpc(host: IpcHost, handle: Handle, on: On): void {
           query,
           spaceId,
           parentId: typeof input.parentId === 'string' ? input.parentId : undefined,
-          mapId: typeof input.mapId === 'string' ? input.mapId : undefined
+          mapId: typeof input.mapId === 'string' ? input.mapId : undefined,
+          depth:
+            input.depth === 'quick' || input.depth === 'deep' ? input.depth : 'standard',
+          variants: Array.isArray(input.variants)
+            ? input.variants.filter((entry): entry is string => typeof entry === 'string')
+            : undefined,
+          more: input.more === true
         },
         (event) => host.send('tunnel:event', event)
       )
@@ -94,6 +99,10 @@ export function registerTunnelIpc(host: IpcHost, handle: Handle, on: On): void {
       show: false,
       webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
     })
+    // La fenêtre d'impression ne montre qu'un document écrit par Vela : elle
+    // n'ouvre rien, ne navigue nulle part, et n'expose aucune permission.
+    printer.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    printer.webContents.on('will-navigate', (event) => event.preventDefault())
     try {
       await printer.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
       const pdf = await printer.webContents.printToPDF({ printBackground: true })

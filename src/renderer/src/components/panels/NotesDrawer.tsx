@@ -60,7 +60,11 @@ export default function NotesDrawer() {
   const [highlights, setHighlights] = useState<PageHighlight[]>([])
   const [graph, setGraph] = useState<NoteGraph | null>(null)
   const [linksOpen, setLinksOpen] = useState(true)
-  const [renameUndo, setRenameUndo] = useState<{ id: string; from: string; updated: number } | null>(null)
+  const [renameUndo, setRenameUndo] = useState<{
+    id: string
+    from: string
+    updated: number
+  } | null>(null)
   const [recorderOpen, setRecorderOpen] = useState(false)
   const loadedTitle = useRef('')
   // Vue large : liste et éditeur côte à côte. Le choix et la dernière largeur
@@ -76,6 +80,8 @@ export default function NotesDrawer() {
   // clé quand aucun brouillon n'est ouvert ne doit pas l'effacer avant.
   const lastNoteId = useRef<string | null>(window.localStorage.getItem('vela-notes-last'))
   const restoredLastNote = useRef(false)
+  /** Le tiroir vient-il d'être monté ? La clé « dernière note » se nettoie après. */
+  const mounted = useRef(false)
   const [width, setWidth] = useState(() => {
     const stored = Number(window.localStorage.getItem('vela-notes-width'))
     const base = Number.isFinite(stored) && stored >= 300 && stored <= 760 ? stored : 400
@@ -108,6 +114,13 @@ export default function NotesDrawer() {
   }, [draftId])
 
   useEffect(() => {
+    // La clé ne se nettoie qu'une fois le tiroir monté : au premier rendu
+    // aucun brouillon n'est encore ouvert, et l'effacer là supprimait la
+    // dernière note — la reprise ne marchait plus d'une session à l'autre.
+    if (!mounted.current) {
+      mounted.current = true
+      return
+    }
     if (!hasDraft) window.localStorage.removeItem('vela-notes-last')
   }, [hasDraft])
 
@@ -190,7 +203,9 @@ export default function NotesDrawer() {
     for (const note of view?.notes ?? []) {
       for (const tag of note.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1)
     }
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
   }, [view?.notes])
   const notes = useMemo(() => {
     const list = view?.notes ?? []
@@ -206,10 +221,7 @@ export default function NotesDrawer() {
         // Le stockage lit aussi le corps : ses identifiants font foi dès qu'ils
         // sont disponibles, notamment pour les exclusions.
         if (bodyIds) return bodyIds.has(note.id)
-        return matchesSearch(
-          `${note.title} ${note.preview} ${(note.tags ?? []).join(' ')}`,
-          parsed
-        )
+        return matchesSearch(`${note.title} ${note.preview} ${(note.tags ?? []).join(' ')}`, parsed)
       })
       .slice()
       .sort(
@@ -251,7 +263,9 @@ export default function NotesDrawer() {
       if (draftVersion.current !== version) return
       // Un brouillon encore vierge d'identifiant reçoit celui de sa première
       // sauvegarde, même si l'utilisateur a continué à taper entre-temps.
-      setDraft((active) => (active && !active.id && !current.id ? { ...active, id: note.id } : active))
+      setDraft((active) =>
+        active && !active.id && !current.id ? { ...active, id: note.id } : active
+      )
       // Des frappes sont arrivées pendant l'enregistrement : la version
       // enregistrée n'est plus celle à l'écran, on laisse « Modifié ».
       if (latest.current.draft !== current) return
@@ -259,7 +273,12 @@ export default function NotesDrawer() {
       setDirty(false)
       // Un titre changé réécrit les liens des autres notes : on propose de
       // revenir en arrière tant que la trace est fraîche.
-      if (current.id && loadedTitle.current && loadedTitle.current !== note.title && note.linksUpdated) {
+      if (
+        current.id &&
+        loadedTitle.current &&
+        loadedTitle.current !== note.title &&
+        note.linksUpdated
+      ) {
         setRenameUndo({ id: note.id, from: loadedTitle.current, updated: note.linksUpdated })
       }
       // Un fichier refusé garde son ancien lien : le dire vaut mieux que le
@@ -273,7 +292,10 @@ export default function NotesDrawer() {
         )
       }
       loadedTitle.current = note.title
-      void window.vela.notes.graph(note.id).then(setGraph).catch(() => undefined)
+      void window.vela.notes
+        .graph(note.id)
+        .then(setGraph)
+        .catch(() => undefined)
     },
     [saveNote, toast]
   )
@@ -478,7 +500,11 @@ export default function NotesDrawer() {
           return
         }
       }
-      if (event.altKey && !event.shiftKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      if (
+        event.altKey &&
+        !event.shiftKey &&
+        (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+      ) {
         event.preventDefault()
         if (state.notes.length === 0) return
         const current = state.draft.id
@@ -518,15 +544,19 @@ export default function NotesDrawer() {
       const { draft: current, dirty: pending } = latest.current
       if (!current || !pending) return
       if (!current.title.trim() && !current.body.trim()) return
-      void window.vela.notes.save({
-        id: current.id,
-        title: current.title || 'Note sans titre',
-        body: current.body,
-        spaceId: current.spaceId,
-        url: current.url,
-        tags: current.tags,
-        pinned: current.pinned
-      })
+      void window.vela.notes
+        .save({
+          id: current.id,
+          title: current.title || 'Note sans titre',
+          body: current.body,
+          spaceId: current.spaceId,
+          url: current.url,
+          tags: current.tags,
+          pinned: current.pinned
+        })
+        // Dernier filet au démontage : un refus ne doit pas rester une
+        // rejection sans filet dans la console.
+        .catch(() => undefined)
     }
   }, [])
 
@@ -638,6 +668,25 @@ export default function NotesDrawer() {
     setConfirming(false)
     setSavedAt(null)
   }
+
+  /** Dicter : une note vierge, puis l'enregistreur déjà ouvert. */
+  const dictateNote = async (): Promise<void> => {
+    await newNote(null)
+    setRecorderOpen(true)
+  }
+
+  // ⌘N ouvre le menu « Nouvelle note » depuis n'importe où dans le panneau.
+  useEffect(() => {
+    if (!notesOpen) return
+    const onKey = (event: KeyboardEvent): void => {
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
+      if (event.key.toLowerCase() !== 'n' || event.defaultPrevented) return
+      event.preventDefault()
+      setTemplateOpen(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [notesOpen])
 
   const close = (): void => {
     toggleNotes(false)
@@ -797,10 +846,17 @@ export default function NotesDrawer() {
       const result = await window.vela.notes.rename({ id: renameUndo.id, title: renameUndo.from })
       if (!result) throw new Error('note absente')
       loadedTitle.current = result.note.title
-      setDraft((current) => (current && current.id === result.note.id ? { ...current, title: result.note.title } : current))
+      setDraft((current) =>
+        current && current.id === result.note.id
+          ? { ...current, title: result.note.title }
+          : current
+      )
       setRenameUndo(null)
       toast('Renommage annulé, liens rétablis.')
-      void window.vela.notes.graph(result.note.id).then(setGraph).catch(() => undefined)
+      void window.vela.notes
+        .graph(result.note.id)
+        .then(setGraph)
+        .catch(() => undefined)
     } catch {
       toast('Le renommage n’a pas pu être annulé.', 'error')
     }
@@ -823,7 +879,9 @@ export default function NotesDrawer() {
   const noteAudio: NoteAudioContext | undefined = draft
     ? {
         remove: (name) => {
-          setDraft((current) => (current ? { ...current, body: removeAudioToken(current.body, name) } : current))
+          setDraft((current) =>
+            current ? { ...current, body: removeAudioToken(current.body, name) } : current
+          )
           setDirty(true)
         },
         transcribe: (_name, text) => {
@@ -876,6 +934,8 @@ export default function NotesDrawer() {
 
   const pageNote = activeUrl ? view.notes.find((note) => note.url === activeUrl) : undefined
   const noNotes = view.notes.length === 0
+  // Une seule note : la liste n'apporte rien, l'éditeur prend la largeur.
+  const splitView = wide && notes.length > 1
 
   // Une seule définition des cinq actions : dans la barre compacte quand il y a
   // des notes, dans la surface de départ quand le tiroir est encore vierge.
@@ -980,7 +1040,11 @@ export default function NotesDrawer() {
       style={{ width, flexBasis: width }}
       data-dropping={dropping}
       onDragOver={(event) => {
-        if (!event.dataTransfer.types.includes('Files') && !event.dataTransfer.types.includes('text/plain')) return
+        if (
+          !event.dataTransfer.types.includes('Files') &&
+          !event.dataTransfer.types.includes('text/plain')
+        )
+          return
         event.preventDefault()
         setDropping(true)
       }}
@@ -1014,7 +1078,7 @@ export default function NotesDrawer() {
         </div>
       )}
 
-      {wide && (draft || !noNotes) ? (
+      {splitView && (draft || !noNotes) ? (
         <div className="notes-wide">
           <div className="notes-wide-list">{listPane}</div>
           <div className="notes-wide-editor">
@@ -1047,6 +1111,14 @@ export default function NotesDrawer() {
           onPick={(template) => {
             setTemplateOpen(false)
             void newNote(template)
+          }}
+          onCapture={() => {
+            setTemplateOpen(false)
+            void capturePage()
+          }}
+          onDictate={() => {
+            setTemplateOpen(false)
+            void dictateNote()
           }}
           onClose={() => setTemplateOpen(false)}
         />

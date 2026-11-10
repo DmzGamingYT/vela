@@ -35,6 +35,7 @@ function durationLabel(ms: number): string {
 export default function ChatTranscript({
   agent,
   mode,
+  draft = '',
   approved,
   engineLabel,
   engineLocal,
@@ -47,6 +48,8 @@ export default function ChatTranscript({
   agent: AgentUi
   /** Mode choisi dans le composeur : l’état vide en dépend. */
   mode: 'answer' | 'act'
+  /** Texte en cours de saisie : il retire les suggestions de relance. */
+  draft?: string
   approved: boolean
   engineLabel: string
   engineLocal: boolean
@@ -106,9 +109,7 @@ export default function ChatTranscript({
               {turn.sources.length > 0 && (
                 <div className="bubble-src">
                   {turn.sources.slice(0, 4).map((source, index) => (
-                    <span key={`${source.url}-${index}`}>
-                      {hostOf(source.url) || source.title}
-                    </span>
+                    <span key={`${source.url}-${index}`}>{hostOf(source.url) || source.title}</span>
                   ))}
                 </div>
               )}
@@ -139,6 +140,10 @@ export default function ChatTranscript({
       </div>
 
       <div className="msg msg-agent">
+        <span className="msg-avatar" aria-hidden="true">
+          <Icon name="sparkles" size={13} />
+        </span>
+        <div className="msg-body">
         {agent.steps.length > 0 && (
           <ol className="msg-steps" aria-label="Étapes">
             {agent.steps.map((step, index) => (
@@ -214,8 +219,7 @@ export default function ChatTranscript({
             {running && <span className="caret" />}
           </div>
         ) : (
-          running &&
-          !agent.error && <p className="msg-thinking">L’agent travaille…</p>
+          running && !agent.error && <p className="msg-thinking">L’agent travaille…</p>
         )}
 
         {agent.status === 'done' && agent.markdown && (
@@ -228,7 +232,7 @@ export default function ChatTranscript({
           />
         )}
 
-        {agent.status === 'done' && agent.markdown && (
+        {agent.status === 'done' && agent.markdown && !draft.trim() && (
           <div className="chat-followups" aria-label="Questions de suivi">
             <span>Continuer</span>
             <button
@@ -273,7 +277,7 @@ export default function ChatTranscript({
             {approved && (
               <button type="button" className="msg-tool" onClick={onSave}>
                 <Icon name="notes" size={13} />
-                Enregistrer
+                Enregistrer dans Notes
               </button>
             )}
             <button type="button" className="msg-tool" onClick={onReset}>
@@ -282,6 +286,7 @@ export default function ChatTranscript({
             </button>
           </div>
         )}
+        </div>
       </div>
       <div ref={endRef} />
     </div>

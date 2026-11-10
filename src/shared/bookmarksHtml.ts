@@ -88,7 +88,10 @@ export function parseBookmarksHtml(html: string): ParsedBookmark[] {
 }
 
 /** Fichier HTML standard : lisible par Chrome, Firefox et Safari. */
-export function bookmarksToHtml(entries: { title: string; url: string }[], date = new Date()): string {
+export function bookmarksToHtml(
+  entries: { title: string; url: string }[],
+  date = new Date()
+): string {
   const lines = entries
     .map((entry) => {
       const url = safeBookmarkUrl(entry.url)

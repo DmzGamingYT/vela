@@ -148,7 +148,8 @@ export default function TunnelBackdrop() {
       const rect = canvas.getBoundingClientRect()
       pointer.x = event.clientX - rect.left
       pointer.y = event.clientY - rect.top
-      pointer.active = pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height
+      pointer.active =
+        pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height
     }
     const onLeave = (): void => {
       pointer.active = false

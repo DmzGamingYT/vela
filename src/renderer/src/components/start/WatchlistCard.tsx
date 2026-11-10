@@ -52,7 +52,9 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
   }
 
   const toggle = (item: SpaceWatchItem): void => {
-    save(items.map((entry) => (entry.id === item.id ? { ...entry, watched: !entry.watched } : entry)))
+    save(
+      items.map((entry) => (entry.id === item.id ? { ...entry, watched: !entry.watched } : entry))
+    )
     if (pick === item.id) setPick(null)
   }
 
@@ -77,11 +79,7 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
     try {
       const result = await window.vela.letterboxd.import(space.id)
       if (result.ok) {
-        setNotice(
-          result.count === 1
-            ? '1 entrée importée.'
-            : `${result.count} entrées importées.`
-        )
+        setNotice(result.count === 1 ? '1 entrée importée.' : `${result.count} entrées importées.`)
         return
       }
       const reasons: Record<string, string> = {
@@ -179,7 +177,9 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
                       <span className="watch-log-date">{logDateLabel(entry.watchedDate)}</span>
                       <span className="watch-log-name">
                         {entry.title}
-                        {entry.year ? <span className="watch-log-year"> · {entry.year}</span> : null}
+                        {entry.year ? (
+                          <span className="watch-log-year"> · {entry.year}</span>
+                        ) : null}
                       </span>
                       {entry.rating !== null && (
                         <span className="watch-log-stars" aria-label={`${entry.rating} sur 5`}>
@@ -228,7 +228,9 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
               className="watch-check"
               role="checkbox"
               aria-checked={item.watched}
-              aria-label={item.watched ? `Marquer ${item.title} à voir` : `Marquer ${item.title} vu`}
+              aria-label={
+                item.watched ? `Marquer ${item.title} à voir` : `Marquer ${item.title} vu`
+              }
               onClick={() => toggle(item)}
             >
               <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -250,7 +252,9 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
       </ul>
 
       {items.length === 0 && (
-        <p className="watch-hint">Ajoutez un film ou une série : la liste reste sur cet appareil.</p>
+        <p className="watch-hint">
+          Ajoutez un film ou une série : la liste reste sur cet appareil.
+        </p>
       )}
 
       {picked ? (
@@ -270,7 +274,9 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
             <button
               type="button"
               className="watch-link"
-              onClick={() => open(`https://letterboxd.com/search/${encodeURIComponent(picked.title)}/`)}
+              onClick={() =>
+                open(`https://letterboxd.com/search/${encodeURIComponent(picked.title)}/`)
+              }
             >
               Fiche
             </button>

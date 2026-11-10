@@ -205,7 +205,9 @@ export function isLoopbackEndpoint(value: string): boolean {
     const parsed = new URL(value.trim())
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
     const host = parsed.hostname.replace(/^\[|\]$/g, '').toLowerCase()
-    return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost')
+    return (
+      host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost')
+    )
   } catch {
     return false
   }
@@ -298,7 +300,8 @@ export function parseStreamPayload(protocol: ProviderProtocol, payload: string):
   }
 
   if (protocol === 'google') {
-    const candidates = record.candidates as { content?: { parts?: { text?: unknown }[] } }[] | undefined
+    const candidates = record.candidates as
+      { content?: { parts?: { text?: unknown }[] } }[] | undefined
     const parts = candidates?.[0]?.content?.parts ?? []
     return parts.map((part) => (typeof part.text === 'string' ? part.text : '')).join('')
   }

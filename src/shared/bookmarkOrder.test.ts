@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { migrateBookmarkOrder, moveBookmark, orderBookmarks, reorderBookmarks } from './bookmarkOrder'
+import {
+  migrateBookmarkOrder,
+  moveBookmark,
+  orderBookmarks,
+  reorderBookmarks
+} from './bookmarkOrder'
 import type { Bookmark } from './types'
 
 function bookmark(id: string, order = 0): Bookmark {
@@ -165,7 +170,11 @@ describe('permutation complète', () => {
 
 describe('remise en ordre d’une liste', () => {
   it('trie par numéro, sans numéro en fin, puis referme les trous', () => {
-    const list = [bookmark('a', 8), { ...bookmark('b'), order: undefined as unknown as number }, bookmark('c', 2)]
+    const list = [
+      bookmark('a', 8),
+      { ...bookmark('b'), order: undefined as unknown as number },
+      bookmark('c', 2)
+    ]
     expect(orderBookmarks(list).map((entry) => entry.id)).toEqual(['c', 'a', 'b'])
     expect(orderBookmarks(list).map((entry) => entry.order)).toEqual([0, 1, 2])
   })

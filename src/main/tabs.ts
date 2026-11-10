@@ -16,6 +16,7 @@ import { detectLanguage } from '@shared/language'
 import type {
   LayoutRequest,
   PaneRect,
+  PaneSnapshot,
   SelectionPayload,
   Settings,
   ShortcutAction,
@@ -25,7 +26,7 @@ import type {
 } from '@shared/types'
 import { opensPeek, searchOptionsOf, shouldOpenAsPopup, zoomHostOf } from '@shared/navigation'
 import { partitionFor } from '@shared/space'
-import { isHomeUrl, normalizeInput, titleFromUrl } from '@shared/url'
+import { isHomeUrl, isLoadableUrl, normalizeInput, titleFromUrl } from '@shared/url'
 import { attachPrivacy, prepareSession } from './privacy'
 import { applyBrowserIdentity } from './identity'
 
@@ -41,6 +42,8 @@ export interface TabHost {
   space(id: string): Space | undefined
   patchTab(id: string, patch: Partial<TabState>): void
   changed(): void
+  /** Une requête vient d’être arrêtée : compteurs du jour et de la semaine. */
+  noteBlocked?(): void
   /** `background` ouvre l'onglet sans lui donner le focus (⌘ + clic). */
   createTab(spaceId: string, url: string, background?: boolean): string
   tabsOfSpace(spaceId: string): TabState[]
@@ -53,8 +56,16 @@ export interface TabHost {
   zoomFor?(host: string): number | null
   /** Retient le niveau choisi pour ce domaine. */
   rememberZoom?(host: string, level: number): void
-  /** Ouvre une page dans le coup d'œil, sans créer d'onglet. */
+  /** Ouvert une page dans le coup d'œil, sans créer d'onglet. */
   openPeek?(url: string, spaceId?: string): void
+  /**
+   * Épreuves des pages visibles, poussées à la coque quand un élément
+   * d'interface couvre la scène ; `null` quand les vues natives reprennent la
+   * main.
+   */
+  freezeNotice?(shots: PaneSnapshot[] | null): void
+  /** Sens du défilement d'une page : la coque replie sa pilule du bas. */
+  scrollDirection?(direction: 'down' | 'up'): void
   /** Surlignages déjà enregistrés pour cette URL, repeints au chargement. */
   highlightsFor?(url: string): string[]
 }
@@ -100,6 +111,8 @@ export class TabManager {
   private capCache: number | null = null
   private panes: PaneRect[] = []
   private overlay = false
+  /** Images en place des vues natives pendant que l'interface couvre la scène. */
+  private frozen = false
 
   constructor(
     private getWindow: () => BrowserWindow | null,
@@ -125,6 +138,15 @@ export class TabManager {
     const current = this.runtimes.get(tabId) ?? { loading: false, error: null }
     this.runtimes.set(tabId, { ...current, muted, audible: muted ? false : current.audible })
     this.host.changed()
+  }
+
+  /**
+   * Défilement d'une page, ramené à son onglet puis à la coque : la pilule du
+   * bas se replie quand on descend.
+   */
+  noteScroll(webContentsId: number, direction: 'down' | 'up'): void {
+    if (!this.byWebContents.has(webContentsId)) return
+    this.host.scrollDirection?.(direction)
   }
 
   markAgentSent(tabIds: Iterable<string>, sent: boolean): void {
@@ -174,6 +196,7 @@ export class TabManager {
       hosts.set(host, (hosts.get(host) ?? 0) + 1)
       this.blockedHosts.set(tabId, hosts)
     }
+    this.host.noteBlocked?.()
     this.host.changed()
   }
 
@@ -232,6 +255,9 @@ export class TabManager {
   ensure(tabId: string, autoLoad = true): WebContentsView | null {
     const tab = this.host.tab(tabId)
     if (!tab || isHomeUrl(tab.url)) return null
+    // Un onglet enregistré avec une adresse `file:` (session ancienne, dossier
+    // modifié à la main) ne doit pas ouvrir le disque dans une vue.
+    if (!isLoadableUrl(tab.url)) return null
     const existing = this.views.get(tabId)
     if (existing && !existing.webContents.isDestroyed()) {
       this.touch(tabId)
@@ -644,6 +670,30 @@ export class TabManager {
   }
 
   /**
+   * Pages traversées par cet onglet, la plus ancienne en premier. Sert à la
+   * liste de « Précédent » au clic long : elle ne montre que le parcours de
+   * l'onglet, pas l'historique global de l'appareil.
+   */
+  entries(tabId: string): { index: number; url: string; title: string }[] {
+    const wc = this.views.get(tabId)?.webContents
+    if (!wc || wc.isDestroyed()) return []
+    return wc.navigationHistory.getAllEntries().map((entry, index) => ({
+      index,
+      url: entry.url,
+      title: entry.title || ''
+    }))
+  }
+
+  /** Revient à une entrée précise du parcours de l'onglet. */
+  goto(tabId: string, index: number): void {
+    this.touch(tabId)
+    const wc = this.views.get(tabId)?.webContents
+    if (!wc || wc.isDestroyed()) return
+    const history = wc.navigationHistory
+    if (index >= 0 && index < history.length()) history.goToIndex(index)
+  }
+
+  /**
    * Zoom du texte de la page, par paliers, comme un navigateur classique.
    * Rend le nouveau niveau (null si l'onglet n'a pas de page) pour que
    * l'interface puisse afficher « 125 % » sans le deviner.
@@ -960,29 +1010,93 @@ export class TabManager {
   }
 
   private applyLayout(): void {
+    // Un élément d'interface couvre la scène : la vue native, toujours au-dessus
+    // du DOM, est retirée — mais pas avant d'en avoir tiré une image, sinon la
+    // place qu'elle occupait devient un rectangle noir.
+    if (this.overlay) {
+      this.freeze()
+      return
+    }
+    if (this.frozen) {
+      this.frozen = false
+      this.host.freezeNotice?.(null)
+    }
     const visible = new Set<string>()
-    if (!this.overlay) {
-      for (const pane of this.panes) {
-        if (pane.width < 8 || pane.height < 8) continue
-        if (this.runtimeOf(pane.tabId).error) continue
-        const view = this.ensure(pane.tabId)
-        if (!view) continue
-        view.setBounds({
-          x: Math.round(pane.x),
-          y: Math.round(pane.y),
-          width: Math.round(pane.width),
-          height: Math.round(pane.height)
-        })
-        view.setVisible(true)
-        visible.add(pane.tabId)
-        this.touch(pane.tabId)
-      }
+    for (const pane of this.panes) {
+      if (pane.width < 8 || pane.height < 8) continue
+      if (this.runtimeOf(pane.tabId).error) continue
+      const view = this.ensure(pane.tabId)
+      if (!view) continue
+      view.setBounds({
+        x: Math.round(pane.x),
+        y: Math.round(pane.y),
+        width: Math.round(pane.width),
+        height: Math.round(pane.height)
+      })
+      view.setVisible(true)
+      visible.add(pane.tabId)
+      this.touch(pane.tabId)
     }
     this.visible = visible
     for (const [tabId, view] of this.views) {
       if (!visible.has(tabId)) view.setVisible(false)
     }
     this.evictExcess(visible)
+  }
+
+  /**
+   * Épreuve de chaque page visible, puis retrait des vues. La coque peint les
+   * images avant de les retirer : la scène reste reconnaissable, et le menu
+   * s'affiche par-dessus au lieu d'une zone noire.
+   */
+  private freeze(): void {
+    if (this.frozen) return
+    this.frozen = true
+    const ids = [...this.visible]
+    if (!ids.length) return
+    const hide = (): void => {
+      if (!this.frozen) return
+      for (const id of ids) this.views.get(id)?.setVisible(false)
+    }
+    void Promise.all(ids.map((id) => this.shot(id))).then((shots) => {
+      const list = shots.filter((shot): shot is PaneSnapshot => shot !== null)
+      if (!this.frozen) return
+      if (!list.length) {
+        hide()
+        return
+      }
+      this.host.freezeNotice?.(list)
+      // Le temps que la coque décode l'image : retirer la vue plus tôt laissait
+      // passer une ou deux trames de fond noir.
+      setTimeout(hide, 60)
+    })
+  }
+
+  /** Épreuve JPEG d'une page, réduite pour rester légère à transporter. */
+  private async shot(tabId: string): Promise<PaneSnapshot | null> {
+    const contents = this.captureSource(tabId)
+    if (!contents) return null
+    try {
+      const image = await Promise.race([
+        contents.capturePage(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 240))
+      ])
+      if (!image || image.isEmpty()) return null
+      const size = image.getSize()
+      const trimmed = size.width > 1440 ? image.resize({ width: 1440, quality: 'good' }) : image
+      return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(72).toString('base64')}` }
+    } catch {
+      /* une capture ratée laisse la place au fond de la coque */
+      return null
+    }
+  }
+
+  /**
+   * Onglet auquel appartient une vue. Un canal appelé par une page ne peut
+   * ainsi agir que sur son propre onglet.
+   */
+  tabIdOf(webContentsId: number): string | null {
+    return this.byWebContents.get(webContentsId) ?? null
   }
 
   /** Texte sélectionné dans la page (capture de citation). */
@@ -1253,6 +1367,14 @@ export class TabManager {
       action = 'home'
     } else if (key === 'n') {
       action = 'peek'
+    } else if (key === 'c') {
+      action = 'copy-address'
+    } else if (key === 'k') {
+      action = 'duplicate-tab'
+    } else if (key === 's') {
+      action = 'sleep-tab'
+    } else if (key === 'e') {
+      action = 'unpin-tab'
     }
 
     if (!action) return

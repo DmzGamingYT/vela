@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { net } from 'electron'
 import type { SourceType, TunnelFilters, TunnelMap } from '@shared/tunnel'
 import {
+  canonicalUrl,
   detectTensions,
   looksFrench,
   relevanceReason,
@@ -10,6 +11,9 @@ import {
   suggestQueryFix,
   summarizeMap,
   tokenize,
+  queryVariants,
+  TUNNEL_DEPTHS,
+  type TunnelDepth,
   type MapNode
 } from '@shared/tunnel'
 
@@ -58,17 +62,21 @@ async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
 }
 
 function decodeEntities(value: string): string {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    // Entités numériques : Hacker News écrit les apostrophes en hexadécimal
-    // (&#x27;), d’autres pages en décimal.
-    .replace(/&#x([0-9a-f]+);/gi, (_match, code: string) => String.fromCodePoint(parseInt(code, 16)))
-    .replace(/&#(\d+);/g, (_match, code: string) => String.fromCodePoint(Number(code)))
+  return (
+    value
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;|&apos;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      // Entités numériques : Hacker News écrit les apostrophes en hexadécimal
+      // (&#x27;), d’autres pages en décimal.
+      .replace(/&#x([0-9a-f]+);/gi, (_match, code: string) =>
+        String.fromCodePoint(parseInt(code, 16))
+      )
+      .replace(/&#(\d+);/g, (_match, code: string) => String.fromCodePoint(Number(code)))
+  )
 }
 
 function firstMatch(value: string, pattern: RegExp): string | undefined {
@@ -133,7 +141,9 @@ const hn: TunnelProvider = {
       const title = (hit.title ?? '').trim()
       if (!title) continue
       const target =
-        hit.url && /^https?:/i.test(hit.url) ? hit.url : `https://news.ycombinator.com/item?id=${hit.objectID}`
+        hit.url && /^https?:/i.test(hit.url)
+          ? hit.url
+          : `https://news.ycombinator.com/item?id=${hit.objectID}`
       out.push({
         title,
         url: target,
@@ -173,7 +183,9 @@ const arxiv: TunnelProvider = {
   label: 'Travaux',
   type: 'academic',
   async search(query, signal) {
-    const terms = tokenize(query).slice(0, 6).map((token) => `all:${token}`)
+    const terms = tokenize(query)
+      .slice(0, 6)
+      .map((token) => `all:${token}`)
     if (terms.length === 0) return []
     const url = `https://export.arxiv.org/api/query?search_query=${encodeURIComponent(terms.join('+AND+'))}&max_results=5&sortBy=relevance`
     return parseArxiv(await fetchText(url, signal))
@@ -196,7 +208,15 @@ const gdelt: TunnelProvider = {
       `${encodeURIComponent(`"${query}"`)}&mode=artlist&format=json&maxrecords=6&sort=hybridrel`
     const text = await fetchText(url, signal)
     if (!text.trim().startsWith('{')) return []
-    let data: { articles?: { title?: string; url?: string; domain?: string; seendate?: string; language?: string }[] }
+    let data: {
+      articles?: {
+        title?: string
+        url?: string
+        domain?: string
+        seendate?: string
+        language?: string
+      }[]
+    }
     try {
       data = JSON.parse(text) as typeof data
     } catch {
@@ -205,7 +225,11 @@ const gdelt: TunnelProvider = {
     const french = looksFrench(query)
     return (data.articles ?? [])
       .filter((article) => article.url && article.title)
-      .filter((article) => !article.language || (french ? article.language === 'French' : article.language === 'English'))
+      .filter(
+        (article) =>
+          !article.language ||
+          (french ? article.language === 'French' : article.language === 'English')
+      )
       .map((article) => ({
         title: decodeEntities(article.title as string),
         url: article.url as string,
@@ -245,13 +269,20 @@ function ddgResults(html: string): RawSource[] {
   const pattern = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g
   const snippets = Array.from(
     html.matchAll(/<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g),
-    (match) => match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    (match) =>
+      match[1]
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
   )
   let match: RegExpExecArray | null
   let index = 0
   while ((match = pattern.exec(html)) && out.length < 8) {
     const url = decodeDdgUrl(match[1])
-    const title = match[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    const title = match[2]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
     const snippet = snippets[index] ?? ''
     index += 1
     if (!url || !title) continue
@@ -284,21 +315,57 @@ const ddg: TunnelProvider = {
 
 const PROVIDERS: TunnelProvider[] = [ddg, wikipedia, arxiv, hn, gdelt]
 
+/** File de lecture : six pages à la fois, jamais une rafale par domaine. */
+function limiter(max: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let active = 0
+  const queue: (() => void)[] = []
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    if (active >= max) await new Promise<void>((resolve) => queue.push(resolve))
+    active += 1
+    try {
+      return await task()
+    } finally {
+      active -= 1
+      queue.shift()?.()
+    }
+  }
+}
+
 /** Thèmes de sous-angle repérables dans le texte des pages. */
 const FACETS: { title: string; match: RegExp }[] = [
-  { title: 'Outils', match: /\b(outils?|générateurs?|generateurs?|logiciels?|plateformes?|applications?)\b/i },
-  { title: 'Comparatifs', match: /\b(comparatif|comparaison|meilleurs?|top \d|classement|palmarès)\b/i },
+  {
+    title: 'Outils',
+    match: /\b(outils?|générateurs?|generateurs?|logiciels?|plateformes?|applications?)\b/i
+  },
+  {
+    title: 'Comparatifs',
+    match: /\b(comparatif|comparaison|meilleurs?|top \d|classement|palmarès)\b/i
+  },
   { title: 'Guides', match: /\b(guide|tutoriel|comment|débuter|apprendre|méthode|pas à pas)\b/i },
   { title: 'Limites', match: /\b(limites?|risques?|erreurs?|inconvénients?|biais|dérives?)\b/i },
-  { title: 'Exemples', match: /\b(exemples?|cas d’usage|cas d'usage|retour d’expérience|témoignage)\b/i }
+  {
+    title: 'Exemples',
+    match: /\b(exemples?|cas d’usage|cas d'usage|retour d’expérience|témoignage)\b/i
+  }
 ]
 
-const DOC_HOSTS = ['developer.mozilla.org', 'docs.', 'devdocs.io', 'github.com', 'gitlab.com', 'readthedocs.io']
+const DOC_HOSTS = [
+  'developer.mozilla.org',
+  'docs.',
+  'devdocs.io',
+  'github.com',
+  'gitlab.com',
+  'readthedocs.io'
+]
 
 function refineType(type: SourceType | undefined, url: string): SourceType {
   try {
     const host = new URL(url).hostname
-    if (DOC_HOSTS.some((pattern) => host === pattern || host.startsWith('docs.') || host.includes(pattern))) {
+    if (
+      DOC_HOSTS.some(
+        (pattern) => host === pattern || host.startsWith('docs.') || host.includes(pattern)
+      )
+    ) {
       return 'docs'
     }
   } catch {
@@ -341,7 +408,9 @@ function readableText(html: string): string {
 }
 
 function cleanText(value: string): string {
-  return decodeEntities(value.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim()
+  return decodeEntities(value.replace(/<[^>]+>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 /**
@@ -371,7 +440,9 @@ export function metaContent(html: string, key: string): string | undefined {
 
 /** Paragraphes utiles d’une page : évite les menus, formulaires et bandeaux. */
 export function mainParagraphs(html: string): string {
-  const paragraphs = Array.from(withoutNoise(html).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi), (match) => cleanText(match[1]))
+  const paragraphs = Array.from(withoutNoise(html).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi), (match) =>
+    cleanText(match[1])
+  )
     .filter((text) => text.length > 90)
     .filter(
       (text) =>
@@ -453,6 +524,10 @@ export interface TunnelRunOptions {
   parentId?: string
   mapId?: string
   filters?: TunnelFilters
+  depth?: TunnelDepth
+  variants?: string[]
+  /** Ajoute des pages à la carte active au lieu d'en créer une autre. */
+  more?: boolean
 }
 
 export interface TunnelEvents {
@@ -477,11 +552,23 @@ interface RunState {
  * fournisseur qui l'a servi.
  */
 export const ANGLES: Record<string, { title: string; summary: string }> = {
-  ddg: { title: 'Vue d’ensemble', summary: 'Pages publiques consacrées au sujet.' },
-  wikipedia: { title: 'Définitions', summary: 'Repères et synthèses encyclopédiques.' },
-  arxiv: { title: 'Études', summary: 'Travaux de recherche et articles académiques.' },
-  gdelt: { title: 'Actualité', summary: 'Articles de presse récents.' },
-  hn: { title: 'Retours d’expérience', summary: 'Discussions de praticiens et avis argumentés.' }
+  ddg: {
+    title: 'Vue d’ensemble',
+    summary: 'Pages générales qui posent le sujet ; elles ne comparent pas les offres entre elles.'
+  },
+  wikipedia: {
+    title: 'Définitions',
+    summary: 'Repères encyclopédiques : le vocabulaire et le contexte, pas les prix.'
+  },
+  arxiv: {
+    title: 'Études',
+    summary: 'Travaux de recherche : méthodes et résultats, rarement des tarifs.'
+  },
+  gdelt: { title: 'Actualité', summary: 'Presse récente : annonces et chiffres datés.' },
+  hn: {
+    title: 'Retours d’expérience',
+    summary: 'Discussions de praticiens : ce qu’ils ont essayé, et ce qui a échoué.'
+  }
 }
 
 export class TunnelService {
@@ -496,7 +583,11 @@ export class TunnelService {
     this.runs.delete(runId)
   }
 
-  async start(runId: string, options: TunnelRunOptions, emit: (payload: unknown) => void): Promise<void> {
+  async start(
+    runId: string,
+    options: TunnelRunOptions,
+    emit: (payload: unknown) => void
+  ): Promise<void> {
     const controller = new AbortController()
     this.runs.set(runId, { controller, spaceId: options.spaceId, query: options.query })
     const query = options.query.trim().slice(0, 300)
@@ -505,12 +596,24 @@ export class TunnelService {
       return
     }
 
+    const depth: TunnelDepth = options.depth ?? 'standard'
+    const target =
+      TUNNEL_DEPTHS.find((entry) => entry.id === depth)?.pages ?? 25
+    // Un peu plus que la cible : le seuil de pertinence et le plafond par
+    // domaine éliminent une partie des pages lues.
+    const budget = Math.max(4, Math.ceil(target / 3))
+    const variants = (options.variants?.length ? options.variants : queryVariants(query))
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .slice(0, 8)
+    if (variants.length === 0) variants.push(query)
+
     const now = Date.now()
     const existing = options.mapId ? this.host.getMap(options.mapId) : null
     const parent = options.parentId
     const root: MapNode = parent
       ? (existing?.nodes.find((node) => node.id === parent) as MapNode)
-      : {
+      : (existing?.nodes.find((node) => node.kind === 'subject') ?? existing?.nodes[0]) ?? {
           id: randomUUID(),
           kind: 'subject',
           title: query,
@@ -555,11 +658,30 @@ export class TunnelService {
     // au renderer, sinon la carte commence à l’angle et perd sa racine.
     if (!existing) emit({ runId, type: 'node', node: root })
 
-    const seen = new Set(nodes.filter((node) => node.url).map((node) => node.url as string))
+    const seen = new Set(
+      nodes.filter((node) => node.url).map((node) => canonicalUrl(node.url as string))
+    )
+    // Plafond global : deux pages par domaine, toutes requêtes confondues.
+    const domainCounts = new Map<string, number>()
+    for (const node of nodes) {
+      if (node.kind !== 'site' || !node.domain) continue
+      domainCounts.set(node.domain, (domainCounts.get(node.domain) ?? 0) + 1)
+    }
     let siteCount = 0
     let totalNodes = 0
+    const readSlot = limiter(6)
+    const lastReadByDomain = new Map<string, number>()
+
+    const readPage = async (source: RawSource): Promise<PageSnapshot> => {
+      const domain = domainOf(source.url)
+      const since = Date.now() - (lastReadByDomain.get(domain) ?? 0)
+      if (since < 250) await new Promise((resolve) => setTimeout(resolve, 250 - since))
+      lastReadByDomain.set(domain, Date.now())
+      return readSlot(() => snapshotPage(source.url, controller.signal))
+    }
 
     const pushNode = (node: MapNode): void => {
+      if (nodes.some((entry) => entry.id === node.id)) return
       nodes.push(node)
       emit({ runId, type: 'node', node })
       totalNodes += 1
@@ -569,35 +691,53 @@ export class TunnelService {
       const lens = ANGLES[provider.id] ?? { title: provider.label, summary: '' }
       emit({ runId, type: 'phase', message: `Recherche ${lens.title.toLowerCase()}…` })
 
-      let raw: RawSource[] = []
-      try {
-        raw = await provider.search(query, controller.signal)
-      } catch (error) {        emit({
-          runId,
-          type: 'phase',
-          message: `${lens.title} indisponible (${error instanceof Error ? error.message : 'réseau'}).`
-        })
+      // Chaque fournisseur interroge plusieurs variantes. Les moteurs
+      // spécialisés répondent une fois : multiplier leurs appels coûterait
+      // plus qu'il n'apporte.
+      const variantLimit =
+        provider.id === 'ddg' ? variants.length : provider.id === 'arxiv' || provider.id === 'gdelt' ? 1 : 3
+      const perVariant = provider.id === 'ddg' ? Math.ceil(budget / variantLimit) + 1 : 4
+      const raw: RawSource[] = []
+      for (const variant of variants.slice(0, variantLimit)) {
+        if (controller.signal.aborted) return
+        try {
+          const found = await provider.search(variant, controller.signal)
+          raw.push(...found.slice(0, perVariant))
+        } catch (error) {
+          emit({
+            runId,
+            type: 'phase',
+            message: `${lens.title} indisponible pour « ${variant} » (${error instanceof Error ? error.message : 'réseau'}).`
+          })
+        }
+        if (raw.length >= budget) break
       }
       if (controller.signal.aborted) return
 
-      raw = raw.filter((source) => /^https?:/i.test(source.url)).slice(0, 6)
-
-      const fresh = raw.filter((source) => !seen.has(source.url))
-      for (const source of fresh) seen.add(source.url)
+      const fresh: RawSource[] = []
+      for (const source of raw) {
+        if (!/^https?:/i.test(source.url)) continue
+        const canonical = canonicalUrl(source.url)
+        if (seen.has(canonical)) continue
+        seen.add(canonical)
+        fresh.push(source)
+        if (fresh.length >= budget) break
+      }
       // Chaque page est réellement ouverte. Une notice d'API (arXiv) reste
       // utile quand la page refuse l'accès, mais elle est alors marquée comme
       // non récupérée : l'interface ne peut plus prétendre l'inverse.
-      const verified: { source: RawSource; page: PageSnapshot; notice?: boolean }[] = await Promise.all(
-        fresh.map(async (source) => {
-          const page = await snapshotPage(source.url, controller.signal)
-          if (page.ok || !source.verified || !source.snippet) return { source, page }
-          return {
-            source,
-            page: { ok: true, reachable: false, title: source.title, excerpt: source.snippet },
-            notice: true
-          }
-        })
-      )
+      const verified: { source: RawSource; page: PageSnapshot; notice?: boolean }[] =
+        await Promise.all(
+          fresh.map(async (source) => {
+            const page = await readPage(source)
+            if (page.ok || !source.verified || !source.snippet) return { source, page }
+            return {
+              source,
+              page: { ok: true, reachable: false, title: source.title, excerpt: source.snippet },
+              notice: true
+            }
+          })
+        )
       if (controller.signal.aborted) return
 
       const withPages = verified.map(({ source, page, notice }) => ({
@@ -622,12 +762,11 @@ export class TunnelService {
         })
         .filter((entry) => entry.relevance >= 35)
 
-      // Diversité : deux pages maximum par domaine, les mieux classées d’abord.
-      const perDomain = new Map<string, number>()
+      // Diversité : deux pages maximum par domaine, sur toute la carte.
       const diverse = scored.filter((entry) => {
-        const count = perDomain.get(entry.domain) ?? 0
+        const count = domainCounts.get(entry.domain) ?? 0
         if (count >= 2) return false
-        perDomain.set(entry.domain, count + 1)
+        domainCounts.set(entry.domain, count + 1)
         return true
       })
 
@@ -636,9 +775,10 @@ export class TunnelService {
         emit({
           runId,
           type: 'phase',
-          message: fresh.length === 0
-            ? `${lens.title} : aucun résultat.`
-            : `${lens.title} : ${fresh.length} page${fresh.length > 1 ? 's' : ''} examinée${fresh.length > 1 ? 's' : ''}, aucune retenue.`
+          message:
+            fresh.length === 0
+              ? `${lens.title} : aucun résultat.`
+              : `${lens.title} : ${fresh.length} page${fresh.length > 1 ? 's' : ''} examinée${fresh.length > 1 ? 's' : ''}, aucune retenue.`
         })
         return
       }
@@ -667,7 +807,9 @@ export class TunnelService {
       // « Comparatifs », « Limites »), jamais un nom de domaine.
       const facets = new Map<string, typeof diverse>()
       for (const entry of diverse) {
-        const facet = FACETS.find((candidate) => candidate.match.test(`${entry.title} ${entry.excerpt.slice(0, 400)}`))
+        const facet = FACETS.find((candidate) =>
+          candidate.match.test(`${entry.title} ${entry.excerpt.slice(0, 400)}`)
+        )
         if (!facet) continue
         const bucket = facets.get(facet.title)
         if (bucket) bucket.push(entry)
@@ -687,7 +829,9 @@ export class TunnelService {
           kind: 'subangle',
           title,
           summary: `Sources classées « ${title} » pour « ${query} ».`,
-          relevance: Math.round(entries.reduce((sum, entry) => sum + entry.relevance, 0) / entries.length),
+          relevance: Math.round(
+            entries.reduce((sum, entry) => sum + entry.relevance, 0) / entries.length
+          ),
           confidence: 75,
           reason: 'Thème commun aux pages récupérées.',
           status: 'neutral',
@@ -712,7 +856,9 @@ export class TunnelService {
           id: randomUUID(),
           kind: 'site',
           title: entry.title,
-          summary: entry.excerpt ? entry.excerpt.slice(0, 300) : 'Page inaccessible : contenu non récupéré.',
+          summary: entry.excerpt
+            ? entry.excerpt.slice(0, 300)
+            : 'Page inaccessible : contenu non récupéré.',
           url: entry.source.url,
           domain: entry.domain,
           sourceType,
@@ -762,7 +908,7 @@ export class TunnelService {
         else counts.set(token, [site.id])
       }
     }
-    const concepts = Array.from(counts)
+    const concepts = (options.more ? [] : Array.from(counts))
       .filter(([, ids]) => ids.length >= 2)
       .sort((a, b) => b[1].length - a[1].length)
       .slice(0, 3)
@@ -784,7 +930,7 @@ export class TunnelService {
     }
 
     // Tensions : uniquement appuyées sur les extraits récupérés.
-    const tensions = detectTensions(sites).slice(0, 4)
+    const tensions = options.more ? [] : detectTensions(sites).slice(0, 4)
     for (const tension of tensions) {
       pushNode({
         ...tension,

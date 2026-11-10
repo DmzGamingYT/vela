@@ -1,0 +1,104 @@
+/* Tranche 48 — barre latérale : alignement, hauteurs, affordances.
+   Les lignes d'onglets vivaient sur 10 px de marge alors que la carte Sessions,
+   les en-têtes et le pied sont à 16 px : la ligne active dépassait de 6 px de
+   chaque côté. Une seule marge désormais, et des hauteurs de ligne régulières. */
+
+/* ── Même marge pour tout ───────────────────────────────────────────────── */
+.sidebar .tabs-scroll {
+  padding: 0 16px 10px;
+}
+
+.sidebar .space-head {
+  padding: 0 16px 6px;
+}
+
+.sidebar .sessions-card {
+  margin: 4px 16px 8px;
+}
+
+/* Le filet entre sections reste (tranche 40) : seule la respiration change. */
+.sidebar .tabs-scroll > .tabs-head {
+  margin-top: 2px;
+  padding: 10px 2px 6px;
+}
+
+.sidebar .tabs-scroll > .tabs-head:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+
+/* ── Hauteurs de ligne régulières ──────────────────────────────────────── */
+/* Le domaine tenait une deuxième ligne pour certaines pages et pas pour
+   l'accueil : la liste paraissait irrégulière. Il passe en infobulle. */
+.sidebar .tab-host {
+  display: none;
+}
+
+.sidebar .tab-row {
+  min-height: 36px;
+  padding: 6px 8px;
+  margin-bottom: 2px;
+}
+
+.sidebar .tab-row + .tab-row {
+  margin-top: 0;
+}
+
+/* ── Le nom de l'espace se lit comme un bouton ─────────────────────────── */
+.space-head .space-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--fill);
+  color: var(--ink);
+  text-align: left;
+}
+
+.space-head .space-name:hover {
+  background: var(--fill-2);
+  border-color: var(--line);
+}
+
+.space-name-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.space-head .space-name svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+/* ── Une carte d'action n'est pas un titre de section ──────────────────── */
+.sessions-kicker {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+/* ── Veille : plus grise, et expliquée ─────────────────────────────────── */
+.sidebar .tab-row[data-asleep='true'] {
+  opacity: 0.62;
+}
+
+.sidebar .tab-row[data-asleep='true']:hover,
+.sidebar .tab-row[data-asleep='true']:focus-within {
+  opacity: 1;
+}
+
+.sidebar .tab-row[data-asleep='true'] .tab-title {
+  color: var(--muted);
+}
+
+.foot-note {
+  cursor: default;
+}

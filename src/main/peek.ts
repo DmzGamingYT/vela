@@ -257,7 +257,10 @@ export class Peek {
       this.sync({ loading: false, error: description || 'Chargement impossible' })
     })
     wc.on('render-process-gone', (_event, details) => {
-      this.sync({ loading: false, error: details.reason === 'clean-exit' ? null : 'La page a cessé de répondre.' })
+      this.sync({
+        loading: false,
+        error: details.reason === 'clean-exit' ? null : 'La page a cessé de répondre.'
+      })
     })
     return true
   }
@@ -312,7 +315,14 @@ export class Peek {
     const wc = this.page()
     if (!wc) return
     if (!this.state) return
-    this.state = { ...this.state, url, host: hostOf(url), title: titleFromUrl(url), loading: true, error: null }
+    this.state = {
+      ...this.state,
+      url,
+      host: hostOf(url),
+      title: titleFromUrl(url),
+      loading: true,
+      error: null
+    }
     this.place()
     void wc.loadURL(url).catch(() => {
       /* did-fail-load remonte déjà l'erreur */
@@ -374,7 +384,8 @@ export class Peek {
     if (!this.addressPending) return
     this.addressPending = false
     const win = this.host.parent()
-    if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send('peek:focus-address')
+    if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
+      win.webContents.send('peek:focus-address')
   }
 
   private keys(event: ElectronEvent, input: Input): void {
@@ -431,7 +442,10 @@ export class Peek {
     const wc = this.page()
     if (wc) {
       try {
-        const full: unknown = await wc.executeJavaScript('Boolean(document.fullscreenElement)', true)
+        const full: unknown = await wc.executeJavaScript(
+          'Boolean(document.fullscreenElement)',
+          true
+        )
         if (full === true) return
       } catch {
         /* page inaccessible : on referme quand même */

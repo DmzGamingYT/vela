@@ -10,11 +10,7 @@ import {
   updateStatus
 } from '../updater'
 import { readAvatarDataUrl } from '../avatars'
-import {
-  faviconCachedDataUrl,
-  faviconDataUrl,
-  purgeFavicons
-} from '../favicons'
+import { faviconCachedDataUrl, faviconDataUrl, purgeFavicons } from '../favicons'
 import type { IpcHost } from './host'
 import type { Handle, On } from './types'
 import { asId, readImageDataUrl } from './util'
@@ -36,8 +32,16 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
       typeof payload.spaceId === 'string' ? payload.spaceId : ''
     )
   })
-  handle('app:platform', () => process.platform)
   handle('app:metrics', () => host.metrics())
+  // Double-clic sur une zone libre de la barre de titre : le geste macOS
+  // attendu, agrandir puis restaurer. La barre est en `-webkit-app-region:
+  // drag`, donc le glissement de la fenêtre suit tout seul.
+  handle('app:zoom-window', () => {
+    const win = host.win()
+    if (!win) return
+    if (win.isMaximized()) win.unmaximize()
+    else win.maximize()
+  })
 
   // Coup d'œil : la carte vit dans la coque, la page est une vue native.
   // Seuls ces quelques échanges traversent l'IPC.
@@ -49,7 +53,9 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
     })
   })
   handle('peek:close', () => host.peek.close())
-  handle('peek:navigate', (payload) => host.peek.navigate(typeof payload === 'string' ? payload : ''))
+  handle('peek:navigate', (payload) =>
+    host.peek.navigate(typeof payload === 'string' ? payload : '')
+  )
   handle('peek:back', () => host.peek.back())
   handle('peek:forward', () => host.peek.forward())
   handle('peek:reload', () => host.peek.reload())
@@ -65,9 +71,7 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
     const name = typeof payload === 'string' ? payload : ''
     return readAvatarDataUrl(host.store.dir, name)
   })
-  handle('thumbs:get', (payload) =>
-    host.thumbs.dataUrl(typeof payload === 'string' ? payload : '')
-  )
+  handle('thumbs:get', (payload) => host.thumbs.dataUrl(typeof payload === 'string' ? payload : ''))
   handle('thumbs:count', () => host.thumbs.count())
   handle('thumbs:purge', () => {
     const removed = host.thumbs.purge()

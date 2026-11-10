@@ -257,9 +257,7 @@ export const GALLERY_AVATARS: GalleryAvatar[] = [
     to: '#2B2B78',
     ink: '#F2F2FF',
     initial: true,
-    shapes: [
-      { kind: 'path', d: 'M4 30 30 4M4 42 42 4M16 44 44 16', stroke: true, o: 0.35 }
-    ]
+    shapes: [{ kind: 'path', d: 'M4 30 30 4M4 42 42 4M16 44 44 16', stroke: true, o: 0.35 }]
   },
   {
     id: 'mono-dots',
@@ -293,7 +291,11 @@ export const GALLERY_AVATARS: GalleryAvatar[] = [
     to: '#3B120A',
     ink: '#FFD9AC',
     shapes: [
-      { kind: 'path', d: 'M24 7c8 0 14 11 14 21 0 8-6 13-14 13S10 36 10 28C10 18 16 7 24 7Z', o: 0.95 },
+      {
+        kind: 'path',
+        d: 'M24 7c8 0 14 11 14 21 0 8-6 13-14 13S10 36 10 28C10 18 16 7 24 7Z',
+        o: 0.95
+      },
       { kind: 'circle', cx: 20, cy: 21, r: 2.3, o: 0.3 },
       { kind: 'circle', cx: 28, cy: 21, r: 2.3, o: 0.3 },
       { kind: 'circle', cx: 24, cy: 28, r: 2.6, o: 0.3 },

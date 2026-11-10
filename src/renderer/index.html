@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data: https: http:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-8qxicPZtQXoSwskE4wirX3ECoUSBYdB3zvIo5k3ZfTg='; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com __DEV_WS__; font-src 'self' data:;"
+      content="default-src 'self'; img-src 'self' data: https: http:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-gn/o0o6PT/N0P3c2plscjWm69hhP6XOIcfVCji0Ksas='; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com __DEV_WS__; font-src 'self' data:;"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
@@ -12,27 +12,28 @@
     <script>
       // Rejoue le thème mémorisé avant le premier rendu : pas de flash indigo.
       try {
-        var root = document.documentElement;
-        var cached = JSON.parse(localStorage.getItem('vela.appearance') || 'null');
+        var root = document.documentElement
+        var cached = JSON.parse(localStorage.getItem('vela.appearance') || 'null')
         if (cached && cached.tokens) {
-          root.dataset.mode = cached.mode || 'light';
-          root.dataset.theme = cached.themeId || 'indigo';
-          root.dataset.glass = cached.glass || 'normal';
-          root.dataset.ambience = cached.ambience || 'none';
-          root.dataset.contrast = cached.highContrast ? 'high' : 'normal';
-          root.dataset.density = cached.density || 'normal';
-          root.dataset.text = cached.textSize || 'normal';
-          root.dataset.sidebar = cached.sidebarSide || 'left';
-          root.dataset.motion = cached.reduceMotion ? 'reduce' : 'full';
-          root.style.colorScheme = cached.mode || 'light';
+          root.dataset.mode = cached.mode || 'light'
+          root.dataset.theme = cached.themeId || 'indigo'
+          root.dataset.glass = cached.glass || 'normal'
+          root.dataset.ambience = cached.ambience || 'none'
+          root.dataset.contrast = cached.highContrast ? 'high' : 'normal'
+          root.dataset.density = cached.density || 'normal'
+          root.dataset.text = cached.textSize || 'normal'
+          root.dataset.sidebar = cached.sidebarSide || 'left'
+          root.dataset.motion = cached.reduceMotion ? 'reduce' : 'full'
+          root.style.colorScheme = cached.mode || 'light'
           for (var name in cached.tokens) {
-            if (typeof cached.tokens[name] === 'string') root.style.setProperty(name, cached.tokens[name]);
+            if (typeof cached.tokens[name] === 'string')
+              root.style.setProperty(name, cached.tokens[name])
           }
-          root.style.setProperty('--space-accent', cached.tokens['--accent-label'] || '');
+          root.style.setProperty('--space-accent', cached.tokens['--accent-label'] || '')
         } else {
-          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          root.dataset.mode = dark ? 'dark' : 'light';
-          root.style.colorScheme = dark ? 'dark' : 'light';
+          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          root.dataset.mode = dark ? 'dark' : 'light'
+          root.style.colorScheme = dark ? 'dark' : 'light'
         }
       } catch (e) {}
     </script>

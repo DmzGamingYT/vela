@@ -15,9 +15,9 @@ interface RawBookmark {
 function isEntry(value: unknown): value is RawBookmark {
   return Boolean(
     value &&
-      typeof value === 'object' &&
-      typeof (value as RawBookmark).id === 'string' &&
-      typeof (value as RawBookmark).url === 'string'
+    typeof value === 'object' &&
+    typeof (value as RawBookmark).id === 'string' &&
+    typeof (value as RawBookmark).url === 'string'
   )
 }
 
@@ -88,7 +88,9 @@ export function migrateBookmarkOrder(raw: unknown): BookmarkMigration {
       `${result.broken} entrée${result.broken > 1 ? 's' : ''} de favori ignorée${result.broken > 1 ? 's' : ''} : identifiant ou adresse manquant.`
     )
   }
-  journal.push(`Ordre des favoris normalisé : ${result.kept} entrée${result.kept > 1 ? 's' : ''}, de 0 à ${Math.max(0, result.kept - 1)}.`)
+  journal.push(
+    `Ordre des favoris normalisé : ${result.kept} entrée${result.kept > 1 ? 's' : ''}, de 0 à ${Math.max(0, result.kept - 1)}.`
+  )
   return { changed: true, state: { ...input, bookmarks: result.entries }, journal }
 }
 

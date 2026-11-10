@@ -13,13 +13,7 @@ import Favicon from './Favicon'
  * initiales : on ne dessine pas un logo qui n'existe pas.
  */
 export type SiteBrand =
-  | 'github'
-  | 'notion'
-  | 'figma'
-  | 'linear'
-  | 'youtube'
-  | 'wikipedia'
-  | 'hackernews'
+  'github' | 'notion' | 'figma' | 'linear' | 'youtube' | 'wikipedia' | 'hackernews'
 
 const PATHS: Record<SiteBrand, string> = {
   github:

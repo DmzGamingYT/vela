@@ -4,7 +4,8 @@
  * garde le scoring, la mise en page et les exports testables sans Electron.
  */
 
-export type MapNodeKind = 'subject' | 'angle' | 'subangle' | 'detail' | 'concept' | 'site' | 'tension'
+export type MapNodeKind =
+  'subject' | 'angle' | 'subangle' | 'detail' | 'concept' | 'site' | 'tension'
 
 export type SourceType = 'academic' | 'news' | 'wiki' | 'discussion' | 'docs' | 'other'
 
@@ -120,14 +121,131 @@ export const NODE_LABELS: Record<MapNodeKind, string> = {
 /* ------------------------------------------------------------------ */
 
 const STOP_WORDS = new Set([
-  'le','la','les','un','une','des','du','de','d','au','aux','et','ou','mais','donc','or','ni','car',
-  'pour','sur','sous','dans','avec','sans','par','vers','chez','entre','comme','que','qui','quoi',
-  'dont','ou','où','quand','comment','pourquoi','est','sont','être','été','avoir','a','ai','as','ont',
-  'ce','cet','cette','ces','son','sa','ses','leur','leurs','mon','ma','mes','ton','ta','tes','notre',
-  'nos','votre','vos','je','tu','il','elle','on','nous','vous','ils','elles','se','s','y','en','ne',
-  'pas','plus','moins','très','tout','tous','toute','toutes','aussi','encore','déjà','the','a','an',
-  'of','to','in','on','for','and','or','with','without','from','by','at','is','are','was','were',
-  'be','been','this','that','these','those','it','its','as','about','into','over','under','how','why'
+  'le',
+  'la',
+  'les',
+  'un',
+  'une',
+  'des',
+  'du',
+  'de',
+  'd',
+  'au',
+  'aux',
+  'et',
+  'ou',
+  'mais',
+  'donc',
+  'or',
+  'ni',
+  'car',
+  'pour',
+  'sur',
+  'sous',
+  'dans',
+  'avec',
+  'sans',
+  'par',
+  'vers',
+  'chez',
+  'entre',
+  'comme',
+  'que',
+  'qui',
+  'quoi',
+  'dont',
+  'ou',
+  'où',
+  'quand',
+  'comment',
+  'pourquoi',
+  'est',
+  'sont',
+  'être',
+  'été',
+  'avoir',
+  'a',
+  'ai',
+  'as',
+  'ont',
+  'ce',
+  'cet',
+  'cette',
+  'ces',
+  'son',
+  'sa',
+  'ses',
+  'leur',
+  'leurs',
+  'mon',
+  'ma',
+  'mes',
+  'ton',
+  'ta',
+  'tes',
+  'notre',
+  'nos',
+  'votre',
+  'vos',
+  'je',
+  'tu',
+  'il',
+  'elle',
+  'on',
+  'nous',
+  'vous',
+  'ils',
+  'elles',
+  'se',
+  's',
+  'y',
+  'en',
+  'ne',
+  'pas',
+  'plus',
+  'moins',
+  'très',
+  'tout',
+  'tous',
+  'toute',
+  'toutes',
+  'aussi',
+  'encore',
+  'déjà',
+  'the',
+  'a',
+  'an',
+  'of',
+  'to',
+  'in',
+  'on',
+  'for',
+  'and',
+  'or',
+  'with',
+  'without',
+  'from',
+  'by',
+  'at',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'this',
+  'that',
+  'these',
+  'those',
+  'it',
+  'its',
+  'as',
+  'about',
+  'into',
+  'over',
+  'under',
+  'how',
+  'why'
 ])
 
 export function stripAccents(value: string): string {
@@ -141,7 +259,8 @@ export function tokenize(value: string): string[] {
 }
 
 export function looksFrench(query: string): boolean {
-  const words = /\b(le|la|les|des|du|de|un|une|pour|comment|pourquoi|est|sont|avec|sur|dans|quand|quel|quelle|quels|quelles|sans|plus|aux|ce|cette|ces)\b/i
+  const words =
+    /\b(le|la|les|des|du|de|un|une|pour|comment|pourquoi|est|sont|avec|sur|dans|quand|quel|quelle|quels|quelles|sans|plus|aux|ce|cette|ces)\b/i
   if (words.test(query)) return true
   // Accents et ligatures du français : « vélo cargo » est une requête
   // française même sans petit mot grammatical, et interroger Wikipédia en
@@ -164,9 +283,36 @@ function stem(word: string): string {
  * quand la requête est « utiliser l’IA pour rédiger des textes ».
  */
 const INTENT_WORDS = new Set([
-  'utiliser','utilise','utiliser','utilisation','comment','pourquoi','chercher','cherche','trouver',
-  'trouve','faire','fais','peut','peux','veut','veux','savoir','expliquer','explique','mieux',
-  'meilleur','meilleure','meilleurs','meilleures','bon','bonne','quel','quelle','quels','quelles'
+  'utiliser',
+  'utilise',
+  'utiliser',
+  'utilisation',
+  'comment',
+  'pourquoi',
+  'chercher',
+  'cherche',
+  'trouver',
+  'trouve',
+  'faire',
+  'fais',
+  'peut',
+  'peux',
+  'veut',
+  'veux',
+  'savoir',
+  'expliquer',
+  'explique',
+  'mieux',
+  'meilleur',
+  'meilleure',
+  'meilleurs',
+  'meilleures',
+  'bon',
+  'bonne',
+  'quel',
+  'quelle',
+  'quels',
+  'quelles'
 ])
 
 function queryTokens(query: string): string[] {
@@ -223,7 +369,9 @@ export function relevanceReason(
   const domain = new Set(tokenize(candidate.domain ?? '').map(stem))
   const inTitle = wanted.filter((token) => title.has(token)).length
   const inText = wanted.filter((token) => !title.has(token) && excerpt.has(token)).length
-  const inDomain = wanted.filter((token) => !title.has(token) && !excerpt.has(token) && domain.has(token)).length
+  const inDomain = wanted.filter(
+    (token) => !title.has(token) && !excerpt.has(token) && domain.has(token)
+  ).length
   const missing = wanted.length - inTitle - inText - inDomain
   const parts: string[] = []
   if (inTitle > 0) parts.push(`${inTitle} dans le titre`)
@@ -254,19 +402,137 @@ export function scoreConfidence(input: {
 
 /** Lexique volontairement court : il ne corrige que les fautes fréquentes. */
 const LEXICON = [
-  'utiliser','utilisation','utilise','rédiger','rédigé','rédaction','texte','textes','article','articles',
-  'recherche','recherches','chercher','trouver','comprendre','comparer','analyse','analyser','sources',
-  'source','document','documents','navigateur','navigateurs','internet','logiciel','logiciels','application',
-  'applications','intelligence','artificielle','machine','apprentissage','données','sécurité','confidentialité',
-  'histoire','culture','société','économie','politique','science','sciences','technique','techniques','méthode',
-  'méthodes','travail','étude','études','projet','projets','gestion','performance','mémoire','vitesse',
-  'réseau','réseaux','serveur','serveurs','développement','développeur','programmation','langage','langages',
-  'éducation','apprendre','école','université','citation','citations','rapport',
-  'présentation','résumé','synthèse','exemple','exemples','guide','tutoriel','fonctionnement','définition',
-  'avantage','avantages','inconvénient','inconvénients','comparaison','différence','différences','marché',
-  'monde','france','europe','futur','avenir','impact','impacts','risque','risques','enjeu','enjeux',
-  'minimaliste','minimalistes','rapide','rapides','léger','légers','simple','simples','ouvert','ouverte',
-  'gratuit','gratuite','privé','privée','locale','local','cloud','modèle','modèles','agent','agents'
+  'utiliser',
+  'utilisation',
+  'utilise',
+  'rédiger',
+  'rédigé',
+  'rédaction',
+  'texte',
+  'textes',
+  'article',
+  'articles',
+  'recherche',
+  'recherches',
+  'chercher',
+  'trouver',
+  'comprendre',
+  'comparer',
+  'analyse',
+  'analyser',
+  'sources',
+  'source',
+  'document',
+  'documents',
+  'navigateur',
+  'navigateurs',
+  'internet',
+  'logiciel',
+  'logiciels',
+  'application',
+  'applications',
+  'intelligence',
+  'artificielle',
+  'machine',
+  'apprentissage',
+  'données',
+  'sécurité',
+  'confidentialité',
+  'histoire',
+  'culture',
+  'société',
+  'économie',
+  'politique',
+  'science',
+  'sciences',
+  'technique',
+  'techniques',
+  'méthode',
+  'méthodes',
+  'travail',
+  'étude',
+  'études',
+  'projet',
+  'projets',
+  'gestion',
+  'performance',
+  'mémoire',
+  'vitesse',
+  'réseau',
+  'réseaux',
+  'serveur',
+  'serveurs',
+  'développement',
+  'développeur',
+  'programmation',
+  'langage',
+  'langages',
+  'éducation',
+  'apprendre',
+  'école',
+  'université',
+  'citation',
+  'citations',
+  'rapport',
+  'présentation',
+  'résumé',
+  'synthèse',
+  'exemple',
+  'exemples',
+  'guide',
+  'tutoriel',
+  'fonctionnement',
+  'définition',
+  'avantage',
+  'avantages',
+  'inconvénient',
+  'inconvénients',
+  'comparaison',
+  'différence',
+  'différences',
+  'marché',
+  'monde',
+  'france',
+  'europe',
+  'futur',
+  'avenir',
+  'impact',
+  'impacts',
+  'risque',
+  'risques',
+  'enjeu',
+  'enjeux',
+  'minimaliste',
+  'minimalistes',
+  'rapide',
+  'rapides',
+  'léger',
+  'légers',
+  'simple',
+  'simples',
+  'ouvert',
+  'ouverte',
+  'gratuit',
+  'gratuite',
+  'gratuits',
+  'gratuites',
+  'meilleur',
+  'meilleure',
+  'meilleurs',
+  'meilleures',
+  'top',
+  'classement',
+  'comparatif',
+  'comparaison',
+  'privé',
+  'privée',
+  'locale',
+  'local',
+  'cloud',
+  'modèle',
+  'modèles',
+  'agent',
+  'agents'
 ]
 
 /** Clé sans accent → mot affiché avec ses accents. */
@@ -357,7 +623,11 @@ export function filterMap(
       hiddenSites += 1
       continue
     }
-    if (filters.sourceTypes.length > 0 && site.sourceType && !filters.sourceTypes.includes(site.sourceType)) {
+    if (
+      filters.sourceTypes.length > 0 &&
+      site.sourceType &&
+      !filters.sourceTypes.includes(site.sourceType)
+    ) {
       hiddenSites += 1
       continue
     }
@@ -447,7 +717,7 @@ export function addCard(
   input: { title: string; kind?: MapNodeKind; summary?: string }
 ): TunnelMap {
   const title = input.title.trim().slice(0, 200) || 'Nouvelle carte'
-  const parent = parentId ? map.nodes.find((node) => node.id === parentId) ?? null : null
+  const parent = parentId ? (map.nodes.find((node) => node.id === parentId) ?? null) : null
   const kind = input.kind ?? (parent?.kind === 'subject' ? 'angle' : 'detail')
   const card: MapNode = {
     id: newId('card'),
@@ -609,9 +879,18 @@ export function layoutMap(
     const own = heights.get(id) ?? sizeOf(id).height
     const size = sizeOf(id)
     const kids = children.get(id) ?? []
-    box.set(id, { x: depth * columnWidth, y: top + own / 2 - size.height / 2, width: size.width, height: size.height, depth })
+    box.set(id, {
+      x: depth * columnWidth,
+      y: top + own / 2 - size.height / 2,
+      width: size.width,
+      height: size.height,
+      depth
+    })
     if (kids.length === 0) return
-    const total = kids.reduce((sum, kid) => sum + (heights.get(kid) ?? sizeOf(kid).height) + rowGap, -rowGap)
+    const total = kids.reduce(
+      (sum, kid) => sum + (heights.get(kid) ?? sizeOf(kid).height) + rowGap,
+      -rowGap
+    )
     let cursor = top + own / 2 - total / 2
     for (const kid of kids) {
       const kidHeight = heights.get(kid) ?? nodeHeight
@@ -713,7 +992,9 @@ export function detectTensions(sites: MapNode[]): MapNode[] {
       kind: 'tension',
       title: `Divergence sur « ${context} »`,
       summary: `Deux sources avancent une valeur différente : ${entries.map((entry) => entry.value).join(' et ')}.`,
-      relevance: Math.min(...entries.map((entry) => sites.find((site) => site.id === entry.siteId)?.relevance ?? 0)),
+      relevance: Math.min(
+        ...entries.map((entry) => sites.find((site) => site.id === entry.siteId)?.relevance ?? 0)
+      ),
       confidence: 60,
       reason: 'Chiffres ou dates divergents dans des phrases comparables.',
       status: 'neutral',
@@ -769,7 +1050,8 @@ export function buildTunnelReport(map: TunnelMap, visible?: Set<string>): string
       lines.push('')
       lines.push(`- Domaine : ${site.domain ?? 'inconnu'}`)
       lines.push(`- Pertinence : ${site.relevance} % · Confiance : ${site.confidence} %`)
-      if (site.publishedAt) lines.push(`- Publication : ${new Date(site.publishedAt).toLocaleDateString('fr-FR')}`)
+      if (site.publishedAt)
+        lines.push(`- Publication : ${new Date(site.publishedAt).toLocaleDateString('fr-FR')}`)
       lines.push(`- URL : ${site.url ?? 'inconnue'}`)
       if (site.excerpt) lines.push('', `> ${site.excerpt.replace(/\n+/g, ' ').slice(0, 400)}`)
       lines.push('')
@@ -792,7 +1074,9 @@ export function buildTunnelReport(map: TunnelMap, visible?: Set<string>): string
   }
 
   lines.push('---')
-  lines.push(`Carte générée le ${new Date().toLocaleDateString('fr-FR')} · ${sites.length} sources · ${map.nodes.length} nœuds.`)
+  lines.push(
+    `Carte générée le ${new Date().toLocaleDateString('fr-FR')} · ${sites.length} sources · ${map.nodes.length} nœuds.`
+  )
   return lines.join('\n')
 }
 
@@ -835,7 +1119,10 @@ export function toOpmlExport(map: TunnelMap): string {
     const attributes = [
       `text="${escapeXml(node.title)}"`,
       `_note="${escapeXml(
-        [NODE_LABELS[node.kind], node.summary, node.reason].filter(Boolean).join(' — ').slice(0, 900)
+        [NODE_LABELS[node.kind], node.summary, node.reason]
+          .filter(Boolean)
+          .join(' — ')
+          .slice(0, 900)
       )}"`
     ]
     if (node.url) attributes.push(`htmlUrl="${escapeXml(node.url)}"`)
@@ -901,7 +1188,9 @@ export function buildTunnelHtml(map: TunnelMap, visible?: Set<string>): string {
       const related = (tension.relatedIds ?? [])
         .map((id) => {
           const site = map.nodes.find((node) => node.id === id)
-          return site ? `<li>[${index.get(site.id) ?? '—'}] ${escapeHtml(site.title)} — ${escapeHtml(site.url ?? '')}</li>` : ''
+          return site
+            ? `<li>[${index.get(site.id) ?? '—'}] ${escapeHtml(site.title)} — ${escapeHtml(site.url ?? '')}</li>`
+            : ''
         })
         .join('')
       return `<section><h2>${escapeHtml(tension.title)}</h2><p>${escapeHtml(tension.summary)}</p><pre>${escapeHtml(
@@ -953,19 +1242,33 @@ export function summarizeMap(map: TunnelMap): TunnelMapSummary {
     query: map.query,
     title: tunnelMapTitle(map),
     sourceCount: map.nodes.filter((node) => node.kind === 'site').length,
-    angleCount: map.nodes.filter((node) => node.kind === 'angle' || node.kind === 'subangle').length,
+    angleCount: map.nodes.filter((node) => node.kind === 'angle' || node.kind === 'subangle')
+      .length,
     updatedAt: map.updatedAt
   }
 }
 
-const KINDS: MapNodeKind[] = ['subject', 'angle', 'subangle', 'detail', 'concept', 'site', 'tension']
+const KINDS: MapNodeKind[] = [
+  'subject',
+  'angle',
+  'subangle',
+  'detail',
+  'concept',
+  'site',
+  'tension'
+]
 const TYPES: SourceType[] = ['academic', 'news', 'wiki', 'discussion', 'docs', 'other']
 
 /** Normalise une carte venue du disque : aucune donnée non reconnue n'entre. */
 export function sanitizeMap(raw: unknown): TunnelMap | null {
   if (!raw || typeof raw !== 'object') return null
   const input = raw as Partial<TunnelMap>
-  if (typeof input.id !== 'string' || typeof input.query !== 'string' || !Array.isArray(input.nodes)) return null
+  if (
+    typeof input.id !== 'string' ||
+    typeof input.query !== 'string' ||
+    !Array.isArray(input.nodes)
+  )
+    return null
   const nodes: MapNode[] = []
   for (const entry of input.nodes) {
     if (!entry || typeof entry !== 'object') continue
@@ -1017,6 +1320,70 @@ export function sanitizeMap(raw: unknown): TunnelMap | null {
 function clampScore(value: unknown): number {
   const number = typeof value === 'number' && Number.isFinite(value) ? value : 0
   return Math.max(0, Math.min(100, Math.round(number)))
+}
+
+/** Profondeur de recherche : un nombre de pages lues, pas un niveau abstrait. */
+export type TunnelDepth = 'quick' | 'standard' | 'deep'
+
+export const TUNNEL_DEPTHS: { id: TunnelDepth; label: string; pages: number; estimate: string }[] =
+  [
+    { id: 'quick', label: 'Rapide', pages: 10, estimate: '≈ 30 s' },
+    { id: 'standard', label: 'Standard', pages: 25, estimate: '≈ 1 min' },
+    { id: 'deep', label: 'Approfondie', pages: 50, estimate: '≈ 2 min' }
+  ]
+
+/**
+ * Variantes de requête : reformulation, termes alternatifs, anglais.
+ * Elles restent visibles et modifiables ; rien n'est lancé avec une requête
+ * que l'utilisateur n'a pas vue.
+ */
+export function queryVariants(query: string): string[] {
+  const base = query.trim()
+  if (!base) return []
+  const core = base.replace(/^(comparer|chercher|trouver|quelle?)\s+/i, '').trim()
+  const variants = new Set<string>([base])
+  variants.add(`${core} comparatif`)
+  variants.add(`${core} alternatives`)
+  variants.add(`${core} retours d’expérience`)
+  variants.add(`${core} documentation officielle`)
+  variants.add(`${core} comparison alternatives`)
+  if (/\blibres?\b/i.test(base)) variants.add(core.replace(/\blibres?\b/i, 'open source'))
+  return Array.from(variants).slice(0, 6)
+}
+
+/** Adresse canonique : pas de fragment, pas de paramètres de campagne. */
+export function canonicalUrl(raw: string): string {
+  try {
+    const url = new URL(raw)
+    url.hash = ''
+    for (const key of Array.from(url.searchParams.keys())) {
+      if (/^(utm_|ref|source|fbclid|gclid)/i.test(key)) url.searchParams.delete(key)
+    }
+    const path = url.pathname.replace(/\/$/, '') || '/'
+    return `${url.protocol}//${url.hostname.replace(/^www\./, '')}${path}${
+      url.search ? `?${url.searchParams.toString()}` : ''
+    }`
+  } catch {
+    return raw
+  }
+}
+
+/** Compteurs communs à tous les écrans : trouvées, lues, retenues, écartées. */
+export function tunnelCounts(
+  nodes: MapNode[],
+  visible?: Set<string>
+): { found: number; read: number; kept: number; dismissed: number } {
+  const sites = nodes.filter((node) => node.kind === 'site')
+  const dismissed = sites.filter((site) => site.status === 'dismissed').length
+  const kept = sites.filter(
+    (site) => site.status !== 'dismissed' && (!visible || visible.has(site.id))
+  ).length
+  return {
+    found: sites.length,
+    read: sites.filter((site) => site.reachable !== false).length,
+    kept,
+    dismissed
+  }
 }
 
 export type { MapNode as TunnelNode }

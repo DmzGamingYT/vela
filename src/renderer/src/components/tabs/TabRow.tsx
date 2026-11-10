@@ -57,6 +57,7 @@ export default function TabRow({
       aria-roledescription="onglet"
       aria-label={`${home ? 'Accueil' : tab.title}${active ? ', page courante' : ''}`}
       aria-current={active ? 'page' : undefined}
+      title={home ? 'Accueil' : prettyUrl(tab.url)}
       tabIndex={0}
       draggable
       onClick={() => selectTab(tab.id)}
@@ -66,10 +67,7 @@ export default function TabRow({
         setMenu({ x: event.clientX, y: event.clientY, keyboard: false })
       }}
       onKeyDown={(event) => {
-        if (
-          event.target === event.currentTarget &&
-          (event.key === 'Enter' || event.key === ' ')
-        ) {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault()
           selectTab(tab.id)
         }
@@ -89,13 +87,16 @@ export default function TabRow({
         {tab.favicon && !broken ? (
           <img src={tab.favicon} alt="" onError={() => setBroken(true)} draggable={false} />
         ) : (
-          <span aria-hidden="true">{home ? <Icon name="home" size={13} /> : initials(tab.title || host)}</span>
+          <span aria-hidden="true">
+            {home ? <Icon name="home" size={13} /> : initials(tab.title || host)}
+          </span>
         )}
       </span>
 
+      {/* Une seule ligne par onglet : le domaine passe en infobulle, sinon
+          « Accueil » et « YouTube » n'avaient pas la même hauteur. */}
       <span className="tab-copy">
         <span className="tab-title">{home ? 'Accueil' : tab.title}</span>
-        {!home && <span className="tab-host">{prettyUrl(tab.url)}</span>}
       </span>
 
       {tab.loading && <span className="tab-loading" aria-label="Chargement" />}
@@ -121,8 +122,8 @@ export default function TabRow({
         <span
           className="tab-asleep"
           role="img"
-          aria-label="En veille : la page se recharge à l’ouverture"
-          title="En veille : la page se recharge à l’ouverture"
+          aria-label="En veille : mémoire libérée, la page se recharge à l’ouverture"
+          title="En veille : mémoire libérée, la page se recharge à l’ouverture"
         >
           <Icon name="moon" size={12} />
         </span>
@@ -174,7 +175,6 @@ export default function TabRow({
           <Icon name="close" size={12} />
         </button>
       </span>
-
 
       {menu && (
         <TabContextMenu

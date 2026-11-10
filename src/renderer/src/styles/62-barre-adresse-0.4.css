@@ -1,0 +1,133 @@
+/* Tranche 62 — la barre d'adresse a un contenant (0.4).
+   Sur l'accueil l'adresse était dans une pilule ; sur une page, le domaine
+   flottait en texte nu. Un seul champ, partout : fond léger, 34 px, rayon 10.
+   Les trois icônes prennent la même taille et le même trait, et la barre dit
+   qu'elle charge. */
+
+/* ── Le rythme de la barre ────────────────────────────────────────────── */
+.pane-head {
+  position: relative;
+  gap: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.pane-head .nav-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 18 px d'icône dans une cible de 32 : le chevron ne dépasse plus le bouton
+   « Recharger ». */
+.pane-head .icon-btn {
+  display: grid;
+  place-items: center;
+  /* 03 fixe `flex: 0 0 28px` : sans cette ligne, la largeur restait 28 px
+     malgré la cible de 32. */
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+}
+
+.pane-head .icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.pane-head .icon-btn:disabled {
+  opacity: 0.35;
+}
+
+/* ── Le champ, sur toutes les pages ───────────────────────────────────── */
+.pane-head .address,
+.pane-head .address[data-home='true']:not([data-focused='true']),
+.pane-head .address[data-resting='true'] {
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.pane-head .address:hover,
+.pane-head .address[data-resting='true']:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.pane-head .address:focus-within,
+.pane-head .address[data-focused='true'] {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+/* Sur l'accueil, le champ reste vide et annonce ce qu'il fait : « Vela —
+   Accueil » décrivait la page au lieu d'inviter à écrire. */
+.pane-head .address[data-home='true']:not([data-focused='true']) .address-input {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* ── Le bouclier, à gauche de l'adresse ───────────────────────────────── */
+.address-shield {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2, var(--muted));
+  transition:
+    background var(--dur-1, 120ms) ease,
+    color var(--dur-1, 120ms) ease;
+}
+
+.address-shield:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-1, var(--ink));
+}
+
+.address-shield[data-active='true'] {
+  color: var(--clay);
+}
+
+.address-shield:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+/* ── Chargement : 2 px d'accent sous la barre ─────────────────────────── */
+.pane-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--clay);
+  transform-origin: left center;
+  animation: pane-progress 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pane-progress {
+  0% {
+    transform: scaleX(0.04);
+    opacity: 0.9;
+  }
+  55% {
+    transform: scaleX(0.65);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pane-progress {
+    animation: none;
+    transform: scaleX(0.4);
+  }
+}

@@ -25,7 +25,16 @@ export default function GalleryAvatar({
   const shape = (item: GalleryShape, index: number) => {
     const opacity = item.o ?? 1
     if (item.kind === 'circle') {
-      return <circle key={index} cx={item.cx} cy={item.cy} r={item.r} fill={entry.ink} opacity={opacity} />
+      return (
+        <circle
+          key={index}
+          cx={item.cx}
+          cy={item.cy}
+          r={item.r}
+          fill={entry.ink}
+          opacity={opacity}
+        />
+      )
     }
     if (item.kind === 'rect') {
       return (

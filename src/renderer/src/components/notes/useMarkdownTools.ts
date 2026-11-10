@@ -43,7 +43,9 @@ export function useMarkdownTools({
     const start = area?.selectionStart ?? draft.body.length
     const end = area?.selectionEnd ?? draft.body.length
     const selected = draft.body.slice(start, end)
-    const chunk = options.block ? `\n${before}${selected}${after}\n` : `${before}${selected}${after}`
+    const chunk = options.block
+      ? `\n${before}${selected}${after}\n`
+      : `${before}${selected}${after}`
     const body = `${draft.body.slice(0, start)}${chunk}${draft.body.slice(end)}`
     setDraft({ ...draft, body })
     setDirty(true)

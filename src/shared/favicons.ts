@@ -145,9 +145,7 @@ export function rankIconCandidates(candidates: IconCandidate[]): IconCandidate[]
       best.set(candidate.url, candidate)
     }
   }
-  return [...best.values()].sort(
-    (a, b) => b.size - a.size || Number(b.apple) - Number(a.apple)
-  )
+  return [...best.values()].sort((a, b) => b.size - a.size || Number(b.apple) - Number(a.apple))
 }
 
 /** La meilleure adresse d'icône, ou null si la page n'en déclare aucune. */

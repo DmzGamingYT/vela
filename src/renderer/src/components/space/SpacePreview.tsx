@@ -140,7 +140,8 @@ export default function SpacePreview({
                   {/* Même salutation que l'accueil : l'aperçu n'annonce plus
                       « Bonsoir » en plein matin. */}
                   <span className="preview-hello">
-                    {greeting()}<span>.</span>
+                    {greeting()}
+                    <span>.</span>
                   </span>
                   <span className="preview-search">
                     <Icon name="search" size={9} />

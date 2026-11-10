@@ -5,7 +5,7 @@ export interface NoteTemplate {
   id: NoteTemplateId
   label: string
   hint: string
-  icon: 'check' | 'sparkles' | 'globe'
+  icon: 'users' | 'bulb' | 'book'
   title: string
   tags: string[]
   body: string
@@ -16,7 +16,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
     id: 'meeting',
     label: 'Réunion',
     hint: 'Ordre du jour, décisions, actions',
-    icon: 'check',
+    icon: 'users',
     title: 'Réunion',
     tags: ['réunion'],
     body: `## Ordre du jour
@@ -36,7 +36,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
     id: 'idea',
     label: 'Idée',
     hint: 'L’idée, son pourquoi, la première étape',
-    icon: 'sparkles',
+    icon: 'bulb',
     title: 'Idée',
     tags: ['idée'],
     body: `## L’idée
@@ -54,7 +54,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
     id: 'reading',
     label: 'Lecture',
     hint: 'Référence, idées clés, citations',
-    icon: 'globe',
+    icon: 'book',
     title: 'Lecture',
     tags: ['lecture'],
     body: `## Référence

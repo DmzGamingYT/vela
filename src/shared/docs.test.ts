@@ -36,7 +36,9 @@ describe('limites documentées dans l’aide et sur le site', () => {
     ] as const) {
       expect(text, name).toMatch(/Google peut[^.]{0,60}refuser/i)
       expect(text, name).toMatch(/navigateur système/i)
-      expect(text, name).toMatch(/(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i)
+      expect(text, name).toMatch(
+        /(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i
+      )
     }
     expect(home + aide).not.toMatch(/Connexion Google garantie/i)
   })
@@ -60,7 +62,7 @@ describe('limites documentées dans l’aide et sur le site', () => {
       ['site', aide]
     ] as const) {
       expect(text, name).toMatch(/universel/)
-      expect(text, name).toMatch(/Apple silicon/)
+      expect(text, name).toMatch(/Apple\s+silicon/)
       expect(text, name).toMatch(/Intel/)
       // Les deux disent qu’un essai sur une vraie machine Intel reste à faire.
       expect(text, name).toMatch(/vraie machine Intel/)
@@ -80,7 +82,9 @@ describe('limites documentées dans l’aide et sur le site', () => {
     const app = version.split('.').map(Number)
     const ahead = site[0] - app[0] || site[1] - app[1] || site[2] - app[2]
     expect(ahead, `site ${announced} en avance sur l’app ${version}`).toBeLessThanOrEqual(0)
-    expect(home, 'titre de téléchargement').toContain(`Vela ${announced}, pour les trois plateformes`)
+    expect(home, 'titre de téléchargement').toContain(
+      `Vela ${announced}, pour les trois plateformes`
+    )
     // Les liens du tableau pointent vers la release annoncée…
     expect(home).toContain(`releases/download/v${announced}/Vela-${announced}-universal.dmg`)
     expect(home).toContain(`Vela-${announced}-amd64.deb`)

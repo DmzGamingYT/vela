@@ -44,7 +44,13 @@ export default function TasksCard() {
         }}
         aria-label="Nouvelle tâche"
       />
-      <button type="button" onClick={submit} title="Ajouter" aria-label="Ajouter la tâche" disabled={!draft.trim()}>
+      <button
+        type="button"
+        onClick={submit}
+        title="Ajouter"
+        aria-label="Ajouter la tâche"
+        disabled={!draft.trim()}
+      >
         <Icon name="plus" size={13} />
       </button>
     </div>
@@ -58,14 +64,18 @@ export default function TasksCard() {
     >
       <div className="home-card-head">
         <h2>Tâches du jour</h2>
-        {empty ? (
-          addTask
-        ) : (
+        {empty ? null : (
           <span className="tasks-score" aria-hidden="true">
             {done.length}/{total}
           </span>
         )}
       </div>
+
+      {/* Le champ vit sur sa propre ligne, pleine largeur : collé au titre, il
+          se lisait comme un contrôle du titre plutôt que comme une saisie. */}
+      {addTask}
+
+      {empty ? <p className="tasks-empty">Rien de prévu aujourd’hui.</p> : null}
 
       {total > 0 && (
         <div className="tasks-progress">
@@ -84,38 +94,36 @@ export default function TasksCard() {
       )}
 
       {total > 0 && (
-      <ul className="tasks-list">
-        {visible.map((task) => (
-          <li key={task.id} className="task-row" data-done={task.done ? 'true' : undefined}>
-            <button
-              type="button"
-              className="task-check"
-              data-done={task.done ? 'true' : undefined}
-              role="checkbox"
-              aria-checked={task.done}
-              aria-label={task.done ? `Rouvrir ${task.title}` : `Marquer ${task.title} faite`}
-              onClick={() => void toggleTask(task.id)}
-            >
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="m3.5 8.5 3 3 6-6" />
-              </svg>
-            </button>
-            <span className="task-title">{task.title}</span>
-            <button
-              type="button"
-              className="task-remove"
-              onClick={() => void deleteTask(task.id)}
-              title="Supprimer"
-              aria-label={`Supprimer ${task.title}`}
-            >
-              <Icon name="close" size={11} />
-            </button>
-          </li>
-        ))}
-      </ul>
+        <ul className="tasks-list">
+          {visible.map((task) => (
+            <li key={task.id} className="task-row" data-done={task.done ? 'true' : undefined}>
+              <button
+                type="button"
+                className="task-check"
+                data-done={task.done ? 'true' : undefined}
+                role="checkbox"
+                aria-checked={task.done}
+                aria-label={task.done ? `Rouvrir ${task.title}` : `Marquer ${task.title} faite`}
+                onClick={() => void toggleTask(task.id)}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="m3.5 8.5 3 3 6-6" />
+                </svg>
+              </button>
+              <span className="task-title">{task.title}</span>
+              <button
+                type="button"
+                className="task-remove"
+                onClick={() => void deleteTask(task.id)}
+                title="Supprimer"
+                aria-label={`Supprimer ${task.title}`}
+              >
+                <Icon name="close" size={11} />
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
-
-      {empty ? null : addTask}
     </section>
   )
 }

@@ -73,7 +73,9 @@ function setView(): void {
       tasks: [],
       works: [],
       downloads: [],
-      blockedTotal: 0
+      blockedTotal: 0,
+      blockedToday: 0,
+      blockedWeek: 0
     } as AppView,
     overlay: 'command',
     setOverlay: setOverlay as unknown as ReturnType<typeof useBrowser.getState>['setOverlay'],
@@ -91,14 +93,20 @@ beforeEach(() => {
   splitToggle.mockReset()
   newTab.mockReset()
   selectTab.mockReset()
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+  vi.stubGlobal('matchMedia', () => ({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }))
   vi.stubGlobal('vela', {
     platform: 'darwin',
     avatars: { read: vi.fn(async () => null) },
     peek: { open: vi.fn(async () => undefined) }
   })
   setView()
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(callback, 0))
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+    setTimeout(callback, 0)
+  )
   vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
 })
 

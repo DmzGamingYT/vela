@@ -37,7 +37,11 @@ describe('liens entre notes', () => {
   })
 
   it('réécrit les liens lors d’un renommage, alias conservé', () => {
-    const result = rewriteWikiTargets('[[Méthode]] et [[méthode|la méthode]]', 'Méthode', 'Méthode 2026')
+    const result = rewriteWikiTargets(
+      '[[Méthode]] et [[méthode|la méthode]]',
+      'Méthode',
+      'Méthode 2026'
+    )
     expect(result.count).toBe(2)
     expect(result.body).toBe('[[Méthode 2026]] et [[Méthode 2026|la méthode]]')
   })
@@ -70,7 +74,10 @@ describe('liens entre notes', () => {
     expect(graph.incoming.map((ref) => ref.id)).toEqual(['b'])
     expect(graph.missing).toEqual([])
 
-    const withMissing = noteGraph([...notes, { id: 'd', title: 'Idées', body: 'Voir [[Note absente]].' }], 'd')
+    const withMissing = noteGraph(
+      [...notes, { id: 'd', title: 'Idées', body: 'Voir [[Note absente]].' }],
+      'd'
+    )
     expect(withMissing.missing).toEqual(['Note absente'])
   })
 
@@ -109,7 +116,9 @@ describe('liens entre notes', () => {
     expect(token).toBe('![Note vocale 1:12](vela-audio:projet-tfe/abc123.webm)')
     expect(audioRefs(`Texte\n${token}\n${token}`)).toEqual(['projet-tfe/abc123.webm'])
     expect(audioRefs('aucun')).toEqual([])
-    expect(removeAudioToken(`Avant\n\n${token}\n\nAprès`, 'projet-tfe/abc123.webm')).toBe('Avant\n\nAprès')
+    expect(removeAudioToken(`Avant\n\n${token}\n\nAprès`, 'projet-tfe/abc123.webm')).toBe(
+      'Avant\n\nAprès'
+    )
     expect(removeAudioToken('Rien', 'projet-tfe/abc123.webm')).toBe('Rien')
   })
 })

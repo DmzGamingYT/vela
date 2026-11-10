@@ -1,13 +1,53 @@
+import { useEffect } from 'react'
 import { Icon } from '../Icon'
 import { NOTE_TEMPLATES, type NoteTemplate } from './templates'
 
 interface NoteTemplatePickerProps {
   onPick(template: NoteTemplate | null): void
+  /** Garde la page ouverte comme point de départ, source comprise. */
+  onCapture(): void
+  /** Ouvre une note vierge puis l'enregistreur vocal. */
+  onDictate(): void
   onClose(): void
 }
 
-/** Choix du point de départ : page blanche ou modèle prêt à remplir. */
-export default function NoteTemplatePicker({ onPick, onClose }: NoteTemplatePickerProps) {
+/**
+ * Le menu « Nouvelle note » : une liste, pas une fenêtre.
+ *
+ * Pas d'en-tête qui répète le titre du bouton, pas de bouton « Annuler » —
+ * Échap et le clic extérieur ferment. Chaque ligne porte sa touche :
+ * ⌘N pour la page blanche, 2 à 4 pour les modèles.
+ */
+export default function NoteTemplatePicker({
+  onPick,
+  onCapture,
+  onDictate,
+  onClose
+}: NoteTemplatePickerProps) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (event.key === '1' || event.key === 'n') {
+        event.preventDefault()
+        onPick(null)
+        return
+      }
+      const index = Number(event.key) - 2
+      const template = NOTE_TEMPLATES[index]
+      if (template) {
+        event.preventDefault()
+        onPick(template)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onPick, onClose])
+
   return (
     <div className="notes-templates-layer">
       <button
@@ -16,35 +56,30 @@ export default function NoteTemplatePicker({ onPick, onClose }: NoteTemplatePick
         aria-label="Fermer le choix du modèle"
         onClick={onClose}
       />
-      <div className="notes-templates" role="dialog" aria-label="Créer une note">
-        <div className="notes-templates-head">
-          <span className="notes-mark">
-            <Icon name="plus" size={14} />
-          </span>
-          <div>
-            <h3>Nouvelle note</h3>
-            <p>Une page blanche, ou un modèle prêt à remplir.</p>
-          </div>
-        </div>
+      <div className="notes-templates" role="menu" aria-label="Nouvelle note">
         <div className="note-template-list">
           <button
             type="button"
+            role="menuitem"
             className="note-template-option"
             autoFocus
             onClick={() => onPick(null)}
           >
             <span className="note-template-mark">
-              <Icon name="plus" size={14} />
+              <Icon name="notes" size={14} />
             </span>
             <span>
               <strong>Page blanche</strong>
               <small>Commencer sans structure</small>
             </span>
+            <kbd className="note-template-key">⌘N</kbd>
           </button>
-          {NOTE_TEMPLATES.map((template) => (
+
+          {NOTE_TEMPLATES.map((template, index) => (
             <button
               key={template.id}
               type="button"
+              role="menuitem"
               className="note-template-option"
               onClick={() => onPick(template)}
             >
@@ -55,12 +90,42 @@ export default function NoteTemplatePicker({ onPick, onClose }: NoteTemplatePick
                 <strong>{template.label}</strong>
                 <small>{template.hint}</small>
               </span>
+              <kbd className="note-template-key">{index + 2}</kbd>
             </button>
           ))}
+
+          <div className="note-template-sep" role="separator" />
+
+          <button
+            type="button"
+            role="menuitem"
+            className="note-template-option"
+            onClick={onCapture}
+          >
+            <span className="note-template-mark">
+              <Icon name="globe" size={14} />
+            </span>
+            <span>
+              <strong>Depuis la page ouverte</strong>
+              <small>Garder la page, sa source et sa date</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            className="note-template-option"
+            onClick={onDictate}
+          >
+            <span className="note-template-mark">
+              <Icon name="mic" size={14} />
+            </span>
+            <span>
+              <strong>Dicter une note</strong>
+              <small>Enregistrer la voix, puis transcrire</small>
+            </span>
+          </button>
         </div>
-        <button type="button" className="notes-templates-cancel" onClick={onClose}>
-          Annuler
-        </button>
       </div>
     </div>
   )

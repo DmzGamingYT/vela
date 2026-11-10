@@ -27,7 +27,10 @@ function backups(dir: string): string[] {
 }
 
 /** Fichier tel que la 0.3.7 l'écrivait : pas de champ d'ordre. */
-function writeLegacy(dir: string, bookmarks: { id: string; url: string; title: string; createdAt: number }[]) {
+function writeLegacy(
+  dir: string,
+  bookmarks: { id: string; url: string; title: string; createdAt: number }[]
+) {
   writeFileSync(
     join(dir, 'vela.json'),
     JSON.stringify({
@@ -120,7 +123,10 @@ describe('migration des favoris au démarrage', () => {
         version: 1,
         spaces: [{ id: 'space-1', name: 'Personnel', color: '#5b5bd6' }],
         tabs: [],
-        bookmarks: [{ id: 'a', url: 'https://a.example', title: 'A', createdAt: 1 }, { url: 'https://x.example' }]
+        bookmarks: [
+          { id: 'a', url: 'https://a.example', title: 'A', createdAt: 1 },
+          { url: 'https://x.example' }
+        ]
       }),
       'utf8'
     )

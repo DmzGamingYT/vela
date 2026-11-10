@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DragEvent, KeyboardEvent } from 'react'
-import { MAX_SHORTCUTS, normalizeShortcutUrl, sanitizeSpaceShortcuts, type SpaceShortcut } from '@shared/space'
+import {
+  MAX_SHORTCUTS,
+  normalizeShortcutUrl,
+  sanitizeSpaceShortcuts,
+  type SpaceShortcut
+} from '@shared/space'
 import { hostOf } from '@shared/url'
 import { useBrowser } from '../../store/browser'
 import Favicon from '../Favicon'
@@ -8,7 +13,13 @@ import { Icon } from '../Icon'
 import TileMenu, { type TileMenuItem } from '../tabs/TileMenu'
 
 type Editing = { id: string; field: 'title' | 'url' } | null
-type Transfer = { action: 'copy' | 'move'; shortcut: SpaceShortcut; from: string; to: string; index: number } | null
+type Transfer = {
+  action: 'copy' | 'move'
+  shortcut: SpaceShortcut
+  from: string
+  to: string
+  index: number
+} | null
 
 /**
  * Barre de sites épinglés de l'espace affiché sur la page d'accueil. Elle ne
@@ -107,7 +118,9 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
       setDragging(null)
       return
     }
-    addDropped(event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain'))
+    addDropped(
+      event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain')
+    )
   }
 
   /** Alt + flèches : même déplacement que le glisser, bords inertes. */
@@ -151,7 +164,9 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
     if (!id) return
     // Sans cela, le focus repartirait du début après la disparition du champ.
     requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(`.pin-card[data-shortcut-id="${CSS.escape(id)}"] .pin-open`)?.focus()
+      document
+        .querySelector<HTMLElement>(`.pin-card[data-shortcut-id="${CSS.escape(id)}"] .pin-open`)
+        ?.focus()
     })
   }
 
@@ -244,8 +259,18 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
         onSelect: () => transferTo(shortcut, item.id, action)
       }))
     const items: TileMenuItem[] = [
-      { id: 'rename', label: 'Renommer', icon: 'edit', onSelect: () => startEdit(shortcut, 'title') },
-      { id: 'url', label: 'Modifier l’adresse', icon: 'link', onSelect: () => startEdit(shortcut, 'url') },
+      {
+        id: 'rename',
+        label: 'Renommer',
+        icon: 'edit',
+        onSelect: () => startEdit(shortcut, 'title')
+      },
+      {
+        id: 'url',
+        label: 'Modifier l’adresse',
+        icon: 'link',
+        onSelect: () => startEdit(shortcut, 'url')
+      },
       {
         id: 'copy',
         label: 'Copier l’adresse',
@@ -261,7 +286,12 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
     ]
     if (others.length > 0) {
       items.push({ id: 'copy-to', label: 'Copier vers…', icon: 'folder', submenu: targets('copy') })
-      items.push({ id: 'move-to', label: 'Déplacer vers…', icon: 'arrow-right', submenu: targets('move') })
+      items.push({
+        id: 'move-to',
+        label: 'Déplacer vers…',
+        icon: 'arrow-right',
+        submenu: targets('move')
+      })
     }
     items.push({
       id: 'remove',
@@ -276,7 +306,8 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
     return items
   }
 
-  const openMenu = (shortcut: SpaceShortcut, x: number, y: number): void => setMenu({ id: shortcut.id, x, y })
+  const openMenu = (shortcut: SpaceShortcut, x: number, y: number): void =>
+    setMenu({ id: shortcut.id, x, y })
 
   const menuShortcut = menu ? shortcuts.find((item) => item.id === menu.id) : null
 
@@ -298,7 +329,9 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
         <h2>
           Sites épinglés · {space.name}
           <span className="home-pins-count">
-            {shortcuts.length > 0 ? `${shortcuts.length} épinglé${shortcuts.length > 1 ? 's' : ''}` : 'aucun site'}
+            {shortcuts.length > 0
+              ? `${shortcuts.length} épinglé${shortcuts.length > 1 ? 's' : ''}`
+              : 'aucun site'}
           </span>
         </h2>
         <div className="home-pins-actions">
@@ -329,7 +362,11 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
       </div>
 
       {!collapsed && (
-        <div className="pin-grid" role="list" aria-label={`Sites épinglés · ${space.name} — Alt + flèches pour réordonner`}>
+        <div
+          className="pin-grid"
+          role="list"
+          aria-label={`Sites épinglés · ${space.name} — Alt + flèches pour réordonner`}
+        >
           {shortcuts.map((shortcut) => {
             const isEditingTitle = editing?.id === shortcut.id && editing.field === 'title'
             return (
@@ -364,7 +401,10 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                     setDragging(null)
                     return
                   }
-                  addDropped(event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain'))
+                  addDropped(
+                    event.dataTransfer.getData('text/uri-list') ||
+                      event.dataTransfer.getData('text/plain')
+                  )
                 }}
               >
                 {editing?.id === shortcut.id ? (
@@ -396,7 +436,12 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                     <button type="submit" className="tab-action" title="Valider (Entrée)">
                       <Icon name="check" size={12} />
                     </button>
-                    <button type="button" className="tab-action" title="Annuler (Échap)" onClick={cancelEdit}>
+                    <button
+                      type="button"
+                      className="tab-action"
+                      title="Annuler (Échap)"
+                      onClick={cancelEdit}
+                    >
                       <Icon name="close" size={12} />
                     </button>
                   </form>
@@ -412,7 +457,8 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                     onKeyDown={(event) => {
                       moveWithKeyboard(event, shortcut)
                       if (event.defaultPrevented) return
-                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
+                      if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
+                        return
                       event.preventDefault()
                       const rect = event.currentTarget.getBoundingClientRect()
                       openMenu(shortcut, rect.left, rect.bottom)
@@ -420,7 +466,12 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
                     title={`${shortcut.title} — ${hostOf(shortcut.url)}`}
                   >
                     <span className="pin-icon">
-                      <Favicon url={shortcut.url} label={shortcut.title} size={30} spaceId={space.id} />
+                      <Favicon
+                        url={shortcut.url}
+                        label={shortcut.title}
+                        size={30}
+                        spaceId={space.id}
+                      />
                     </span>
                     <span className="pin-copy">
                       <strong>{shortcut.title}</strong>
@@ -495,7 +546,11 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
             const id = menu.id
             setMenu(null)
             requestAnimationFrame(() => {
-              document.querySelector<HTMLElement>(`.pin-card[data-shortcut-id="${CSS.escape(id)}"] .pin-open`)?.focus()
+              document
+                .querySelector<HTMLElement>(
+                  `.pin-card[data-shortcut-id="${CSS.escape(id)}"] .pin-open`
+                )
+                ?.focus()
             })
           }}
         />

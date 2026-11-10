@@ -363,7 +363,13 @@ describe('export OPML', () => {
           parentId: 'angle',
           url: 'https://duckduckgo.com/'
         }),
-        node({ id: 'ecarte', kind: 'site', title: 'Hors sujet', parentId: 'angle', status: 'dismissed' })
+        node({
+          id: 'ecarte',
+          kind: 'site',
+          title: 'Hors sujet',
+          parentId: 'angle',
+          status: 'dismissed'
+        })
       ],
       createdAt: now,
       updatedAt: now

@@ -4,13 +4,20 @@ import { useBrowser } from '../../store/browser'
 import { useTunnel } from '../../store/tunnel'
 import { Icon } from '../Icon'
 
+/** Trois mots plutôt qu'un pourcentage seul : la mesure reste une heuristique. */
+function levelLabel(value: number): string {
+  return value >= 75 ? 'Élevée' : value >= 60 ? 'Moyenne' : 'Faible'
+}
+
 const SOURCE_LABEL = new Map(SOURCE_TYPES.map((type) => [type.id, type.label]))
 
 function publishLabel(timestamp?: number): string {
   if (!timestamp) return 'Date inconnue'
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-    new Date(timestamp)
-  )
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date(timestamp))
 }
 
 function domainOf(node: MapNode): string {
@@ -45,7 +52,8 @@ export default function TunnelDetail() {
   const [linkId, setLinkId] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const node = active && selectedId ? active.nodes.find((entry) => entry.id === selectedId) ?? null : null
+  const node =
+    active && selectedId ? (active.nodes.find((entry) => entry.id === selectedId) ?? null) : null
 
   const path = useMemo(() => {
     if (!active || !node) return [] as MapNode[]
@@ -54,7 +62,9 @@ export default function TunnelDetail() {
     let guard = 0
     while (current && guard < 12) {
       chain.unshift(current)
-      current = current.parentId ? active.nodes.find((entry) => entry.id === current?.parentId) : undefined
+      current = current.parentId
+        ? active.nodes.find((entry) => entry.id === current?.parentId)
+        : undefined
       guard += 1
     }
     return chain
@@ -171,8 +181,8 @@ export default function TunnelDetail() {
             type="button"
             className="icon-btn"
             onClick={close}
-            title="Fermer le détail"
-            aria-label="Fermer le détail"
+            title="Fermer le panneau (l’Atelier reste ouvert)"
+            aria-label="Fermer le panneau de détail"
           >
             <Icon name="close" size={15} />
           </button>
@@ -208,7 +218,9 @@ export default function TunnelDetail() {
       {domain && (
         <p className="tunnel-detail-domain">
           <Icon name="globe" size={13} /> {domain}
-          {node.sourceType && <span className="tunnel-tag">{SOURCE_LABEL.get(node.sourceType)}</span>}
+          {node.sourceType && (
+            <span className="tunnel-tag">{SOURCE_LABEL.get(node.sourceType)}</span>
+          )}
         </p>
       )}
 
@@ -251,7 +263,7 @@ export default function TunnelDetail() {
             </>
           )}
           <section>
-            <h3>Pourquoi cette source</h3>
+            <h3>{node.kind === 'concept' ? 'Pourquoi ce concept' : 'Pourquoi cette page'}</h3>
             <p className="tunnel-detail-text">{node.reason}</p>
           </section>
         </>
@@ -272,23 +284,41 @@ export default function TunnelDetail() {
       </section>
 
       <section className="tunnel-gauges">
-        <div className="tunnel-gauge" title="Part des mots de votre requête retrouvés dans la page, et place du résultat dans les sources.">
+        <div
+          className="tunnel-gauge"
+          title="Part des mots de votre requête retrouvés dans la page, et place du résultat dans les sources."
+        >
           <span>Pertinence</span>
-          <strong>{node.relevance} %</strong>
+          <strong>{levelLabel(node.relevance)}</strong>
+          <span className="tunnel-gauge-value">{node.relevance} %</span>
           <i role="img" aria-label={`Pertinence ${node.relevance} pour cent`}>
-            <b style={{ width: `${node.relevance}%` }} data-level={node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'} />
+            <b
+              style={{ width: `${node.relevance}%` }}
+              data-level={node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'}
+            />
           </i>
         </div>
-        <div className="tunnel-gauge" title="Longueur de l’extrait disponible, page réellement récupérée et concordance du domaine.">
+        <div
+          className="tunnel-gauge"
+          title="Longueur de l’extrait disponible, page réellement récupérée et concordance du domaine."
+        >
           <span>Confiance</span>
-          <strong>{node.confidence} %</strong>
+          <strong>{levelLabel(node.confidence)}</strong>
+          <span className="tunnel-gauge-value">{node.confidence} %</span>
           <i role="img" aria-label={`Confiance ${node.confidence} pour cent`}>
-            <b style={{ width: `${node.confidence}%` }} data-level={node.confidence >= 75 ? 'high' : node.confidence >= 60 ? 'mid' : 'low'} />
+            <b
+              style={{ width: `${node.confidence}%` }}
+              data-level={node.confidence >= 75 ? 'high' : node.confidence >= 60 ? 'mid' : 'low'}
+            />
           </i>
         </div>
         <p className="tunnel-detail-meta">
           {node.kind === 'site' ? publishLabel(node.publishedAt) : NODE_LABELS[node.kind]}
           {node.reachable === false && <span className="tunnel-warn"> · page inaccessible</span>}
+        </p>
+        <p className="tunnel-gauge-legend">
+          Pertinence : part des mots de la requête retrouvés dans la page. Confiance : longueur de
+          l’extrait, page réellement récupérée et concordance du domaine.
         </p>
         {node.relevanceReason && node.kind === 'site' && (
           <p className="tunnel-detail-reason">{node.relevanceReason}</p>
@@ -304,12 +334,20 @@ export default function TunnelDetail() {
 
       <div className="tunnel-detail-actions">
         {node.url && (
-          <button type="button" className="action" onClick={() => useBrowser.getState().newTab(node.url as string)}>
+          <button
+            type="button"
+            className="action"
+            onClick={() => useBrowser.getState().newTab(node.url as string)}
+          >
             <Icon name="external" size={13} /> Ouvrir la source
           </button>
         )}
         {node.url && (
-          <button type="button" className="ghost-btn" onClick={() => void openSplit(node.url as string)}>
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => void openSplit(node.url as string)}
+          >
             <Icon name="split" size={13} /> Ouvrir en vue scindée
           </button>
         )}
@@ -320,11 +358,16 @@ export default function TunnelDetail() {
         >
           <Icon name="sparkles" size={13} /> Explorer depuis ce nœud
         </button>
-        <button type="button" className="ghost-btn" onClick={() => void runTunnel(active?.query ?? node.title)}>
+        <button
+          type="button"
+          className="ghost-btn"
+          onClick={() => void runTunnel(active?.query ?? node.title)}
+        >
           <Icon name="reload" size={13} /> Relancer
         </button>
         <button type="button" className="ghost-btn" onClick={() => void copyCitation()}>
-          <Icon name={copied ? 'check' : 'copy'} size={13} /> {copied ? 'Citation copiée' : 'Copier la citation'}
+          <Icon name={copied ? 'check' : 'copy'} size={13} />{' '}
+          {copied ? 'Citation copiée' : 'Copier la citation'}
         </button>
         <div className="tunnel-keep">
           <button
@@ -339,7 +382,9 @@ export default function TunnelDetail() {
             type="button"
             className="ghost-btn"
             data-active={node.status === 'dismissed'}
-            onClick={() => void setStatus(node.id, node.status === 'dismissed' ? 'neutral' : 'dismissed')}
+            onClick={() =>
+              void setStatus(node.id, node.status === 'dismissed' ? 'neutral' : 'dismissed')
+            }
           >
             <Icon name="close" size={13} /> Écarter
           </button>
@@ -355,7 +400,12 @@ export default function TunnelDetail() {
         <h3>Modifier la carte</h3>
 
         <div className="tunnel-edit-actions">
-          <button type="button" className="ghost-btn" data-active={adding} onClick={() => setAdding(!adding)}>
+          <button
+            type="button"
+            className="ghost-btn"
+            data-active={adding}
+            onClick={() => setAdding(!adding)}
+          >
             <Icon name="plus" size={13} /> Ajouter une carte
           </button>
           <button
@@ -425,7 +475,11 @@ export default function TunnelDetail() {
               linkNode()
             }}
           >
-            <select value={linkId} onChange={(event) => setLinkId(event.target.value)} aria-label="Carte à relier">
+            <select
+              value={linkId}
+              onChange={(event) => setLinkId(event.target.value)}
+              aria-label="Carte à relier"
+            >
               <option value="">Choisir une carte…</option>
               {linkCandidates.map((entry) => (
                 <option key={entry.id} value={entry.id}>
@@ -440,8 +494,10 @@ export default function TunnelDetail() {
         )}
 
         {related.length > 0 && (
-          <ul className="tunnel-links">
-            {related.map((entry) => (
+          <>
+            <h4 className="tunnel-links-head">Sources liées</h4>
+            <ul className="tunnel-links">
+              {related.map((entry) => (
               <li key={entry.id}>
                 <button type="button" onClick={() => select(entry.id)}>
                   {entry.title}
@@ -456,8 +512,9 @@ export default function TunnelDetail() {
                   <Icon name="close" size={12} />
                 </button>
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+          </>
         )}
 
         <p className="tunnel-edit-hint">

@@ -1,0 +1,105 @@
+/* ------------------------------------------------------------------
+   0.4 — l'onglet ouvert
+   ------------------------------------------------------------------
+   La barre d'adresse devient une identité de site : le domaine en encre,
+   le chemin en gris clair, dans une pilule qui ne pèse plus rien au
+   repos. La barre latérale range ses listes en sections : un filet, un
+   libellé en petites capitales, le compte à droite.
+   ------------------------------------------------------------------ */
+
+/* --- Adresse : deux temps ---------------------------------------- */
+
+.address {
+  height: 36px;
+  padding: 0 6px 0 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--fill);
+  box-shadow: none;
+}
+
+.address:hover {
+  border-color: var(--line);
+  background: var(--fill-2);
+}
+
+.address[data-focused='true'] {
+  background: var(--fill-2);
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Au repos, la pilule s'efface : seul le texte reste. */
+.address[data-resting='true'] {
+  border-color: transparent;
+  background: transparent;
+}
+
+.address[data-resting='true']:hover {
+  background: var(--hover);
+}
+
+.address-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.address-host {
+  color: var(--ink);
+}
+
+.address-path {
+  min-width: 0;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Le champ reste le seul élément focusable : le calque ne prend pas le clic,
+   et le champ le recouvre pour recevoir celui de la pilule entière. */
+.address[data-resting='true'] .address-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  padding: 0 11px;
+  text-align: left;
+  cursor: text;
+}
+
+/* --- Barre latérale : sections ------------------------------------
+   Un filet sépare les groupes (épinglés, favoris, onglets, dossiers) ;
+   le compte s'aligne à droite, en chiffres tabulaires. */
+
+.sidebar .tabs-scroll > .tabs-head {
+  margin-top: 6px;
+  padding: 16px 6px 6px 6px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  border-top: 1px solid var(--line-soft);
+}
+
+.sidebar .tabs-scroll > .tabs-head:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.sidebar .tabs-head .tabs-count {
+  margin-left: auto;
+  opacity: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+
+/* Les outils de section reprennent leur place à droite du compte. */
+.sidebar .tabs-head .tabs-tools {
+  margin-left: 2px;
+}

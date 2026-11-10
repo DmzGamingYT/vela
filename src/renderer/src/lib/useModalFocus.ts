@@ -15,7 +15,9 @@ function focusables(root: HTMLElement): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((node) => {
     if (node.closest('[aria-hidden="true"]')) return false
     const style = window.getComputedStyle(node)
-    return style.visibility !== 'hidden' && style.display !== 'none' && node.getClientRects().length > 0
+    return (
+      style.visibility !== 'hidden' && style.display !== 'none' && node.getClientRects().length > 0
+    )
   })
 }
 

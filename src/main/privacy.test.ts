@@ -24,8 +24,7 @@ interface Details {
  */
 function harness(level: 'trackers' | 'strict' = 'trackers', exempt = false) {
   let listener:
-    | ((details: Details, callback: (response: { cancel?: boolean }) => void) => void)
-    | null = null
+    ((details: Details, callback: (response: { cancel?: boolean }) => void) => void) | null = null
   const ses = {
     webRequest: {
       onBeforeRequest: (
@@ -82,8 +81,8 @@ describe('compteurs de confidentialité', () => {
     await exempt.request('https://www.google-analytics.com/analytics.js')
     expect(exempt.counters().blocked).toBe(0)
 
-    let listener: ((details: Details, done: (response: { cancel?: boolean }) => void) => void) | null =
-      null
+    let listener:
+      ((details: Details, done: (response: { cancel?: boolean }) => void) => void) | null = null
     attachPrivacy(
       {
         webRequest: {
@@ -104,7 +103,14 @@ describe('compteurs de confidentialité', () => {
     )
     const response = await new Promise<{ cancel?: boolean }>((resolve) => {
       if (!listener) throw new Error('écouteur non posé')
-      listener({ url: 'https://www.google-analytics.com/analytics.js', resourceType: 'image', webContentsId: 42 }, resolve)
+      listener(
+        {
+          url: 'https://www.google-analytics.com/analytics.js',
+          resourceType: 'image',
+          webContentsId: 42
+        },
+        resolve
+      )
     })
     expect(response).toEqual({})
   })

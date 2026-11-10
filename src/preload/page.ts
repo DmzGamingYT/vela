@@ -79,7 +79,8 @@ contextBridge.exposeInMainWorld('__velaComicBridge', {
     ipcRenderer.invoke('comic:translate', { token, texts, contexte }),
   // Lecture d'un éclat que l'OCR n'a pas su lire, et enregistrement des
   // corrections manuelles dans un fichier par planche.
-  vision: (token: string, dataUrl: string) => ipcRenderer.invoke('comic:vision', { token, dataUrl }),
+  vision: (token: string, dataUrl: string) =>
+    ipcRenderer.invoke('comic:vision', { token, dataUrl }),
   saveEdits: (token: string, key: string, value: unknown) =>
     ipcRenderer.invoke('comic:edits', { token, key, value }),
   loadEdits: (token: string, key: string) => ipcRenderer.invoke('comic:load-edits', { token, key })
@@ -177,9 +178,13 @@ function installNoteGrip(): void {
   }
 
   document.addEventListener('mouseup', schedule, true)
-  document.addEventListener('keyup', (event) => {
-    if (event.shiftKey || event.key.startsWith('Arrow') || event.key === 'a') schedule()
-  }, true)
+  document.addEventListener(
+    'keyup',
+    (event) => {
+      if (event.shiftKey || event.key.startsWith('Arrow') || event.key === 'a') schedule()
+    },
+    true
+  )
   document.addEventListener('selectionchange', schedule, true)
   window.addEventListener('scroll', hide, true)
   window.addEventListener('blur', hide)
@@ -202,6 +207,30 @@ function installNoteGrip(): void {
     }
   })
 }
+
+/**
+ * Sens du défilement, pour la pilule flottante : seule la page voit son propre
+ * `scroll`. Un message par geste, jamais un par pixel. Rien d'autre ne part.
+ */
+function reportScroll(): void {
+  let lastY = window.scrollY
+  let last = 0
+  window.addEventListener(
+    'scroll',
+    () => {
+      const now = performance.now()
+      if (now - last < 140) return
+      const y = window.scrollY
+      const delta = y - lastY
+      if (Math.abs(delta) < 40) return
+      last = now
+      lastY = y
+      ipcRenderer.send('page:scroll', delta > 0 ? 'down' : 'up')
+    },
+    { passive: true }
+  )
+}
+reportScroll()
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', installNoteGrip, { once: true })

@@ -89,7 +89,11 @@ export function findNoteByTitle(notes: NoteRef[], title: string): NoteRef | null
  * `from`, en gardant l'alias éventuel. Une seule passe : un cycle de notes ne
  * peut pas boucler. Retourne le corps et le nombre de liens changés.
  */
-export function rewriteWikiTargets(body: string, from: string, to: string): { body: string; count: number } {
+export function rewriteWikiTargets(
+  body: string,
+  from: string,
+  to: string
+): { body: string; count: number } {
   const target = to.trim()
   const key = foldTitle(from)
   if (!body.includes('[[') || !key || !target || foldTitle(target) === key) {
@@ -115,7 +119,10 @@ export function noteGraph(notes: (NoteRef & { body: string })[], id: string): No
   const seen = new Set<string>()
   for (const title of wikiTargets(current.body)) {
     if (foldTitle(title) === foldTitle(current.title)) continue
-    const found = findNoteByTitle(refs.filter((note) => note.id !== id), title)
+    const found = findNoteByTitle(
+      refs.filter((note) => note.id !== id),
+      title
+    )
     if (found) {
       outgoing.push({ id: found.id, title: found.title })
     } else {
@@ -125,7 +132,9 @@ export function noteGraph(notes: (NoteRef & { body: string })[], id: string): No
   }
   const incoming: LinkRef[] = notes
     .filter((note) => note.id !== id)
-    .filter((note) => wikiTargets(note.body).some((title) => foldTitle(title) === foldTitle(current.title)))
+    .filter((note) =>
+      wikiTargets(note.body).some((title) => foldTitle(title) === foldTitle(current.title))
+    )
     .map((note) => ({ id: note.id, title: note.title }))
   return { outgoing, incoming, missing: missing.filter((title) => seen.has(foldTitle(title))) }
 }
@@ -152,13 +161,25 @@ export function linkQueryAt(body: string, caret: number): LinkQuery | null {
 }
 
 /** Insère `[[Titre]]` à la place de la frappe en cours ; curseur après. */
-export function completeLink(body: string, caret: number, title: string): { body: string; caret: number } {
-  const clean = title.trim().replace(/[[\]|\n]/g, ' ').replace(/\s+/g, ' ').slice(0, 120) || 'Note'
+export function completeLink(
+  body: string,
+  caret: number,
+  title: string
+): { body: string; caret: number } {
+  const clean =
+    title
+      .trim()
+      .replace(/[[\]|\n]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .slice(0, 120) || 'Note'
   const query = linkQueryAt(body, caret)
   const insertion = `[[${clean}]]`
   if (!query) {
     const at = Math.max(0, Math.min(caret, body.length))
-    return { body: `${body.slice(0, at)}${insertion}${body.slice(at)}`, caret: at + insertion.length }
+    return {
+      body: `${body.slice(0, at)}${insertion}${body.slice(at)}`,
+      caret: at + insertion.length
+    }
   }
   const end = query.start + 2 + query.query.length
   return {
@@ -168,7 +189,12 @@ export function completeLink(body: string, caret: number, title: string): { body
 }
 
 /** Titres à proposer : commence par la frappe, puis contient la frappe. */
-export function suggestNotes(notes: NoteRef[], query: string, excludeId?: string, limit = 6): NoteRef[] {
+export function suggestNotes(
+  notes: NoteRef[],
+  query: string,
+  excludeId?: string,
+  limit = 6
+): NoteRef[] {
   const key = foldTitle(query)
   const pool = notes.filter((note) => note.id !== excludeId)
   if (!key) return pool.slice(0, limit)
@@ -179,7 +205,8 @@ export function suggestNotes(notes: NoteRef[], query: string, excludeId?: string
   return [...starts, ...contains].slice(0, limit)
 }
 
-const AUDIO = /!\[([^\]]{0,80})\]\(vela-audio:([a-z0-9-]{1,64}\/[a-z0-9]{4,40}\.(?:webm|ogg|mp4|mp3|wav))\)/g
+const AUDIO =
+  /!\[([^\]]{0,80})\]\(vela-audio:([a-z0-9-]{1,64}\/[a-z0-9]{4,40}\.(?:webm|ogg|mp4|mp3|wav))\)/g
 
 /** Enregistrements cités par un corps de note. */
 export function audioRefs(body: string): string[] {
@@ -192,7 +219,10 @@ export function audioRefs(body: string): string[] {
 
 /** Retire un enregistrement cité par un corps de note. */
 export function removeAudioToken(body: string, name: string): string {
-  const pattern = new RegExp(`\\n*!\\[[^\\]]*\\]\\(vela-audio:${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n*`, 'g')
+  const pattern = new RegExp(
+    `\\n*!\\[[^\\]]*\\]\\(vela-audio:${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n*`,
+    'g'
+  )
   return body
     .replace(pattern, '\n\n')
     .replace(/\n{3,}/g, '\n\n')

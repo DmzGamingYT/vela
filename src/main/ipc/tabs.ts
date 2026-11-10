@@ -33,6 +33,13 @@ export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
   handle('tab:forward', (payload) => {
     host.tabs.forward(asId(payload))
   })
+  handle('tab:entries', (payload) => host.tabs.entries(asId(payload)))
+  handle('tab:goto', (payload) => {
+    const input = (payload ?? {}) as { id?: unknown; index?: unknown }
+    const index = typeof input.index === 'number' ? input.index : Number.NaN
+    if (!Number.isFinite(index)) return
+    host.tabs.goto(asId(input.id), index)
+  })
   handle('tab:reload', (payload) => {
     host.tabs.reload(asId(payload))
   })
@@ -100,6 +107,12 @@ export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
     if (typeof request?.splitFits === 'boolean') host.setSplitPanesFit(request.splitFits)
     host.setOverlay(overlay)
     host.tabs.layout({ panes, overlay })
+  })
+
+  // Défilement d'une page : un mot, rien d'autre. Chaque onglet prévient pour
+  // lui-même, la coque ne sait que « on descend » ou « on remonte ».
+  on('page:scroll', (event, payload) => {
+    host.tabs.noteScroll(event.sender.id, payload === 'down' ? 'down' : 'up')
   })
 
   // Épreuves des volets pour le glissement du séparateur. Demandé avant que

@@ -86,8 +86,8 @@ export default function DownloadsPanel() {
               </span>
               <strong>Rien pour le moment.</strong>
               <p>
-                Les fichiers téléchargés depuis Vela apparaîtront ici, avec leur progression et
-                leur destination.
+                Les fichiers téléchargés depuis Vela apparaîtront ici, avec leur progression et leur
+                destination.
               </p>
               <span className="downloads-empty-hint">
                 <Icon name="lock" size={12} />

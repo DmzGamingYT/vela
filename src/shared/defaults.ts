@@ -1,4 +1,14 @@
-import { HOME_URL, type PersistedState, type ProviderId, type ProviderSettings, type Settings, type Space, type TabGroup, type TabState } from './types'
+import {
+  HOME_URL,
+  type PersistedState,
+  type PrivacyStats,
+  type ProviderId,
+  type ProviderSettings,
+  type Settings,
+  type Space,
+  type TabGroup,
+  type TabState
+} from './types'
 import { PROVIDERS, providerDefaults } from './providers'
 import { DEFAULT_GLASS_BLUR, THEME_PRESETS } from './theme'
 
@@ -26,19 +36,20 @@ export const SPACE_TINTS: SpaceTint[] = THEME_PRESETS.map((preset) => ({
 }))
 
 /** Teinte connue pour une couleur stockée, ou null pour une couleur libre. */
-export function spaceTintFor(color: string, tints: readonly SpaceTint[] = SPACE_TINTS): SpaceTint | null {
+export function spaceTintFor(
+  color: string,
+  tints: readonly SpaceTint[] = SPACE_TINTS
+): SpaceTint | null {
   const needle = color.trim().toLowerCase()
   return tints.find((tint) => tint.color.toLowerCase() === needle) ?? null
 }
 
-
 export const SPACE_COLORS = SPACE_TINTS.map((tint) => tint.color)
 
 export function defaultProviders(): Record<ProviderId, ProviderSettings> {
-  return Object.fromEntries(PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])) as Record<
-    ProviderId,
-    ProviderSettings
-  >
+  return Object.fromEntries(
+    PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])
+  ) as Record<ProviderId, ProviderSettings>
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -107,11 +118,20 @@ export function createSpace(name = 'Personnel', color = SPACE_COLORS[0], now = D
   return { id, name, color, partition: `persist:vela-${id}`, createdAt: now }
 }
 
-export function createGroup(spaceId: string, name: string, color: string, now = Date.now()): TabGroup {
+export function createGroup(
+  spaceId: string,
+  name: string,
+  color: string,
+  now = Date.now()
+): TabGroup {
   return { id: newId(), spaceId, name, color, collapsed: false, createdAt: now }
 }
 
-export function createTab(spaceId: string, now = Date.now(), patch: Partial<TabState> = {}): TabState {
+export function createTab(
+  spaceId: string,
+  now = Date.now(),
+  patch: Partial<TabState> = {}
+): TabState {
   return {
     id: newId(),
     spaceId,
@@ -147,6 +167,28 @@ export function createDefaultState(now = Date.now()): PersistedState {
     privacyExemptions: [],
     tasks: [],
     works: [],
-    tunnelMaps: []
+    tunnelMaps: [],
+    privacyStats: emptyPrivacyStats(now)
   }
+}
+
+/** Jour local `AAAA-MM-JJ` : les compteurs basculent à minuit, pas à UTC. */
+export function dayKey(now = Date.now()): string {
+  const date = new Date(now)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+/** Lundi de la semaine locale, en `AAAA-MM-JJ`. */
+export function weekKey(now = Date.now()): string {
+  const date = new Date(now)
+  // `getDay()` place dimanche à 0 : la semaine française commence lundi.
+  const offset = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - offset)
+  return dayKey(date.getTime())
+}
+
+export function emptyPrivacyStats(now = Date.now()): PrivacyStats {
+  return { day: dayKey(now), today: 0, weekStart: weekKey(now), week: 0 }
 }

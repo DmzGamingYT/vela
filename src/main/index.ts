@@ -17,6 +17,7 @@ import { Browser } from './browser'
 import { installMenu } from './menu'
 import { initUpdater, setUpdaterPolicy } from './updater'
 import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
+import { attachPermissions } from './privacy'
 
 // Le nom du produit est fixé avant toute autre chose : `app.name` alimente le
 // premier menu macOS, la fenêtre « À propos » et les dossiers de données. Sans
@@ -235,7 +236,9 @@ function installStatusItem(): void {
     ])
   )
   if (!app.isPackaged) {
-    process.stdout.write('[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela\n')
+    process.stdout.write(
+      '[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela\n'
+    )
   }
 }
 
@@ -257,6 +260,11 @@ function main(): void {
 
   app.whenReady().then(async () => {
     applySessionIdentity(session.defaultSession)
+    // La coque (et la fenêtre d'export PDF) vivent dans la session par
+    // défaut : sans gestionnaire de permissions, Electron leur accorde tout.
+    // Seul le micro du dictaphone passe, avec l'écriture dans le
+    // presse-papier et le plein écran.
+    attachPermissions(session.defaultSession, ['media'])
     try {
       // Les clés du trousseau sont lues avant la fenêtre : le premier état
       // diffusé dit déjà quels fournisseurs ont une clé.

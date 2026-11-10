@@ -21,7 +21,10 @@ describe('useSystemDark', () => {
       removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener)
     }
 
-    vi.stubGlobal('matchMedia', vi.fn(() => query))
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => query)
+    )
 
     const { result } = renderHook(() => useSystemDark())
     expect(result.current).toBe(false)

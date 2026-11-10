@@ -59,8 +59,6 @@ export interface TabsSlice {
   zoom(direction: 'in' | 'out' | 'reset'): Promise<void>
 }
 
-/** Effacement automatique du pourcentage de zoom. */
-let zoomTimer: ReturnType<typeof setTimeout> | null = null
 
 /** Onglets, dossiers, vue scindée, historique et favoris. */
 export const createTabsSlice: StateCreator<BrowserState, [], [], TabsSlice> = (set, get) => ({
@@ -417,18 +415,10 @@ export const createTabsSlice: StateCreator<BrowserState, [], [], TabsSlice> = (s
     set({ findOpen: false, findQuery: '', findResult: { matches: 0, activeMatchOrdinal: 0 } })
   },
 
-  /**
-   * Zoom de la page active, avec un retour visuel bref : sans lui, ⌘+ et ⌘-
-   * changeaient la page sans qu'aucun état ne le dise.
-   */
+  /** Zoom de la page active ; le niveau est retenu côté principal. */
   async zoom(direction) {
     const id = get().view?.activeTabId
     if (!id) return
-    const level = await get().call(() => window.vela.tabs.zoom(id, direction), 'Zoom impossible.')
-    if (level === null) return
-    const percent = Math.round(1.2 ** level * 100)
-    set({ zoomNotice: percent })
-    if (zoomTimer) clearTimeout(zoomTimer)
-    zoomTimer = setTimeout(() => set({ zoomNotice: null }), 1800)
+    await get().call(() => window.vela.tabs.zoom(id, direction), 'Zoom impossible.')
   }
 })

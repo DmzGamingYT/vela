@@ -97,16 +97,22 @@ describe('tuile d’onglet épinglé', () => {
     setup()
     const main = screen.getByRole('button', { name: /TITRE DE L/ })
     fireEvent.focusIn(main)
-    expect(screen.getByRole('tooltip').textContent).toBe('[TITRE DE L’ONGLET]')
+    // L'infobulle nomme le site puis son domaine : les tuiles n'ont pas de texte.
+    const tip = screen.getByRole('tooltip')
+    expect(tip.querySelector('.pin-tip-title')?.textContent).toBe('[TITRE DE L’ONGLET]')
+    expect(tip.querySelector('.pin-tip-host')?.textContent).toBe('exemple.fr')
     fireEvent.keyDown(main, { key: 'Escape' })
     expect(screen.queryByRole('tooltip')).toBeNull()
   })
 
+  it('marque une page en veille pour la griser', () => {
+    const { container } = setup({ asleep: true })
+    expect(container.querySelector('.pin-tile')?.getAttribute('data-asleep')).toBe('true')
+  })
+
   it('donne au clavier le bouton principal puis la pastille sonore', () => {
     setup({ audible: true })
-    const labels = screen
-      .getAllByRole('button')
-      .map((button) => button.getAttribute('aria-label'))
+    const labels = screen.getAllByRole('button').map((button) => button.getAttribute('aria-label'))
     expect(labels[0]).toContain('[TITRE DE L’ONGLET]')
     expect(labels[1]).toBe('Son en cours')
   })

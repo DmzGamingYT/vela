@@ -1,5 +1,12 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { AVATAR_FILE, MAX_AVATAR_BYTES, MAX_AVATAR_LENGTH } from '@shared/space'
 

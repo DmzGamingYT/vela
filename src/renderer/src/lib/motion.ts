@@ -14,8 +14,14 @@ export function trackGlow(event: ReactPointerEvent<HTMLElement>): void {
   const node = event.currentTarget
   const rect = node.getBoundingClientRect()
   if (!rect.width || !rect.height) return
-  node.style.setProperty('--mx', `${(((event.clientX - rect.left) / rect.width) * 100).toFixed(2)}%`)
-  node.style.setProperty('--my', `${(((event.clientY - rect.top) / rect.height) * 100).toFixed(2)}%`)
+  node.style.setProperty(
+    '--mx',
+    `${(((event.clientX - rect.left) / rect.width) * 100).toFixed(2)}%`
+  )
+  node.style.setProperty(
+    '--my',
+    `${(((event.clientY - rect.top) / rect.height) * 100).toFixed(2)}%`
+  )
 }
 
 /** Onde de propagation discrète au clic, désactivée si le mouvement est réduit. */

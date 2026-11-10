@@ -16,7 +16,9 @@ export function timeAgo(timestamp: number, now = Date.now()): string {
   const days = Math.floor(hours / 24)
   if (days === 1) return 'hier'
   if (days < 7) return `il y a ${days} j`
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(timestamp))
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
+    new Date(timestamp)
+  )
 }
 
 export function shortDate(timestamp: number): string {
@@ -29,9 +31,11 @@ export function shortDate(timestamp: number): string {
 }
 
 export function weekdayLabel(timestamp: number): string {
-  return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(
-    new Date(timestamp)
-  )
+  return new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  }).format(new Date(timestamp))
 }
 
 export function initials(value: string): string {
@@ -51,7 +55,8 @@ const TINTS = ['#C8623E', '#2F6B5B', '#5058C8', '#B08230', '#7B4B6B', '#3D6E9E']
 
 export function tintFor(seed: string): string {
   let hash = 0
-  for (let index = 0; index < seed.length; index += 1) hash = (hash * 31 + seed.charCodeAt(index)) % 9973
+  for (let index = 0; index < seed.length; index += 1)
+    hash = (hash * 31 + seed.charCodeAt(index)) % 9973
   return TINTS[hash % TINTS.length]
 }
 

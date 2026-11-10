@@ -158,7 +158,12 @@ export default function PeekOverlay() {
     >
       <section className="peek-card" onMouseDown={(event) => event.stopPropagation()}>
         <header className="peek-head">
-          <Favicon url={state.url} label={state.host || 'aperçu'} size={20} spaceId={state.spaceId} />
+          <Favicon
+            url={state.url}
+            label={state.host || 'aperçu'}
+            size={20}
+            spaceId={state.spaceId}
+          />
           {editing ? (
             <form className="peek-address" onSubmit={navigate}>
               <input

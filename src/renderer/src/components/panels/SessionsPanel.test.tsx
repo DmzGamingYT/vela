@@ -44,7 +44,10 @@ describe('panneau Sessions', () => {
   })
 
   it('passe au pluriel dès la deuxième page', () => {
-    setTabs([page('Article', 'https://example.com/article'), page('Suite', 'https://example.com/suite')])
+    setTabs([
+      page('Article', 'https://example.com/article'),
+      page('Suite', 'https://example.com/suite')
+    ])
     render(<SessionsPanel />)
     expect(screen.getByText('onglets ouverts')).toBeTruthy()
   })

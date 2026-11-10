@@ -71,7 +71,8 @@ export function demoNote(input: { title: string; url?: string; text: string }): 
   ]
   if (input.url) lines.push(`Source : [${input.url}](${input.url})`, '')
   lines.push('## Points clés', '')
-  if (sentences.length === 0) lines.push('- La page ne contient pas assez de texte pour une synthèse.')
+  if (sentences.length === 0)
+    lines.push('- La page ne contient pas assez de texte pour une synthèse.')
   for (const sentence of sentences) lines.push(`- ${sentence.slice(0, 240)}`)
   lines.push('', '## Plan d’action', '')
   lines.push('- Relire la source et vérifier les chiffres cités.')
@@ -117,7 +118,10 @@ export class AgentRunner {
     const useApi =
       settings.agent.mode === 'api' && (definition.local || Boolean(this.getSecret(definition.id)))
     if (useApi) {
-      const loop = request.mode === 'act' ? this.runAct(run, request, settings) : this.runApi(run, request, settings)
+      const loop =
+        request.mode === 'act'
+          ? this.runAct(run, request, settings)
+          : this.runApi(run, request, settings)
       void loop.catch((error: unknown) => {
         if (run.cancelled) return
         this.emit({ runId: run.id, type: 'error', message: this.describe(error) })
@@ -197,7 +201,8 @@ export class AgentRunner {
         return {
           ok: false,
           reason: 'unavailable',
-          detail: 'Aucun modèle n’est actif. Ouvrez Réglages › Modèles pour transcrire sur cet appareil.'
+          detail:
+            'Aucun modèle n’est actif. Ouvrez Réglages › Modèles pour transcrire sur cet appareil.'
         }
       }
       if (!consent) {
@@ -210,7 +215,11 @@ export class AgentRunner {
     }
     const key = this.getSecret(definition.id)
     if (!definition.local && !key) {
-      return { ok: false, reason: 'unavailable', detail: 'Aucune clé API enregistrée pour ce fournisseur.' }
+      return {
+        ok: false,
+        reason: 'unavailable',
+        detail: 'Aucune clé API enregistrée pour ce fournisseur.'
+      }
     }
 
     const url = `${state.baseUrl.replace(/\/+$/, '')}/audio/transcriptions`
@@ -370,11 +379,16 @@ export class AgentRunner {
    * dans la limite d'un budget. Chaque action entre au journal avant que son
    * résultat ne reparte au modèle ; rien n'est simulé.
    */
-  private async runAct(run: ActiveRun, request: AgentRunRequest, settings: Settings): Promise<void> {
+  private async runAct(
+    run: ActiveRun,
+    request: AgentRunRequest,
+    settings: Settings
+  ): Promise<void> {
     const definition = providerById(settings.agent.provider)
     const state = providerState(settings)
     const key = this.getSecret(definition.id)
-    if (!key && !definition.local) throw new Error('Aucune clé API enregistrée pour ce fournisseur.')
+    if (!key && !definition.local)
+      throw new Error('Aucune clé API enregistrée pour ce fournisseur.')
 
     run.title = request.prompt.slice(0, 60) || 'Tâche de l’agent'
     run.mode = 'api'
@@ -462,14 +476,25 @@ export class AgentRunner {
         const decision = await dialog.showMessageBox(win, {
           type: 'question',
           title: 'Valider l’action de l’agent',
-          message: phase === 'submission' ? 'Soumettre la saisie avec Entrée' : preview(describeAction(action)),
+          message:
+            phase === 'submission'
+              ? 'Soumettre la saisie avec Entrée'
+              : preview(describeAction(action)),
           detail: [
-            approvedPage ? `Page actuelle : ${preview(approvedPage.url)}` : 'Aucune page de travail ouverte.',
+            approvedPage
+              ? `Page actuelle : ${preview(approvedPage.url)}`
+              : 'Aucune page de travail ouverte.',
             action.tool === 'open' ? `Adresse à ouvrir : ${preview(action.args.url ?? '')}` : '',
-            action.tool === 'click' ? `Cible : ${preview(action.args.role ?? 'élément')} · ${preview(action.args.name ?? action.args.text ?? '')}` : '',
-            action.tool === 'type' ? `Champ : ${preview(action.args.name ?? 'champ actif')}\nTexte : ${preview(action.args.text ?? '')}` : '',
+            action.tool === 'click'
+              ? `Cible : ${preview(action.args.role ?? 'élément')} · ${preview(action.args.name ?? action.args.text ?? '')}`
+              : '',
+            action.tool === 'type'
+              ? `Champ : ${preview(action.args.name ?? 'champ actif')}\nTexte : ${preview(action.args.text ?? '')}`
+              : '',
             'Vérifiez cette action avant de continuer.'
-          ].filter(Boolean).join('\n\n'),
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
           buttons: ['Refuser et arrêter', 'Autoriser cette action'],
           defaultId: 0,
           cancelId: 0,
@@ -483,9 +508,10 @@ export class AgentRunner {
         return
       }
       // Entrée est une seconde action, distincte de la saisie.
-      const execution = action.tool === 'type' && action.args.submit
-        ? { ...action, args: { ...action.args, submit: false } }
-        : action
+      const execution =
+        action.tool === 'type' && action.args.submit
+          ? { ...action, args: { ...action.args, submit: false } }
+          : action
       const result = await driver.run(execution)
       if (action.tool === 'type' && action.args.submit && result.ok) {
         if (!(await confirm('submission'))) {
@@ -624,11 +650,16 @@ export class AgentRunner {
     return true
   }
 
-  private async runApi(run: ActiveRun, request: AgentRunRequest, settings: Settings): Promise<void> {
+  private async runApi(
+    run: ActiveRun,
+    request: AgentRunRequest,
+    settings: Settings
+  ): Promise<void> {
     const definition = providerById(settings.agent.provider)
     const state = providerState(settings)
     const key = this.getSecret(definition.id)
-    if (!key && !definition.local) throw new Error('Aucune clé API enregistrée pour ce fournisseur.')
+    if (!key && !definition.local)
+      throw new Error('Aucune clé API enregistrée pour ce fournisseur.')
 
     const sources = await Promise.all(
       request.sources.map(async (source) => {
@@ -647,7 +678,11 @@ export class AgentRunner {
       runId: run.id,
       type: 'plan',
       title: run.title,
-      steps: ['Connexion au modèle', `Lecture de ${sources.length || 0} source(s)`, 'Rédaction de la synthèse'],
+      steps: [
+        'Connexion au modèle',
+        `Lecture de ${sources.length || 0} source(s)`,
+        'Rédaction de la synthèse'
+      ],
       mode: 'api',
       sources: sources.map((source) => ({
         title: source.title,

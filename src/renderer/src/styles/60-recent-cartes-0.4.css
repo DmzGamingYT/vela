@@ -1,0 +1,149 @@
+/* Tranche 60 — « Récemment » en grille de cartes (0.4).
+   La liste laissait trois lignes écartées sur 300 px ; chaque page est
+   maintenant une carte compacte, alignée sur les blocs voisins. */
+
+/* ── Le bloc : même padding, même rayon, même bordure que ses voisins ──── */
+.home-recent,
+.home-tasks,
+.home-quicknotes {
+  padding: 16px;
+  border-radius: 12px;
+}
+
+/* ── La grille : 2 colonnes, 3 au-delà de 720 px de bloc ───────────────── */
+.home-recent {
+  container-type: inline-size;
+}
+
+.recent-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 8px;
+}
+
+@container (min-width: 720px) {
+  .recent-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── La carte ─────────────────────────────────────────────────────────── */
+.recent-card {
+  min-width: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: transparent;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.recent-card:hover {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.recent-open {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.recent-open:focus-visible,
+.recent-all:focus-visible,
+.recent-empty:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+}
+
+.recent-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.recent-favicon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.recent-favicon .favicon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.recent-card-time {
+  color: var(--ink-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.recent-title {
+  overflow: hidden;
+  color: var(--ink-1);
+  font-size: 13px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-host {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Dernière carte et état vide : le même pointillé ───────────────────── */
+.recent-all,
+.recent-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--ink-2);
+  font-size: 12px;
+  text-align: left;
+}
+
+.recent-all:hover,
+.recent-empty:hover {
+  border-color: var(--line-2, var(--line));
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink-1);
+}
+
+/* ── Mode sombre : bordure à 8 %, carte un niveau au-dessus du bloc ────── */
+:root[data-mode='dark'] .recent-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+:root[data-mode='dark'] .recent-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+/* Un favicon saturé vibre sur du noir : la tuile se calme. */
+:root[data-mode='dark'] .recent-favicon .favicon {
+  filter: saturate(0.72);
+}

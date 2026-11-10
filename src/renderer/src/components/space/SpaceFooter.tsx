@@ -27,13 +27,21 @@ export default function SpaceFooter({
   return (
     <div className="space-foot-wrap">
       {discardOpen ? (
-        <div className="space-discard" role="alertdialog" aria-label="Abandonner les modifications ?">
+        <div
+          className="space-discard"
+          role="alertdialog"
+          aria-label="Abandonner les modifications ?"
+        >
           <span>Des modifications ne sont pas enregistrées.</span>
           <div className="space-discard-actions">
             <button type="button" className="space-small-btn" onClick={onKeepEditing}>
               Continuer l’édition
             </button>
-            <button type="button" className="space-small-btn space-small-danger" onClick={onDiscard}>
+            <button
+              type="button"
+              className="space-small-btn space-small-danger"
+              onClick={onDiscard}
+            >
               Abandonner
             </button>
           </div>

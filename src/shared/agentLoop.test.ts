@@ -37,13 +37,19 @@ describe('choisir un outil, puis remplir ses arguments', () => {
   })
 
   it('cite la réponse fautive quand on redemande', () => {
-    const prompt = buildToolArgsPrompt({ ...turn, tool: 'click', correction: '{"cible":"Envoyer"}' })
+    const prompt = buildToolArgsPrompt({
+      ...turn,
+      tool: 'click',
+      correction: '{"cible":"Envoyer"}'
+    })
     expect(prompt).toContain('n’a pas été comprise')
     expect(prompt).toContain('{"cible":"Envoyer"}')
   })
 
   it('garde les derniers résultats seulement', () => {
-    const transcript = Array.from({ length: 9 }, (_, index) => `${index + 1}. étape faite`).join('\n')
+    const transcript = Array.from({ length: 9 }, (_, index) => `${index + 1}. étape faite`).join(
+      '\n'
+    )
     const prompt = buildToolChoicePrompt({ ...turn, transcript })
     expect(prompt).toContain('9. étape faite')
     expect(prompt).not.toContain('1. étape faite\n')

@@ -1,0 +1,47 @@
+/* ------------------------------------------------------------------
+   0.4 — les pastilles du rail d'espaces
+   ------------------------------------------------------------------
+   La maquette 0.4 donne 36 px de côté et un rayon de 12 à toutes les
+   pastilles, ajout compris. Dans l'app, les avatars faisaient 34 px dans
+   un cadre de 40 : le « + », lui, remplissait ses 40 px, donc il dépassait
+   visiblement les autres. Les quatre reprennent le même format.
+
+   La matière redevient plate : le dégradé 145° et le halo coloré de l'état
+   actif donnaient aux pastilles un air de sphère brillante qui jurait avec
+   les icônes nues du reste du châssis. Il reste le liseré blanc intérieur
+   et une ombre courte, comme dans la maquette.
+   ------------------------------------------------------------------ */
+
+.rail .space-chip {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+}
+
+.rail .space-avatar {
+  background: var(--space);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.rail .space-chip[data-avatar='true'][data-active='true'] .space-avatar {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 8px -4px rgba(0, 0, 0, 0.55);
+}
+
+/* La barre de l'espace actif : 3 × 18 px sur le bord extérieur du rail. */
+.rail .space-chip[data-active='true']::before {
+  left: -16px;
+  top: 9px;
+  width: 3px;
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: var(--space);
+  box-shadow: none;
+}
+
+.rail .space-add {
+  color: var(--faint);
+  border-color: var(--line);
+}

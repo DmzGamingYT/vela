@@ -45,7 +45,9 @@
 :root[data-theme='braise'] .mini-tile:hover {
   border-color: color-mix(in srgb, #ff8f5e 55%, transparent);
   background: color-mix(in srgb, #ff8f5e 13%, var(--fill));
-  box-shadow: var(--inner-light-soft), 0 8px 20px -12px rgba(255, 122, 60, 0.75);
+  box-shadow:
+    var(--inner-light-soft),
+    0 8px 20px -12px rgba(255, 122, 60, 0.75);
 }
 
 /* ---------------------------------------------------------------

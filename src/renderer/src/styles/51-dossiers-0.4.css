@@ -1,0 +1,55 @@
+/* Tranche 51 — dossiers de la barre latérale.
+   Un dossier est une structure, pas un titre : il perd sa graisse, son
+   compteur vide, et son trait couvre enfin tout ce qu'il contient. */
+
+/* ── Nom du dossier au niveau d'un onglet ──────────────────────────────── */
+.sidebar .group-name {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.sidebar .group-name-input {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* Seul un dossier qui contient la page courante s'allume, sans grossir. */
+.sidebar .group-head[data-live='true'] .group-name {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+/* ── Compteur : plus près du nom, et absent à zéro ─────────────────────── */
+.sidebar .group-count {
+  margin-left: 0;
+  padding-left: 2px;
+  font-size: 9.5px;
+  color: var(--faint);
+  opacity: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Trait continu sur tout le dossier ─────────────────────────────────── */
+.sidebar .tab-group {
+  margin-left: 9px;
+  padding-left: 4px;
+  border-left: 1px solid var(--line-soft);
+}
+
+.sidebar .group-tabs {
+  margin-left: 0;
+  padding-left: 5px;
+  border-left: 0;
+}
+
+/* ── Dossier vide : une zone, pas une phrase ───────────────────────────── */
+.sidebar .group-empty {
+  margin: 2px 0 4px;
+  padding: 7px 8px;
+  border: 1px dashed var(--line-soft);
+  border-radius: 8px;
+  font-size: 10.5px;
+  color: var(--faint);
+}

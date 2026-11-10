@@ -1,0 +1,308 @@
+/* 67 — Atelier : profondeur, variantes de requête, couverture et pages écartées. */
+
+.tw-depth {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.tw-depth > .tw-k {
+  flex: 0 0 auto;
+}
+
+.tw-depth-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 380px;
+}
+
+.tw-depth-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tw-depth-options button b {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tw-depth-options button span {
+  font-size: 11px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.tw-depth-options button[data-active='true'] {
+  border-color: var(--clay);
+  box-shadow: inset 0 0 0 1px var(--clay);
+}
+
+.tw-variants {
+  margin-top: 16px;
+  min-width: 0;
+}
+
+.tw-variants-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.tw-variants-head em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.tw-variants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tw-variant {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px 3px 2px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.tw-variant input {
+  border: 0;
+  background: transparent;
+  color: var(--ink-1);
+  font: inherit;
+  font-size: 12px;
+  min-width: 90px;
+  width: 16ch;
+  max-width: 36ch;
+  padding: 3px 0;
+  outline: none;
+}
+
+.tw-variant input:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tw-variant button,
+.tw-variant-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.tw-variant button:hover,
+.tw-variant-add:hover {
+  color: var(--ink-1);
+  background: var(--line-soft);
+}
+
+.tw-variant-add {
+  border: 1px dashed var(--line-soft);
+  padding: 4px 10px;
+}
+
+/* Couverture et avertissement de diversité */
+
+.tw-coverage {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 10px;
+}
+
+.tw-coverage button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.tw-coverage button b {
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+.tw-coverage button[data-on='true'] {
+  border-color: var(--clay);
+  color: var(--ink-1);
+}
+
+.tw-coverage button[data-zero='true'] {
+  border-style: dashed;
+  color: var(--ink-3);
+}
+
+.tw-coverage button[data-zero='true']:hover {
+  border-color: var(--clay);
+  color: var(--ink-1);
+}
+
+.tw-same-type {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--tunnel-warn, #b7791f);
+  background: var(--surface-2);
+  border-radius: 6px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.tw-same-type b {
+  color: var(--ink-1);
+}
+
+/* Raison courte du classement, sous la jauge */
+
+.tw-src-why {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 3px;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Carte pointillée « Trouver plus de sources » */
+
+.tw-angle-add {
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 10px;
+  border: 1px dashed var(--line-soft);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tw-angle-add:hover:not(:disabled) {
+  border-color: var(--clay);
+  color: var(--ink-1);
+}
+
+.tw-angle-add:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Page écartées : repliées, jamais supprimées */
+
+.tw-dismissed {
+  margin-top: 14px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 8px;
+}
+
+.tw-dismissed summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.tw-dismissed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tw-dismissed-row > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tw-dismissed-row b {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-dismissed-row em {
+  color: var(--ink-3);
+  font-style: normal;
+  font-size: 11px;
+}
+
+.tw-dismissed-row button {
+  flex: 0 0 auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.tw-dismissed-row button:hover {
+  border-color: var(--clay);
+  color: var(--ink-1);
+}
+
+/* Bouton de la barre du bas */
+
+.tw-btn-more {
+  gap: 5px;
+}
+
+@media (max-width: 900px) {
+  .tw-depth-options {
+    grid-template-columns: 1fr;
+    flex-basis: 100%;
+  }
+
+  .tw-variant input {
+    width: 14ch;
+  }
+}

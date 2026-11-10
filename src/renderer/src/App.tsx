@@ -16,6 +16,7 @@ import { appearanceState, applyAppearance } from './lib/appearance'
 const AgentCanvas = lazy(() => import('./components/agent/AgentCanvas'))
 const BookmarksPanel = lazy(() => import('./components/panels/BookmarksPanel'))
 const SessionsPanel = lazy(() => import('./components/panels/SessionsPanel'))
+const ShieldPanel = lazy(() => import('./components/panels/ShieldPanel'))
 const HistoryPanel = lazy(() => import('./components/panels/HistoryPanel'))
 const CommandBar = lazy(() => import('./components/chrome/CommandBar'))
 const DownloadsPanel = lazy(() => import('./components/panels/DownloadsPanel'))
@@ -58,15 +59,24 @@ export default function App() {
   // les jetons. L'espace actif peut fournir son propre thème.
   useEffect(() => {
     if (!settings) return
-    applyAppearance(appearanceState(settings, space))
+    const state = appearanceState(settings, space)
+    applyAppearance(state)
     const root = document.documentElement
+    // La couleur d'un espace est choisie sur le papier clair : sur le noir, la
+    // même teinte passe sous le seuil de lisibilité. En sombre, elle est
+    // éclaircie une fois ici, et tous les repères (barre active, pastille du
+    // « P », contours d'icônes) en héritent ensemble.
+    const spaceColor = space?.color ?? '#5B5BD6'
+    root.style.setProperty(
+      '--space-color',
+      state.mode === 'dark' ? `color-mix(in srgb, ${spaceColor} 58%, white)` : spaceColor
+    )
     root.dataset.home = settings.homeBackground
     root.dataset.homeIntensity = settings.homeIntensity
     root.style.setProperty('--home-blur', `${settings.homeBlur}px`)
     // Ambiance propre à l'espace : une couche derrière le châssis, jamais
     // au-dessus du contenu des pages.
     root.dataset.spaceBg = space?.background ?? 'none'
-    root.style.setProperty('--space-color', space?.color ?? '#5B5BD6')
   }, [settings, space])
 
   // Suit le système et, si l'option est active, l'heure (clair le jour).
@@ -211,6 +221,9 @@ export default function App() {
         </Presence>
         <Presence open={overlay === 'bookmarks'} exit={!overlay}>
           <BookmarksPanel />
+        </Presence>
+        <Presence open={overlay === 'shield'} exit={!overlay}>
+          <ShieldPanel />
         </Presence>
         {/* L’accueil se retire le temps d’un panneau : sans cela, il recouvrait
             les réglages ouverts depuis « Votre clé ou Ollama » et le bouton

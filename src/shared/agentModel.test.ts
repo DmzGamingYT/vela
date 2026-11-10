@@ -16,12 +16,14 @@ afterEach(() => {
 
 describe('façade AgentModel', () => {
   it('envoie la consigne système puis le tour, et découpe le flux', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      sse([
-        { choices: [{ delta: { content: 'Bon' } }] },
-        { choices: [{ delta: { content: 'jour' } }] }
-      ])
-    )
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        sse([
+          { choices: [{ delta: { content: 'Bon' } }] },
+          { choices: [{ delta: { content: 'jour' } }] }
+        ])
+      )
     vi.stubGlobal('fetch', fetchMock)
     const session = await chatModel({ definition: local, config, key: null }).create({
       system: 'Tu es Vela.'
@@ -86,10 +88,7 @@ describe('façade AgentModel', () => {
   })
 
   it('nomme le fournisseur quand il refuse la requête', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('clé refusée', { status: 401 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('clé refusée', { status: 401 })))
     const session = await chatModel({ definition: local, config, key: null }).create()
     await expect(session.prompt('Salut')).rejects.toThrow('Modèle indisponible (401). clé refusée')
   })
@@ -106,7 +105,12 @@ describe('façade AgentModel', () => {
           })
       )
     )
-    const session = await chatModel({ definition: local, config, key: null, timeoutMs: 2000 }).create()
+    const session = await chatModel({
+      definition: local,
+      config,
+      key: null,
+      timeoutMs: 2000
+    }).create()
     await expect(session.prompt('Salut')).rejects.toThrow('dans les 2 secondes')
   })
 

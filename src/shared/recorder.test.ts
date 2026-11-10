@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_RECORDING_BYTES, describeMicError, formatDuration, pickAudioMime, recorderStatus } from './recorder'
+import {
+  MAX_RECORDING_BYTES,
+  describeMicError,
+  formatDuration,
+  pickAudioMime,
+  recorderStatus
+} from './recorder'
 
 describe('permission du micro', () => {
   it('explique un refus sans lever d’erreur', () => {
-    const problem = describeMicError(Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' }))
+    const problem = describeMicError(
+      Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' })
+    )
     expect(problem.reason).toBe('denied')
     expect(problem.system).toBe(true)
     expect(problem.message).toContain('Réglages Système')

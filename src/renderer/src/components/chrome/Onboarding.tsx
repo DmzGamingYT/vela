@@ -24,11 +24,31 @@ interface Step {
  * elle liste les étapes et permet d'y revenir.
  */
 const STEPS: Step[] = [
-  { kicker: 'Moteur', title: 'Votre web, à votre façon.', lede: 'Vos recherches vont au moteur que vous choisissez.' },
-  { kicker: 'Bruit', title: 'Moins de bruit, tout de suite.', lede: 'Le filtre tourne en local, et vos favoris existants vous suivent.' },
-  { kicker: 'Habitués', title: 'Vos habitués, un clic plus loin.', lede: 'Épinglés dans l’espace, ouverts seulement quand vous cliquez.' },
-  { kicker: 'Teinte', title: 'Une teinte à vous.', lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.' },
-  { kicker: 'Chez vous', title: 'Ce qui sort, et quand.', lede: 'Aucun compte, aucun serveur Vela, aucune mesure d’usage. Voici les requêtes que Vela déclenche lui-même.' }
+  {
+    kicker: 'Moteur',
+    title: 'Votre web, à votre façon.',
+    lede: 'Vos recherches vont au moteur que vous choisissez.'
+  },
+  {
+    kicker: 'Bruit',
+    title: 'Moins de bruit, tout de suite.',
+    lede: 'Le filtre tourne en local, et vos favoris existants vous suivent.'
+  },
+  {
+    kicker: 'Habitués',
+    title: 'Vos habitués, un clic plus loin.',
+    lede: 'Épinglés dans l’espace, ouverts seulement quand vous cliquez.'
+  },
+  {
+    kicker: 'Teinte',
+    title: 'Une teinte à vous.',
+    lede: 'Tout le châssis la reprend. Les sites visités gardent leurs couleurs.'
+  },
+  {
+    kicker: 'Chez vous',
+    title: 'Ce qui sort, et quand.',
+    lede: 'Aucun compte, aucun serveur Vela, aucune mesure d’usage. Voici les requêtes que Vela déclenche lui-même.'
+  }
 ]
 
 const ESSENTIALS: { name: string; url: string; brand?: SiteBrand }[] = [
@@ -45,7 +65,13 @@ const ESSENTIALS: { name: string; url: string; brand?: SiteBrand }[] = [
 const DEFAULT_ESSENTIALS = ['https://github.com', 'https://www.notion.so']
 
 /** Les flux que l'écran final montre, avec leur propre mécanisme d'arrêt. */
-const FLOW_IDS = ['moteur-recherche', 'mises-a-jour', 'modeles', 'tunnel-fournisseurs', 'bd-ocr'] as const
+const FLOW_IDS = [
+  'moteur-recherche',
+  'mises-a-jour',
+  'modeles',
+  'tunnel-fournisseurs',
+  'bd-ocr'
+] as const
 
 function extractBookmarkEntries(html: string): { title: string; url: string }[] {
   const entries = new Map<string, string>()
@@ -151,7 +177,9 @@ export default function Onboarding() {
   const accent = preset ? (dark ? preset.dark : preset.light) : settings.customAccent || '#5B5BD6'
 
   const toggleEssential = (url: string): void => {
-    setSelected((list) => (list.includes(url) ? list.filter((item) => item !== url) : [...list, url]))
+    setSelected((list) =>
+      list.includes(url) ? list.filter((item) => item !== url) : [...list, url]
+    )
   }
 
   const importSource = (source: BookmarkImportSource): void => {
@@ -162,7 +190,12 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="overlay onboarding-overlay" role="dialog" aria-modal="true" aria-label="Bienvenue dans Vela">
+    <div
+      className="overlay onboarding-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bienvenue dans Vela"
+    >
       <div ref={sheetRef} className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
         <span
           className="onboarding-progress"
@@ -204,8 +237,12 @@ export default function Onboarding() {
 
         <div className="onboarding-main">
           <header className="onboarding-top">
-            <span className="wordmark">Vela<span className="wordmark-dot">.</span></span>
-            <button type="button" className="onboarding-skip" onClick={finish}>Passer</button>
+            <span className="wordmark">
+              Vela<span className="wordmark-dot">.</span>
+            </span>
+            <button type="button" className="onboarding-skip" onClick={finish}>
+              Passer
+            </button>
           </header>
 
           <div className="onboarding-copy">
@@ -246,7 +283,8 @@ export default function Onboarding() {
 
                 <p className="onboarding-note">
                   <Icon name="lock" size={13} />
-                  Une adresse s’ouvre, une question part vers ce moteur. Vela n’ajoute rien au milieu.
+                  Une adresse s’ouvre, une question part vers ce moteur. Vela n’ajoute rien au
+                  milieu.
                 </p>
               </>
             )}
@@ -254,7 +292,9 @@ export default function Onboarding() {
             {step === 1 && (
               <>
                 <div className="onboarding-row" data-on={settings.blockTrackers}>
-                  <span className="onboarding-row-icon"><Icon name="shield" size={22} /></span>
+                  <span className="onboarding-row-icon">
+                    <Icon name="shield" size={22} />
+                  </span>
                   <span className="onboarding-row-copy">
                     <strong>Bloqueur local</strong>
                     <small>
@@ -273,12 +313,16 @@ export default function Onboarding() {
                     aria-label="Bloquer les traqueurs"
                     data-on={settings.blockTrackers}
                     onClick={() => void updateSettings({ blockTrackers: !settings.blockTrackers })}
-                  ><span /></button>
+                  >
+                    <span />
+                  </button>
                 </div>
 
                 <div className="onboarding-detected">
                   <span className="field-label">Favoris de vos autres navigateurs</span>
-                  {detected === null && <p className="setting-hint">Recherche des profils installés…</p>}
+                  {detected === null && (
+                    <p className="setting-hint">Recherche des profils installés…</p>
+                  )}
                   {detected !== null && detected.length > 0 && (
                     <div className="detected-list">
                       {detected.map((source) => (
@@ -300,14 +344,19 @@ export default function Onboarding() {
                   {detected !== null && detected.length === 0 && (
                     <p className="setting-hint">
                       Aucun profil lisible. Sur macOS, autorisez Vela dans Réglages Système →
-                      Confidentialité → Accès complet au disque pour lire Safari, ou importez un export HTML.
+                      Confidentialité → Accès complet au disque pour lire Safari, ou importez un
+                      export HTML.
                     </p>
                   )}
                   <label className="onboarding-row is-action">
-                    <span className="onboarding-row-icon"><Icon name="download" size={22} /></span>
+                    <span className="onboarding-row-icon">
+                      <Icon name="download" size={22} />
+                    </span>
                     <span className="onboarding-row-copy">
                       <strong>Importer un fichier de favoris</strong>
-                      <small>Export HTML de Chrome, Firefox ou Safari — vers vos marque-pages Vela</small>
+                      <small>
+                        Export HTML de Chrome, Firefox ou Safari — vers vos marque-pages Vela
+                      </small>
                     </span>
                     <Icon name="arrow-right" size={16} />
                     <input
@@ -319,7 +368,10 @@ export default function Onboarding() {
                         if (!file) return
                         void file.text().then((text) => {
                           const entries = extractBookmarkEntries(text)
-                          void importBookmarks(entries.map(({ url }) => url), entries)
+                          void importBookmarks(
+                            entries.map(({ url }) => url),
+                            entries
+                          )
                         })
                       }}
                     />
@@ -342,7 +394,13 @@ export default function Onboarding() {
                         aria-pressed={active}
                         onClick={() => toggleEssential(app.url)}
                       >
-                        <SiteMark brand={app.brand} url={app.url} label={app.name} size={22} spaceId={spaceId} />
+                        <SiteMark
+                          brand={app.brand}
+                          url={app.url}
+                          label={app.name}
+                          size={22}
+                          spaceId={spaceId}
+                        />
                         <span className="essentials-name">{app.name}</span>
                         <span className="essentials-check">
                           {active && <Icon name="check" size={12} />}
@@ -388,14 +446,18 @@ export default function Onboarding() {
                   })}
                 </div>
 
-                <div className="theme-preview" style={{ '--swatch': accent } as CSSProperties} aria-hidden="true">
+                <div
+                  className="theme-preview"
+                  style={{ '--swatch': accent } as CSSProperties}
+                  aria-hidden="true"
+                >
                   <span className="theme-preview-rail">
-                    <i data-on="true" /><i /><i />
+                    <i data-on="true" />
+                    <i />
+                    <i />
                   </span>
                   <span className="theme-preview-page">
-                    <span className="theme-preview-kicker">
-                      Papier · accent · texte sur accent
-                    </span>
+                    <span className="theme-preview-kicker">Papier · accent · texte sur accent</span>
                     <span className="theme-preview-line" />
                     <span className="theme-preview-line is-short" />
                     <span className="theme-preview-actions">
@@ -411,14 +473,21 @@ export default function Onboarding() {
               <>
                 <div className="onboarding-local">
                   <div className="local-row">
-                    <span className="local-row-icon"><Icon name="shield" size={18} /></span>
+                    <span className="local-row-icon">
+                      <Icon name="shield" size={18} />
+                    </span>
                     <span>
                       <strong>Pas de compte, pas de serveur Vela</strong>
-                      <small>Espaces, onglets, favoris et réglages vivent dans un dossier sur cet appareil.</small>
+                      <small>
+                        Espaces, onglets, favoris et réglages vivent dans un dossier sur cet
+                        appareil.
+                      </small>
                     </span>
                   </div>
                   <div className="local-row">
-                    <span className="local-row-icon"><Icon name="notes" size={18} /></span>
+                    <span className="local-row-icon">
+                      <Icon name="notes" size={18} />
+                    </span>
                     <span>
                       <strong>Notes en fichiers Markdown</strong>
                       <small>Un dossier à vous, lisible dans le Finder, sans Vela.</small>
@@ -473,14 +542,25 @@ export default function Onboarding() {
           </div>
 
           <footer className="onboarding-foot">
-            <button type="button" className="onboarding-back" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+            <button
+              type="button"
+              className="onboarding-back"
+              disabled={step === 0}
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+            >
               Retour
             </button>
             <span className="onboarding-dots" aria-hidden="true">
-              {STEPS.map((_, i) => <i key={i} data-active={i === step} data-done={i < step} />)}
+              {STEPS.map((_, i) => (
+                <i key={i} data-active={i === step} data-done={i < step} />
+              ))}
             </span>
             {step < last ? (
-              <button type="button" className="action primary onboarding-next" onClick={() => setStep((s) => s + 1)}>
+              <button
+                type="button"
+                className="action primary onboarding-next"
+                onClick={() => setStep((s) => s + 1)}
+              >
                 Continuer <kbd>↵</kbd>
               </button>
             ) : (

@@ -1,25 +1,31 @@
 import type { CSSProperties } from 'react'
+import { APP_SHORTCUTS } from '@shared/shortcuts'
 import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
-import SidebarDock from './SidebarDock'
 import SpaceAvatar from '../space/SpaceAvatar'
 
+/**
+ * Rail des espaces.
+ *
+ * Trois étages : la bascule de la barre latérale dans la rangée du titre, les
+ * deux modes au milieu, les espaces puis « + » en bas. Réglages ferme la
+ * colonne sous le « + » : la barre latérale n’a donc plus de carte pour lui.
+ *
+ * La colonne est détachée de 8 px du bord de la fenêtre : l’indicateur de
+ * l’espace actif, posé sur le bord extérieur, n’est plus rogné.
+ */
 export default function SpaceRail() {
   const view = useBrowser((state) => state.view)
-  // Le sélecteur de mode vit ici : le rail reste visible quand la barre
-  // latérale est repliée, donc le mode ne disparaît plus.
   const workMode = useBrowser((state) => state.workMode)
   const setWorkMode = useBrowser((state) => state.setWorkMode)
   const activateSpace = useBrowser((state) => state.activateSpace)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const toggleSidebar = useBrowser((state) => state.toggleSidebar)
-  const notesOpen = useBrowser((state) => state.notesOpen)
-  const agentOpen = useBrowser((state) => state.agentOpen)
   const overlay = useBrowser((state) => state.overlay)
-  const toggleNotes = useBrowser((state) => state.toggleNotes)
-  const openAgent = useBrowser((state) => state.openAgent)
   const setOverlay = useBrowser((state) => state.setOverlay)
+
+  const settingsTitle = `Réglages (${shortcut(APP_SHORTCUTS.settings.key)})`
 
   if (!view) return <aside className="rail" aria-label="Espaces" />
 
@@ -27,8 +33,8 @@ export default function SpaceRail() {
     <aside className="rail" aria-label="Espaces">
       <div className="rail-drag drag" />
 
-      {/* Le repli commande le rail lui-même : il vit en haut, pas dans la
-          pile des outils. */}
+      {/* Dans la rangée du titre : la bascule se lit à la hauteur du mot
+          « Vela », pas 56 px plus bas. */}
       <div className="rail-head">
         <button
           type="button"
@@ -51,7 +57,7 @@ export default function SpaceRail() {
           onClick={() => setWorkMode('browse')}
           title={`Navigation (${shortcut('⇧A')})`}
         >
-          <Icon name="globe" size={17} />
+          <Icon name="globe" size={18} />
           <span className="sr-only">Navigation</span>
         </button>
         <button
@@ -63,14 +69,10 @@ export default function SpaceRail() {
           onClick={() => setWorkMode('work')}
           title={`Atelier (${shortcut('⇧A')})`}
         >
-          <Icon name="monitor" size={17} />
+          <Icon name="monitor" size={18} />
           <span className="sr-only">Atelier</span>
         </button>
       </div>
-
-      {/* Deux groupes d’actions distincts : le trait empêche de lire les
-          modes et les espaces comme une seule pile d’icônes. */}
-      <div className="rail-sep" aria-hidden="true" />
 
       <div className="rail-spaces">
         {view.spaces.map((space) => {
@@ -87,7 +89,7 @@ export default function SpaceRail() {
               title={space.name}
               onDoubleClick={() => openSpaceDialog(space.id)}
             >
-              <SpaceAvatar space={space} size={34} />
+              <SpaceAvatar space={space} size={36} />
             </button>
           )
         })}
@@ -101,19 +103,17 @@ export default function SpaceRail() {
         </button>
       </div>
 
-      {/* La barre latérale repliée ne laisse que le rail : le dock y garde les
-          trois actions, en icônes seules. */}
-      {view.settings.sidebarCollapsed && (
-        <SidebarDock
-          compact
-          notesOpen={notesOpen}
-          agentOpen={agentOpen}
-          settingsOpen={overlay === 'settings'}
-          onNotes={() => toggleNotes()}
-          onAgent={() => openAgent()}
-          onSettings={() => setOverlay('settings')}
-        />
-      )}
+      <button
+        type="button"
+        className="rail-ghost rail-settings"
+        data-active={overlay === 'settings'}
+        aria-pressed={overlay === 'settings'}
+        onClick={() => setOverlay(overlay === 'settings' ? null : 'settings')}
+        title={settingsTitle}
+        aria-label="Réglages"
+      >
+        <Icon name="settings" size={17} />
+      </button>
     </aside>
   )
 }

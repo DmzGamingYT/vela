@@ -89,7 +89,9 @@ describe('lecture du flux Letterboxd', () => {
       <guid>x</guid>
     </item></channel></rss>`
     expect(parseLetterboxdLog(xml)[0]?.url).toBeNull()
-    expect(sanitizeLetterboxdLog([{ id: 'x', title: 'Film', url: 'http://exemple.test/' }])[0]?.url).toBeNull()
+    expect(
+      sanitizeLetterboxdLog([{ id: 'x', title: 'Film', url: 'http://exemple.test/' }])[0]?.url
+    ).toBeNull()
   })
 })
 
@@ -101,7 +103,12 @@ describe('journal stocké', () => {
       { title: 'Sans identifiant' }
     ])
     expect(cleaned).toHaveLength(1)
-    expect(cleaned[0]).toMatchObject({ year: null, rating: null, watchedDate: null, rewatch: false })
+    expect(cleaned[0]).toMatchObject({
+      year: null,
+      rating: null,
+      watchedDate: null,
+      rewatch: false
+    })
   })
 
   it('garde l’ordre du flux, du plus récent au plus ancien', () => {

@@ -1,0 +1,62 @@
+/* Tranche 59 — la barre latérale sans cadres (0.4).
+   Les tuiles épinglées portaient un cadre, un fond de carte et une ombre au
+   survol : trois traits pour une icône. Dans la pilule, la même icône se pose
+   nue. Ici on aligne la barre sur ce principe : pas de bordure, pas de carte ;
+   l'état actif se lit au fond, le survol à un voile. */
+
+/* ── Épinglés : l'icône seule ─────────────────────────────────────────── */
+.sidebar .pin-tile-main {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 0.12s ease;
+}
+
+.sidebar .pin-tile:hover .pin-tile-main,
+.sidebar .pin-tile:focus-within .pin-tile-main {
+  border: 0;
+  background: var(--hover);
+  box-shadow: none;
+}
+
+/* Actif : un fond, jamais un trait. Le point sous l'icône reste réservé à
+   l'onglet ouvert en arrière-plan. */
+.sidebar .pin-tile[data-active='true'] .pin-tile-main {
+  border: 0;
+  background: var(--fill-2);
+  box-shadow: none;
+}
+
+.sidebar .pin-tile[data-active='true']:hover .pin-tile-main {
+  background: var(--fill-3);
+}
+
+/* Volet secondaire : le tiret devient un point creux, sans toucher au cadre
+   puisqu'il n'y en a plus. */
+.sidebar .pin-tile[data-secondary='true'] .pin-tile-main {
+  border: 0;
+}
+
+.sidebar .pin-tile[data-secondary='true']::after {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--pin-accent);
+}
+
+/* ── Emplacements libres : aucune boîte ───────────────────────────────── */
+.sidebar .pin-slot,
+.sidebar .pin-slot:hover,
+.sidebar .pin-slot:focus-visible {
+  border: 0;
+  border-radius: 12px;
+}
+
+.sidebar .pin-slot:hover {
+  background: var(--hover);
+}
+
+/* ── Pastille de dossier : plus d'anneau au survol ────────────────────── */
+.sidebar .group-dot:hover,
+.sidebar .group-dot:focus-visible {
+  box-shadow: none;
+  background: var(--hover) !important;
+}

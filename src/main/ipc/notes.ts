@@ -1,18 +1,32 @@
-import { shell } from 'electron'
+import { shell, type IpcMainInvokeEvent } from 'electron'
 import { newId } from '@shared/defaults'
 import { isHomeUrl, titleFromUrl } from '@shared/url'
+import type { TabState } from '@shared/types'
 import type { IpcHost } from './host'
 import type { Handle, On } from './types'
 import { asId, asString } from './util'
 
 /** Notes, surlignages, enregistrements vocaux et tâches du jour. */
 export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
-  handle('notes:capture-selection', async () => {
+  /**
+   * Onglet visé par une capture : l'onglet actif, et seulement si la page qui
+   * demande est bien cette page. Sans ce contrôle, une page en arrière-plan
+   * pourrait prendre la sélection d'une autre page.
+   */
+  const activeTabOf = (event?: IpcMainInvokeEvent): TabState | null => {
     const state = host.store.get()
     const tabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
     const tab = state.tabs.find((item) => item.id === tabId)
     if (!tab || isHomeUrl(tab.url)) return null
-    const text = await host.tabs.selectionText(tabId)
+    // La coque appelle aussi ces canaux : elle n'est pas une page.
+    if (event && host.tabs.tabIdOf(event.sender.id) !== tabId) return null
+    return tab
+  }
+
+  handle('notes:capture-selection', async (_payload, event) => {
+    const tab = activeTabOf(event)
+    if (!tab) return null
+    const text = await host.tabs.selectionText(tab.id)
     if (!text) return null
     const site = (() => {
       try {
@@ -38,15 +52,13 @@ export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
       tags: ['extrait']
     })
   })
-  handle('notes:highlight', async () => {
-    const state = host.store.get()
-    const tabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
-    const tab = state.tabs.find((item) => item.id === tabId)
-    if (!tab || isHomeUrl(tab.url)) return null
-    const text = await host.tabs.selectionText(tabId)
+  handle('notes:highlight', async (_payload, event) => {
+    const tab = activeTabOf(event)
+    if (!tab) return null
+    const text = await host.tabs.selectionText(tab.id)
     if (!text) return null
     const highlight = host.highlights.add({ url: tab.url, title: tab.title, text })
-    await host.tabs.highlightSelection(tabId)
+    await host.tabs.highlightSelection(tab.id)
     const site = (() => {
       try {
         return new URL(tab.url).hostname.replace(/^www\./, '')
@@ -139,8 +151,7 @@ export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
     const input = (payload ?? {}) as { spaceId?: unknown; dataUrl?: unknown }
     const state = host.store.get()
     const spaceId =
-      typeof input.spaceId === 'string' &&
-      state.spaces.some((space) => space.id === input.spaceId)
+      typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
         ? input.spaceId
         : state.activeSpaceId
     const saved = host.noteAudio.save(spaceId, input.dataUrl)

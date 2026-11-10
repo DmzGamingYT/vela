@@ -11,12 +11,19 @@ import { Icon } from '../Icon'
 const SIZE = 232
 const OUTPUT = 144
 
-function scaleFor(image: HTMLImageElement, zoom: number): { scale: number; width: number; height: number } {
+function scaleFor(
+  image: HTMLImageElement,
+  zoom: number
+): { scale: number; width: number; height: number } {
   const scale = Math.max(SIZE / image.width, SIZE / image.height) * zoom
   return { scale, width: image.width * scale, height: image.height * scale }
 }
 
-function clampOffset(image: HTMLImageElement, zoom: number, offset: { x: number; y: number }): { x: number; y: number } {
+function clampOffset(
+  image: HTMLImageElement,
+  zoom: number,
+  offset: { x: number; y: number }
+): { x: number; y: number } {
   const { width, height } = scaleFor(image, zoom)
   return {
     x: Math.min(0, Math.max(SIZE - width, offset.x)),
@@ -92,7 +99,9 @@ export default function SpaceAvatarEditor({
       y: (event.clientY - drag.current.y) * ratio
     }
     drag.current = { x: event.clientX, y: event.clientY }
-    setOffset((previous) => clampOffset(image, zoom, { x: previous.x + delta.x, y: previous.y + delta.y }))
+    setOffset((previous) =>
+      clampOffset(image, zoom, { x: previous.x + delta.x, y: previous.y + delta.y })
+    )
   }
 
   const endDrag = (): void => {
@@ -151,7 +160,9 @@ export default function SpaceAvatarEditor({
       {error ? (
         <p className="avatar-editor-hint">Cette image n’a pas pu être lue.</p>
       ) : (
-        <p className="avatar-editor-hint">Glissez pour cadrer, zoomez au curseur. Le cadre devient l’avatar de l’espace.</p>
+        <p className="avatar-editor-hint">
+          Glissez pour cadrer, zoomez au curseur. Le cadre devient l’avatar de l’espace.
+        </p>
       )}
 
       <label className="avatar-zoom">

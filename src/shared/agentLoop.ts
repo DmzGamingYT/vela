@@ -118,7 +118,14 @@ function normalizeAction(tool: AgentToolName, raw: Record<string, unknown>): Age
       const target = text(raw.text, 200)
       if (!name && !target) return null
       const role = text(raw.role, 40)
-      return { tool, args: { ...(name ? { name } : {}), ...(target ? { text: target } : {}), ...(role ? { role } : {}) } }
+      return {
+        tool,
+        args: {
+          ...(name ? { name } : {}),
+          ...(target ? { text: target } : {}),
+          ...(role ? { role } : {})
+        }
+      }
     }
     case 'type': {
       const value = text(raw.text, 2000)
@@ -252,7 +259,9 @@ export interface StepPromptInput {
 /** Consigne envoyée à chaque tour : la demande, l'état, puis l'historique. */
 export function buildStepPrompt(input: StepPromptInput): string {
   const lines: string[] = []
-  lines.push(`Demande de l’utilisateur (instruction) : ${input.prompt || 'Explorer la page et résumer.'}`)
+  lines.push(
+    `Demande de l’utilisateur (instruction) : ${input.prompt || 'Explorer la page et résumer.'}`
+  )
   lines.push('')
   lines.push(`Étape ${input.step} sur ${input.steps} au maximum.`)
   lines.push(

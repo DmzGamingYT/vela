@@ -1236,7 +1236,6 @@
   color: var(--muted);
 }
 
-
 /* Les réglages à plusieurs choix gardent le libellé au-dessus du contrôle. */
 .setting-row-top {
   align-items: flex-start;

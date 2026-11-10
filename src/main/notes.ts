@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { newId } from '@shared/defaults'
 import { audioRefs, noteGraph, rewriteWikiTargets, type NoteGraph } from '@shared/noteLinks'
@@ -27,11 +34,7 @@ export function normalizeTags(input: unknown): string[] {
   const tags: string[] = []
   for (const value of input) {
     if (typeof value !== 'string') continue
-    const tag = value
-      .trim()
-      .replace(/^#+/, '')
-      .replace(/\s+/g, ' ')
-      .slice(0, 24)
+    const tag = value.trim().replace(/^#+/, '').replace(/\s+/g, ' ').slice(0, 24)
     if (!tag) continue
     const key = tag.toLowerCase()
     if (seen.has(key)) continue
@@ -55,20 +58,25 @@ function slugify(title: string): string {
 }
 
 function pressText(body: string): string {
-  return body
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '[croquis]')
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/^#+\s*/gm, '')
-    // Deux puces ramenées sur une ligne se lisaient comme une phrase :
-    // « À vérifier La densité… ». Le point médian garde la césure.
-    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, ' · ')
-    .replace(/\[\[([^[\]|]+)(?:\|([^[\]]+))?\]\]/g, (_match, target: string, alias?: string) => alias || target)
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/\[[ xX]\]\s?/g, '')
-    .replace(/[*_>`|-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .replace(/^(?:·\s*)+/, '')
-    .trim()
+  return (
+    body
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '[croquis]')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/^#+\s*/gm, '')
+      // Deux puces ramenées sur une ligne se lisaient comme une phrase :
+      // « À vérifier La densité… ». Le point médian garde la césure.
+      .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, ' · ')
+      .replace(
+        /\[\[([^[\]|]+)(?:\|([^[\]]+))?\]\]/g,
+        (_match, target: string, alias?: string) => alias || target
+      )
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/\[[ xX]\]\s?/g, '')
+      .replace(/[*_>`|-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/^(?:·\s*)+/, '')
+      .trim()
+  )
 }
 
 /**
@@ -81,10 +89,22 @@ function previewOf(body: string, title = ''): string {
   const words = title.trim().split(/\s+/).filter(Boolean).length
   if (words > 0) {
     const same =
-      text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, title.trim().length) ===
-      title.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .slice(0, title.trim().length) ===
+      title
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
     if (same) {
-      const rest = text.split(/\s+/).slice(words).join(' ').replace(/^[·—–-]+\s*/, '')
+      const rest = text
+        .split(/\s+/)
+        .slice(words)
+        .join(' ')
+        .replace(/^[·—–-]+\s*/, '')
       if (rest) text = rest
     }
   }
@@ -122,8 +142,10 @@ export class NotesStore {
       // Un index absent n’est normal que pour un dossier réellement neuf.
       try {
         const files = readdirSync(this.dir)
-        if (files.some((file) => file.endsWith('.md')) ||
-            (existsSync(join(this.dir, 'audio')) && readdirSync(join(this.dir, 'audio')).length > 0)) {
+        if (
+          files.some((file) => file.endsWith('.md')) ||
+          (existsSync(join(this.dir, 'audio')) && readdirSync(join(this.dir, 'audio')).length > 0)
+        ) {
           this.indexReadable = false
         }
       } catch {
@@ -133,17 +155,24 @@ export class NotesStore {
     }
     try {
       const raw = JSON.parse(readFileSync(this.indexFile, 'utf8'))
-      if (!Array.isArray(raw) || raw.some((entry) =>
-        !entry || typeof entry.id !== 'string' || typeof entry.file !== 'string' || typeof entry.title !== 'string'
-      )) {
+      if (
+        !Array.isArray(raw) ||
+        raw.some(
+          (entry) =>
+            !entry ||
+            typeof entry.id !== 'string' ||
+            typeof entry.file !== 'string' ||
+            typeof entry.title !== 'string'
+        )
+      ) {
         this.indexReadable = false
         return []
       }
       return (raw as NoteIndexEntry[]).map((entry) => ({
-          ...entry,
-          tags: normalizeTags((entry as { tags?: unknown }).tags),
-          pinned: (entry as { pinned?: unknown }).pinned === true
-        }))
+        ...entry,
+        tags: normalizeTags((entry as { tags?: unknown }).tags),
+        pinned: (entry as { pinned?: unknown }).pinned === true
+      }))
     } catch {
       this.indexReadable = false
       return []
@@ -165,7 +194,10 @@ export class NotesStore {
   }
 
   private requireReadableIndex(): void {
-    if (!this.canReadIndex) throw new Error('Index ou fichier de note illisible : les fichiers ont été conservés. Restaurez-les avant de modifier les notes.')
+    if (!this.canReadIndex)
+      throw new Error(
+        'Index ou fichier de note illisible : les fichiers ont été conservés. Restaurez-les avant de modifier les notes.'
+      )
   }
 
   private writeIndex(): void {
@@ -178,7 +210,8 @@ export class NotesStore {
   private readTrash(): TrashIndexEntry[] {
     if (!existsSync(this.trashIndexFile)) {
       try {
-        if (readdirSync(this.trashDir).some((file) => file.endsWith('.md'))) this.trashReadable = false
+        if (readdirSync(this.trashDir).some((file) => file.endsWith('.md')))
+          this.trashReadable = false
       } catch {
         this.trashReadable = false
       }
@@ -265,10 +298,7 @@ export class NotesStore {
     if (parsed.include.length === 0 && parsed.exclude.length === 0) return []
     return this.entries
       .filter((entry) =>
-        matchesSearch(
-          `${entry.title}\n${entry.tags.join(' ')}\n${this.bodyOf(entry)}`,
-          parsed
-        )
+        matchesSearch(`${entry.title}\n${entry.tags.join(' ')}\n${this.bodyOf(entry)}`, parsed)
       )
       .map((entry) => entry.id)
   }
@@ -326,8 +356,8 @@ export class NotesStore {
     if (moved) renameSync(oldFile, join(this.dir, filename))
     writeFileSync(join(this.dir, filename), body, 'utf8')
 
-    const tags = input.tags === undefined ? existing?.tags ?? [] : normalizeTags(input.tags)
-    const pinned = input.pinned === undefined ? existing?.pinned ?? false : input.pinned === true
+    const tags = input.tags === undefined ? (existing?.tags ?? []) : normalizeTags(input.tags)
+    const pinned = input.pinned === undefined ? (existing?.pinned ?? false) : input.pinned === true
     const next: NoteIndexEntry = {
       id,
       title,
@@ -339,7 +369,9 @@ export class NotesStore {
       updatedAt: Date.now()
     }
     const previousEntries = this.entries
-    this.entries = existing ? this.entries.map((entry) => (entry.id === id ? next : entry)) : [next, ...this.entries]
+    this.entries = existing
+      ? this.entries.map((entry) => (entry.id === id ? next : entry))
+      : [next, ...this.entries]
     try {
       this.writeIndex()
     } catch (error) {
@@ -419,7 +451,8 @@ export class NotesStore {
   /** Enregistrements vocaux cités par au moins une note, corbeille comprise. */
   audioNames(): Set<string> {
     const names = new Set<string>()
-    for (const entry of this.entries) for (const name of audioRefs(this.bodyOf(entry))) names.add(name)
+    for (const entry of this.entries)
+      for (const name of audioRefs(this.bodyOf(entry))) names.add(name)
     for (const entry of this.trashed) {
       for (const name of audioRefs(this.bodyIn(this.trashDir, entry))) names.add(name)
     }
@@ -590,7 +623,9 @@ export class HighlightsStore {
   }
 
   list(url: string): PageHighlight[] {
-    return this.entries.filter((entry) => entry.url === url).sort((a, b) => a.createdAt - b.createdAt)
+    return this.entries
+      .filter((entry) => entry.url === url)
+      .sort((a, b) => a.createdAt - b.createdAt)
   }
 
   add(input: { url: string; title: string; text: string }): PageHighlight {

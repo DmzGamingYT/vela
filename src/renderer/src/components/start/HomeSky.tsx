@@ -155,7 +155,12 @@ export default function HomeSky({
   if (!active) return null
 
   return (
-    <div className="home-sky" data-calm={calm ? 'true' : undefined} data-variant={variant} aria-hidden="true">
+    <div
+      className="home-sky"
+      data-calm={calm ? 'true' : undefined}
+      data-variant={variant}
+      aria-hidden="true"
+    >
       {variant === 'nuit-etoilee' && (
         <div className="sky-night">
           {stars.map((star, index) => (

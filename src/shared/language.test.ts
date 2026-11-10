@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  codeLabel,
-  detectLanguage,
-  langCode,
-  languageName,
-  needsTranslation
-} from './language'
+import { codeLabel, detectLanguage, langCode, languageName, needsTranslation } from './language'
 
 describe('langue des pages', () => {
   it('normalise les codes longs', () => {

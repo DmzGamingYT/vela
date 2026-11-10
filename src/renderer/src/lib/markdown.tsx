@@ -246,17 +246,17 @@ export function Markdown({
     if (heading) {
       const level = heading[1].length
       blocks.push(
-        createElement(
-          `h${level}`,
-          { key: key++ },
-          renderInline(heading[2], `h-${key}`, highlight)
-        )
+        createElement(`h${level}`, { key: key++ }, renderInline(heading[2], `h-${key}`, highlight))
       )
       index += 1
       continue
     }
 
-    if (/^\s*\|.*\|\s*$/.test(line) && index + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[index + 1])) {
+    if (
+      /^\s*\|.*\|\s*$/.test(line) &&
+      index + 1 < lines.length &&
+      /^\s*\|[\s:|-]+\|\s*$/.test(lines[index + 1])
+    ) {
       const header = splitRow(line)
       index += 2
       const rows: string[][] = []
@@ -271,7 +271,9 @@ export function Markdown({
             <thead>
               <tr>
                 {header.map((cell, cellIndex) => (
-                  <th key={cellIndex}>{renderInline(cell, `th-${tableKey}-${cellIndex}`, highlight)}</th>
+                  <th key={cellIndex}>
+                    {renderInline(cell, `th-${tableKey}-${cellIndex}`, highlight)}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -279,7 +281,9 @@ export function Markdown({
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   {row.map((cell, cellIndex) => (
-                    <td key={cellIndex}>{renderInline(cell, `td-${tableKey}-${rowIndex}-${cellIndex}`, highlight)}</td>
+                    <td key={cellIndex}>
+                      {renderInline(cell, `td-${tableKey}-${rowIndex}-${cellIndex}`, highlight)}
+                    </td>
                   ))}
                 </tr>
               ))}
@@ -322,7 +326,11 @@ export function Markdown({
             return (
               <li key={itemIndex} className={task ? 'md-task' : undefined}>
                 {task && (
-                  <span className="md-check" data-done={task[1].toLowerCase() === 'x'} aria-hidden="true">
+                  <span
+                    className="md-check"
+                    data-done={task[1].toLowerCase() === 'x'}
+                    aria-hidden="true"
+                  >
                     {task[1].toLowerCase() === 'x' ? '✓' : ''}
                   </span>
                 )}
@@ -380,13 +388,21 @@ export function Markdown({
       index += 1
     }
     const paragraphKey = key++
-    blocks.push(<p key={paragraphKey}>{renderInline(paragraph.join(' '), `p-${paragraphKey}`, highlight)}</p>)
+    blocks.push(
+      <p key={paragraphKey}>{renderInline(paragraph.join(' '), `p-${paragraphKey}`, highlight)}</p>
+    )
   }
 
   if (sourceLinks.length > 0) {
-    const unique = sourceLinks.filter((source, index, all) => all.findIndex((item) => item.url === source.url) === index)
+    const unique = sourceLinks.filter(
+      (source, index, all) => all.findIndex((item) => item.url === source.url) === index
+    )
     blocks.push(
-      <section className="markdown-sources" key="source-links" aria-label="Sources et passages cités">
+      <section
+        className="markdown-sources"
+        key="source-links"
+        aria-label="Sources et passages cités"
+      >
         <h2>Sources</h2>
         <ul>
           {unique.map((source, index) => (
@@ -399,7 +415,12 @@ export function Markdown({
                 <span>{source.title || source.url}</span>
               )}
               {source.anchor && safeUrl(source.url) && (
-                <a className="markdown-source-quote" href={`${safeUrl(source.url)}${source.anchor}`} target="_blank" rel="noreferrer">
+                <a
+                  className="markdown-source-quote"
+                  href={`${safeUrl(source.url)}${source.anchor}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Aller au passage transmis ↗
                 </a>
               )}

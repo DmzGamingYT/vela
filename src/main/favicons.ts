@@ -8,6 +8,7 @@ import {
   rankIconCandidates,
   type IconStore
 } from '@shared/favicons'
+import { isPublicHost } from '@shared/url'
 
 /**
  * Icônes de sites : une requête vers le site lui-même, puis le cache local
@@ -46,9 +47,15 @@ function save(spaceId: string, store: IconStore): void {
   }
 }
 
-/** Nom d'hôte simple : pas de port, de chemin ni d'IP. */
+/**
+ * Hôte public : ni adresse IP, ni nom de machine locale.
+ *
+ * La requête part du processus principal : un hôte du réseau local — box, NAS,
+ * service de métadonnées — ne doit pas être contacté sur demande d'une page.
+ */
 function validHost(host: string): boolean {
-  return /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(host) && !host.includes('..')
+  if (!/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(host) || host.includes('..')) return false
+  return isPublicHost(host)
 }
 
 /** Texte du site (page ou manifeste), sur le même hôte et en HTTPS seulement. */
@@ -69,7 +76,10 @@ async function fetchText(url: string, host: string, max: number): Promise<string
   }
 }
 
-async function fetchImage(url: string, host: string): Promise<{ data: string; type: string } | null> {
+async function fetchImage(
+  url: string,
+  host: string
+): Promise<{ data: string; type: string } | null> {
   try {
     const target = new URL(url)
     if (target.protocol !== 'https:' || target.hostname !== host) return null
@@ -105,7 +115,9 @@ async function fetchIcon(host: string): Promise<{ data: string; type: string } |
     const raw = await fetchText(declared.manifest, host, MAX_MANIFEST_BYTES)
     if (raw) {
       try {
-        candidates = candidates.concat(iconCandidatesFromManifest(JSON.parse(raw), declared.manifest))
+        candidates = candidates.concat(
+          iconCandidatesFromManifest(JSON.parse(raw), declared.manifest)
+        )
       } catch {
         /* manifeste illisible : les icônes de la page suffisent */
       }

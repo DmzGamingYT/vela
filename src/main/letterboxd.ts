@@ -9,17 +9,10 @@ import { letterboxdFeedUrl, parseLetterboxdLog, type LetterboxdLogEntry } from '
  * dans l'audit réseau.
  */
 export type LogImportReason =
-  | 'no-profile'
-  | 'not-found'
-  | 'private'
-  | 'offline'
-  | 'timeout'
-  | 'empty'
-  | 'failed'
+  'no-profile' | 'not-found' | 'private' | 'offline' | 'timeout' | 'empty' | 'failed'
 
 export type LogImport =
-  | { ok: true; entries: LetterboxdLogEntry[] }
-  | { ok: false; reason: LogImportReason }
+  { ok: true; entries: LetterboxdLogEntry[] } | { ok: false; reason: LogImportReason }
 
 const TIMEOUT_MS = 8000
 const MAX_BYTES = 2_000_000

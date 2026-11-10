@@ -415,7 +415,11 @@ export default function NavigationPage({
         </div>
         <ul className="nav-list">
           {settings.searchKeywords.map((entry, index) => (
-            <li key={`${entry.keyword}-${index}`} className="nav-list-row">
+            // La clé ne dépend pas du mot-clé : il change à chaque frappe, et
+            // React remonterait alors le champ — le curseur perdrait le focus
+            // au premier caractère. La liste ne se réordonne pas, l'index
+            // suffit.
+            <li key={index} className="nav-list-row">
               <input
                 className="nav-keyword"
                 value={entry.keyword}

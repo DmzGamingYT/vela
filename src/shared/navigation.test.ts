@@ -46,7 +46,9 @@ describe('modèle d’adresse d’un moteur ajouté', () => {
   })
 
   it('encode la requête une seule fois', () => {
-    expect(customSearchUrl('https://exemple.org/?q=%s', 'a b&c')).toBe('https://exemple.org/?q=a%20b%26c')
+    expect(customSearchUrl('https://exemple.org/?q=%s', 'a b&c')).toBe(
+      'https://exemple.org/?q=a%20b%26c'
+    )
   })
 })
 
@@ -129,8 +131,12 @@ describe('mots-clés rapides', () => {
     expect(searchAddressOf({ searchEngine: 'brave', searxInstance: '' }, 'verre')).toBe(
       'https://search.brave.com/search?q=verre'
     )
-    expect(searchUrl('verre', 'custom', '', 'https://a.example/?q=%s')).toBe('https://a.example/?q=verre')
-    expect(searchUrl('verre', 'custom', '', 'javascript:alert(1)')).toBe('https://duckduckgo.com/?q=verre')
+    expect(searchUrl('verre', 'custom', '', 'https://a.example/?q=%s')).toBe(
+      'https://a.example/?q=verre'
+    )
+    expect(searchUrl('verre', 'custom', '', 'javascript:alert(1)')).toBe(
+      'https://duckduckgo.com/?q=verre'
+    )
   })
 })
 

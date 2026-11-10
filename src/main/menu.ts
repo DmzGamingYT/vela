@@ -105,6 +105,7 @@ export function buildMenuTemplate(
         item('Vue scindée', 'split', send, 'CmdOrCtrl+Shift+D'),
         item('Notes', 'notes', send, APP_SHORTCUTS.notes.accelerator),
         item('Agent', 'agent', send, APP_SHORTCUTS.agent.accelerator),
+        item('Protection de la page', 'shield', send, APP_SHORTCUTS.shield.accelerator),
         item('Atelier', 'work', send, 'CmdOrCtrl+Shift+A'),
         item('Sessions', 'sessions', send, 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },

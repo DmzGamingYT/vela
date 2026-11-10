@@ -68,6 +68,11 @@ export type IconName =
   | 'upload'
   | 'pause'
   | 'play'
+  | 'more'
+  | 'users'
+  | 'book'
+  | 'bulb'
+  | 'eye'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -153,6 +158,40 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />,
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+      <path d="M16 6.5a3 3 0 0 1 0 5.8" />
+      <path d="M17.5 14.2A4.8 4.8 0 0 1 20.5 19" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5Z" />
+      <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19" />
+    </>
+  ),
+  bulb: (
+    <>
+      <path d="M9.5 17h5" />
+      <path d="M10 20h4" />
+      <path d="M12 3a6 6 0 0 0-3.5 10.9c.4.3.5.7.5 1.1h6c0-.4.1-.8.5-1.1A6 6 0 0 0 12 3Z" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </>
+  ),
   check: <path d="m20 6-11 11-5-5" />,
   'chevron-down': <path d="m6 9 6 6 6-6" />,
   'chevron-right': <path d="m9 6 6 6-6 6" />,
@@ -371,7 +410,14 @@ interface IconProps {
   strokeWidth?: number
 }
 
-export function Icon({ name, size = 16, className, style, filled = false, strokeWidth }: IconProps) {
+export function Icon({
+  name,
+  size = 16,
+  className,
+  style,
+  filled = false,
+  strokeWidth
+}: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"

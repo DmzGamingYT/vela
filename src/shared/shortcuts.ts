@@ -8,5 +8,7 @@
 export const APP_SHORTCUTS = {
   notes: { key: 'E', accelerator: 'CmdOrCtrl+E' },
   agent: { key: 'J', accelerator: 'CmdOrCtrl+J' },
-  settings: { key: ',', accelerator: 'CmdOrCtrl+,' }
+  settings: { key: ',', accelerator: 'CmdOrCtrl+,' },
+  /** Bouclier : le détail des requêtes arrêtées sur la page ouverte. */
+  shield: { key: '⇧P', accelerator: 'CmdOrCtrl+Shift+P' }
 } as const

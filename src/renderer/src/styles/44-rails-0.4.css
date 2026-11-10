@@ -1,0 +1,95 @@
+/* ------------------------------------------------------------------
+   0.4 — les deux rails
+   ------------------------------------------------------------------
+   Rail gauche : trois étages (bascule dans la rangée du titre, modes au
+   milieu, espaces puis « + » en bas), Réglages en pied, colonne détachée
+   de 8 px du bord pour que l'indicateur actif ne soit plus rogné.
+
+   Rail droit : le fond reprend la teinte de la barre d'outils au lieu du
+   papier profond, et les filets respirent (12 px de part et d'autre).
+   ------------------------------------------------------------------ */
+
+/* --- Rail gauche ------------------------------------------------- */
+
+.rail {
+  position: relative;
+  padding-left: 8px;
+  width: 76px;
+  flex: 0 0 76px;
+  background: transparent;
+}
+
+/* La zone de glissement reste derrière l'en-tête : la rangée du titre
+   appartient à la fenêtre, pas à un bouton. */
+.rail-drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--top);
+}
+
+.rail-head {
+  height: var(--top);
+  flex: 0 0 var(--top);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Au milieu, entre la bascule et les espaces. Deux marges automatiques se
+   partagent l'espace restant : les modes tombent au centre, les espaces au
+   pied. */
+.rail-modes {
+  margin-top: auto;
+  width: 100%;
+  padding: 0 0 8px;
+}
+
+.rail-spaces {
+  flex: 0 1 auto;
+  margin-top: auto;
+  max-height: 58vh;
+  padding: 4px 0 2px;
+}
+
+/* Les indicateurs se posent sur le bord extérieur du contenu, à 8 px du
+   bord de la fenêtre : plus de moitié rognée. */
+.rail-mode[data-active='true']::before,
+.rail .space-chip[data-active='true']::before {
+  left: -14px;
+}
+
+.rail-mode {
+  width: 40px;
+  height: 36px;
+  border-radius: 11px;
+}
+
+.rail-settings {
+  margin: 6px 0 8px;
+}
+
+.rail-settings[data-active='true'] {
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+/* --- Rail droit -------------------------------------------------- */
+
+.reading-rail {
+  background: var(--paper);
+}
+
+/* Un filet qui respire : 8 px de pas + 4 px de marge de chaque côté. */
+.rr-sep {
+  margin: 4px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-settings {
+    transition: none;
+  }
+}

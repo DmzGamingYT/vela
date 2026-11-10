@@ -87,7 +87,8 @@ export interface SaveNoteInput {
   pinned?: boolean
 }
 
-export type NoteAiAction = 'generate' | 'reformulate' | 'summarize' | 'translate' | 'correct' | 'beautify'
+export type NoteAiAction =
+  'generate' | 'reformulate' | 'summarize' | 'translate' | 'correct' | 'beautify'
 
 export interface NoteAiInput {
   action: NoteAiAction
@@ -170,6 +171,12 @@ export interface TunnelRunInput {
   /** Relance ciblée depuis un nœud existant. */
   parentId?: string
   mapId?: string
+  /** quick | standard | deep : visée de pages lues. */
+  depth?: 'quick' | 'standard' | 'deep'
+  /** Variantes validées ou modifiées par l'utilisateur. */
+  variants?: string[]
+  /** Ajoute à la carte existante sans effacer les statuts. */
+  more?: boolean
 }
 
 export type TunnelEvent =
@@ -251,7 +258,8 @@ export interface LetterboxdImportResult {
   count: number
   /** Horodatage du dernier import réussi, null sinon. */
   at: number | null
-  reason?: 'no-space' | 'no-profile' | 'not-found' | 'private' | 'offline' | 'timeout' | 'empty' | 'failed'
+  reason?:
+    'no-space' | 'no-profile' | 'not-found' | 'private' | 'offline' | 'timeout' | 'empty' | 'failed'
 }
 
 export interface VelaApi {
@@ -292,7 +300,11 @@ export interface VelaApi {
   }
   tabs: {
     create(input?: CreateTabInput): Promise<TabState>
-    find(id: string, query: string, forward?: boolean): Promise<{ matches: number; activeMatchOrdinal: number }>
+    find(
+      id: string,
+      query: string,
+      forward?: boolean
+    ): Promise<{ matches: number; activeMatchOrdinal: number }>
     findStop(id: string, action?: 'clearSelection' | 'keepSelection'): Promise<void>
     close(id: string): Promise<void>
     activate(id: string): Promise<void>
@@ -300,6 +312,10 @@ export interface VelaApi {
     home(id: string): Promise<void>
     back(id: string): Promise<void>
     forward(id: string): Promise<void>
+    /** Parcours de l'onglet, la plus ancienne page en premier. */
+    entries(id: string): Promise<{ index: number; url: string; title: string }[]>
+    /** Revient à une page précise du parcours de l'onglet. */
+    goto(id: string, index: number): Promise<void>
     reload(id: string): Promise<void>
     /** Nouveau niveau de zoom (null si l'onglet n'a pas de page vivante). */
     zoom(id: string, direction: 'in' | 'out' | 'reset'): Promise<number | null>
@@ -329,6 +345,17 @@ export interface VelaApi {
      * coque, mais un fond vide se lit comme un plantage.
      */
     snapshot(tabIds: string[]): Promise<PaneSnapshot[]>
+    /**
+     * Épreuves des pages poussées quand l'interface recouvre la scène : la vue
+     * native est retirée, son image prend sa place. `null` rend la main aux
+     * vues natives. Renvoie la fonction de désabonnement.
+     */
+    onFrozen(callback: (shots: PaneSnapshot[] | null) => void): () => void
+    /**
+     * Sens du défilement de la page active, pour replier la pilule du bas :
+     * seule la page voit son propre `scroll`. Renvoie le désabonnement.
+     */
+    onScroll(callback: (direction: 'down' | 'up') => void): () => void
   }
   peek: {
     /**
@@ -356,7 +383,7 @@ export interface VelaApi {
     onState(callback: (state: PeekState | null) => void): () => void
     /** Demande de focus sur le champ d'adresse (ouverture, ⌘L). */
     onFocusAddress(callback: () => void): () => void
-  },
+  }
   history: {
     list(): Promise<HistoryEntry[]>
     remove(url: string): Promise<void>
@@ -411,7 +438,12 @@ export interface VelaApi {
     search(query: string): Promise<string[]>
     save(input: SaveNoteInput): Promise<Note>
     /** Change le titre, les étiquettes ou l'épinglage sans réécrire le corps. */
-    patch(input: { id: string; title?: string; pinned?: boolean; tags?: string[] }): Promise<Note | null>
+    patch(input: {
+      id: string
+      title?: string
+      pinned?: boolean
+      tags?: string[]
+    }): Promise<Note | null>
     remove(id: string): Promise<void>
     /** Notes passées par la corbeille, les plus récentes d'abord. */
     trash(): Promise<import('./types').TrashedNote[]>
@@ -502,6 +534,8 @@ export interface VelaApi {
     onEvent(callback: (info: UpdateInfo) => void): () => void
   }
   processes(): Promise<{ live: number; processes: import('./types').ProcessInfo[] }>
+  /** Double-clic sur une zone libre de la barre : agrandit ou restaure. */
+  zoomWindow(): Promise<void>
   onState(callback: (view: AppView) => void): () => void
   onShortcut(callback: (event: ShortcutEvent) => void): () => void
 }

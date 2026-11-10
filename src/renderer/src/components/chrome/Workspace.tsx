@@ -5,8 +5,8 @@ import { clampSplitRatio, panesCanSplit } from '@shared/layout'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
-import StatusBar from './StatusBar'
 import PaneHeader from './PaneHeader'
+import ReadingRail from './ReadingRail'
 import StartPage from '../start/StartPage'
 
 // La carte de recherche n'est chargée qu'en mode Atelier : elle pèse à elle
@@ -30,7 +30,11 @@ function ErrorPane({ tab }: { tab: TabView }) {
           <Icon name="reload" size={14} />
           Recharger
         </button>
-        <button type="button" className="action" onClick={() => navigate(tab.id, 'https://duckduckgo.com')}>
+        <button
+          type="button"
+          className="action"
+          onClick={() => navigate(tab.id, 'https://duckduckgo.com')}
+        >
           Chercher ailleurs
         </button>
       </div>
@@ -80,7 +84,7 @@ function Pane({
                 Les vues natives ne peuvent pas rester à l’écran pendant le
                 glissement (elles prendraient le pointeur), mais un fond
                 pointillé se lit comme un plantage. */}
-            {resizing && shot && (
+            {shot && (
               <span className="pane-shot" aria-hidden="true">
                 <img src={shot} alt="" draggable={false} />
               </span>
@@ -120,14 +124,29 @@ export default function Workspace() {
     findInput.current?.select()
   }, [findOpen, activeTabId])
 
-  useEffect(() => () => {
-    if (findDebounce.current) clearTimeout(findDebounce.current)
-  }, [])
+  useEffect(
+    () =>
+      window.vela.views.onFrozen((list) => {
+        setFrozen(list ? Object.fromEntries(list.map((shot) => [shot.tabId, shot.image])) : {})
+      }),
+    []
+  )
+
+  useEffect(
+    () => () => {
+      if (findDebounce.current) clearTimeout(findDebounce.current)
+    },
+    []
+  )
 
   const panesRef = useRef<HTMLDivElement>(null)
   const resizingRef = useRef(false)
   const [resizing, setResizing] = useState(false)
   const [shots, setShots] = useState<Record<string, string>>({})
+  // Épreuves des pages pendant qu'un menu, une feuille ou un popover couvre la
+  // scène : la vue native passe au-dessus du DOM, donc elle est retirée — mais
+  // son image reste en place, sinon la zone qu'elle occupait devient noire.
+  const [frozen, setFrozen] = useState<Record<string, string>>({})
   // Largeur mesurée, partagée avec le store : la barre d'adresse, la palette
   // et le processus principal prennent la même décision que ce composant.
   const panesWidth = useBrowser((state) => state.panesWidth)
@@ -250,7 +269,9 @@ export default function Workspace() {
     // trame à rendre — et les vues quittent la scène dès qu’elle est prise,
     // au plus tard après 120 ms pour ne pas laisser le pointeur sur la page.
     const ids = view.tabs
-      .filter((tab) => (tab.id === view.activeTabId || tab.id === view.secondTabId) && !isHomeUrl(tab.url))
+      .filter(
+        (tab) => (tab.id === view.activeTabId || tab.id === view.secondTabId) && !isHomeUrl(tab.url)
+      )
       .map((tab) => tab.id)
     let begun = false
     let finished = false
@@ -336,7 +357,13 @@ export default function Workspace() {
           style={{ '--ratio': `${ratio * 100}%` } as CSSProperties}
         >
           <div className="work-stage">
-            <Suspense fallback={<div className="work-stage-loading" role="status" aria-live="polite">Chargement de la carte…</div>}>
+            <Suspense
+              fallback={
+                <div className="work-stage-loading" role="status" aria-live="polite">
+                  Chargement de la carte…
+                </div>
+              }
+            >
               <TunnelView />
             </Suspense>
           </div>
@@ -353,11 +380,16 @@ export default function Workspace() {
                 <span />
                 {resizing && <span className="split-hint" aria-hidden="true" />}
               </div>
-              <Pane tab={second} primary={false} secondary resizing={resizing} shot={shots[second.id]} />
+              <Pane
+                tab={second}
+                primary={false}
+                secondary
+                resizing={resizing}
+                shot={shots[second.id]}
+              />
             </>
           )}
         </div>
-        <StatusBar />
       </main>
     )
   }
@@ -369,6 +401,7 @@ export default function Workspace() {
       data-compact={compactViewport}
       data-split={split}
       data-collapsed={view.settings.sidebarCollapsed}
+      data-rail={active ? 'true' : undefined}
     >
       {findOpen && (
         <div className="find-bar" role="search" aria-label="Rechercher dans la page">
@@ -379,7 +412,10 @@ export default function Workspace() {
             aria-label="Texte recherché"
             onChange={(event) => {
               const value = event.target.value
-              useBrowser.setState({ findQuery: value, findResult: { matches: 0, activeMatchOrdinal: 0 } })
+              useBrowser.setState({
+                findQuery: value,
+                findResult: { matches: 0, activeMatchOrdinal: 0 }
+              })
               if (findDebounce.current) clearTimeout(findDebounce.current)
               findDebounce.current = setTimeout(() => void findInPage(value), 120)
             }}
@@ -388,14 +424,37 @@ export default function Workspace() {
               if (event.key === 'Enter') void findInPage(findQuery, !event.shiftKey)
             }}
           />
-          <span aria-live="polite">{findResult.matches ? `${findResult.activeMatchOrdinal} / ${findResult.matches}` : findQuery ? 'Aucun résultat' : ''}</span>
-          <button type="button" className="icon-btn" aria-label="Correspondance précédente" onClick={() => void findInPage(findQuery, false)}>
+          <span aria-live="polite">
+            {findResult.matches
+              ? `${findResult.activeMatchOrdinal} / ${findResult.matches}`
+              : findQuery
+                ? 'Aucun résultat'
+                : ''}
+          </span>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Correspondance précédente"
+            onClick={() => void findInPage(findQuery, false)}
+          >
             <Icon name="arrow-up" size={14} />
           </button>
-          <button type="button" className="icon-btn" aria-label="Correspondance suivante" onClick={() => void findInPage(findQuery, true)}>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Correspondance suivante"
+            onClick={() => void findInPage(findQuery, true)}
+          >
             <Icon name="arrow-down" size={14} />
           </button>
-          <button type="button" className="icon-btn" aria-label="Fermer la recherche" onClick={closeFind}><Icon name="close" size={14} /></button>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Fermer la recherche"
+            onClick={closeFind}
+          >
+            <Icon name="close" size={14} />
+          </button>
         </div>
       )}
       <div
@@ -403,7 +462,12 @@ export default function Workspace() {
         ref={panesRef}
         style={{ '--ratio': `${ratio * 100}%` } as CSSProperties}
       >
-        <Pane tab={active} primary resizing={resizing} shot={shots[active.id]} />
+        <Pane
+          tab={active}
+          primary
+          resizing={resizing}
+          shot={shots[active.id] ?? frozen[active.id]}
+        />
         {split && second && (
           <>
             <div
@@ -417,11 +481,17 @@ export default function Workspace() {
               <span />
               {resizing && <span className="split-hint" aria-hidden="true" />}
             </div>
-            <Pane tab={second} primary={false} secondary resizing={resizing} shot={shots[second.id]} />
+            <Pane
+              tab={second}
+              primary={false}
+              secondary
+              resizing={resizing}
+              shot={shots[second.id] ?? frozen[second.id]}
+            />
           </>
         )}
       </div>
-      <StatusBar />
+      <ReadingRail />
     </main>
   )
 }

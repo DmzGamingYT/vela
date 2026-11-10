@@ -48,7 +48,9 @@ export function scoreOf(item: Rankable, search: string): number {
  */
 export function rankItems<T extends Rankable>(items: T[], search: string): T[] {
   if (!search) return items
-  const matched = items.filter((item) => normalize(`${item.label} ${item.hint ?? ''} ${item.group}`).includes(search))
+  const matched = items.filter((item) =>
+    normalize(`${item.label} ${item.hint ?? ''} ${item.group}`).includes(search)
+  )
   const buckets = new Map<string, T[]>()
   for (const item of matched) {
     const list = buckets.get(item.group) ?? []

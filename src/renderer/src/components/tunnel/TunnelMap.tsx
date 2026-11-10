@@ -87,7 +87,11 @@ function metaLabel(node: MapNode): string {
   return 'Sujet'
 }
 
-export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<SVGSVGElement | null> }) {
+export default function TunnelMap({
+  svgRef
+}: {
+  svgRef: React.MutableRefObject<SVGSVGElement | null>
+}) {
   const active = useTunnel((s) => s.active)
   const filters = useTunnel((s) => s.filters)
   const level = useTunnel((s) => s.level)
@@ -121,7 +125,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
   } | null>(null)
   const suppressClick = useRef(0)
 
-  const { visible, hiddenSites } = useMemo(
+  const { visible } = useMemo(
     () => filterMap(active?.nodes ?? [], filters),
     [active, filters]
   )
@@ -249,7 +253,11 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       }
     }
     const height = Math.max(tree.height, y > 0 ? y - ROW_GAP : 0)
-    return { boxes: result, width: width || CARD_SIZE.subject.width, height: height || CARD_SIZE.subject.height }
+    return {
+      boxes: result,
+      width: width || CARD_SIZE.subject.width,
+      height: height || CARD_SIZE.subject.height
+    }
   }, [layoutNodes, subject])
 
   const boxes = useMemo(() => {
@@ -378,7 +386,11 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       const target = event.target as HTMLElement | null
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      )
+        return
       if (event.metaKey || event.ctrlKey) return
       if (event.key === '+' || event.key === '=') {
         event.preventDefault()
@@ -523,15 +535,15 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                     {zoom > 0.62 &&
                       label &&
                       (tension ? index === 0 || branch?.has(node.id) : branch?.has(node.id)) && (
-                      <text
-                        className="tunnel-edge-label"
-                        x={midX}
-                        y={(startY + endY) / 2 - 5}
-                        fontSize={9.5 * fontUnit}
-                      >
-                        {label}
-                      </text>
-                    )}
+                        <text
+                          className="tunnel-edge-label"
+                          x={midX}
+                          y={(startY + endY) / 2 - 5}
+                          fontSize={9.5 * fontUnit}
+                        >
+                          {label}
+                        </text>
+                      )}
                   </g>
                 )
               })
@@ -700,9 +712,7 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                     }
                   }}
                 >
-                  <title>
-                    {`${node.title}${node.domain ? ` — ${node.domain}` : ''}`}
-                  </title>
+                  <title>{`${node.title}${node.domain ? ` — ${node.domain}` : ''}`}</title>
                   <rect
                     className="tunnel-card-halo"
                     x={-2 * fontUnit}
@@ -743,7 +753,12 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                       </text>
                     ) : isSubject ? (
                       <>
-                        <text className="tunnel-node-kicker" x={pad} y={pad + kickerSize} fontSize={kickerSize}>
+                        <text
+                          className="tunnel-node-kicker"
+                          x={pad}
+                          y={pad + kickerSize}
+                          fontSize={kickerSize}
+                        >
                           SUJET
                         </text>
                         {titleLines.map((line, index) => (
@@ -757,7 +772,12 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                             {line}
                           </text>
                         ))}
-                        <text className="tunnel-node-meta" x={pad} y={box.height - pad} fontSize={metaSize}>
+                        <text
+                          className="tunnel-node-meta"
+                          x={pad}
+                          y={box.height - pad}
+                          fontSize={metaSize}
+                        >
                           {subjectStats.angles} angle{subjectStats.angles > 1 ? 's' : ''} ·{' '}
                           {subjectStats.sites} source{subjectStats.sites > 1 ? 's' : ''}
                         </text>
@@ -784,7 +804,10 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                       </>
                     ) : isSite ? (
                       <>
-                        <g className="tunnel-node-icon" transform={`translate(${pad} ${pad}) scale(${0.82 * fontUnit})`}>
+                        <g
+                          className="tunnel-node-icon"
+                          transform={`translate(${pad} ${pad}) scale(${0.82 * fontUnit})`}
+                        >
                           <Icon name="globe" size={13} />
                         </g>
                         <text
@@ -816,7 +839,9 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                         />
                         <rect
                           className="tunnel-relevance-bar"
-                          data-level={node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'}
+                          data-level={
+                            node.relevance >= 75 ? 'high' : node.relevance >= 60 ? 'mid' : 'low'
+                          }
                           x={pad}
                           y={box.height - pad - 3 * fontUnit}
                           width={Math.max(
@@ -829,7 +854,10 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                       </>
                     ) : (
                       <>
-                        <g className="tunnel-node-icon" transform={`translate(${pad} ${pad}) scale(${0.86 * fontUnit})`}>
+                        <g
+                          className="tunnel-node-icon"
+                          transform={`translate(${pad} ${pad}) scale(${0.86 * fontUnit})`}
+                        >
                           <Icon name="warning" size={14} />
                         </g>
                         {titleLines.map((line, index) => (
@@ -872,7 +900,9 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
                       </text>
                     )}
                     {isChecked && (
-                      <g transform={`translate(${box.width - 26 * fontUnit} ${box.height - 22 * fontUnit})`}>
+                      <g
+                        transform={`translate(${box.width - 26 * fontUnit} ${box.height - 22 * fontUnit})`}
+                      >
                         <circle r={7 * fontUnit} className="tunnel-check-dot" />
                         <path
                           d={`M${-3 * fontUnit} 0 L${-0.8 * fontUnit} ${2.4 * fontUnit} L${3.4 * fontUnit} ${-2.8 * fontUnit}`}
@@ -897,25 +927,40 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
       )}
 
       <ul className="tunnel-legend" aria-label="Légende des types de nœuds">
-        {(['subject', 'angle', 'subangle', 'detail', 'concept', 'site', 'tension'] as MapNodeKind[]).map(
-          (kind) => (
-            <li key={kind} data-kind={kind}>
-              <i aria-hidden="true" />
-              {NODE_LABELS[kind]}
-            </li>
-          )
-        )}
+        {(
+          ['subject', 'angle', 'subangle', 'detail', 'concept', 'site', 'tension'] as MapNodeKind[]
+        ).map((kind) => (
+          <li key={kind} data-kind={kind}>
+            <i aria-hidden="true" />
+            {NODE_LABELS[kind]}
+          </li>
+        ))}
       </ul>
 
       <div className="tunnel-zoom">
-        <button type="button" onClick={() => zoomBy(1 / 1.18)} aria-label="Réduire le zoom" title="Réduire le zoom (−)">
-          <Icon name="chevron-down" size={14} style={{ transform: 'rotate(0deg)' }} />
+        <button
+          type="button"
+          onClick={() => zoomBy(1 / 1.18)}
+          aria-label="Réduire le zoom"
+          title="Réduire le zoom (−)"
+        >
+          −
         </button>
         <span aria-live="polite">{Math.round(zoom * 100)} %</span>
-        <button type="button" onClick={() => zoomBy(1.18)} aria-label="Agrandir le zoom" title="Agrandir le zoom (+)">
-          <Icon name="chevron-down" size={14} style={{ transform: 'rotate(180deg)' }} />
+        <button
+          type="button"
+          onClick={() => zoomBy(1.18)}
+          aria-label="Agrandir le zoom"
+          title="Agrandir le zoom (+)"
+        >
+          +
         </button>
-        <button type="button" onClick={fit} title="Ajuster la carte (0)" aria-label="Ajuster la carte">
+        <button
+          type="button"
+          onClick={fit}
+          title="Ajuster la carte (0)"
+          aria-label="Ajuster la carte"
+        >
           Ajuster
         </button>
       </div>
@@ -956,14 +1001,6 @@ export default function TunnelMap({ svgRef }: { svgRef: React.MutableRefObject<S
           />
         </svg>
       </div>
-
-      {hiddenSites > 0 && (
-        <p className="tunnel-hidden-note">
-          {hiddenSites} source{hiddenSites > 1 ? 's' : ''} écartée{hiddenSites > 1 ? 's' : ''} par l’entonnoir
-          ou la pertinence.
-        </p>
-      )}
-
     </div>
   )
 }

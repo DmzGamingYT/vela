@@ -50,7 +50,11 @@ interface ChromeNode {
 }
 
 /** Parcourt l'arbre `roots` d'un fichier Bookmarks Chromium. */
-function walkChromium(node: ChromeNode | undefined, out: { title: string; url: string }[], limit: number): void {
+function walkChromium(
+  node: ChromeNode | undefined,
+  out: { title: string; url: string }[],
+  limit: number
+): void {
   if (!node || out.length >= limit) return
   if (node.type === 'url' && typeof node.url === 'string' && /^https?:/i.test(node.url)) {
     out.push({ title: (node.name ?? '').trim().slice(0, 160) || node.url, url: node.url })
@@ -94,9 +98,17 @@ interface SafariNode {
   Children?: SafariNode[]
 }
 
-function walkSafari(node: SafariNode | undefined, out: { title: string; url: string }[], limit: number): void {
+function walkSafari(
+  node: SafariNode | undefined,
+  out: { title: string; url: string }[],
+  limit: number
+): void {
   if (!node || out.length >= limit) return
-  if (node.WebBookmarkType === 'WebBookmarkTypeLeaf' && typeof node.URLString === 'string' && /^https?:/i.test(node.URLString)) {
+  if (
+    node.WebBookmarkType === 'WebBookmarkTypeLeaf' &&
+    typeof node.URLString === 'string' &&
+    /^https?:/i.test(node.URLString)
+  ) {
     out.push({
       title: (node.URIDictionary?.title ?? '').trim().slice(0, 160) || node.URLString,
       url: node.URLString
@@ -112,7 +124,9 @@ async function readSafari(limit: number): Promise<{ title: string; url: string }
   try {
     // plutil lit le plist binaire sans dépendance ; sans autorisation disque,
     // la commande échoue et on renvoie simplement une liste vide.
-    const { stdout } = await run('plutil', ['-convert', 'json', '-o', '-', file], { maxBuffer: 8 * 1024 * 1024 })
+    const { stdout } = await run('plutil', ['-convert', 'json', '-o', '-', file], {
+      maxBuffer: 8 * 1024 * 1024
+    })
     const parsed = JSON.parse(stdout) as SafariNode
     const out: { title: string; url: string }[] = []
     walkSafari(parsed, out, limit)

@@ -47,7 +47,6 @@ export default function TileMenu({
   label,
   header,
   items,
-  keyboard = true,
   onClose
 }: {
   x: number
@@ -56,7 +55,7 @@ export default function TileMenu({
   /** En-tête informatif, jamais focalisable (titre d'épingle, domaine). */
   header?: ReactNode
   items: TileMenuItem[]
-  /** Ouvert au clavier : la première action prend le focus et son anneau. */
+  /** Conservé pour compatibilité : la première entrée prend toujours le focus. */
   keyboard?: boolean
   onClose: () => void
 }) {
@@ -66,6 +65,14 @@ export default function TileMenu({
   const [openSub, setOpenSub] = useState<string | null>(null)
   const typed = useRef('')
   const typedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // `onClose` est une fonction inline chez l'appelant : elle change d'identité
+  // à chaque rendu. La garder dans une référence évite que l'effet ci-dessous
+  // se remonte à chaque passe — le menu reprenait alors la première entrée
+  // sous le curseur, et la navigation au clavier devenait impossible.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   const current = openSub ? items.find((item) => item.id === openSub) : null
   const submenu = current?.submenu ?? []
@@ -74,20 +81,21 @@ export default function TileMenu({
     // L'élément qui avait le focus (la tuile, la ligne) le reprend à la
     // fermeture : Échap ne doit pas renvoyer le clavier au document.
     const opener = document.activeElement as HTMLElement | null
-    // À la souris, la liste prend le focus sans anneau : aucune action n'est
-    // entourée d'un contour épais à l'ouverture.
-    if (keyboard) rootRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    // La première entrée prend le focus à l'ouverture, souris comprise : les
+    // flèches agissent tout de suite. L'anneau, lui, reste réservé au clavier.
+    const first = rootRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')
+    if (first) first.focus()
     else rootRef.current?.focus()
     const onPointerDown = (event: PointerEvent): void => {
       if (ref.current?.contains(event.target as Node)) return
-      onClose()
+      onCloseRef.current()
     }
     window.addEventListener('pointerdown', onPointerDown, true)
     return () => {
       window.removeEventListener('pointerdown', onPointerDown, true)
       if (opener && opener.isConnected) opener.focus()
     }
-  }, [onClose, keyboard])
+  }, [])
 
   useEffect(() => {
     // Le menu flotte au-dessus de la page : les vues natives quittent la scène
@@ -129,7 +137,10 @@ export default function TileMenu({
   const menuHeight =
     items.reduce((total, item) => total + height(item), 12) + (header ? HEADER_HEIGHT : 0)
   const left = Math.max(8, Math.min(x, window.innerWidth - width - 8))
-  const top = Math.max(8, Math.min(y, window.innerHeight - Math.min(menuHeight, window.innerHeight - 16) - 8))
+  const top = Math.max(
+    8,
+    Math.min(y, window.innerHeight - Math.min(menuHeight, window.innerHeight - 16) - 8)
+  )
 
   // Le calcul ci-dessus est une estimation (lignes, séparateurs, en-tête). Une
   // fois la liste posée, sa hauteur réelle corrige le placement : le menu ne
@@ -141,10 +152,16 @@ export default function TileMenu({
     const h = Math.min(element.offsetHeight, window.innerHeight - 16)
     const w = element.offsetWidth || width
     setPos((current) => {
-      const next = {
-        left: Math.max(8, Math.min(x, window.innerWidth - w - 8)),
-        top: Math.max(8, Math.min(y, window.innerHeight - h - 8))
-      }
+      const left = Math.max(8, Math.min(x, window.innerWidth - w - 8))
+      // Pas la place en dessous, davantage au-dessus : le menu se retourne et
+      // s'aligne sur le bas du clic, au lieu de mordre le bord de la fenêtre.
+      const above = y - h - 8
+      const below = window.innerHeight - y - h - 8
+      const top =
+        below < 0 && above >= 0
+          ? Math.max(8, above)
+          : Math.max(8, Math.min(y, window.innerHeight - h - 8))
+      const next = { left, top }
       return current.left === next.left && current.top === next.top ? current : next
     })
   }, [x, y, items, header, width])
@@ -152,7 +169,12 @@ export default function TileMenu({
   const side = left + width + subWidth + 8 <= window.innerWidth ? 'right' : 'left'
   const subTop = Math.max(
     0,
-    items.slice(0, items.findIndex((item) => item.id === openSub)).reduce((sum, item) => sum + height(item), 6)
+    items
+      .slice(
+        0,
+        items.findIndex((item) => item.id === openSub)
+      )
+      .reduce((sum, item) => sum + height(item), 6)
   )
 
   const entries = (container: HTMLElement | null): HTMLButtonElement[] =>
@@ -183,9 +205,7 @@ export default function TileMenu({
     )
     if (!match) return
     const container = openSub ? subRef.current : rootRef.current
-    container
-      ?.querySelector<HTMLButtonElement>(`[data-item="${CSS.escape(match.id)}"]`)
-      ?.focus()
+    container?.querySelector<HTMLButtonElement>(`[data-item="${CSS.escape(match.id)}"]`)?.focus()
   }
 
   const closeSub = (): void => {
@@ -224,7 +244,11 @@ export default function TileMenu({
         data-open={level === 0 && openSub === item.id ? 'true' : undefined}
         aria-haspopup={item.submenu ? 'menu' : undefined}
         aria-expanded={item.submenu ? openSub === item.id : undefined}
-        aria-keyshortcuts={item.keys ? item.keys.replace('⌘', 'Meta+').replace('⇧', 'Shift+').replace('⌥', 'Alt+') : undefined}
+        aria-keyshortcuts={
+          item.keys
+            ? item.keys.replace('⌘', 'Meta+').replace('⇧', 'Shift+').replace('⌥', 'Alt+')
+            : undefined
+        }
         title={item.hint}
         onMouseEnter={() => {
           if (level !== 0) return
@@ -232,7 +256,8 @@ export default function TileMenu({
         }}
         onClick={() => choose(item)}
       >
-        {item.icon && <Icon name={item.icon} size={14} />}
+        {/* Même trait que le reste du chrome : 1,5 px, jamais plus épais. */}
+        {item.icon && <Icon name={item.icon} size={14} strokeWidth={1.5} />}
         <span>{item.label}</span>
         {item.keys && (
           <span className="tile-menu-keys" aria-label={`Raccourci ${spokenShortcut(item.keys)}`}>

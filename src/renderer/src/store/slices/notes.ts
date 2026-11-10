@@ -39,7 +39,14 @@ export const createNotesSlice: StateCreator<BrowserState, [], [], NotesSlice> = 
     // ouvertes ensemble sur une fenêtre de 1280 px, elles ne laissaient plus
     // que 116 px à la page. Une seule à la fois, donc.
     const next = open ?? !get().notesOpen
-    set((state) => ({ notesOpen: next, agentOpen: next ? false : state.agentOpen }))
+    set((state) => ({
+      notesOpen: next,
+      agentOpen: next ? false : state.agentOpen,
+      // Comme l'agent, les notes referment le panneau modal ouvert : les deux
+      // se disputaient le clavier, et le tiroir restait visible sous la
+      // fenêtre des réglages.
+      overlay: next ? null : state.overlay
+    }))
   },
 
   requestVoiceNote(spaceId) {

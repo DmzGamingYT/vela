@@ -17,7 +17,10 @@ describe('teintes d’espace', () => {
   })
 
   it('garde des noms distincts entre teintes et ambiances', () => {
-    const labels = [...SPACE_TINTS.map((tint) => tint.label), ...SPACE_BACKGROUNDS.map((item) => item.label)]
+    const labels = [
+      ...SPACE_TINTS.map((tint) => tint.label),
+      ...SPACE_BACKGROUNDS.map((item) => item.label)
+    ]
     expect(new Set(labels).size).toBe(labels.length)
   })
 

@@ -144,11 +144,15 @@ export default function NoteAudio({
       )}
 
       {stage === 'consent' && (
-        <div className="note-audio-consent" role="group" aria-label="Envoyer l’enregistrement au modèle">
+        <div
+          className="note-audio-consent"
+          role="group"
+          aria-label="Envoyer l’enregistrement au modèle"
+        >
           <p>{message}</p>
           <p className="note-audio-warn">
-            <Icon name="upload" size={12} /> L’enregistrement complet et votre demande sont envoyés au modèle. Rien
-            n’est conservé par Vela.
+            <Icon name="upload" size={12} /> L’enregistrement complet et votre demande sont envoyés
+            au modèle. Rien n’est conservé par Vela.
           </p>
           <div className="note-audio-actions">
             <button type="button" className="action" onClick={() => setStage('idle')}>

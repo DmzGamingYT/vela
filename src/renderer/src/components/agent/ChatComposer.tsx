@@ -99,10 +99,7 @@ export default function ChatComposer({
               {tabs.length} page{tabs.length > 1 ? 's' : ''} dans cet espace
             </span>
             {tabs.length > 0 && (
-              <button
-                type="button"
-                onClick={() => onJoinAll(selected.length !== tabs.length)}
-              >
+              <button type="button" onClick={() => onJoinAll(selected.length !== tabs.length)}>
                 {selected.length === tabs.length ? 'Tout détacher' : 'Tout joindre'}
               </button>
             )}
@@ -141,9 +138,7 @@ export default function ChatComposer({
                 <Icon name="close" size={10} />
               </button>
             ))}
-            {attached.length > 4 && (
-              <span className="attached-chip">+{attached.length - 4}</span>
-            )}
+            {attached.length > 4 && <span className="attached-chip">+{attached.length - 4}</span>}
           </div>
         )}
 
@@ -154,7 +149,9 @@ export default function ChatComposer({
           value={value}
           aria-label="Votre demande"
           placeholder={
-            mode === 'act' ? 'Dites à l’agent quoi faire sur la page…' : 'Demandez, comparez, résumez…'
+            mode === 'act'
+              ? 'Dites à l’agent quoi faire sur la page…'
+              : 'Demander, résumer, comparer…'
           }
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {

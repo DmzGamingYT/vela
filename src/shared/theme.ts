@@ -184,7 +184,9 @@ export const SKY_THEME: ThemePresetId = 'braise'
  * Les dix thèmes de couleur de la grille : Braise n'en fait pas partie, il est
  * le thème du ciel et se choisit depuis le fond de l'accueil.
  */
-export const ACCENT_THEMES: ThemePreset[] = THEME_PRESETS.filter((preset) => preset.id !== SKY_THEME)
+export const ACCENT_THEMES: ThemePreset[] = THEME_PRESETS.filter(
+  (preset) => preset.id !== SKY_THEME
+)
 
 export const DEFAULT_THEME: ThemePresetId = 'indigo'
 // En minuscules, comme toute couleur relue par `parseHex` : la valeur par
@@ -274,7 +276,9 @@ export function hexToRgb(hex: string): Rgb {
 
 export function rgbToHex({ r, g, b }: Rgb): string {
   const clamp = (value: number): string =>
-    Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, '0')
   return `#${clamp(r)}${clamp(g)}${clamp(b)}`
 }
 
@@ -366,7 +370,10 @@ export function ensureContrast(foreground: string, background: string, target = 
   const towardsLight = luminance(background) < 0.4
   const hsl = hexToHsl(foreground)
   for (let step = 1; step <= 100; step += 1) {
-    const next = hslToHex({ ...hsl, l: Math.max(0, Math.min(1, hsl.l + (towardsLight ? step : -step) / 100)) })
+    const next = hslToHex({
+      ...hsl,
+      l: Math.max(0, Math.min(1, hsl.l + (towardsLight ? step : -step) / 100))
+    })
     if (contrast(next, background) >= target) return next
   }
   return towardsLight ? '#ffffff' : '#000000'
@@ -407,7 +414,12 @@ export function adjustAccent(
   mode: ResolvedMode
 ): { color: string; adjusted: boolean; reason?: string } {
   const parsed = parseHex(hex)
-  if (!parsed) return { color: DEFAULT_CUSTOM_ACCENT, adjusted: true, reason: 'Couleur invalide : indigo conservé.' }
+  if (!parsed)
+    return {
+      color: DEFAULT_CUSTOM_ACCENT,
+      adjusted: true,
+      reason: 'Couleur invalide : indigo conservé.'
+    }
   const paper = PAPER[mode]
   if (contrast(parsed, paper) >= 4.5) return { color: parsed, adjusted: false }
   const tone = mode === 'light' ? 'assombrie' : 'éclaircie'
@@ -443,7 +455,11 @@ export interface AppearanceInput extends ThemeChoice {
 
 export type Tokens = Record<string, string>
 
-export function accentColor({ themeId, customAccent, mode }: ThemeChoice & { mode: ResolvedMode }): string {
+export function accentColor({
+  themeId,
+  customAccent,
+  mode
+}: ThemeChoice & { mode: ResolvedMode }): string {
   if (themeId === 'custom') return adjustAccent(customAccent, mode).color
   const preset = presetById(themeId) ?? THEME_PRESETS[0]
   return mode === 'dark' ? preset.dark : preset.light
@@ -470,7 +486,13 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   const contrastInk = readableOn(accent)
   const soft = alpha(accent, dark ? 0.18 : 0.13)
   const tint = alpha(accent, dark ? 0.13 : 0.1)
-  const glassOpacity = highContrast ? 1 : glass === 'light' ? 0.58 : glass === 'strong' ? 0.92 : 0.76
+  const glassOpacity = highContrast
+    ? 1
+    : glass === 'light'
+      ? 0.58
+      : glass === 'strong'
+        ? 0.92
+        : 0.76
   const tintMix = highContrast ? 0.04 : glass === 'strong' ? 0.14 : glass === 'light' ? 0.07 : 0.1
   const blur = sanitizeGlassBlur(input.glassBlur, GLASS_BLUR[glass])
   // Le wordmark de la barre latérale est posé sur le verre (teinté par
@@ -627,14 +649,18 @@ export interface AppearancePrefs {
  * Assainit les réglages d'apparence lus sur disque. Utilisé au chargement et
  * couvert par les tests de persistance : une valeur inconnue ne casse rien.
  */
-export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefined): AppearancePrefs {
+export function sanitizeAppearance(
+  raw: Partial<AppearancePrefs> | null | undefined
+): AppearancePrefs {
   const input = raw ?? {}
   // Champs de la 0.3.24 : le ciel était une case à cocher, sa variante
   // portait un nom qui n'a plus cours. Les deux sont migrés une seule fois.
   const legacy = input as Partial<AppearancePrefs> & { dragonSky?: boolean }
   const themeId = isThemeId(input.themeId) ? input.themeId : DEFAULT_THEME
   const background: HomeBackground =
-    input.homeBackground === 'sky' || input.homeBackground === 'plain' || input.homeBackground === 'image'
+    input.homeBackground === 'sky' ||
+    input.homeBackground === 'plain' ||
+    input.homeBackground === 'image'
       ? input.homeBackground
       : 'gradient'
   const migrateSky =
@@ -676,7 +702,9 @@ export function sanitizeAppearance(raw: Partial<AppearancePrefs> | null | undefi
         : 'braise',
     highContrast: input.highContrast === true,
     reduceMotion:
-      input.reduceMotion === 'reduce' || input.reduceMotion === 'full' ? input.reduceMotion : 'system',
+      input.reduceMotion === 'reduce' || input.reduceMotion === 'full'
+        ? input.reduceMotion
+        : 'system',
     density: input.density === 'compact' || input.density === 'airy' ? input.density : 'normal',
     textSize: input.textSize === 'small' || input.textSize === 'large' ? input.textSize : 'normal',
     sidebarSide: input.sidebarSide === 'right' ? 'right' : 'left',

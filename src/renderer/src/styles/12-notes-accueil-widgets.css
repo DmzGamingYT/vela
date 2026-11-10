@@ -4,7 +4,7 @@
   position: relative;
 }
 
-.notes-drawer[data-dropping="true"] {
+.notes-drawer[data-dropping='true'] {
   outline: 2px dashed color-mix(in srgb, var(--clay) 55%, transparent);
   outline-offset: -6px;
 }
@@ -62,7 +62,9 @@
   background: color-mix(in srgb, var(--surface) 55%, transparent);
   color: var(--muted);
   font-size: 10.5px;
-  transition: border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard),
     background var(--dur-2) var(--ease-standard);
 }
 
@@ -71,7 +73,7 @@
   border-color: color-mix(in srgb, var(--clay) 30%, var(--line));
 }
 
-.notes-filter[data-active="true"] {
+.notes-filter[data-active='true'] {
   color: var(--clay);
   border-color: color-mix(in srgb, var(--clay) 40%, var(--line));
   background: color-mix(in srgb, var(--clay) 10%, transparent);
@@ -124,29 +126,33 @@
     linear-gradient(180deg, color-mix(in srgb, #ffffff 16%, transparent), transparent 42%),
     color-mix(in srgb, var(--surface) 72%, transparent);
   backdrop-filter: blur(14px) saturate(1.12);
-  box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 25%, transparent) inset,
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #ffffff 25%, transparent) inset,
     0 10px 24px -18px color-mix(in srgb, var(--ink) 45%, transparent);
   cursor: pointer;
   text-align: left;
-  transition: border-color var(--dur-2) var(--ease-standard),
-    box-shadow var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-standard);
+  transition:
+    border-color var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-standard);
 }
 
 .note-card:hover,
 .note-card:focus-visible {
   border-color: color-mix(in srgb, var(--clay) 32%, var(--line));
-  box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent) inset,
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #ffffff 30%, transparent) inset,
     0 14px 28px -18px color-mix(in srgb, var(--ink) 40%, transparent);
   transform: translateY(-1px);
   outline: none;
 }
 
-.note-card[data-pinned="true"] {
+.note-card[data-pinned='true'] {
   border-color: color-mix(in srgb, var(--clay) 26%, var(--line-soft));
 }
 
-.note-card[data-pinned="true"]::before {
-  content: "";
+.note-card[data-pinned='true']::before {
+  content: '';
   position: absolute;
   left: 0;
   top: 14px;
@@ -191,7 +197,7 @@
   background: color-mix(in srgb, var(--clay) 10%, transparent);
 }
 
-.note-pin[data-active="true"] {
+.note-pin[data-active='true'] {
   opacity: 1;
   color: var(--clay);
 }
@@ -375,7 +381,8 @@
   background: color-mix(in srgb, var(--clay) 6%, transparent);
   color: color-mix(in srgb, var(--clay) 75%, var(--ink));
   font-size: 10px;
-  transition: background var(--dur-2) var(--ease-standard),
+  transition:
+    background var(--dur-2) var(--ease-standard),
     border-color var(--dur-2) var(--ease-standard);
 }
 
@@ -463,7 +470,7 @@
   letter-spacing: 0;
 }
 
-.note-ai-menu button[data-last="true"] {
+.note-ai-menu button[data-last='true'] {
   background: color-mix(in srgb, var(--clay) 7%, transparent);
 }
 
@@ -491,7 +498,7 @@
     overflow: visible;
   }
 
-  .note-ai[data-secondary="true"] {
+  .note-ai[data-secondary='true'] {
     display: none;
   }
 
@@ -1045,7 +1052,7 @@
   color: var(--paper);
 }
 
-.md-check[data-done="true"] {
+.md-check[data-done='true'] {
   background: var(--clay);
   border-color: var(--clay);
 }
@@ -1247,9 +1254,14 @@
   border: 1px solid var(--edge);
   background: var(--fill);
   backdrop-filter: blur(22px) saturate(160%);
-  box-shadow: var(--inner-light-soft), 0 20px 44px -34px rgba(2, 4, 12, 0.6);
-  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
+  box-shadow:
+    var(--inner-light-soft),
+    0 20px 44px -34px rgba(2, 4, 12, 0.6);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    background var(--dur-2) var(--ease-out);
 }
 
 .home-field:hover {
@@ -1261,8 +1273,10 @@
   transform: scale(1.012);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   background: var(--fill-2);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent),
-    0 26px 60px -34px rgba(var(--glow), 0.6), var(--inner-light);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent),
+    0 26px 60px -34px rgba(var(--glow), 0.6),
+    var(--inner-light);
 }
 
 /* L'accueil ne montre pas un second champ de saisie : il conduit à celui de la
@@ -1277,8 +1291,10 @@
 .home-field-button:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent),
-    0 26px 60px -34px rgba(var(--glow), 0.6), var(--inner-light);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent),
+    0 26px 60px -34px rgba(var(--glow), 0.6),
+    var(--inner-light);
 }
 
 .home-field-text {
@@ -1332,7 +1348,9 @@
   border-radius: 11px;
   background: var(--ink);
   color: var(--paper);
-  transition: transform var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-standard);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    opacity var(--dur-2) var(--ease-standard);
 }
 
 .home-go:hover {
@@ -1363,8 +1381,11 @@
   background: var(--fill);
   font-size: 10.5px;
   color: var(--muted);
-  transition: color var(--dur-2) var(--ease-standard), border-color var(--dur-2) var(--ease-standard),
-    background var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out);
+  transition:
+    color var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .home-chip:hover {
@@ -1394,12 +1415,20 @@
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(250px, 1fr);
   gap: 16px;
-  align-items: start;
+  /* Le bento prend la place laissée entre les favoris et le pied de page :
+     sur une fenêtre haute, les cartes ne flottaient plus en haut d'un grand
+     vide. Les deux colonnes occupent la même hauteur. */
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .home-side {
   display: grid;
   gap: 16px;
+  /* Les cartes gardent leur hauteur naturelle : l'espace restant reste du
+     papier, pas un trou dans une carte. */
+  align-content: start;
 }
 
 /* Les cartes de l'accueil sont posées sur le papier opaque (--paper) : leur
@@ -1412,16 +1441,20 @@
   padding: 15px;
   border-radius: 18px;
   border: 1px solid var(--edge);
-  background: linear-gradient(158deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
-    var(--fill);
-  box-shadow: var(--inner-light-soft), 0 22px 50px -38px rgba(2, 4, 12, 0.7);
-  transition: border-color var(--dur-3) var(--ease-standard),
-    background var(--dur-3) var(--ease-standard), box-shadow var(--dur-3) var(--ease-standard);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)), var(--fill);
+  box-shadow:
+    var(--inner-light-soft),
+    0 22px 50px -38px rgba(2, 4, 12, 0.7);
+  transition:
+    border-color var(--dur-3) var(--ease-standard),
+    background var(--dur-3) var(--ease-standard),
+    box-shadow var(--dur-3) var(--ease-standard);
 }
 
 :root[data-mode='light'] .home-card {
-  background: linear-gradient(158deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)),
-    var(--fill);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)), var(--fill);
 }
 
 .home-card:hover {
@@ -1434,6 +1467,13 @@
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+/* La carte des pages récentes est une colonne : la grille des tuiles prend
+   la place qui reste, et la carte atteint le bas du bento. */
+.home-recent {
+  display: flex;
+  flex-direction: column;
 }
 
 .home-card-head h2 {
@@ -1454,7 +1494,9 @@
   border-radius: 999px;
   font-size: 10px;
   color: var(--muted);
-  transition: color var(--dur-2) var(--ease-standard), background var(--dur-2) var(--ease-standard);
+  transition:
+    color var(--dur-2) var(--ease-standard),
+    background var(--dur-2) var(--ease-standard);
 }
 
 .home-card-action svg {
@@ -1486,6 +1528,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  /* La grille occupe le bas de la carte : les tuiles s'étirent sur la place
+     libre, le titre reste en bas (voir `.tile-title`). */
+  flex: 1 1 auto;
+  align-content: stretch;
 }
 
 .recent-tile {
@@ -1496,12 +1542,16 @@
   min-width: 0;
   gap: 8px;
   min-height: 116px;
+  /* Au-delà, une tuile devient une affiche ; la place excédentaire reste
+     sous la grille, dans la carte. */
+  max-height: 300px;
   padding: 12px 12px 16px;
   border-radius: 14px;
   border: 1px solid var(--line-soft);
   text-align: left;
   overflow: hidden;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       150deg,
       color-mix(in srgb, var(--tile-tint, var(--accent)) 16%, transparent),
       transparent 64%
@@ -1509,7 +1559,9 @@
     var(--fill);
   transform: perspective(820px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
   transform-style: preserve-3d;
-  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-standard),
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-standard),
     box-shadow var(--dur-2) var(--ease-standard);
 }
 
@@ -1543,7 +1595,8 @@
 }
 
 .recent-tile[data-thumb='true'] {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       color-mix(in srgb, var(--canvas) 42%, transparent),
       color-mix(in srgb, var(--canvas) 88%, transparent)
@@ -1634,7 +1687,9 @@
   color: var(--accent-label);
   opacity: 0;
   transform: translateX(-3px);
-  transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .recent-tile:hover .tile-arrow {
@@ -1876,7 +1931,8 @@
   padding: 6px 6px 6px 8px;
   border-color: transparent;
   border-radius: 10px;
-  transition: background var(--dur-2) var(--ease-standard),
+  transition:
+    background var(--dur-2) var(--ease-standard),
     border-color var(--dur-2) var(--ease-standard);
 }
 
@@ -1901,8 +1957,10 @@
   border: 1.5px solid color-mix(in srgb, var(--ink) 26%, transparent);
   opacity: 1;
   color: var(--accent-contrast);
-  transition: background var(--dur-2) var(--ease-standard),
-    border-color var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out);
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    border-color var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .home-tasks .task-check:hover {
@@ -1920,7 +1978,9 @@
   stroke-linejoin: round;
   opacity: 0;
   transform: scale(0.5);
-  transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-out);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .home-tasks .task-check[data-done='true'] {
@@ -1947,7 +2007,9 @@
   border-radius: 6px;
   color: var(--faint);
   opacity: 0;
-  transition: opacity var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    color var(--dur-2) var(--ease-standard),
     background var(--dur-2) var(--ease-standard);
 }
 

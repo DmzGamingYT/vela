@@ -23,6 +23,8 @@
   --fill: rgba(255, 255, 255, 0.05);
   --fill-2: rgba(255, 255, 255, 0.08);
   --fill-3: rgba(255, 255, 255, 0.12);
+  /* Voile des boutons d'icônes : 7,5 % de blanc la nuit. */
+  --hover: rgba(255, 255, 255, 0.075);
   --tint: rgba(168, 163, 255, 0.13);
   --clay: #b3aeff;
   /* Fermer : un rouge discret, lisible sur le verre sombre. */
@@ -43,14 +45,15 @@
   --shadow: 0 34px 90px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.3);
   --top: 56px;
   --radius: 20px;
-  --sans: "Geist", "Geist Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
-    "Segoe UI", Inter, system-ui, sans-serif;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-  --mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --sans:
+    'Geist', 'Geist Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   --glow: 168, 163, 255;
 }
 
-:root[data-mode="light"] {
+:root[data-mode='light'] {
   --paper: #faf8f5;
   --paper-deep: #f2ede5;
   --surface: rgba(255, 253, 250, 0.78);
@@ -69,6 +72,8 @@
   --fill: rgba(255, 255, 255, 0.5);
   --fill-2: rgba(255, 255, 255, 0.74);
   --fill-3: rgba(255, 255, 255, 0.92);
+  /* Voile des boutons d'icônes : 5,5 % d'encre sur le papier clair. */
+  --hover: rgba(27, 26, 22, 0.055);
   --tint: rgba(91, 86, 214, 0.1);
   --clay: #5b56d6;
   /* Fermer : un rouge discret, lisible sur le papier clair. */
@@ -172,4 +177,3 @@ kbd {
   height: 100vh;
   overflow: hidden;
 }
-

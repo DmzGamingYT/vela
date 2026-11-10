@@ -1,0 +1,134 @@
+/* Tranche 65 — focus global et allègements du panneau Notes.
+   Une seule règle de focus pour toute l’interface : au clavier seulement,
+   un anneau de 2 px en couleur d’accent. Le clic ne laisse aucun cadre. */
+
+:focus {
+  outline: none;
+}
+
+:where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    summary,
+    [role='button'],
+    [role='menuitem'],
+    [role='option'],
+    [role='tab'],
+    [role='radio'],
+    [tabindex]
+  ):focus-visible {
+  outline: 2px solid var(--clay) !important;
+  outline-offset: 2px;
+}
+
+/* ── Menu « Nouvelle note » : un menu, pas une feuille ─────────────────── */
+.notes-templates-scrim {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.notes-templates {
+  width: min(320px, 100%);
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.note-template-option {
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 8px;
+}
+
+.note-template-option > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-template-key {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--line-soft);
+  color: var(--faint);
+  font-family: var(--sans);
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.note-template-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line-soft);
+}
+
+/* ── En-tête de l’éditeur : titre sans boîte, état discret ─────────────── */
+.note-editor-head {
+  gap: 6px;
+}
+
+.note-title-input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  padding-left: 2px;
+}
+
+.note-title-input::placeholder {
+  color: var(--ink-3, var(--muted));
+}
+
+.note-head-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  margin-right: 4px;
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.note-head-state[data-dirty='true'] {
+  color: var(--faint);
+}
+
+/* ── Une seule rangée d’outils, IA comprise ────────────────────────────── */
+.note-toolbar {
+  flex-wrap: nowrap;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 5px 0 6px;
+}
+
+.note-ai-more {
+  display: inline-flex;
+  flex: none;
+}
+
+.note-ai-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--clay) 22%, var(--line-soft));
+  color: color-mix(in srgb, var(--clay) 78%, var(--ink));
+  font-size: 10.5px;
+  font-weight: 560;
+}
+
+.note-ai-trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay) 8%, transparent);
+}
+
+/* ── Pied : plus de bouton « Dossier » ambigu ──────────────────────────── */
+.note-foot .text-btn {
+  gap: 4px;
+}

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
-import { filterMap, type MapNode } from '@shared/tunnel'
+import {
+  filterMap,
+  tunnelCounts,
+  type MapNode,
+  type SourceType
+} from '@shared/tunnel'
 import { angleGroups, domainOf, siteYear } from '@shared/tunnelSynthesis'
 import { useBrowser } from '../../store/browser'
 import { useTunnel } from '../../store/tunnel'
@@ -8,6 +13,24 @@ import TunnelDetail from './TunnelDetail'
 
 const FIVE_YEARS = 5 * 365 * 24 * 3600 * 1000
 const PREVIEW_ROWS = 3
+
+const TYPE_LABELS: Record<SourceType, string> = {
+  other: 'Comparatifs',
+  wiki: 'Définitions',
+  discussion: 'Forums',
+  docs: 'Documentation',
+  academic: 'Académique',
+  news: 'Presse'
+}
+
+const TYPE_QUERY: Record<SourceType, string> = {
+  other: 'comparatif',
+  wiki: 'définition',
+  discussion: 'forum',
+  docs: 'documentation',
+  academic: 'étude',
+  news: 'actualité'
+}
 
 function yearOf(node: MapNode): string {
   return siteYear(node)
@@ -30,8 +53,11 @@ export default function TunnelExplore() {
   const setProjectsOpen = useTunnel((s) => s.setProjectsOpen)
   const running = useTunnel((s) => s.running)
   const phase = useTunnel((s) => s.phase)
+  const findMore = useTunnel((s) => s.findMore)
+  const runTunnel = useTunnel((s) => s.runTunnel)
+  const toggleType = useTunnel((s) => s.toggleType)
 
-  const [mode, setMode] = useState<'angles' | 'list'>('angles')
+  const [mode, setMode] = useState<'angles' | 'list'>('list')
   const [needle, setNeedle] = useState('')
   const [findOpen, setFindOpen] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -45,17 +71,32 @@ export default function TunnelExplore() {
     () => sites.filter((site) => visible.has(site.id) && site.status !== 'dismissed'),
     [sites, visible]
   )
+  const live = useMemo(() => tunnelCounts(nodes, visible), [nodes, visible])
+  const dismissedSites = useMemo(
+    () => sites.filter((site) => site.status === 'dismissed'),
+    [sites]
+  )
+  const typeCounts = useMemo(() => {
+    const map = new Map<SourceType, number>()
+    for (const site of kept) {
+      const type = site.sourceType ?? 'other'
+      map.set(type, (map.get(type) ?? 0) + 1)
+    }
+    return map
+  }, [kept])
   const groups = useMemo(() => angleGroups(nodes, visible), [nodes, visible])
   const selectedNode = useMemo(
-    () => (selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null),
+    () => (selectedId ? (nodes.find((node) => node.id === selectedId) ?? null) : null),
     [nodes, selectedId]
   )
 
   const counts = useMemo(
     () => ({
       reachable: sites.filter((site) => site.reachable !== false).length,
-      recent: sites.filter((site) => site.publishedAt && site.publishedAt >= mountedAt - FIVE_YEARS).length,
-      academic: sites.filter((site) => site.sourceType === 'academic' || site.sourceType === 'news').length,
+      recent: sites.filter((site) => site.publishedAt && site.publishedAt >= mountedAt - FIVE_YEARS)
+        .length,
+      academic: sites.filter((site) => site.sourceType === 'academic' || site.sourceType === 'news')
+        .length,
       long: sites.filter((site) => (site.excerpt ?? '').length >= 600).length
     }),
     [sites, mountedAt]
@@ -132,7 +173,15 @@ export default function TunnelExplore() {
   }, [selectedNode, setStatus, findOpen])
 
   const keptMarked = kept.filter((site) => site.status === 'kept').length
+  const autoSelected = useRef(false)
 
+  // Une cible dès l'arrivée : la première page retenue prend le focus, sinon
+  // K, X et ↵ n'ont aucun nœud sur lequel agir.
+  useEffect(() => {
+    if (autoSelected.current || selectedId || kept.length === 0) return
+    autoSelected.current = true
+    select(kept[0].id)
+  }, [kept, selectedId, select])
 
   const toggleKeep = (site: MapNode): void => {
     void setStatus(site.id, site.status === 'kept' ? 'neutral' : 'kept')
@@ -142,11 +191,22 @@ export default function TunnelExplore() {
     void setStatus(site.id, site.status === 'dismissed' ? 'neutral' : 'dismissed')
   }
 
+  const searchType = (type: SourceType): void => {
+    const base = active?.query ?? ''
+    if (!base) return
+    void runTunnel(base, { more: true, variants: [`${base} ${TYPE_QUERY[type]}`] })
+  }
+
   const row = (site: MapNode): ReactElement => {
     const year = yearOf(site)
     const domain = domainOf(site)
     return (
-      <div key={site.id} className="tw-src" data-on={selectedId === site.id} data-state={site.status}>
+      <div
+        key={site.id}
+        className="tw-src"
+        data-on={selectedId === site.id}
+        data-state={site.status}
+      >
         <button
           type="button"
           className="tw-src-main"
@@ -168,8 +228,15 @@ export default function TunnelExplore() {
             <span className="track">
               <i style={{ width: `${site.relevance}%` }} />
             </span>
-            <b>{site.relevance}</b>
+            <b
+              title={`Pertinence ${site.relevance} % — part des mots de la requête retrouvés dans la page, son extrait et son domaine.`}
+            >
+              Pertinence {site.relevance}
+            </b>
           </span>
+          {(site.relevanceReason || site.reason) && (
+            <span className="tw-src-why">{site.relevanceReason || site.reason}</span>
+          )}
         </button>
         <span className="tw-src-do">
           <button
@@ -186,7 +253,9 @@ export default function TunnelExplore() {
             type="button"
             data-on={site.status === 'dismissed'}
             aria-pressed={site.status === 'dismissed'}
-            aria-label={site.status === 'dismissed' ? `Rétablir ${site.title}` : `Écarter ${site.title}`}
+            aria-label={
+              site.status === 'dismissed' ? `Rétablir ${site.title}` : `Écarter ${site.title}`
+            }
             title="Écarter"
             onClick={() => toggleDismiss(site)}
           >
@@ -202,7 +271,7 @@ export default function TunnelExplore() {
   return (
     <div className="tw-screen">
       <div className="tw-stage" aria-busy={running}>
-        <aside className="tw-rail" aria-label="Entonnoir">
+        <aside className="tw-rail" aria-label="Progression">
           <div className="tw-rail-query">
             <span className="tw-k">Question</span>
             <b title={active.query}>{active.query}</b>
@@ -211,71 +280,40 @@ export default function TunnelExplore() {
             </button>
           </div>
 
-          <div className="tw-stations">
+          <div className="tw-progress" aria-label="Progression">
             <button
               type="button"
-              className="tw-station"
               data-on={filterCount === 0}
               onClick={() => {
                 resetFilters()
-                setMode('angles')
+                setMode('list')
               }}
             >
-              <span className="tw-station-top">
-                <b>Large spectre</b>
-                <span>{sites.length}</span>
-              </span>
-              <span className="tw-station-track">
-                <i style={{ width: '100%' }} />
-              </span>
+              <b>{sites.length}</b> trouvées
             </button>
-            <button
-              type="button"
-              className="tw-station"
-              data-on={mode === 'angles'}
-              onClick={() => setMode('angles')}
-            >
-              <span className="tw-station-top">
-                <b>Angles</b>
-                <span>{groups.length}</span>
-              </span>
-              <span className="tw-station-track">
-                <i style={{ width: `${Math.min(100, groups.length * 16)}%` }} />
-              </span>
+            <span aria-hidden="true">→</span>
+            <span className="tw-progress-read">
+              <b>{live.read}</b> lues
+            </span>
+            <span aria-hidden="true">→</span>
+            <button type="button" data-on={mode === 'list'} onClick={() => setMode('list')}>
+              <b>{kept.length}</b> retenues
             </button>
-            <button
-              type="button"
-              className="tw-station"
-              data-on={mode === 'list'}
-              onClick={() => setMode('list')}
-            >
-              <span className="tw-station-top">
-                <b>Retenues</b>
-                <span>{kept.length}</span>
-              </span>
-              <span className="tw-station-track">
-                <i style={{ width: `${sites.length ? Math.round((kept.length / sites.length) * 100) : 0}%` }} />
-              </span>
-            </button>
-            <button type="button" className="tw-station" onClick={() => setStep('synthesis')}>
-              <span className="tw-station-top">
-                <b>Synthèse</b>
-                <span>{kept.length > 0 ? 1 : 0}</span>
-              </span>
-              <span className="tw-station-track">
-                <i style={{ width: kept.length > 0 ? '16%' : '0%' }} />
-              </span>
+            <span aria-hidden="true">→</span>
+            <button type="button" onClick={() => setStep('synthesis')}>
+              Synthèse
             </button>
           </div>
 
           <div className="tw-filters">
             <span className="tw-k">
-              Filtrer
+              Affiner les pages
               {filterCount > 0 && <em className="tw-count">{filterCount}</em>}
             </span>
             <button
               type="button"
               className="tw-filter-line"
+              disabled={counts.reachable === 0}
               data-on={Boolean(filters.reachableOnly)}
               aria-pressed={Boolean(filters.reachableOnly)}
               onClick={() => setFilters({ reachableOnly: !filters.reachableOnly })}
@@ -287,6 +325,7 @@ export default function TunnelExplore() {
             <button
               type="button"
               className="tw-filter-line"
+              disabled={counts.recent === 0}
               data-on={filters.from !== null}
               aria-pressed={filters.from !== null}
               onClick={() =>
@@ -300,12 +339,12 @@ export default function TunnelExplore() {
             <button
               type="button"
               className="tw-filter-line"
+              disabled={counts.academic === 0}
               data-on={filters.sourceTypes.length > 0}
               aria-pressed={filters.sourceTypes.length > 0}
               onClick={() =>
                 setFilters({
-                  sourceTypes:
-                    filters.sourceTypes.length > 0 ? [] : ['academic', 'news']
+                  sourceTypes: filters.sourceTypes.length > 0 ? [] : ['academic', 'news']
                 })
               }
             >
@@ -316,6 +355,7 @@ export default function TunnelExplore() {
             <button
               type="button"
               className="tw-filter-line"
+              disabled={counts.long === 0}
               data-on={filters.minExcerpt >= 600}
               aria-pressed={filters.minExcerpt >= 600}
               onClick={() => setFilters({ minExcerpt: filters.minExcerpt >= 600 ? 0 : 600 })}
@@ -328,7 +368,10 @@ export default function TunnelExplore() {
 
           <p className="tw-note">
             Un filtre ne supprime rien : il replie les branches et le compteur dit ce qu’il masque
-            {hiddenSites > 0 ? ` (${hiddenSites} page${hiddenSites > 1 ? 's' : ''} masquée${hiddenSites > 1 ? 's' : ''})` : ''}.
+            {hiddenSites > 0
+              ? ` (${hiddenSites} page${hiddenSites > 1 ? 's' : ''} masquée${hiddenSites > 1 ? 's' : ''})`
+              : ''}
+            .
           </p>
         </aside>
 
@@ -336,8 +379,8 @@ export default function TunnelExplore() {
           <div className="tw-center-head">
             <h2>{running ? 'Exploration en cours' : 'Explorer'}</h2>
             <span className="tw-sub">
-              {sites.length} source{sites.length > 1 ? 's' : ''} · {kept.length} retenue
-              {kept.length > 1 ? 's' : ''}
+              {live.found} trouvées · {live.read} lues · {live.kept} retenues
+              {live.dismissed > 0 ? ` · ${live.dismissed} écartées` : ''}
               {running && phase ? ` · ${phase}` : ''}
             </span>
             <span className="tw-grow" />
@@ -407,6 +450,35 @@ export default function TunnelExplore() {
           </div>
 
           <div className="tw-scroll">
+            {kept.length > 0 && typeCounts.size < 3 && (
+              <p className="tw-same-type">
+                <b>Sources de même type</b> : {typeCounts.size} type
+                {typeCounts.size > 1 ? 's' : ''} seulement parmi les pages retenues. Cherchez un
+                forum, une documentation ou une étude pour croiser les regards.
+              </p>
+            )}
+            <div className="tw-coverage" aria-label="Couverture par type">
+              <span className="tw-k">Couverture</span>
+              {(Object.keys(TYPE_LABELS) as SourceType[]).map((type) => {
+                const count = typeCounts.get(type) ?? 0
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    data-zero={count === 0}
+                    data-on={filters.sourceTypes.includes(type)}
+                    title={
+                      count === 0
+                        ? `Chercher des sources de ce type (${TYPE_LABELS[type]})`
+                        : `Filtrer : ${TYPE_LABELS[type]}`
+                    }
+                    onClick={() => (count === 0 ? searchType(type) : toggleType(type))}
+                  >
+                    {TYPE_LABELS[type]} <b>{count}</b>
+                  </button>
+                )
+              })}
+            </div>
             {mode === 'angles' && (
               <div className="tw-angles">
                 {matchedGroups.map((group) => {
@@ -426,7 +498,9 @@ export default function TunnelExplore() {
                           type="button"
                           className="tw-angle-more"
                           aria-expanded={Boolean(open)}
-                          onClick={() => setExpanded((state) => ({ ...state, [group.id]: !state[group.id] }))}
+                          onClick={() =>
+                            setExpanded((state) => ({ ...state, [group.id]: !state[group.id] }))
+                          }
                         >
                           {open
                             ? 'Replier'
@@ -435,13 +509,21 @@ export default function TunnelExplore() {
                               } source${group.sites.length - PREVIEW_ROWS > 1 ? 's' : ''}`}
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className="tw-angle-add"
+                        disabled={running}
+                        onClick={() => void findMore()}
+                      >
+                        + Trouver plus de sources
+                      </button>
                     </article>
                   )
                 })}
                 {matchedGroups.length === 0 && (
                   <p className="tw-note tw-empty">
-                    Aucune source ne passe le seuil de pertinence. Baissez-le dans l’entonnoir ou reformulez la
-                    question.
+                    Aucune source ne passe le seuil de pertinence. Baissez-le dans les filtres ou
+                    reformulez la question.
                   </p>
                 )}
               </div>
@@ -458,17 +540,46 @@ export default function TunnelExplore() {
                   </button>
                 </div>
                 {matchedList.map(row)}
-                {matchedList.length === 0 && <p className="tw-note tw-empty">Aucune source retenue.</p>}
+                {matchedList.length === 0 && (
+                  <p className="tw-note tw-empty">Aucune source retenue.</p>
+                )}
               </div>
+            )}
+
+            {dismissedSites.length > 0 && (
+              <details className="tw-dismissed">
+                <summary>
+                  {dismissedSites.length} écartée{dismissedSites.length > 1 ? 's' : ''}
+                </summary>
+                {dismissedSites.map((site) => (
+                  <div key={site.id} className="tw-dismissed-row">
+                    <span>
+                      <b>{site.title}</b>
+                      <em>{domainOf(site)}</em>
+                    </span>
+                    <button type="button" onClick={() => void setStatus(site.id, 'neutral')}>
+                      Réintégrer
+                    </button>
+                  </div>
+                ))}
+              </details>
             )}
           </div>
 
           <div className="tw-dock">
             <span className="tw-tally" title={`${keptMarked} gardée${keptMarked > 1 ? 's' : ''}`}>
-              <b>{kept.length}</b> retenues · <b>{sites.length}</b> explorées
+              <b>{live.found}</b> trouvées · <b>{live.read}</b> lues · <b>{live.kept}</b> retenues
             </span>
             <span className="tw-grow" />
             <span className="tw-hint">K garder · X écarter · ↵ ouvrir</span>
+            <button
+              type="button"
+              className="tw-btn tw-btn-more"
+              disabled={running}
+              onClick={() => void findMore()}
+            >
+              <Icon name="search" size={13} /> Trouver plus
+            </button>
             <button type="button" className="tw-btn" onClick={() => setStep('map')}>
               Voir la carte
             </button>
@@ -493,8 +604,8 @@ export default function TunnelExplore() {
               <Icon name="panel" size={20} />
               <h3>Une source à la fois</h3>
               <p>
-                Choisissez une page pour voir pourquoi elle est là, son extrait, ses divergences et les actions de
-                lecture.
+                Choisissez une page pour voir pourquoi elle est là, son extrait, ses divergences et
+                les actions de lecture.
               </p>
               <ul>
                 <li>

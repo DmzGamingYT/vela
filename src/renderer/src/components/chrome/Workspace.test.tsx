@@ -8,7 +8,6 @@ import Workspace from './Workspace'
 vi.mock('./PaneHeader', () => ({
   default: ({ tab }: { tab: TabView }) => <header>{tab.title}</header>
 }))
-vi.mock('./StatusBar', () => ({ default: () => <footer>Statut</footer> }))
 vi.mock('../start/StartPage', () => ({ default: () => <div>Accueil de test</div> }))
 
 const primary = {
@@ -37,6 +36,7 @@ const commitSplitRatio = vi.fn()
 const layout = vi.fn(async () => {})
 const snapshot = vi.fn(async () => [])
 let observerCallback: ResizeObserverCallback | null = null
+let frozenListener: ((shots: { tabId: string; image: string }[] | null) => void) | null = null
 
 function setView(over: { split?: boolean; allowed?: boolean; width?: number } = {}): void {
   useBrowser.setState({
@@ -98,7 +98,17 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
   vi.stubGlobal('vela', {
     platform: 'darwin',
-    views: { layout, snapshot }
+    views: {
+      layout,
+      snapshot,
+      onFrozen: (callback: (shots: { tabId: string; image: string }[] | null) => void) => {
+        frozenListener = callback
+        return () => {
+          frozenListener = null
+        }
+      },
+      onScroll: () => () => {}
+    }
   })
   setView()
 })
@@ -130,12 +140,34 @@ describe('vue scindée', () => {
   })
 
   it('borne le glissement à la largeur minimale des deux panneaux', async () => {
-    const getRect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      if (this.classList.contains('panes')) {
-        return { x: 0, y: 0, left: 0, top: 0, right: 668, bottom: 720, width: 668, height: 720, toJSON: () => ({}) } as DOMRect
-      }
-      return { x: 0, y: 0, left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0, toJSON: () => ({}) } as DOMRect
-    })
+    const getRect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains('panes')) {
+          return {
+            x: 0,
+            y: 0,
+            left: 0,
+            top: 0,
+            right: 668,
+            bottom: 720,
+            width: 668,
+            height: 720,
+            toJSON: () => ({})
+          } as DOMRect
+        }
+        return {
+          x: 0,
+          y: 0,
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 0,
+          height: 0,
+          toJSON: () => ({})
+        } as DOMRect
+      })
     render(<Workspace />)
     const separator = screen.getByRole('separator', { name: 'Largeur de la vue scindée' })
 
@@ -152,5 +184,27 @@ describe('vue scindée', () => {
     expect(commitSplitRatio).toHaveBeenCalledOnce()
     expect(commitSplitRatio.mock.calls[0][0]).toBeCloseTo(320 / 668)
     getRect.mockRestore()
+  })
+
+  it('garde une image de la page quand l’interface la recouvre', () => {
+    useBrowser.setState((state) => ({
+      view: {
+        ...state.view!,
+        tabs: state.view!.tabs.map((tab) => ({ ...tab, url: 'https://example.com/a' }))
+      }
+    }))
+    render(<Workspace />)
+
+    act(() => {
+      frozenListener?.([{ tabId: 'primary', image: 'data:image/jpeg;base64,AA' }])
+    })
+    expect(document.querySelector('.pane-shot img')?.getAttribute('src')).toBe(
+      'data:image/jpeg;base64,AA'
+    )
+
+    act(() => {
+      frozenListener?.(null)
+    })
+    expect(document.querySelector('.pane-shot')).toBeNull()
   })
 })

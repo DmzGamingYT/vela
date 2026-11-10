@@ -11,7 +11,15 @@ import type {
   UpdateGroupInput,
   VelaApi
 } from '@shared/api'
-import type { AgentEvent, AppView, LayoutRequest, PeekState, SelectionPayload, ShortcutEvent } from '@shared/types'
+import type {
+  AgentEvent,
+  AppView,
+  LayoutRequest,
+  PaneSnapshot,
+  PeekState,
+  SelectionPayload,
+  ShortcutEvent
+} from '@shared/types'
 import type { TunnelEvent } from '@shared/api'
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
@@ -50,13 +58,18 @@ const api: VelaApi = {
     close: (id: string) => ipcRenderer.invoke('tab:close', id),
     activate: (id: string) => ipcRenderer.invoke('tab:activate', id),
     navigate: (id: string, input: string) => ipcRenderer.invoke('tab:navigate', { id, input }),
-    find: (id: string, query: string, forward?: boolean) => ipcRenderer.invoke('tab:find', { id, query, forward }),
-    findStop: (id: string, action?: 'clearSelection' | 'keepSelection') => ipcRenderer.invoke('tab:find-stop', { id, action }),
+    find: (id: string, query: string, forward?: boolean) =>
+      ipcRenderer.invoke('tab:find', { id, query, forward }),
+    findStop: (id: string, action?: 'clearSelection' | 'keepSelection') =>
+      ipcRenderer.invoke('tab:find-stop', { id, action }),
     home: (id: string) => ipcRenderer.invoke('tab:home', id),
     back: (id: string) => ipcRenderer.invoke('tab:back', id),
     forward: (id: string) => ipcRenderer.invoke('tab:forward', id),
+    entries: (id: string) => ipcRenderer.invoke('tab:entries', id),
+    goto: (id: string, index: number) => ipcRenderer.invoke('tab:goto', { id, index }),
     reload: (id: string) => ipcRenderer.invoke('tab:reload', id),
-    zoom: (id: string, direction: 'in' | 'out' | 'reset') => ipcRenderer.invoke('tab:zoom', { id, direction }),
+    zoom: (id: string, direction: 'in' | 'out' | 'reset') =>
+      ipcRenderer.invoke('tab:zoom', { id, direction }),
     stop: (id: string) => ipcRenderer.invoke('tab:stop', id),
     pin: (id: string, pinned: boolean) => ipcRenderer.invoke('tab:pin', { id, pinned }),
     mute: (id: string, muted: boolean) => ipcRenderer.invoke('tab:mute', { id, muted }),
@@ -76,7 +89,11 @@ const api: VelaApi = {
   },
   views: {
     layout: (request: LayoutRequest) => ipcRenderer.send('views:layout', request),
-    snapshot: (tabIds: string[]) => ipcRenderer.invoke('views:snapshot', tabIds)
+    snapshot: (tabIds: string[]) => ipcRenderer.invoke('views:snapshot', tabIds),
+    onFrozen: (callback: (shots: PaneSnapshot[] | null) => void) =>
+      subscribe<PaneSnapshot[] | null>('views:frozen', (shots) => callback(shots ?? null)),
+    onScroll: (callback: (direction: 'down' | 'up') => void) =>
+      subscribe<'down' | 'up'>('scroll:direction', callback)
   },
   peek: {
     open: (input) => ipcRenderer.invoke('peek:open', input ?? {}),
@@ -109,14 +126,17 @@ const api: VelaApi = {
   },
   favicons: {
     get: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:get', { host, spaceId }),
-    peek: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:peek', { host, spaceId }),
+    peek: (host: string, spaceId?: string) =>
+      ipcRenderer.invoke('favicons:peek', { host, spaceId }),
     purge: () => ipcRenderer.invoke('favicons:purge')
   },
   bookmarks: {
-    toggle: (input: { url: string; title?: string; favicon?: string }) => ipcRenderer.invoke('bookmark:toggle', input),
+    toggle: (input: { url: string; title?: string; favicon?: string }) =>
+      ipcRenderer.invoke('bookmark:toggle', input),
     remove: (id: string) => ipcRenderer.invoke('bookmark:remove', id),
     detect: () => ipcRenderer.invoke('bookmark:detect'),
-    addMany: (entries: { url: string; title?: string }[]) => ipcRenderer.invoke('bookmark:add-many', entries),
+    addMany: (entries: { url: string; title?: string }[]) =>
+      ipcRenderer.invoke('bookmark:add-many', entries),
     move: (id: string, position: number) => ipcRenderer.invoke('bookmark:move', { id, position }),
     reorder: (ids: string[]) => ipcRenderer.invoke('bookmark:reorder', ids),
     exportHtml: () => ipcRenderer.invoke('bookmark:export-html'),
@@ -140,8 +160,10 @@ const api: VelaApi = {
       subscribe('update:event', callback)
   },
   processes: () => ipcRenderer.invoke('app:metrics'),
+  zoomWindow: () => ipcRenderer.invoke('app:zoom-window'),
   tasks: {
-    create: (input: { title: string; dueAt?: number | null }) => ipcRenderer.invoke('tasks:create', input),
+    create: (input: { title: string; dueAt?: number | null }) =>
+      ipcRenderer.invoke('tasks:create', input),
     toggle: (id: string) => ipcRenderer.invoke('tasks:toggle', id),
     remove: (id: string) => ipcRenderer.invoke('tasks:remove', id)
   },
@@ -167,11 +189,13 @@ const api: VelaApi = {
     rename: (input: { id: string; title: string }) => ipcRenderer.invoke('notes:rename', input),
     graph: (id: string) => ipcRenderer.invoke('notes:graph', id),
     audio: {
-      save: (input: { spaceId: string; dataUrl: string }) => ipcRenderer.invoke('notes:audio-save', input),
+      save: (input: { spaceId: string; dataUrl: string }) =>
+        ipcRenderer.invoke('notes:audio-save', input),
       get: (name: string) => ipcRenderer.invoke('notes:audio-get', name),
       remove: (name: string) => ipcRenderer.invoke('notes:audio-remove', name)
     },
-    transcribe: (input: { name: string; consent: boolean }) => ipcRenderer.invoke('notes:transcribe', input)
+    transcribe: (input: { name: string; consent: boolean }) =>
+      ipcRenderer.invoke('notes:transcribe', input)
   },
   privacy: {
     toggleSite: (host: string) => ipcRenderer.invoke('privacy:toggle-site', host)
@@ -186,8 +210,10 @@ const api: VelaApi = {
     rename: (input: { id: string; title: string }) => ipcRenderer.invoke('tunnel:rename', input),
     remove: (id: string) => ipcRenderer.invoke('tunnel:remove', id),
     duplicate: (id: string) => ipcRenderer.invoke('tunnel:duplicate', id),
-    savePng: (input: { dataUrl: string; name: string }) => ipcRenderer.invoke('tunnel:save-png', input),
-    exportPdf: (input: { html: string; name: string }) => ipcRenderer.invoke('tunnel:export-pdf', input)
+    savePng: (input: { dataUrl: string; name: string }) =>
+      ipcRenderer.invoke('tunnel:save-png', input),
+    exportPdf: (input: { html: string; name: string }) =>
+      ipcRenderer.invoke('tunnel:export-pdf', input)
   },
   selection: {
     onSelect: (callback: (payload: SelectionPayload) => void) => subscribe('selection', callback)

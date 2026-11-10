@@ -62,7 +62,9 @@ describe('vignettes de pages récentes', () => {
   it('ignore les adresses internes', async () => {
     const dir = tempDir()
     const store = new Thumbnails(dir, () => true)
-    const fake = { capturePage: async () => ({}) } as unknown as Parameters<Thumbnails['capture']>[0]
+    const fake = { capturePage: async () => ({}) } as unknown as Parameters<
+      Thumbnails['capture']
+    >[0]
     expect(await store.capture(fake, 'vela://accueil')).toBe(false)
     expect(await store.capture(fake, 'about:blank')).toBe(false)
   })

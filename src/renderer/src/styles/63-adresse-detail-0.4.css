@@ -1,0 +1,159 @@
+/* Tranche 63 — détails de l'adresse (0.4).
+   Suggestions sous le champ, étoile et copie dans la pilule, champ sombre un
+   cran au-dessus de la barre. */
+
+.pane-head .address {
+  position: relative;
+}
+
+/* ── Étoile et copie, dans le champ ───────────────────────────────────── */
+.address-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.address-star,
+.address-copy {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2);
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.address-star:hover,
+.address-copy:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-1);
+}
+
+.address-star[data-active='true'] {
+  color: var(--clay);
+}
+
+/* La copie n'apparaît qu'au survol du champ : deux icônes permanentes à côté
+   du texte feraient un troisième bouton dans une pilule de 34 px. */
+.address-copy {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.address:hover .address-copy,
+.address:focus-within .address-copy,
+.address-copy:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.address-star:focus-visible,
+.address-copy:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+/* ── Suggestions ──────────────────────────────────────────────────────── */
+.address-suggest {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--glass-strong, var(--paper));
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.address-suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-1);
+  font-size: 12px;
+  text-align: left;
+}
+
+.address-suggest-row:hover,
+.address-suggest-row[data-active='true'] {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.address-suggest-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink-2);
+}
+
+.address-suggest-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-suggest-host {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-2);
+  font-size: 11px;
+}
+
+.address-suggest-row[data-search='true'] .address-suggest-icon {
+  background: color-mix(in srgb, var(--clay) 16%, transparent);
+  color: var(--clay);
+}
+
+/* ── Mode sombre : champ un cran au-dessus de la barre ────────────────── */
+:root[data-mode='dark'] .pane-head .address,
+:root[data-mode='dark'] .pane-head .address[data-home='true']:not([data-focused='true']),
+:root[data-mode='dark'] .pane-head .address[data-resting='true'] {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-mode='dark'] .pane-head .address:hover,
+:root[data-mode='dark'] .pane-head .address[data-resting='true']:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-mode='dark'] .pane-head .address:focus-within,
+:root[data-mode='dark'] .pane-head .address[data-focused='true'] {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: color-mix(in srgb, var(--clay) 55%, transparent);
+}
+
+:root[data-mode='dark'] .address-path,
+:root[data-mode='dark'] .address-suggest-host {
+  color: var(--ink-2);
+}
+
+:root[data-mode='dark'] .address-suggest {
+  background: rgba(29, 29, 34, 0.96);
+  border-color: rgba(255, 255, 255, 0.08);
+}

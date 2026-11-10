@@ -9,7 +9,12 @@ vi.mock('electron', () => ({
 
 const { buildMenuTemplate } = await import('./menu')
 
-type Entry = { label: string; accelerator?: string; registerAccelerator?: boolean; click?: () => void }
+type Entry = {
+  label: string
+  accelerator?: string
+  registerAccelerator?: boolean
+  click?: () => void
+}
 
 /** Tous les éléments du gabarit, aplatis, avec leur menu d'origine. */
 function flatten(template: MenuItemConstructorOptions[]): { menu: string; entry: Entry }[] {
@@ -78,10 +83,20 @@ describe('menu — accélérateurs sur les trois plateformes', () => {
         .map(({ entry }) => entry.label)
       expect(menus).not.toContain('Vela')
       expect(menus[0]).toBe('Fichier')
-      expect(menus).toEqual(['Fichier', 'Édition', 'Affichage', 'Historique', 'Marque-pages', 'Fenêtre', 'Aide'])
+      expect(menus).toEqual([
+        'Fichier',
+        'Édition',
+        'Affichage',
+        'Historique',
+        'Marque-pages',
+        'Fenêtre',
+        'Aide'
+      ])
       // Pas de « Tout ramener au premier plan » hors macOS.
       expect(menus).not.toContain('front')
-      expect(build(platform).some(({ entry }) => (entry as { role?: string }).role === 'front')).toBe(false)
+      expect(
+        build(platform).some(({ entry }) => (entry as { role?: string }).role === 'front')
+      ).toBe(false)
     }
   })
 

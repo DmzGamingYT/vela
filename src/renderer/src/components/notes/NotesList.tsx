@@ -49,7 +49,6 @@ export default function NotesList({
   allTags,
   highlights,
   pageNote,
-  hasPage,
   noNotes,
   spaceName,
   onOpen,
@@ -180,25 +179,21 @@ export default function NotesList({
             <span>
               {filter || tagFilter || onlyPinned
                 ? 'Videz la recherche ou revenez à toutes les notes.'
-                : hasPage
-                  ? 'Glissez un passage depuis la page, ou écrivez à côté d’elle.'
-                  : 'Écrivez votre première note, puis ouvrez une page pour en garder des passages.'}
+                : 'Créez une note, ou gardez un passage depuis une page.'}
             </span>
-            {noNotes
-              ? renderActions(true)
-              : (filter || tagFilter || onlyPinned) && (
-                  <button
-                    type="button"
-                    className="action"
-                    onClick={() => {
-                      onFilter('')
-                      onTagFilter(null)
-                      onOnlyPinned(false)
-                    }}
-                  >
-                    Tout afficher
-                  </button>
-                )}
+            {(filter || tagFilter || onlyPinned) && (
+              <button
+                type="button"
+                className="action"
+                onClick={() => {
+                  onFilter('')
+                  onTagFilter(null)
+                  onOnlyPinned(false)
+                }}
+              >
+                Tout afficher
+              </button>
+            )}
           </div>
         )}
 
@@ -265,24 +260,25 @@ export default function NotesList({
         })}
       </div>
 
-      <footer className="note-foot note-foot-inset">
-        <span>{spaceName ? `Espace ${spaceName}` : 'Vela'} · fichiers .md</span>
-        <div className="note-foot-actions">
-          <button
-            type="button"
-            className="text-btn"
-            onClick={onTrash}
-            title="Notes supprimées"
-          >
-            <Icon name="trash" size={13} />
-            Corbeille{trashCount > 0 ? ` (${trashCount})` : ''}
-          </button>
-          <button type="button" className="text-btn" onClick={() => void window.vela.notes.openFolder()}>
-            <Icon name="folder" size={13} />
-            Ouvrir le dossier
-          </button>
-        </div>
-      </footer>
+      {!noNotes && (
+        <footer className="note-foot note-foot-inset">
+          <span>{spaceName ? `Espace ${spaceName}` : 'Vela'} · fichiers .md</span>
+          <div className="note-foot-actions">
+            <button type="button" className="text-btn" onClick={onTrash} title="Notes supprimées">
+              <Icon name="trash" size={13} />
+              Corbeille{trashCount > 0 ? ` (${trashCount})` : ''}
+            </button>
+            <button
+              type="button"
+              className="text-btn"
+              onClick={() => void window.vela.notes.openFolder()}
+            >
+              <Icon name="folder" size={13} />
+              Ouvrir le dossier
+            </button>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }

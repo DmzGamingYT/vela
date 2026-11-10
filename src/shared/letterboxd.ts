@@ -154,7 +154,8 @@ export function sanitizeLetterboxdLog(raw: unknown): LetterboxdLogEntry[] {
     const candidate = item as Partial<LetterboxdLogEntry>
     const title = typeof candidate.title === 'string' ? short(candidate.title, 140) : ''
     if (!title) continue
-    const id = typeof candidate.id === 'string' && candidate.id.trim() ? candidate.id.slice(0, 60) : ''
+    const id =
+      typeof candidate.id === 'string' && candidate.id.trim() ? candidate.id.slice(0, 60) : ''
     if (!id || seen.has(id)) continue
     seen.add(id)
     items.push({
@@ -165,7 +166,9 @@ export function sanitizeLetterboxdLog(raw: unknown): LetterboxdLogEntry[] {
         typeof candidate.rating === 'number' && candidate.rating >= 0.5 && candidate.rating <= 5
           ? Math.round(candidate.rating * 2) / 2
           : null,
-      watchedDate: dateOrNull(typeof candidate.watchedDate === 'string' ? candidate.watchedDate : null),
+      watchedDate: dateOrNull(
+        typeof candidate.watchedDate === 'string' ? candidate.watchedDate : null
+      ),
       rewatch: candidate.rewatch === true,
       url: letterboxdLink(typeof candidate.url === 'string' ? candidate.url : null)
     })
@@ -183,7 +186,20 @@ export function letterboxdFeedUrl(user: string | null | undefined): string | nul
 }
 
 /** « 2024-10-25 » → « 25 oct. 2024 », sans dépendre d'une locale système. */
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+const MONTHS = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.'
+]
 
 export function logDateLabel(date: string | null): string {
   if (!date) return ''

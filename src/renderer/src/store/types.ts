@@ -10,6 +10,7 @@ export type Overlay =
   | 'downloads'
   | 'history'
   | 'bookmarks'
+  | 'shield'
   | null
 
 export type WorkMode = 'browse' | 'work'

@@ -70,14 +70,13 @@ export interface CoreSlice {
    * est affiché, sinon elles en recouvrent la moitié droite.
    */
   menuOpen: number
+  /** Hauteur réservée sous la page pour la pilule flottante (0 = aucune). */
   /**
    * Coup d'œil ouvert : sa carte est du DOM alors que la page est une vue
    * native, toujours au-dessus. Les onglets doivent donc quitter la scène.
    */
   peekOpen: boolean
   toasts: Toast[]
-  /** Niveau de zoom à annoncer, en pourcentage ; s'efface seul. */
-  zoomNotice: number | null
   /** Largeur de la coque, suivie au redimensionnement. */
   viewportWidth: number
   /** Largeur du conteneur des volets, mesurée (0 avant le premier rendu). */
@@ -116,13 +115,7 @@ export interface CoreSlice {
 }
 
 export interface BrowserState
-  extends CoreSlice,
-    TabsSlice,
-    SpacesSlice,
-    NotesSlice,
-    PrivacySlice,
-    AgentSlice,
-    UpdatesSlice {}
+  extends CoreSlice, TabsSlice, SpacesSlice, NotesSlice, PrivacySlice, AgentSlice, UpdatesSlice {}
 
 export const useBrowser = create<BrowserState>((set, get, api) => ({
   ...createCoreSlice(set, get, api),
@@ -147,7 +140,6 @@ function createCoreSlice(
     menuOpen: 0,
     peekOpen: false,
     toasts: [],
-    zoomNotice: null,
     viewportWidth: Number.POSITIVE_INFINITY,
     panesWidth: 0,
     panesFit: true,
@@ -371,7 +363,7 @@ function createCoreSlice(
           break
         case 'peek':
           // Coup d'œil : une carte dans la fenêtre, sans nouvel onglet.
-          void window.vela.peek.open({})
+          void window.vela.peek.open({}).catch(() => undefined)
           break
         case 'close-tab':
           if (active) state.closeTab(active.id)
@@ -432,8 +424,28 @@ function createCoreSlice(
         case 'bookmark':
           void state.toggleBookmark(active?.id)
           break
+        case 'copy-address':
+          if (active && /^https?:/i.test(active.url)) {
+            void navigator.clipboard
+              .writeText(active.url)
+              .then(() => state.toast('Adresse copiée.'))
+              .catch(() => state.toast('Copie impossible.', 'error'))
+          }
+          break
+        case 'duplicate-tab':
+          if (active && /^https?:/i.test(active.url)) state.newTab(active.url)
+          break
+        case 'sleep-tab':
+          if (active && !active.asleep && /^https?:/i.test(active.url)) state.sleep(active.id)
+          break
+        case 'unpin-tab':
+          if (active?.pinned) state.pin(active.id, false)
+          break
         case 'bookmarks':
           state.setOverlay(state.overlay === 'bookmarks' ? null : 'bookmarks')
+          break
+        case 'shield':
+          state.setOverlay(state.overlay === 'shield' ? null : 'shield')
           break
         case 'history':
           state.setOverlay(state.overlay === 'history' ? null : 'history')

@@ -7,7 +7,14 @@
  * requête vers un schéma inattendu.
  */
 
-import { HOME_URL, type CustomSearchEngine, type HistoryRetention, type SearchEngineId, type SearchKeyword, type StartupBehavior } from './types'
+import {
+  HOME_URL,
+  type CustomSearchEngine,
+  type HistoryRetention,
+  type SearchEngineId,
+  type SearchKeyword,
+  type StartupBehavior
+} from './types'
 import { isBuiltinEngine, searchUrl, type EngineOptions } from './url'
 
 export const MAX_CUSTOM_ENGINES = 12
@@ -16,11 +23,7 @@ export const MAX_KEYWORDS = 20
 /** Nom lisible d'un moteur personnalisé : borné, sans balise ni retour ligne. */
 export function sanitizeEngineName(raw: unknown): string {
   if (typeof raw !== 'string') return ''
-  return raw
-    .replace(/[<>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 40)
+  return raw.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40)
 }
 
 /**
@@ -104,7 +107,11 @@ export function sanitizeKeywords(raw: unknown, engines: CustomSearchEngine[]): S
     const item = entry as { keyword?: unknown; engineId?: unknown }
     const keyword =
       typeof item.keyword === 'string'
-        ? item.keyword.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12)
+        ? item.keyword
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+            .slice(0, 12)
         : ''
     const engineId = typeof item.engineId === 'string' ? item.engineId : ''
     if (!keyword || seen.has(keyword) || !known.has(engineId)) continue
@@ -115,7 +122,16 @@ export function sanitizeKeywords(raw: unknown, engines: CustomSearchEngine[]): S
   return out
 }
 
-const BUILTIN_IDS = ['duckduckgo', 'brave', 'startpage', 'google', 'bing', 'ecosia', 'qwant', 'searxng']
+const BUILTIN_IDS = [
+  'duckduckgo',
+  'brave',
+  'startpage',
+  'google',
+  'bing',
+  'ecosia',
+  'qwant',
+  'searxng'
+]
 
 export interface NavigationSettingsLike {
   searchEngine: SearchEngineId
@@ -176,7 +192,9 @@ export const HISTORY_RETENTIONS: { id: HistoryRetention; label: string; detail: 
 ]
 
 export function isHistoryRetention(value: unknown): value is HistoryRetention {
-  return value === 'forever' || value === '90' || value === '30' || value === '7' || value === 'never'
+  return (
+    value === 'forever' || value === '90' || value === '30' || value === '7' || value === 'never'
+  )
 }
 
 /** Date plancher de conservation : null quand tout est gardé. */
@@ -188,7 +206,11 @@ export function retentionFloor(retention: HistoryRetention, now: number): number
   return now - days * 86_400_000
 }
 
-export function keepByRetention(visitedAt: number, retention: HistoryRetention, now: number): boolean {
+export function keepByRetention(
+  visitedAt: number,
+  retention: HistoryRetention,
+  now: number
+): boolean {
   const floor = retentionFloor(retention, now)
   return floor === null ? true : visitedAt >= floor
 }

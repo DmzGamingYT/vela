@@ -12,7 +12,11 @@ import { describe, expect, it } from 'vitest'
 const require = createRequire(import.meta.url)
 const translator = require('../../scripts/translator.cjs') as {
   config: () => { configured: boolean; reason: string }
-  vision: (cfg: unknown, dataUrl: string, timeoutMs?: number) => Promise<{ ok: boolean; texte?: string; error?: string }>
+  vision: (
+    cfg: unknown,
+    dataUrl: string,
+    timeoutMs?: number
+  ) => Promise<{ ok: boolean; texte?: string; error?: string }>
 }
 
 const cfg = translator.config()

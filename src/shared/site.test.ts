@@ -40,9 +40,7 @@ const ANCIEN_NOM = /\bpetite\s+fen[eê]tre\b/i
 
 /** Décode les entités qui peuvent couper le nom dans une page HTML. */
 const normaliser = (texte: string): string =>
-  texte
-    .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
-    .replace(/&ecirc;|&#234;|&#xea;/gi, 'ê')
+  texte.replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').replace(/&ecirc;|&#234;|&#xea;/gi, 'ê')
 
 /** Résout une adresse interne vers le fichier qui la sert. */
 const resolveInternal = (path: string): string | null => {
@@ -211,9 +209,9 @@ describe('site — version et téléchargements', () => {
    * balisage a remplacé l'ancien tableau `<td class="file">` : on s'appuie sur
    * ces attributs de données, pas sur la mise en forme.
    */
-  const rows = [
-    ...home.matchAll(/<li class="dl-row" data-file="([^"]+)">([\s\S]*?)<\/li>/g)
-  ].map((match) => ({ file: match[1], html: match[2] }))
+  const rows = [...home.matchAll(/<li class="dl-row" data-file="([^"]+)">([\s\S]*?)<\/li>/g)].map(
+    (match) => ({ file: match[1], html: match[2] })
+  )
 
   it('annonce une seule version, et jamais celle d’une version à venir', () => {
     expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
@@ -235,7 +233,10 @@ describe('site — version et téléchargements', () => {
   })
 
   it('liste les six installateurs avec leur ligne et leur lien de release', () => {
-    expect(rows.map((row) => row.file), 'fiche de téléchargement').toEqual(files)
+    expect(
+      rows.map((row) => row.file),
+      'fiche de téléchargement'
+    ).toEqual(files)
     for (const file of files) {
       expect(home, file).toContain(file)
       expect(home, `${file} : lien`).toContain(`releases/download/v${announced}/${file}`)
@@ -303,8 +304,11 @@ describe('site — confidentialité alignée sur l’application', () => {
   })
 
   it('nomme les destinations que l’application contacte', () => {
+    const normalizedPrivacy = privacy.replace(/\s+/g, ' ')
     for (const flow of NETWORK_FLOWS) {
-      expect(privacy, `${flow.label} : destination`).toContain(flow.target)
+      expect(normalizedPrivacy, `${flow.label} : destination`).toContain(
+        flow.target.replace(/\s+/g, ' ')
+      )
     }
   })
 
@@ -339,7 +343,9 @@ describe('site — promesses cohérentes avec l’aide', () => {
     for (const text of [readme, aide]) {
       expect(text).toMatch(/Google peut[^.]{0,60}refuser/i)
       expect(text).toMatch(/navigateur système/i)
-      expect(text).toMatch(/(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i)
+      expect(text).toMatch(
+        /(n’importe jamais de cookies|aucune session ni aucun cookie|pas encore pris en charge)/i
+      )
     }
     expect(all).not.toMatch(/Connexion Google garantie/i)
   })
@@ -380,9 +386,7 @@ describe('site — vocabulaire des nouveautés', () => {
       .map((fichier) => join(root, 'site', 'releases', fichier))
     const coupables = [...publishedHtml(), ...notes].filter((fichier) => {
       const brut = readFileSync(fichier, 'utf8')
-      const texte = normaliser(
-        fichier.endsWith('.json') ? JSON.stringify(JSON.parse(brut)) : brut
-      )
+      const texte = normaliser(fichier.endsWith('.json') ? JSON.stringify(JSON.parse(brut)) : brut)
       return ANCIEN_NOM.test(texte)
     })
 

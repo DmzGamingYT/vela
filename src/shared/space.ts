@@ -454,12 +454,14 @@ export function moveShortcutBy(
 const SUGGESTIONS: { set: string; words: RegExp }[] = [
   {
     set: 'dev',
-    words: /\b(dev|devops|developpement|developpeur|code|programmation|veille|tech|technique|informatique)\b/
+    words:
+      /\b(dev|devops|developpement|developpeur|code|programmation|veille|tech|technique|informatique)\b/
   },
   { set: 'study', words: /\b(etude|etudes|ecole|universite|uni|fac|cours|lycee|these|memoire)\b/ },
   {
     set: 'cinema',
-    words: /\b(cinema|films?|series?|movies?|serie|acteur|actrice|realisateur|realisation|plateau)\b/
+    words:
+      /\b(cinema|films?|series?|movies?|serie|acteur|actrice|realisateur|realisation|plateau)\b/
   },
   { set: 'gaming', words: /\b(gaming|game|games|jeu|jeux|loisir|loisirs|stream)\b/ },
   { set: 'work', words: /\b(travail|boulot|pro|professionnel|bureau|equipe|job)\b/ },
@@ -507,7 +509,8 @@ export function sanitizeWatchlist(raw: unknown): SpaceWatchItem[] {
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue
     const candidate = item as Partial<SpaceWatchItem>
-    const title = typeof candidate.title === 'string' ? candidate.title.trim().replace(/\s+/g, ' ') : ''
+    const title =
+      typeof candidate.title === 'string' ? candidate.title.trim().replace(/\s+/g, ' ') : ''
     if (!title) continue
     const clean = title.slice(0, 120)
     const key = clean.toLowerCase()
@@ -521,7 +524,10 @@ export function sanitizeWatchlist(raw: unknown): SpaceWatchItem[] {
       id,
       title: clean,
       watched: candidate.watched === true,
-      addedAt: typeof candidate.addedAt === 'number' && candidate.addedAt > 0 ? candidate.addedAt : Date.now()
+      addedAt:
+        typeof candidate.addedAt === 'number' && candidate.addedAt > 0
+          ? candidate.addedAt
+          : Date.now()
     })
     if (items.length >= MAX_WATCH_ITEMS) break
   }
@@ -584,7 +590,9 @@ const PARTITION = /^persist:[a-z0-9._-]{1,64}$/i
  * l'espace vient d'un vela.json ancien. Deux espaces ne partagent jamais la
  * même partition, et le résultat est stable d'un lancement à l'autre.
  */
-export function partitionFor(space: { id?: unknown; partition?: unknown } | null | undefined): string {
+export function partitionFor(
+  space: { id?: unknown; partition?: unknown } | null | undefined
+): string {
   const given = typeof space?.partition === 'string' ? space.partition.trim() : ''
   if (PARTITION.test(given)) return given
   const id =

@@ -1,0 +1,136 @@
+/* ---------------------------------------------------------------
+   Vela 0.4 — des icônes sans matière
+   ---------------------------------------------------------------
+   Une seule règle pour tous les boutons d'icônes du châssis : aucune
+   matière au repos, un voile au survol, l'accent pour l'état actif. Les
+   passes précédentes donnaient à chacun sa pastille (`--surface-2`,
+   `--fill-2`, `--tint`, `--bar-hover`) : d'où des blocs gris empilés dans
+   le rail, les en-têtes et la barre d'adresse. Cette tranche est chargée
+   en dernier ; elle neutralise ces fonds au lieu de les traquer un par un.
+   --------------------------------------------------------------- */
+
+.icon-btn,
+.rail-ghost,
+.rail-mode,
+.bar-btn,
+.statusbar-utility,
+.sidebar-dock[data-compact] .dock-button {
+  background: none;
+  box-shadow: none;
+  transition:
+    background var(--dur-1) var(--ease-standard),
+    color var(--dur-1) var(--ease-standard),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.icon-btn:hover:not(:disabled),
+.rail-ghost:hover,
+.rail-mode:hover,
+.bar-btn:hover:not(:disabled),
+.statusbar-utility:hover,
+.sidebar-dock[data-compact] .dock-button:hover {
+  background: var(--hover);
+  box-shadow: none;
+}
+
+/* L'icône ne saute plus dans son bouton : le voile suffit à dire le survol. */
+.icon-btn:hover:not(:disabled) svg,
+.rail-ghost:hover svg,
+.sidebar-dock[data-compact] .dock-button:hover .dock-icon {
+  transform: none;
+}
+
+.icon-btn:active:not(:disabled),
+.rail-ghost:active,
+.rail-mode:active,
+.bar-btn:active:not(:disabled),
+.statusbar-utility:active,
+.sidebar-dock[data-compact] .dock-button:active {
+  background: var(--hover);
+  transform: scale(0.94);
+}
+
+/* Chaque surface garde sa gamme de couleurs ; seul le fond disparaît. */
+.bar-btn:hover:not(:disabled) {
+  color: var(--bar-ink);
+}
+
+.statusbar-utility:hover {
+  color: var(--sb-ink);
+}
+
+.icon-btn[data-active='true'],
+.rail-ghost[data-active='true'],
+.bar-btn[data-active='true'] {
+  background: none;
+  box-shadow: none;
+  color: var(--clay);
+}
+
+.bar-btn[data-active='true'] {
+  color: var(--bar-accent);
+}
+
+/* Le mode du rail : l'icône s'allume et une barre de 2,5 × 14 px se pose sur
+   le bord extérieur du rail. C'est le signal de l'état actif, pas un fond. */
+.rail-mode {
+  position: relative;
+  border-color: transparent;
+}
+
+.rail-mode[data-active='true'] {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--clay);
+}
+
+.rail-mode[data-active='true']::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 2.5px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--clay);
+  transform: translateY(-50%);
+}
+
+/* Dock replié : icônes seules, donc même contrat que le rail. */
+.sidebar-dock[data-compact] .dock-button {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.sidebar-dock[data-compact] .dock-button[data-active='true'] {
+  border-color: transparent;
+  background: none;
+  color: var(--clay);
+}
+
+.sidebar-dock[data-compact] .dock-button--agent {
+  color: var(--clay);
+}
+
+/* Focus : un anneau de 2 px, jamais un fond. */
+.icon-btn:focus-visible,
+.rail-ghost:focus-visible,
+.rail-mode:focus-visible,
+.bar-btn:focus-visible,
+.statusbar-utility:focus-visible,
+.sidebar-dock[data-compact] .dock-button:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-btn,
+  .rail-ghost,
+  .rail-mode,
+  .bar-btn,
+  .statusbar-utility,
+  .sidebar-dock[data-compact] .dock-button {
+    transition: none;
+  }
+}

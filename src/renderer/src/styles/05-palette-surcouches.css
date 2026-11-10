@@ -4,7 +4,9 @@
 @media (prefers-reduced-motion: reduce) {
   /* 0,01 ms et non `0s` : l'animation ne se voit pas, mais son événement de
      fin continue d'être émis pour le code qui l'attend. */
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -48,7 +50,7 @@
   .icon-btn svg,
   .group-chevron,
   .tab-action svg,
-  .tab-row[data-dragging="true"] {
+  .tab-row[data-dragging='true'] {
     transition: none !important;
   }
 }
@@ -143,7 +145,7 @@
   color: var(--ink-soft);
 }
 
-.command-item[data-active="true"] {
+.command-item[data-active='true'] {
   background: color-mix(in srgb, var(--clay) 10%, var(--surface-2));
   color: var(--ink);
 }
@@ -159,7 +161,7 @@
   background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
-.command-item[data-active="true"] .command-icon {
+.command-item[data-active='true'] .command-icon {
   color: var(--clay);
   background: color-mix(in srgb, var(--clay) 12%, transparent);
 }
@@ -355,7 +357,9 @@
   color: var(--muted);
   opacity: 0;
   transform: translateX(-4px);
-  transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-2) var(--ease-standard);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-standard);
 }
 
 .brief-line:hover .brief-line-go {
@@ -365,4 +369,3 @@
 }
 
 /* --- Agent ----------------------------------------------------- */
-

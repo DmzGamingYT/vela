@@ -94,6 +94,8 @@ export interface TabGroup {
   spaceId: string
   name: string
   color: string
+  /** Glyphe choisi pour la pastille ; absent = pastille seule. */
+  icon?: string
   collapsed: boolean
   createdAt: number
 }
@@ -187,6 +189,8 @@ export type { SkyVariant }
 /** Rythme du contrôle automatique des mises à jour ; `off` garde le bouton manuel. */
 export type UpdateChecks = 'auto' | 'weekly' | 'off'
 
+/** Pilule flottante du bas : toujours visible, au survol, ou jamais. */
+
 export interface Settings {
   theme: Theme
   searchEngine: SearchEngineId
@@ -272,6 +276,7 @@ export interface Settings {
   thumbnails: boolean
   /** Espacement du contrôle automatique des mises à jour (Réglages › Mises à jour). */
   updateChecks: UpdateChecks
+  /** Pilule flottante du bas de la fenêtre. */
   sidebarCollapsed: boolean
   onboarded: boolean
   agent: AgentSettings
@@ -359,6 +364,16 @@ export interface ProcessInfo {
   memoryMb: number | null
 }
 
+/** Compteurs du bouclier, par jour et par semaine locales. */
+export interface PrivacyStats {
+  /** Jour local `AAAA-MM-JJ` du compteur `today`. */
+  day: string
+  today: number
+  /** Lundi de la semaine en cours, `AAAA-MM-JJ`. */
+  weekStart: string
+  week: number
+}
+
 export interface PersistedState {
   version: 1
   spaces: Space[]
@@ -378,6 +393,8 @@ export interface PersistedState {
   tasks: Task[]
   works: WorkItem[]
   tunnelMaps: import('./tunnel').TunnelMap[]
+  /** Compteurs du bouclier : aujourd’hui et cette semaine. */
+  privacyStats: PrivacyStats
 }
 
 export interface TabView extends TabState {
@@ -442,6 +459,10 @@ export interface AppView {
   works: WorkSummary[]
   downloads: DownloadItem[]
   blockedTotal: number
+  /** Requêtes arrêtées depuis le début de la journée locale. */
+  blockedToday: number
+  /** Requêtes arrêtées depuis le lundi de la semaine en cours. */
+  blockedWeek: number
 }
 
 export interface Rect {
@@ -522,6 +543,10 @@ export type ShortcutAction =
   | 'settings'
   | 'sidebar'
   | 'reload'
+  | 'copy-address'
+  | 'duplicate-tab'
+  | 'sleep-tab'
+  | 'unpin-tab'
   | 'back'
   | 'forward'
   | 'zoom-in'
@@ -533,6 +558,7 @@ export type ShortcutAction =
   | 'bookmark'
   | 'bookmarks'
   | 'history'
+  | 'shield'
   | 'print'
   | 'home'
   | 'tab-select'

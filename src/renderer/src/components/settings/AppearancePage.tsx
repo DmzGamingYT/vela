@@ -278,7 +278,10 @@ export default function AppearancePage({
           <h2 id="appearance-mode">Mode</h2>
           <p>Clair, sombre, ou comme votre système.</p>
         </div>
-        <ModeCards value={settings.theme} onChange={(value) => void updateSettings({ theme: value })} />
+        <ModeCards
+          value={settings.theme}
+          onChange={(value) => void updateSettings({ theme: value })}
+        />
       </section>
 
       <AccentColorSection settings={settings} mode={mode} updateSettings={updateSettings} />
@@ -353,7 +356,8 @@ export default function AppearancePage({
                   className="action ghost"
                   onClick={() =>
                     void window.vela.appearance.pickImage().then((picked) => {
-                      if (picked) void updateSettings({ homeImage: picked.path, homeBackground: 'image' })
+                      if (picked)
+                        void updateSettings({ homeImage: picked.path, homeBackground: 'image' })
                     })
                   }
                 >

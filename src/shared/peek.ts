@@ -6,14 +6,7 @@
  */
 
 export type PeekKeyAction =
-  | 'close'
-  | 'address'
-  | 'reload'
-  | 'back'
-  | 'forward'
-  | 'zoom-in'
-  | 'zoom-out'
-  | 'zoom-reset'
+  'close' | 'address' | 'reload' | 'back' | 'forward' | 'zoom-in' | 'zoom-out' | 'zoom-reset'
 
 export interface PeekKeyInput {
   type: string

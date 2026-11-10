@@ -10,13 +10,10 @@ export default function BookmarksPanel() {
   const setOverlay = useBrowser((s) => s.setOverlay)
   const newTab = useBrowser((s) => s.newTab)
   const removeBookmark = useBrowser((s) => s.removeBookmark)
-  const toggleBookmark = useBrowser((s) => s.toggleBookmark)
   const sheetRef = useModalFocus<HTMLDivElement>()
 
   if (!view) return null
   const bookmarks = view.bookmarks
-  const active = view.tabs.find((tab) => tab.id === view.activeTabId)
-  const activeSaved = Boolean(active && bookmarks.some((entry) => entry.url === active.url))
 
   return (
     <div className="overlay" onMouseDown={() => setOverlay(null)}>
@@ -33,19 +30,15 @@ export default function BookmarksPanel() {
             <h1>Marque-pages</h1>
             <p>Vos pages gardées, dans l’ordre où vous les avez ajoutées.</p>
           </div>
+          {/* Pas d’étoile ici : celle de la barre d’adresse garde déjà la page
+              courante. Deux boutons pour un même geste, un de trop. */}
           <div className="library-head-actions">
-            {active && (
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => void toggleBookmark(active.id)}
-                disabled={activeSaved}
-              >
-                <Icon name="star" size={13} filled={activeSaved} />
-                {activeSaved ? 'Page déjà gardée' : 'Garder cette page'}
-              </button>
-            )}
-            <button type="button" className="icon-btn" onClick={() => setOverlay(null)} title="Fermer">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setOverlay(null)}
+              title="Fermer"
+            >
               <Icon name="close" size={17} />
             </button>
           </div>
@@ -54,7 +47,8 @@ export default function BookmarksPanel() {
         <div className="settings-scroll library-scroll">
           {bookmarks.length === 0 && (
             <p className="setting-hint">
-              Aucun marque-page. Ouvrez une page puis {shortcut('D')}, ou l’étoile dans la barre d’adresse.
+              Aucun marque-page. Ouvrez une page puis {shortcut('D')}, ou l’étoile dans la barre
+              d’adresse.
             </p>
           )}
           <ul className="library-list">

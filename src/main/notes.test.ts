@@ -1,4 +1,12 @@
-import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+  mkdirSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -22,7 +30,10 @@ afterEach(() => {
 
 describe('étiquettes de note', () => {
   it('nettoie, déduplique et borne le nombre d’étiquettes', () => {
-    expect(normalizeTags(['  #Histoire ', 'histoire', 'TODO', '', 42])).toEqual(['Histoire', 'TODO'])
+    expect(normalizeTags(['  #Histoire ', 'histoire', 'TODO', '', 42])).toEqual([
+      'Histoire',
+      'TODO'
+    ])
     const many = Array.from({ length: 12 }, (_, index) => `tag-${index}`)
     expect(normalizeTags(many)).toHaveLength(8)
     expect(normalizeTags('histoire')).toEqual([])
@@ -57,7 +68,13 @@ describe('NotesStore', () => {
 
   it('conserve les étiquettes quand une sauvegarde ne les mentionne pas', () => {
     const store = new NotesStore(tempDir())
-    const note = store.save({ title: 'Note', body: 'v1', spaceId: 'space', tags: ['projet'], pinned: true })
+    const note = store.save({
+      title: 'Note',
+      body: 'v1',
+      spaceId: 'space',
+      tags: ['projet'],
+      pinned: true
+    })
     const updated = store.save({ id: note.id, title: 'Note', body: 'v2', spaceId: 'space' })
     expect(updated.tags).toEqual(['projet'])
     expect(updated.pinned).toBe(true)
@@ -110,7 +127,12 @@ describe('NotesStore', () => {
   it('retrouve la note rattachée à une URL', () => {
     const store = new NotesStore(tempDir())
     store.save({ title: 'A', body: 'a', spaceId: 'space', url: 'https://example.org/a' })
-    const latest = store.save({ title: 'B', body: 'b', spaceId: 'space', url: 'https://example.org/a' })
+    const latest = store.save({
+      title: 'B',
+      body: 'b',
+      spaceId: 'space',
+      url: 'https://example.org/a'
+    })
     expect(store.findByUrl('https://example.org/a')?.id).toBe(latest.id)
     expect(store.findByUrl('https://example.org/inconnu')).toBeNull()
   })
@@ -123,7 +145,13 @@ describe('NotesStore', () => {
     writeFileSync(
       join(notesDir, 'index.json'),
       JSON.stringify([
-        { id: 'note-1', title: 'Ancienne', file: 'ancienne-1234.md', spaceId: 'space', updatedAt: 1 }
+        {
+          id: 'note-1',
+          title: 'Ancienne',
+          file: 'ancienne-1234.md',
+          spaceId: 'space',
+          updatedAt: 1
+        }
       ]),
       'utf8'
     )
@@ -137,7 +165,10 @@ describe('protection des notes et enregistrements', () => {
   it('conserve les enregistrements et bloque les écritures si l’index est corrompu', () => {
     const dir = tempDir()
     const audio = new NoteAudioStore(dir)
-    const saved = audio.save('space-1', `data:audio/webm;base64,${Buffer.from('audio').toString('base64')}`)
+    const saved = audio.save(
+      'space-1',
+      `data:audio/webm;base64,${Buffer.from('audio').toString('base64')}`
+    )
     const index = join(dir, 'notes', 'index.json')
     writeFileSync(index, '{ invalide', 'utf8')
     const notes = new NotesStore(dir)
@@ -145,7 +176,9 @@ describe('protection des notes et enregistrements', () => {
     if (notes.canReadIndex) audio.prune(notes.audioNames())
     expect(notes.canReadIndex).toBe(false)
     expect(saved && audio.read(saved.name)).toBeTruthy()
-    expect(() => notes.save({ title: 'Nouvelle', body: '', spaceId: 'space-1' })).toThrow(/illisible/)
+    expect(() => notes.save({ title: 'Nouvelle', body: '', spaceId: 'space-1' })).toThrow(
+      /illisible/
+    )
     expect(readFileSync(index, 'utf8')).toBe('{ invalide')
   })
 
@@ -172,8 +205,16 @@ describe('liens entre notes dans le stockage', () => {
   function linked(): { store: NotesStore; a: string; b: string; c: string } {
     const store = new NotesStore(tempDir())
     const c = store.save({ title: 'Sources', body: 'Rien encore.', spaceId: 'space' })
-    const b = store.save({ title: 'Méthode', body: 'Voir [[Sources]] et [[Projet TFE|le projet]].', spaceId: 'space' })
-    const a = store.save({ title: 'Projet TFE', body: 'La [[Méthode]] avant tout.', spaceId: 'space' })
+    const b = store.save({
+      title: 'Méthode',
+      body: 'Voir [[Sources]] et [[Projet TFE|le projet]].',
+      spaceId: 'space'
+    })
+    const a = store.save({
+      title: 'Projet TFE',
+      body: 'La [[Méthode]] avant tout.',
+      spaceId: 'space'
+    })
     return { store, a: a.id, b: b.id, c: c.id }
   }
 
@@ -190,7 +231,12 @@ describe('liens entre notes dans le stockage', () => {
 
   it('gère un cycle A → B → A sans lien cassé', () => {
     const { store, a, b } = linked()
-    store.save({ id: b, title: 'Méthode et outils', body: store.get(b)?.body ?? '', spaceId: 'space' })
+    store.save({
+      id: b,
+      title: 'Méthode et outils',
+      body: store.get(b)?.body ?? '',
+      spaceId: 'space'
+    })
     expect(store.get(a)?.body).toBe('La [[Méthode et outils]] avant tout.')
     store.save({ id: b, title: 'Méthode', body: store.get(b)?.body ?? '', spaceId: 'space' })
     expect(store.get(a)?.body).toBe('La [[Méthode]] avant tout.')
@@ -230,36 +276,42 @@ describe('liens entre notes dans le stockage', () => {
     expect(store.get(b)?.body).toContain('[[Projet de mémoire|le projet]]')
   })
 
-  it.skipIf(process.getuid?.() === 0)('garde le renommage quand une note liée refuse l’écriture', () => {
-    const { store, a, b } = linked()
-    const linkedFile = fileOf(store, 'Méthode')
-    const before = readFileSync(linkedFile, 'utf8')
-    chmodSync(linkedFile, 0o444)
-    try {
-      const renamed = store.rename(a, 'Projet de mémoire')
-      expect(renamed?.note.title).toBe('Projet de mémoire')
-      expect(renamed?.note.linksUpdated ?? 0).toBe(0)
-      expect(renamed?.note.linksFailed).toBe(1)
-      expect(store.get(b)?.body).toBe(before)
-      expect(store.list().some((note) => note.title === 'Projet de mémoire')).toBe(true)
-    } finally {
-      chmodSync(linkedFile, 0o644)
+  it.skipIf(process.getuid?.() === 0)(
+    'garde le renommage quand une note liée refuse l’écriture',
+    () => {
+      const { store, a, b } = linked()
+      const linkedFile = fileOf(store, 'Méthode')
+      const before = readFileSync(linkedFile, 'utf8')
+      chmodSync(linkedFile, 0o444)
+      try {
+        const renamed = store.rename(a, 'Projet de mémoire')
+        expect(renamed?.note.title).toBe('Projet de mémoire')
+        expect(renamed?.note.linksUpdated ?? 0).toBe(0)
+        expect(renamed?.note.linksFailed).toBe(1)
+        expect(store.get(b)?.body).toBe(before)
+        expect(store.list().some((note) => note.title === 'Projet de mémoire')).toBe(true)
+      } finally {
+        chmodSync(linkedFile, 0o644)
+      }
     }
-  })
+  )
 
-  it.skipIf(process.getuid?.() === 0)('remet le fichier en place si l’index ne peut pas être écrit', () => {
-    const { store, a } = linked()
-    const before = fileOf(store, 'Projet TFE')
-    chmodSync(store.dir, 0o555)
-    try {
-      expect(() => store.rename(a, 'Projet de mémoire')).toThrow()
-    } finally {
-      chmodSync(store.dir, 0o755)
+  it.skipIf(process.getuid?.() === 0)(
+    'remet le fichier en place si l’index ne peut pas être écrit',
+    () => {
+      const { store, a } = linked()
+      const before = fileOf(store, 'Projet TFE')
+      chmodSync(store.dir, 0o555)
+      try {
+        expect(() => store.rename(a, 'Projet de mémoire')).toThrow()
+      } finally {
+        chmodSync(store.dir, 0o755)
+      }
+      expect(existsSync(before)).toBe(true)
+      expect(store.get(a)?.title).toBe('Projet TFE')
+      expect(store.get(a)?.body).toContain('[[Méthode]]')
     }
-    expect(existsSync(before)).toBe(true)
-    expect(store.get(a)?.title).toBe('Projet TFE')
-    expect(store.get(a)?.body).toContain('[[Méthode]]')
-  })
+  )
 
   it('liste les enregistrements vocaux cités par les notes', () => {
     const store = new NotesStore(tempDir())
@@ -288,7 +340,12 @@ describe('corbeille des notes', () => {
     expect(store.list().some((item) => item.id === note.id)).toBe(false)
 
     const [trashed] = store.listTrash()
-    expect(trashed).toMatchObject({ id: note.id, title: 'Brouillon', tags: ['projet'], pinned: true })
+    expect(trashed).toMatchObject({
+      id: note.id,
+      title: 'Brouillon',
+      tags: ['projet'],
+      pinned: true
+    })
     expect(trashed.preview).toBe('À garder')
 
     const restored = store.restore(note.id)

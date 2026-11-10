@@ -1,0 +1,304 @@
+/* Tranche 66 — Atelier : la mise en page tient dans la fenêtre.
+   Les colonnes de grille cèdent avant les actions, et les chiffres parlent
+   tous la même langue : « retenues sur lues ». */
+
+/* ── Coupures à droite ────────────────────────────────────────────────── */
+.tw-screen,
+.tw-stage,
+.tw-center,
+.tw-synth,
+.tw-doc-wrap,
+.tw-synth-side,
+.tw-angles,
+.tw-angle,
+.tw-list,
+.tw-sheet,
+.tunnel-detail,
+.tunnel-projects,
+.tunnel-map-wrap {
+  min-width: 0;
+}
+
+.tw-synth {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 282px);
+}
+
+.tw-synth-head,
+.tw-center-head,
+.tw-map-head,
+.tw-dock {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.tw-synth-head > .tw-btn,
+.tw-dock > .tw-btn,
+.tw-tools {
+  flex: 0 0 auto;
+}
+
+.tw-synth-head > .tw-btn {
+  white-space: nowrap;
+}
+
+.tw-synth-side {
+  overflow-x: hidden;
+}
+
+.tw-doc-wrap {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .tw-doc-wrap {
+    padding: 20px 18px 28px;
+  }
+
+  .tw-synth {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 244px);
+  }
+}
+
+/* Une pastille de citation ne se coupe jamais entre deux lignes. */
+.tw-cite {
+  white-space: nowrap;
+}
+
+/* ── Contrastes des aides et des compteurs ────────────────────────────── */
+.tw-hint,
+.tw-map-note,
+.tw-tally,
+.tw-synth .tw-note,
+.tunnel-hidden-note {
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+/* ── Entonnoir : une échelle, pas quatre curseurs ─────────────────────── */
+.tw-station {
+  align-items: stretch;
+}
+
+.tw-station-track {
+  display: none;
+}
+
+.tw-station-top span {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tw-filter-line:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tunnel-gauge-value {
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* ── Détail : actions rangées, source liée titrée ─────────────────────── */
+.tunnel-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 5px;
+}
+
+.tunnel-detail-actions .action,
+.tunnel-detail-actions .ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  justify-content: flex-start;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tunnel-keep {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.tunnel-detail-actions .ghost-btn.danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--line-soft));
+}
+
+.tunnel-links-head {
+  margin: 8px 0 4px;
+  font-size: 9.5px;
+  font-weight: 560;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tunnel-links {
+  margin: 0;
+  padding: 0;
+}
+
+.tunnel-gauge-legend {
+  margin: 6px 0 0;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ── Carte : légende lisible, zoom en + / − ───────────────────────────── */
+.tunnel-legend li {
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+}
+
+.tunnel-legend li[data-kind='subject'] i {
+  width: 11px;
+  height: 3px;
+  border-radius: 2px;
+  background: #5b56d6;
+}
+
+.tunnel-legend li[data-kind='angle'] i {
+  background: #c0753a;
+}
+
+.tunnel-legend li[data-kind='subangle'] i {
+  background: #2f8f6b;
+  border-radius: 50%;
+}
+
+.tunnel-legend li[data-kind='detail'] i {
+  background: #3b7bb5;
+}
+
+.tunnel-zoom button {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ── Panneaux flottants contenus dans la fenêtre ──────────────────────── */
+.tunnel-projects {
+  max-width: min(380px, calc(100vw - 24px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-station,
+  .tw-cite {
+    transition: none;
+  }
+}
+
+/* ── Progression en une ligne, sans barres trompeuses ──────────────────── */
+.tw-progress {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tw-progress button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tw-progress button:hover,
+.tw-progress button[data-on='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.tw-progress b {
+  color: var(--ink);
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+}
+
+.tw-progress > span {
+  color: var(--faint);
+}
+
+/* ── Synthèse : options et alerte de malentendu ────────────────────────── */
+.tw-options {
+  margin: 18px 0 10px;
+  overflow-x: auto;
+}
+
+.tw-options table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tw-options th {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  font-size: 9.5px;
+  font-weight: 560;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tw-options td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.tw-options td:first-child {
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.tw-options-pages {
+  white-space: nowrap;
+}
+
+.tw-divergence {
+  border-left: 2px solid var(--tunnel-warn, var(--clay));
+}
+
+.tw-divergence p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Les boutons de l’en-tête de synthèse ne poussent plus la colonne. */
+.tw-synth-head {
+  overflow: hidden;
+}
+
+.tw-synth-head > .tw-btn {
+  max-width: 230px;
+}
+
+.tunnel-refonte,
+.tw-bar,
+.tw-steps {
+  min-width: 0;
+}
+
+.tw-bar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
