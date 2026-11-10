@@ -1,0 +1,45 @@
+{
+  "version": "0.3.35",
+  "slug": "0-3-35",
+  "date": "2026-11-10",
+  "headline": "L’icône passe au verre, l’Atelier part en parallèle",
+  "intro": "La tuile crème reçoit une calotte liquide, un reflet d’angle et un liseré prismatique sans noyer le V. L’Atelier interroge ses variantes ensemble et sépare les recherches des lectures, pendant que les raccourcis des panneaux restent actifs même sans vue.",
+  "tags": ["icône", "atelier", "performance", "raccourcis"],
+  "stats": {
+    "commits": 2,
+    "files": 26,
+    "insertions": 560,
+    "deletions": 280
+  },
+  "sections": [
+    {
+      "title": "Le V sous une calotte de verre",
+      "body": [
+        "La tuile garde son crème, son V à deux voiles, son soleil d’argile et son horizon. Une calotte ondulée, un ménisque plus net, un reflet d’angle et un liseré prismatique donnent l’épaisseur du verre sans recouvrir le monogramme.",
+        "Le maître est rendu en 1024 px puis décliné pour macOS, Windows et la barre de menus. À 32 px, le V et le soleil restent distincts ; à 16 px, le verre s’efface au profit du signe."
+      ]
+    },
+    {
+      "title": "Les variantes partent ensemble",
+      "body": [
+        "Les variantes de recherche d’un angle ne s’attendent plus l’une après l’autre : elles partent ensemble, avec une file de six requêtes qui leur est propre. La lecture des pages garde sa file séparée, elle aussi limitée à six.",
+        "Le budget de pages est toujours respecté : seules les variantes qui peuvent encore le remplir sont lancées, et une variante en erreur n’empêche pas les autres de revenir."
+      ]
+    },
+    {
+      "title": "Les panneaux gardent leurs raccourcis",
+      "body": [
+        "Les effets de ⌘Z et de ⌘N sont montés avant le retour anticipé des panneaux : supprimer un dossier puis annuler, ou ouvrir le menu « Nouvelle note » après avoir fermé la vue, ne dépend plus de l’ordre des hooks.",
+        "La scène garde aussi ses épreuves gelées et ses mesures de redimensionnement au bon endroit, pour que les panneaux qui couvrent une vue native ne laissent pas de zone noire."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir l’app : le Dock affiche la tuile crème et le V, et la barre de menus garde le gabarit monochrome.",
+    "Réduire l’icône à 32 puis 16 px : le V reste lisible et le verre ne brouille pas le signe.",
+    "Lancer une recherche dans l’Atelier : les variantes partent ensemble et les lectures restent limitées à six.",
+    "Supprimer un dossier puis ⌘Z ; ouvrir Notes puis ⌘N : les raccourcis répondent même après fermeture de la vue.",
+    "Après publication, vérifier que le site annonce 0.3.35 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.34...v0.3.35"
+}
