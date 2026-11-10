@@ -102,13 +102,13 @@
     win: {
       label: 'Télécharger pour Windows',
       file: 'Vela-0.3.34-x64.exe',
-      size: 'x64 · 122,1 Mo',
+      size: 'x64 · 122,2 Mo',
       href: download('Vela-0.3.34-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
       file: 'Vela-0.3.34-x86_64.AppImage',
-      size: 'AppImage · 126,8 Mo',
+      size: 'AppImage · 126,9 Mo',
       href: download('Vela-0.3.34-x86_64.AppImage')
     },
     other: {
