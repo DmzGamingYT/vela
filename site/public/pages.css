@@ -582,12 +582,14 @@
   border: 1px solid var(--line);
   border-radius: 2px;
   color: var(--ink-3);
-  transition: color 0.18s var(--ease), background 0.18s var(--ease),
+  transition:
+    color 0.18s var(--ease),
+    background 0.18s var(--ease),
     border-color 0.18s var(--ease);
 }
 
 .cmd .copy::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: -5px;
 }

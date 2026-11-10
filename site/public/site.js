@@ -77,45 +77,45 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.33/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.34/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.33-universal.dmg',
+      file: 'Vela-0.3.34-universal.dmg',
       size: 'Apple silicon et Intel · 224,3 Mo',
-      href: download('Vela-0.3.33-universal.dmg')
+      href: download('Vela-0.3.34-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.33-arm64.dmg',
+      file: 'Vela-0.3.34-arm64.dmg',
       size: 'Apple silicon · 120,6 Mo',
-      href: download('Vela-0.3.33-arm64.dmg')
+      href: download('Vela-0.3.34-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.33-x64.dmg',
+      file: 'Vela-0.3.34-x64.dmg',
       size: 'Intel non testé · 127,9 Mo',
-      href: download('Vela-0.3.33-x64.dmg')
+      href: download('Vela-0.3.34-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
-      file: 'Vela-0.3.33-x64.exe',
+      file: 'Vela-0.3.34-x64.exe',
       size: 'x64 · 122,1 Mo',
-      href: download('Vela-0.3.33-x64.exe')
+      href: download('Vela-0.3.34-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
-      file: 'Vela-0.3.33-x86_64.AppImage',
+      file: 'Vela-0.3.34-x86_64.AppImage',
       size: 'AppImage · 126,8 Mo',
-      href: download('Vela-0.3.33-x86_64.AppImage')
+      href: download('Vela-0.3.34-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
-      file: 'Vela-0.3.33',
+      file: 'Vela-0.3.34',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.33`
+      href: `${RELEASE}/tag/v0.3.34`
     }
   }
 
@@ -337,7 +337,7 @@
   if (diagnostic) {
     diagnostic.addEventListener('click', async () => {
       const texte = [
-        'Vela 0.3.33',
+        'Vela 0.3.34',
         `Système : ${navigator.userAgentData?.platform || navigator.platform || 'inconnu'}`,
         `Langue : ${navigator.language}`,
         `Page : ${location.href}`,

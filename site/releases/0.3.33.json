@@ -4,12 +4,7 @@
   "date": "2026-11-08",
   "headline": "Le gestionnaire lit la mémoire, le menu tient dans la fenêtre",
   "intro": "Le gestionnaire de processus donne la mémoire réelle de chaque onglet, accorde son compteur et nomme l’onglet d’accueil. Le menu d’un onglet ne mord plus le bas de la fenêtre : il regroupe les actions de l’agent dans un sous-menu, et « Copier » passe en tête du menu de page.",
-  "tags": [
-    "processus",
-    "menus",
-    "colonne latérale",
-    "accessibilité"
-  ],
+  "tags": ["processus", "menus", "colonne latérale", "accessibilité"],
   "stats": {
     "commits": 2,
     "files": 134,

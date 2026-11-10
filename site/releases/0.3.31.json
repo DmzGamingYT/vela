@@ -4,12 +4,7 @@
   "date": "2026-11-07",
   "headline": "Le coup d’œil, la carte calée et un site aux couleurs de l’icône",
   "intro": "Le mini navigateur séparé devient un coup d’œil posé sur la page en cours, la carte du tunnel cale son sujet au milieu de la colonne d’angles et retient ses textes dans les cartes, les mises à jour disent enfin ce qu’elles font selon la plateforme, et le site vitrine reprend la palette de l’icône.",
-  "tags": [
-    "coup d’œil",
-    "carte",
-    "mises à jour",
-    "site"
-  ],
+  "tags": ["coup d’œil", "carte", "mises à jour", "site"],
   "stats": {
     "commits": 1,
     "files": 214,

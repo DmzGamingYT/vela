@@ -4,11 +4,7 @@
   "date": "2026-11-06",
   "headline": "Le voilier devient l’icône",
   "intro": "Vela change de visage dans le Dock, le Launchpad et la barre des tâches : un voilier à deux voiles sur une coque corail, devant un soleil couchant, sur un carré bleu nuit. La barre de menus reçoit le même bateau en noir et blanc, et le site corrige un pied de page qui annonçait encore la 0.3.26.",
-  "tags": [
-    "icône",
-    "identité",
-    "site"
-  ],
+  "tags": ["icône", "identité", "site"],
   "stats": {
     "commits": 3,
     "files": 21,

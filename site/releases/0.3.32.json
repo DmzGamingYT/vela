@@ -4,12 +4,7 @@
   "date": "2026-11-07",
   "headline": "Le tunnel se traverse en quatre temps",
   "intro": "Le tunnel de recherche n’arrive plus d’un bloc : il s’ouvre sur la question, range les pages par angle avec un entonnoir qui dit ce qu’il masque, laisse la carte à la main, et finit sur une synthèse dont chaque paragraphe cite les pages qui le fondent.",
-  "tags": [
-    "tunnel",
-    "recherche",
-    "synthèse",
-    "carte"
-  ],
+  "tags": ["tunnel", "recherche", "synthèse", "carte"],
   "stats": {
     "commits": 1,
     "files": 89,

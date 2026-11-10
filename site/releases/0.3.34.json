@@ -1,0 +1,47 @@
+{
+  "version": "0.3.34",
+  "slug": "0-3-34",
+  "date": "2026-11-10",
+  "headline": "L’Atelier lit plus large, sans perdre le fil",
+  "intro": "L’Atelier décline la question en variantes modifiables, choisit une profondeur de 10 à 50 pages et plafonne à deux pages par domaine. L’Exploration compte ce qu’elle a trouvé, lu et retenu, relance une passe sans effacer les choix, et garde les pages écartées à portée de clic.",
+  "tags": ["atelier", "recherche", "sources", "profondeur"],
+  "stats": {
+    "commits": 2,
+    "files": 249,
+    "insertions": 13040,
+    "deletions": 10231
+  },
+  "sections": [
+    {
+      "title": "La question se décline",
+      "body": [
+        "Quatre à six variantes sont proposées avant le lancement : reformulation, comparatif, alternatives, retours d’expérience, documentation et anglais. Elles restent visibles, se modifient et se retirent une par une ; c’est la liste affichée qui part, pas une requête cachée.",
+        "Le sélecteur de profondeur annonce sa cible en pages plutôt qu’en niveau abstrait : Rapide autour de dix pages, Standard autour de vingt-cinq, Approfondie cinquante ou plus, avec une estimation de durée."
+      ]
+    },
+    {
+      "title": "Plus de pages, mêmes règles",
+      "body": [
+        "Chaque fournisseur interroge plusieurs variantes et les résultats sont dédoublonnés par adresse canonique : fragment, paramètres de campagne, www et slash final ne créent plus de doublons.",
+        "Le plafond de deux pages par domaine s’applique à toute la carte, y compris aux pages déjà retenues. Les lectures passent par une file de six pages avec un délai par domaine, plutôt que par une rafale de requêtes."
+      ]
+    },
+    {
+      "title": "Compter, couvrir, retrouver",
+      "body": [
+        "L’Exploration affiche en direct les pages trouvées, lues, retenues et écartées, et les mêmes chiffres se retrouvent dans le rail et la barre du bas. « Trouver plus » relance une passe sur la carte active sans toucher aux pages déjà classées.",
+        "La couverture par type montre les comparatifs, forums, documentations, travaux et presse réellement présents ; un type absent lance une recherche ciblée. Sous trois types distincts, un avertissement le dit.",
+        "Une page écartée ne disparaît pas : elle rejoint la section repliée « N écartées », d’où elle se réintègre. Chaque page garde aussi la raison courte de son classement."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir l’Atelier : la question propose plusieurs variantes, modifiables et retirables, et un sélecteur de profondeur.",
+    "Lancer en Standard : le compteur distingue trouvées, lues et retenues, et aucun domaine ne dépasse deux pages.",
+    "Cliquer « Trouver plus » : de nouvelles pages s’ajoutent, les pages gardées ou écartées restent dans leur état.",
+    "Écarter une page : elle apparaît dans « N écartées » et « Réintégrer » la remet dans la liste.",
+    "Vérifier la couverture : les types présents affichent leur nombre ; un type à zéro propose de chercher.",
+    "Vérifier qu’aucune page n’est envoyée à un modèle : la recherche et le classement restent locaux."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.33...v0.3.34"
+}
