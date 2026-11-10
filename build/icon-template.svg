@@ -4,7 +4,7 @@
        transparent, sans dégradé ni ombre. Le V et son point restent lisibles
        à 16 pt. -->
   <g fill="#000000">
-    <path d="M4.8 6.2H9.9L16 17.2 22.1 6.2H27.2L16 26.2Z"/>
-    <circle cx="26.4" cy="23.4" r="2.7"/>
+    <path d="M9.4 9.9H14.4L16 13.5 17.6 9.9H22.6L16 21.7Z"/>
+    <circle cx="16" cy="8.6" r="1.2"/>
   </g>
 </svg>

@@ -118,6 +118,15 @@ export default function Workspace() {
   const findInput = useRef<HTMLInputElement>(null)
   const findDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const panesRef = useRef<HTMLDivElement>(null)
+  const resizingRef = useRef(false)
+  const [resizing, setResizing] = useState(false)
+  const [shots, setShots] = useState<Record<string, string>>({})
+  // Épreuves des pages pendant qu'un menu, une feuille ou un popover couvre la
+  // scène : la vue native passe au-dessus du DOM, donc elle est retirée — mais
+  // son image reste en place, sinon la zone qu'elle occupait devient noire.
+  const [frozen, setFrozen] = useState<Record<string, string>>({})
+
   useEffect(() => {
     if (!findOpen) return
     findInput.current?.focus()
@@ -139,14 +148,6 @@ export default function Workspace() {
     []
   )
 
-  const panesRef = useRef<HTMLDivElement>(null)
-  const resizingRef = useRef(false)
-  const [resizing, setResizing] = useState(false)
-  const [shots, setShots] = useState<Record<string, string>>({})
-  // Épreuves des pages pendant qu'un menu, une feuille ou un popover couvre la
-  // scène : la vue native passe au-dessus du DOM, donc elle est retirée — mais
-  // son image reste en place, sinon la zone qu'elle occupait devient noire.
-  const [frozen, setFrozen] = useState<Record<string, string>>({})
   // Largeur mesurée, partagée avec le store : la barre d'adresse, la palette
   // et le processus principal prennent la même décision que ce composant.
   const panesWidth = useBrowser((state) => state.panesWidth)

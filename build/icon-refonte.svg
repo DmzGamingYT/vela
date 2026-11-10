@@ -1,0 +1,151 @@
+<!-- Vela — icône de l'app : « Vela, à la ligne d'horizon » (0.3.35).
+     Le V est construit comme deux voiles facettées ; le soleil se pose dans
+     l'ouverture, et deux traits d'horizon ferment le signe. Squircle macOS
+     avec marge de 104 px sur le canevas 1024, pour ne pas coller au Dock.
+     Source : ce fichier. Rendu : build/icon-refonte.html + scripts/shot.cjs,
+     puis build/make-icons.py pour .icns, .ico et .png. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
+     role="img" aria-labelledby="vela-title vela-desc">
+  <title id="vela-title">Vela</title>
+  <desc id="vela-desc">Un V d'encre à deux voiles, un soleil d'argile dans son ouverture et deux lignes d'horizon, sur une tuile crème arrondie.</desc>
+  <defs>
+    <linearGradient id="paper" x1="220" y1="120" x2="820" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFCF6"/>
+      <stop offset="0.55" stop-color="#F8EFE3"/>
+      <stop offset="1" stop-color="#EDDFCC"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="312" cy="198" r="660" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.4"/>
+      <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="512" y1="690" x2="512" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4A3320" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4A3320" stop-opacity="0.08"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="512" cy="274" r="186" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F2A45C" stop-opacity="0.24"/>
+      <stop offset="0.52" stop-color="#F2A45C" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#F2A45C" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="inkLeft" x1="330" y1="316" x2="512" y2="694" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B3088"/>
+      <stop offset="0.58" stop-color="#271E66"/>
+      <stop offset="1" stop-color="#17103D"/>
+    </linearGradient>
+    <linearGradient id="inkRight" x1="674" y1="316" x2="512" y2="694" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9C92FF"/>
+      <stop offset="0.55" stop-color="#7B70EF"/>
+      <stop offset="1" stop-color="#5D51D2"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="492" cy="252" r="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD99E"/>
+      <stop offset="0.55" stop-color="#F4AB62"/>
+      <stop offset="1" stop-color="#E48647"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="180" y1="130" x2="850" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="0.72" stop-color="#3B2A18" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#3B2A18" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="glassTop" x1="512" y1="104" x2="512" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.66"/>
+      <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.01"/>
+    </linearGradient>
+    <linearGradient id="glassSheen" x1="180" y1="260" x2="820" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="0.48" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="glassEdge" x1="180" y1="120" x2="850" y2="910" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.72"/>
+      <stop offset="0.4" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="0.7" stop-color="#2A1A52" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#2A1A52" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="prism" x1="180" y1="120" x2="850" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A9DCEB" stop-opacity="0.42"/>
+      <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#E7A07B" stop-opacity="0.42"/>
+    </linearGradient>
+    <filter id="liquid" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.022" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="2.4"/>
+    </filter>
+    <filter id="blurSoft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="blurEdge" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.4"/>
+    </filter>
+    <filter id="markShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#2A1A52" flood-opacity="0.16"/>
+    </filter>
+    <clipPath id="tile">
+      <path d="M290 104H734C836 104 920 188 920 290V734C920 836 836 920 734 920H290C188 920 104 836 104 734V290C104 188 188 104 290 104Z"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect x="104" y="104" width="816" height="816" fill="url(#paper)"/>
+    <rect x="104" y="104" width="816" height="816" fill="url(#sheen)"/>
+    <rect x="104" y="104" width="816" height="816" fill="url(#shade)"/>
+
+    <!-- La calotte de verre : une surface ondulée, vue de trois quarts. Elle
+         reste assez basse pour ne pas noyer le V ni le soleil. -->
+    <path d="M104 228C210 158 330 250 452 204S660 150 920 238V104H104Z"
+          fill="url(#glassTop)" filter="url(#liquid)" opacity="0.92"/>
+    <path d="M104 232C210 162 330 254 452 208S660 154 920 242"
+          fill="none" stroke="#FFFFFF" stroke-opacity="0.68" stroke-width="3" filter="url(#blurEdge)"/>
+    <path d="M104 236C210 166 330 258 452 212S660 158 920 246"
+          fill="none" stroke="#5A3E28" stroke-opacity="0.12" stroke-width="7" filter="url(#blurEdge)"/>
+    <path d="M188 168C270 116 372 108 456 130" fill="none" stroke="#FFFFFF"
+          stroke-opacity="0.5" stroke-width="5" stroke-linecap="round" filter="url(#blurEdge)"/>
+    <ellipse cx="280" cy="175" rx="160" ry="80" transform="rotate(-18 280 175)"
+             fill="#FFFFFF" opacity="0.22" filter="url(#blurSoft)"/>
+    <rect x="130" y="300" width="760" height="170" rx="85" transform="rotate(-30 512 512)"
+          fill="url(#glassSheen)" opacity="0.55" filter="url(#blurSoft)"/>
+
+    <!-- Le soleil éclaire la tuile avant que le V ne soit posé. -->
+    <circle cx="512" cy="274" r="186" fill="url(#sunGlow)"/>
+
+    <!-- Deux voiles, un seul V : la lumière vient de la droite, le pli reste
+         lisible à 16 px parce qu'aucun détail ne traverse les facettes. -->
+    <g filter="url(#markShadow)">
+      <path d="M300 316H462L512 694Z" fill="url(#inkLeft)"/>
+      <path d="M562 316H724L512 694Z" fill="url(#inkRight)"/>
+    </g>
+
+    <!-- Arêtes de verre sur les deux voiles : la lumière s'accroche au pli
+         sans ajouter de trait intérieur qui salirait le 16 px. -->
+    <path d="M724 316L512 694" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="2"/>
+    <path d="M300 316L512 694" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+
+    <!-- Le point d'argile ferme le mot, comme le point de « Vela. ». -->
+    <circle cx="512" cy="274" r="45" fill="url(#sun)"/>
+    <circle cx="497" cy="257" r="11" fill="#FFE0B0" opacity="0.62"/>
+
+    <!-- L'horizon : un trait plein, un trait léger, alignés sur la largeur du V. -->
+    <rect x="302" y="786" width="420" height="24" rx="12" fill="#2A2074"/>
+    <rect x="406" y="836" width="212" height="16" rx="8" fill="#847AF0"/>
+
+    <!-- Un reflet traverse le V et les lignes : c'est la dalle qui est en
+         verre, pas seulement son bord. -->
+    <rect x="130" y="360" width="760" height="220" rx="110" transform="rotate(-30 512 512)"
+          fill="url(#glassSheen)" opacity="0.2" filter="url(#blurSoft)"/>
+    <path d="M604 850C690 810 770 812 856 846" fill="none" stroke="#FFFFFF"
+          stroke-opacity="0.26" stroke-width="7" stroke-linecap="round" filter="url(#blurSoft)"/>
+
+    <!-- Épaisseur de la tuile : arête claire en haut à gauche, ombre en bas. -->
+    <path d="M290 104H734C836 104 920 188 920 290V734C920 836 836 920 734 920H290C188 920 104 836 104 734V290C104 188 188 104 290 104Z"
+          fill="none" stroke="url(#rim)" stroke-width="3"/>
+    <path d="M290 104H734C836 104 920 188 920 290V734C920 836 836 920 734 920H290C188 920 104 836 104 734V290C104 188 188 104 290 104Z"
+          fill="none" stroke="url(#glassEdge)" stroke-width="5"/>
+    <path d="M290 104H734C836 104 920 188 920 290V734C920 836 836 920 734 920H290C188 920 104 836 104 734V290C104 188 188 104 290 104Z"
+          fill="none" stroke="url(#prism)" stroke-width="3" opacity="0.85"/>
+  </g>
+</svg>

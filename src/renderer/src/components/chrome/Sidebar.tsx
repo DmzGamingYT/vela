@@ -32,6 +32,41 @@ type MenuState = { kind: 'bookmark'; bookmark: Bookmark; x: number; y: number }
 /** Au-delà, une tuile « +N » ouvre la liste complète plutôt que de tronquer. */
 const FAVORITE_LIMIT = 12
 
+/**
+ * ⌘Z reste actif tant que le dernier dossier supprimé est en mémoire. Le
+ * raccourci vit dans son propre composant : son effet n'est ainsi jamais
+ * appelé après le retour anticipé de la barre sans vue.
+ */
+function UndoGroupShortcut({
+  hasDeleted,
+  undo
+}: {
+  hasDeleted: () => boolean
+  undo: () => Promise<void>
+}) {
+  const latest = useRef({ undo, hasDeleted })
+
+  useEffect(() => {
+    latest.current = { undo, hasDeleted }
+  }, [undo, hasDeleted])
+
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
+      if (!latest.current.hasDeleted()) return
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
+      if (event.key.toLowerCase() !== 'z') return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return
+      event.preventDefault()
+      void latest.current.undo()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  return null
+}
+
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const view = useBrowser((state) => state.view)
@@ -197,6 +232,16 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     })
   }, [])
 
+  const pin = useBrowser((state) => state.pin)
+  // Zone des épinglés repliée : le choix survit au redémarrage.
+  const [pinsCollapsed, setPinsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('vela.sidebar.pins.collapsed') === '1'
+    } catch {
+      return false
+    }
+  })
+
   if (!view) {
     return (
       <aside
@@ -207,15 +252,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     )
   }
 
-  const pin = useBrowser((state) => state.pin)
-  // Zone des épinglés repliée : le choix survit au redémarrage.
-  const [pinsCollapsed, setPinsCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem('vela.sidebar.pins.collapsed') === '1'
-    } catch {
-      return false
-    }
-  })
   const togglePins = (): void => {
     setPinsCollapsed((previous) => {
       const next = !previous
@@ -787,21 +823,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     }
   ]
 
-  // ⌘Z remet le dossier supprimé, tant que son toast est affiché.
-  useEffect(() => {
-    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (!lastDeletedGroup.current) return
-      if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
-      if (event.key.toLowerCase() !== 'z') return
-      const target = event.target as HTMLElement | null
-      if (target?.closest('input, textarea, [contenteditable="true"]')) return
-      event.preventDefault()
-      void undoGroupDelete()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
-
   // Une recherche vide laisse tout passer ; sinon le titre et l'adresse
   // suffisent à retrouver un onglet, sans toucher à l'ordre ni aux dossiers.
   const matches = (tab: TabView): boolean => {
@@ -838,6 +859,10 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       // d'un espace ne doit pas disparaître sur le noir.
       style={{ '--space': 'var(--space-color)' } as CSSProperties}
     >
+      <UndoGroupShortcut
+        hasDeleted={() => lastDeletedGroup.current !== null}
+        undo={undoGroupDelete}
+      />
       <SidebarHeader />
 
       {/* Le chevron annonce que ce nom est un contrôle ; le crayon séparé

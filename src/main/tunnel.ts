@@ -669,6 +669,9 @@ export class TunnelService {
     }
     let siteCount = 0
     let totalNodes = 0
+    // Deux files distinctes : les requêtes de recherche et la lecture des
+    // pages ne se disputent pas les mêmes créneaux réseau.
+    const searchSlot = limiter(6)
     const readSlot = limiter(6)
     const lastReadByDomain = new Map<string, number>()
 
@@ -697,22 +700,30 @@ export class TunnelService {
       const variantLimit =
         provider.id === 'ddg' ? variants.length : provider.id === 'arxiv' || provider.id === 'gdelt' ? 1 : 3
       const perVariant = provider.id === 'ddg' ? Math.ceil(budget / variantLimit) + 1 : 4
-      const raw: RawSource[] = []
-      for (const variant of variants.slice(0, variantLimit)) {
-        if (controller.signal.aborted) return
-        try {
-          const found = await provider.search(variant, controller.signal)
-          raw.push(...found.slice(0, perVariant))
-        } catch (error) {
-          emit({
-            runId,
-            type: 'phase',
-            message: `${lens.title} indisponible pour « ${variant} » (${error instanceof Error ? error.message : 'réseau'}).`
-          })
-        }
-        if (raw.length >= budget) break
-      }
+      // Les variantes partent ensemble : attendre chaque réponse avant de
+      // lancer la suivante multipliait la latence par le nombre de variantes.
+      // On ne lance que celles qui peuvent encore remplir le budget.
+      const needed = Math.min(variantLimit, Math.max(1, Math.ceil(budget / perVariant)))
+      const batches = await Promise.all(
+        variants.slice(0, needed).map(async (variant) => {
+          try {
+            const found = await searchSlot(() =>
+              provider.search(variant, controller.signal)
+            )
+            return found.slice(0, perVariant)
+          } catch (error) {
+            emit({
+              runId,
+              type: 'phase',
+              message: `${lens.title} indisponible pour « ${variant} » (${error instanceof Error ? error.message : 'réseau'}).`
+            })
+            return []
+          }
+        })
+      )
       if (controller.signal.aborted) return
+
+      const raw = batches.flat()
 
       const fresh: RawSource[] = []
       for (const source of raw) {

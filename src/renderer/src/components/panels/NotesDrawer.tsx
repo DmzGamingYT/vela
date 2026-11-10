@@ -621,6 +621,19 @@ export default function NotesDrawer() {
     })
   }, [voiceNoteRequest, voiceSpaceTarget, consumeVoiceNoteRequest, setAiMode, setLinkMenu])
 
+  // ⌘N ouvre le menu « Nouvelle note » depuis n'importe où dans le panneau.
+  useEffect(() => {
+    if (!notesOpen) return
+    const onKey = (event: KeyboardEvent): void => {
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
+      if (event.key.toLowerCase() !== 'n' || event.defaultPrevented) return
+      event.preventDefault()
+      setTemplateOpen(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [notesOpen])
+
   if (!view) return null
 
   const newNote = async (template?: NoteTemplate | null): Promise<void> => {
@@ -674,19 +687,6 @@ export default function NotesDrawer() {
     await newNote(null)
     setRecorderOpen(true)
   }
-
-  // ⌘N ouvre le menu « Nouvelle note » depuis n'importe où dans le panneau.
-  useEffect(() => {
-    if (!notesOpen) return
-    const onKey = (event: KeyboardEvent): void => {
-      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
-      if (event.key.toLowerCase() !== 'n' || event.defaultPrevented) return
-      event.preventDefault()
-      setTemplateOpen(true)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [notesOpen])
 
   const close = (): void => {
     toggleNotes(false)
