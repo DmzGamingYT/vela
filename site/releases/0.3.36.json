@@ -1,0 +1,51 @@
+{
+  "version": "0.3.36",
+  "slug": "0-3-36",
+  "date": "2026-11-11",
+  "headline": "Les réglages se réunissent, l’adresse propose",
+  "intro": "Six sections, une recherche qui descend jusqu’au réglage et des ancres qui ouvrent le bon onglet. La barre d’adresse propose ses destinations, pendant que l’agent gagne la dictée, des suggestions et un coût lisible.",
+  "tags": [
+    "réglages",
+    "recherche",
+    "adresse",
+    "agent",
+    "accessibilité"
+  ],
+  "stats": {
+    "commits": 1,
+    "files": 117,
+    "insertions": 21552,
+    "deletions": 6259
+  },
+  "sections": [
+    {
+      "title": "Six sections, une seule entrée",
+      "body": [
+        "Vue d’ensemble, Apparence, Navigation, Confidentialité, Agent et Système remplacent les anciennes pages Tweaks, Thèmes et Modèles. Chaque section garde ses sous-onglets, et la barre latérale ne propose plus qu’une entrée par domaine.",
+        "La vue d’ensemble résume l’essentiel et mène directement au bon réglage. Les anciens comportements restent disponibles, avec les mêmes valeurs et les mêmes effets."
+      ]
+    },
+    {
+      "title": "La recherche descend jusqu’au réglage",
+      "body": [
+        "La recherche globale couvre les sections, les sous-onglets et les réglages individuels. Un résultat ouvre la bonne page, sélectionne le bon onglet puis centre le réglage et le surligne brièvement.",
+        "Le parcours au clavier fonctionne avec les flèches, Entrée et Échap. Le défilement respecte « Réduire les animations » : il passe en mode instantané quand l’interface le demande."
+      ]
+    },
+    {
+      "title": "L’adresse propose, l’agent écoute",
+      "body": [
+        "La barre d’adresse propose désormais des destinations pendant la saisie, avec un filtrage local et des raccourcis clavier. La navigation, les onglets et l’accueil gagnent les ajustements nécessaires pour rester cohérents avec cette nouvelle entrée.",
+        "L’agent reçoit la dictée vocale, des suggestions de suites et un suivi du coût. Son panneau garde ses raccourcis et son fil, même lorsque la vue change."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir Réglages et parcourir les six sections ; vérifier que chaque sous-onglet s’ouvre et que les réglages existants répondent comme avant.",
+    "Rechercher « densité » : la recherche doit ouvrir Apparence › Interface, centrer le réglage et le surligner. Refaire le test en thème sombre et en fenêtre étroite.",
+    "Taper une adresse et choisir une suggestion ; vérifier que la page s’ouvre dans le bon espace et que les raccourcis clavier restent disponibles.",
+    "Dicter une note dans l’agent et vérifier le coût affiché après la réponse.",
+    "Après publication, vérifier que le site annonce 0.3.36 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.35...v0.3.36"
+}
