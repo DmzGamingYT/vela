@@ -1,0 +1,59 @@
+{
+  "version": "0.3.37",
+  "slug": "0-3-37",
+  "date": "2026-11-11",
+  "headline": "Le profil prend visage, l’aperçu dit vrai",
+  "intro": "« Espace » devient « profil » partout où on le lit. Le dialogue de profil et l’aperçu d’Apparence montrent le brouillon réel dans une même coquille, la teinte se détache de la lumière du thème et l’icône se redessine à chaque taille.",
+  "tags": [
+    "profil",
+    "aperçus",
+    "thèmes",
+    "icône",
+    "accessibilité"
+  ],
+  "stats": {
+    "commits": 1,
+    "files": 111,
+    "insertions": 5269,
+    "deletions": 1077
+  },
+  "sections": [
+    {
+      "title": "Un profil, et son aperçu",
+      "body": [
+        "Le mot « espace » disparaît de l’interface : la fenêtre de création, la barre latérale, la palette de commandes et les réglages parlent désormais de profils. Les identifiants internes gardent leurs anciens noms, donc les profils existants, leurs réglages et leurs sessions s’ouvrent sans migration.",
+        "Le dialogue de profil Range ses réglages en sections : portrait, teinte, ambiance. Une carte d’aperçu de 292 pixels montre le résultat pendant la saisie, avec le nom du brouillon, la photo ou les initiales, les sites épinglés et le contexte du profil. La bascule clair/sombre passe en icônes et les faits tiennent sur une ligne.",
+        "Sans site épinglé, l’aperçu propose trois destinations réelles plutôt qu’un cadre vide. Le portrait choisit sa source dans un panneau qui ne s’ouvre qu’au besoin, et le recadrage de photo se fait dans la carte, sans quitter le dialogue."
+      ]
+    },
+    {
+      "title": "Apparence montre le profil actif",
+      "body": [
+        "L’aperçu des réglages prend la même coquille et s’élargit à 256 pixels : deux onglets, Accueil et Profil, une légende latérale de 170 pixels et les sites réels du profil actif. Le profil affiché est celui qui est ouvert, pas un exemple.",
+        "Dans cet onglet, la bascule clair/sombre applique le thème global : ce que l’aperçu montre est ce que la fenêtre fait. Le dialogue de profil, lui, garde une bascule locale pour comparer sans changer toute l’application."
+      ]
+    },
+    {
+      "title": "La teinte n’est plus la lumière",
+      "body": [
+        "Un thème porte maintenant deux choses séparées : sa lumière — papier, surface profonde, encre et deux lavis — et sa teinte d’accent. Une couleur libre remplace l’accent sans toucher au papier, et se corrige contre ce papier-là pour rester lisible.",
+        "Chaque profil peut aussi porter sa propre teinte. Un sélecteur de portée, dans Apparence, choisit entre toute l’application et le profil actif ; la grille de pastilles marque la teinte réellement appliquée, y compris quand celle du profil l’emporte sur le réglage global."
+      ]
+    },
+    {
+      "title": "L’icône rendue à sa taille",
+      "body": [
+        "L’icône ne part plus d’un 1024 rééchantillonné : chaque taille est rendue depuis son SVG, avec un gabarit dédié sous 64 pixels. L’anneau reste net à 16 pixels, dans le Dock comme dans le sélecteur de fichiers.",
+        "Le gabarit de la barre de menus vient de son propre SVG, et le kit se régénère sans Pillow. Les feuilles modales retiennent aussi leur déclencheur : le focus revient au bon endroit, et le fond passe inerte pendant qu’une feuille est ouverte."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir la fenêtre d’un profil : changer le nom, la photo, la teinte et l’ambiance ; l’aperçu doit suivre la saisie, et proposer trois sites quand aucun n’est épinglé.",
+    "Basculer clair/sombre dans le dialogue ; l’aperçu change seul. Refaire le geste dans Réglages › Apparence : le thème global doit suivre.",
+    "Choisir un thème, puis une teinte libre : le papier du thème doit rester, l’accent doit changer. Activer une teinte de profil et vérifier la marque dans la grille.",
+    "Regarder l’icône à 16 pixels dans le Dock et la barre de menus, en clair et en sombre.",
+    "Après publication, vérifier que le site annonce 0.3.37 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.36...v0.3.37"
+}
