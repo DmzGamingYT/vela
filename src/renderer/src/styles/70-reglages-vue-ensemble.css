@@ -1,0 +1,218 @@
+/* ---------------------------------------------------------------
+   Réglages › Vue d’ensemble — états et chemins directs
+   --------------------------------------------------------------- */
+
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.overview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-toolbar p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-elevated);
+  color: var(--ink);
+  text-align: left;
+  transition:
+    border-color var(--dur-1) var(--ease-standard),
+    background var(--dur-1) var(--ease-standard),
+    transform var(--dur-1) var(--ease-standard);
+}
+
+.overview-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  background: var(--paper-deep);
+}
+
+.overview-card:active {
+  transform: translateY(1px);
+}
+
+.overview-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.overview-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-card-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--accent-label);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.overview-card-kicker {
+  flex: 1;
+  min-width: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.overview-card-top .tag {
+  flex: none;
+}
+
+.overview-card-title {
+  font-size: 14px;
+  font-weight: 620;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.overview-card-hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.overview-card-link {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 520;
+  color: var(--accent-label);
+}
+
+.overview-discover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.overview-discover-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--ink);
+  text-align: left;
+  transition:
+    border-color var(--dur-1) var(--ease-standard),
+    background var(--dur-1) var(--ease-standard);
+}
+
+.overview-discover-row:hover {
+  border-color: var(--line-soft);
+  background: var(--surface-2);
+}
+
+.overview-discover-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.overview-discover-mark {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--accent-label);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.overview-discover-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.overview-discover-copy strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.overview-discover-copy span {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.overview-discover-row > .icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.overview-stat {
+  padding: 10px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  background: var(--surface-elevated);
+}
+
+.overview-stat b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.overview-stat span {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+@media (max-width: 680px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+}

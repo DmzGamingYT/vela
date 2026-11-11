@@ -26,6 +26,7 @@ beforeEach(() => {
   // Les globals sont posés par vi.stubGlobal pour être rendus à l'hôte après
   // chaque test : un fichier voisin ne doit pas hériter de ce panneau.
   vi.stubGlobal('vela', { platform: 'darwin' })
+  Element.prototype.scrollIntoView = vi.fn()
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({
@@ -53,8 +54,13 @@ describe('fenêtre de réglages', () => {
   it('garde le titre et ferme avec le bouton 44 px', () => {
     render(<SettingsPanel />)
 
-    expect(screen.getByRole('heading', { name: 'Apparence' })).toBeTruthy()
-    expect(screen.getByText('Mode, couleur, fond de l’accueil et accessibilité.')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Vue d’ensemble' })).toBeTruthy()
+    expect(
+      screen.getByText(
+        'Les choix qui façonnent l’interface, la navigation et la confidentialité. Tout est local, tout s’applique immédiatement.'
+      )
+    ).toBeTruthy()
+    expect(screen.getByText('Repères')).toBeTruthy()
     expect(screen.getByText('Général')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Fermer' }))
@@ -67,11 +73,80 @@ describe('fenêtre de réglages', () => {
     expect(useBrowser.getState().overlay).toBeNull()
 
     open()
-    const search = screen.getByRole('textbox', { name: 'Chercher une section des réglages' })
+    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
     fireEvent.change(search, { target: { value: 'notes' } })
     fireEvent.keyDown(search, { key: 'Escape' })
     expect(useBrowser.getState().overlay).toBe('settings')
     expect((search as HTMLInputElement).value).toBe('')
+  })
+
+  it('ouvre une section depuis la vue d’ensemble', () => {
+    render(<SettingsPanel />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Ouvrir Apparence/ }))
+    expect(screen.getByRole('heading', { name: 'Apparence' })).toBeTruthy()
+  })
+
+  it('ouvre une page et son sous-onglet depuis la recherche globale', () => {
+    render(<SettingsPanel />)
+
+    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    fireEvent.change(search, { target: { value: 'notes' } })
+    fireEvent.keyDown(search, { key: 'ArrowDown' })
+    fireEvent.keyDown(search, { key: 'Enter' })
+
+    expect(screen.getByRole('heading', { name: 'Agent' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Notes' }).getAttribute('aria-selected')).toBe('true')
+
+    fireEvent.change(search, { target: { value: 'mises à jour' } })
+    fireEvent.click(screen.getByRole('option', { name: /^Mises à jour/ }))
+
+    expect(screen.getByRole('heading', { name: 'Système' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Mises à jour' }).getAttribute('aria-selected')).toBe(
+      'true'
+    )
+  })
+
+  it('ouvre un réglage individuel et fait défiler jusqu’à sa ligne', () => {
+    render(<SettingsPanel />)
+
+    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    fireEvent.change(search, { target: { value: 'densité' } })
+    fireEvent.click(screen.getByRole('option', { name: /^Densité/ }))
+
+    expect(screen.getByRole('heading', { name: 'Apparence' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Interface' }).getAttribute('aria-selected')).toBe(
+      'true'
+    )
+    const target = document.getElementById('density-label')
+    expect(target?.classList.contains('settings-search-target')).toBe(true)
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+  })
+
+  it('désactive le défilement doux quand les animations sont réduites', () => {
+    vi.mocked(window.matchMedia).mockImplementation(
+      (query: string) =>
+        ({
+          matches: query === '(prefers-reduced-motion: reduce)',
+          media: query,
+          onchange: null,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          dispatchEvent: vi.fn()
+        }) as MediaQueryList
+    )
+    render(<SettingsPanel />)
+
+    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    fireEvent.change(search, { target: { value: 'densité' } })
+    fireEvent.click(screen.getByRole('option', { name: /^Densité/ }))
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+      block: 'center',
+      behavior: 'auto'
+    })
   })
 
   it('marque la page courante et navigue au clavier par les boutons', () => {
@@ -84,9 +159,9 @@ describe('fenêtre de réglages', () => {
     expect(screen.getByRole('heading', { name: 'Navigation' })).toBeTruthy()
     expect(navigation.getAttribute('aria-current')).toBe('page')
 
-    const about = screen.getByRole('button', { name: 'À propos' })
-    expect(about.tabIndex).toBe(0)
-    fireEvent.click(about)
-    expect(screen.getByRole('heading', { name: 'À propos' })).toBeTruthy()
+    const system = screen.getByRole('button', { name: 'Système' })
+    expect(system.tabIndex).toBe(0)
+    fireEvent.click(system)
+    expect(screen.getByRole('heading', { name: 'Système' })).toBeTruthy()
   })
 })

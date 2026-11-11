@@ -258,21 +258,15 @@
 }
 
 .app[data-drawer='true'] .home-side {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   align-items: start;
 }
 
 .app[data-drawer='true'] .start-inner.home {
   max-width: none;
-  padding-inline: 30px;
-}
-
-/* Volet vraiment étroit (fenêtre réduite + tiroir) : les cartes latérales
-   repassent l'une sous l'autre plutôt que de se comprimer à 150 px. */
-@container start (max-width: 620px) {
-  .app[data-drawer='true'] .home-side {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  /* À 900 px avec un panneau de 340 px, 30 px de marge de chaque côté
+     laisseraient moins de 280 px au bloc « Mémoire de l'espace ». */
+  padding-inline: 16px;
 }
 
 /* --- Réglages ------------------------------------------------- */

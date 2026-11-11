@@ -41,6 +41,7 @@ function setup() {
   settings.theme = 'light'
   const updateSettings = vi.fn(async () => {})
   const chooseBackground = vi.fn(async () => {})
+  const resetAppearance = vi.fn()
   const view = render(
     <AppearancePage
       settings={settings}
@@ -48,9 +49,10 @@ function setup() {
       previewThemeId="indigo"
       updateSettings={updateSettings}
       chooseBackground={chooseBackground}
+      resetAppearance={resetAppearance}
     />
   )
-  return { ...view, settings, updateSettings, chooseBackground }
+  return { ...view, settings, updateSettings, chooseBackground, resetAppearance }
 }
 
 describe('page Apparence refondue', () => {
@@ -82,6 +84,7 @@ describe('page Apparence refondue', () => {
         previewThemeId="indigo"
         updateSettings={updateSettings}
         chooseBackground={vi.fn(async () => {})}
+        resetAppearance={vi.fn()}
       />
     )
     expect(document.querySelector('.pv')?.getAttribute('data-preview-mode')).toBe('dark')
@@ -94,7 +97,26 @@ describe('page Apparence refondue', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Rouge' }))
     expect(updateSettings).toHaveBeenCalledWith({ themeId: 'rouge' })
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Accueil' }))
     fireEvent.click(screen.getByRole('radio', { name: 'Marqué' }))
     expect(updateSettings).toHaveBeenCalledWith({ homeIntensity: 'marked' })
+  })
+
+  it('répartit les réglages dans les quatre onglets', () => {
+    setup()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Interface' }))
+    expect(screen.getByText('Densité')).toBeTruthy()
+    expect(screen.getByText('Ambiance')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Accessibilité' }))
+    expect(screen.getByText('Contraste élevé')).toBeTruthy()
+  })
+
+  it('réinitialise l’apparence depuis les réglages avancés', () => {
+    const { resetAppearance } = setup()
+
+    fireEvent.click(screen.getByRole('button', { name: /Réinitialiser l’apparence/ }))
+    expect(resetAppearance).toHaveBeenCalled()
   })
 })

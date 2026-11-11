@@ -23,17 +23,21 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(path.join(OUT, 'frames'), { recursive: true })
 
-  const child = spawn(require('electron'), ['.', `--remote-debugging-port=${PORT}`, '--disable-backgrounding-occluded-windows'], {
-    cwd: ROOT,
-    env: {
-      ...process.env,
-      VELA_USER_DATA: path.join(OUT, 'data'),
-      VELA_FRAMES: path.join(OUT, 'frames'),
-      VELA_FPS: '20',
-      NODE_OPTIONS: `--require ${INJECT}`
-    },
-    stdio: 'ignore'
-  })
+  const child = spawn(
+    require('electron'),
+    ['.', `--remote-debugging-port=${PORT}`, '--disable-backgrounding-occluded-windows'],
+    {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        VELA_USER_DATA: path.join(OUT, 'data'),
+        VELA_FRAMES: path.join(OUT, 'frames'),
+        VELA_FPS: '20',
+        NODE_OPTIONS: `--require ${INJECT}`
+      },
+      stdio: 'ignore'
+    }
+  )
 
   try {
     let target = null
@@ -67,7 +71,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
       ws.onerror = reject
     })
 
-    await send('Runtime.evaluate', { expression: `window.vela.settings.update({ onboarded: true, theme: 'dark' })`, awaitPromise: true })
+    await send('Runtime.evaluate', {
+      expression: `window.vela.settings.update({ onboarded: true, theme: 'dark' })`,
+      awaitPromise: true
+    })
     await sleep(1200)
     await send('Runtime.evaluate', {
       expression: `window.vela.tabs.create({ url: 'https://fr.wikipedia.org/wiki/H%C3%A9bergement_web' })`,
@@ -80,11 +87,18 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     child.kill('SIGTERM')
   }
 
-  const log = fs.readFileSync(path.join(OUT, 'frames.jsonl'), 'utf8').trim().split('\n').filter(Boolean)
+  const log = fs
+    .readFileSync(path.join(OUT, 'frames.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
   const files = log.map((line) => JSON.parse(line)).filter((entry) => entry.file)
   console.log(`images capturées : ${files.length}`)
-  const span = files.length > 1 ? ((files[files.length - 1].at - files[0].at) / 1000).toFixed(1) : '0'
-  console.log(`durée couverte : ${span} s → ${(files.length / Math.max(Number(span), 0.001)).toFixed(1)} i/s`)
+  const span =
+    files.length > 1 ? ((files[files.length - 1].at - files[0].at) / 1000).toFixed(1) : '0'
+  console.log(
+    `durée couverte : ${span} s → ${(files.length / Math.max(Number(span), 0.001)).toFixed(1)} i/s`
+  )
   const last = files[files.length - 1]
   if (last) {
     fs.copyFileSync(path.join(OUT, 'frames', last.file), path.join(OUT, 'derniere.jpg'))

@@ -9,7 +9,7 @@
 :where(
     a,
     button,
-    input,
+    input:not(.address-input),
     textarea,
     select,
     summary,

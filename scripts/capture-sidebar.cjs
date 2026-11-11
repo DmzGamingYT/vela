@@ -124,7 +124,9 @@ async function waitForTarget(url, pick, attempts = 500) {
 
 ;(async () => {
   if (process.platform !== 'darwin') {
-    throw new Error('les captures de référence avec feux macOS passent par screencapture (macOS uniquement)')
+    throw new Error(
+      'les captures de référence avec feux macOS passent par screencapture (macOS uniquement)'
+    )
   }
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(DATA, { recursive: true })
@@ -152,7 +154,9 @@ async function waitForTarget(url, pick, attempts = 500) {
     const mainWindow = `process.mainModule.require("electron").BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Vela")`
     const mainEval = (expression) => main.evaluate(expression)
     const setTheme = async (theme) => {
-      await renderer.evaluate(`window.vela.settings.update({ onboarded: true, themeId: 'indigo', theme: '${theme}' })`)
+      await renderer.evaluate(
+        `window.vela.settings.update({ onboarded: true, themeId: 'indigo', theme: '${theme}' })`
+      )
       await sleep(900)
     }
     const setCollapsed = async (collapsed) => {
@@ -160,7 +164,9 @@ async function waitForTarget(url, pick, attempts = 500) {
       await sleep(650)
     }
     const setFullScreen = async (full) => {
-      await mainEval(`(() => { const w = ${mainWindow}; if (!w) return false; w.setFullScreen(${full}); return true })()`)
+      await mainEval(
+        `(() => { const w = ${mainWindow}; if (!w) return false; w.setFullScreen(${full}); return true })()`
+      )
       for (let attempt = 0; attempt < 80; attempt += 1) {
         const state = await mainEval(`${mainWindow}.isFullScreen()`)
         if (state === full) break
@@ -169,7 +175,9 @@ async function waitForTarget(url, pick, attempts = 500) {
       await sleep(900)
     }
     const resize = async (width, height, center = true) => {
-      await mainEval(`(() => { const w = ${mainWindow}; w.show(); w.focus(); w.setSize(${width}, ${height}); ${center ? 'w.center();' : ''} return w.getBounds() })()`)
+      await mainEval(
+        `(() => { const w = ${mainWindow}; w.show(); w.focus(); w.setSize(${width}, ${height}); ${center ? 'w.center();' : ''} return w.getBounds() })()`
+      )
       await sleep(600)
     }
     const measure = async () =>
@@ -194,7 +202,9 @@ async function waitForTarget(url, pick, attempts = 500) {
       })()`)
     const shoot = async (name) => {
       await sleep(300)
-      mainEval(`(() => { const w = ${mainWindow}; w.show(); w.focus(); return w.getBounds() })()`).catch(() => {})
+      mainEval(
+        `(() => { const w = ${mainWindow}; w.show(); w.focus(); return w.getBounds() })()`
+      ).catch(() => {})
       await sleep(200)
       const id = windowId('Vela')
       const file = path.join(OUT, `${name}.png`)
@@ -216,7 +226,8 @@ async function waitForTarget(url, pick, attempts = 500) {
     const check = (label, condition, detail) => {
       checks.push({ label, ok: Boolean(condition), detail })
       if (!condition && strict) throw new Error(`${label} — ${JSON.stringify(detail)}`)
-      if (!condition) console.warn('  (état avant : attente non remplie)', label, JSON.stringify(detail))
+      if (!condition)
+        console.warn('  (état avant : attente non remplie)', label, JSON.stringify(detail))
     }
 
     await resize(1380, 880)
@@ -228,7 +239,8 @@ async function waitForTarget(url, pick, attempts = 500) {
       check('dépliée : barre présente', Boolean(state.sidebar) && Boolean(state.wordmark), state)
       check(
         'dépliée : wordmark sur la marge du sélecteur',
-        Math.abs(state.wordmark.x - state.avatar.x) < 0.6 && Math.abs(state.wordmark.x - (state.sidebar.x + expectations.sidebarInset)) < 0.6,
+        Math.abs(state.wordmark.x - state.avatar.x) < 0.6 &&
+          Math.abs(state.wordmark.x - (state.sidebar.x + expectations.sidebarInset)) < 0.6,
         { wordmark: state.wordmark, avatar: state.avatar, sidebar: state.sidebar }
       )
       check(
@@ -238,7 +250,7 @@ async function waitForTarget(url, pick, attempts = 500) {
       )
       check(
         'dépliée : centré verticalement avec les feux',
-        Math.abs((state.wordmark.y + state.wordmark.height / 2) - 28) <= 1.5,
+        Math.abs(state.wordmark.y + state.wordmark.height / 2 - 28) <= 1.5,
         state.wordmark
       )
     }
@@ -267,7 +279,11 @@ async function waitForTarget(url, pick, attempts = 500) {
       await setTheme(mode)
       await resize(980, 700)
       const state = await shoot(`etroite-${mode === 'light' ? 'clair' : 'sombre'}`)
-      check('étroite : barre toujours alignée', Boolean(state.wordmark) && Math.abs(state.wordmark.x - state.avatar.x) < 0.6, state)
+      check(
+        'étroite : barre toujours alignée',
+        Boolean(state.wordmark) && Math.abs(state.wordmark.x - state.avatar.x) < 0.6,
+        state
+      )
       check(
         'étroite : pas de chevauchement avec les feux',
         state.wordmark.x - expectations.macLastLight >= expectations.minGap,
@@ -300,7 +316,9 @@ async function waitForTarget(url, pick, attempts = 500) {
           navMark: Boolean(navMark)
         }
       })()`)
-      await renderer.evaluate(`(() => { const button = document.querySelector('.settings-head .icon-btn'); if (button) button.click(); return true })()`)
+      await renderer.evaluate(
+        `(() => { const button = document.querySelector('.settings-head .icon-btn'); if (button) button.click(); return true })()`
+      )
       await sleep(600)
     }
     check(

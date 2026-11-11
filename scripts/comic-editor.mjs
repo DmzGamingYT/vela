@@ -64,7 +64,10 @@ function state() {
 
 async function translateOne(texte) {
   if (!KEY) {
-    return { status: 503, body: { ok: false, error: 'traduction non évaluée : TRANSLATOR_API_KEY absente' } }
+    return {
+      status: 503,
+      body: { ok: false, error: 'traduction non évaluée : TRANSLATOR_API_KEY absente' }
+    }
   }
   const response = await fetch(URL_API, {
     method: 'POST',
@@ -83,13 +86,16 @@ async function translateOne(texte) {
       ]
     })
   })
-  if (!response.ok) return { status: 502, body: { ok: false, error: `traducteur HTTP ${response.status}` } }
+  if (!response.ok)
+    return { status: 502, body: { ok: false, error: `traducteur HTTP ${response.status}` } }
   const body = await response.json()
   const content = body.choices?.[0]?.message?.content || ''
   const match = content.match(/\{[\s\S]*\}/)
   if (!match) return { status: 502, body: { ok: false, error: 'réponse illisible' } }
   const texte2 = String(JSON.parse(match[0]).texte || '').trim()
-  return texte2 ? { status: 200, body: { ok: true, texte: texte2 } } : { status: 502, body: { ok: false, error: 'réponse vide' } }
+  return texte2
+    ? { status: 200, body: { ok: true, texte: texte2 } }
+    : { status: 502, body: { ok: false, error: 'réponse vide' } }
 }
 
 const PAGE = `<!doctype html><meta charset="utf-8"><title>Corrections BD</title>
@@ -182,7 +188,10 @@ charger()
 const server = createServer((request, response) => {
   const url = new URL(request.url || '/', 'http://127.0.0.1')
   const send = (status, body, type = 'application/json') => {
-    response.writeHead(status, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store' })
+    response.writeHead(status, {
+      'content-type': `${type}; charset=utf-8`,
+      'cache-control': 'no-store'
+    })
     response.end(typeof body === 'string' ? body : JSON.stringify(body))
   }
   if (request.method === 'GET' && url.pathname === '/') return send(200, PAGE, 'text/html')
@@ -246,5 +255,8 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`éditeur : http://127.0.0.1:${PORT}`)
   console.log('bulles :', BUBBLES)
   console.log('corrections :', EDITS, '· image', imageKey)
-  if (!KEY) console.log('TRANSLATOR_API_KEY absente : la retraduction répondra 503 « traduction non évaluée ».')
+  if (!KEY)
+    console.log(
+      'TRANSLATOR_API_KEY absente : la retraduction répondra 503 « traduction non évaluée ».'
+    )
 })

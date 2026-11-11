@@ -28,12 +28,22 @@ if (!reachable.ok) {
   console.error('TRADUCTION NON ÉVALUÉE : aucune valeur de repli ne sera produite.')
   process.exit(2)
 }
-console.log(`connexion : OK en ${reachable.ms} ms${reachable.warning ? ` (${reachable.warning})` : ''}`)
-if (Array.isArray(reachable.models) && reachable.models.length && !reachable.models.includes(cfg.model)) {
-  console.log(`attention : « ${cfg.model} » n’apparaît pas dans la liste du serveur (${reachable.models.slice(0, 5).join(', ')})`)
+console.log(
+  `connexion : OK en ${reachable.ms} ms${reachable.warning ? ` (${reachable.warning})` : ''}`
+)
+if (
+  Array.isArray(reachable.models) &&
+  reachable.models.length &&
+  !reachable.models.includes(cfg.model)
+) {
+  console.log(
+    `attention : « ${cfg.model} » n’apparaît pas dans la liste du serveur (${reachable.models.slice(0, 5).join(', ')})`
+  )
 }
 
-const data = JSON.parse(readFileSync(new URL('../userscripts/comic-eval.json', import.meta.url), 'utf8'))
+const data = JSON.parse(
+  readFileSync(new URL('../userscripts/comic-eval.json', import.meta.url), 'utf8')
+)
 const bulles = data.bulles || []
 
 const SYSTEM =
@@ -100,7 +110,9 @@ const result = await chat(
 if (!result.ok) {
   // Distinguer « rien au bout du fil » de « réponse mal formée ».
   const unreachable = /délai dépassé|fetch|ECONN|HTTP 5\d\d/.test(result.error)
-  console.error(`${unreachable ? 'FOURNISSEUR INJOIGNABLE' : 'RÉPONSE INEXPLOITABLE'} — ${result.error}.`)
+  console.error(
+    `${unreachable ? 'FOURNISSEUR INJOIGNABLE' : 'RÉPONSE INEXPLOITABLE'} — ${result.error}.`
+  )
   console.error('TRADUCTION NON ÉVALUÉE : aucune valeur de repli ne sera produite.')
   process.exit(unreachable ? 2 : 3)
 }
@@ -122,7 +134,14 @@ console.log('date :', startedAt.toISOString())
 console.log('latence :', `${result.ms} ms`)
 console.log('contexte :', data.contexte || '—')
 console.log('')
-console.log(pad('#', 3), pad('source', 34), pad('traduction', 34), pad('référence', 34), pad('ratio', 6), 'chrf')
+console.log(
+  pad('#', 3),
+  pad('source', 34),
+  pad('traduction', 34),
+  pad('référence', 34),
+  pad('ratio', 6),
+  'chrf'
+)
 console.log('-'.repeat(132))
 
 let totalRatio = 0
@@ -164,7 +183,9 @@ for (const bulle of bulles) {
 const moyenne = bulles.length ? totalRatio / bulles.length : 0
 const chrfMoyen = bulles.length ? totalChrf / bulles.length : 0
 console.log('')
-console.log(`longueur moyenne traduit/original : ${moyenne.toFixed(2)} (seuil ${MAX_RATIO}, ${longues}/${bulles.length} au-dessus)`)
+console.log(
+  `longueur moyenne traduit/original : ${moyenne.toFixed(2)} (seuil ${MAX_RATIO}, ${longues}/${bulles.length} au-dessus)`
+)
 console.log(`chrF moyen (n = 1…6, approximation) : ${chrfMoyen.toFixed(3)}`)
 if (manquantes) console.log(`traductions manquantes : ${manquantes}`)
 console.log('')

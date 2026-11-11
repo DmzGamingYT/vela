@@ -83,8 +83,16 @@ async function main() {
     env: { ...process.env, VELA_USER_DATA: dataDir },
     stdio: ['ignore', 'pipe', 'pipe']
   })
-  child.stdout.on('data', (b) => String(b).split('\n').forEach((l) => record('main', l)))
-  child.stderr.on('data', (b) => String(b).split('\n').forEach((l) => record('main', l)))
+  child.stdout.on('data', (b) =>
+    String(b)
+      .split('\n')
+      .forEach((l) => record('main', l))
+  )
+  child.stderr.on('data', (b) =>
+    String(b)
+      .split('\n')
+      .forEach((l) => record('main', l))
+  )
 
   let shell = null
   for (let attempt = 0; attempt < 300 && !shell; attempt += 1) {
@@ -100,7 +108,11 @@ async function main() {
   await shellSocket.open
   await shellSocket.send('Runtime.enable')
   const evaluateShell = async (expression) => {
-    const r = await shellSocket.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
+    const r = await shellSocket.send('Runtime.evaluate', {
+      expression,
+      awaitPromise: true,
+      returnByValue: true
+    })
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.text || 'évaluation refusée')
     return r.result?.value
   }
@@ -126,7 +138,11 @@ async function main() {
   await pageSocket.send('Runtime.enable')
   await pageSocket.send('Log.enable')
   const evaluate = async (expression) => {
-    const r = await pageSocket.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
+    const r = await pageSocket.send('Runtime.evaluate', {
+      expression,
+      awaitPromise: true,
+      returnByValue: true
+    })
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.text || 'évaluation refusée')
     return r.result?.value
   }
@@ -153,7 +169,10 @@ async function main() {
   const deadline = Date.now() + SECONDS * 1000
   let status
   while (Date.now() < deadline) {
-    status = (await evaluate(`document.querySelector('.vt-panel #vt-status')?.textContent || ''`).catch(() => '')) || ''
+    status =
+      (await evaluate(`document.querySelector('.vt-panel #vt-status')?.textContent || ''`).catch(
+        () => ''
+      )) || ''
     record('harnais', `état : ${status}`)
     if (status && !/en file|préparation|lecture|découpage|zones,/.test(status)) break
     await sleep(3000)

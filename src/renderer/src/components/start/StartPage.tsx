@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { engineLabel, hostOf, isHomeUrl, readableTitle } from '@shared/url'
+import { engineLabel, hostOf, isHomeUrl, isLoginUrl, readableTitle } from '@shared/url'
 import { SKY_THEME, resolveThemeId } from '@shared/theme'
 import { greeting, shortcut, weekdayLabel } from '../../lib/format'
 import { listSessions } from '../../lib/sessions'
@@ -268,6 +268,9 @@ export default function StartPage({ tabId }: { tabId: string }) {
   }
   cards.sort((a, b) => b.visitedAt - a.visitedAt)
   const visibleCards = cards.slice(0, 5)
+  // « Reprendre » ne doit pas rouvrir un formulaire de connexion : la dernière
+  // page utile est la première page de l'historique qui n'en est pas une.
+  const usefulHistory = view.history.filter((entry) => !isLoginUrl(entry.url))
 
   // L'accueil ne compte pas comme une page : une fenêtre qui ne montre que son
   // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
@@ -419,7 +422,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
       toast(`« ${lastSession.name} » rouverte.`)
       return
     }
-    const last = view.history[0]
+    const last = usefulHistory[0]
     if (!last) {
       toast('Rien à reprendre pour le moment.')
       return
@@ -430,7 +433,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
   // Le geste dit sur quoi il porte : « Reprendre YouTube » plutôt qu'un
   // « Reprendre » qui laisse deviner ce qu'on rouvre.
   const resumeTarget =
-    lastSession?.name ?? (view.history[0] ? hostOf(view.history[0].url) : '')
+    lastSession?.name ?? (usefulHistory[0] ? hostOf(usefulHistory[0].url) : '')
 
   return (
     <div

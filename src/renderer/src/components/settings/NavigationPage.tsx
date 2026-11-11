@@ -24,6 +24,7 @@ import { BrandMark, ENGINE_BRANDS } from '../BrandMark'
 import { Icon } from '../Icon'
 import RadioCards from '../RadioCards'
 import ZoomSitesList from './ZoomSitesList'
+import { resolveTab } from './settingsSearch'
 
 interface Props {
   settings: Settings
@@ -32,7 +33,18 @@ interface Props {
   historyCount: number
   downloadCount: number
   onOpenPrivacy: () => void
+  initialTab?: string
 }
+
+type Tab = 'search' | 'startup' | 'library' | 'downloads' | 'web'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'search', label: 'Recherche' },
+  { id: 'startup', label: 'Démarrage' },
+  { id: 'library', label: 'Bibliothèque' },
+  { id: 'downloads', label: 'Téléchargements' },
+  { id: 'web', label: 'Pages web' }
+]
 
 /** Hôte lisible d'un modèle d'adresse : « searx.example.org », sans chemin. */
 function templateHost(template: string): string {
@@ -106,7 +118,12 @@ function EngineGrid({
   }
 
   return (
-    <div className="engine-grid" role="radiogroup" aria-label="Moteur de recherche">
+    <div
+      className="engine-grid"
+      role="radiogroup"
+      aria-label="Moteur de recherche"
+      data-settings-anchor="nav-engine"
+    >
       {tiles.map((tile, index) => {
         const active = index === activeIndex
         return (
@@ -158,7 +175,8 @@ export default function NavigationPage({
   bookmarkCount,
   historyCount,
   downloadCount,
-  onOpenPrivacy
+  onOpenPrivacy,
+  initialTab
 }: Props) {
   const setOverlay = useBrowser((state) => state.setOverlay)
   const toast = useBrowser((state) => state.toast)
@@ -175,6 +193,24 @@ export default function NavigationPage({
   const [undo, setUndo] = useState<number | null>(null)
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [startupDraft, setStartupDraft] = useState(settings.startupUrl)
+  const [tab, setTab] = useState<Tab>(() => resolveTab(initialTab, TABS, 'search'))
+  const tabRefs = useRef(new Map<Tab, HTMLButtonElement | null>())
+
+  const chooseTab = (next: Tab): void => {
+    setTab(next)
+    tabRefs.current.get(next)?.focus()
+  }
+
+  const tabKeys = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
+    const steps: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
+    let next: number | null = null
+    if (event.key in steps) next = (index + steps[event.key] + TABS.length) % TABS.length
+    else if (event.key === 'Home') next = 0
+    else if (event.key === 'End') next = TABS.length - 1
+    if (next === null) return
+    event.preventDefault()
+    chooseTab(TABS[next].id)
+  }
 
   const save = (patch: SettingsPatch): void => {
     void updateSettings(patch)
@@ -304,548 +340,623 @@ export default function NavigationPage({
       : settings.startupBehavior
 
   return (
-    <>
-      <section className="setting-block" aria-labelledby="nav-search">
-        <div className="setting-head">
-          <h2 id="nav-search">Recherche</h2>
-          <p>Le moteur qui reçoit vos mots, et ce que vous tapez dans la barre d’adresse.</p>
-        </div>
-        <EngineGrid
-          settings={settings}
-          onPick={(engine, customId) =>
-            save({ searchEngine: engine, customEngineId: customId || settings.customEngineId })
-          }
-        />
-
-        {settings.searchEngine === 'searxng' && (
-          <label className="field nav-field">
-            <span>Adresse de l’instance SearXNG</span>
-            <input
-              key={settings.searxInstance}
-              defaultValue={settings.searxInstance}
-              placeholder="searx.be"
-              spellCheck={false}
-              autoComplete="off"
-              onBlur={(event) => {
-                const value = event.target.value.trim()
-                save({ searxInstance: value })
-                toast(`SearXNG : ${value || 'searx.be'}.`)
+    <div className="navigation-page">
+      <div className="navigation-tabs" role="tablist" aria-label="Sous-sections de la navigation">
+        {TABS.map((entry, index) => {
+          const active = tab === entry.id
+          return (
+            <button
+              key={entry.id}
+              ref={(node) => {
+                if (node) tabRefs.current.set(entry.id, node)
+                else tabRefs.current.delete(entry.id)
               }}
-              onKeyDown={(event) => {
-                if (event.key !== 'Enter') return
-                event.preventDefault()
-                event.currentTarget.blur()
-              }}
-            />
-            <small className="setting-hint">
-              L’instance qui reçoit vos recherches. Vide : searx.be.
-            </small>
-          </label>
-        )}
+              type="button"
+              role="tab"
+              id={`navigation-tab-${entry.id}`}
+              aria-selected={active}
+              aria-controls={`navigation-panel-${entry.id}`}
+              tabIndex={active ? 0 : -1}
+              className="navigation-tab"
+              data-active={active}
+              onClick={() => setTab(entry.id)}
+              onKeyDown={(event) => tabKeys(event, index)}
+            >
+              {entry.label}
+            </button>
+          )
+        })}
+      </div>
 
-        <div className="nav-subhead">
-          <h3>Moteurs ajoutés</h3>
-          <p>
-            Un nom et une adresse de recherche contenant %s, en https uniquement.
-            {settings.customEngines.length >= MAX_CUSTOM_ENGINES ? ' Douze au maximum.' : ''}
-          </p>
-        </div>
+      <div
+        className="navigation-panel"
+        role="tabpanel"
+        id="navigation-panel-search"
+        aria-labelledby="navigation-tab-search"
+        hidden={tab !== 'search'}
+      >
+        <section className="setting-block" aria-labelledby="nav-search">
+          <div className="setting-head">
+            <h2 id="nav-search">Recherche</h2>
+            <p>Le moteur qui reçoit vos mots, et ce que vous tapez dans la barre d’adresse.</p>
+          </div>
+          <EngineGrid
+            settings={settings}
+            onPick={(engine, customId) =>
+              save({ searchEngine: engine, customEngineId: customId || settings.customEngineId })
+            }
+          />
 
-        {settings.customEngines.length > 0 && (
+          {settings.searchEngine === 'searxng' && (
+            <label className="field nav-field">
+              <span>Adresse de l’instance SearXNG</span>
+              <input
+                key={settings.searxInstance}
+                defaultValue={settings.searxInstance}
+                placeholder="searx.be"
+                spellCheck={false}
+                autoComplete="off"
+                onBlur={(event) => {
+                  const value = event.target.value.trim()
+                  save({ searxInstance: value })
+                  toast(`SearXNG : ${value || 'searx.be'}.`)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }}
+              />
+              <small className="setting-hint">
+                L’instance qui reçoit vos recherches. Vide : searx.be.
+              </small>
+            </label>
+          )}
+
+          <div className="nav-subhead" data-settings-anchor="nav-custom-engines">
+            <h3>Moteurs ajoutés</h3>
+            <p>
+              Un nom et une adresse de recherche contenant %s, en https uniquement.
+              {settings.customEngines.length >= MAX_CUSTOM_ENGINES ? ' Douze au maximum.' : ''}
+            </p>
+          </div>
+
+          {settings.customEngines.length > 0 && (
+            <ul className="nav-list">
+              {settings.customEngines.map((engine) => (
+                <li key={engine.id} className="nav-list-row">
+                  <span className="nav-list-copy">
+                    <strong>{engine.name}</strong>
+                    <span>{templateHost(engine.template)}</span>
+                  </span>
+                  <span className="nav-list-preview">
+                    {searchUrl('verre', 'custom', '', engine.template)}
+                  </span>
+                  <button
+                    type="button"
+                    className="tab-action"
+                    title={`Retirer ${engine.name}`}
+                    onClick={() => removeEngine(engine.id)}
+                  >
+                    <Icon name="trash" size={12} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="nav-add-grid">
+            <label className="field">
+              <span>Nom</span>
+              <input
+                value={draftName}
+                onChange={(event) => setDraftName(event.target.value)}
+                placeholder="Exemple : Mon moteur"
+                maxLength={40}
+                spellCheck={false}
+              />
+            </label>
+            <label className="field">
+              <span>Adresse de recherche</span>
+              <input
+                value={draftTemplate}
+                onChange={(event) => setDraftTemplate(event.target.value)}
+                placeholder="Adresse complète avec %s"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </label>
+            <button type="button" className="action" onClick={addEngine}>
+              <Icon name="plus" size={13} /> Ajouter un moteur
+            </button>
+          </div>
+          {draftError && (
+            <p className="nav-error" role="alert">
+              <Icon name="warning" size={12} /> {draftError}
+            </p>
+          )}
+
+          <div className="nav-subhead" data-settings-anchor="nav-keywords">
+            <h3>Mots-clés rapides</h3>
+            <p>
+              Un mot puis un espace dans la barre d’adresse : «{' '}
+              {settings.searchKeywords[0]?.keyword ?? 'g'} verre » cherche sur ce moteur.
+            </p>
+          </div>
           <ul className="nav-list">
-            {settings.customEngines.map((engine) => (
-              <li key={engine.id} className="nav-list-row">
-                <span className="nav-list-copy">
-                  <strong>{engine.name}</strong>
-                  <span>{templateHost(engine.template)}</span>
+            {settings.searchKeywords.map((entry, index) => (
+              // La clé ne dépend pas du mot-clé : il change à chaque frappe, et
+              // React remonterait alors le champ — le curseur perdrait le focus
+              // au premier caractère. La liste ne se réordonne pas, l'index
+              // suffit.
+              <li key={index} className="nav-list-row">
+                <input
+                  className="nav-keyword"
+                  value={entry.keyword}
+                  aria-label={`Mot-clé ${index + 1}`}
+                  maxLength={12}
+                  spellCheck={false}
+                  onChange={(event) =>
+                    setKeyword(index, {
+                      keyword: event.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+                    })
+                  }
+                />
+                <span className="nav-keyword-arrow" aria-hidden="true">
+                  →
                 </span>
-                <span className="nav-list-preview">
-                  {searchUrl('verre', 'custom', '', engine.template)}
-                </span>
+                <select
+                  className="nav-select"
+                  value={entry.engineId}
+                  aria-label={`Moteur du mot-clé ${entry.keyword || index + 1}`}
+                  onChange={(event) => setKeyword(index, { engineId: event.target.value })}
+                >
+                  <optgroup label="Moteurs">
+                    {BUILTIN_ENGINES.map((id) => (
+                      <option key={id} value={id}>
+                        {SEARCH_ENGINES[id].label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  {settings.customEngines.length > 0 && (
+                    <optgroup label="Moteurs ajoutés">
+                      {settings.customEngines.map((engine) => (
+                        <option key={engine.id} value={engine.id}>
+                          {engine.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
                 <button
                   type="button"
                   className="tab-action"
-                  title={`Retirer ${engine.name}`}
-                  onClick={() => removeEngine(engine.id)}
+                  title="Retirer ce mot-clé"
+                  onClick={() =>
+                    save({
+                      searchKeywords: settings.searchKeywords.filter(
+                        (_, position) => position !== index
+                      )
+                    })
+                  }
                 >
-                  <Icon name="trash" size={12} />
+                  <Icon name="close" size={12} />
                 </button>
               </li>
             ))}
           </ul>
-        )}
+          {settings.searchKeywords.length < MAX_KEYWORDS && (
+            <button type="button" className="action" onClick={addKeyword}>
+              <Icon name="plus" size={13} /> Ajouter un mot-clé
+            </button>
+          )}
 
-        <div className="nav-add-grid">
-          <label className="field">
-            <span>Nom</span>
-            <input
-              value={draftName}
-              onChange={(event) => setDraftName(event.target.value)}
-              placeholder="Exemple : Mon moteur"
-              maxLength={40}
-              spellCheck={false}
-            />
-          </label>
-          <label className="field">
-            <span>Adresse de recherche</span>
-            <input
-              value={draftTemplate}
-              onChange={(event) => setDraftTemplate(event.target.value)}
-              placeholder="Adresse complète avec %s"
-              spellCheck={false}
-              autoComplete="off"
-            />
-          </label>
-          <button type="button" className="action" onClick={addEngine}>
-            <Icon name="plus" size={13} /> Ajouter un moteur
-          </button>
-        </div>
-        {draftError && (
-          <p className="nav-error" role="alert">
-            <Icon name="warning" size={12} /> {draftError}
+          <p className="nav-audit">
+            Vos recherches partent vers le moteur choisi, pas vers un serveur Vela.{' '}
+            <button type="button" className="link-btn" onClick={onOpenPrivacy}>
+              Ce qui reste local, ce qui sort
+            </button>
           </p>
-        )}
+        </section>
+      </div>
 
-        <div className="nav-subhead">
-          <h3>Mots-clés rapides</h3>
-          <p>
-            Un mot puis un espace dans la barre d’adresse : «{' '}
-            {settings.searchKeywords[0]?.keyword ?? 'g'} verre » cherche sur ce moteur.
-          </p>
-        </div>
-        <ul className="nav-list">
-          {settings.searchKeywords.map((entry, index) => (
-            // La clé ne dépend pas du mot-clé : il change à chaque frappe, et
-            // React remonterait alors le champ — le curseur perdrait le focus
-            // au premier caractère. La liste ne se réordonne pas, l'index
-            // suffit.
-            <li key={index} className="nav-list-row">
+      <div
+        className="navigation-panel"
+        role="tabpanel"
+        id="navigation-panel-startup"
+        aria-labelledby="navigation-tab-startup"
+        hidden={tab !== 'startup'}
+      >
+        <section className="setting-block" aria-labelledby="nav-startup">
+          <div className="setting-head">
+            <h2 id="nav-startup">Démarrage et onglets</h2>
+            <p>Ce que Vela ouvre au lancement, et ce qu’il fait d’un nouvel onglet.</p>
+          </div>
+
+          <div className="appearance-field">
+            <span className="appearance-field-label" id="startup-label">
+              À l’ouverture
+            </span>
+            <RadioCards
+              ariaLabel="À l’ouverture"
+              value={startupValue}
+              variant="segment"
+              options={[
+                { value: 'restore', label: 'Reprendre', hint: 'Vos onglets tels quels' },
+                { value: 'home', label: 'Accueil', hint: 'Un seul onglet d’accueil' },
+                { value: 'url', label: 'Page précise', hint: 'Une adresse choisie' }
+              ]}
+              onChange={(value) => {
+                if (value === 'url') {
+                  save({ startupBehavior: 'url', startupUrl: startupDraft })
+                  return
+                }
+                save({ startupBehavior: value })
+              }}
+            />
+          </div>
+
+          {settings.startupBehavior === 'url' && (
+            <label className="field nav-field">
+              <span>Page de démarrage</span>
               <input
-                className="nav-keyword"
-                value={entry.keyword}
-                aria-label={`Mot-clé ${index + 1}`}
-                maxLength={12}
+                value={startupDraft}
+                onChange={(event) => setStartupDraft(event.target.value)}
+                onBlur={() => {
+                  const clean = sanitizeStartupUrl(startupDraft)
+                  setStartupDraft(clean)
+                  save({ startupUrl: clean })
+                  if (!clean) toast('Adresse refusée : il faut une page https.', 'error')
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }}
+                placeholder="Adresse de la page"
                 spellCheck={false}
-                onChange={(event) =>
-                  setKeyword(index, {
-                    keyword: event.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')
-                  })
-                }
+                inputMode="url"
               />
-              <span className="nav-keyword-arrow" aria-hidden="true">
-                →
-              </span>
-              <select
-                className="nav-select"
-                value={entry.engineId}
-                aria-label={`Moteur du mot-clé ${entry.keyword || index + 1}`}
-                onChange={(event) => setKeyword(index, { engineId: event.target.value })}
-              >
-                <optgroup label="Moteurs">
-                  {BUILTIN_ENGINES.map((id) => (
-                    <option key={id} value={id}>
-                      {SEARCH_ENGINES[id].label}
-                    </option>
-                  ))}
-                </optgroup>
-                {settings.customEngines.length > 0 && (
-                  <optgroup label="Moteurs ajoutés">
-                    {settings.customEngines.map((engine) => (
-                      <option key={engine.id} value={engine.id}>
-                        {engine.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-              <button
-                type="button"
-                className="tab-action"
-                title="Retirer ce mot-clé"
-                onClick={() =>
-                  save({
-                    searchKeywords: settings.searchKeywords.filter(
-                      (_, position) => position !== index
-                    )
-                  })
-                }
-              >
-                <Icon name="close" size={12} />
-              </button>
-            </li>
-          ))}
-        </ul>
-        {settings.searchKeywords.length < MAX_KEYWORDS && (
-          <button type="button" className="action" onClick={addKeyword}>
-            <Icon name="plus" size={13} /> Ajouter un mot-clé
-          </button>
-        )}
+              <small className="setting-hint">
+                Adresse https uniquement ; la page s’ouvre au lancement.
+              </small>
+            </label>
+          )}
 
-        <p className="nav-audit">
-          Vos recherches partent vers le moteur choisi, pas vers un serveur Vela.{' '}
-          <button type="button" className="link-btn" onClick={onOpenPrivacy}>
-            Ce qui reste local, ce qui sort
-          </button>
-        </p>
-      </section>
-
-      <section className="setting-block" aria-labelledby="nav-startup">
-        <div className="setting-head">
-          <h2 id="nav-startup">Démarrage et onglets</h2>
-          <p>Ce que Vela ouvre au lancement, et ce qu’il fait d’un nouvel onglet.</p>
-        </div>
-
-        <div className="appearance-field">
-          <span className="appearance-field-label" id="startup-label">
-            À l’ouverture
-          </span>
-          <RadioCards
-            ariaLabel="À l’ouverture"
-            value={startupValue}
-            variant="segment"
-            options={[
-              { value: 'restore', label: 'Reprendre', hint: 'Vos onglets tels quels' },
-              { value: 'home', label: 'Accueil', hint: 'Un seul onglet d’accueil' },
-              { value: 'url', label: 'Page précise', hint: 'Une adresse choisie' }
-            ]}
-            onChange={(value) => {
-              if (value === 'url') {
-                save({ startupBehavior: 'url', startupUrl: startupDraft })
-                return
-              }
-              save({ startupBehavior: value })
-            }}
-          />
-        </div>
-
-        {settings.startupBehavior === 'url' && (
-          <label className="field nav-field">
-            <span>Page de démarrage</span>
-            <input
-              value={startupDraft}
-              onChange={(event) => setStartupDraft(event.target.value)}
-              onBlur={() => {
-                const clean = sanitizeStartupUrl(startupDraft)
-                setStartupDraft(clean)
-                save({ startupUrl: clean })
-                if (!clean) toast('Adresse refusée : il faut une page https.', 'error')
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== 'Enter') return
-                event.preventDefault()
-                event.currentTarget.blur()
-              }}
-              placeholder="Adresse de la page"
-              spellCheck={false}
-              inputMode="url"
+          <div className="appearance-field">
+            <span className="appearance-field-label" id="newtab-label">
+              Nouvel onglet
+            </span>
+            <RadioCards
+              ariaLabel="Nouvel onglet"
+              value={settings.newTabBlank ? 'blank' : 'home'}
+              variant="segment"
+              options={[
+                { value: 'home', label: 'Accueil' },
+                { value: 'blank', label: 'Page vide' }
+              ]}
+              onChange={(value) => save({ newTabBlank: value === 'blank' })}
             />
-            <small className="setting-hint">
-              Adresse https uniquement ; la page s’ouvre au lancement.
-            </small>
-          </label>
-        )}
+          </div>
 
-        <div className="appearance-field">
-          <span className="appearance-field-label" id="newtab-label">
-            Nouvel onglet
-          </span>
-          <RadioCards
-            ariaLabel="Nouvel onglet"
-            value={settings.newTabBlank ? 'blank' : 'home'}
-            variant="segment"
-            options={[
-              { value: 'home', label: 'Accueil' },
-              { value: 'blank', label: 'Page vide' }
-            ]}
-            onChange={(value) => save({ newTabBlank: value === 'blank' })}
-          />
-        </div>
+          <div className="setting-row">
+            <div>
+              <label>Liens externes</label>
+              <p className="setting-hint">
+                Un lien cliqué s’ouvre dans un nouvel onglet de l’espace actif.
+              </p>
+            </div>
+            <span className="tag">Nouvel onglet</span>
+          </div>
+        </section>
+      </div>
 
-        <div className="setting-row">
-          <div>
-            <label>Liens externes</label>
-            <p className="setting-hint">
-              Un lien cliqué s’ouvre dans un nouvel onglet de l’espace actif.
+      <div
+        className="navigation-panel"
+        role="tabpanel"
+        id="navigation-panel-library"
+        aria-labelledby="navigation-tab-library"
+        hidden={tab !== 'library'}
+      >
+        <section className="setting-block" aria-labelledby="nav-bookmarks">
+          <div className="setting-head">
+            <h2 id="nav-bookmarks">Marque-pages</h2>
+            <p>
+              {plural(bookmarkCount, 'page gardée', 'pages gardées')} sur cet appareil, jamais
+              synchronisée.
             </p>
           </div>
-          <span className="tag">Nouvel onglet</span>
-        </div>
-      </section>
-
-      <section className="setting-block" aria-labelledby="nav-bookmarks">
-        <div className="setting-head">
-          <h2 id="nav-bookmarks">Marque-pages</h2>
-          <p>
-            {plural(bookmarkCount, 'page gardée', 'pages gardées')} sur cet appareil, jamais
-            synchronisée.
-          </p>
-        </div>
-        <div className="setting-row">
-          <div>
-            <label>Vos pages gardées</label>
-            <p className="setting-hint">
-              <kbd className="key">{shortcut('D')}</kbd> garde la page affichée,{' '}
-              <kbd className="key">{shortcut('⇧O')}</kbd> ouvre la liste.
-            </p>
-          </div>
-          <div className="setting-actions">
-            <button type="button" className="action" onClick={() => setOverlay('bookmarks')}>
-              <Icon name="star" size={14} /> Gérer
-            </button>
-            <button type="button" className="action" onClick={() => void openImporter()}>
-              <Icon name="download" size={13} /> Importer
-            </button>
-            <button type="button" className="action" onClick={() => void exportFile()}>
-              <Icon name="external" size={13} /> Exporter
-            </button>
-          </div>
-        </div>
-
-        {showImporter && (
-          <div className="nav-importer">
-            <p className="setting-hint">
-              Reprenez les favoris d’un navigateur installé, ou un fichier HTML.
-            </p>
-            {detected === null && <p className="setting-hint">Lecture locale…</p>}
-            {detected !== null && detected.length === 0 && (
-              <p className="setting-hint">Aucun navigateur détecté sur cet appareil.</p>
-            )}
-            <div className="nav-importer-actions">
-              {(detected ?? []).map((source) => (
-                <button
-                  key={source.id}
-                  type="button"
-                  className="action"
-                  onClick={() => void importFrom(source)}
-                >
-                  {source.label} · {source.count}
-                </button>
-              ))}
-              <button type="button" className="action" onClick={() => void importFile()}>
-                Fichier HTML…
+          <div className="setting-row">
+            <div>
+              <label>Vos pages gardées</label>
+              <p className="setting-hint">
+                <kbd className="key">{shortcut('D')}</kbd> garde la page affichée,{' '}
+                <kbd className="key">{shortcut('⇧O')}</kbd> ouvre la liste.
+              </p>
+            </div>
+            <div className="setting-actions">
+              <button type="button" className="action" onClick={() => setOverlay('bookmarks')}>
+                <Icon name="star" size={14} /> Gérer
               </button>
-              <button type="button" className="action ghost" onClick={() => setShowImporter(false)}>
-                Annuler
+              <button type="button" className="action" onClick={() => void openImporter()}>
+                <Icon name="download" size={13} /> Importer
+              </button>
+              <button type="button" className="action" onClick={() => void exportFile()}>
+                <Icon name="external" size={13} /> Exporter
               </button>
             </div>
           </div>
-        )}
-      </section>
 
-      <section className="setting-block" aria-labelledby="nav-history">
-        <div className="setting-head">
-          <h2 id="nav-history">Historique</h2>
-          <p>{plural(historyCount, 'entrée conservée', 'entrées conservées')} sur cet appareil.</p>
-        </div>
+          {showImporter && (
+            <div className="nav-importer">
+              <p className="setting-hint">
+                Reprenez les favoris d’un navigateur installé, ou un fichier HTML.
+              </p>
+              {detected === null && <p className="setting-hint">Lecture locale…</p>}
+              {detected !== null && detected.length === 0 && (
+                <p className="setting-hint">Aucun navigateur détecté sur cet appareil.</p>
+              )}
+              <div className="nav-importer-actions">
+                {(detected ?? []).map((source) => (
+                  <button
+                    key={source.id}
+                    type="button"
+                    className="action"
+                    onClick={() => void importFrom(source)}
+                  >
+                    {source.label} · {source.count}
+                  </button>
+                ))}
+                <button type="button" className="action" onClick={() => void importFile()}>
+                  Fichier HTML…
+                </button>
+                <button
+                  type="button"
+                  className="action ghost"
+                  onClick={() => setShowImporter(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
-        <div className="appearance-field">
-          <span className="appearance-field-label" id="retention-label">
-            Durée de conservation
-          </span>
-          <RadioCards
-            ariaLabel="Durée de conservation de l’historique"
-            value={settings.historyRetention}
-            variant="segment"
-            options={HISTORY_RETENTIONS.map((entry) => ({
-              value: entry.id,
-              label: entry.label,
-              hint: entry.detail
-            }))}
-            onChange={(value) => save({ historyRetention: value })}
-          />
-        </div>
-        <p className="setting-hint nav-hint">
-          La purge se fait au lancement : au-delà de la durée choisie, les entrées partent.
-        </p>
-
-        <div className="setting-row">
-          <div>
-            <label>Consulter</label>
-            <p className="setting-hint">Par jour, avec suppression entrée par entrée.</p>
-          </div>
-          <button type="button" className="action" onClick={() => setOverlay('history')}>
-            <Icon name="history" size={14} /> Consulter
-          </button>
-        </div>
-
-        <div className="setting-row setting-row-top">
-          <div>
-            <label>Effacer</label>
-            <p className="setting-hint">
-              Les suggestions repartent à zéro. Annulation possible huit secondes.
+        <section className="setting-block" aria-labelledby="nav-history">
+          <div className="setting-head">
+            <h2 id="nav-history">Historique</h2>
+            <p>
+              {plural(historyCount, 'entrée conservée', 'entrées conservées')} sur cet appareil.
             </p>
           </div>
-          {!confirming ? (
-            <button type="button" className="action danger" onClick={() => setConfirming(true)}>
-              <Icon name="trash" size={13} /> Effacer
+
+          <div className="appearance-field">
+            <span className="appearance-field-label" id="retention-label">
+              Durée de conservation
+            </span>
+            <RadioCards
+              ariaLabel="Durée de conservation de l’historique"
+              value={settings.historyRetention}
+              variant="segment"
+              options={HISTORY_RETENTIONS.map((entry) => ({
+                value: entry.id,
+                label: entry.label,
+                hint: entry.detail
+              }))}
+              onChange={(value) => save({ historyRetention: value })}
+            />
+          </div>
+          <p className="setting-hint nav-hint">
+            La purge se fait au lancement : au-delà de la durée choisie, les entrées partent.
+          </p>
+
+          <div className="setting-row">
+            <div>
+              <label>Consulter</label>
+              <p className="setting-hint">Par jour, avec suppression entrée par entrée.</p>
+            </div>
+            <button type="button" className="action" onClick={() => setOverlay('history')}>
+              <Icon name="history" size={14} /> Consulter
             </button>
-          ) : (
-            <div className="nav-confirm" role="group" aria-label="Confirmer l’effacement">
-              <label className="nav-confirm-range">
-                <span>Période</span>
-                <select
-                  className="nav-select"
-                  value={range}
-                  onChange={(event) => setRange(event.target.value as HistoryRange)}
-                >
-                  {HISTORY_RANGES.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="button" className="action danger" onClick={() => void clearHistory()}>
-                Effacer définitivement
+          </div>
+
+          <div className="setting-row setting-row-top">
+            <div>
+              <label>Effacer</label>
+              <p className="setting-hint">
+                Les suggestions repartent à zéro. Annulation possible huit secondes.
+              </p>
+            </div>
+            {!confirming ? (
+              <button type="button" className="action danger" onClick={() => setConfirming(true)}>
+                <Icon name="trash" size={13} /> Effacer
               </button>
-              <button type="button" className="action ghost" onClick={() => setConfirming(false)}>
-                Annuler
+            ) : (
+              <div className="nav-confirm" role="group" aria-label="Confirmer l’effacement">
+                <label className="nav-confirm-range">
+                  <span>Période</span>
+                  <select
+                    className="nav-select"
+                    value={range}
+                    onChange={(event) => setRange(event.target.value as HistoryRange)}
+                  >
+                    {HISTORY_RANGES.map((entry) => (
+                      <option key={entry.id} value={entry.id}>
+                        {entry.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button type="button" className="action danger" onClick={() => void clearHistory()}>
+                  Effacer définitivement
+                </button>
+                <button type="button" className="action ghost" onClick={() => setConfirming(false)}>
+                  Annuler
+                </button>
+              </div>
+            )}
+          </div>
+
+          {undo !== null && (
+            <div className="nav-undo" role="status">
+              <span>{plural(undo, 'entrée effacée', 'entrées effacées')}.</span>
+              <button type="button" className="link-btn" onClick={() => void undoClear()}>
+                Rétablir
               </button>
             </div>
           )}
-        </div>
+        </section>
+      </div>
 
-        {undo !== null && (
-          <div className="nav-undo" role="status">
-            <span>{plural(undo, 'entrée effacée', 'entrées effacées')}.</span>
-            <button type="button" className="link-btn" onClick={() => void undoClear()}>
-              Rétablir
-            </button>
-          </div>
-        )}
-      </section>
-
-      <section className="setting-block" aria-labelledby="nav-downloads">
-        <div className="setting-head">
-          <h2 id="nav-downloads">Téléchargements</h2>
-          <p>
-            {downloadCount > 0
-              ? plural(downloadCount, 'fichier cette session', 'fichiers cette session')
-              : 'Aucun fichier cette session'}{' '}
-            · rien n’est envoyé ailleurs.
-          </p>
-        </div>
-
-        <div className="setting-row">
-          <div>
-            <label>Dossier de destination</label>
-            <p className="setting-hint">
-              {settings.downloadDir ?? 'Dossier Téléchargements du système'}
+      <div
+        className="navigation-panel"
+        role="tabpanel"
+        id="navigation-panel-downloads"
+        aria-labelledby="navigation-tab-downloads"
+        hidden={tab !== 'downloads'}
+      >
+        <section className="setting-block" aria-labelledby="nav-downloads">
+          <div className="setting-head">
+            <h2 id="nav-downloads">Téléchargements</h2>
+            <p>
+              {downloadCount > 0
+                ? plural(downloadCount, 'fichier cette session', 'fichiers cette session')
+                : 'Aucun fichier cette session'}{' '}
+              · rien n’est envoyé ailleurs.
             </p>
           </div>
-          <div className="setting-actions">
-            <button type="button" className="action" onClick={() => void pickDownloadDir()}>
-              <Icon name="folder" size={13} /> Choisir
-            </button>
-            {settings.downloadDir && (
-              <button
-                type="button"
-                className="action ghost"
-                onClick={() => save({ downloadDir: null })}
-              >
-                Par défaut
+
+          <div className="setting-row" data-settings-anchor="download-folder">
+            <div>
+              <label>Dossier de destination</label>
+              <p className="setting-hint">
+                {settings.downloadDir ?? 'Dossier Téléchargements du système'}
+              </p>
+            </div>
+            <div className="setting-actions">
+              <button type="button" className="action" onClick={() => void pickDownloadDir()}>
+                <Icon name="folder" size={13} /> Choisir
               </button>
-            )}
+              {settings.downloadDir && (
+                <button
+                  type="button"
+                  className="action ghost"
+                  onClick={() => save({ downloadDir: null })}
+                >
+                  Par défaut
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="setting-row">
-          <div>
-            <label htmlFor="ask-download">Demander où enregistrer</label>
-            <p className="setting-hint">Une boîte système à chaque fichier.</p>
+          <div className="setting-row">
+            <div>
+              <label htmlFor="ask-download">Demander où enregistrer</label>
+              <p className="setting-hint">Une boîte système à chaque fichier.</p>
+            </div>
+            <button
+              id="ask-download"
+              type="button"
+              className="switch"
+              role="switch"
+              aria-checked={settings.askDownloadLocation}
+              data-on={settings.askDownloadLocation}
+              aria-label="Demander où enregistrer"
+              onClick={() => save({ askDownloadLocation: !settings.askDownloadLocation })}
+            >
+              <span />
+            </button>
           </div>
-          <button
-            id="ask-download"
-            type="button"
-            className="switch"
-            role="switch"
-            aria-checked={settings.askDownloadLocation}
-            data-on={settings.askDownloadLocation}
-            aria-label="Demander où enregistrer"
-            onClick={() => save({ askDownloadLocation: !settings.askDownloadLocation })}
-          >
-            <span />
-          </button>
-        </div>
 
-        <div className="setting-row">
-          <div>
-            <label htmlFor="open-download">Ouvrir après le téléchargement</label>
-            <p className="setting-hint">
-              Le fichier s’ouvre dans l’app associée, une fois complet.
-            </p>
+          <div className="setting-row">
+            <div>
+              <label htmlFor="open-download">Ouvrir après le téléchargement</label>
+              <p className="setting-hint">
+                Le fichier s’ouvre dans l’app associée, une fois complet.
+              </p>
+            </div>
+            <button
+              id="open-download"
+              type="button"
+              className="switch"
+              role="switch"
+              aria-checked={settings.openAfterDownload}
+              data-on={settings.openAfterDownload}
+              aria-label="Ouvrir après le téléchargement"
+              onClick={() => save({ openAfterDownload: !settings.openAfterDownload })}
+            >
+              <span />
+            </button>
           </div>
-          <button
-            id="open-download"
-            type="button"
-            className="switch"
-            role="switch"
-            aria-checked={settings.openAfterDownload}
-            data-on={settings.openAfterDownload}
-            aria-label="Ouvrir après le téléchargement"
-            onClick={() => save({ openAfterDownload: !settings.openAfterDownload })}
-          >
-            <span />
-          </button>
-        </div>
 
-        <div className="setting-row">
-          <div>
-            <label>Liste des téléchargements</label>
-            <p className="setting-hint">Les trente derniers fichiers, avec leur état.</p>
+          <div className="setting-row">
+            <div>
+              <label>Liste des téléchargements</label>
+              <p className="setting-hint">Les trente derniers fichiers, avec leur état.</p>
+            </div>
+            <button type="button" className="action" onClick={() => setOverlay('downloads')}>
+              <Icon name="download" size={13} /> Voir la liste
+            </button>
           </div>
-          <button type="button" className="action" onClick={() => setOverlay('downloads')}>
-            <Icon name="download" size={13} /> Voir la liste
-          </button>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section className="setting-block" aria-labelledby="nav-web">
-        <div className="setting-head">
-          <h2 id="nav-web">Pages web</h2>
-          <p>La langue annoncée aux sites, et la taille d’affichage de départ.</p>
-        </div>
-
-        <div className="setting-row">
-          <div>
-            <label htmlFor="web-language">Langue préférée</label>
-            <p className="setting-hint">Envoyée dans l’en-tête Accept-Language de chaque page.</p>
+      <div
+        className="navigation-panel"
+        role="tabpanel"
+        id="navigation-panel-web"
+        aria-labelledby="navigation-tab-web"
+        hidden={tab !== 'web'}
+      >
+        <section className="setting-block" aria-labelledby="nav-web">
+          <div className="setting-head">
+            <h2 id="nav-web">Pages web</h2>
+            <p>La langue annoncée aux sites, et la taille d’affichage de départ.</p>
           </div>
-          <select
-            id="web-language"
-            className="nav-select"
-            value={settings.webLanguage}
-            onChange={(event) => save({ webLanguage: event.target.value })}
-          >
-            {WEB_LANGUAGES.map((language) => (
-              <option key={language.id} value={language.id}>
-                {language.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
-        <div className="setting-row">
-          <div>
-            <label htmlFor="default-zoom">Zoom par défaut</label>
-            <p className="setting-hint">Appliqué à l’ouverture d’une page ; ⌘0 revient à 100 %.</p>
+          <div className="setting-row">
+            <div>
+              <label htmlFor="web-language">Langue préférée</label>
+              <p className="setting-hint">Envoyée dans l’en-tête Accept-Language de chaque page.</p>
+            </div>
+            <select
+              id="web-language"
+              className="nav-select"
+              value={settings.webLanguage}
+              onChange={(event) => save({ webLanguage: event.target.value })}
+            >
+              {WEB_LANGUAGES.map((language) => (
+                <option key={language.id} value={language.id}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <select
-            id="default-zoom"
-            className="nav-select"
-            value={String(settings.defaultZoom)}
-            onChange={(event) => save({ defaultZoom: Number(event.target.value) })}
-          >
-            {ZOOM_LEVELS.map((level) => (
-              <option key={level} value={String(level)}>
-                {describeZoom(level)}
-              </option>
-            ))}
-          </select>
-        </div>
 
-        <ZoomSitesList />
-      </section>
-    </>
+          <div className="setting-row">
+            <div>
+              <label htmlFor="default-zoom">Zoom par défaut</label>
+              <p className="setting-hint">
+                Appliqué à l’ouverture d’une page ; ⌘0 revient à 100 %.
+              </p>
+            </div>
+            <select
+              id="default-zoom"
+              className="nav-select"
+              value={String(settings.defaultZoom)}
+              onChange={(event) => save({ defaultZoom: Number(event.target.value) })}
+            >
+              {ZOOM_LEVELS.map((level) => (
+                <option key={level} value={String(level)}>
+                  {describeZoom(level)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <ZoomSitesList />
+        </section>
+      </div>
+    </div>
   )
 }

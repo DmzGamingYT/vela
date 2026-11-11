@@ -29,8 +29,16 @@ const HEIGHT = 900
 /* Légendes : chaque phrase est posée entre deux repères du tournage, donc elle
    reste juste même si le scénario change de rythme. */
 const CAPTIONS = [
-  ['accueil', 'saisie', 'Un navigateur, des espaces : chaque profil garde ses onglets, ses favoris et ses notes'],
-  ['saisie', 'adresse', 'La question s’écrit dans la page d’accueil, sans quitter l’espace de travail'],
+  [
+    'accueil',
+    'saisie',
+    'Un navigateur, des espaces : chaque profil garde ses onglets, ses favoris et ses notes'
+  ],
+  [
+    'saisie',
+    'adresse',
+    'La question s’écrit dans la page d’accueil, sans quitter l’espace de travail'
+  ],
   ['adresse', 'page', 'Une adresse, et la page réelle s’affiche'],
   ['page', 'scindé', 'Défilement réel : c’est bien le site que l’on voit, pas une maquette'],
   ['scindé', 'notes', 'Vue scindée : la documentation à gauche, la page à droite'],
@@ -41,7 +49,8 @@ const CAPTIONS = [
   ['niveaux', null, 'Vela — le navigateur de travail']
 ]
 
-const run = (args) => execFileSync(FFMPEG, ['-v', 'error', '-y', ...args], { stdio: ['ignore', 'inherit', 'inherit'] })
+const run = (args) =>
+  execFileSync(FFMPEG, ['-v', 'error', '-y', ...args], { stdio: ['ignore', 'inherit', 'inherit'] })
 const stamp = (seconds) => {
   const value = Math.max(0, seconds)
   const hours = Math.floor(value / 3600)
@@ -77,43 +86,79 @@ const main = () => {
   /* MP4 : H.264 + AAC, lisible partout, index déplacé en tête pour la lecture
      immédiate dans le navigateur. */
   run([
-    '-i', VIDEO,
-    '-i', SOUND,
-    '-t', String(duration),
-    '-vf', picture,
-    '-r', '30',
-    '-c:v', 'libx264',
-    '-preset', 'slow',
-    '-crf', '21',
-    '-pix_fmt', 'yuv420p',
-    '-c:a', 'aac',
-    '-b:a', '160k',
-    '-movflags', '+faststart',
+    '-i',
+    VIDEO,
+    '-i',
+    SOUND,
+    '-t',
+    String(duration),
+    '-vf',
+    picture,
+    '-r',
+    '30',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'slow',
+    '-crf',
+    '21',
+    '-pix_fmt',
+    'yuv420p',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '160k',
+    '-movflags',
+    '+faststart',
     mp4
   ])
   console.log('écrit', mp4)
 
   /* WebM : second format pour les navigateurs qui préfèrent VP9. */
   run([
-    '-i', VIDEO,
-    '-i', SOUND,
-    '-t', String(duration),
-    '-vf', picture,
-    '-r', '30',
-    '-c:v', 'libvpx-vp9',
-    '-crf', '34',
-    '-b:v', '0',
-    '-row-mt', '1',
-    '-cpu-used', '2',
-    '-c:a', 'libopus',
-    '-b:a', '128k',
+    '-i',
+    VIDEO,
+    '-i',
+    SOUND,
+    '-t',
+    String(duration),
+    '-vf',
+    picture,
+    '-r',
+    '30',
+    '-c:v',
+    'libvpx-vp9',
+    '-crf',
+    '34',
+    '-b:v',
+    '0',
+    '-row-mt',
+    '1',
+    '-cpu-used',
+    '2',
+    '-c:a',
+    'libopus',
+    '-b:a',
+    '128k',
     webm
   ])
   console.log('écrit', webm)
 
   /* Vignette : l'accueil, la question déjà écrite — lisible même en petit. */
   const posterAt = Math.max(1.4, (at('saisie') ?? 4) - 0.6)
-  run(['-ss', String(posterAt + 0.6), '-i', VIDEO, '-frames:v', '1', '-vf', `scale=${WIDTH}:${HEIGHT}:flags=lanczos`, '-q:v', '3', poster])
+  run([
+    '-ss',
+    String(posterAt + 0.6),
+    '-i',
+    VIDEO,
+    '-frames:v',
+    '1',
+    '-vf',
+    `scale=${WIDTH}:${HEIGHT}:flags=lanczos`,
+    '-q:v',
+    '3',
+    poster
+  ])
   console.log('écrit', poster)
 
   /* Légendes, calées sur les repères du tournage. */

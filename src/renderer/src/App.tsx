@@ -48,12 +48,13 @@ export default function App() {
   // Largeur de la coque : le repli automatique de la barre latérale et la garde
   // de la vue scindée en dépendent. `ready` relance la mesure une fois l'état
   // diffusé, sinon une fenêtre étroite ouverte au démarrage restait dépliée.
+  // Un tiroir ouvert change aussi la place disponible sans `resize`.
   useEffect(() => {
     const sync = (): void => useBrowser.getState().syncViewport(window.innerWidth)
     sync()
     window.addEventListener('resize', sync)
     return () => window.removeEventListener('resize', sync)
-  }, [ready])
+  }, [ready, notesOpen, agentOpen])
 
   // Mode, thème de couleur et intensité du verre : un seul passage pose tous
   // les jetons. L'espace actif peut fournir son propre thème.

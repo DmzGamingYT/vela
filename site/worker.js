@@ -12,7 +12,10 @@
 // remplacée à la release suivante ne doit pas rester une semaine chez un
 // visiteur. Le stale-while-revalidate évite la revalidation bloquante.
 const CACHE = [
-  { test: /^\/(captures|og-vela\.jpg|favicon|apple-touch-icon)/, value: 'public, max-age=86400, stale-while-revalidate=604800' },
+  {
+    test: /^\/(captures|og-vela\.jpg|favicon|apple-touch-icon)/,
+    value: 'public, max-age=86400, stale-while-revalidate=604800'
+  },
   // Le build publie des noms qui portent l’empreinte du contenu : un an sans
   // revalidation ne peut pas servir une version périmée.
   { test: /\.(css|js)$/, value: 'public, max-age=31536000, immutable' },
@@ -42,7 +45,8 @@ const SECURITY = {
   'Cross-Origin-Opener-Policy': 'same-origin'
 }
 
-const cacheFor = (pathname) => CACHE.find((rule) => rule.test.test(pathname))?.value ?? 'public, max-age=0, must-revalidate'
+const cacheFor = (pathname) =>
+  CACHE.find((rule) => rule.test.test(pathname))?.value ?? 'public, max-age=0, must-revalidate'
 
 const decorate = (response, { status, cache, body } = {}) => {
   const headers = new Headers(response.headers)

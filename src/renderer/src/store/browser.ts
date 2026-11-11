@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import type { SettingsPatch } from '@shared/api'
-import { AUTO_COLLAPSE_WIDTH, SPLIT_MIN_WIDTH, panesCanSplit } from '@shared/layout'
+import {
+  AUTO_COLLAPSE_WIDTH,
+  DRAWER_AUTO_COLLAPSE_WIDTH,
+  SPLIT_MIN_WIDTH,
+  panesCanSplit
+} from '@shared/layout'
 import type { AppView, ProviderId, ShortcutEvent } from '@shared/types'
 import { updateReadyMessage } from '@shared/update'
 import { createAgentSlice, type AgentSlice } from './slices/agent'
@@ -149,8 +154,11 @@ function createCoreSlice(
     sidebarOverride: false,
 
     syncViewport(width) {
-      const compact = width < AUTO_COLLAPSE_WIDTH
       const previous = get()
+      const drawerOpen = previous.notesOpen || previous.agentOpen
+      const compact =
+        width < AUTO_COLLAPSE_WIDTH ||
+        (drawerOpen && width < DRAWER_AUTO_COLLAPSE_WIDTH)
       set({
         viewportWidth: width,
         compactViewport: compact,
@@ -165,9 +173,11 @@ function createCoreSlice(
         if (previous.sidebarAutoValue === null) return
         set({ sidebarAutoValue: null })
         const view = get().view
-        if (view && view.settings.sidebarCollapsed !== previous.sidebarAutoValue) {
-          void get().updateSettings({ sidebarCollapsed: previous.sidebarAutoValue })
-        }
+        // Toujours réécrire la valeur mémorisée : le repli automatique a pu
+        // partir par IPC et revenir après ce passage, auquel cas l'état local
+        // dit encore « dépliée » et un test d'égalité laisserait la barre
+        // repliée définitivement.
+        if (view) void get().updateSettings({ sidebarCollapsed: previous.sidebarAutoValue })
         return
       }
       const view = get().view

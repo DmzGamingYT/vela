@@ -140,7 +140,7 @@ export default function UpdatesPage() {
         </div>
       )}
 
-      <div className="setting-row">
+      <div className="setting-row" data-settings-anchor="system-update-action">
         <div>
           <label>{downloaded ? 'Mise à jour prête' : 'Mettre à jour Vela'}</label>
           <p className="setting-hint">

@@ -37,7 +37,16 @@ const GROUP_LABELS = {
   extensions: 'Lecture des planches'
 }
 
-const ORDER = ['meteo', 'recherche', 'tunnel', 'modeles', 'journal', 'mises-a-jour', 'pages', 'extensions']
+const ORDER = [
+  'meteo',
+  'recherche',
+  'tunnel',
+  'modeles',
+  'journal',
+  'mises-a-jour',
+  'pages',
+  'extensions'
+]
 
 const GROUP_IDS = {
   meteo: 'meteo',
@@ -111,10 +120,18 @@ const target = path.join(publicRoot, 'confidentialite/index.html')
 fs.mkdirSync(path.dirname(target), { recursive: true })
 fs.writeFileSync(target, html)
 
-const hosts = NETWORK_FLOWS.filter((flow) => flow.hosts.length).reduce((sum, flow) => sum + flow.hosts.length, 0)
+const hosts = NETWORK_FLOWS.filter((flow) => flow.hosts.length).reduce(
+  (sum, flow) => sum + flow.hosts.length,
+  0
+)
 console.log(
   JSON.stringify(
-    { target: path.relative(projectRoot, target), flows: NETWORK_FLOWS.length, hosts, bytes: Buffer.byteLength(html) },
+    {
+      target: path.relative(projectRoot, target),
+      flows: NETWORK_FLOWS.length,
+      hosts,
+      bytes: Buffer.byteLength(html)
+    },
     null,
     1
   )

@@ -1,0 +1,59 @@
+/* ---------------------------------------------------------------
+   Réglages › Apparence — onglets de la fusion Tweaks / Thèmes
+   --------------------------------------------------------------- */
+
+.appearance-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  overflow-x: auto;
+}
+
+.appearance-tab {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.appearance-tab:hover {
+  color: var(--ink);
+}
+
+.appearance-tab[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.appearance-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.appearance-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: fade var(--dur-2) var(--ease-standard);
+}
+
+@media (max-width: 620px) {
+  .appearance-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .appearance-tab {
+    flex: 1 1 45%;
+  }
+}

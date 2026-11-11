@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { TabView } from '@shared/types'
-import { engineLabel, hostOf, isHomeUrl, prettyUrl } from '@shared/url'
+import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { shortcut } from '../../lib/format'
+import { buildAddressSuggestions, type AddressSuggestion } from '../../lib/addressSuggestions'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 import BarButton from '../BarButton'
 import TileMenu, { type TileMenuItem } from '../tabs/TileMenu'
+import AddressSuggestions from './AddressSuggestions'
 
 interface PaneHeaderProps {
   tab: TabView
@@ -13,20 +15,11 @@ interface PaneHeaderProps {
   secondary?: boolean
 }
 
-/** Une ligne de la liste d'adresses : une page connue ou une recherche. */
-interface Suggestion {
-  id: string
-  url: string
-  title: string
-  host: string
-  search?: boolean
-}
-
-const MAX_SUGGESTIONS = 5
-
 export default function PaneHeader({ tab, primary, secondary = false }: PaneHeaderProps) {
   const view = useBrowser((state) => state.view)
   const navigate = useBrowser((state) => state.navigate)
+  const newTab = useBrowser((state) => state.newTab)
+  const selectTab = useBrowser((state) => state.selectTab)
   const back = useBrowser((state) => state.back)
   const forward = useBrowser((state) => state.forward)
   const reload = useBrowser((state) => state.reload)
@@ -38,10 +31,12 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
   const toast = useBrowser((state) => state.toast)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const addressRef = useRef<HTMLFormElement>(null)
   const [focused, setFocused] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [draft, setDraft] = useState('')
-  const [activeIndex, setActiveIndex] = useState(-1)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [anchor, setAnchor] = useState({ left: 0, top: 0, width: 0 })
   // Clic long sur « Précédent » : le parcours de l'onglet, pas un menu
   // déroulant au survol (geste discret, mais qui ne cache aucune fonction).
   const [backMenu, setBackMenu] = useState<{
@@ -79,51 +74,83 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
     }
   })()
 
-  // Suggestions : ce que l'appareil connaît d'abord (favoris, historique),
-  // puis la recherche. Taper « you » propose youtube.com avant de proposer
-  // d'envoyer « you » au moteur.
-  const suggestions: Suggestion[] = []
-  if (focused) {
-    const needle = draft.trim().toLowerCase()
-    const seen = new Set<string>()
-    const pool = [
-      ...(view?.bookmarks ?? []).map((bookmark) => ({
-        url: bookmark.url,
-        title: bookmark.title
-      })),
-      ...(view?.history ?? []).map((entry) => ({ url: entry.url, title: entry.title }))
-    ]
-    for (const item of pool) {
-      if (!item.url || isHomeUrl(item.url) || seen.has(item.url)) continue
-      const itemHost = hostOf(item.url)
-      const title = (item.title || '').trim() || itemHost
-      if (needle && !`${title} ${item.url}`.toLowerCase().includes(needle)) continue
-      seen.add(item.url)
-      suggestions.push({ id: item.url, url: item.url, title, host: itemHost })
-      if (suggestions.length >= MAX_SUGGESTIONS) break
-    }
-    const query = draft.trim()
-    if (query) {
-      const engine = engineLabel(
-        view?.settings.searchEngine ?? 'duckduckgo',
-        view?.settings.customEngines.find((entry) => entry.id === view.settings.customEngineId)?.name
-      )
-      suggestions.push({
-        id: 'search',
-        url: query,
-        title: `Rechercher « ${query} »`,
-        host: engine,
-        search: true
-      })
-    }
-  }
-  const suggestionsOpen = focused && suggestions.length > 0
+  const suggestions = useMemo(
+    () =>
+      focused && view
+        ? buildAddressSuggestions(view, tab.id, draft)
+        : { groups: [], rows: [] },
+    [focused, view, tab.id, draft]
+  )
+  const suggestionsOpen = focused && suggestions.rows.length > 0
+  const suggestionsId = `address-suggest-${tab.id.replace(/[^a-z0-9_-]/gi, '')}`
 
-  const pick = (suggestion: Suggestion): void => {
-    navigate(tab.id, suggestion.url)
+  useEffect(() => {
+    if (!suggestionsOpen) {
+      queueMicrotask(() => setActiveIndex(-1))
+      return
+    }
+    queueMicrotask(() =>
+      setActiveIndex((current) =>
+        current >= 0 && current < suggestions.rows.length ? current : 0
+      )
+    )
+  }, [suggestionsOpen, suggestions.rows.length])
+
+  // Le popover est un calque HTML : la vue native est retirée derrière son
+  // épreuve le temps de l'ouverture, sans changer sa taille ni sa géométrie.
+  useEffect(() => {
+    if (!suggestionsOpen) return
+    const state = useBrowser.getState()
+    state.beginMenu()
+    if (state.view) window.vela?.views?.layout({ panes: [], overlay: true })
+    return () => state.endMenu()
+  }, [suggestionsOpen])
+
+  useLayoutEffect(() => {
+    if (!focused) return
+    const sync = (): void => {
+      const rect = addressRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setAnchor({ left: rect.left, top: rect.bottom + 8, width: rect.width })
+    }
+    sync()
+    window.addEventListener('resize', sync)
+    window.addEventListener('scroll', sync, true)
+    return () => {
+      window.removeEventListener('resize', sync)
+      window.removeEventListener('scroll', sync, true)
+    }
+  }, [focused, tab.id])
+
+  useEffect(() => {
+    if (!overlay) return
+    queueMicrotask(() => {
+      setFocused(false)
+      setActiveIndex(-1)
+    })
+  }, [overlay])
+
+  const closeSuggestions = (): void => {
     setFocused(false)
     setActiveIndex(-1)
     inputRef.current?.blur()
+  }
+
+  const pick = (suggestion: AddressSuggestion, newWindow = false): void => {
+    if (suggestion.kind === 'tab' && suggestion.tabId && !newWindow) {
+      selectTab(suggestion.tabId)
+    } else if (newWindow) {
+      newTab(suggestion.url)
+    } else {
+      navigate(tab.id, suggestion.url)
+    }
+    closeSuggestions()
+  }
+
+  const complete = (suggestion: AddressSuggestion): void => {
+    setDraft(suggestion.complete)
+    setActiveIndex(0)
+    inputRef.current?.focus()
   }
 
   const cancelPress = (): void => {
@@ -222,6 +249,7 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
       </div>
 
       <form
+        ref={addressRef}
         className="address"
         aria-label={primary ? 'Adresse de l’onglet' : 'Adresse de l’onglet secondaire'}
         data-focused={focused}
@@ -274,21 +302,23 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           spellCheck={false}
           autoComplete="off"
           aria-label="Adresse"
+          aria-autocomplete="list"
           aria-keyshortcuts={window.vela.platform === 'darwin' ? 'Meta+L' : 'Control+L'}
           aria-expanded={suggestionsOpen}
-          aria-controls={suggestionsOpen ? 'address-suggest' : undefined}
+          aria-controls={suggestionsOpen ? suggestionsId : undefined}
           aria-activedescendant={
             suggestionsOpen && activeIndex >= 0
-              ? `address-suggest-${activeIndex}`
+              ? `${suggestionsId}-option-${activeIndex}`
               : undefined
           }
           onChange={(event) => {
             setDraft(event.target.value)
-            setActiveIndex(-1)
+            setActiveIndex(0)
           }}
           onFocus={(event) => {
             setFocused(true)
             setDraft(home ? '' : tab.url)
+            setActiveIndex(0)
             requestAnimationFrame(() => event.target.select())
           }}
           onBlur={() => {
@@ -305,15 +335,23 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
               return
             }
             if (!suggestionsOpen) return
+            const count = suggestions.rows.length
             if (event.key === 'ArrowDown') {
               event.preventDefault()
-              setActiveIndex((index) => Math.min(suggestions.length - 1, index + 1))
+              setActiveIndex((index) => (index < 0 ? 0 : (index + 1) % count))
             } else if (event.key === 'ArrowUp') {
               event.preventDefault()
-              setActiveIndex((index) => Math.max(-1, index - 1))
-            } else if (event.key === 'Enter' && activeIndex >= 0) {
+              setActiveIndex((index) => (index <= 0 ? count - 1 : index - 1))
+            } else if (event.key === 'Tab' && !event.shiftKey) {
+              const current = suggestions.rows[activeIndex]
+              if (!current) return
               event.preventDefault()
-              pick(suggestions[activeIndex])
+              complete(current)
+            } else if (event.key === 'Enter' && activeIndex >= 0) {
+              const current = suggestions.rows[activeIndex]
+              if (!current) return
+              event.preventDefault()
+              pick(current, event.metaKey || event.ctrlKey)
             }
           }}
         />
@@ -369,39 +407,22 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
           </div>
         )}
 
-        {suggestionsOpen && (
-          <ul
-            id="address-suggest"
-            className="address-suggest"
-            role="listbox"
-            aria-label="Suggestions d’adresses"
-            // Le clic sur une suggestion ne doit pas voler le focus au champ
-            // avant que la sélection ait pu se faire.
-            onMouseDown={(event) => event.preventDefault()}
-          >
-            {suggestions.map((suggestion, index) => (
-              <li key={suggestion.id}>
-                <button
-                  type="button"
-                  id={`address-suggest-${index}`}
-                  role="option"
-                  aria-selected={index === activeIndex}
-                  className="address-suggest-row"
-                  data-active={index === activeIndex ? 'true' : undefined}
-                  data-search={suggestion.search ? 'true' : undefined}
-                  onClick={() => pick(suggestion)}
-                >
-                  <span className="address-suggest-icon" aria-hidden="true">
-                    <Icon name={suggestion.search ? 'search' : 'globe'} size={13} />
-                  </span>
-                  <span className="address-suggest-title">{suggestion.title}</span>
-                  <span className="address-suggest-host">{suggestion.host}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </form>
+
+      {suggestionsOpen && anchor.width > 0 && (
+        <AddressSuggestions
+          listId={suggestionsId}
+          anchor={anchor}
+          groups={suggestions.groups}
+          activeIndex={activeIndex}
+          onActive={setActiveIndex}
+          onPick={(index, newWindow) => {
+            const row = suggestions.rows[index]
+            if (row) pick(row, newWindow)
+          }}
+          onClose={closeSuggestions}
+        />
+      )}
 
       <div className="pane-tools">
         {secondary && (

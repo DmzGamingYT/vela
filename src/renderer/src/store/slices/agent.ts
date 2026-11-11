@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import type { AgentEvent, SelectionPayload, WorkSummary } from '@shared/types'
+import type { AgentEvent, AgentSource, SelectionPayload, WorkSummary } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
 import type { AgentTurn, AgentUi, WorkMode } from '../types'
 import type { BrowserState } from '../browser'
@@ -16,7 +16,12 @@ export interface AgentSlice {
   agentSourceTab: string | null
   toggleAgent(open?: boolean): void
   openAgent(prompt?: string): void
-  startAgent(prompt: string, tabIds: string[], mode?: 'answer' | 'act'): Promise<void>
+  startAgent(
+    prompt: string,
+    tabIds: string[],
+    mode?: 'answer' | 'act',
+    extraSources?: AgentSource[]
+  ): Promise<void>
   cancelAgent(): void
   resetAgent(): void
   saveAgentNote(): Promise<void>
@@ -106,7 +111,7 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
     set({ agentOpen: true, notesOpen: false, overlay: null, agentDraft: prompt })
   },
 
-  async startAgent(prompt, tabIds, mode = 'answer') {
+  async startAgent(prompt, tabIds, mode = 'answer', extraSources = []) {
     const view = get().view
     if (!view) return
     if (!prompt.trim()) {
@@ -115,9 +120,17 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
     }
     // En mode « agir », l'agent ouvre son propre onglet : joindre une page est
     // un contexte utile, pas une condition de départ.
-    const sources = view.tabs
-      .filter((tab) => tabIds.includes(tab.id) && !isHomeUrl(tab.url))
-      .map((tab) => ({ tabId: tab.id, title: tab.title, url: tab.url }))
+    const sources: AgentSource[] = [
+      ...view.tabs
+        .filter((tab) => tabIds.includes(tab.id) && !isHomeUrl(tab.url))
+        .map((tab) => ({
+          tabId: tab.id,
+          title: tab.title,
+          url: tab.url,
+          kind: 'tab' as const
+        })),
+      ...extraSources
+    ]
     // La réponse précédente rejoint le fil, et les échanges repartent au modèle
     // comme contexte : une question de suivi n'a plus à répéter les sources.
     const previous = get().agent

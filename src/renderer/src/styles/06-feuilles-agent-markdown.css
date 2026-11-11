@@ -125,14 +125,15 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, var(--clay), #b3823c);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--clay) 35%, transparent);
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clay) 18%, transparent);
+  box-shadow: none;
 }
 
 .agent-identity h1 {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--sans);
   font-size: 21px;
   font-weight: 400;
   letter-spacing: -0.01em;
@@ -781,11 +782,12 @@
 }
 
 .chat-thread[data-empty='true'] {
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .chat-empty {
   max-width: 430px;
+  padding-bottom: 4px;
 }
 
 /* Le point et le libellé suivent le titre : un eyebrow centré au-dessus d’un
@@ -842,6 +844,32 @@
 
 .chat-picks svg {
   flex: 0 0 auto;
+  color: var(--clay);
+}
+
+/* Lien explicite vers l’Atelier : le panneau Agent ne prend plus le nom de
+   l’autre fonction, il propose d’y continuer une question de recherche. */
+.chat-atelier {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--clay) 28%, var(--line));
+  background: color-mix(in srgb, var(--clay) 8%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.chat-atelier:hover {
+  border-color: color-mix(in srgb, var(--clay) 45%, var(--line));
+  background: color-mix(in srgb, var(--clay) 12%, transparent);
+}
+
+.chat-atelier svg {
   color: var(--clay);
 }
 
@@ -1180,6 +1208,60 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 9%, transparent);
 }
 
+/* Pièces jointes, modèle et coût estimé vivent au-dessus du champ : la page
+   jointe se voit, et le prix se lit avant d’envoyer. */
+.composer-context {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 6px;
+  min-width: 0;
+}
+
+.composer-context-spacer {
+  flex: 1;
+}
+
+.composer-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 180px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 8.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.composer-model span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-model:hover {
+  color: var(--ink-soft);
+  border-color: color-mix(in srgb, var(--clay) 35%, var(--line));
+}
+
+.composer-model svg {
+  flex: 0 0 auto;
+  color: var(--clay);
+}
+
+.composer-cost {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
 .chat-input {
   width: 100%;
   min-height: 22px;
@@ -1207,6 +1289,10 @@
   gap: 6px;
 }
 
+.composer-row-spacer {
+  flex: 1;
+}
+
 .composer-chip {
   display: inline-flex;
   align-items: center;
@@ -1218,6 +1304,7 @@
   color: var(--muted);
   font: inherit;
   font-size: 9px;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1273,7 +1360,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  max-width: 100%;
+  max-width: min(100%, 210px);
   padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -1284,8 +1371,13 @@
   cursor: pointer;
 }
 
+.attached-chip:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--clay) 32%, var(--line));
+}
+
 .attached-chip span {
-  max-width: 118px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1302,7 +1394,7 @@
   padding: 6px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
@@ -1335,6 +1427,15 @@
 .actions-pop-row:hover,
 .actions-pop-row:focus-visible {
   background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.actions-pop-row:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.actions-pop-row:disabled svg {
+  color: var(--faint);
 }
 
 .actions-pop-row svg {

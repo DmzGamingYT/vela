@@ -66,8 +66,13 @@ function connect(url) {
       resolve({
         send,
         evaluate: async (expression) => {
-          const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
-          if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? 'exception')
+          const result = await send('Runtime.evaluate', {
+            expression,
+            awaitPromise: true,
+            returnByValue: true
+          })
+          if (result.exceptionDetails)
+            throw new Error(result.exceptionDetails.exception?.description ?? 'exception')
           return result.result ? result.result.value : undefined
         },
         close: () => ws.close()
@@ -108,11 +113,15 @@ p.ad{margin:0;padding:10px 20px}
 ;(async () => {
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(DATA, { recursive: true })
-  const child = spawn(require('electron'), ['.', `--inspect=${INSPECT}`, `--remote-debugging-port=${PORT}`], {
-    cwd: ROOT,
-    env: { ...process.env, VELA_USER_DATA: DATA },
-    stdio: 'ignore'
-  })
+  const child = spawn(
+    require('electron'),
+    ['.', `--inspect=${INSPECT}`, `--remote-debugging-port=${PORT}`],
+    {
+      cwd: ROOT,
+      env: { ...process.env, VELA_USER_DATA: DATA },
+      stdio: 'ignore'
+    }
+  )
   let renderer
   let main
   try {
@@ -123,7 +132,9 @@ p.ad{margin:0;padding:10px 20px}
     renderer = await connect(pageTarget.webSocketDebuggerUrl)
     main = await connect(mainTarget.webSocketDebuggerUrl)
     const win = `process.mainModule.require("electron").BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Vela")`
-    await main.evaluate(`(() => { const w = ${win}; w.setSize(1380, 880); w.center(); w.show(); w.focus(); return true })()`)
+    await main.evaluate(
+      `(() => { const w = ${win}; w.setSize(1380, 880); w.center(); w.show(); w.focus(); return true })()`
+    )
     await renderer.evaluate(`window.vela.settings.update({ onboarded: true, theme: 'light' })`)
     await sleep(2400)
     // Journal des demandes de disposition envoyées au compositeur natif.
@@ -136,7 +147,9 @@ p.ad{margin:0;padding:10px 20px}
       }
       return true
     })()`)
-    await renderer.evaluate(`window.vela.tabs.create({ url: 'data:text/html,' + encodeURIComponent(${JSON.stringify(MOCK)}), activate: true })`)
+    await renderer.evaluate(
+      `window.vela.tabs.create({ url: 'data:text/html,' + encodeURIComponent(${JSON.stringify(MOCK)}), activate: true })`
+    )
     await sleep(2400)
 
     const opened = await renderer.evaluate(`(() => {
@@ -159,7 +172,12 @@ p.ad{margin:0;padding:10px 20px}
       menuRect: (() => { const m = document.querySelector('.tile-menu'); if (!m) return null; const r = m.getBoundingClientRect(); return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), width: Math.round(r.width) } })()
     }))()`)
     console.log('état :', JSON.stringify(state, null, 2))
-    execFileSync('screencapture', ['-x', '-o', `-l${windowId()}`, path.join(OUT, 'menu-sur-page.png')])
+    execFileSync('screencapture', [
+      '-x',
+      '-o',
+      `-l${windowId()}`,
+      path.join(OUT, 'menu-sur-page.png')
+    ])
     console.log('capture', path.relative(ROOT, path.join(OUT, 'menu-sur-page.png')))
 
     // Cascade : un calque s'ouvre alors que le menu est encore là (ici via un
@@ -184,7 +202,12 @@ p.ad{margin:0;padding:10px 20px}
       overlay: document.querySelectorAll('.overlay').length
     }))()`)
     console.log('cascade (menu doit être 0) :', JSON.stringify(cascade))
-    execFileSync('screencapture', ['-x', '-o', `-l${windowId()}`, path.join(OUT, 'menu-puis-modale.png')])
+    execFileSync('screencapture', [
+      '-x',
+      '-o',
+      `-l${windowId()}`,
+      path.join(OUT, 'menu-puis-modale.png')
+    ])
     console.log('capture', path.relative(ROOT, path.join(OUT, 'menu-puis-modale.png')))
   } finally {
     try {

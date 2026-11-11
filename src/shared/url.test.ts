@@ -6,6 +6,7 @@ import {
   hostOf,
   isHomeUrl,
   isLoadableUrl,
+  isLoginUrl,
   isPublicHost,
   normalizeInput,
   prettyUrl,
@@ -84,6 +85,20 @@ describe('helpers', () => {
   it('affiche une adresse courte', () => {
     expect(prettyUrl('https://www.notion.so/page/')).toBe('notion.so/page')
     expect(prettyUrl(HOME_URL)).toBe('Nouvel onglet')
+  })
+})
+
+describe('isLoginUrl', () => {
+  it('reconnaît les pages de connexion connues', () => {
+    expect(isLoginUrl('https://accounts.google.com/ServiceLogin')).toBe(true)
+    expect(isLoginUrl('https://login.microsoftonline.com/common/oauth2/authorize')).toBe(true)
+    expect(isLoginUrl('https://github.com/login')).toBe(true)
+  })
+
+  it('laisse passer une page ordinaire', () => {
+    expect(isLoginUrl('https://mail.google.com/')).toBe(false)
+    expect(isLoginUrl('https://example.com/article')).toBe(false)
+    expect(isLoginUrl('pas une url')).toBe(false)
   })
 })
 

@@ -663,7 +663,11 @@ export class AgentRunner {
 
     const sources = await Promise.all(
       request.sources.map(async (source) => {
-        const page = source.tabId ? await this.excerpt(source.tabId) : { text: '', anchor: '' }
+        // Une page est relue au lancement ; une sélection, un fichier ou une
+        // note arrivent déjà avec leur texte et ne doivent pas être vidés.
+        const page = source.tabId
+          ? await this.excerpt(source.tabId)
+          : { text: source.excerpt ?? '', anchor: source.anchor ?? '' }
         return {
           ...source,
           excerpt: page.text.slice(0, 5000),

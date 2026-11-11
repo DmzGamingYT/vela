@@ -74,6 +74,7 @@
 
 .agent-identity h1 {
   margin: 0;
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 550;
   letter-spacing: -0.01em;
@@ -227,5 +228,470 @@
 @media (prefers-reduced-motion: reduce) {
   .msg-steps li[data-state='running'] .step-dot > span {
     animation: none;
+  }
+}
+
+/* ── Suggestions : des lignes, pas des pastilles ──────────────────────── */
+.chat-picks {
+  gap: 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.chat-picks button {
+  width: 100%;
+  gap: 10px;
+  padding: 9px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+.chat-picks button:hover,
+.chat-picks button[data-active='true'] {
+  color: var(--ink-1);
+  border-color: var(--line-soft);
+  background: color-mix(in srgb, var(--clay) 6%, transparent);
+}
+
+.chat-picks button[data-active='true'] {
+  padding-left: 8px;
+}
+
+.chat-picks button svg {
+  color: var(--clay);
+}
+
+.pick-key {
+  margin-left: auto;
+  padding: 0 4px;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+/* ── Bascule Lire / Agir ──────────────────────────────────────────────── */
+.composer-plus,
+.composer-mic {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.composer-plus:hover,
+.composer-mic:hover,
+.composer-plus[data-active='true'] {
+  color: var(--ink-1);
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.composer-mic[data-recording='true'] {
+  color: var(--clay);
+  border-color: color-mix(in srgb, var(--clay) 38%, var(--line));
+  background: color-mix(in srgb, var(--clay) 12%, transparent);
+}
+
+.composer-mic:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.composer-modes {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 1px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.composer-mode {
+  height: 22px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.composer-mode[data-active='true'] {
+  color: var(--ink-1);
+  background: var(--surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.composer-mode[data-active='true'][data-mode='act'] {
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 13%, var(--surface));
+}
+
+.composer-mode:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.composer-mode:focus-visible,
+.composer-plus:focus-visible,
+.composer-mic:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+/* ── Menu « + » : joindre une source ──────────────────────────────────── */
+.attach-pop {
+  position: absolute;
+  left: 14px;
+  bottom: calc(100% - 6px);
+  z-index: 40;
+  width: min(280px, calc(100% - 28px));
+  max-height: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.attach-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 7px;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.attach-pop-head svg {
+  color: var(--clay);
+}
+
+.attach-back {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--muted);
+}
+
+.attach-back:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.attach-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 30px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.attach-row:hover:not(:disabled),
+.attach-row:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--clay) 9%, transparent);
+}
+
+.attach-row:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.attach-row svg {
+  flex: 0 0 auto;
+  color: var(--clay);
+}
+
+.attach-row:disabled svg {
+  color: var(--faint);
+}
+
+.attach-row span {
+  flex: 1;
+  min-width: 0;
+}
+
+.attach-row small {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--faint);
+  font-size: 8.5px;
+}
+
+.attach-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+}
+
+.attach-note-list > p {
+  margin: 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.attach-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  text-align: left;
+}
+
+.attach-note:hover,
+.attach-note:focus-visible {
+  outline: none;
+  background: var(--surface-2);
+  color: var(--ink-1);
+}
+
+.attach-note > svg {
+  margin-top: 2px;
+  flex: 0 0 auto;
+  color: var(--clay);
+}
+
+.attach-note > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.attach-note strong {
+  font-size: 11px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attach-note small {
+  color: var(--faint);
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Menu « / » : la ligne active reste lisible au clavier ────────────── */
+.actions-pop-row[data-active='true'] {
+  background: color-mix(in srgb, var(--clay) 10%, transparent);
+}
+
+.actions-pop-key {
+  margin-left: auto;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+/* ── Transparence sous la saisie ──────────────────────────────────────── */
+.composer-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 7px 2px 0;
+  color: var(--faint);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.composer-notice > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-notice button {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font: inherit;
+  font-size: 9px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.composer-notice button:hover {
+  color: var(--ink-2);
+}
+
+/* ── Bandeau d’action ─────────────────────────────────────────────────── */
+.act-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--clay) 30%, var(--line-soft));
+  background: color-mix(in srgb, var(--clay) 7%, transparent);
+  color: var(--ink-2);
+  font-size: 10px;
+}
+
+.act-banner > svg {
+  flex: 0 0 auto;
+  color: var(--clay);
+}
+
+.act-banner b {
+  color: var(--clay);
+  font-weight: 550;
+}
+
+.act-banner .act-budget {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Dictée ───────────────────────────────────────────────────────────── */
+.mic-pop {
+  position: absolute;
+  left: 14px;
+  bottom: calc(100% - 6px);
+  z-index: 45;
+  width: min(320px, calc(100% - 28px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+  color: var(--ink-2);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.mic-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mic-pop-head strong {
+  flex: 1;
+  color: var(--ink-1);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.mic-pop-mark {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--clay);
+  background: color-mix(in srgb, var(--clay) 13%, transparent);
+}
+
+.mic-pop p {
+  margin: 0;
+}
+
+.mic-pop-live {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mic-pop-time {
+  color: var(--ink-1);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mic-pop-status,
+.mic-pop-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.mic-pop-error {
+  color: var(--clay);
+}
+
+.mic-pop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.mic-pop-actions .action {
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 10px;
+}
+
+.mic-pop-actions .action.primary {
+  border-color: transparent;
+  background: var(--clay);
+  color: var(--paper);
+}
+
+/* ── Mode sombre ──────────────────────────────────────────────────────── */
+:root[data-mode='dark'] .composer-notice,
+:root[data-mode='dark'] .chat-picks button {
+  color: var(--muted);
+}
+
+:root[data-mode='dark'] .chat-picks button[data-active='true'] {
+  color: var(--ink-1);
+}
+
+:root[data-mode='dark'] .act-banner {
+  background: color-mix(in srgb, var(--clay) 11%, transparent);
+}
+
+@media (max-width: 380px) {
+  .composer-hint {
+    display: none;
   }
 }

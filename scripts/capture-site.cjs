@@ -108,7 +108,9 @@ function connect(url) {
             returnByValue: true
           })
           if (result.exceptionDetails) {
-            throw new Error(result.exceptionDetails.exception?.description || 'exception dans la page')
+            throw new Error(
+              result.exceptionDetails.exception?.description || 'exception dans la page'
+            )
           }
           return result.result ? result.result.value : undefined
         },
@@ -171,19 +173,32 @@ async function waitForTarget(url, pick, attempts = 600) {
     const shoot = async (name) => {
       await sleep(350)
       await main
-        .evaluate(`(() => { const w = ${mainWindow}; w.show(); w.focus(); return w.getBounds() })()`)
+        .evaluate(
+          `(() => { const w = ${mainWindow}; w.show(); w.focus(); return w.getBounds() })()`
+        )
         .catch(() => {})
       await sleep(250)
       const png = path.join(OUT, `${name}.png`)
       execFileSync('screencapture', ['-x', '-o', `-l${windowId(child.pid)}`, png])
       const jpg = path.join(SRC, `${name}.jpg`)
-      execFileSync('sips', [
-        '-s', 'format', 'jpeg',
-        '-s', 'formatOptions', '90',
-        '--resampleHeightWidth', String(HEIGHT), String(WIDTH),
-        png,
-        '--out', jpg
-      ], { stdio: 'ignore' })
+      execFileSync(
+        'sips',
+        [
+          '-s',
+          'format',
+          'jpeg',
+          '-s',
+          'formatOptions',
+          '90',
+          '--resampleHeightWidth',
+          String(HEIGHT),
+          String(WIDTH),
+          png,
+          '--out',
+          jpg
+        ],
+        { stdio: 'ignore' }
+      )
       const size = fs.statSync(jpg).size
       console.log(`  ${name}.jpg  ${(size / 1024).toFixed(0)} Ko`)
       return jpg
@@ -239,7 +254,9 @@ async function waitForTarget(url, pick, attempts = 600) {
 
     /* --- Préparation du profil -------------------------------------------- */
 
-    await evaluate(`window.vela.settings.update({ onboarded: true, theme: 'light', sidebarCollapsed: false })`)
+    await evaluate(
+      `window.vela.settings.update({ onboarded: true, theme: 'light', sidebarCollapsed: false })`
+    )
     await sleep(2400)
     await resize()
 
@@ -251,15 +268,19 @@ async function waitForTarget(url, pick, attempts = 600) {
       await sleep(1200)
     }
     const seeded = await evaluate(`window.vela.view()`)
-    const personnel = seeded.spaces.find((space) => /personnel/i.test(space.name)) ?? seeded.spaces[0]
+    const personnel =
+      seeded.spaces.find((space) => /personnel/i.test(space.name)) ?? seeded.spaces[0]
     if (personnel) await evaluate(`window.vela.spaces.activate(${JSON.stringify(personnel.id)})`)
     await sleep(1000)
 
     // Deux onglets et une visite réelle : l’accueil montre alors des pages
     // récentes au lieu d’un profil vide.
     const before = await evaluate(`window.vela.view()`)
-    const homeTab = before.tabs.find((tab) => /^vela:\/\/home|^about:start/.test(tab.url)) ?? before.tabs[0]
-    await evaluate(`window.vela.tabs.create({ url: 'https://fr.wikipedia.org/wiki/Navigateur_web' })`)
+    const homeTab =
+      before.tabs.find((tab) => /^vela:\/\/home|^about:start/.test(tab.url)) ?? before.tabs[0]
+    await evaluate(
+      `window.vela.tabs.create({ url: 'https://fr.wikipedia.org/wiki/Navigateur_web' })`
+    )
     await sleep(4200)
     if (homeTab) await evaluate(`window.vela.tabs.activate(${JSON.stringify(homeTab.id)})`)
     await sleep(1200)
@@ -376,7 +397,12 @@ async function waitForTarget(url, pick, attempts = 600) {
       } else {
         console.warn('  (tunnel vide : capture de l’état courant)')
       }
-      const drawn = await waitFor('carte dessinée', `document.querySelectorAll('.tunnel-node').length > 3`, 30000, 800)
+      const drawn = await waitFor(
+        'carte dessinée',
+        `document.querySelectorAll('.tunnel-node').length > 3`,
+        30000,
+        800
+      )
       if (!drawn) console.warn('  (carte non dessinée : capture de l’état courant)')
       await sleep(3000)
       await shoot('atelier')

@@ -26,14 +26,11 @@ const SCOPES: ChoiceOption<AmbienceScope>[] = [
 ]
 
 /**
- * Page « Thèmes » des réglages : les huit ambiances animées du châssis, leur
- * portée et leur présence.
- *
- * Une ambiance n'est pas un thème de couleur : elle ne change aucun accent et
- * ne touche jamais au contenu des pages. Chaque carte montre l'animation en
- * petit, la scène du haut la joue en grand, et le choix s'applique en direct.
+ * Les ambiances animées de l’ancienne page Thèmes, désormais dans l’onglet
+ * Interface d’Apparence. Une ambiance ne change aucun accent et ne touche
+ * jamais au contenu des pages.
  */
-export default function ThemesPage({
+export default function AmbienceSection({
   mode,
   settings,
   updateSettings
@@ -45,9 +42,9 @@ export default function ThemesPage({
   const active = ambiencePreset(settings.ambience)
 
   return (
-    <section className="setting-block">
+    <section className="appearance-section" aria-labelledby="appearance-ambience">
       <div className="setting-head">
-        <h2>Ambiance</h2>
+        <h2 id="appearance-ambience">Ambiance</h2>
         <p>
           Une atmosphère animée derrière le verre. Elle ne recolore jamais le contenu des pages
           ouvertes : l’ambiance s’arrête à l’interface Vela.

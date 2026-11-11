@@ -1,1300 +1,2967 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vela — maquette · Tunnel de recherche, refonte</title>
-<style>
-  /* ============================================================
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela — maquette · Tunnel de recherche, refonte</title>
+    <style>
+      /* ============================================================
      Cadre de la maquette (hors application)
      ============================================================ */
-  :root { --board: #0c0c0f; --board-ink: #e9e6e2; --board-muted: #8c8882; --board-line: rgba(255,255,255,.08); }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0; background: var(--board); color: var(--board-ink); overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
-    display: flex; flex-direction: column;
-  }
-  .bar {
-    flex: 0 0 52px; display: flex; align-items: center; gap: 14px;
-    /* Dégage la pastille du client, posée en haut à gauche du panneau. */
-    padding: 0 18px 0 152px; border-bottom: 1px solid var(--board-line);
-  }
-  .bar-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .bar-title b { font-size: 12.5px; font-weight: 600; }
-  .bar-title span { font-size: 11px; color: var(--board-muted); }
-  .bar-grow { flex: 1; }
-  .tabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); }
-  .tabs button {
-    height: 25px; padding: 0 12px; border: 0; border-radius: 999px; background: none;
-    color: #a4a09b; font: inherit; font-size: 11px; cursor: pointer;
-  }
-  .tabs button[aria-selected="true"] { background: #efece7; color: #17161a; font-weight: 600; }
-  .tabs button em { font-style: normal; opacity: .5; margin-right: 5px; }
-  .toggle {
-    height: 26px; padding: 0 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.04); color: #b7b3ad; font: inherit; font-size: 11px; cursor: pointer;
-  }
-  .toggle[aria-pressed="true"] { background: rgba(239,236,231,.14); color: #efece7; border-color: rgba(239,236,231,.3); }
+      :root {
+        --board: #0c0c0f;
+        --board-ink: #e9e6e2;
+        --board-muted: #8c8882;
+        --board-line: rgba(255, 255, 255, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--board);
+        color: var(--board-ink);
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+      .bar {
+        flex: 0 0 52px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        /* Dégage la pastille du client, posée en haut à gauche du panneau. */
+        padding: 0 18px 0 152px;
+        border-bottom: 1px solid var(--board-line);
+      }
+      .bar-title {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+      }
+      .bar-title b {
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+      .bar-title span {
+        font-size: 11px;
+        color: var(--board-muted);
+      }
+      .bar-grow {
+        flex: 1;
+      }
+      .tabs {
+        display: inline-flex;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .tabs button {
+        height: 25px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 999px;
+        background: none;
+        color: #a4a09b;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .tabs button[aria-selected='true'] {
+        background: #efece7;
+        color: #17161a;
+        font-weight: 600;
+      }
+      .tabs button em {
+        font-style: normal;
+        opacity: 0.5;
+        margin-right: 5px;
+      }
+      .toggle {
+        height: 26px;
+        padding: 0 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: #b7b3ad;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .toggle[aria-pressed='true'] {
+        background: rgba(239, 236, 231, 0.14);
+        color: #efece7;
+        border-color: rgba(239, 236, 231, 0.3);
+      }
 
-  .board { flex: 1; min-height: 0; display: flex; position: relative; overflow: hidden; }
-  .stage-wrap { flex: 1; min-width: 0; padding: 12px; }
-  .stage {
-    position: relative; height: 100%; overflow: hidden; border-radius: 14px;
-    box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.07);
-    isolation: isolate;
-  }
+      .board {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+      .stage-wrap {
+        flex: 1;
+        min-width: 0;
+        padding: 12px;
+      }
+      .stage {
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 14px;
+        box-shadow:
+          0 30px 90px rgba(0, 0, 0, 0.55),
+          0 0 0 1px rgba(255, 255, 255, 0.07);
+        isolation: isolate;
+      }
 
-  /* ============================================================
+      /* ============================================================
      Jetons Vela (clair par défaut, sombre via [data-theme])
      ============================================================ */
-  .stage {
-    --paper: #faf8f5; --paper-deep: #f2ede5;
-    --surface: rgba(255,253,250,.78); --surface-2: rgba(255,253,250,.62);
-    --ink: #1b1a18; --ink-soft: #45413c; --muted: rgba(27,26,24,.62); --faint: rgba(27,26,24,.44);
-    --line: rgba(27,26,22,.11); --line-soft: rgba(27,26,22,.06);
-    --fill: rgba(255,255,255,.55); --fill-2: rgba(255,255,255,.8);
-    --clay: #5b56d6; --tint: rgba(91,86,214,.1);
-    --sage: #1f8a6a; --sage-tint: rgba(31,138,106,.1);
-    --warn: #9a5a12; --warn-tint: rgba(180,102,31,.1);
-    --danger: #a8432c;
-    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-    --mono: ui-monospace, "SF Mono", Menlo, monospace;
-    background: var(--paper); color: var(--ink); font-family: var(--sans);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .stage[data-theme="dark"] {
-    --paper: #151518; --paper-deep: #101013;
-    --surface: rgba(28,28,33,.78); --surface-2: rgba(255,255,255,.05);
-    --ink: #f3f1ee; --ink-soft: #cbc6bf; --muted: rgba(243,241,238,.6); --faint: rgba(243,241,238,.42);
-    --line: rgba(255,255,255,.11); --line-soft: rgba(255,255,255,.06);
-    --fill: rgba(255,255,255,.05); --fill-2: rgba(255,255,255,.08);
-    --clay: #b3aeff; --tint: rgba(168,163,255,.13);
-    --sage: #6fd3b1; --sage-tint: rgba(111,211,177,.1);
-    --warn: #e2a06a; --warn-tint: rgba(226,160,106,.1);
-    --danger: #e0907c;
-    color-scheme: dark;
-  }
+      .stage {
+        --paper: #faf8f5;
+        --paper-deep: #f2ede5;
+        --surface: rgba(255, 253, 250, 0.78);
+        --surface-2: rgba(255, 253, 250, 0.62);
+        --ink: #1b1a18;
+        --ink-soft: #45413c;
+        --muted: rgba(27, 26, 24, 0.62);
+        --faint: rgba(27, 26, 24, 0.44);
+        --line: rgba(27, 26, 22, 0.11);
+        --line-soft: rgba(27, 26, 22, 0.06);
+        --fill: rgba(255, 255, 255, 0.55);
+        --fill-2: rgba(255, 255, 255, 0.8);
+        --clay: #5b56d6;
+        --tint: rgba(91, 86, 214, 0.1);
+        --sage: #1f8a6a;
+        --sage-tint: rgba(31, 138, 106, 0.1);
+        --warn: #9a5a12;
+        --warn-tint: rgba(180, 102, 31, 0.1);
+        --danger: #a8432c;
+        --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif;
+        --serif:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+        --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .stage[data-theme='dark'] {
+        --paper: #151518;
+        --paper-deep: #101013;
+        --surface: rgba(28, 28, 33, 0.78);
+        --surface-2: rgba(255, 255, 255, 0.05);
+        --ink: #f3f1ee;
+        --ink-soft: #cbc6bf;
+        --muted: rgba(243, 241, 238, 0.6);
+        --faint: rgba(243, 241, 238, 0.42);
+        --line: rgba(255, 255, 255, 0.11);
+        --line-soft: rgba(255, 255, 255, 0.06);
+        --fill: rgba(255, 255, 255, 0.05);
+        --fill-2: rgba(255, 255, 255, 0.08);
+        --clay: #b3aeff;
+        --tint: rgba(168, 163, 255, 0.13);
+        --sage: #6fd3b1;
+        --sage-tint: rgba(111, 211, 177, 0.1);
+        --warn: #e2a06a;
+        --warn-tint: rgba(226, 160, 106, 0.1);
+        --danger: #e0907c;
+        color-scheme: dark;
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      Écrans
      ------------------------------------------------------------ */
-  .screen { display: none; flex: 1; min-height: 0; flex-direction: column; }
-  .screen[data-on="true"] { display: flex; }
+      .screen {
+        display: none;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+      }
+      .screen[data-on='true'] {
+        display: flex;
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      1 · Poser la question
      ------------------------------------------------------------ */
-  .ask { flex: 1; overflow: auto; padding: 0 24px 32px; }
-  .ask-inner { max-width: 700px; margin: 0 auto; padding-top: 54px; }
-  .eyebrow {
-    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--faint); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
-  }
-  .eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: var(--clay); display: block; }
-  .ask h1 {
-    font-family: var(--serif); font-size: 33px; line-height: 1.14; font-weight: 400;
-    letter-spacing: -.015em; margin: 0 0 12px;
-  }
-  .ask .lede { font-size: 13px; line-height: 1.65; color: var(--muted); margin: 0 0 26px; max-width: 56ch; }
-  .ask-field {
-    display: flex; align-items: center; gap: 10px; padding: 13px 13px 13px 18px;
-    border: 1px solid var(--line); border-radius: 14px; background: var(--fill);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
-  }
-  .stage[data-theme="dark"] .ask-field { box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
-  .ask-field .cursor { flex: 1; min-width: 0; font-size: 14px; color: var(--faint); }
-  .ask-field .cursor b { font-weight: 400; color: var(--ink); }
-  .ask-field .cursor::after { content: ""; display: inline-block; width: 1px; height: 16px; background: var(--clay); vertical-align: -3px; margin-left: 1px; }
-  .btn {
-    height: 30px; padding: 0 13px; border-radius: 9px; border: 1px solid var(--line);
-    background: var(--surface-2); color: var(--ink-soft); font: inherit; font-size: 11.5px;
-    display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap;
-  }
-  .btn:hover { color: var(--ink); border-color: var(--line); background: var(--fill-2); }
-  .btn.primary { background: var(--ink); color: var(--paper); border-color: transparent; font-weight: 500; }
-  .stage[data-theme="dark"] .btn.primary { background: #efece7; color: #17161a; }
-  .btn.ghost { border-color: transparent; background: none; }
-  .btn kbd {
-    font: inherit; font-size: 10px; opacity: .5;
-  }
-  .ask-tips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .tip {
-    display: inline-flex; align-items: center; gap: 6px; height: 25px; padding: 0 10px;
-    border-radius: 999px; border: 1px solid var(--line-soft); background: var(--surface-2);
-    color: var(--muted); font-size: 11px; cursor: pointer;
-  }
-  .tip:hover { color: var(--ink); }
-  .ask-block { margin-top: 36px; }
-  .ask-block h2 { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); font-weight: 500; margin: 0 0 10px; }
-  .recent { border-top: 1px solid var(--line-soft); }
-  .recent-row {
-    display: flex; align-items: center; gap: 12px; padding: 11px 4px;
-    border-bottom: 1px solid var(--line-soft); cursor: pointer;
-  }
-  .recent-row:hover { background: var(--surface-2); }
-  .recent-main { flex: 1; min-width: 0; }
-  .recent-main b { display: block; font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .recent-main span { font-size: 11px; color: var(--faint); }
-  .recent-bar { width: 86px; height: 4px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
-  .recent-bar i { display: block; height: 100%; background: var(--clay); opacity: .7; }
-  .recent-meta { font-size: 11px; color: var(--faint); width: 92px; text-align: right; }
+      .ask {
+        flex: 1;
+        overflow: auto;
+        padding: 0 24px 32px;
+      }
+      .ask-inner {
+        max-width: 700px;
+        margin: 0 auto;
+        padding-top: 54px;
+      }
+      .eyebrow {
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .eyebrow i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--clay);
+        display: block;
+      }
+      .ask h1 {
+        font-family: var(--serif);
+        font-size: 33px;
+        line-height: 1.14;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        margin: 0 0 12px;
+      }
+      .ask .lede {
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--muted);
+        margin: 0 0 26px;
+        max-width: 56ch;
+      }
+      .ask-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 13px 13px 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--fill);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      .stage[data-theme='dark'] .ask-field {
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .ask-field .cursor {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        color: var(--faint);
+      }
+      .ask-field .cursor b {
+        font-weight: 400;
+        color: var(--ink);
+      }
+      .ask-field .cursor::after {
+        content: '';
+        display: inline-block;
+        width: 1px;
+        height: 16px;
+        background: var(--clay);
+        vertical-align: -3px;
+        margin-left: 1px;
+      }
+      .btn {
+        height: 30px;
+        padding: 0 13px;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 11.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        color: var(--ink);
+        border-color: var(--line);
+        background: var(--fill-2);
+      }
+      .btn.primary {
+        background: var(--ink);
+        color: var(--paper);
+        border-color: transparent;
+        font-weight: 500;
+      }
+      .stage[data-theme='dark'] .btn.primary {
+        background: #efece7;
+        color: #17161a;
+      }
+      .btn.ghost {
+        border-color: transparent;
+        background: none;
+      }
+      .btn kbd {
+        font: inherit;
+        font-size: 10px;
+        opacity: 0.5;
+      }
+      .ask-tips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .tip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 25px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .tip:hover {
+        color: var(--ink);
+      }
+      .ask-block {
+        margin-top: 36px;
+      }
+      .ask-block h2 {
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        font-weight: 500;
+        margin: 0 0 10px;
+      }
+      .recent {
+        border-top: 1px solid var(--line-soft);
+      }
+      .recent-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 4px;
+        border-bottom: 1px solid var(--line-soft);
+        cursor: pointer;
+      }
+      .recent-row:hover {
+        background: var(--surface-2);
+      }
+      .recent-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .recent-main b {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .recent-main span {
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .recent-bar {
+        width: 86px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--line-soft);
+        overflow: hidden;
+      }
+      .recent-bar i {
+        display: block;
+        height: 100%;
+        background: var(--clay);
+        opacity: 0.7;
+      }
+      .recent-meta {
+        font-size: 11px;
+        color: var(--faint);
+        width: 92px;
+        text-align: right;
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      2 · Exploration
      ------------------------------------------------------------ */
-  .explore { flex: 1; min-height: 0; display: grid; grid-template-columns: 214px minmax(0,1fr) 326px; }
+      .explore {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 214px minmax(0, 1fr) 326px;
+      }
 
-  /* Rail-entonnnoir : large en haut, étroit en bas */
-  .rail { border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; min-height: 0; }
-  .rail-query { padding: 14px 14px 12px; border-bottom: 1px solid var(--line-soft); }
-  .rail-query .k { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 5px; }
-  .rail-query b { display: block; font-family: var(--serif); font-size: 14px; font-weight: 400; line-height: 1.3; }
-  .rail-query button { margin-top: 6px; font-size: 11px; color: var(--clay); background: none; border: 0; padding: 0; cursor: pointer; }
-  .stations { padding: 10px 10px 4px; }
-  .station {
-    position: relative; display: block; width: 100%; text-align: left; border: 0; cursor: pointer;
-    background: none; color: inherit; padding: 0 0 10px;
-  }
-  .station-top { display: flex; align-items: baseline; gap: 6px; padding: 0 6px 5px; }
-  .station-top b { font-size: 11.5px; font-weight: 500; }
-  .station-top span { margin-left: auto; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
-  .station-track {
-    display: block; height: 30px; border-radius: 7px; background: var(--line-soft);
-    position: relative; overflow: hidden; margin: 0 6px;
-  }
-  .station-track i {
-    position: absolute; inset: 0 auto 0 0; background: var(--fill); border: 1px solid var(--line);
-    border-radius: 7px;
-  }
-  .station[data-on="true"] .station-track i { background: var(--tint); border-color: color-mix(in srgb, var(--clay) 40%, transparent); }
-  .station[data-on="true"] .station-top b { color: var(--clay); }
-  .station:last-child .station-track i { background: var(--ink); border-color: transparent; }
-  .station:last-child .station-track { background: var(--line-soft); }
-  .rail-filters { margin-top: auto; border-top: 1px solid var(--line-soft); padding: 12px 14px 14px; }
-  .rail-filters .k { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-  .rail-filters .k .count {
-    margin-left: auto; letter-spacing: 0; text-transform: none; font-size: 10px;
-    background: var(--tint); color: var(--clay); border-radius: 999px; padding: 1px 6px;
-  }
-  .filter-line { display: flex; align-items: center; gap: 7px; padding: 4px 0; font-size: 11.5px; color: var(--ink-soft); cursor: pointer; }
-  .filter-line i {
-    width: 13px; height: 13px; border-radius: 4px; border: 1px solid var(--line); flex: 0 0 13px;
-    display: grid; place-items: center; font-size: 9px; color: transparent;
-  }
-  .filter-line[data-on="true"] i { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-  .filter-line em { margin-left: auto; font-style: normal; font-size: 10.5px; color: var(--faint); }
-  .rail-note { font-size: 10.5px; color: var(--faint); line-height: 1.5; padding: 10px 14px 0; }
+      /* Rail-entonnnoir : large en haut, étroit en bas */
+      .rail {
+        border-right: 1px solid var(--line-soft);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .rail-query {
+        padding: 14px 14px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .rail-query .k {
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 5px;
+      }
+      .rail-query b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.3;
+      }
+      .rail-query button {
+        margin-top: 6px;
+        font-size: 11px;
+        color: var(--clay);
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+      }
+      .stations {
+        padding: 10px 10px 4px;
+      }
+      .station {
+        position: relative;
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        cursor: pointer;
+        background: none;
+        color: inherit;
+        padding: 0 0 10px;
+      }
+      .station-top {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        padding: 0 6px 5px;
+      }
+      .station-top b {
+        font-size: 11.5px;
+        font-weight: 500;
+      }
+      .station-top span {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: var(--faint);
+        font-variant-numeric: tabular-nums;
+      }
+      .station-track {
+        display: block;
+        height: 30px;
+        border-radius: 7px;
+        background: var(--line-soft);
+        position: relative;
+        overflow: hidden;
+        margin: 0 6px;
+      }
+      .station-track i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--fill);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+      }
+      .station[data-on='true'] .station-track i {
+        background: var(--tint);
+        border-color: color-mix(in srgb, var(--clay) 40%, transparent);
+      }
+      .station[data-on='true'] .station-top b {
+        color: var(--clay);
+      }
+      .station:last-child .station-track i {
+        background: var(--ink);
+        border-color: transparent;
+      }
+      .station:last-child .station-track {
+        background: var(--line-soft);
+      }
+      .rail-filters {
+        margin-top: auto;
+        border-top: 1px solid var(--line-soft);
+        padding: 12px 14px 14px;
+      }
+      .rail-filters .k {
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .rail-filters .k .count {
+        margin-left: auto;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 10px;
+        background: var(--tint);
+        color: var(--clay);
+        border-radius: 999px;
+        padding: 1px 6px;
+      }
+      .filter-line {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 0;
+        font-size: 11.5px;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+      .filter-line i {
+        width: 13px;
+        height: 13px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        flex: 0 0 13px;
+        display: grid;
+        place-items: center;
+        font-size: 9px;
+        color: transparent;
+      }
+      .filter-line[data-on='true'] i {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: var(--paper);
+      }
+      .filter-line em {
+        margin-left: auto;
+        font-style: normal;
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      .rail-note {
+        font-size: 10.5px;
+        color: var(--faint);
+        line-height: 1.5;
+        padding: 10px 14px 0;
+      }
 
-  /* Centre : angles + sources */
-  .center { min-width: 0; display: flex; flex-direction: column; min-height: 0; }
-  .center-head {
-    flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 12px 16px;
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .center-head h2 { font-family: var(--serif); font-weight: 400; font-size: 16px; margin: 0; }
-  .center-head .sub { font-size: 11px; color: var(--faint); }
-  .center-head .grow { flex: 1; }
-  .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--fill); border: 1px solid var(--line-soft); }
-  .seg button { height: 23px; padding: 0 9px; border: 0; border-radius: 6px; background: none; color: var(--muted); font: inherit; font-size: 11px; cursor: pointer; }
-  .seg button[data-on="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .center-scroll { flex: 1; min-height: 0; overflow: auto; padding: 14px 16px 18px; }
-  .angles { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; align-items: start; }
-  .angle { border: 1px solid var(--line-soft); border-radius: 12px; background: var(--surface); overflow: hidden; }
-  .stage[data-theme="dark"] .angle { background: var(--surface-2); }
-  .angle-head { display: flex; align-items: center; gap: 7px; padding: 9px 11px; border-bottom: 1px solid var(--line-soft); }
-  .angle-head b { font-size: 11.5px; font-weight: 500; }
-  .angle-head .tally { margin-left: auto; font-size: 10.5px; color: var(--sage); font-variant-numeric: tabular-nums; }
-  .angle-head .tally[data-zero="true"] { color: var(--faint); }
-  .src {
-    display: grid; grid-template-columns: 1fr; gap: 4px; padding: 9px 11px;
-    border-bottom: 1px solid var(--line-soft); cursor: pointer; position: relative;
-  }
-  .src:last-child { border-bottom: 0; }
-  .src:hover { background: var(--fill); }
-  .src[data-on="true"] { background: var(--tint); box-shadow: inset 2px 0 0 var(--clay); }
-  .src[data-state="kept"] .src-domain { color: var(--sage); }
-  .src[data-state="dismissed"] { opacity: .46; }
-  .src[data-state="dismissed"] .src-title { text-decoration: line-through; text-decoration-color: var(--faint); }
-  .src-title { font-size: 12px; line-height: 1.35; padding-right: 46px; }
-  .src-meta { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--faint); }
-  .src-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--clay); opacity: .55; flex: 0 0 5px; }
-  .src-domain { font-family: var(--mono); font-size: 10px; letter-spacing: -.02em; }
-  .src-bar { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
-  .src-bar .track { flex: 1; height: 2px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
-  .src-bar .track i { display: block; height: 100%; background: var(--clay); opacity: .55; }
-  .src-bar b { font-size: 9.5px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
-  .src-do {
-    position: absolute; right: 8px; top: 7px; display: flex; gap: 2px; opacity: 0;
-  }
-  .src:hover .src-do, .src[data-state="kept"] .src-do { opacity: 1; }
-  .src-do button {
-    width: 20px; height: 20px; border-radius: 5px; border: 1px solid var(--line-soft);
-    background: var(--paper); color: var(--faint); font-size: 10px; cursor: pointer; display: grid; place-items: center;
-  }
-  .src-do button:hover { color: var(--ink); }
-  .src-do button.keep[data-on="true"] { background: var(--sage); border-color: var(--sage); color: var(--paper); }
-  .angle-more { padding: 7px 11px; font-size: 10.5px; color: var(--faint); background: none; border: 0; width: 100%; text-align: left; cursor: pointer; }
-  .angle-more:hover { color: var(--ink); }
+      /* Centre : angles + sources */
+      .center {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .center-head {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .center-head h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 16px;
+        margin: 0;
+      }
+      .center-head .sub {
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .center-head .grow {
+        flex: 1;
+      }
+      .seg {
+        display: inline-flex;
+        padding: 2px;
+        border-radius: 8px;
+        background: var(--fill);
+        border: 1px solid var(--line-soft);
+      }
+      .seg button {
+        height: 23px;
+        padding: 0 9px;
+        border: 0;
+        border-radius: 6px;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .seg button[data-on='true'] {
+        background: var(--paper);
+        color: var(--ink);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+      .center-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 16px 18px;
+      }
+      .angles {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-items: start;
+      }
+      .angle {
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .stage[data-theme='dark'] .angle {
+        background: var(--surface-2);
+      }
+      .angle-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .angle-head b {
+        font-size: 11.5px;
+        font-weight: 500;
+      }
+      .angle-head .tally {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: var(--sage);
+        font-variant-numeric: tabular-nums;
+      }
+      .angle-head .tally[data-zero='true'] {
+        color: var(--faint);
+      }
+      .src {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--line-soft);
+        cursor: pointer;
+        position: relative;
+      }
+      .src:last-child {
+        border-bottom: 0;
+      }
+      .src:hover {
+        background: var(--fill);
+      }
+      .src[data-on='true'] {
+        background: var(--tint);
+        box-shadow: inset 2px 0 0 var(--clay);
+      }
+      .src[data-state='kept'] .src-domain {
+        color: var(--sage);
+      }
+      .src[data-state='dismissed'] {
+        opacity: 0.46;
+      }
+      .src[data-state='dismissed'] .src-title {
+        text-decoration: line-through;
+        text-decoration-color: var(--faint);
+      }
+      .src-title {
+        font-size: 12px;
+        line-height: 1.35;
+        padding-right: 46px;
+      }
+      .src-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      .src-meta .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--clay);
+        opacity: 0.55;
+        flex: 0 0 5px;
+      }
+      .src-domain {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: -0.02em;
+      }
+      .src-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 1px;
+      }
+      .src-bar .track {
+        flex: 1;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--line-soft);
+        overflow: hidden;
+      }
+      .src-bar .track i {
+        display: block;
+        height: 100%;
+        background: var(--clay);
+        opacity: 0.55;
+      }
+      .src-bar b {
+        font-size: 9.5px;
+        font-weight: 500;
+        color: var(--faint);
+        font-variant-numeric: tabular-nums;
+      }
+      .src-do {
+        position: absolute;
+        right: 8px;
+        top: 7px;
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+      }
+      .src:hover .src-do,
+      .src[data-state='kept'] .src-do {
+        opacity: 1;
+      }
+      .src-do button {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        border: 1px solid var(--line-soft);
+        background: var(--paper);
+        color: var(--faint);
+        font-size: 10px;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      .src-do button:hover {
+        color: var(--ink);
+      }
+      .src-do button.keep[data-on='true'] {
+        background: var(--sage);
+        border-color: var(--sage);
+        color: var(--paper);
+      }
+      .angle-more {
+        padding: 7px 11px;
+        font-size: 10.5px;
+        color: var(--faint);
+        background: none;
+        border: 0;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+      }
+      .angle-more:hover {
+        color: var(--ink);
+      }
 
-  /* Fiche de source */
-  .sheet { border-left: 1px solid var(--line-soft); display: flex; flex-direction: column; min-height: 0; background: var(--surface-2); }
-  .sheet-head { display: flex; align-items: center; gap: 8px; padding: 11px 12px; border-bottom: 1px solid var(--line-soft); }
-  .fav { width: 20px; height: 20px; border-radius: 5px; background: var(--tint); color: var(--clay); display: grid; place-items: center; font-size: 9px; font-weight: 700; }
-  .sheet-head .dom { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
-  .sheet-head .grow { flex: 1; }
-  .sheet-head button { background: none; border: 0; color: var(--faint); cursor: pointer; font-size: 13px; }
-  .sheet-body { flex: 1; min-height: 0; overflow: auto; padding: 14px; }
-  .sheet h3 { font-family: var(--serif); font-weight: 400; font-size: 18px; line-height: 1.25; margin: 0 0 8px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; }
-  .chip {
-    height: 21px; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line-soft);
-    background: var(--fill); color: var(--muted); font-size: 10px; display: inline-flex; align-items: center; gap: 4px;
-  }
-  .block { border: 1px solid var(--line-soft); border-radius: 10px; padding: 10px 11px; margin-bottom: 12px; background: var(--paper); }
-  .block .k { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
-  .why-line { display: flex; gap: 4px; margin: 7px 0 5px; }
-  .why-line i { flex: 1; height: 4px; border-radius: 999px; background: var(--line-soft); }
-  .why-line i.on { background: var(--clay); opacity: .7; }
-  .block p { margin: 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-soft); }
-  .excerpt { font-family: var(--serif); font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); border-left: 2px solid var(--line); padding-left: 10px; margin: 0; }
-  .excerpt q { quotes: "« " " »"; }
-  .divergence { border-color: color-mix(in srgb, var(--warn) 30%, transparent); background: var(--warn-tint); }
-  .divergence .k { color: var(--warn); }
-  .divergence p b { font-weight: 500; color: var(--ink); }
-  .sheet-actions { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line-soft); }
-  .sheet-actions .btn:first-child { flex: 1; justify-content: center; }
+      /* Fiche de source */
+      .sheet {
+        border-left: 1px solid var(--line-soft);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--surface-2);
+      }
+      .sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .fav {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        background: var(--tint);
+        color: var(--clay);
+        display: grid;
+        place-items: center;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .sheet-head .dom {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .sheet-head .grow {
+        flex: 1;
+      }
+      .sheet-head button {
+        background: none;
+        border: 0;
+        color: var(--faint);
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .sheet-body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px;
+      }
+      .sheet h3 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 1.25;
+        margin: 0 0 8px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 14px;
+      }
+      .chip {
+        height: 21px;
+        padding: 0 7px;
+        border-radius: 999px;
+        border: 1px solid var(--line-soft);
+        background: var(--fill);
+        color: var(--muted);
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .block {
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        padding: 10px 11px;
+        margin-bottom: 12px;
+        background: var(--paper);
+      }
+      .block .k {
+        font-size: 9.5px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 6px;
+      }
+      .why-line {
+        display: flex;
+        gap: 4px;
+        margin: 7px 0 5px;
+      }
+      .why-line i {
+        flex: 1;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--line-soft);
+      }
+      .why-line i.on {
+        background: var(--clay);
+        opacity: 0.7;
+      }
+      .block p {
+        margin: 0;
+        font-size: 11.5px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+      .excerpt {
+        font-family: var(--serif);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+        border-left: 2px solid var(--line);
+        padding-left: 10px;
+        margin: 0;
+      }
+      .excerpt q {
+        quotes: '« ' ' »';
+      }
+      .divergence {
+        border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+        background: var(--warn-tint);
+      }
+      .divergence .k {
+        color: var(--warn);
+      }
+      .divergence p b {
+        font-weight: 500;
+        color: var(--ink);
+      }
+      .sheet-actions {
+        display: flex;
+        gap: 6px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sheet-actions .btn:first-child {
+        flex: 1;
+        justify-content: center;
+      }
 
-  /* Barre de décisions */
-  .dock {
-    flex: 0 0 46px; display: flex; align-items: center; gap: 12px; padding: 0 14px;
-    border-top: 1px solid var(--line-soft); background: var(--surface-2);
-  }
-  .dock .tally { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--muted); }
-  .dock .tally b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .dock .pips { display: flex; gap: 3px; }
-  .dock .pips i { width: 7px; height: 7px; border-radius: 2px; background: var(--sage); opacity: .8; }
-  .dock .pips i.off { background: var(--line); }
-  .dock .grow { flex: 1; }
-  .dock .hint { font-size: 10.5px; color: var(--faint); }
+      /* Barre de décisions */
+      .dock {
+        flex: 0 0 46px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 14px;
+        border-top: 1px solid var(--line-soft);
+        background: var(--surface-2);
+      }
+      .dock .tally {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .dock .tally b {
+        color: var(--ink);
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .dock .pips {
+        display: flex;
+        gap: 3px;
+      }
+      .dock .pips i {
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        background: var(--sage);
+        opacity: 0.8;
+      }
+      .dock .pips i.off {
+        background: var(--line);
+      }
+      .dock .grow {
+        flex: 1;
+      }
+      .dock .hint {
+        font-size: 10.5px;
+        color: var(--faint);
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      3 · Carte : arbre, légende, zoom, minimap
      ------------------------------------------------------------ */
-  .map-head {
-    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; border-bottom: 1px solid var(--line-soft);
-  }
-  .map-head h2 { font-family: var(--serif); font-weight: 400; font-size: 16px; margin: 0; }
-  .map-head .sub { font-size: 11px; color: var(--faint); }
-  .map-head .grow { flex: 1; }
+      .map-head {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .map-head h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 16px;
+        margin: 0;
+      }
+      .map-head .sub {
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .map-head .grow {
+        flex: 1;
+      }
 
-  .map-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  .map-scroll {
-    flex: 1; min-height: 0; overflow: auto; padding: 8px 10px 0;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(120% 80% at 28% 18%, color-mix(in srgb, var(--clay) 5%, transparent), transparent 62%);
-  }
-  .map-canvas { flex: 0 0 auto; width: 100%; max-width: 462px; }
-  .map-svg { width: 100%; height: auto; display: block; }
-  .map-svg text { font-family: var(--sans); }
+      .map-body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .map-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 8px 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          120% 80% at 28% 18%,
+          color-mix(in srgb, var(--clay) 5%, transparent),
+          transparent 62%
+        );
+      }
+      .map-canvas {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 462px;
+      }
+      .map-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .map-svg text {
+        font-family: var(--sans);
+      }
 
-  .map-dot-bg { fill: var(--clay); opacity: .16; }
-  .map-thread { fill: none; stroke: color-mix(in srgb, var(--clay) 20%, transparent); stroke-width: .6; }
-  .map-caption { flex: 0 0 auto; padding: 10px 16px 0; font-size: 10.5px; color: var(--faint); }
+      .map-dot-bg {
+        fill: var(--clay);
+        opacity: 0.16;
+      }
+      .map-thread {
+        fill: none;
+        stroke: color-mix(in srgb, var(--clay) 20%, transparent);
+        stroke-width: 0.6;
+      }
+      .map-caption {
+        flex: 0 0 auto;
+        padding: 10px 16px 0;
+        font-size: 10.5px;
+        color: var(--faint);
+      }
 
-  .map-edge { fill: none; stroke: color-mix(in srgb, var(--ink) 22%, transparent); stroke-width: 1; }
-  .map-edge[data-kind="concept"] { stroke: color-mix(in srgb, var(--sage) 55%, transparent); stroke-dasharray: 2 3; }
+      .map-edge {
+        fill: none;
+        stroke: color-mix(in srgb, var(--ink) 22%, transparent);
+        stroke-width: 1;
+      }
+      .map-edge[data-kind='concept'] {
+        stroke: color-mix(in srgb, var(--sage) 55%, transparent);
+        stroke-dasharray: 2 3;
+      }
 
-  .map-node { fill: var(--surface); stroke: var(--line-soft); }
-  .map-node[data-kind="subject"] { fill: var(--tint); stroke: color-mix(in srgb, var(--clay) 30%, transparent); }
-  .map-node[data-kind="concept"] { fill: color-mix(in srgb, var(--clay) 8%, var(--surface)); }
-  .map-bar { fill: none; stroke-width: 3; stroke-linecap: round; }
-  .map-bar[data-kind="subject"], .map-bar[data-kind="angle"] { stroke: var(--clay); }
-  .map-bar[data-kind="site"] { stroke: var(--sage); }
-  .map-title { font-size: 7.5px; fill: var(--ink); }
-  .map-title[data-kind="subject"] { font-size: 8.5px; }
+      .map-node {
+        fill: var(--surface);
+        stroke: var(--line-soft);
+      }
+      .map-node[data-kind='subject'] {
+        fill: var(--tint);
+        stroke: color-mix(in srgb, var(--clay) 30%, transparent);
+      }
+      .map-node[data-kind='concept'] {
+        fill: color-mix(in srgb, var(--clay) 8%, var(--surface));
+      }
+      .map-bar {
+        fill: none;
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+      .map-bar[data-kind='subject'],
+      .map-bar[data-kind='angle'] {
+        stroke: var(--clay);
+      }
+      .map-bar[data-kind='site'] {
+        stroke: var(--sage);
+      }
+      .map-title {
+        font-size: 7.5px;
+        fill: var(--ink);
+      }
+      .map-title[data-kind='subject'] {
+        font-size: 8.5px;
+      }
 
-  .map-chrome { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 6px 12px 12px; }
-  .map-legend {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px;
-    padding: 6px 9px; border-radius: 9px; border: 1px solid var(--line-soft);
-    background: var(--surface-2); font-size: 9px; color: var(--muted);
-  }
-  .map-legend span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-  .map-legend i { width: 6px; height: 6px; border-radius: 2px; display: block; }
-  .map-legend i[data-kind="subject"] { background: var(--clay); }
-  .map-legend i[data-kind="angle"] { background: color-mix(in srgb, var(--clay) 55%, var(--ink)); }
-  .map-legend i[data-kind="subangle"] { background: color-mix(in srgb, var(--ink) 45%, transparent); }
-  .map-legend i[data-kind="detail"] { background: color-mix(in srgb, var(--muted) 55%, transparent); }
-  .map-legend i[data-kind="concept"] { background: color-mix(in srgb, var(--clay) 35%, var(--surface)); border: 1px solid color-mix(in srgb, var(--clay) 45%, transparent); }
-  .map-legend i[data-kind="site"] { background: var(--sage); }
-  .map-legend i[data-kind="tension"] { background: var(--warn); transform: rotate(45deg); border-radius: 0; }
+      .map-chrome {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 6px 12px 12px;
+      }
+      .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 9px;
+        padding: 6px 9px;
+        border-radius: 9px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-2);
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .map-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .map-legend i {
+        width: 6px;
+        height: 6px;
+        border-radius: 2px;
+        display: block;
+      }
+      .map-legend i[data-kind='subject'] {
+        background: var(--clay);
+      }
+      .map-legend i[data-kind='angle'] {
+        background: color-mix(in srgb, var(--clay) 55%, var(--ink));
+      }
+      .map-legend i[data-kind='subangle'] {
+        background: color-mix(in srgb, var(--ink) 45%, transparent);
+      }
+      .map-legend i[data-kind='detail'] {
+        background: color-mix(in srgb, var(--muted) 55%, transparent);
+      }
+      .map-legend i[data-kind='concept'] {
+        background: color-mix(in srgb, var(--clay) 35%, var(--surface));
+        border: 1px solid color-mix(in srgb, var(--clay) 45%, transparent);
+      }
+      .map-legend i[data-kind='site'] {
+        background: var(--sage);
+      }
+      .map-legend i[data-kind='tension'] {
+        background: var(--warn);
+        transform: rotate(45deg);
+        border-radius: 0;
+      }
 
-  .map-foot { display: flex; align-items: center; gap: 8px; }
-  .map-foot .grow { flex: 1; }
-  .map-zoom {
-    display: inline-flex; align-items: center; gap: 1px; height: 28px; padding: 0 3px 0 7px;
-    border-radius: 9px; border: 1px solid var(--line-soft); background: var(--surface-2);
-    font-size: 10.5px; color: var(--muted);
-  }
-  .map-zoom button {
-    width: 20px; height: 20px; border: 0; border-radius: 6px; background: none;
-    color: var(--muted); font: inherit; font-size: 11px; cursor: pointer;
-  }
-  .map-zoom button:hover { background: var(--fill-2); color: var(--ink); }
-  .map-zoom b { min-width: 32px; text-align: center; font-weight: 500; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-  .map-zoom .fit { width: auto; padding: 0 7px; font-size: 10.5px; }
+      .map-foot {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .map-foot .grow {
+        flex: 1;
+      }
+      .map-zoom {
+        display: inline-flex;
+        align-items: center;
+        gap: 1px;
+        height: 28px;
+        padding: 0 3px 0 7px;
+        border-radius: 9px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-2);
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .map-zoom button {
+        width: 20px;
+        height: 20px;
+        border: 0;
+        border-radius: 6px;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .map-zoom button:hover {
+        background: var(--fill-2);
+        color: var(--ink);
+      }
+      .map-zoom b {
+        min-width: 32px;
+        text-align: center;
+        font-weight: 500;
+        color: var(--ink-soft);
+        font-variant-numeric: tabular-nums;
+      }
+      .map-zoom .fit {
+        width: auto;
+        padding: 0 7px;
+        font-size: 10.5px;
+      }
 
-  .map-mini {
-    position: relative; flex: 0 0 auto; width: 90px; height: 56px; overflow: hidden;
-    border-radius: 8px; border: 1px solid var(--line-soft); background: var(--paper-deep);
-  }
-  .map-mini i { position: absolute; display: block; border-radius: 1px; background: color-mix(in srgb, var(--ink) 20%, transparent); }
-  .map-mini i[data-kind="subject"] { background: var(--clay); }
-  .map-mini i[data-kind="site"] { background: var(--sage); }
-  .map-mini .vp { position: absolute; inset: 4px 24px 6px 6px; border: 1px solid color-mix(in srgb, var(--clay) 55%, transparent); border-radius: 3px; }
+      .map-mini {
+        position: relative;
+        flex: 0 0 auto;
+        width: 90px;
+        height: 56px;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid var(--line-soft);
+        background: var(--paper-deep);
+      }
+      .map-mini i {
+        position: absolute;
+        display: block;
+        border-radius: 1px;
+        background: color-mix(in srgb, var(--ink) 20%, transparent);
+      }
+      .map-mini i[data-kind='subject'] {
+        background: var(--clay);
+      }
+      .map-mini i[data-kind='site'] {
+        background: var(--sage);
+      }
+      .map-mini .vp {
+        position: absolute;
+        inset: 4px 24px 6px 6px;
+        border: 1px solid color-mix(in srgb, var(--clay) 55%, transparent);
+        border-radius: 3px;
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      4 · Synthèse
      ------------------------------------------------------------ */
-  .synth-head {
-    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-    padding: 10px 16px; border-bottom: 1px solid var(--line-soft);
-  }
-  .synth-head .back { background: none; border: 0; color: var(--muted); font-size: 11.5px; cursor: pointer; padding: 0; }
-  .synth-head .sep { width: 1px; height: 14px; background: var(--line); }
-  .synth-head .crumb { font-size: 11.5px; color: var(--faint); }
-  .synth-head .grow { flex: 1; }
-  .synth { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 282px; }
-  .doc-wrap { overflow: auto; padding: 30px 34px 40px; }
-  .doc { max-width: 620px; margin: 0 auto; }
-  .doc .eyebrow { margin-bottom: 10px; }
-  .doc h1 { font-family: var(--serif); font-weight: 400; font-size: 29px; line-height: 1.2; letter-spacing: -.015em; margin: 0 0 10px; }
-  .doc .lede { font-size: 13px; line-height: 1.65; color: var(--muted); margin: 0 0 24px; }
-  .doc h2 { font-family: var(--serif); font-weight: 400; font-size: 17px; margin: 26px 0 8px; }
-  .doc p { font-size: 13px; line-height: 1.72; margin: 0 0 11px; color: var(--ink-soft); }
-  .cite {
-    display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 15px;
-    padding: 0 4px; margin: 0 1px; border-radius: 4px; background: var(--tint); color: var(--clay);
-    font-size: 9.5px; font-weight: 600; vertical-align: 1px; text-decoration: none;
-  }
-  .doc blockquote {
-    margin: 14px 0 16px; padding: 10px 0 10px 14px; border-left: 2px solid var(--line);
-    font-family: var(--serif); font-size: 13px; line-height: 1.6; color: var(--ink-soft);
-  }
-  .doc blockquote cite { display: block; font-family: var(--sans); font-size: 10.5px; font-style: normal; color: var(--faint); margin-top: 5px; }
-  .doc ul { margin: 0 0 12px; padding-left: 18px; }
-  .doc li { font-size: 13px; line-height: 1.7; color: var(--ink-soft); margin-bottom: 5px; }
-  .callout {
-    margin: 18px 0; padding: 12px 14px; border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--warn) 28%, transparent); background: var(--warn-tint);
-  }
-  .callout .k { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--warn); margin-bottom: 6px; }
-  .callout p { margin: 0; font-size: 12px; line-height: 1.6; }
-  .doc-foot { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--line-soft); font-size: 10.5px; color: var(--faint); display: flex; gap: 8px; align-items: center; }
-  .synth-side { border-left: 1px solid var(--line-soft); overflow: auto; padding: 16px 14px; background: var(--surface-2); }
-  .synth-side .k { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 9px; display: flex; align-items: center; }
-  .synth-side .k span { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: 10px; }
-  .sources { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
-  .source-mini { display: flex; gap: 8px; align-items: flex-start; }
-  .source-mini b { font-size: 9.5px; color: var(--clay); background: var(--tint); border-radius: 4px; padding: 1px 4px; flex: 0 0 auto; margin-top: 1px; }
-  .source-mini span { display: block; font-size: 11px; line-height: 1.35; min-width: 0; }
-  .source-mini em { display: block; font-style: normal; font-family: var(--mono); font-size: 9.5px; color: var(--faint); margin-top: 1px; }
+      .synth-head {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .synth-head .back {
+        background: none;
+        border: 0;
+        color: var(--muted);
+        font-size: 11.5px;
+        cursor: pointer;
+        padding: 0;
+      }
+      .synth-head .sep {
+        width: 1px;
+        height: 14px;
+        background: var(--line);
+      }
+      .synth-head .crumb {
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .synth-head .grow {
+        flex: 1;
+      }
+      .synth {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 282px;
+      }
+      .doc-wrap {
+        overflow: auto;
+        padding: 30px 34px 40px;
+      }
+      .doc {
+        max-width: 620px;
+        margin: 0 auto;
+      }
+      .doc .eyebrow {
+        margin-bottom: 10px;
+      }
+      .doc h1 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 29px;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        margin: 0 0 10px;
+      }
+      .doc .lede {
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      .doc h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 17px;
+        margin: 26px 0 8px;
+      }
+      .doc p {
+        font-size: 13px;
+        line-height: 1.72;
+        margin: 0 0 11px;
+        color: var(--ink-soft);
+      }
+      .cite {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
+        height: 15px;
+        padding: 0 4px;
+        margin: 0 1px;
+        border-radius: 4px;
+        background: var(--tint);
+        color: var(--clay);
+        font-size: 9.5px;
+        font-weight: 600;
+        vertical-align: 1px;
+        text-decoration: none;
+      }
+      .doc blockquote {
+        margin: 14px 0 16px;
+        padding: 10px 0 10px 14px;
+        border-left: 2px solid var(--line);
+        font-family: var(--serif);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+      }
+      .doc blockquote cite {
+        display: block;
+        font-family: var(--sans);
+        font-size: 10.5px;
+        font-style: normal;
+        color: var(--faint);
+        margin-top: 5px;
+      }
+      .doc ul {
+        margin: 0 0 12px;
+        padding-left: 18px;
+      }
+      .doc li {
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--ink-soft);
+        margin-bottom: 5px;
+      }
+      .callout {
+        margin: 18px 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid color-mix(in srgb, var(--warn) 28%, transparent);
+        background: var(--warn-tint);
+      }
+      .callout .k {
+        font-size: 9.5px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--warn);
+        margin-bottom: 6px;
+      }
+      .callout p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .doc-foot {
+        margin-top: 26px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 10.5px;
+        color: var(--faint);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .synth-side {
+        border-left: 1px solid var(--line-soft);
+        overflow: auto;
+        padding: 16px 14px;
+        background: var(--surface-2);
+      }
+      .synth-side .k {
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 9px;
+        display: flex;
+        align-items: center;
+      }
+      .synth-side .k span {
+        margin-left: auto;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 10px;
+      }
+      .sources {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 20px;
+      }
+      .source-mini {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .source-mini b {
+        font-size: 9.5px;
+        color: var(--clay);
+        background: var(--tint);
+        border-radius: 4px;
+        padding: 1px 4px;
+        flex: 0 0 auto;
+        margin-top: 1px;
+      }
+      .source-mini span {
+        display: block;
+        font-size: 11px;
+        line-height: 1.35;
+        min-width: 0;
+      }
+      .source-mini em {
+        display: block;
+        font-style: normal;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--faint);
+        margin-top: 1px;
+      }
 
-  /* ------------------------------------------------------------
+      /* ------------------------------------------------------------
      Annotations de conception
      ------------------------------------------------------------ */
-  .notes {
-    position: absolute; top: 0; right: 0; bottom: 0; width: 300px; z-index: 6;
-    border-left: 1px solid rgba(255,255,255,.1); padding: 16px 16px 22px;
-    overflow: auto; background: #131316; box-shadow: -30px 0 70px rgba(0,0,0,.55);
-    transform: translateX(100%); transition: transform .18s ease;
-  }
-  body[data-notes="on"] .notes { transform: none; }
-  .notes h3 { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--board-muted); font-weight: 500; margin: 0 0 12px; }
-  .note { display: flex; gap: 9px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.06); }
-  .note:first-of-type { border-top: 0; }
-  .note b {
-    flex: 0 0 17px; height: 17px; border-radius: 50%; background: rgba(239,236,231,.12); color: #efece7;
-    font-size: 10px; font-weight: 600; display: grid; place-items: center;
-  }
-  .note p { margin: 0; font-size: 11px; line-height: 1.55; color: #b9b5af; }
-  .note p strong { color: #efece7; font-weight: 500; }
-  .notes .legend { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); font-size: 10.5px; color: var(--board-muted); line-height: 1.6; }
-  .notes .legend b { color: #efece7; font-weight: 500; }
-
-  @media (max-width: 1280px) {
-    .explore { grid-template-columns: 186px minmax(0,1fr) 292px; }
-    .angles { grid-template-columns: 1fr; }
-    .rail-filters { padding-inline: 12px; }
-    .sheet h3 { font-size: 16px; }
-  }
-  @media (max-width: 960px) {
-    .explore { grid-template-columns: 174px minmax(0,1fr) 274px; }
-    .center-head .sub, .dock .hint { display: none; }
-    .bar-title span { display: none; }
-    .ask-inner { padding-top: 34px; }
-    .ask h1 { font-size: 27px; }
-    .synth { grid-template-columns: 1fr; }
-    .synth-side { display: none; }
-    .doc-wrap { padding: 22px 20px 30px; }
-  }
-  /* Fenêtre étroite : l'app se replie, le tunnel reste lisible. */
-  @media (max-width: 780px) {
-    .bar { padding: 0 10px 0 140px; gap: 8px; }
-    .bar-title, .tabs button span { display: none; }
-    .tabs { margin-left: auto; }
-    .tabs button { padding: 0 10px; font-size: 11px; }
-    .tabs button em { margin: 0; }
-    .toggle { padding: 0 9px; font-size: 10.5px; }
-
-    .ask { padding: 0 16px 26px; }
-    .ask-inner { padding-top: 26px; }
-    .ask h1 { font-size: 24px; }
-    .ask .lede { font-size: 12.5px; }
-    .ask-field { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
-    .ask-field .cursor { font-size: 13px; }
-    .ask-field .btn { justify-content: center; }
-    .recent-bar { display: none; }
-    .recent-meta { width: auto; font-size: 10px; }
-
-    .explore { display: flex; flex-direction: column; position: relative; }
-    .rail { border-right: 0; border-bottom: 1px solid var(--line-soft); flex: 0 0 auto; }
-    .rail-query { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px 8px; }
-    .rail-query .k { display: none; }
-    .rail-query b { font-size: 13px; }
-    .rail-query button { margin: 0 0 0 auto; }
-    .stations { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 12px 10px; }
-    .station { padding-bottom: 0; }
-    .station-top { padding: 0 0 4px; flex-direction: column; align-items: flex-start; gap: 1px; }
-    .station-top b { font-size: 9.5px; }
-    .station-top span { margin: 0; font-size: 10px; }
-    .station-track { height: 5px; margin: 0; border-radius: 999px; }
-    .station-track i { height: 5px; border-radius: 999px; }
-    .rail-filters { border: 0; margin: 0; padding: 0 12px 10px; display: flex; gap: 5px; overflow: hidden; }
-    .rail-filters .k { display: none; }
-    .filter-line {
-      flex: 0 0 auto; padding: 0 8px; height: 21px; border-radius: 999px;
-      border: 1px solid var(--line-soft); font-size: 10px; white-space: nowrap;
-    }
-    .filter-line i { display: none; }
-    .filter-line em { display: none; }
-    .filter-line[data-on="true"] { border-color: color-mix(in srgb, var(--clay) 40%, transparent); color: var(--clay); background: var(--tint); }
-    .rail-note { display: none; }
-
-    .center { flex: 1; min-height: 0; }
-    .center-head { padding: 9px 12px; }
-    .center-head h2 { font-size: 14px; }
-    .center-scroll { padding: 10px 12px 12px; }
-    .angles { grid-template-columns: 1fr; gap: 8px; }
-    .src-do { opacity: 1; }
-    .angle-head { padding: 8px 10px; }
-
-    .sheet {
-      position: absolute; left: 8px; right: 8px; bottom: 54px; z-index: 4;
-      max-height: 62%; border: 1px solid var(--line); border-left-width: 1px;
-      border-radius: 14px; background: var(--paper);
-      box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.08);
-    }
-    .sheet-head { padding: 9px 10px; }
-    .sheet-body { padding: 12px; }
-    .sheet h3 { font-size: 16px; }
-    .sheet-actions { padding: 8px 10px; }
-
-    .map-head { padding: 9px 12px; gap: 8px; }
-    .map-head h2 { font-size: 14px; }
-    .map-head .btn.ghost { display: none; }
-    .map-scroll { padding: 10px 8px 16px; }
-    .map-legend { font-size: 8.5px; }
-
-    .dock { gap: 8px; padding: 0 10px; }
-    .dock .pips, .dock .hint, .dock .btn.ghost { display: none; }
-    .dock .tally { font-size: 10.5px; }
-    .dock .btn.primary { font-size: 11px; padding: 0 10px; }
-
-    .synth-head { padding: 9px 12px; gap: 8px; }
-    .synth-head .crumb, .synth-head .hint, .synth-head .btn.ghost { display: none; }
-    .doc-wrap { padding: 18px 16px 28px; }
-    .doc h1 { font-size: 23px; }
-    .doc .lede, .doc p, .doc li { font-size: 12.5px; }
-  }
-</style>
-</head>
-<body data-notes="off">
-
-  <!-- ===================== Cadre ===================== -->
-  <div class="bar">
-    <div class="bar-title">
-      <b>Tunnel de recherche — refonte</b>
-      <span>Proposition de maquette · trois temps, une seule question</span>
-    </div>
-    <div class="bar-grow"></div>
-    <div class="tabs" role="tablist" aria-label="Écrans">
-      <button role="tab" data-screen="1" aria-selected="true" title="1 · Poser la question"><em>1</em><span>Question</span></button>
-      <button role="tab" data-screen="2" aria-selected="false" title="2 · Explorer"><em>2</em><span>Exploration</span></button>
-      <button role="tab" data-screen="3" aria-selected="false" title="3 · Carte"><em>3</em><span>Carte</span></button>
-      <button role="tab" data-screen="4" aria-selected="false" title="4 · Synthèse"><em>4</em><span>Synthèse</span></button>
-    </div>
-    <button class="toggle" id="notesToggle" aria-pressed="false">Notes</button>
-    <button class="toggle" id="themeToggle" aria-pressed="false">Sombre</button>
-  </div>
-
-  <div class="board">
-    <div class="stage-wrap">
-      <div class="stage" id="stage" data-theme="light">
-
-        <!-- =============== 1 · Poser la question =============== -->
-        <section class="screen" data-screen="1" data-on="true">
-          <div class="ask">
-            <div class="ask-inner">
-              <p class="eyebrow"><i></i>Atelier · nouveau tunnel</p>
-              <h1>Quelle question voulez-vous ouvrir&nbsp;?</h1>
-              <p class="lede">Vela cherche des sources réelles, les range par angle et laisse tomber le bruit. Vous gardez ce qui compte, la synthèse garde ses citations.</p>
-
-              <div class="ask-field">
-                <span class="cursor"><b>Comparer les hébergeurs d’images libres</b></span>
-                <button class="btn primary">Ouvrir le tunnel <kbd>⌘↵</kbd></button>
-              </div>
-
-              <div class="ask-tips">
-                <span class="tip">+ coût réel à l’échelle</span>
-                <span class="tip">+ licences et attribution</span>
-                <span class="tip">+ auto-hébergement</span>
-              </div>
-
-              <div class="ask-block">
-                <h2>Reprendre</h2>
-                <div class="recent">
-                  <div class="recent-row">
-                    <div class="recent-main"><b>Héberger des images libres sans se ruiner</b><span>9 sources · 4 angles</span></div>
-                    <div class="recent-bar"><i style="width:74%"></i></div>
-                    <div class="recent-meta">il y a 12 min</div>
-                  </div>
-                  <div class="recent-row">
-                    <div class="recent-main"><b>Histoire de la photographie argentique</b><span>21 sources · 6 angles</span></div>
-                    <div class="recent-bar"><i style="width:46%"></i></div>
-                    <div class="recent-meta">hier</div>
-                  </div>
-                  <div class="recent-row">
-                    <div class="recent-main"><b>Utiliser l’IA pour rédiger des textes</b><span>18 sources · 5 angles</span></div>
-                    <div class="recent-bar"><i style="width:38%"></i></div>
-                    <div class="recent-meta">3 jours</div>
-                  </div>
-                </div>
-              </div>
-
-              <p class="rail-note" style="padding:22px 0 0; max-width:52ch">Rien n’est envoyé à un moteur : le tunnel interroge des sources publiques, mesure la correspondance localement et garde la trace de chaque page.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- =============== 2 · Exploration =============== -->
-        <section class="screen" data-screen="2">
-          <div class="explore">
-
-            <!-- Rail : l'entonnoir comme navigation -->
-            <aside class="rail">
-              <div class="rail-query">
-                <div class="k">Question</div>
-                <b>Comparer les hébergeurs d’images libres</b>
-                <button>Modifier</button>
-              </div>
-
-              <div class="stations">
-                <button class="station" data-station="all" data-on="false">
-                  <span class="station-top"><b>Large spectre</b><span>38</span></span>
-                  <span class="station-track"><i style="width:100%"></i></span>
-                </button>
-                <button class="station" data-station="angles" data-on="true">
-                  <span class="station-top"><b>Angles</b><span>6</span></span>
-                  <span class="station-track"><i style="width:78%"></i></span>
-                </button>
-                <button class="station" data-station="kept" data-on="false">
-                  <span class="station-top"><b>Retenues</b><span id="stationKept">9</span></span>
-                  <span class="station-track"><i style="width:38%"></i></span>
-                </button>
-                <button class="station" data-station="synth" data-on="false">
-                  <span class="station-top"><b>Synthèse</b><span>1</span></span>
-                  <span class="station-track"><i style="width:16%"></i></span>
-                </button>
-              </div>
-
-              <div class="rail-filters">
-                <div class="k">Filtrer <span class="count">2</span></div>
-                <div class="filter-line" data-on="true"><i>✓</i>Pages accessibles<em>31</em></div>
-                <div class="filter-line" data-on="true"><i>✓</i>Moins de 5 ans<em>26</em></div>
-                <div class="filter-line"><i>✓</i>Académique et presse<em>14</em></div>
-                <div class="filter-line"><i>✓</i>Extrait de plus de 200 mots<em>22</em></div>
-              </div>
-
-              <p class="rail-note">Un filtre ne supprime rien : il replie les branches et le compteur dit ce qu’il masque.</p>
-            </aside>
-
-            <!-- Centre : angles et sources -->
-            <section class="center">
-              <div class="center-head">
-                <h2>Explorer</h2>
-                <span class="sub">38 sources · 9 retenues</span>
-                <span class="grow"></span>
-                <div class="seg" role="tablist" aria-label="Vue">
-                  <button data-on="true" role="tab" aria-selected="true">Angles</button>
-                  <button data-on="false" role="tab" aria-selected="false">Liste</button>
-                  <button data-on="false" role="tab" aria-selected="false" data-goto="3">Carte</button>
-                </div>
-              </div>
-
-              <div class="center-scroll">
-                <div class="angles">
-
-                  <!-- Angle 1 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Licences et attribution</b>
-                      <span class="tally" data-total="7" data-extra="0">2 / 7</span>
-                    </header>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Licences Creative Commons : ce que « libre » recouvre</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">commons.wikimedia.org</span><span>·</span><span>2024</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:92%"></i></span><b>92</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Conditions d’utilisation des hébergeurs d’images</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">docs.imgix.com</span><span>·</span><span>2023</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:74%"></i></span><b>74</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="dismissed">
-                      <div class="src-title">Le piège des licences non commerciales</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">fr.wikipedia.org</span><span>·</span><span>2022</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:68%"></i></span><b>68</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 4 autres sources</button>
-                  </article>
-
-                  <!-- Angle 2 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Coût réel à l’échelle</b>
-                      <span class="tally" data-total="6" data-extra="0">2 / 6</span>
-                    </header>
-                    <div class="src" data-on="true" data-state="kept">
-                      <div class="src-title">Le coût caché de la bande passante</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">arstechnica.com</span><span>·</span><span>2023</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:88%"></i></span><b>88</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Tarifs Cloudflare Images, par requête</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">developers.cloudflare.com</span><span>·</span><span>2025</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:71%"></i></span><b>71</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="neutral">
-                      <div class="src-title">Facturer à la requête : trois retours d’expérience</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">news.ycombinator.com</span><span>·</span><span>2022</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:63%"></i></span><b>63</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 3 autres sources</button>
-                  </article>
-
-                  <!-- Angle 3 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Performance et diffusion</b>
-                      <span class="tally" data-total="8" data-extra="0">2 / 8</span>
-                    </header>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Comparatif des CDN d’images</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">web.dev</span><span>·</span><span>2024</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:90%"></i></span><b>90</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Formats modernes : AVIF et WebP en production</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">developer.mozilla.org</span><span>·</span><span>2023</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:79%"></i></span><b>79</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="dismissed">
-                      <div class="src-title">Un domaine, un CDN, un cache</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">github.com</span><span>·</span><span>2021</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:55%"></i></span><b>55</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 5 autres sources</button>
-                  </article>
-
-                  <!-- Angle 4 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Vie privée et modération</b>
-                      <span class="tally" data-total="6" data-extra="0">2 / 6</span>
-                    </header>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Vie privée des services d’images : ce que la CNIL relève</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">cnil.fr</span><span>·</span><span>2024</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:86%"></i></span><b>86</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Modération automatique : qui décide de retirer une image</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">eff.org</span><span>·</span><span>2023</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:70%"></i></span><b>70</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 4 autres sources</button>
-                  </article>
-
-                  <!-- Angle 5 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Auto-hébergement</b>
-                      <span class="tally" data-total="5" data-extra="0">1 / 5</span>
-                    </header>
-                    <div class="src" data-on="false" data-state="kept">
-                      <div class="src-title">Héberger ses images sur un serveur à soi</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">selfhosted.show</span><span>·</span><span>2024</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:81%"></i></span><b>81</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="true" title="Retirer">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="neutral">
-                      <div class="src-title">Sauvegardes et migrations d’un stockage maison</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">docs.immich.app</span><span>·</span><span>2025</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:66%"></i></span><b>66</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 3 autres sources</button>
-                  </article>
-
-                  <!-- Angle 6 -->
-                  <article class="angle">
-                    <header class="angle-head">
-                      <b>Alternatives émergentes</b>
-                      <span class="tally" data-total="6" data-extra="0" data-zero="true">0 / 6</span>
-                    </header>
-                    <div class="src" data-on="false" data-state="neutral">
-                      <div class="src-title">IPFS pour les images : promesses et latence</div>
-                      <div class="src-meta"><i class="dot"></i><span class="src-domain">ipfs.tech</span><span>·</span><span>2023</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:61%"></i></span><b>61</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <div class="src" data-on="false" data-state="neutral">
-                      <div class="src-title">Stockage objet sans serveur : état des offres</div>
-                      <div class="src-meta"><i class="dot" style="opacity:.3"></i><span class="src-domain">thenewstack.io</span><span>·</span><span>2024</span></div>
-                      <div class="src-bar"><span class="track"><i style="width:58%"></i></span><b>58</b></div>
-                      <div class="src-do">
-                        <button class="keep" data-on="false" title="Garder">✓</button>
-                        <button class="drop" title="Écarter">✕</button>
-                      </div>
-                    </div>
-                    <button class="angle-more">+ 4 autres sources</button>
-                  </article>
-
-                </div>
-              </div>
-
-              <!-- Barre de décisions -->
-              <div class="dock">
-                <span class="tally"><b id="keptCount">9</b> sources retenues · <b>38</b> explorées</span>
-                <span class="pips" id="pips"></span>
-                <span class="grow"></span>
-                <span class="hint">K garder · X écarter · ↵ ouvrir</span>
-                <button class="btn ghost">Voir la carte</button>
-                <button class="btn primary" data-goto="4">Rédiger la synthèse</button>
-              </div>
-            </section>
-
-            <!-- Fiche de la source sélectionnée -->
-            <aside class="sheet">
-              <div class="sheet-head">
-                <span class="fav">A</span>
-                <span class="dom">arstechnica.com</span>
-                <span class="grow"></span>
-                <button title="Fermer">✕</button>
-              </div>
-              <div class="sheet-body">
-                <h3>Le coût caché de la bande passante</h3>
-                <div class="chips">
-                  <span class="chip">Presse</span>
-                  <span class="chip">2023</span>
-                  <span class="chip">5 min de lecture</span>
-                </div>
-
-                <div class="block">
-                  <div class="k">Pourquoi cette source</div>
-                  <p>4 mots de la question retrouvés : 2 dans le titre, 2 dans le texte, aucun absent.</p>
-                  <div class="why-line">
-                    <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i>
-                  </div>
-                  <p style="color:var(--faint); font-size:10.5px">Mesure locale, pas un verdict.</p>
-                </div>
-
-                <div class="block" style="background:transparent; border-color:var(--line-soft)">
-                  <div class="k">Extrait</div>
-                  <blockquote class="excerpt"><q>Le stockage ne représente que 8 % de la facture ; c’est la diffusion qui décide de tout, et elle croît avec le succès de l’image.</q></blockquote>
-                </div>
-
-                <div class="block divergence">
-                  <div class="k">Divergence repérée</div>
-                  <p>Sur le coût du Go : <b>0,015 $</b> chez Cloudflare (2025), <b>0,03 $</b> ici (2023).</p>
-                </div>
-              </div>
-              <div class="sheet-actions">
-                <button class="btn">Lire dans Vela</button>
-                <button class="btn primary">Garder</button>
-              </div>
-            </aside>
-
-          </div>
-        </section>
-
-        <!-- =============== 3 · Carte =============== -->
-        <section class="screen" data-screen="3">
-          <div class="map-head">
-            <h2>Carte</h2>
-            <span class="sub">9 sources · 6 angles · 2 écartées</span>
-            <span class="grow"></span>
-            <button class="btn ghost">Recadrer</button>
-          </div>
-          <div class="map-body">
-            <p class="map-caption">2 sources écartées par l’entonnoir ou la pertinence.</p>
-            <div class="map-scroll">
-              <div class="map-canvas">
-                <svg class="map-svg" viewBox="0 0 400 440" role="img"
-                  aria-label="Carte du tunnel : la question, quatre angles, neuf sources retenues et trois concepts reliés">
-                  <defs>
-                    <clipPath id="site-clip"><rect x="196" y="80" width="132" height="340" /></clipPath>
-                  </defs>
-
-                  <g aria-hidden="true">
-                    <circle class="map-dot-bg" cx="30" cy="392" r="2" />
-                    <circle class="map-dot-bg" cx="62" cy="414" r="1.4" />
-                    <circle class="map-dot-bg" cx="46" cy="428" r="1.7" />
-                    <circle class="map-dot-bg" cx="120" cy="420" r="1.3" />
-                    <circle class="map-dot-bg" cx="348" cy="70" r="1.6" />
-                    <circle class="map-dot-bg" cx="372" cy="120" r="1.2" />
-                    <circle class="map-dot-bg" cx="356" cy="176" r="1.8" />
-                    <circle class="map-dot-bg" cx="380" cy="232" r="1.3" />
-                    <circle class="map-dot-bg" cx="360" cy="300" r="1.5" />
-                    <circle class="map-dot-bg" cx="338" cy="416" r="1.4" />
-                    <circle class="map-dot-bg" cx="286" cy="430" r="1.2" />
-                    <circle class="map-dot-bg" cx="24" cy="176" r="1.5" />
-                    <circle class="map-dot-bg" cx="52" cy="212" r="1.2" />
-                    <path class="map-thread" d="M30 392 L46 428 M62 414 L46 428 M120 420 L46 428" />
-                    <path class="map-thread" d="M348 70 L372 120 M356 176 L380 232 M360 300 L338 416" />
-                  </g>
-
-                  <g>
-                    <path class="map-edge" d="M80 252 C88 266 88 111 96 111" />
-                    <path class="map-edge" d="M80 252 C90 266 86 205 96 205" />
-                    <path class="map-edge" d="M80 252 C90 266 86 299 96 299" />
-                    <path class="map-edge" d="M80 252 C88 266 88 393 96 393" />
-
-                    <path class="map-edge" d="M178 111 C186 111 188 94 196 94" />
-                    <path class="map-edge" d="M178 111 C186 111 188 124 196 124" />
-
-                    <path class="map-edge" d="M178 205 C186 205 188 188 196 188" />
-                    <path class="map-edge" d="M178 205 C187 205 189 218 196 218" />
-                    <path class="map-edge" d="M178 205 C187 205 189 248 196 248" />
-
-                    <path class="map-edge" d="M178 299 C186 299 188 282 196 282" />
-                    <path class="map-edge" d="M178 299 C186 299 188 312 196 312" />
-
-                    <path class="map-edge" d="M178 393 C186 393 188 376 196 376" />
-                    <path class="map-edge" d="M178 393 C186 393 188 406 196 406" />
-
-                    <path class="map-edge" data-kind="concept" d="M326 124 C334 124 332 131 340 131" />
-                    <path class="map-edge" data-kind="concept" d="M326 218 C334 218 332 227 340 227" />
-                    <path class="map-edge" data-kind="concept" d="M326 312 C334 330 332 323 340 323" />
-                  </g>
-
-                  <g>
-                    <rect class="map-node" data-kind="subject" x="6" y="232" width="74" height="40" rx="9" />
-                    <path class="map-bar" data-kind="subject" d="M12 242 V262" />
-                    <text class="map-title" data-kind="subject" x="20" y="250">Hébergeurs</text>
-                    <text class="map-title" data-kind="subject" x="20" y="263">d’images</text>
-                  </g>
-
-                  <g>
-                    <rect class="map-node" data-kind="angle" x="96" y="96" width="82" height="30" rx="7" />
-                    <path class="map-bar" data-kind="angle" d="M102 104 V118" />
-                    <text class="map-title" x="110" y="114">Licences</text>
-
-                    <rect class="map-node" data-kind="angle" x="96" y="190" width="82" height="30" rx="7" />
-                    <path class="map-bar" data-kind="angle" d="M102 198 V212" />
-                    <text class="map-title" x="110" y="208">Coût réel</text>
-
-                    <rect class="map-node" data-kind="angle" x="96" y="284" width="82" height="30" rx="7" />
-                    <path class="map-bar" data-kind="angle" d="M102 292 V306" />
-                    <text class="map-title" x="110" y="302">Performance</text>
-
-                    <rect class="map-node" data-kind="angle" x="96" y="378" width="82" height="30" rx="7" />
-                    <path class="map-bar" data-kind="angle" d="M102 386 V400" />
-                    <text class="map-title" x="110" y="396">Vie privée</text>
-                  </g>
-
-                  <g clip-path="url(#site-clip)">
-                    <rect class="map-node" data-kind="site" x="196" y="82" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 88 V100" />
-                    <text class="map-title" x="210" y="97">Licences Creative Commons…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="112" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 118 V130" />
-                    <text class="map-title" x="210" y="127">Conditions d’utilisation…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="176" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 182 V194" />
-                    <text class="map-title" x="210" y="191">Coût de la bande passante…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="206" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 212 V224" />
-                    <text class="map-title" x="210" y="221">Tarifs Cloudflare — CDN…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="236" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 242 V254" />
-                    <text class="map-title" x="210" y="251">Facturation à la requête…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="270" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 276 V288" />
-                    <text class="map-title" x="210" y="285">Comparatif des CDN — tests…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="300" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 306 V318" />
-                    <text class="map-title" x="210" y="315">AVIF et WebP — formats…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="364" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 370 V382" />
-                    <text class="map-title" x="210" y="379">Vie privée — CNIL et RGPD…</text>
-
-                    <rect class="map-node" data-kind="site" x="196" y="394" width="130" height="24" rx="6" />
-                    <path class="map-bar" data-kind="site" d="M202 400 V412" />
-                    <text class="map-title" x="210" y="409">Modération — rapport EFF…</text>
-                  </g>
-
-                  <g>
-                    <rect class="map-node" data-kind="concept" x="340" y="120" width="54" height="22" rx="6" />
-                    <circle cx="348" cy="131" r="2" fill="var(--clay)" />
-                    <text class="map-title" x="354" y="134">licence</text>
-
-                    <rect class="map-node" data-kind="concept" x="340" y="216" width="54" height="22" rx="6" />
-                    <circle cx="348" cy="227" r="2" fill="var(--clay)" />
-                    <text class="map-title" x="354" y="230">coût</text>
-
-                    <rect class="map-node" data-kind="concept" x="340" y="312" width="54" height="22" rx="6" />
-                    <circle cx="348" cy="323" r="2" fill="var(--clay)" />
-                    <text class="map-title" x="354" y="326">CDN</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div class="map-chrome">
-              <div class="map-legend" aria-label="Légende de la carte">
-                <span><i data-kind="subject"></i>Sujet</span>
-                <span><i data-kind="angle"></i>Angle</span>
-                <span><i data-kind="subangle"></i>Sous-angle</span>
-                <span><i data-kind="detail"></i>Détail</span>
-                <span><i data-kind="concept"></i>Concept</span>
-                <span><i data-kind="site"></i>Site</span>
-                <span><i data-kind="tension"></i>Tension</span>
-              </div>
-              <div class="map-foot">
-                <div class="map-zoom">
-                  <button type="button" aria-label="Zoom arrière">⌄</button>
-                  <b>51 %</b>
-                  <button type="button" aria-label="Zoom avant">⌃</button>
-                  <button type="button" class="fit">Ajuster</button>
-                </div>
-                <span class="grow"></span>
-                <div class="map-mini" aria-hidden="true">
-                  <span class="vp"></span>
-                  <i data-kind="subject" style="left:6px;top:22px;width:14px;height:6px"></i>
-                  <i style="left:28px;top:8px;width:16px;height:4px"></i>
-                  <i style="left:28px;top:18px;width:16px;height:4px"></i>
-                  <i style="left:28px;top:28px;width:16px;height:4px"></i>
-                  <i style="left:52px;top:6px;width:12px;height:18px"></i>
-                  <i data-kind="site" style="left:70px;top:6px;width:10px;height:18px"></i>
-                  <i style="left:28px;top:42px;width:16px;height:4px"></i>
-                  <i style="left:52px;top:38px;width:12px;height:10px"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- =============== 4 · Synthèse =============== -->
-        <section class="screen" data-screen="4">
-          <div class="synth-head">
-            <button class="back" data-goto="2">← Exploration</button>
-            <span class="sep"></span>
-            <span class="crumb">Comparer les hébergeurs d’images libres</span>
-            <span class="grow"></span>
-            <span class="hint" style="font-size:10.5px; color:var(--faint); margin-right:6px">9 sources · 7 nov. 2026</span>
-            <button class="btn ghost">Copier le Markdown</button>
-            <button class="btn">Exporter ▾</button>
-          </div>
-
-          <div class="synth">
-            <div class="doc-wrap">
-              <article class="doc">
-                <p class="eyebrow"><i></i>Synthèse du tunnel</p>
-                <h1>Héberger des images libres sans se ruiner</h1>
-                <p class="lede">Ce qui distingue vraiment les offres n’est pas le prix du stockage, mais la diffusion : bande passante, transformations, cache et conditions de licence.</p>
-
-                <h2>Ce que « libre » recouvre</h2>
-                <p>Un hébergeur peut servir des images sans en revendiquer la propriété, mais il ne rend pas une image libre : la licence reste celle de l’auteur <a class="cite">1</a>. Les conditions d’utilisation ajoutent leurs propres limites, notamment sur les images non commerciales <a class="cite">2</a>.</p>
-
-                <h2>Le coût suit la diffusion, pas le stockage</h2>
-                <p>Les grilles tarifaires se ressemblent sur le stockage et divergent sur les requêtes et les transformations <a class="cite">3</a>. C’est la page la plus partagée qui décide de la facture, pas la plus lourde.</p>
-                <blockquote>
-                  « Le stockage ne représente que 8 % de la facture ; c’est la diffusion qui décide de tout. »
-                  <cite>Ars Technica, 2023 · source 3</cite>
-                </blockquote>
-                <p>Les comparatifs récents confirment ce renversement, à condition de mesurer la latence au bon endroit <a class="cite">4</a> <a class="cite">5</a>.</p>
-
-                <div class="callout">
-                  <div class="k">À trancher</div>
-                  <p>Deux sources donnent un coût au Go deux fois différent : <b>0,015 $</b> et <b>0,03 $</b>. Vérifier la date de la grille avant de citer un chiffre <a class="cite">3</a> <a class="cite">6</a>.</p>
-                </div>
-
-                <h2>Trois points avant de choisir</h2>
-                <ul>
-                  <li>La licence de l’image, jamais celle de l’hébergeur <a class="cite">1</a> <a class="cite">2</a>.</li>
-                  <li>Le prix de la requête et de la transformation, pas celui du Go <a class="cite">3</a> <a class="cite">4</a>.</li>
-                  <li>Qui peut retirer une image, et sur quelle base <a class="cite">7</a>.</li>
-                </ul>
-
-                <div class="doc-foot">
-                  <span>9 sources retenues sur 38 explorées</span>
-                  <span>·</span>
-                  <span>6 angles</span>
-                  <span>·</span>
-                  <span>chaque affirmation renvoie à une page</span>
-                </div>
-              </article>
-            </div>
-
-            <aside class="synth-side">
-              <div class="k">Sources retenues <span>9</span></div>
-              <div class="sources">
-                <div class="source-mini"><b>1</b><span>Licences Creative Commons : ce que « libre » recouvre<em>commons.wikimedia.org</em></span></div>
-                <div class="source-mini"><b>2</b><span>Conditions d’utilisation des hébergeurs d’images<em>docs.imgix.com</em></span></div>
-                <div class="source-mini"><b>3</b><span>Le coût caché de la bande passante<em>arstechnica.com</em></span></div>
-                <div class="source-mini"><b>4</b><span>Comparatif des CDN d’images<em>web.dev</em></span></div>
-                <div class="source-mini"><b>5</b><span>Formats modernes : AVIF et WebP<em>developer.mozilla.org</em></span></div>
-                <div class="source-mini"><b>6</b><span>Tarifs Cloudflare Images<em>developers.cloudflare.com</em></span></div>
-                <div class="source-mini"><b>7</b><span>Modération automatique des images<em>eff.org</em></span></div>
-                <div class="source-mini"><b>8</b><span>Vie privée des services d’images<em>cnil.fr</em></span></div>
-                <div class="source-mini"><b>9</b><span>Héberger ses images sur un serveur à soi<em>selfhosted.show</em></span></div>
-              </div>
-
-              <div class="k">À vérifier <span>2</span></div>
-              <div class="block divergence" style="background:var(--warn-tint)">
-                <div class="k">Coût du Go</div>
-                <p>0,015 $ (2025) contre 0,03 $ (2023).</p>
-              </div>
-              <div class="block" style="background:transparent">
-                <div class="k">Attribution</div>
-                <p>Deux sources se contredisent sur le crédit obligatoire en modification.</p>
-              </div>
-            </aside>
-          </div>
-        </section>
-
+      .notes {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 300px;
+        z-index: 6;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 16px 16px 22px;
+        overflow: auto;
+        background: #131316;
+        box-shadow: -30px 0 70px rgba(0, 0, 0, 0.55);
+        transform: translateX(100%);
+        transition: transform 0.18s ease;
+      }
+      body[data-notes='on'] .notes {
+        transform: none;
+      }
+      .notes h3 {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--board-muted);
+        font-weight: 500;
+        margin: 0 0 12px;
+      }
+      .note {
+        display: flex;
+        gap: 9px;
+        padding: 9px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .note:first-of-type {
+        border-top: 0;
+      }
+      .note b {
+        flex: 0 0 17px;
+        height: 17px;
+        border-radius: 50%;
+        background: rgba(239, 236, 231, 0.12);
+        color: #efece7;
+        font-size: 10px;
+        font-weight: 600;
+        display: grid;
+        place-items: center;
+      }
+      .note p {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.55;
+        color: #b9b5af;
+      }
+      .note p strong {
+        color: #efece7;
+        font-weight: 500;
+      }
+      .notes .legend {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 10.5px;
+        color: var(--board-muted);
+        line-height: 1.6;
+      }
+      .notes .legend b {
+        color: #efece7;
+        font-weight: 500;
+      }
+
+      @media (max-width: 1280px) {
+        .explore {
+          grid-template-columns: 186px minmax(0, 1fr) 292px;
+        }
+        .angles {
+          grid-template-columns: 1fr;
+        }
+        .rail-filters {
+          padding-inline: 12px;
+        }
+        .sheet h3 {
+          font-size: 16px;
+        }
+      }
+      @media (max-width: 960px) {
+        .explore {
+          grid-template-columns: 174px minmax(0, 1fr) 274px;
+        }
+        .center-head .sub,
+        .dock .hint {
+          display: none;
+        }
+        .bar-title span {
+          display: none;
+        }
+        .ask-inner {
+          padding-top: 34px;
+        }
+        .ask h1 {
+          font-size: 27px;
+        }
+        .synth {
+          grid-template-columns: 1fr;
+        }
+        .synth-side {
+          display: none;
+        }
+        .doc-wrap {
+          padding: 22px 20px 30px;
+        }
+      }
+      /* Fenêtre étroite : l'app se replie, le tunnel reste lisible. */
+      @media (max-width: 780px) {
+        .bar {
+          padding: 0 10px 0 140px;
+          gap: 8px;
+        }
+        .bar-title,
+        .tabs button span {
+          display: none;
+        }
+        .tabs {
+          margin-left: auto;
+        }
+        .tabs button {
+          padding: 0 10px;
+          font-size: 11px;
+        }
+        .tabs button em {
+          margin: 0;
+        }
+        .toggle {
+          padding: 0 9px;
+          font-size: 10.5px;
+        }
+
+        .ask {
+          padding: 0 16px 26px;
+        }
+        .ask-inner {
+          padding-top: 26px;
+        }
+        .ask h1 {
+          font-size: 24px;
+        }
+        .ask .lede {
+          font-size: 12.5px;
+        }
+        .ask-field {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+          padding: 12px;
+        }
+        .ask-field .cursor {
+          font-size: 13px;
+        }
+        .ask-field .btn {
+          justify-content: center;
+        }
+        .recent-bar {
+          display: none;
+        }
+        .recent-meta {
+          width: auto;
+          font-size: 10px;
+        }
+
+        .explore {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+        }
+        .rail {
+          border-right: 0;
+          border-bottom: 1px solid var(--line-soft);
+          flex: 0 0 auto;
+        }
+        .rail-query {
+          display: flex;
+          align-items: baseline;
+          gap: 8px;
+          padding: 10px 12px 8px;
+        }
+        .rail-query .k {
+          display: none;
+        }
+        .rail-query b {
+          font-size: 13px;
+        }
+        .rail-query button {
+          margin: 0 0 0 auto;
+        }
+        .stations {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 6px;
+          padding: 0 12px 10px;
+        }
+        .station {
+          padding-bottom: 0;
+        }
+        .station-top {
+          padding: 0 0 4px;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1px;
+        }
+        .station-top b {
+          font-size: 9.5px;
+        }
+        .station-top span {
+          margin: 0;
+          font-size: 10px;
+        }
+        .station-track {
+          height: 5px;
+          margin: 0;
+          border-radius: 999px;
+        }
+        .station-track i {
+          height: 5px;
+          border-radius: 999px;
+        }
+        .rail-filters {
+          border: 0;
+          margin: 0;
+          padding: 0 12px 10px;
+          display: flex;
+          gap: 5px;
+          overflow: hidden;
+        }
+        .rail-filters .k {
+          display: none;
+        }
+        .filter-line {
+          flex: 0 0 auto;
+          padding: 0 8px;
+          height: 21px;
+          border-radius: 999px;
+          border: 1px solid var(--line-soft);
+          font-size: 10px;
+          white-space: nowrap;
+        }
+        .filter-line i {
+          display: none;
+        }
+        .filter-line em {
+          display: none;
+        }
+        .filter-line[data-on='true'] {
+          border-color: color-mix(in srgb, var(--clay) 40%, transparent);
+          color: var(--clay);
+          background: var(--tint);
+        }
+        .rail-note {
+          display: none;
+        }
+
+        .center {
+          flex: 1;
+          min-height: 0;
+        }
+        .center-head {
+          padding: 9px 12px;
+        }
+        .center-head h2 {
+          font-size: 14px;
+        }
+        .center-scroll {
+          padding: 10px 12px 12px;
+        }
+        .angles {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+        .src-do {
+          opacity: 1;
+        }
+        .angle-head {
+          padding: 8px 10px;
+        }
+
+        .sheet {
+          position: absolute;
+          left: 8px;
+          right: 8px;
+          bottom: 54px;
+          z-index: 4;
+          max-height: 62%;
+          border: 1px solid var(--line);
+          border-left-width: 1px;
+          border-radius: 14px;
+          background: var(--paper);
+          box-shadow:
+            0 24px 60px rgba(0, 0, 0, 0.28),
+            0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .sheet-head {
+          padding: 9px 10px;
+        }
+        .sheet-body {
+          padding: 12px;
+        }
+        .sheet h3 {
+          font-size: 16px;
+        }
+        .sheet-actions {
+          padding: 8px 10px;
+        }
+
+        .map-head {
+          padding: 9px 12px;
+          gap: 8px;
+        }
+        .map-head h2 {
+          font-size: 14px;
+        }
+        .map-head .btn.ghost {
+          display: none;
+        }
+        .map-scroll {
+          padding: 10px 8px 16px;
+        }
+        .map-legend {
+          font-size: 8.5px;
+        }
+
+        .dock {
+          gap: 8px;
+          padding: 0 10px;
+        }
+        .dock .pips,
+        .dock .hint,
+        .dock .btn.ghost {
+          display: none;
+        }
+        .dock .tally {
+          font-size: 10.5px;
+        }
+        .dock .btn.primary {
+          font-size: 11px;
+          padding: 0 10px;
+        }
+
+        .synth-head {
+          padding: 9px 12px;
+          gap: 8px;
+        }
+        .synth-head .crumb,
+        .synth-head .hint,
+        .synth-head .btn.ghost {
+          display: none;
+        }
+        .doc-wrap {
+          padding: 18px 16px 28px;
+        }
+        .doc h1 {
+          font-size: 23px;
+        }
+        .doc .lede,
+        .doc p,
+        .doc li {
+          font-size: 12.5px;
+        }
+      }
+    </style>
+  </head>
+  <body data-notes="off">
+    <!-- ===================== Cadre ===================== -->
+    <div class="bar">
+      <div class="bar-title">
+        <b>Tunnel de recherche — refonte</b>
+        <span>Proposition de maquette · trois temps, une seule question</span>
       </div>
+      <div class="bar-grow"></div>
+      <div class="tabs" role="tablist" aria-label="Écrans">
+        <button role="tab" data-screen="1" aria-selected="true" title="1 · Poser la question">
+          <em>1</em><span>Question</span>
+        </button>
+        <button role="tab" data-screen="2" aria-selected="false" title="2 · Explorer">
+          <em>2</em><span>Exploration</span>
+        </button>
+        <button role="tab" data-screen="3" aria-selected="false" title="3 · Carte">
+          <em>3</em><span>Carte</span>
+        </button>
+        <button role="tab" data-screen="4" aria-selected="false" title="4 · Synthèse">
+          <em>4</em><span>Synthèse</span>
+        </button>
+      </div>
+      <button class="toggle" id="notesToggle" aria-pressed="false">Notes</button>
+      <button class="toggle" id="themeToggle" aria-pressed="false">Sombre</button>
     </div>
 
-    <!-- ===================== Notes de conception ===================== -->
-    <aside class="notes">
-      <h3>Ce qui change</h3>
-      <div class="note"><b>1</b><p><strong>Trois temps, pas un écran.</strong> On pose la question, on explore, on écrit. Chaque temps a une seule tâche, et le retour arrière est visible.</p></div>
-      <div class="note"><b>2</b><p><strong>L’entonnoir devient la navigation.</strong> Large spectre → angles → retenues → synthèse : les largeurs rétrécissent pour de vrai, les compteurs disent ce qui reste. Plus de menu « Entonnoir » ni de niveaux 1–4.</p></div>
-      <div class="note"><b>3</b><p><strong>Des sources rangées par angle</strong>, en colonnes lisibles, plutôt qu’un arbre horizontal qu’il faut déplacer pour comprendre.</p></div>
-      <div class="note"><b>4</b><p><strong>La pertinence s’explique.</strong> Une barre fine et une phrase (« 2 mots dans le titre, 2 dans le texte ») remplacent un pourcentage nu.</p></div>
-      <div class="note"><b>5</b><p><strong>Chaque source a trois gestes</strong> : garder, écarter, ouvrir. Les décisions sont réversibles et le compteur de retenues se met à jour dans le rail et la barre basse.</p></div>
-      <div class="note"><b>6</b><p><strong>La synthèse est le but</strong>, pas un export parmi sept. Elle naît des sources retenues, avec des renvois numérotés et les divergences mises de côté.</p></div>
-      <div class="note"><b>7</b><p><strong>Une seule question, en grand.</strong> La recherche n’est plus un champ parmi six boutons : c’est le titre de la page, modifiable à tout moment.</p></div>
-      <div class="note"><b>8</b><p><strong>La carte garde sa base.</strong> Sujet → angles → sites, la légende des sept natures, le zoom et la minimap restent en place ; le compteur de sources écartées aussi. La refonte l’épure, elle ne la remplace pas.</p></div>
-      <div class="legend">
-        <b>À trancher avec toi :</b> garder la carte libre pour les cartes écrites à la main, ou la retirer complètement ? Et faut-il conserver les sept formats d’export, ou seulement Markdown, PDF et image ?
+    <div class="board">
+      <div class="stage-wrap">
+        <div class="stage" id="stage" data-theme="light">
+          <!-- =============== 1 · Poser la question =============== -->
+          <section class="screen" data-screen="1" data-on="true">
+            <div class="ask">
+              <div class="ask-inner">
+                <p class="eyebrow"><i></i>Atelier · nouveau tunnel</p>
+                <h1>Quelle question voulez-vous ouvrir&nbsp;?</h1>
+                <p class="lede">
+                  Vela cherche des sources réelles, les range par angle et laisse tomber le bruit.
+                  Vous gardez ce qui compte, la synthèse garde ses citations.
+                </p>
+
+                <div class="ask-field">
+                  <span class="cursor"><b>Comparer les hébergeurs d’images libres</b></span>
+                  <button class="btn primary">Ouvrir le tunnel <kbd>⌘↵</kbd></button>
+                </div>
+
+                <div class="ask-tips">
+                  <span class="tip">+ coût réel à l’échelle</span>
+                  <span class="tip">+ licences et attribution</span>
+                  <span class="tip">+ auto-hébergement</span>
+                </div>
+
+                <div class="ask-block">
+                  <h2>Reprendre</h2>
+                  <div class="recent">
+                    <div class="recent-row">
+                      <div class="recent-main">
+                        <b>Héberger des images libres sans se ruiner</b
+                        ><span>9 sources · 4 angles</span>
+                      </div>
+                      <div class="recent-bar"><i style="width: 74%"></i></div>
+                      <div class="recent-meta">il y a 12 min</div>
+                    </div>
+                    <div class="recent-row">
+                      <div class="recent-main">
+                        <b>Histoire de la photographie argentique</b
+                        ><span>21 sources · 6 angles</span>
+                      </div>
+                      <div class="recent-bar"><i style="width: 46%"></i></div>
+                      <div class="recent-meta">hier</div>
+                    </div>
+                    <div class="recent-row">
+                      <div class="recent-main">
+                        <b>Utiliser l’IA pour rédiger des textes</b
+                        ><span>18 sources · 5 angles</span>
+                      </div>
+                      <div class="recent-bar"><i style="width: 38%"></i></div>
+                      <div class="recent-meta">3 jours</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="rail-note" style="padding: 22px 0 0; max-width: 52ch">
+                  Rien n’est envoyé à un moteur : le tunnel interroge des sources publiques, mesure
+                  la correspondance localement et garde la trace de chaque page.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============== 2 · Exploration =============== -->
+          <section class="screen" data-screen="2">
+            <div class="explore">
+              <!-- Rail : l'entonnoir comme navigation -->
+              <aside class="rail">
+                <div class="rail-query">
+                  <div class="k">Question</div>
+                  <b>Comparer les hébergeurs d’images libres</b>
+                  <button>Modifier</button>
+                </div>
+
+                <div class="stations">
+                  <button class="station" data-station="all" data-on="false">
+                    <span class="station-top"><b>Large spectre</b><span>38</span></span>
+                    <span class="station-track"><i style="width: 100%"></i></span>
+                  </button>
+                  <button class="station" data-station="angles" data-on="true">
+                    <span class="station-top"><b>Angles</b><span>6</span></span>
+                    <span class="station-track"><i style="width: 78%"></i></span>
+                  </button>
+                  <button class="station" data-station="kept" data-on="false">
+                    <span class="station-top"><b>Retenues</b><span id="stationKept">9</span></span>
+                    <span class="station-track"><i style="width: 38%"></i></span>
+                  </button>
+                  <button class="station" data-station="synth" data-on="false">
+                    <span class="station-top"><b>Synthèse</b><span>1</span></span>
+                    <span class="station-track"><i style="width: 16%"></i></span>
+                  </button>
+                </div>
+
+                <div class="rail-filters">
+                  <div class="k">Filtrer <span class="count">2</span></div>
+                  <div class="filter-line" data-on="true"><i>✓</i>Pages accessibles<em>31</em></div>
+                  <div class="filter-line" data-on="true"><i>✓</i>Moins de 5 ans<em>26</em></div>
+                  <div class="filter-line"><i>✓</i>Académique et presse<em>14</em></div>
+                  <div class="filter-line"><i>✓</i>Extrait de plus de 200 mots<em>22</em></div>
+                </div>
+
+                <p class="rail-note">
+                  Un filtre ne supprime rien : il replie les branches et le compteur dit ce qu’il
+                  masque.
+                </p>
+              </aside>
+
+              <!-- Centre : angles et sources -->
+              <section class="center">
+                <div class="center-head">
+                  <h2>Explorer</h2>
+                  <span class="sub">38 sources · 9 retenues</span>
+                  <span class="grow"></span>
+                  <div class="seg" role="tablist" aria-label="Vue">
+                    <button data-on="true" role="tab" aria-selected="true">Angles</button>
+                    <button data-on="false" role="tab" aria-selected="false">Liste</button>
+                    <button data-on="false" role="tab" aria-selected="false" data-goto="3">
+                      Carte
+                    </button>
+                  </div>
+                </div>
+
+                <div class="center-scroll">
+                  <div class="angles">
+                    <!-- Angle 1 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Licences et attribution</b>
+                        <span class="tally" data-total="7" data-extra="0">2 / 7</span>
+                      </header>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">
+                          Licences Creative Commons : ce que « libre » recouvre
+                        </div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">commons.wikimedia.org</span
+                          ><span>·</span><span>2024</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 92%"></i></span><b>92</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">
+                          Conditions d’utilisation des hébergeurs d’images
+                        </div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">docs.imgix.com</span><span>·</span
+                          ><span>2023</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 74%"></i></span><b>74</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="dismissed">
+                        <div class="src-title">Le piège des licences non commerciales</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">fr.wikipedia.org</span><span>·</span
+                          ><span>2022</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 68%"></i></span><b>68</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 4 autres sources</button>
+                    </article>
+
+                    <!-- Angle 2 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Coût réel à l’échelle</b>
+                        <span class="tally" data-total="6" data-extra="0">2 / 6</span>
+                      </header>
+                      <div class="src" data-on="true" data-state="kept">
+                        <div class="src-title">Le coût caché de la bande passante</div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">arstechnica.com</span
+                          ><span>·</span><span>2023</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 88%"></i></span><b>88</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">Tarifs Cloudflare Images, par requête</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">developers.cloudflare.com</span><span>·</span
+                          ><span>2025</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 71%"></i></span><b>71</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="neutral">
+                        <div class="src-title">
+                          Facturer à la requête : trois retours d’expérience
+                        </div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">news.ycombinator.com</span><span>·</span
+                          ><span>2022</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 63%"></i></span><b>63</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 3 autres sources</button>
+                    </article>
+
+                    <!-- Angle 3 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Performance et diffusion</b>
+                        <span class="tally" data-total="8" data-extra="0">2 / 8</span>
+                      </header>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">Comparatif des CDN d’images</div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">web.dev</span><span>·</span
+                          ><span>2024</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 90%"></i></span><b>90</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">Formats modernes : AVIF et WebP en production</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">developer.mozilla.org</span><span>·</span
+                          ><span>2023</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 79%"></i></span><b>79</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="dismissed">
+                        <div class="src-title">Un domaine, un CDN, un cache</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">github.com</span><span>·</span><span>2021</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 55%"></i></span><b>55</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 5 autres sources</button>
+                    </article>
+
+                    <!-- Angle 4 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Vie privée et modération</b>
+                        <span class="tally" data-total="6" data-extra="0">2 / 6</span>
+                      </header>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">
+                          Vie privée des services d’images : ce que la CNIL relève
+                        </div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">cnil.fr</span><span>·</span
+                          ><span>2024</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 86%"></i></span><b>86</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">
+                          Modération automatique : qui décide de retirer une image
+                        </div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">eff.org</span><span>·</span><span>2023</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 70%"></i></span><b>70</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 4 autres sources</button>
+                    </article>
+
+                    <!-- Angle 5 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Auto-hébergement</b>
+                        <span class="tally" data-total="5" data-extra="0">1 / 5</span>
+                      </header>
+                      <div class="src" data-on="false" data-state="kept">
+                        <div class="src-title">Héberger ses images sur un serveur à soi</div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">selfhosted.show</span
+                          ><span>·</span><span>2024</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 81%"></i></span><b>81</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="true" title="Retirer">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="neutral">
+                        <div class="src-title">Sauvegardes et migrations d’un stockage maison</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">docs.immich.app</span><span>·</span
+                          ><span>2025</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 66%"></i></span><b>66</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 3 autres sources</button>
+                    </article>
+
+                    <!-- Angle 6 -->
+                    <article class="angle">
+                      <header class="angle-head">
+                        <b>Alternatives émergentes</b>
+                        <span class="tally" data-total="6" data-extra="0" data-zero="true"
+                          >0 / 6</span
+                        >
+                      </header>
+                      <div class="src" data-on="false" data-state="neutral">
+                        <div class="src-title">IPFS pour les images : promesses et latence</div>
+                        <div class="src-meta">
+                          <i class="dot"></i><span class="src-domain">ipfs.tech</span><span>·</span
+                          ><span>2023</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 61%"></i></span><b>61</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <div class="src" data-on="false" data-state="neutral">
+                        <div class="src-title">Stockage objet sans serveur : état des offres</div>
+                        <div class="src-meta">
+                          <i class="dot" style="opacity: 0.3"></i
+                          ><span class="src-domain">thenewstack.io</span><span>·</span
+                          ><span>2024</span>
+                        </div>
+                        <div class="src-bar">
+                          <span class="track"><i style="width: 58%"></i></span><b>58</b>
+                        </div>
+                        <div class="src-do">
+                          <button class="keep" data-on="false" title="Garder">✓</button>
+                          <button class="drop" title="Écarter">✕</button>
+                        </div>
+                      </div>
+                      <button class="angle-more">+ 4 autres sources</button>
+                    </article>
+                  </div>
+                </div>
+
+                <!-- Barre de décisions -->
+                <div class="dock">
+                  <span class="tally"
+                    ><b id="keptCount">9</b> sources retenues · <b>38</b> explorées</span
+                  >
+                  <span class="pips" id="pips"></span>
+                  <span class="grow"></span>
+                  <span class="hint">K garder · X écarter · ↵ ouvrir</span>
+                  <button class="btn ghost">Voir la carte</button>
+                  <button class="btn primary" data-goto="4">Rédiger la synthèse</button>
+                </div>
+              </section>
+
+              <!-- Fiche de la source sélectionnée -->
+              <aside class="sheet">
+                <div class="sheet-head">
+                  <span class="fav">A</span>
+                  <span class="dom">arstechnica.com</span>
+                  <span class="grow"></span>
+                  <button title="Fermer">✕</button>
+                </div>
+                <div class="sheet-body">
+                  <h3>Le coût caché de la bande passante</h3>
+                  <div class="chips">
+                    <span class="chip">Presse</span>
+                    <span class="chip">2023</span>
+                    <span class="chip">5 min de lecture</span>
+                  </div>
+
+                  <div class="block">
+                    <div class="k">Pourquoi cette source</div>
+                    <p>
+                      4 mots de la question retrouvés : 2 dans le titre, 2 dans le texte, aucun
+                      absent.
+                    </p>
+                    <div class="why-line">
+                      <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i>
+                    </div>
+                    <p style="color: var(--faint); font-size: 10.5px">
+                      Mesure locale, pas un verdict.
+                    </p>
+                  </div>
+
+                  <div
+                    class="block"
+                    style="background: transparent; border-color: var(--line-soft)"
+                  >
+                    <div class="k">Extrait</div>
+                    <blockquote class="excerpt">
+                      <q
+                        >Le stockage ne représente que 8 % de la facture ; c’est la diffusion qui
+                        décide de tout, et elle croît avec le succès de l’image.</q
+                      >
+                    </blockquote>
+                  </div>
+
+                  <div class="block divergence">
+                    <div class="k">Divergence repérée</div>
+                    <p>
+                      Sur le coût du Go : <b>0,015 $</b> chez Cloudflare (2025), <b>0,03 $</b> ici
+                      (2023).
+                    </p>
+                  </div>
+                </div>
+                <div class="sheet-actions">
+                  <button class="btn">Lire dans Vela</button>
+                  <button class="btn primary">Garder</button>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <!-- =============== 3 · Carte =============== -->
+          <section class="screen" data-screen="3">
+            <div class="map-head">
+              <h2>Carte</h2>
+              <span class="sub">9 sources · 6 angles · 2 écartées</span>
+              <span class="grow"></span>
+              <button class="btn ghost">Recadrer</button>
+            </div>
+            <div class="map-body">
+              <p class="map-caption">2 sources écartées par l’entonnoir ou la pertinence.</p>
+              <div class="map-scroll">
+                <div class="map-canvas">
+                  <svg
+                    class="map-svg"
+                    viewBox="0 0 400 440"
+                    role="img"
+                    aria-label="Carte du tunnel : la question, quatre angles, neuf sources retenues et trois concepts reliés"
+                  >
+                    <defs>
+                      <clipPath id="site-clip">
+                        <rect x="196" y="80" width="132" height="340" />
+                      </clipPath>
+                    </defs>
+
+                    <g aria-hidden="true">
+                      <circle class="map-dot-bg" cx="30" cy="392" r="2" />
+                      <circle class="map-dot-bg" cx="62" cy="414" r="1.4" />
+                      <circle class="map-dot-bg" cx="46" cy="428" r="1.7" />
+                      <circle class="map-dot-bg" cx="120" cy="420" r="1.3" />
+                      <circle class="map-dot-bg" cx="348" cy="70" r="1.6" />
+                      <circle class="map-dot-bg" cx="372" cy="120" r="1.2" />
+                      <circle class="map-dot-bg" cx="356" cy="176" r="1.8" />
+                      <circle class="map-dot-bg" cx="380" cy="232" r="1.3" />
+                      <circle class="map-dot-bg" cx="360" cy="300" r="1.5" />
+                      <circle class="map-dot-bg" cx="338" cy="416" r="1.4" />
+                      <circle class="map-dot-bg" cx="286" cy="430" r="1.2" />
+                      <circle class="map-dot-bg" cx="24" cy="176" r="1.5" />
+                      <circle class="map-dot-bg" cx="52" cy="212" r="1.2" />
+                      <path
+                        class="map-thread"
+                        d="M30 392 L46 428 M62 414 L46 428 M120 420 L46 428"
+                      />
+                      <path
+                        class="map-thread"
+                        d="M348 70 L372 120 M356 176 L380 232 M360 300 L338 416"
+                      />
+                    </g>
+
+                    <g>
+                      <path class="map-edge" d="M80 252 C88 266 88 111 96 111" />
+                      <path class="map-edge" d="M80 252 C90 266 86 205 96 205" />
+                      <path class="map-edge" d="M80 252 C90 266 86 299 96 299" />
+                      <path class="map-edge" d="M80 252 C88 266 88 393 96 393" />
+
+                      <path class="map-edge" d="M178 111 C186 111 188 94 196 94" />
+                      <path class="map-edge" d="M178 111 C186 111 188 124 196 124" />
+
+                      <path class="map-edge" d="M178 205 C186 205 188 188 196 188" />
+                      <path class="map-edge" d="M178 205 C187 205 189 218 196 218" />
+                      <path class="map-edge" d="M178 205 C187 205 189 248 196 248" />
+
+                      <path class="map-edge" d="M178 299 C186 299 188 282 196 282" />
+                      <path class="map-edge" d="M178 299 C186 299 188 312 196 312" />
+
+                      <path class="map-edge" d="M178 393 C186 393 188 376 196 376" />
+                      <path class="map-edge" d="M178 393 C186 393 188 406 196 406" />
+
+                      <path
+                        class="map-edge"
+                        data-kind="concept"
+                        d="M326 124 C334 124 332 131 340 131"
+                      />
+                      <path
+                        class="map-edge"
+                        data-kind="concept"
+                        d="M326 218 C334 218 332 227 340 227"
+                      />
+                      <path
+                        class="map-edge"
+                        data-kind="concept"
+                        d="M326 312 C334 330 332 323 340 323"
+                      />
+                    </g>
+
+                    <g>
+                      <rect
+                        class="map-node"
+                        data-kind="subject"
+                        x="6"
+                        y="232"
+                        width="74"
+                        height="40"
+                        rx="9"
+                      />
+                      <path class="map-bar" data-kind="subject" d="M12 242 V262" />
+                      <text class="map-title" data-kind="subject" x="20" y="250">Hébergeurs</text>
+                      <text class="map-title" data-kind="subject" x="20" y="263">d’images</text>
+                    </g>
+
+                    <g>
+                      <rect
+                        class="map-node"
+                        data-kind="angle"
+                        x="96"
+                        y="96"
+                        width="82"
+                        height="30"
+                        rx="7"
+                      />
+                      <path class="map-bar" data-kind="angle" d="M102 104 V118" />
+                      <text class="map-title" x="110" y="114">Licences</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="angle"
+                        x="96"
+                        y="190"
+                        width="82"
+                        height="30"
+                        rx="7"
+                      />
+                      <path class="map-bar" data-kind="angle" d="M102 198 V212" />
+                      <text class="map-title" x="110" y="208">Coût réel</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="angle"
+                        x="96"
+                        y="284"
+                        width="82"
+                        height="30"
+                        rx="7"
+                      />
+                      <path class="map-bar" data-kind="angle" d="M102 292 V306" />
+                      <text class="map-title" x="110" y="302">Performance</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="angle"
+                        x="96"
+                        y="378"
+                        width="82"
+                        height="30"
+                        rx="7"
+                      />
+                      <path class="map-bar" data-kind="angle" d="M102 386 V400" />
+                      <text class="map-title" x="110" y="396">Vie privée</text>
+                    </g>
+
+                    <g clip-path="url(#site-clip)">
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="82"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 88 V100" />
+                      <text class="map-title" x="210" y="97">Licences Creative Commons…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="112"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 118 V130" />
+                      <text class="map-title" x="210" y="127">Conditions d’utilisation…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="176"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 182 V194" />
+                      <text class="map-title" x="210" y="191">Coût de la bande passante…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="206"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 212 V224" />
+                      <text class="map-title" x="210" y="221">Tarifs Cloudflare — CDN…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="236"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 242 V254" />
+                      <text class="map-title" x="210" y="251">Facturation à la requête…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="270"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 276 V288" />
+                      <text class="map-title" x="210" y="285">Comparatif des CDN — tests…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="300"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 306 V318" />
+                      <text class="map-title" x="210" y="315">AVIF et WebP — formats…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="364"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 370 V382" />
+                      <text class="map-title" x="210" y="379">Vie privée — CNIL et RGPD…</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="site"
+                        x="196"
+                        y="394"
+                        width="130"
+                        height="24"
+                        rx="6"
+                      />
+                      <path class="map-bar" data-kind="site" d="M202 400 V412" />
+                      <text class="map-title" x="210" y="409">Modération — rapport EFF…</text>
+                    </g>
+
+                    <g>
+                      <rect
+                        class="map-node"
+                        data-kind="concept"
+                        x="340"
+                        y="120"
+                        width="54"
+                        height="22"
+                        rx="6"
+                      />
+                      <circle cx="348" cy="131" r="2" fill="var(--clay)" />
+                      <text class="map-title" x="354" y="134">licence</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="concept"
+                        x="340"
+                        y="216"
+                        width="54"
+                        height="22"
+                        rx="6"
+                      />
+                      <circle cx="348" cy="227" r="2" fill="var(--clay)" />
+                      <text class="map-title" x="354" y="230">coût</text>
+
+                      <rect
+                        class="map-node"
+                        data-kind="concept"
+                        x="340"
+                        y="312"
+                        width="54"
+                        height="22"
+                        rx="6"
+                      />
+                      <circle cx="348" cy="323" r="2" fill="var(--clay)" />
+                      <text class="map-title" x="354" y="326">CDN</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="map-chrome">
+                <div class="map-legend" aria-label="Légende de la carte">
+                  <span><i data-kind="subject"></i>Sujet</span>
+                  <span><i data-kind="angle"></i>Angle</span>
+                  <span><i data-kind="subangle"></i>Sous-angle</span>
+                  <span><i data-kind="detail"></i>Détail</span>
+                  <span><i data-kind="concept"></i>Concept</span>
+                  <span><i data-kind="site"></i>Site</span>
+                  <span><i data-kind="tension"></i>Tension</span>
+                </div>
+                <div class="map-foot">
+                  <div class="map-zoom">
+                    <button type="button" aria-label="Zoom arrière">⌄</button>
+                    <b>51 %</b>
+                    <button type="button" aria-label="Zoom avant">⌃</button>
+                    <button type="button" class="fit">Ajuster</button>
+                  </div>
+                  <span class="grow"></span>
+                  <div class="map-mini" aria-hidden="true">
+                    <span class="vp"></span>
+                    <i
+                      data-kind="subject"
+                      style="left: 6px; top: 22px; width: 14px; height: 6px"
+                    ></i>
+                    <i style="left: 28px; top: 8px; width: 16px; height: 4px"></i>
+                    <i style="left: 28px; top: 18px; width: 16px; height: 4px"></i>
+                    <i style="left: 28px; top: 28px; width: 16px; height: 4px"></i>
+                    <i style="left: 52px; top: 6px; width: 12px; height: 18px"></i>
+                    <i data-kind="site" style="left: 70px; top: 6px; width: 10px; height: 18px"></i>
+                    <i style="left: 28px; top: 42px; width: 16px; height: 4px"></i>
+                    <i style="left: 52px; top: 38px; width: 12px; height: 10px"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============== 4 · Synthèse =============== -->
+          <section class="screen" data-screen="4">
+            <div class="synth-head">
+              <button class="back" data-goto="2">← Exploration</button>
+              <span class="sep"></span>
+              <span class="crumb">Comparer les hébergeurs d’images libres</span>
+              <span class="grow"></span>
+              <span class="hint" style="font-size: 10.5px; color: var(--faint); margin-right: 6px"
+                >9 sources · 7 nov. 2026</span
+              >
+              <button class="btn ghost">Copier le Markdown</button>
+              <button class="btn">Exporter ▾</button>
+            </div>
+
+            <div class="synth">
+              <div class="doc-wrap">
+                <article class="doc">
+                  <p class="eyebrow"><i></i>Synthèse du tunnel</p>
+                  <h1>Héberger des images libres sans se ruiner</h1>
+                  <p class="lede">
+                    Ce qui distingue vraiment les offres n’est pas le prix du stockage, mais la
+                    diffusion : bande passante, transformations, cache et conditions de licence.
+                  </p>
+
+                  <h2>Ce que « libre » recouvre</h2>
+                  <p>
+                    Un hébergeur peut servir des images sans en revendiquer la propriété, mais il ne
+                    rend pas une image libre : la licence reste celle de l’auteur
+                    <a class="cite">1</a>. Les conditions d’utilisation ajoutent leurs propres
+                    limites, notamment sur les images non commerciales <a class="cite">2</a>.
+                  </p>
+
+                  <h2>Le coût suit la diffusion, pas le stockage</h2>
+                  <p>
+                    Les grilles tarifaires se ressemblent sur le stockage et divergent sur les
+                    requêtes et les transformations <a class="cite">3</a>. C’est la page la plus
+                    partagée qui décide de la facture, pas la plus lourde.
+                  </p>
+                  <blockquote>
+                    « Le stockage ne représente que 8 % de la facture ; c’est la diffusion qui
+                    décide de tout. »
+                    <cite>Ars Technica, 2023 · source 3</cite>
+                  </blockquote>
+                  <p>
+                    Les comparatifs récents confirment ce renversement, à condition de mesurer la
+                    latence au bon endroit <a class="cite">4</a> <a class="cite">5</a>.
+                  </p>
+
+                  <div class="callout">
+                    <div class="k">À trancher</div>
+                    <p>
+                      Deux sources donnent un coût au Go deux fois différent : <b>0,015 $</b> et
+                      <b>0,03 $</b>. Vérifier la date de la grille avant de citer un chiffre
+                      <a class="cite">3</a> <a class="cite">6</a>.
+                    </p>
+                  </div>
+
+                  <h2>Trois points avant de choisir</h2>
+                  <ul>
+                    <li>
+                      La licence de l’image, jamais celle de l’hébergeur <a class="cite">1</a>
+                      <a class="cite">2</a>.
+                    </li>
+                    <li>
+                      Le prix de la requête et de la transformation, pas celui du Go
+                      <a class="cite">3</a> <a class="cite">4</a>.
+                    </li>
+                    <li>Qui peut retirer une image, et sur quelle base <a class="cite">7</a>.</li>
+                  </ul>
+
+                  <div class="doc-foot">
+                    <span>9 sources retenues sur 38 explorées</span>
+                    <span>·</span>
+                    <span>6 angles</span>
+                    <span>·</span>
+                    <span>chaque affirmation renvoie à une page</span>
+                  </div>
+                </article>
+              </div>
+
+              <aside class="synth-side">
+                <div class="k">Sources retenues <span>9</span></div>
+                <div class="sources">
+                  <div class="source-mini">
+                    <b>1</b
+                    ><span
+                      >Licences Creative Commons : ce que « libre » recouvre<em
+                        >commons.wikimedia.org</em
+                      ></span
+                    >
+                  </div>
+                  <div class="source-mini">
+                    <b>2</b
+                    ><span
+                      >Conditions d’utilisation des hébergeurs d’images<em>docs.imgix.com</em></span
+                    >
+                  </div>
+                  <div class="source-mini">
+                    <b>3</b><span>Le coût caché de la bande passante<em>arstechnica.com</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>4</b><span>Comparatif des CDN d’images<em>web.dev</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>5</b
+                    ><span>Formats modernes : AVIF et WebP<em>developer.mozilla.org</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>6</b><span>Tarifs Cloudflare Images<em>developers.cloudflare.com</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>7</b><span>Modération automatique des images<em>eff.org</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>8</b><span>Vie privée des services d’images<em>cnil.fr</em></span>
+                  </div>
+                  <div class="source-mini">
+                    <b>9</b
+                    ><span>Héberger ses images sur un serveur à soi<em>selfhosted.show</em></span>
+                  </div>
+                </div>
+
+                <div class="k">À vérifier <span>2</span></div>
+                <div class="block divergence" style="background: var(--warn-tint)">
+                  <div class="k">Coût du Go</div>
+                  <p>0,015 $ (2025) contre 0,03 $ (2023).</p>
+                </div>
+                <div class="block" style="background: transparent">
+                  <div class="k">Attribution</div>
+                  <p>Deux sources se contredisent sur le crédit obligatoire en modification.</p>
+                </div>
+              </aside>
+            </div>
+          </section>
+        </div>
       </div>
-    </aside>
-  </div>
 
-<script>
-  const body = document.body
-  const stage = document.getElementById('stage')
+      <!-- ===================== Notes de conception ===================== -->
+      <aside class="notes">
+        <h3>Ce qui change</h3>
+        <div class="note">
+          <b>1</b>
+          <p>
+            <strong>Trois temps, pas un écran.</strong> On pose la question, on explore, on écrit.
+            Chaque temps a une seule tâche, et le retour arrière est visible.
+          </p>
+        </div>
+        <div class="note">
+          <b>2</b>
+          <p>
+            <strong>L’entonnoir devient la navigation.</strong> Large spectre → angles → retenues →
+            synthèse : les largeurs rétrécissent pour de vrai, les compteurs disent ce qui reste.
+            Plus de menu « Entonnoir » ni de niveaux 1–4.
+          </p>
+        </div>
+        <div class="note">
+          <b>3</b>
+          <p>
+            <strong>Des sources rangées par angle</strong>, en colonnes lisibles, plutôt qu’un arbre
+            horizontal qu’il faut déplacer pour comprendre.
+          </p>
+        </div>
+        <div class="note">
+          <b>4</b>
+          <p>
+            <strong>La pertinence s’explique.</strong> Une barre fine et une phrase (« 2 mots dans
+            le titre, 2 dans le texte ») remplacent un pourcentage nu.
+          </p>
+        </div>
+        <div class="note">
+          <b>5</b>
+          <p>
+            <strong>Chaque source a trois gestes</strong> : garder, écarter, ouvrir. Les décisions
+            sont réversibles et le compteur de retenues se met à jour dans le rail et la barre
+            basse.
+          </p>
+        </div>
+        <div class="note">
+          <b>6</b>
+          <p>
+            <strong>La synthèse est le but</strong>, pas un export parmi sept. Elle naît des sources
+            retenues, avec des renvois numérotés et les divergences mises de côté.
+          </p>
+        </div>
+        <div class="note">
+          <b>7</b>
+          <p>
+            <strong>Une seule question, en grand.</strong> La recherche n’est plus un champ parmi
+            six boutons : c’est le titre de la page, modifiable à tout moment.
+          </p>
+        </div>
+        <div class="note">
+          <b>8</b>
+          <p>
+            <strong>La carte garde sa base.</strong> Sujet → angles → sites, la légende des sept
+            natures, le zoom et la minimap restent en place ; le compteur de sources écartées aussi.
+            La refonte l’épure, elle ne la remplace pas.
+          </p>
+        </div>
+        <div class="legend">
+          <b>À trancher avec toi :</b> garder la carte libre pour les cartes écrites à la main, ou
+          la retirer complètement ? Et faut-il conserver les sept formats d’export, ou seulement
+          Markdown, PDF et image ?
+        </div>
+      </aside>
+    </div>
 
-  /* --- Écrans --- */
-  const showScreen = (id) => {
-    document.querySelectorAll('.screen').forEach((el) => {
-      el.dataset.on = String(el.dataset.screen === id)
-    })
-    document.querySelectorAll('.tabs button').forEach((el) => {
-      el.setAttribute('aria-selected', String(el.dataset.screen === id))
-    })
-    if (id === '2') updateCounts()
-  }
-  document.querySelectorAll('.tabs button').forEach((el) => {
-    el.addEventListener('click', () => showScreen(el.dataset.screen))
-  })
-  document.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => showScreen(el.dataset.goto))
-  })
+    <script>
+      const body = document.body
+      const stage = document.getElementById('stage')
 
-  /* --- Thème --- */
-  const themeToggle = document.getElementById('themeToggle')
-  themeToggle.addEventListener('click', () => {
-    const dark = stage.dataset.theme !== 'dark'
-    stage.dataset.theme = dark ? 'dark' : 'light'
-    themeToggle.setAttribute('aria-pressed', String(dark))
-    themeToggle.textContent = dark ? 'Clair' : 'Sombre'
-  })
-
-  /* --- Notes --- */
-  const notesToggle = document.getElementById('notesToggle')
-  notesToggle.addEventListener('click', () => {
-    const on = body.dataset.notes !== 'off'
-    body.dataset.notes = on ? 'off' : 'on'
-    notesToggle.setAttribute('aria-pressed', String(!on))
-  })
-
-  /* --- Stations --- */
-  document.querySelectorAll('.station').forEach((el) => {
-    el.addEventListener('click', () => {
-      document.querySelectorAll('.station').forEach((other) => {
-        other.dataset.on = String(other === el)
+      /* --- Écrans --- */
+      const showScreen = (id) => {
+        document.querySelectorAll('.screen').forEach((el) => {
+          el.dataset.on = String(el.dataset.screen === id)
+        })
+        document.querySelectorAll('.tabs button').forEach((el) => {
+          el.setAttribute('aria-selected', String(el.dataset.screen === id))
+        })
+        if (id === '2') updateCounts()
+      }
+      document.querySelectorAll('.tabs button').forEach((el) => {
+        el.addEventListener('click', () => showScreen(el.dataset.screen))
       })
-      if (el.dataset.station === 'synth') showScreen('4')
-    })
-  })
-
-  /* --- Filtres --- */
-  document.querySelectorAll('.filter-line').forEach((el) => {
-    el.addEventListener('click', () => {
-      el.dataset.on = el.dataset.on === 'true' ? 'false' : 'true'
-    })
-  })
-
-  /* --- Garder / écarter --- */
-  document.querySelectorAll('.src').forEach((row) => {
-    const keep = row.querySelector('.keep')
-    const drop = row.querySelector('.drop')
-    row.addEventListener('click', (event) => {
-      if (event.target.closest('button')) return
-      document.querySelectorAll('.src').forEach((other) => {
-        other.dataset.on = String(other === row)
+      document.querySelectorAll('[data-goto]').forEach((el) => {
+        el.addEventListener('click', () => showScreen(el.dataset.goto))
       })
-    })
-    keep.addEventListener('click', (event) => {
-      event.stopPropagation()
-      const on = keep.dataset.on !== 'true'
-      keep.dataset.on = String(on)
-      row.dataset.state = on ? 'kept' : 'neutral'
+
+      /* --- Thème --- */
+      const themeToggle = document.getElementById('themeToggle')
+      themeToggle.addEventListener('click', () => {
+        const dark = stage.dataset.theme !== 'dark'
+        stage.dataset.theme = dark ? 'dark' : 'light'
+        themeToggle.setAttribute('aria-pressed', String(dark))
+        themeToggle.textContent = dark ? 'Clair' : 'Sombre'
+      })
+
+      /* --- Notes --- */
+      const notesToggle = document.getElementById('notesToggle')
+      notesToggle.addEventListener('click', () => {
+        const on = body.dataset.notes !== 'off'
+        body.dataset.notes = on ? 'off' : 'on'
+        notesToggle.setAttribute('aria-pressed', String(!on))
+      })
+
+      /* --- Stations --- */
+      document.querySelectorAll('.station').forEach((el) => {
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.station').forEach((other) => {
+            other.dataset.on = String(other === el)
+          })
+          if (el.dataset.station === 'synth') showScreen('4')
+        })
+      })
+
+      /* --- Filtres --- */
+      document.querySelectorAll('.filter-line').forEach((el) => {
+        el.addEventListener('click', () => {
+          el.dataset.on = el.dataset.on === 'true' ? 'false' : 'true'
+        })
+      })
+
+      /* --- Garder / écarter --- */
+      document.querySelectorAll('.src').forEach((row) => {
+        const keep = row.querySelector('.keep')
+        const drop = row.querySelector('.drop')
+        row.addEventListener('click', (event) => {
+          if (event.target.closest('button')) return
+          document.querySelectorAll('.src').forEach((other) => {
+            other.dataset.on = String(other === row)
+          })
+        })
+        keep.addEventListener('click', (event) => {
+          event.stopPropagation()
+          const on = keep.dataset.on !== 'true'
+          keep.dataset.on = String(on)
+          row.dataset.state = on ? 'kept' : 'neutral'
+          updateCounts()
+        })
+        drop.addEventListener('click', (event) => {
+          event.stopPropagation()
+          row.dataset.state = row.dataset.state === 'dismissed' ? 'neutral' : 'dismissed'
+          if (row.dataset.state === 'dismissed') keep.dataset.on = 'false'
+          updateCounts()
+        })
+      })
+
+      /* --- Compteurs --- */
+      const updateCounts = () => {
+        const rows = [...document.querySelectorAll('.src')]
+        const kept = rows.filter((row) => row.dataset.state === 'kept').length
+        document.getElementById('keptCount').textContent = kept
+        document.getElementById('stationKept').textContent = kept
+
+        document.querySelectorAll('.angle').forEach((angle) => {
+          const tally = angle.querySelector('.tally')
+          const own = [...angle.querySelectorAll('.src')]
+          const kept =
+            own.filter((row) => row.dataset.state === 'kept').length + Number(tally.dataset.extra)
+          tally.textContent = `${kept} / ${tally.dataset.total}`
+          tally.dataset.zero = String(kept === 0)
+        })
+
+        const pips = document.getElementById('pips')
+        pips.innerHTML = ''
+        for (let i = 0; i < 12; i += 1) {
+          const pip = document.createElement('i')
+          if (i >= kept) pip.className = 'off'
+          pips.appendChild(pip)
+        }
+      }
       updateCounts()
-    })
-    drop.addEventListener('click', (event) => {
-      event.stopPropagation()
-      row.dataset.state = row.dataset.state === 'dismissed' ? 'neutral' : 'dismissed'
-      if (row.dataset.state === 'dismissed') keep.dataset.on = 'false'
-      updateCounts()
-    })
-  })
 
-  /* --- Compteurs --- */
-  const updateCounts = () => {
-    const rows = [...document.querySelectorAll('.src')]
-    const kept = rows.filter((row) => row.dataset.state === 'kept').length
-    document.getElementById('keptCount').textContent = kept
-    document.getElementById('stationKept').textContent = kept
+      /* --- État initial par l'URL : ?screen=2&theme=dark&notes=1 --- */
+      const params = new URLSearchParams(location.search)
+      if (params.get('screen')) showScreen(params.get('screen'))
+      if (params.get('theme') === 'dark') {
+        stage.dataset.theme = 'dark'
+        themeToggle.setAttribute('aria-pressed', 'true')
+        themeToggle.textContent = 'Clair'
+      }
+      if (params.get('notes') === '1') {
+        body.dataset.notes = 'on'
+        notesToggle.setAttribute('aria-pressed', 'true')
+      }
 
-    document.querySelectorAll('.angle').forEach((angle) => {
-      const tally = angle.querySelector('.tally')
-      const own = [...angle.querySelectorAll('.src')]
-      const kept = own.filter((row) => row.dataset.state === 'kept').length + Number(tally.dataset.extra)
-      tally.textContent = `${kept} / ${tally.dataset.total}`
-      tally.dataset.zero = String(kept === 0)
-    })
-
-    const pips = document.getElementById('pips')
-    pips.innerHTML = ''
-    for (let i = 0; i < 12; i += 1) {
-      const pip = document.createElement('i')
-      if (i >= kept) pip.className = 'off'
-      pips.appendChild(pip)
-    }
-  }
-  updateCounts()
-
-  /* --- État initial par l'URL : ?screen=2&theme=dark&notes=1 --- */
-  const params = new URLSearchParams(location.search)
-  if (params.get('screen')) showScreen(params.get('screen'))
-  if (params.get('theme') === 'dark') {
-    stage.dataset.theme = 'dark'
-    themeToggle.setAttribute('aria-pressed', 'true')
-    themeToggle.textContent = 'Clair'
-  }
-  if (params.get('notes') === '1') {
-    body.dataset.notes = 'on'
-    notesToggle.setAttribute('aria-pressed', 'true')
-  }
-
-  /* --- Raccourcis d'écran --- */
-  window.addEventListener('keydown', (event) => {
-    if (event.metaKey || event.ctrlKey || event.altKey) return
-    if (event.key === '1') showScreen('1')
-    if (event.key === '2') showScreen('2')
-    if (event.key === '3') showScreen('3')
-    if (event.key === '4') showScreen('4')
-  })
-</script>
-</body>
+      /* --- Raccourcis d'écran --- */
+      window.addEventListener('keydown', (event) => {
+        if (event.metaKey || event.ctrlKey || event.altKey) return
+        if (event.key === '1') showScreen('1')
+        if (event.key === '2') showScreen('2')
+        if (event.key === '3') showScreen('3')
+        if (event.key === '4') showScreen('4')
+      })
+    </script>
+  </body>
 </html>

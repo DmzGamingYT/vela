@@ -88,6 +88,7 @@ export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
     host.reorderTab(payload)
   })
   handle('tab:print', (payload) => host.tabs.print(asId(payload)))
+  handle('tab:selection', (payload) => host.tabs.selection(asId(payload)))
 
   handle('group:create', (payload) => host.createGroup(payload))
   handle('group:update', (payload) => {

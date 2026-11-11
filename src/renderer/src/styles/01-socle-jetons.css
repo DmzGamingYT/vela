@@ -11,6 +11,7 @@
   --paper: #151518;
   --paper-deep: #101013;
   --surface: rgba(28, 28, 33, 0.78);
+  --surface-elevated: #1d1d22;
   --surface-2: rgba(255, 255, 255, 0.06);
   --ink: #f3f1ee;
   --ink-soft: #cbc6bf;
@@ -57,6 +58,7 @@
   --paper: #faf8f5;
   --paper-deep: #f2ede5;
   --surface: rgba(255, 253, 250, 0.78);
+  --surface-elevated: #fffdfa;
   --surface-2: rgba(255, 253, 250, 0.6);
   --ink: #1b1a18;
   --ink-soft: #45413c;

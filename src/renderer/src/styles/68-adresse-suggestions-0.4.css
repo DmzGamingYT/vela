@@ -1,0 +1,149 @@
+/* Tranche 68 — suggestions de la barre d'adresse.
+   Le popover est un calque d'interface fixe, opaque et scrollable. Il vit
+   au-dessus de la scène, jamais dans la pilule du champ. */
+
+.address-suggest-popover {
+  position: fixed;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  padding: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  box-shadow:
+    0 14px 34px -20px rgba(20, 16, 10, 0.45),
+    0 2px 7px rgba(20, 16, 10, 0.08);
+}
+
+.address-suggest-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.address-suggest-group + .address-suggest-group {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.address-suggest-group-title {
+  padding: 7px 8px 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.address-suggest-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.address-suggest-option:hover,
+.address-suggest-option[data-active='true'] {
+  background: color-mix(in srgb, var(--clay) 10%, var(--surface-elevated));
+}
+
+.address-suggest-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--muted);
+}
+
+.address-suggest-icon .favicon {
+  width: 16px;
+  height: 16px;
+}
+
+.address-suggest-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-suggest-action {
+  flex: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.address-suggest-host {
+  flex: none;
+  max-width: 38%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-suggest-option[data-kind='search'] .address-suggest-icon {
+  background: color-mix(in srgb, var(--clay) 16%, transparent);
+  color: var(--clay);
+}
+
+.address-suggest-foot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin-top: 4px;
+  padding: 8px 8px 3px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.address-suggest-foot span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.address-suggest-foot kbd {
+  font-size: 10px;
+}
+
+/* Un seul contour, réservé au clavier. Le champ garde son fond et perd son
+   ancien anneau : le focus ne dessine plus deux cadres. */
+.pane-head .address[data-focused='true'] {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.pane-head .address:has(.address-input:focus-visible) {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+.pane-head .address-input:focus,
+.pane-head .address-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+:root[data-mode='dark'] .pane-head .address[data-focused='true'] {
+  border-color: transparent;
+  box-shadow: none;
+}

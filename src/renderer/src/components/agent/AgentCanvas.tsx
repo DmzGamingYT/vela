@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { isLoopbackEndpoint, providerReady, providerState } from '@shared/providers'
+import { estimateAgentCost, formatUsd } from '@shared/agentCost'
+import { isLoopbackEndpoint, providerById, providerReady, providerState } from '@shared/providers'
+import type { AgentSource } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
 import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
+import { useTunnel } from '../../store/tunnel'
 import ChatComposer, { type ComposerTab } from './ChatComposer'
 import ChatTranscript from './ChatTranscript'
+import { buildAgentSuggestions } from './suggestions'
 import { Icon } from '../Icon'
 import TileMenu, { type TileMenuItem } from '../tabs/TileMenu'
 import WorkList from '../WorkList'
@@ -15,6 +19,7 @@ const MIN_WIDTH = 340
 const MAX_WIDTH = 640
 const WIDE_WIDTH = 560
 const WIDTH_KEY = 'vela.agent.width'
+const NOTICE_KEY = 'vela.agent.notice'
 
 function readWidths(): Record<string, number> {
   try {
@@ -53,6 +58,7 @@ export default function AgentCanvas({
   const running = agent.status === 'running'
   const setOverlay = useBrowser((state) => state.setOverlay)
   const toggleAgent = useBrowser((state) => state.toggleAgent)
+  const setWorkMode = useBrowser((state) => state.setWorkMode)
   const startAgent = useBrowser((state) => state.startAgent)
   const cancelAgent = useBrowser((state) => state.cancelAgent)
   const approved = useBrowser((state) => state.approved)
@@ -67,13 +73,20 @@ export default function AgentCanvas({
 
   const [prompt, setPrompt] = useState(() => useBrowser.getState().agentDraft)
   const [mode, setMode] = useState<'answer' | 'act'>(() => useBrowser.getState().agent.requestMode)
-  const [selected, setSelected] = useState<string[]>(() => {
-    const initial = useBrowser.getState().view
-    if (!initial) return []
-    return initial.tabs
-      .filter((tab) => !isHomeUrl(tab.url) && tab.spaceId === initial.activeSpaceId)
-      .slice(0, 6)
-      .map((tab) => tab.id)
+  // La page active est jointe par défaut : `null` suit l'onglet courant tant
+  // que l'utilisateur n'a pas choisi ses propres pièces jointes.
+  const activeTabId = view?.activeTabId
+  const activePageId =
+    view?.tabs.find((tab) => tab.id === activeTabId && !isHomeUrl(tab.url))?.id ?? null
+  const [selected, setSelected] = useState<string[] | null>(null)
+  const effectiveSelected = selected ?? (activePageId ? [activePageId] : [])
+  const [extraSources, setExtraSources] = useState<AgentSource[]>([])
+  const [noticeVisible, setNoticeVisible] = useState(() => {
+    try {
+      return localStorage.getItem(NOTICE_KEY) !== 'hidden'
+    } catch {
+      return true
+    }
   })
 
   const spaceId = view?.activeSpaceId ?? ''
@@ -190,13 +203,14 @@ export default function AgentCanvas({
   useEffect(() => {
     if (!agentSourceTab) return
     queueMicrotask(() => {
-      setSelected((current) =>
-        current.includes(agentSourceTab) ? current : [...current, agentSourceTab]
-      )
+      setSelected((current) => {
+        const base = current ?? (activePageId ? [activePageId] : [])
+        return base.includes(agentSourceTab) ? base : [...base, agentSourceTab]
+      })
       useBrowser.setState({ agentSourceTab: null })
       inputRef.current?.focus()
     })
-  }, [agentSourceTab])
+  }, [agentSourceTab, activePageId])
 
   if (!view) return null
 
@@ -210,6 +224,50 @@ export default function AgentCanvas({
       (a, b) => Number(b.spaceId === view.activeSpaceId) - Number(a.spaceId === view.activeSpaceId)
     )
     .map((tab) => ({ id: tab.id, title: tab.title, url: tab.url, favicon: tab.favicon }))
+
+  const attached = tabs.filter((tab) => effectiveSelected.includes(tab.id))
+  const suggestionSources: ComposerTab[] = [
+    ...attached,
+    ...extraSources.map((source, index) => ({
+      id: `extra-${index}`,
+      title: source.title,
+      url: source.url
+    }))
+  ]
+  const suggestions = buildAgentSuggestions(suggestionSources, mode)
+  const sourceCount = attached.length + extraSources.length
+  const modelDefinition = providerById(view.settings.agent.provider)
+  const modelState = providerState(view.settings)
+  const modelReady = providerReady(view.settings)
+  // Agir n’existe que lorsque l’agent appelle réellement un modèle : la démo
+  // locale ne sait pas cliquer et le processus principal refuse ce mode.
+  const canAct = modelReady && view.settings.agent.mode === 'api'
+  // La démo n'appelle aucun serveur : elle se lit comme un moteur local.
+  const modelLocal = !modelReady || isLoopbackEndpoint(modelState.baseUrl)
+  const modelName = modelReady
+    ? modelState.model.trim() || modelDefinition.model
+    : 'Démo locale'
+  const modelDetail = modelReady
+    ? modelLocal
+      ? 'local'
+      : modelDefinition.label
+    : 'rapport simulé'
+  const cost = estimateAgentCost(view.settings, prompt, sourceCount, mode)
+  // Un titre ou une adresse de fiche produit suffit à proposer la relance
+  // « Comparer les prix » ; une page d’article ne la reçoit pas.
+  const priceText = [...attached, ...extraSources]
+    .map((source) => `${source.title} ${source.url ?? ''}`)
+    .join(' ')
+  const showPrice =
+    /(prix|price|tarif|€|\$|acheter|buy|boutique|shop|product|produit|promo|abonnement)/i.test(
+      priceText
+    )
+  const costLabel = cost.free
+    ? 'Gratuit'
+    : cost.usd === null
+      ? '≈ ?'
+      : `≈ ${formatUsd(cost.usd)}`
+  const costTitle = cost.detail
 
   const floating = windowWidth < 900
   const expanded = width > DEFAULT_WIDTH
@@ -225,18 +283,77 @@ export default function AgentCanvas({
       inputRef.current?.focus()
       return
     }
-    if (mode === 'answer' && selected.length === 0) {
-      toast('Joignez au moins une page à lire.', 'error')
+    if (mode === 'act' && !canAct) {
+      toast('Agir sur une page demande un modèle connecté.', 'error')
       return
     }
-    void startAgent(prompt, selected, mode)
+    if (mode === 'answer' && sourceCount === 0) {
+      toast('Joignez une page, une note ou un fichier à lire.', 'error')
+      return
+    }
+    void startAgent(prompt, effectiveSelected, mode, extraSources)
     setPrompt('')
   }
 
   const toggleSource = (id: string): void => {
-    setSelected((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
-    )
+    setSelected((current) => {
+      const base = current ?? effectiveSelected
+      return base.includes(id) ? base.filter((item) => item !== id) : [...base, id]
+    })
+  }
+
+  const attachSource = (source: AgentSource): void => {
+    setExtraSources((current) => [...current, source])
+    queueMicrotask(() => inputRef.current?.focus())
+  }
+
+  const attachCurrent = (): void => {
+    if (!activePageId) return
+    setSelected((current) => {
+      const base = current ?? effectiveSelected
+      return base.includes(activePageId) ? base : [...base, activePageId]
+    })
+  }
+
+  const attachSelection = async (): Promise<void> => {
+    if (!activeTabId) {
+      toast('Ouvrez une page pour joindre une sélection.', 'error')
+      return
+    }
+    try {
+      const text = await window.vela.tabs.selection(activeTabId)
+      if (!text) {
+        toast('Sélectionnez un passage dans la page, puis réessayez.', 'error')
+        return
+      }
+      const tab = view.tabs.find((item) => item.id === activeTabId)
+      attachSource({
+        kind: 'selection',
+        title: `Sélection — ${tab?.title || 'page active'}`,
+        url: tab?.url ?? '',
+        excerpt: text
+      })
+    } catch {
+      toast('La sélection n’a pas pu être lue.', 'error')
+    }
+  }
+
+  const dismissNotice = (): void => {
+    setNoticeVisible(false)
+    try {
+      localStorage.setItem(NOTICE_KEY, 'hidden')
+    } catch {
+      /* stockage indisponible : le masquage vaut pour la session */
+    }
+  }
+
+  // Une question de recherche peut continuer dans l'Atelier, avec le texte
+  // déjà saisi : c'est le seul lien entre l'agent et le tunnel, pas un onglet
+  // « Atelier » ambigu dans l'en-tête.
+  const openAtelier = (): void => {
+    const question = prompt.trim()
+    if (question) useTunnel.getState().setQuery(question)
+    setWorkMode('work')
   }
 
   const copy = async (): Promise<void> => {
@@ -269,6 +386,16 @@ export default function AgentCanvas({
       danger: true,
       onSelect: () => resetAgent()
     },
+    ...(embedded
+      ? []
+      : [
+          {
+            id: 'width',
+            label: expanded ? 'Réduire le panneau' : 'Agrandir le panneau',
+            icon: 'panel' as const,
+            onSelect: () => commit(expanded ? DEFAULT_WIDTH : WIDE_WIDTH)
+          }
+        ]),
     { id: 'sep', label: '', separator: true },
     {
       id: 'settings',
@@ -295,18 +422,20 @@ export default function AgentCanvas({
           <h1>{embedded ? 'Atelier' : 'Agent'}</h1>
         </div>
         <div className="agent-head-actions">
-          {!embedded && (
-            <button
-              type="button"
-              className="icon-btn"
-              aria-label={expanded ? 'Réduire le panneau' : 'Agrandir le panneau'}
-              title={expanded ? 'Réduire' : 'Agrandir'}
-              aria-pressed={expanded}
-              onClick={() => commit(expanded ? DEFAULT_WIDTH : WIDE_WIDTH)}
-            >
-              <Icon name="panel" size={16} />
-            </button>
-          )}
+          <button
+            type="button"
+            className="icon-btn"
+            data-active={showWorks}
+            aria-label="Historique des conversations"
+            aria-expanded={showWorks}
+            onClick={() => {
+              setMenu(null)
+              setShowWorks((open) => !open)
+            }}
+            title="Historique des conversations"
+          >
+            <Icon name="history" size={16} />
+          </button>
           <button
             type="button"
             className="icon-btn"
@@ -356,11 +485,13 @@ export default function AgentCanvas({
       <div className="chat" data-hidden={showWorks}>
         <ChatTranscript
           agent={agent}
-          mode={mode}
           draft={prompt}
           approved={approved}
           engineLabel={engineLabel}
           engineLocal={engineLocal}
+          suggestions={suggestions}
+          showPrice={showPrice}
+          onOpenAtelier={embedded ? undefined : openAtelier}
           onPick={(text) => {
             setPrompt(text)
             inputRef.current?.focus()
@@ -381,14 +512,34 @@ export default function AgentCanvas({
             setPrompt(text)
             inputRef.current?.focus()
           }}
+          modelLabel={modelName}
+          modelDetail={modelDetail}
+          modelLocal={modelLocal}
+          onModel={() => setOverlay('settings')}
+          costLabel={costLabel}
+          costTitle={costTitle}
           running={running}
           onCancel={() => cancelAgent()}
           mode={mode}
           onMode={setMode}
+          canAct={canAct}
           tabs={tabs}
-          selected={selected}
+          selected={effectiveSelected}
           onToggle={toggleSource}
           onJoinAll={(join) => setSelected(join ? tabs.map((tab) => tab.id) : [])}
+          currentPageId={activePageId}
+          extraSources={extraSources}
+          onRemoveExtra={(index) =>
+            setExtraSources((current) => current.filter((_, item) => item !== index))
+          }
+          onAttachSource={attachSource}
+          onAttachCurrent={attachCurrent}
+          onAttachSelection={() => void attachSelection()}
+          notes={view.notes}
+          spaceId={spaceId}
+          onError={(message) => toast(message, 'error')}
+          noticeVisible={noticeVisible}
+          onDismissNotice={dismissNotice}
           inputRef={inputRef}
         />
       </div>

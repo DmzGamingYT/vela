@@ -1,1172 +1,2436 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vela — maquette · Refonte de l'icône</title>
-<style>
-  :root {
-    --board: #0a0c16;
-    --board-2: #10131f;
-    --board-3: #161a2a;
-    --ink: #eceaf4;
-    --ink-2: #a7abc4;
-    --ink-3: #6f7592;
-    --line: rgba(168, 163, 255, .14);
-    --line-2: rgba(168, 163, 255, .08);
-    --indigo: #a8a3ff;
-    --indigo-deep: #5b56d6;
-    --corail: #e8805a;
-    --cream: #f6efe4;
-    --ok: #4fd6a8;
-    --warn: #ffc53d;
-    --bad: #ff6b6b;
-    --info: #6fb6ff;
-    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
-    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-    color-scheme: dark;
-  }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela — maquette · Refonte de l'icône</title>
+    <style>
+      :root {
+        --board: #0a0c16;
+        --board-2: #10131f;
+        --board-3: #161a2a;
+        --ink: #eceaf4;
+        --ink-2: #a7abc4;
+        --ink-3: #6f7592;
+        --line: rgba(168, 163, 255, 0.14);
+        --line-2: rgba(168, 163, 255, 0.08);
+        --indigo: #a8a3ff;
+        --indigo-deep: #5b56d6;
+        --corail: #e8805a;
+        --cream: #f6efe4;
+        --ok: #4fd6a8;
+        --warn: #ffc53d;
+        --bad: #ff6b6b;
+        --info: #6fb6ff;
+        --sans:
+          -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, system-ui, sans-serif;
+        --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+        color-scheme: dark;
+      }
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: var(--board);
-    color: var(--ink);
-    font: 400 14px/1.55 var(--sans);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--board);
+        color: var(--ink);
+        font: 400 14px/1.55 var(--sans);
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
 
-  /* ---------- Fond de planche : nappes de couleur + grain ---------- */
-  .aura { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-  .aura i {
-    position: absolute; display: block; border-radius: 50%;
-    filter: blur(90px); opacity: .5; will-change: transform;
-  }
-  .aura i:nth-child(1) {
-    width: 60vw; height: 60vw; left: -14vw; top: -22vw;
-    background: radial-gradient(circle, #4b3fd6 0%, rgba(75,63,214,0) 68%);
-    animation: drift-a 34s ease-in-out infinite alternate;
-  }
-  .aura i:nth-child(2) {
-    width: 46vw; height: 46vw; right: -12vw; top: 4vw;
-    background: radial-gradient(circle, #b4451f 0%, rgba(180,69,31,0) 68%);
-    opacity: .34; animation: drift-b 41s ease-in-out infinite alternate;
-  }
-  .aura i:nth-child(3) {
-    width: 52vw; height: 52vw; left: 26vw; bottom: -26vw;
-    background: radial-gradient(circle, #12a594 0%, rgba(18,165,148,0) 70%);
-    opacity: .2; animation: drift-a 47s ease-in-out infinite alternate-reverse;
-  }
-  @keyframes drift-a { to { transform: translate3d(7vw, 5vh, 0) scale(1.14); } }
-  @keyframes drift-b { to { transform: translate3d(-8vw, 7vh, 0) scale(1.2); } }
-  .grain {
-    position: fixed; inset: -50%; z-index: 1; pointer-events: none; opacity: .035;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .aura i { animation: none; }
-    html { scroll-behavior: auto; }
-  }
+      /* ---------- Fond de planche : nappes de couleur + grain ---------- */
+      .aura {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .aura i {
+        position: absolute;
+        display: block;
+        border-radius: 50%;
+        filter: blur(90px);
+        opacity: 0.5;
+        will-change: transform;
+      }
+      .aura i:nth-child(1) {
+        width: 60vw;
+        height: 60vw;
+        left: -14vw;
+        top: -22vw;
+        background: radial-gradient(circle, #4b3fd6 0%, rgba(75, 63, 214, 0) 68%);
+        animation: drift-a 34s ease-in-out infinite alternate;
+      }
+      .aura i:nth-child(2) {
+        width: 46vw;
+        height: 46vw;
+        right: -12vw;
+        top: 4vw;
+        background: radial-gradient(circle, #b4451f 0%, rgba(180, 69, 31, 0) 68%);
+        opacity: 0.34;
+        animation: drift-b 41s ease-in-out infinite alternate;
+      }
+      .aura i:nth-child(3) {
+        width: 52vw;
+        height: 52vw;
+        left: 26vw;
+        bottom: -26vw;
+        background: radial-gradient(circle, #12a594 0%, rgba(18, 165, 148, 0) 70%);
+        opacity: 0.2;
+        animation: drift-a 47s ease-in-out infinite alternate-reverse;
+      }
+      @keyframes drift-a {
+        to {
+          transform: translate3d(7vw, 5vh, 0) scale(1.14);
+        }
+      }
+      @keyframes drift-b {
+        to {
+          transform: translate3d(-8vw, 7vh, 0) scale(1.2);
+        }
+      }
+      .grain {
+        position: fixed;
+        inset: -50%;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .aura i {
+          animation: none;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
 
-  /* ---------- Barre fixe ---------- */
-  .topbar {
-    position: sticky; top: 0; z-index: 40;
-    display: flex; align-items: center; gap: 16px;
-    height: 58px; padding: 0 20px 0 148px;
-    background: rgba(10, 12, 22, .78);
-    backdrop-filter: blur(22px) saturate(150%);
-    -webkit-backdrop-filter: blur(22px) saturate(150%);
-    border-bottom: 1px solid var(--line);
-  }
-  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .brand .mark { width: 26px; height: 26px; flex: none; border-radius: 6px; overflow: hidden; }
-  .brand b { font: 600 13.5px/1.2 var(--sans); letter-spacing: -.01em; }
-  .brand span { display: block; font-size: 11px; color: var(--ink-3); }
-  .grow { flex: 1; }
-  .navlinks { display: flex; gap: 2px; }
-  .navlinks a {
-    padding: 6px 11px; border-radius: 999px; font-size: 12px; text-decoration: none;
-    color: var(--ink-2); transition: background .16s, color .16s;
-  }
-  .navlinks a:hover { background: rgba(168,163,255,.1); color: var(--ink); }
-  .navlinks a.on { background: rgba(168,163,255,.16); color: #d9d6ff; }
-  .pill {
-    display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px;
-    border-radius: 999px; border: 1px solid var(--line); background: rgba(168,163,255,.07);
-    color: var(--ink); font: 500 12px var(--sans); cursor: pointer;
-    transition: background .16s, border-color .16s, transform .12s;
-  }
-  .pill:hover { background: rgba(168,163,255,.16); border-color: rgba(168,163,255,.3); }
-  .pill:active { transform: translateY(1px); }
-  .pill.solid { background: linear-gradient(135deg, #6f66ea, #4a3fc4); border-color: rgba(168,163,255,.45); color: #fff; }
-  .pill.solid:hover { background: linear-gradient(135deg, #7d75f5, #5449d6); }
-  .pill.warm { background: rgba(232,128,90,.14); border-color: rgba(232,128,90,.34); color: #ffc7ab; }
-  .pill.warm:hover { background: rgba(232,128,90,.24); }
+      /* ---------- Barre fixe ---------- */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 58px;
+        padding: 0 20px 0 148px;
+        background: rgba(10, 12, 22, 0.78);
+        backdrop-filter: blur(22px) saturate(150%);
+        -webkit-backdrop-filter: blur(22px) saturate(150%);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .brand .mark {
+        width: 26px;
+        height: 26px;
+        flex: none;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .brand b {
+        font: 600 13.5px/1.2 var(--sans);
+        letter-spacing: -0.01em;
+      }
+      .brand span {
+        display: block;
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+      .grow {
+        flex: 1;
+      }
+      .navlinks {
+        display: flex;
+        gap: 2px;
+      }
+      .navlinks a {
+        padding: 6px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        text-decoration: none;
+        color: var(--ink-2);
+        transition:
+          background 0.16s,
+          color 0.16s;
+      }
+      .navlinks a:hover {
+        background: rgba(168, 163, 255, 0.1);
+        color: var(--ink);
+      }
+      .navlinks a.on {
+        background: rgba(168, 163, 255, 0.16);
+        color: #d9d6ff;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 30px;
+        padding: 0 13px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(168, 163, 255, 0.07);
+        color: var(--ink);
+        font: 500 12px var(--sans);
+        cursor: pointer;
+        transition:
+          background 0.16s,
+          border-color 0.16s,
+          transform 0.12s;
+      }
+      .pill:hover {
+        background: rgba(168, 163, 255, 0.16);
+        border-color: rgba(168, 163, 255, 0.3);
+      }
+      .pill:active {
+        transform: translateY(1px);
+      }
+      .pill.solid {
+        background: linear-gradient(135deg, #6f66ea, #4a3fc4);
+        border-color: rgba(168, 163, 255, 0.45);
+        color: #fff;
+      }
+      .pill.solid:hover {
+        background: linear-gradient(135deg, #7d75f5, #5449d6);
+      }
+      .pill.warm {
+        background: rgba(232, 128, 90, 0.14);
+        border-color: rgba(232, 128, 90, 0.34);
+        color: #ffc7ab;
+      }
+      .pill.warm:hover {
+        background: rgba(232, 128, 90, 0.24);
+      }
 
-  /* ---------- Structure ---------- */
-  .wrap { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) 322px; gap: 26px; max-width: 1560px; margin: 0 auto; padding: 26px 26px 90px; }
-  main { min-width: 0; }
-  section { scroll-margin-top: 78px; margin-bottom: 30px; }
-  .card {
-    background: linear-gradient(180deg, rgba(22,26,42,.9), rgba(14,17,29,.9));
-    border: 1px solid var(--line); border-radius: 18px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
-    overflow: hidden;
-  }
-  .card > header {
-    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
-    padding: 15px 20px; border-bottom: 1px solid var(--line-2);
-    background: rgba(168,163,255,.035);
-  }
-  .card > header h2 { margin: 0; font: 600 14px/1.3 var(--sans); letter-spacing: -.01em; }
-  .card > header p { margin: 0; font-size: 12px; color: var(--ink-3); }
-  .num { font: 500 10.5px/1 var(--mono); color: var(--indigo); letter-spacing: .1em; opacity: .8; }
-  .pad { padding: 20px; }
+      /* ---------- Structure ---------- */
+      .wrap {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 322px;
+        gap: 26px;
+        max-width: 1560px;
+        margin: 0 auto;
+        padding: 26px 26px 90px;
+      }
+      main {
+        min-width: 0;
+      }
+      section {
+        scroll-margin-top: 78px;
+        margin-bottom: 30px;
+      }
+      .card {
+        background: linear-gradient(180deg, rgba(22, 26, 42, 0.9), rgba(14, 17, 29, 0.9));
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+      }
+      .card > header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--line-2);
+        background: rgba(168, 163, 255, 0.035);
+      }
+      .card > header h2 {
+        margin: 0;
+        font: 600 14px/1.3 var(--sans);
+        letter-spacing: -0.01em;
+      }
+      .card > header p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+      .num {
+        font: 500 10.5px/1 var(--mono);
+        color: var(--indigo);
+        letter-spacing: 0.1em;
+        opacity: 0.8;
+      }
+      .pad {
+        padding: 20px;
+      }
 
-  h1 { margin: 0 0 8px; font: 400 34px/1.12 var(--serif); letter-spacing: -.015em; }
-  h1 em { font-style: italic; color: var(--corail); }
-  .lede { margin: 0; max-width: 66ch; color: var(--ink-2); font-size: 14px; }
-  .intro { margin-bottom: 26px; }
-  .tagrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-  .tag {
-    font: 500 11px var(--mono); letter-spacing: .02em; padding: 4px 9px; border-radius: 6px;
-    background: rgba(168,163,255,.09); border: 1px solid var(--line-2); color: var(--ink-2);
-  }
-  .tag.ok { color: var(--ok); background: rgba(79,214,168,.1); border-color: rgba(79,214,168,.24); }
+      h1 {
+        margin: 0 0 8px;
+        font: 400 34px/1.12 var(--serif);
+        letter-spacing: -0.015em;
+      }
+      h1 em {
+        font-style: italic;
+        color: var(--corail);
+      }
+      .lede {
+        margin: 0;
+        max-width: 66ch;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .intro {
+        margin-bottom: 26px;
+      }
+      .tagrow {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .tag {
+        font: 500 11px var(--mono);
+        letter-spacing: 0.02em;
+        padding: 4px 9px;
+        border-radius: 6px;
+        background: rgba(168, 163, 255, 0.09);
+        border: 1px solid var(--line-2);
+        color: var(--ink-2);
+      }
+      .tag.ok {
+        color: var(--ok);
+        background: rgba(79, 214, 168, 0.1);
+        border-color: rgba(79, 214, 168, 0.24);
+      }
 
-  /* ---------- Pistes ---------- */
-  .tracks { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
-  .track {
-    position: relative; text-align: left; cursor: pointer; padding: 16px 14px 14px;
-    border-radius: 15px; border: 1px solid var(--line-2); color: inherit; font: inherit;
-    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
-    transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-  }
-  .track:hover { transform: translateY(-3px); border-color: rgba(168,163,255,.3); background: rgba(168,163,255,.07); }
-  .track[aria-pressed="true"] {
-    border-color: rgba(168,163,255,.6);
-    background: linear-gradient(180deg, rgba(168,163,255,.16), rgba(168,163,255,.04));
-    box-shadow: 0 0 0 1px rgba(168,163,255,.25), 0 16px 40px rgba(91,86,214,.24);
-  }
-  .track .badge {
-    position: absolute; top: 9px; left: 10px; font: 600 10px var(--mono);
-    color: var(--ink-3); letter-spacing: .08em;
-  }
-  .track[aria-pressed="true"] .badge { color: var(--indigo); }
-  .track .rec {
-    position: absolute; top: 8px; right: 9px; font: 600 9px var(--sans); letter-spacing: .06em;
-    text-transform: uppercase; padding: 3px 6px; border-radius: 5px;
-    background: rgba(79,214,168,.16); color: var(--ok); border: 1px solid rgba(79,214,168,.3);
-  }
-  .track .art { width: 104px; height: 104px; margin-top: 6px; }
-  .track .art svg { width: 100%; height: 100%; display: block; }
-  .track h3 { margin: 0; font: 600 13px var(--sans); text-align: center; }
-  .track p { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--ink-3); text-align: center; }
-  .track .mini { display: flex; align-items: flex-end; gap: 7px; margin-top: 2px; }
-  .track .mini i { display: block; }
-  .track .mini i svg { display: block; }
+      /* ---------- Pistes ---------- */
+      .tracks {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .track {
+        position: relative;
+        text-align: left;
+        cursor: pointer;
+        padding: 16px 14px 14px;
+        border-radius: 15px;
+        border: 1px solid var(--line-2);
+        color: inherit;
+        font: inherit;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+        transition:
+          border-color 0.18s,
+          background 0.18s,
+          transform 0.18s,
+          box-shadow 0.18s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .track:hover {
+        transform: translateY(-3px);
+        border-color: rgba(168, 163, 255, 0.3);
+        background: rgba(168, 163, 255, 0.07);
+      }
+      .track[aria-pressed='true'] {
+        border-color: rgba(168, 163, 255, 0.6);
+        background: linear-gradient(180deg, rgba(168, 163, 255, 0.16), rgba(168, 163, 255, 0.04));
+        box-shadow:
+          0 0 0 1px rgba(168, 163, 255, 0.25),
+          0 16px 40px rgba(91, 86, 214, 0.24);
+      }
+      .track .badge {
+        position: absolute;
+        top: 9px;
+        left: 10px;
+        font: 600 10px var(--mono);
+        color: var(--ink-3);
+        letter-spacing: 0.08em;
+      }
+      .track[aria-pressed='true'] .badge {
+        color: var(--indigo);
+      }
+      .track .rec {
+        position: absolute;
+        top: 8px;
+        right: 9px;
+        font: 600 9px var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 3px 6px;
+        border-radius: 5px;
+        background: rgba(79, 214, 168, 0.16);
+        color: var(--ok);
+        border: 1px solid rgba(79, 214, 168, 0.3);
+      }
+      .track .art {
+        width: 104px;
+        height: 104px;
+        margin-top: 6px;
+      }
+      .track .art svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .track h3 {
+        margin: 0;
+        font: 600 13px var(--sans);
+        text-align: center;
+      }
+      .track p {
+        margin: 0;
+        font-size: 11.5px;
+        line-height: 1.45;
+        color: var(--ink-3);
+        text-align: center;
+      }
+      .track .mini {
+        display: flex;
+        align-items: flex-end;
+        gap: 7px;
+        margin-top: 2px;
+      }
+      .track .mini i {
+        display: block;
+      }
+      .track .mini i svg {
+        display: block;
+      }
 
-  /* ---------- Scène ---------- */
-  .scene-grid { display: grid; grid-template-columns: minmax(0,1fr) 286px; gap: 20px; align-items: start; }
-  .stage {
-    position: relative; border-radius: 14px; min-height: 380px;
-    display: flex; align-items: center; justify-content: center; padding: 26px; overflow: hidden;
-    border: 1px solid var(--line-2);
-    transition: background .3s;
-  }
-  .stage[data-bg="nuit"] { background: radial-gradient(120% 100% at 50% 0%, #1a1e33 0%, #0b0d17 70%); }
-  .stage[data-bg="papier"] { background: radial-gradient(120% 100% at 50% 0%, #fdfcfa 0%, #ece7dd 75%); }
-  .stage[data-bg="bureau"] { background: linear-gradient(150deg, #2b3a63 0%, #4a3a6b 38%, #8a4f52 72%, #c97a4e 100%); }
-  .stage[data-bg="damier"] {
-    background-color: #f2efe9;
-    background-image: linear-gradient(45deg, #ddd8ce 25%, transparent 25%, transparent 75%, #ddd8ce 75%),
-                      linear-gradient(45deg, #ddd8ce 25%, transparent 25%, transparent 75%, #ddd8ce 75%);
-    background-size: 22px 22px; background-position: 0 0, 11px 11px;
-  }
-  .stage .hero { position: relative; flex: 0 1 auto; min-width: 0; max-width: 100%; aspect-ratio: 1; transition: width .22s cubic-bezier(.2,.8,.2,1); }
-  .stage .hero svg { width: 100%; height: 100%; display: block; }
-  .stage .hero.drop { filter: drop-shadow(0 18px 34px rgba(0,0,0,.45)); }
-  .stage .caption {
-    position: absolute; left: 12px; bottom: 10px; font: 500 10.5px var(--mono);
-    color: rgba(255,255,255,.5); letter-spacing: .04em;
-  }
-  .stage[data-bg="papier"] .caption, .stage[data-bg="damier"] .caption { color: rgba(0,0,0,.42); }
+      /* ---------- Scène ---------- */
+      .scene-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 286px;
+        gap: 20px;
+        align-items: start;
+      }
+      .stage {
+        position: relative;
+        border-radius: 14px;
+        min-height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 26px;
+        overflow: hidden;
+        border: 1px solid var(--line-2);
+        transition: background 0.3s;
+      }
+      .stage[data-bg='nuit'] {
+        background: radial-gradient(120% 100% at 50% 0%, #1a1e33 0%, #0b0d17 70%);
+      }
+      .stage[data-bg='papier'] {
+        background: radial-gradient(120% 100% at 50% 0%, #fdfcfa 0%, #ece7dd 75%);
+      }
+      .stage[data-bg='bureau'] {
+        background: linear-gradient(150deg, #2b3a63 0%, #4a3a6b 38%, #8a4f52 72%, #c97a4e 100%);
+      }
+      .stage[data-bg='damier'] {
+        background-color: #f2efe9;
+        background-image:
+          linear-gradient(45deg, #ddd8ce 25%, transparent 25%, transparent 75%, #ddd8ce 75%),
+          linear-gradient(45deg, #ddd8ce 25%, transparent 25%, transparent 75%, #ddd8ce 75%);
+        background-size: 22px 22px;
+        background-position:
+          0 0,
+          11px 11px;
+      }
+      .stage .hero {
+        position: relative;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 100%;
+        aspect-ratio: 1;
+        transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .stage .hero svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .stage .hero.drop {
+        filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.45));
+      }
+      .stage .caption {
+        position: absolute;
+        left: 12px;
+        bottom: 10px;
+        font: 500 10.5px var(--mono);
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.04em;
+      }
+      .stage[data-bg='papier'] .caption,
+      .stage[data-bg='damier'] .caption {
+        color: rgba(0, 0, 0, 0.42);
+      }
 
-  .side h4 { margin: 0 0 9px; font: 600 11px var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
-  .ladder { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; padding: 14px 12px; border-radius: 12px; background: rgba(0,0,0,.24); border: 1px solid var(--line-2); }
-  .rung { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-  .rung i { display: block; }
-  .rung i svg { display: block; }
-  .rung span { font: 500 9.5px var(--mono); color: var(--ink-3); }
-  .rung.bad span { color: var(--bad); }
+      .side h4 {
+        margin: 0 0 9px;
+        font: 600 11px var(--sans);
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .ladder {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 14px 12px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.24);
+        border: 1px solid var(--line-2);
+      }
+      .rung {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+      }
+      .rung i {
+        display: block;
+      }
+      .rung i svg {
+        display: block;
+      }
+      .rung span {
+        font: 500 9.5px var(--mono);
+        color: var(--ink-3);
+      }
+      .rung.bad span {
+        color: var(--bad);
+      }
 
-  .verdict { margin-top: 16px; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line-2); background: rgba(168,163,255,.05); }
-  .verdict .score { display: flex; align-items: baseline; gap: 8px; }
-  .verdict .score b { font: 600 26px/1 var(--sans); letter-spacing: -.02em; }
-  .verdict .score span { font-size: 11.5px; color: var(--ink-3); }
-  .meter { height: 5px; border-radius: 3px; background: rgba(255,255,255,.08); margin: 10px 0 9px; overflow: hidden; }
-  .meter i { display: block; height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
-  .verdict p { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+      .verdict {
+        margin-top: 16px;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line-2);
+        background: rgba(168, 163, 255, 0.05);
+      }
+      .verdict .score {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .verdict .score b {
+        font: 600 26px/1 var(--sans);
+        letter-spacing: -0.02em;
+      }
+      .verdict .score span {
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+      .meter {
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 10px 0 9px;
+        overflow: hidden;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        transition:
+          width 0.3s,
+          background 0.3s;
+      }
+      .verdict p {
+        margin: 0;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--ink-2);
+      }
 
-  /* ---------- Mises en situation ---------- */
-  .contexts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
-  .ctx { border: 1px solid var(--line-2); border-radius: 13px; overflow: hidden; background: rgba(0,0,0,.2); }
-  .ctx > b { display: block; padding: 9px 13px; font: 600 11px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--line-2); }
-  .ctx .body { padding: 16px; }
+      /* ---------- Mises en situation ---------- */
+      .contexts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .ctx {
+        border: 1px solid var(--line-2);
+        border-radius: 13px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .ctx > b {
+        display: block;
+        padding: 9px 13px;
+        font: 600 11px var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        border-bottom: 1px solid var(--line-2);
+      }
+      .ctx .body {
+        padding: 16px;
+      }
 
-  .wall { position: relative; height: 172px; border-radius: 9px; overflow: hidden; }
-  .wall.dark { background: linear-gradient(160deg, #1d2440, #3b2b52 45%, #6d3f4a 78%, #a4603f); }
-  .wall.light { background: linear-gradient(160deg, #dfe6f2, #f3e7dd 50%, #f7d9c0 80%, #e9b48d); }
-  .dock {
-    position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-    display: flex; align-items: flex-end; gap: 9px; padding: 7px 11px;
-    border-radius: 17px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  }
-  .wall.dark .dock { background: rgba(28,30,48,.42); border: 1px solid rgba(255,255,255,.16); box-shadow: 0 12px 30px rgba(0,0,0,.4); }
-  .wall.light .dock { background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 12px 30px rgba(90,70,60,.22); }
-  .dock .slot { position: relative; display: flex; flex-direction: column; align-items: center; }
-  .dock .slot i { display: block; width: 44px; height: 44px; transition: transform .18s cubic-bezier(.2,.8,.2,1); }
-  .dock .slot i svg { width: 100%; height: 100%; display: block; }
-  .dock .slot:hover i { transform: translateY(-7px) scale(1.13); }
-  .dock .slot .dot { width: 3.5px; height: 3.5px; border-radius: 50%; margin-top: 3px; }
-  .wall.dark .dock .slot .dot { background: rgba(255,255,255,.72); }
-  .wall.light .dock .slot .dot { background: rgba(40,30,25,.55); }
-  .dock .slot .dot.off { background: transparent !important; }
-  .dock .slot .tip {
-    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(4px);
-    padding: 3px 9px; border-radius: 7px; font: 500 11px var(--sans); white-space: nowrap;
-    opacity: 0; pointer-events: none; transition: opacity .16s, transform .16s;
-  }
-  .wall.dark .dock .slot .tip { background: rgba(30,32,48,.92); color: #f0eef8; border: 1px solid rgba(255,255,255,.14); }
-  .wall.light .dock .tip { background: rgba(255,255,255,.95); color: #2a2320; border: 1px solid rgba(0,0,0,.1); }
-  .dock .slot:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .wall {
+        position: relative;
+        height: 172px;
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .wall.dark {
+        background: linear-gradient(160deg, #1d2440, #3b2b52 45%, #6d3f4a 78%, #a4603f);
+      }
+      .wall.light {
+        background: linear-gradient(160deg, #dfe6f2, #f3e7dd 50%, #f7d9c0 80%, #e9b48d);
+      }
+      .dock {
+        position: absolute;
+        left: 50%;
+        bottom: 12px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: flex-end;
+        gap: 9px;
+        padding: 7px 11px;
+        border-radius: 17px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      .wall.dark .dock {
+        background: rgba(28, 30, 48, 0.42);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      }
+      .wall.light .dock {
+        background: rgba(255, 255, 255, 0.42);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 12px 30px rgba(90, 70, 60, 0.22);
+      }
+      .dock .slot {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .dock .slot i {
+        display: block;
+        width: 44px;
+        height: 44px;
+        transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .dock .slot i svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .dock .slot:hover i {
+        transform: translateY(-7px) scale(1.13);
+      }
+      .dock .slot .dot {
+        width: 3.5px;
+        height: 3.5px;
+        border-radius: 50%;
+        margin-top: 3px;
+      }
+      .wall.dark .dock .slot .dot {
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .wall.light .dock .slot .dot {
+        background: rgba(40, 30, 25, 0.55);
+      }
+      .dock .slot .dot.off {
+        background: transparent !important;
+      }
+      .dock .slot .tip {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        padding: 3px 9px;
+        border-radius: 7px;
+        font: 500 11px var(--sans);
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.16s,
+          transform 0.16s;
+      }
+      .wall.dark .dock .slot .tip {
+        background: rgba(30, 32, 48, 0.92);
+        color: #f0eef8;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .wall.light .dock .tip {
+        background: rgba(255, 255, 255, 0.95);
+        color: #2a2320;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+      .dock .slot:hover .tip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
 
-  .menubar { display: flex; align-items: center; gap: 14px; height: 26px; padding: 0 12px; font: 500 11.5px var(--sans); border-radius: 6px; }
-  .menubar.dark { background: rgba(24,24,30,.9); color: rgba(255,255,255,.86); border: 1px solid rgba(255,255,255,.08); }
-  .menubar.light { background: rgba(246,244,240,.94); color: rgba(20,18,16,.82); border: 1px solid rgba(0,0,0,.08); }
-  .menubar .apple { font-size: 13px; }
-  .menubar .app { font-weight: 700; }
-  .menubar .tray { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  .menubar .tray i { display: block; width: 16px; height: 16px; }
-  .menubar .tray i svg { width: 100%; height: 100%; display: block; }
-  .ctx .note { margin: 10px 0 0; font-size: 11px; color: var(--ink-3); line-height: 1.5; }
+      .menubar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 26px;
+        padding: 0 12px;
+        font: 500 11.5px var(--sans);
+        border-radius: 6px;
+      }
+      .menubar.dark {
+        background: rgba(24, 24, 30, 0.9);
+        color: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .menubar.light {
+        background: rgba(246, 244, 240, 0.94);
+        color: rgba(20, 18, 16, 0.82);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .menubar .apple {
+        font-size: 13px;
+      }
+      .menubar .app {
+        font-weight: 700;
+      }
+      .menubar .tray {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .menubar .tray i {
+        display: block;
+        width: 16px;
+        height: 16px;
+      }
+      .menubar .tray i svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .ctx .note {
+        margin: 10px 0 0;
+        font-size: 11px;
+        color: var(--ink-3);
+        line-height: 1.5;
+      }
 
-  .browsertab { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 11px; border-radius: 9px 9px 0 0; max-width: 232px; font-size: 12px; }
-  .browsertab.dark { background: rgba(255,255,255,.08); color: #e8e6f2; }
-  .browsertab.light { background: rgba(255,255,255,.92); color: #23201d; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-  .browsertab i { display: block; width: 16px; height: 16px; flex: none; }
-  .browsertab i svg { width: 100%; height: 100%; display: block; }
-  .browsertab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tabstrip { padding: 10px 10px 0; border-radius: 9px; }
-  .tabstrip.dark { background: #17171d; }
-  .tabstrip.light { background: #ded9d2; }
+      .browsertab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 11px;
+        border-radius: 9px 9px 0 0;
+        max-width: 232px;
+        font-size: 12px;
+      }
+      .browsertab.dark {
+        background: rgba(255, 255, 255, 0.08);
+        color: #e8e6f2;
+      }
+      .browsertab.light {
+        background: rgba(255, 255, 255, 0.92);
+        color: #23201d;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+      .browsertab i {
+        display: block;
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .browsertab i svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .browsertab span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tabstrip {
+        padding: 10px 10px 0;
+        border-radius: 9px;
+      }
+      .tabstrip.dark {
+        background: #17171d;
+      }
+      .tabstrip.light {
+        background: #ded9d2;
+      }
 
-  .approw { display: flex; align-items: center; gap: 13px; padding: 12px; border-radius: 11px; }
-  .approw.dark { background: rgba(255,255,255,.05); }
-  .approw.light { background: rgba(255,255,255,.7); border: 1px solid rgba(0,0,0,.06); }
-  .approw i { display: block; width: 52px; height: 52px; flex: none; }
-  .approw i svg { width: 100%; height: 100%; display: block; }
-  .approw b { display: block; font: 600 13px var(--sans); }
-  .approw small { display: block; font-size: 11px; opacity: .6; }
+      .approw {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 12px;
+        border-radius: 11px;
+      }
+      .approw.dark {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .approw.light {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .approw i {
+        display: block;
+        width: 52px;
+        height: 52px;
+        flex: none;
+      }
+      .approw i svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .approw b {
+        display: block;
+        font: 600 13px var(--sans);
+      }
+      .approw small {
+        display: block;
+        font-size: 11px;
+        opacity: 0.6;
+      }
 
-  /* ---------- Palette ---------- */
-  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 10px; }
-  .sw { border-radius: 11px; overflow: hidden; border: 1px solid var(--line-2); background: rgba(0,0,0,.2); cursor: pointer; transition: transform .16s, border-color .16s; text-align: left; padding: 0; font: inherit; color: inherit; }
-  .sw:hover { transform: translateY(-2px); border-color: rgba(168,163,255,.34); }
-  .sw .chip { display: block; height: 52px; }
-  .sw .meta { display: block; padding: 8px 10px 9px; }
-  .sw .meta b { display: block; font: 500 11px var(--sans); }
-  .sw .meta code { font: 500 10.5px var(--mono); color: var(--ink-3); }
+      /* ---------- Palette ---------- */
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+        gap: 10px;
+      }
+      .sw {
+        border-radius: 11px;
+        overflow: hidden;
+        border: 1px solid var(--line-2);
+        background: rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition:
+          transform 0.16s,
+          border-color 0.16s;
+        text-align: left;
+        padding: 0;
+        font: inherit;
+        color: inherit;
+      }
+      .sw:hover {
+        transform: translateY(-2px);
+        border-color: rgba(168, 163, 255, 0.34);
+      }
+      .sw .chip {
+        display: block;
+        height: 52px;
+      }
+      .sw .meta {
+        display: block;
+        padding: 8px 10px 9px;
+      }
+      .sw .meta b {
+        display: block;
+        font: 500 11px var(--sans);
+      }
+      .sw .meta code {
+        font: 500 10.5px var(--mono);
+        color: var(--ink-3);
+      }
 
-  /* ---------- Impact ---------- */
-  .impact { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 12px; }
-  .file { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--line-2); background: rgba(0,0,0,.22); }
-  .file code { display: block; font: 500 11.5px var(--mono); color: #cfc9ff; word-break: break-all; }
-  .file p { margin: 7px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--ink-3); }
-  .file .state { display: inline-block; margin-top: 9px; font: 600 9.5px var(--sans); letter-spacing: .07em; text-transform: uppercase; padding: 3px 7px; border-radius: 5px; }
-  .state.regen { background: rgba(255,197,61,.14); color: var(--warn); border: 1px solid rgba(255,197,61,.28); }
-  .state.edit { background: rgba(111,182,255,.14); color: var(--info); border: 1px solid rgba(111,182,255,.28); }
-  .state.keep { background: rgba(79,214,168,.12); color: var(--ok); border: 1px solid rgba(79,214,168,.26); }
+      /* ---------- Impact ---------- */
+      .impact {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+        gap: 12px;
+      }
+      .file {
+        padding: 13px 15px;
+        border-radius: 12px;
+        border: 1px solid var(--line-2);
+        background: rgba(0, 0, 0, 0.22);
+      }
+      .file code {
+        display: block;
+        font: 500 11.5px var(--mono);
+        color: #cfc9ff;
+        word-break: break-all;
+      }
+      .file p {
+        margin: 7px 0 0;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--ink-3);
+      }
+      .file .state {
+        display: inline-block;
+        margin-top: 9px;
+        font: 600 9.5px var(--sans);
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 3px 7px;
+        border-radius: 5px;
+      }
+      .state.regen {
+        background: rgba(255, 197, 61, 0.14);
+        color: var(--warn);
+        border: 1px solid rgba(255, 197, 61, 0.28);
+      }
+      .state.edit {
+        background: rgba(111, 182, 255, 0.14);
+        color: var(--info);
+        border: 1px solid rgba(111, 182, 255, 0.28);
+      }
+      .state.keep {
+        background: rgba(79, 214, 168, 0.12);
+        color: var(--ok);
+        border: 1px solid rgba(79, 214, 168, 0.26);
+      }
 
-  .callout { display: flex; gap: 13px; padding: 15px 17px; border-radius: 13px; border: 1px solid rgba(232,128,90,.26); background: linear-gradient(120deg, rgba(232,128,90,.1), rgba(168,163,255,.06)); }
-  .callout .ico { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: rgba(232,128,90,.2); color: #ffb693; font: 700 14px var(--sans); }
-  .callout b { display: block; font: 600 12.5px var(--sans); margin-bottom: 4px; }
-  .callout p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--ink-2); }
+      .callout {
+        display: flex;
+        gap: 13px;
+        padding: 15px 17px;
+        border-radius: 13px;
+        border: 1px solid rgba(232, 128, 90, 0.26);
+        background: linear-gradient(120deg, rgba(232, 128, 90, 0.1), rgba(168, 163, 255, 0.06));
+      }
+      .callout .ico {
+        flex: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: rgba(232, 128, 90, 0.2);
+        color: #ffb693;
+        font: 700 14px var(--sans);
+      }
+      .callout b {
+        display: block;
+        font: 600 12.5px var(--sans);
+        margin-bottom: 4px;
+      }
+      .callout p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--ink-2);
+      }
 
-  /* ---------- Atelier (colonne de droite) ---------- */
-  aside { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 108px); overflow-y: auto; overscroll-behavior: contain; }
-  .atelier { border-radius: 18px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(24,28,46,.95), rgba(13,16,27,.95)); box-shadow: 0 24px 60px rgba(0,0,0,.45); }
-  .atelier > header { display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-bottom: 1px solid var(--line-2); }
-  .atelier > header b { font: 600 12.5px var(--sans); }
-  .atelier > header span { font-size: 10.5px; color: var(--ink-3); margin-left: auto; font-family: var(--mono); }
-  .group { padding: 14px 16px; border-bottom: 1px solid var(--line-2); }
-  .group:last-child { border-bottom: 0; }
-  .group > h5 { margin: 0 0 11px; font: 600 9.5px var(--sans); letter-spacing: .11em; text-transform: uppercase; color: var(--ink-3); }
-  .field { margin-bottom: 12px; }
-  .field:last-child { margin-bottom: 0; }
-  .field label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--ink-2); margin-bottom: 6px; }
-  .field label output { font: 500 10.5px var(--mono); color: var(--indigo); }
+      /* ---------- Atelier (colonne de droite) ---------- */
+      aside {
+        position: sticky;
+        top: 84px;
+        align-self: start;
+        max-height: calc(100vh - 108px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+      .atelier {
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(24, 28, 46, 0.95), rgba(13, 16, 27, 0.95));
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      }
+      .atelier > header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-2);
+      }
+      .atelier > header b {
+        font: 600 12.5px var(--sans);
+      }
+      .atelier > header span {
+        font-size: 10.5px;
+        color: var(--ink-3);
+        margin-left: auto;
+        font-family: var(--mono);
+      }
+      .group {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-2);
+      }
+      .group:last-child {
+        border-bottom: 0;
+      }
+      .group > h5 {
+        margin: 0 0 11px;
+        font: 600 9.5px var(--sans);
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .field {
+        margin-bottom: 12px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+      .field label {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11.5px;
+        color: var(--ink-2);
+        margin-bottom: 6px;
+      }
+      .field label output {
+        font: 500 10.5px var(--mono);
+        color: var(--indigo);
+      }
 
-  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; background: transparent; cursor: pointer; display: block; }
-  input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 3px; background: linear-gradient(90deg, var(--indigo-deep), rgba(168,163,255,.18)); }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; margin-top: -4.5px; border-radius: 50%; background: #efedff; border: 1px solid rgba(0,0,0,.3); box-shadow: 0 1px 5px rgba(0,0,0,.5); transition: transform .12s; }
-  input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.18); }
-  input[type="range"]:active::-webkit-slider-thumb { background: var(--indigo); }
-  input[type="range"]::-moz-range-track { height: 4px; border-radius: 3px; background: rgba(168,163,255,.24); }
-  input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #efedff; border: 1px solid rgba(0,0,0,.3); }
+      input[type='range'] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 18px;
+        background: transparent;
+        cursor: pointer;
+        display: block;
+      }
+      input[type='range']::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--indigo-deep), rgba(168, 163, 255, 0.18));
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 13px;
+        height: 13px;
+        margin-top: -4.5px;
+        border-radius: 50%;
+        background: #efedff;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+        transition: transform 0.12s;
+      }
+      input[type='range']:hover::-webkit-slider-thumb {
+        transform: scale(1.18);
+      }
+      input[type='range']:active::-webkit-slider-thumb {
+        background: var(--indigo);
+      }
+      input[type='range']::-moz-range-track {
+        height: 4px;
+        border-radius: 3px;
+        background: rgba(168, 163, 255, 0.24);
+      }
+      input[type='range']::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #efedff;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+      }
 
-  .seg { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: rgba(0,0,0,.3); border: 1px solid var(--line-2); }
-  .seg button { flex: 1; min-width: 0; height: 25px; border: 0; border-radius: 6px; background: none; color: var(--ink-3); font: 500 10.5px var(--sans); cursor: pointer; transition: background .15s, color .15s; padding: 0 4px; }
-  .seg button:hover { color: var(--ink); background: rgba(168,163,255,.1); }
-  .seg button[aria-pressed="true"] { background: rgba(168,163,255,.22); color: #e4e2ff; box-shadow: inset 0 0 0 1px rgba(168,163,255,.3); }
+      .seg {
+        display: flex;
+        gap: 3px;
+        padding: 3px;
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--line-2);
+      }
+      .seg button {
+        flex: 1;
+        min-width: 0;
+        height: 25px;
+        border: 0;
+        border-radius: 6px;
+        background: none;
+        color: var(--ink-3);
+        font: 500 10.5px var(--sans);
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        padding: 0 4px;
+      }
+      .seg button:hover {
+        color: var(--ink);
+        background: rgba(168, 163, 255, 0.1);
+      }
+      .seg button[aria-pressed='true'] {
+        background: rgba(168, 163, 255, 0.22);
+        color: #e4e2ff;
+        box-shadow: inset 0 0 0 1px rgba(168, 163, 255, 0.3);
+      }
 
-  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 11.5px; color: var(--ink-2); cursor: pointer; }
-  .switch input { position: absolute; opacity: 0; pointer-events: none; }
-  .switch .knob { flex: none; width: 32px; height: 18px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid var(--line); position: relative; transition: background .18s, border-color .18s; }
-  .switch .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--ink-3); transition: transform .18s, background .18s; }
-  .switch input:checked + .knob { background: rgba(168,163,255,.34); border-color: rgba(168,163,255,.5); }
-  .switch input:checked + .knob::after { transform: translateX(14px); background: #efedff; }
-  .switch input:focus-visible + .knob { outline: 2px solid var(--indigo); outline-offset: 2px; }
+      .switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 0;
+        font-size: 11.5px;
+        color: var(--ink-2);
+        cursor: pointer;
+      }
+      .switch input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .switch .knob {
+        flex: none;
+        width: 32px;
+        height: 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--line);
+        position: relative;
+        transition:
+          background 0.18s,
+          border-color 0.18s;
+      }
+      .switch .knob::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--ink-3);
+        transition:
+          transform 0.18s,
+          background 0.18s;
+      }
+      .switch input:checked + .knob {
+        background: rgba(168, 163, 255, 0.34);
+        border-color: rgba(168, 163, 255, 0.5);
+      }
+      .switch input:checked + .knob::after {
+        transform: translateX(14px);
+        background: #efedff;
+      }
+      .switch input:focus-visible + .knob {
+        outline: 2px solid var(--indigo);
+        outline-offset: 2px;
+      }
 
-  .colorline { display: flex; align-items: center; gap: 9px; }
-  input[type="color"] { -webkit-appearance: none; appearance: none; width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 7px; background: none; cursor: pointer; }
-  input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
-  input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
-  .colorline code { font: 500 11px var(--mono); color: var(--ink-2); }
-  .dots { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
-  .dots button { width: 17px; height: 17px; border-radius: 5px; border: 1px solid rgba(255,255,255,.18); cursor: pointer; padding: 0; transition: transform .14s; }
-  .dots button:hover { transform: scale(1.18); }
+      .colorline {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      input[type='color'] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 34px;
+        height: 26px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: none;
+        cursor: pointer;
+      }
+      input[type='color']::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+      input[type='color']::-webkit-color-swatch {
+        border: 0;
+        border-radius: 5px;
+      }
+      .colorline code {
+        font: 500 11px var(--mono);
+        color: var(--ink-2);
+      }
+      .dots {
+        display: flex;
+        gap: 5px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .dots button {
+        width: 17px;
+        height: 17px;
+        border-radius: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.14s;
+      }
+      .dots button:hover {
+        transform: scale(1.18);
+      }
 
-  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .actions .pill { width: 100%; justify-content: center; height: 31px; font-size: 11.5px; }
-  .actions .wide { grid-column: 1 / -1; }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .actions .pill {
+        width: 100%;
+        justify-content: center;
+        height: 31px;
+        font-size: 11.5px;
+      }
+      .actions .wide {
+        grid-column: 1 / -1;
+      }
 
-  /* ---------- Barres de défilement maison ---------- */
-  aside::-webkit-scrollbar { width: 9px; }
-  aside::-webkit-scrollbar-track { background: rgba(0,0,0,.24); border-radius: 9px; }
-  aside::-webkit-scrollbar-thumb { background: rgba(168,163,255,.26); border-radius: 9px; border: 2px solid transparent; background-clip: padding-box; }
-  aside::-webkit-scrollbar-thumb:hover { background: rgba(168,163,255,.46); background-clip: padding-box; }
-  body::-webkit-scrollbar { width: 11px; }
-  body::-webkit-scrollbar-track { background: #0a0c16; }
-  body::-webkit-scrollbar-thumb { background: rgba(168,163,255,.24); border-radius: 9px; border: 3px solid #0a0c16; background-clip: padding-box; }
-  body::-webkit-scrollbar-thumb:hover { background: rgba(168,163,255,.44); background-clip: padding-box; }
+      /* ---------- Barres de défilement maison ---------- */
+      aside::-webkit-scrollbar {
+        width: 9px;
+      }
+      aside::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.24);
+        border-radius: 9px;
+      }
+      aside::-webkit-scrollbar-thumb {
+        background: rgba(168, 163, 255, 0.26);
+        border-radius: 9px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      aside::-webkit-scrollbar-thumb:hover {
+        background: rgba(168, 163, 255, 0.46);
+        background-clip: padding-box;
+      }
+      body::-webkit-scrollbar {
+        width: 11px;
+      }
+      body::-webkit-scrollbar-track {
+        background: #0a0c16;
+      }
+      body::-webkit-scrollbar-thumb {
+        background: rgba(168, 163, 255, 0.24);
+        border-radius: 9px;
+        border: 3px solid #0a0c16;
+        background-clip: padding-box;
+      }
+      body::-webkit-scrollbar-thumb:hover {
+        background: rgba(168, 163, 255, 0.44);
+        background-clip: padding-box;
+      }
 
-  /* ---------- Toast ---------- */
-  .toast {
-    position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 16px); z-index: 60;
-    padding: 10px 17px; border-radius: 11px; font: 500 12.5px var(--sans);
-    background: rgba(24,28,46,.96); border: 1px solid rgba(168,163,255,.34); color: var(--ink);
-    box-shadow: 0 18px 44px rgba(0,0,0,.5); opacity: 0; pointer-events: none;
-    transition: opacity .2s, transform .2s;
-  }
-  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+      /* ---------- Toast ---------- */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 26px;
+        transform: translate(-50%, 16px);
+        z-index: 60;
+        padding: 10px 17px;
+        border-radius: 11px;
+        font: 500 12.5px var(--sans);
+        background: rgba(24, 28, 46, 0.96);
+        border: 1px solid rgba(168, 163, 255, 0.34);
+        color: var(--ink);
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+      }
+      .toast.on {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
 
-  :focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; border-radius: 6px; }
+      :focus-visible {
+        outline: 2px solid var(--indigo);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
 
-  @media (max-width: 1180px) {
-    .wrap { grid-template-columns: minmax(0,1fr); }
-    aside { position: static; max-height: none; order: -1; }
-    .atelier { display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); }
-    .atelier > header { grid-column: 1 / -1; }
-    .group { border-bottom: 1px solid var(--line-2); }
-    .tracks { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .scene-grid { grid-template-columns: minmax(0,1fr); }
-  }
-  @media (max-width: 760px) {
-    .topbar { padding-left: 20px; gap: 10px; }
-    .navlinks { display: none; }
-    .wrap { padding: 18px 14px 70px; }
-    h1 { font-size: 26px; }
-    .contexts { grid-template-columns: minmax(0,1fr); }
-    .tracks { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .track .art { width: 84px; height: 84px; }
-    .dock { gap: 6px; padding: 6px 8px; max-width: calc(100% - 12px); }
-    .dock .slot i { width: 34px; height: 34px; }
-  }
-  @media (max-width: 400px) {
-    .dock { gap: 5px; padding: 5px 7px; }
-    .dock .slot i { width: 30px; height: 30px; }
-  }
-</style>
-</head>
-<body>
+      @media (max-width: 1180px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        aside {
+          position: static;
+          max-height: none;
+          order: -1;
+        }
+        .atelier {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+        }
+        .atelier > header {
+          grid-column: 1 / -1;
+        }
+        .group {
+          border-bottom: 1px solid var(--line-2);
+        }
+        .tracks {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .scene-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      @media (max-width: 760px) {
+        .topbar {
+          padding-left: 20px;
+          gap: 10px;
+        }
+        .navlinks {
+          display: none;
+        }
+        .wrap {
+          padding: 18px 14px 70px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        .contexts {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .tracks {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .track .art {
+          width: 84px;
+          height: 84px;
+        }
+        .dock {
+          gap: 6px;
+          padding: 6px 8px;
+          max-width: calc(100% - 12px);
+        }
+        .dock .slot i {
+          width: 34px;
+          height: 34px;
+        }
+      }
+      @media (max-width: 400px) {
+        .dock {
+          gap: 5px;
+          padding: 5px 7px;
+        }
+        .dock .slot i {
+          width: 30px;
+          height: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="grain" aria-hidden="true"></div>
 
-<div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="grain" aria-hidden="true"></div>
-
-<div class="topbar">
-  <div class="brand">
-    <span class="mark" id="brandMark"></span>
-    <span><b>Vela · refonte de l'icône</b><span>Maquette — aucun fichier livré n'est modifié</span></span>
-  </div>
-  <div class="grow"></div>
-  <nav class="navlinks">
-    <a href="#pistes" class="on">Pistes</a>
-    <a href="#echelle">Échelle</a>
-    <a href="#situations">En situation</a>
-    <a href="#palette">Palette</a>
-    <a href="#impact">Impact</a>
-  </nav>
-  <button class="pill" id="btnCompare" type="button">Comparer à l'actuelle</button>
-  <button class="pill solid" id="btnExportTop" type="button">Exporter le SVG</button>
-</div>
-
-<div class="wrap">
-  <main>
-    <div class="intro">
-      <h1>Quatre pistes, une seule question : <em>que reste-t-il à 16 pixels ?</em></h1>
-      <p class="lede">
-        L'icône livrée aujourd'hui est un voilier à deux voiles sur coque corail, dans un carré bleu nuit.
-        Elle se tient à 512&nbsp;px, mais dans le Dock elle rend trois choses molles&nbsp;: un soleil qui vire au brun
-        sale, une voile grise qui s'efface, et une mer qui occupe le quart bas de la tuile sans rien raconter.
-        Voici quatre pistes retravaillées, jugées à leur taille réelle — pas en poster.
-      </p>
-      <div class="tagrow">
-        <span class="tag ok">Faisable : chaîne 100 % locale</span>
-        <span class="tag">SVG → Pillow → .icns / .ico / .png</span>
-        <span class="tag">v0.3.32</span>
-        <span class="tag">Aucune dépendance ajoutée</span>
+    <div class="topbar">
+      <div class="brand">
+        <span class="mark" id="brandMark"></span>
+        <span
+          ><b>Vela · refonte de l'icône</b
+          ><span>Maquette — aucun fichier livré n'est modifié</span></span
+        >
       </div>
+      <div class="grow"></div>
+      <nav class="navlinks">
+        <a href="#pistes" class="on">Pistes</a>
+        <a href="#echelle">Échelle</a>
+        <a href="#situations">En situation</a>
+        <a href="#palette">Palette</a>
+        <a href="#impact">Impact</a>
+      </nav>
+      <button class="pill" id="btnCompare" type="button">Comparer à l'actuelle</button>
+      <button class="pill solid" id="btnExportTop" type="button">Exporter le SVG</button>
     </div>
 
-    <section id="pistes">
-      <div class="card">
-        <header>
-          <span class="num">01</span>
-          <h2>Les pistes</h2>
-          <p>Clique pour poser la piste sur la scène. Les réglages de droite s'appliquent en direct.</p>
-        </header>
-        <div class="pad">
-          <div class="tracks" id="tracks"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="echelle">
-      <div class="card">
-        <header>
-          <span class="num">02</span>
-          <h2>La scène et l'échelle réelle</h2>
-          <p>La colonne de droite descend jusqu'à 16&nbsp;px&nbsp;: c'est la taille du favicon et de la barre de menus.</p>
-        </header>
-        <div class="pad">
-          <div class="scene-grid">
-            <div class="stage" id="stage" data-bg="nuit">
-              <div class="hero" id="hero"></div>
-              <span class="caption" id="stageCaption"></span>
-            </div>
-            <div class="side">
-              <h4>Taille réelle</h4>
-              <div class="ladder" id="ladder"></div>
-              <div class="verdict">
-                <div class="score"><b id="scoreVal">—</b><span>lisibilité à 16 px</span></div>
-                <div class="meter"><i id="scoreBar"></i></div>
-                <p id="scoreNote"></p>
-              </div>
-              <div class="verdict" style="background:rgba(232,128,90,.06);border-color:rgba(232,128,90,.2)">
-                <div class="score"><b style="font-size:15px" id="trackName">—</b></div>
-                <p id="trackNote" style="margin-top:7px"></p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="situations">
-      <div class="card">
-        <header>
-          <span class="num">03</span>
-          <h2>En situation</h2>
-          <p>Dock macOS, barre de menus, onglet de navigateur, panneau « Applications ».</p>
-        </header>
-        <div class="pad">
-          <div class="contexts">
-            <div class="ctx">
-              <b>Dock — fond sombre</b>
-              <div class="body">
-                <div class="wall dark"><div class="dock" id="dockDark"></div></div>
-                <p class="note">Vela est la 3<sup>e</sup> icône, point d'activité allumé. Survole pour la faire lever comme dans le vrai Dock.</p>
-              </div>
-            </div>
-            <div class="ctx">
-              <b>Dock — fond clair</b>
-              <div class="body">
-                <div class="wall light"><div class="dock" id="dockLight"></div></div>
-                <p class="note">Le mode clair est un vrai cas d'usage&nbsp;: Vela suit le système par défaut (<code>theme: 'system'</code>).</p>
-              </div>
-            </div>
-            <div class="ctx">
-              <b>Barre de menus — gabarit monochrome</b>
-              <div class="body">
-                <div class="menubar light">
-                  <span class="apple">&#63743;</span><span class="app">Vela</span><span>Fichier</span><span>Édition</span>
-                  <span class="tray"><i id="trayLight"></i><span>09:41</span></span>
-                </div>
-                <div style="height:9px"></div>
-                <div class="menubar dark">
-                  <span class="apple">&#63743;</span><span class="app">Vela</span><span>Fichier</span><span>Édition</span>
-                  <span class="tray"><i id="trayDark"></i><span>09:41</span></span>
-                </div>
-                <p class="note">16&nbsp;px, noir plein sur transparent&nbsp;: macOS inverse lui-même le gabarit. La couleur n'a aucun droit ici — seule la silhouette compte.</p>
-              </div>
-            </div>
-            <div class="ctx">
-              <b>Onglet &amp; panneau Applications</b>
-              <div class="body">
-                <div class="tabstrip dark"><div class="browsertab dark"><i id="favDark"></i><span>Vela — navigateur de travail</span></div></div>
-                <div style="height:9px"></div>
-                <div class="tabstrip light"><div class="browsertab light"><i id="favLight"></i><span>Vela — navigateur de travail</span></div></div>
-                <div style="height:13px"></div>
-                <div class="approw dark"><i id="appRow"></i><span><b style="color:var(--ink)">Vela</b><small style="color:var(--ink-2)">Navigateur de travail · 0.3.32</small></span></div>
-                <p class="note">Le favicon du site est le même SVG dans une tuile pleine page, sans marge macOS.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="palette">
-      <div class="card">
-        <header>
-          <span class="num">04</span>
-          <h2>Palette de la piste</h2>
-          <p>Clique une couleur pour la copier. Elle bouge avec la teinte d'accent choisie dans l'atelier.</p>
-        </header>
-        <div class="pad"><div class="swatches" id="swatches"></div></div>
-      </div>
-    </section>
-
-    <section id="impact">
-      <div class="card">
-        <header>
-          <span class="num">05</span>
-          <h2>Ce que ça touche</h2>
-          <p>La chaîne existe déjà et ne demande aucun outil externe&nbsp;: Pillow + <code>iconutil</code>.</p>
-        </header>
-        <div class="pad">
-          <div class="callout" style="margin-bottom:16px">
-            <span class="ico">!</span>
-            <span>
-              <b>Le seul vrai travail est géométrique, pas technique</b>
-              <p><code>build/make-voile-icons.py</code> ne rasterise pas le SVG&nbsp;: il redessine la même géométrie avec Pillow,
-              en suréchantillonnant ×8. Toute nouvelle forme doit donc être reportée dans les deux fichiers, sinon le SVG
-              de référence et le <code>.icns</code> livré divergent. C'est la contrainte à accepter avant de choisir une piste.</p>
-            </span>
-          </div>
-          <div class="impact">
-            <div class="file"><code>build/icon-voile/icon.svg</code><p>Le dessin de référence, repère 200. C'est lui qu'on redessine.</p><span class="state edit">à réécrire</span></div>
-            <div class="file"><code>build/make-voile-icons.py</code><p>Palette + géométrie reportées, rendu ×8, tuile 832 posée à (96,96) sur 1024. Produit aussi le gabarit monochrome.</p><span class="state edit">à réécrire</span></div>
-            <div class="file"><code>build/icon-1024.png</code><p>Le maître. Copie du rendu, il alimente toute la suite.</p><span class="state regen">régénéré</span></div>
-            <div class="file"><code>build/make-icons.py</code><p>Iconset complet → <code>icon.icns</code>, <code>icon.ico</code> multi-résolutions, <code>icon-512.png</code>. Inchangé.</p><span class="state keep">aucun changement</span></div>
-            <div class="file"><code>build/iconTemplate.png · @2x</code><p>Barre de menus, copiés hors asar par <code>extraResources</code>. La silhouette doit tenir en 14&nbsp;px utiles.</p><span class="state regen">régénéré</span></div>
-            <div class="file"><code>site/public/favicon.svg</code><p>Même dessin, tuile pleine page (pas de marge des 96&nbsp;px), plus <code>favicon-32x32.png</code> et <code>apple-touch-icon.png</code>.</p><span class="state edit">à reporter</span></div>
-            <div class="file"><code>electron-builder.yml</code><p>Pointe déjà sur <code>build/icon.icns</code>, <code>.ico</code> et <code>icon-512.png</code>.</p><span class="state keep">aucun changement</span></div>
-            <div class="file"><code>src/main/index.ts:42 · :215</code><p>Dock en développement et élément de barre de menus lisent les fichiers régénérés.</p><span class="state keep">aucun changement</span></div>
-          </div>
-          <p class="note" style="margin:16px 0 0;font-size:11.5px;color:var(--ink-3);line-height:1.6">
-            Reste à faire après validation&nbsp; régénérer, remplacer le maître, lancer <code>python3 build/make-icons.py</code>,
-            reporter le favicon du site, puis contrôler le rendu dans le Dock réel avant toute release. Le cache d'icônes
-            macOS peut garder l'ancienne version plusieurs minutes sur une app déjà installée.
+    <div class="wrap">
+      <main>
+        <div class="intro">
+          <h1>Quatre pistes, une seule question : <em>que reste-t-il à 16 pixels ?</em></h1>
+          <p class="lede">
+            L'icône livrée aujourd'hui est un voilier à deux voiles sur coque corail, dans un carré
+            bleu nuit. Elle se tient à 512&nbsp;px, mais dans le Dock elle rend trois choses
+            molles&nbsp;: un soleil qui vire au brun sale, une voile grise qui s'efface, et une mer
+            qui occupe le quart bas de la tuile sans rien raconter. Voici quatre pistes
+            retravaillées, jugées à leur taille réelle — pas en poster.
           </p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <aside>
-    <div class="atelier">
-      <header>
-        <b>Atelier</b>
-        <span id="atelierState">piste B</span>
-      </header>
-
-      <div class="group">
-        <h5>Piste</h5>
-        <div class="seg" id="segTrack"></div>
-      </div>
-
-      <div class="group">
-        <h5>Scène</h5>
-        <div class="field">
-          <label>Fond</label>
-          <div class="seg" id="segBg">
-            <button type="button" data-v="nuit" aria-pressed="true">Nuit</button>
-            <button type="button" data-v="papier" aria-pressed="false">Papier</button>
-            <button type="button" data-v="bureau" aria-pressed="false">Bureau</button>
-            <button type="button" data-v="damier" aria-pressed="false">Alpha</button>
+          <div class="tagrow">
+            <span class="tag ok">Faisable : chaîne 100 % locale</span>
+            <span class="tag">SVG → Pillow → .icns / .ico / .png</span>
+            <span class="tag">v0.3.32</span>
+            <span class="tag">Aucune dépendance ajoutée</span>
           </div>
         </div>
-        <div class="field">
-          <label for="rSize">Taille affichée <output id="oSize">256 px</output></label>
-          <input type="range" id="rSize" min="16" max="320" step="1" value="256">
-        </div>
-        <label class="switch"><span>Repères de construction</span><input type="checkbox" id="cGuides"><span class="knob"></span></label>
-        <label class="switch"><span>Ombre portée du Dock</span><input type="checkbox" id="cShadow" checked><span class="knob"></span></label>
-        <label class="switch"><span>Marge macOS (96/1024)</span><input type="checkbox" id="cMargin" checked><span class="knob"></span></label>
-      </div>
 
-      <div class="group">
-        <h5>Couleur</h5>
-        <div class="field">
-          <label for="colAccent">Teinte d'accent</label>
-          <div class="colorline">
-            <input type="color" id="colAccent" value="#5b5bd6">
-            <code id="oAccent">#5B5BD6</code>
+        <section id="pistes">
+          <div class="card">
+            <header>
+              <span class="num">01</span>
+              <h2>Les pistes</h2>
+              <p>
+                Clique pour poser la piste sur la scène. Les réglages de droite s'appliquent en
+                direct.
+              </p>
+            </header>
+            <div class="pad">
+              <div class="tracks" id="tracks"></div>
+            </div>
           </div>
-          <div class="dots" id="accentDots"></div>
-        </div>
-        <div class="field">
-          <label for="rSat">Saturation <output id="oSat">100 %</output></label>
-          <input type="range" id="rSat" min="0" max="160" step="1" value="100">
-        </div>
-        <div class="field">
-          <label for="rDepth">Profondeur du fond <output id="oDepth">0 %</output></label>
-          <input type="range" id="rDepth" min="0" max="100" step="1" value="0">
-        </div>
-        <label class="switch"><span>Soleil / halo</span><input type="checkbox" id="cSun" checked><span class="knob"></span></label>
-      </div>
+        </section>
 
-      <div class="group">
-        <h5>Géométrie</h5>
-        <div class="field">
-          <label for="rScale">Échelle du motif <output id="oScale">100 %</output></label>
-          <input type="range" id="rScale" min="70" max="130" step="1" value="100">
-        </div>
-        <div class="field">
-          <label for="rRadius">Rayon des angles <output id="oRadius">23 %</output></label>
-          <input type="range" id="rRadius" min="0" max="50" step="1" value="23">
-        </div>
-        <div class="field">
-          <label for="rWeight">Épaisseur du trait <output id="oWeight">100 %</output></label>
-          <input type="range" id="rWeight" min="60" max="180" step="1" value="100">
-        </div>
-        <div class="field">
-          <label for="rHorizon">Ligne d'horizon <output id="oHorizon">0</output></label>
-          <input type="range" id="rHorizon" min="-16" max="16" step="1" value="0">
-        </div>
-        <div class="field">
-          <label for="rTilt">Inclinaison du bateau <output id="oTilt">0°</output></label>
-          <input type="range" id="rTilt" min="-12" max="12" step="1" value="0">
-        </div>
-      </div>
+        <section id="echelle">
+          <div class="card">
+            <header>
+              <span class="num">02</span>
+              <h2>La scène et l'échelle réelle</h2>
+              <p>
+                La colonne de droite descend jusqu'à 16&nbsp;px&nbsp;: c'est la taille du favicon et
+                de la barre de menus.
+              </p>
+            </header>
+            <div class="pad">
+              <div class="scene-grid">
+                <div class="stage" id="stage" data-bg="nuit">
+                  <div class="hero" id="hero"></div>
+                  <span class="caption" id="stageCaption"></span>
+                </div>
+                <div class="side">
+                  <h4>Taille réelle</h4>
+                  <div class="ladder" id="ladder"></div>
+                  <div class="verdict">
+                    <div class="score"><b id="scoreVal">—</b><span>lisibilité à 16 px</span></div>
+                    <div class="meter"><i id="scoreBar"></i></div>
+                    <p id="scoreNote"></p>
+                  </div>
+                  <div
+                    class="verdict"
+                    style="
+                      background: rgba(232, 128, 90, 0.06);
+                      border-color: rgba(232, 128, 90, 0.2);
+                    "
+                  >
+                    <div class="score"><b style="font-size: 15px" id="trackName">—</b></div>
+                    <p id="trackNote" style="margin-top: 7px"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <div class="group">
-        <h5>Actions</h5>
-        <div class="actions">
-          <button class="pill" id="btnRandom" type="button">Variante</button>
-          <button class="pill" id="btnReset" type="button">Réinitialiser</button>
-          <button class="pill warm wide" id="btnExportSvg" type="button">Télécharger le SVG</button>
-          <button class="pill wide" id="btnExportPng" type="button">Télécharger le PNG 1024</button>
-          <button class="pill wide" id="btnExportSheet" type="button">Planche des 4 pistes (PNG)</button>
+        <section id="situations">
+          <div class="card">
+            <header>
+              <span class="num">03</span>
+              <h2>En situation</h2>
+              <p>Dock macOS, barre de menus, onglet de navigateur, panneau « Applications ».</p>
+            </header>
+            <div class="pad">
+              <div class="contexts">
+                <div class="ctx">
+                  <b>Dock — fond sombre</b>
+                  <div class="body">
+                    <div class="wall dark"><div class="dock" id="dockDark"></div></div>
+                    <p class="note">
+                      Vela est la 3<sup>e</sup> icône, point d'activité allumé. Survole pour la
+                      faire lever comme dans le vrai Dock.
+                    </p>
+                  </div>
+                </div>
+                <div class="ctx">
+                  <b>Dock — fond clair</b>
+                  <div class="body">
+                    <div class="wall light"><div class="dock" id="dockLight"></div></div>
+                    <p class="note">
+                      Le mode clair est un vrai cas d'usage&nbsp;: Vela suit le système par défaut
+                      (<code>theme: 'system'</code>).
+                    </p>
+                  </div>
+                </div>
+                <div class="ctx">
+                  <b>Barre de menus — gabarit monochrome</b>
+                  <div class="body">
+                    <div class="menubar light">
+                      <span class="apple">&#63743;</span><span class="app">Vela</span
+                      ><span>Fichier</span><span>Édition</span>
+                      <span class="tray"><i id="trayLight"></i><span>09:41</span></span>
+                    </div>
+                    <div style="height: 9px"></div>
+                    <div class="menubar dark">
+                      <span class="apple">&#63743;</span><span class="app">Vela</span
+                      ><span>Fichier</span><span>Édition</span>
+                      <span class="tray"><i id="trayDark"></i><span>09:41</span></span>
+                    </div>
+                    <p class="note">
+                      16&nbsp;px, noir plein sur transparent&nbsp;: macOS inverse lui-même le
+                      gabarit. La couleur n'a aucun droit ici — seule la silhouette compte.
+                    </p>
+                  </div>
+                </div>
+                <div class="ctx">
+                  <b>Onglet &amp; panneau Applications</b>
+                  <div class="body">
+                    <div class="tabstrip dark">
+                      <div class="browsertab dark">
+                        <i id="favDark"></i><span>Vela — navigateur de travail</span>
+                      </div>
+                    </div>
+                    <div style="height: 9px"></div>
+                    <div class="tabstrip light">
+                      <div class="browsertab light">
+                        <i id="favLight"></i><span>Vela — navigateur de travail</span>
+                      </div>
+                    </div>
+                    <div style="height: 13px"></div>
+                    <div class="approw dark">
+                      <i id="appRow"></i
+                      ><span
+                        ><b style="color: var(--ink)">Vela</b
+                        ><small style="color: var(--ink-2)"
+                          >Navigateur de travail · 0.3.32</small
+                        ></span
+                      >
+                    </div>
+                    <p class="note">
+                      Le favicon du site est le même SVG dans une tuile pleine page, sans marge
+                      macOS.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="palette">
+          <div class="card">
+            <header>
+              <span class="num">04</span>
+              <h2>Palette de la piste</h2>
+              <p>
+                Clique une couleur pour la copier. Elle bouge avec la teinte d'accent choisie dans
+                l'atelier.
+              </p>
+            </header>
+            <div class="pad"><div class="swatches" id="swatches"></div></div>
+          </div>
+        </section>
+
+        <section id="impact">
+          <div class="card">
+            <header>
+              <span class="num">05</span>
+              <h2>Ce que ça touche</h2>
+              <p>
+                La chaîne existe déjà et ne demande aucun outil externe&nbsp;: Pillow +
+                <code>iconutil</code>.
+              </p>
+            </header>
+            <div class="pad">
+              <div class="callout" style="margin-bottom: 16px">
+                <span class="ico">!</span>
+                <span>
+                  <b>Le seul vrai travail est géométrique, pas technique</b>
+                  <p>
+                    <code>build/make-voile-icons.py</code> ne rasterise pas le SVG&nbsp;: il
+                    redessine la même géométrie avec Pillow, en suréchantillonnant ×8. Toute
+                    nouvelle forme doit donc être reportée dans les deux fichiers, sinon le SVG de
+                    référence et le <code>.icns</code> livré divergent. C'est la contrainte à
+                    accepter avant de choisir une piste.
+                  </p>
+                </span>
+              </div>
+              <div class="impact">
+                <div class="file">
+                  <code>build/icon-voile/icon.svg</code>
+                  <p>Le dessin de référence, repère 200. C'est lui qu'on redessine.</p>
+                  <span class="state edit">à réécrire</span>
+                </div>
+                <div class="file">
+                  <code>build/make-voile-icons.py</code>
+                  <p>
+                    Palette + géométrie reportées, rendu ×8, tuile 832 posée à (96,96) sur 1024.
+                    Produit aussi le gabarit monochrome.
+                  </p>
+                  <span class="state edit">à réécrire</span>
+                </div>
+                <div class="file">
+                  <code>build/icon-1024.png</code>
+                  <p>Le maître. Copie du rendu, il alimente toute la suite.</p>
+                  <span class="state regen">régénéré</span>
+                </div>
+                <div class="file">
+                  <code>build/make-icons.py</code>
+                  <p>
+                    Iconset complet → <code>icon.icns</code>,
+                    <code>icon.ico</code> multi-résolutions, <code>icon-512.png</code>. Inchangé.
+                  </p>
+                  <span class="state keep">aucun changement</span>
+                </div>
+                <div class="file">
+                  <code>build/iconTemplate.png · @2x</code>
+                  <p>
+                    Barre de menus, copiés hors asar par <code>extraResources</code>. La silhouette
+                    doit tenir en 14&nbsp;px utiles.
+                  </p>
+                  <span class="state regen">régénéré</span>
+                </div>
+                <div class="file">
+                  <code>site/public/favicon.svg</code>
+                  <p>
+                    Même dessin, tuile pleine page (pas de marge des 96&nbsp;px), plus
+                    <code>favicon-32x32.png</code> et <code>apple-touch-icon.png</code>.
+                  </p>
+                  <span class="state edit">à reporter</span>
+                </div>
+                <div class="file">
+                  <code>electron-builder.yml</code>
+                  <p>
+                    Pointe déjà sur <code>build/icon.icns</code>, <code>.ico</code> et
+                    <code>icon-512.png</code>.
+                  </p>
+                  <span class="state keep">aucun changement</span>
+                </div>
+                <div class="file">
+                  <code>src/main/index.ts:42 · :215</code>
+                  <p>
+                    Dock en développement et élément de barre de menus lisent les fichiers
+                    régénérés.
+                  </p>
+                  <span class="state keep">aucun changement</span>
+                </div>
+              </div>
+              <p
+                class="note"
+                style="margin: 16px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.6"
+              >
+                Reste à faire après validation&nbsp; régénérer, remplacer le maître, lancer
+                <code>python3 build/make-icons.py</code>, reporter le favicon du site, puis
+                contrôler le rendu dans le Dock réel avant toute release. Le cache d'icônes macOS
+                peut garder l'ancienne version plusieurs minutes sur une app déjà installée.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside>
+        <div class="atelier">
+          <header>
+            <b>Atelier</b>
+            <span id="atelierState">piste B</span>
+          </header>
+
+          <div class="group">
+            <h5>Piste</h5>
+            <div class="seg" id="segTrack"></div>
+          </div>
+
+          <div class="group">
+            <h5>Scène</h5>
+            <div class="field">
+              <label>Fond</label>
+              <div class="seg" id="segBg">
+                <button type="button" data-v="nuit" aria-pressed="true">Nuit</button>
+                <button type="button" data-v="papier" aria-pressed="false">Papier</button>
+                <button type="button" data-v="bureau" aria-pressed="false">Bureau</button>
+                <button type="button" data-v="damier" aria-pressed="false">Alpha</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="rSize">Taille affichée <output id="oSize">256 px</output></label>
+              <input type="range" id="rSize" min="16" max="320" step="1" value="256" />
+            </div>
+            <label class="switch"
+              ><span>Repères de construction</span><input type="checkbox" id="cGuides" /><span
+                class="knob"
+              ></span
+            ></label>
+            <label class="switch"
+              ><span>Ombre portée du Dock</span><input type="checkbox" id="cShadow" checked /><span
+                class="knob"
+              ></span
+            ></label>
+            <label class="switch"
+              ><span>Marge macOS (96/1024)</span><input type="checkbox" id="cMargin" checked /><span
+                class="knob"
+              ></span
+            ></label>
+          </div>
+
+          <div class="group">
+            <h5>Couleur</h5>
+            <div class="field">
+              <label for="colAccent">Teinte d'accent</label>
+              <div class="colorline">
+                <input type="color" id="colAccent" value="#5b5bd6" />
+                <code id="oAccent">#5B5BD6</code>
+              </div>
+              <div class="dots" id="accentDots"></div>
+            </div>
+            <div class="field">
+              <label for="rSat">Saturation <output id="oSat">100 %</output></label>
+              <input type="range" id="rSat" min="0" max="160" step="1" value="100" />
+            </div>
+            <div class="field">
+              <label for="rDepth">Profondeur du fond <output id="oDepth">0 %</output></label>
+              <input type="range" id="rDepth" min="0" max="100" step="1" value="0" />
+            </div>
+            <label class="switch"
+              ><span>Soleil / halo</span><input type="checkbox" id="cSun" checked /><span
+                class="knob"
+              ></span
+            ></label>
+          </div>
+
+          <div class="group">
+            <h5>Géométrie</h5>
+            <div class="field">
+              <label for="rScale">Échelle du motif <output id="oScale">100 %</output></label>
+              <input type="range" id="rScale" min="70" max="130" step="1" value="100" />
+            </div>
+            <div class="field">
+              <label for="rRadius">Rayon des angles <output id="oRadius">23 %</output></label>
+              <input type="range" id="rRadius" min="0" max="50" step="1" value="23" />
+            </div>
+            <div class="field">
+              <label for="rWeight">Épaisseur du trait <output id="oWeight">100 %</output></label>
+              <input type="range" id="rWeight" min="60" max="180" step="1" value="100" />
+            </div>
+            <div class="field">
+              <label for="rHorizon">Ligne d'horizon <output id="oHorizon">0</output></label>
+              <input type="range" id="rHorizon" min="-16" max="16" step="1" value="0" />
+            </div>
+            <div class="field">
+              <label for="rTilt">Inclinaison du bateau <output id="oTilt">0°</output></label>
+              <input type="range" id="rTilt" min="-12" max="12" step="1" value="0" />
+            </div>
+          </div>
+
+          <div class="group">
+            <h5>Actions</h5>
+            <div class="actions">
+              <button class="pill" id="btnRandom" type="button">Variante</button>
+              <button class="pill" id="btnReset" type="button">Réinitialiser</button>
+              <button class="pill warm wide" id="btnExportSvg" type="button">
+                Télécharger le SVG
+              </button>
+              <button class="pill wide" id="btnExportPng" type="button">
+                Télécharger le PNG 1024
+              </button>
+              <button class="pill wide" id="btnExportSheet" type="button">
+                Planche des 4 pistes (PNG)
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </aside>
     </div>
-  </aside>
-</div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script>
-(() => {
-  'use strict';
+    <script>
+      ;(() => {
+        'use strict'
 
-  /* ============================================================
+        /* ============================================================
      Couleur — mêmes conversions que src/shared/theme.ts, pour que
      la teinte d'accent de la maquette réagisse comme celle de l'app.
      ============================================================ */
-  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+        const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 
-  function hexToRgb(hex) {
-    const h = hex.replace('#', '');
-    return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
-  }
-  function rgbToHex(r, g, b) {
-    const c = (v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0');
-    return '#' + c(r) + c(g) + c(b);
-  }
-  function hexToHsl(hex) {
-    const { r, g, b } = hexToRgb(hex);
-    const rr = r / 255, gg = g / 255, bb = b / 255;
-    const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
-    const l = (max + min) / 2;
-    if (max === min) return { h: 0, s: 0, l };
-    const d = max - min;
-    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    let h;
-    if (max === rr) h = (gg - bb) / d + (gg < bb ? 6 : 0);
-    else if (max === gg) h = (bb - rr) / d + 2;
-    else h = (rr - gg) / d + 4;
-    return { h: h * 60, s, l };
-  }
-  function hslToHex(h, s, l) {
-    const hue = ((h % 360) + 360) % 360;
-    const sat = clamp(s, 0, 1), light = clamp(l, 0, 1);
-    const c = (1 - Math.abs(2 * light - 1)) * sat;
-    const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
-    const m = light - c / 2;
-    const seg = hue < 60 ? [c, x, 0] : hue < 120 ? [x, c, 0] : hue < 180 ? [0, c, x]
-      : hue < 240 ? [0, x, c] : hue < 300 ? [x, 0, c] : [c, 0, x];
-    return rgbToHex((seg[0] + m) * 255, (seg[1] + m) * 255, (seg[2] + m) * 255);
-  }
-  function mix(a, b, t) {
-    const A = hexToRgb(a), B = hexToRgb(b), w = clamp(t, 0, 1);
-    return rgbToHex(A.r * (1 - w) + B.r * w, A.g * (1 - w) + B.g * w, A.b * (1 - w) + B.b * w);
-  }
-  function lum(hex) {
-    const { r, g, b } = hexToRgb(hex);
-    const f = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  }
-  function contrast(a, b) {
-    const la = lum(a), lb = lum(b);
-    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-  }
+        function hexToRgb(hex) {
+          const h = hex.replace('#', '')
+          return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16)
+          }
+        }
+        function rgbToHex(r, g, b) {
+          const c = (v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')
+          return '#' + c(r) + c(g) + c(b)
+        }
+        function hexToHsl(hex) {
+          const { r, g, b } = hexToRgb(hex)
+          const rr = r / 255,
+            gg = g / 255,
+            bb = b / 255
+          const max = Math.max(rr, gg, bb),
+            min = Math.min(rr, gg, bb)
+          const l = (max + min) / 2
+          if (max === min) return { h: 0, s: 0, l }
+          const d = max - min
+          const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+          let h
+          if (max === rr) h = (gg - bb) / d + (gg < bb ? 6 : 0)
+          else if (max === gg) h = (bb - rr) / d + 2
+          else h = (rr - gg) / d + 4
+          return { h: h * 60, s, l }
+        }
+        function hslToHex(h, s, l) {
+          const hue = ((h % 360) + 360) % 360
+          const sat = clamp(s, 0, 1),
+            light = clamp(l, 0, 1)
+          const c = (1 - Math.abs(2 * light - 1)) * sat
+          const x = c * (1 - Math.abs(((hue / 60) % 2) - 1))
+          const m = light - c / 2
+          const seg =
+            hue < 60
+              ? [c, x, 0]
+              : hue < 120
+                ? [x, c, 0]
+                : hue < 180
+                  ? [0, c, x]
+                  : hue < 240
+                    ? [0, x, c]
+                    : hue < 300
+                      ? [x, 0, c]
+                      : [c, 0, x]
+          return rgbToHex((seg[0] + m) * 255, (seg[1] + m) * 255, (seg[2] + m) * 255)
+        }
+        function mix(a, b, t) {
+          const A = hexToRgb(a),
+            B = hexToRgb(b),
+            w = clamp(t, 0, 1)
+          return rgbToHex(A.r * (1 - w) + B.r * w, A.g * (1 - w) + B.g * w, A.b * (1 - w) + B.b * w)
+        }
+        function lum(hex) {
+          const { r, g, b } = hexToRgb(hex)
+          const f = (v) => {
+            const c = v / 255
+            return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+          }
+          return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+        }
+        function contrast(a, b) {
+          const la = lum(a),
+            lb = lum(b)
+          return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+        }
 
-  /* ============================================================
+        /* ============================================================
      État
      ============================================================ */
-  const DEFAULTS = {
-    track: 'B', bg: 'nuit', size: 256, guides: false, shadow: true, margin: true,
-    accent: '#5b5bd6', sat: 100, depth: 0, sun: true,
-    scale: 100, radius: 23, weight: 100, horizon: 0, tilt: 0
-  };
-  const state = { ...DEFAULTS };
+        const DEFAULTS = {
+          track: 'B',
+          bg: 'nuit',
+          size: 256,
+          guides: false,
+          shadow: true,
+          margin: true,
+          accent: '#5b5bd6',
+          sat: 100,
+          depth: 0,
+          sun: true,
+          scale: 100,
+          radius: 23,
+          weight: 100,
+          horizon: 0,
+          tilt: 0
+        }
+        const state = { ...DEFAULTS }
 
-  const TRACKS = [
-    {
-      id: 'A', name: 'L’Héritière', short: 'Héritière',
-      pitch: 'Le voilier actuel, remis d’aplomb : une seule grande voile bombée, un foc en retrait, une coque corail plus large, mer réduite à un cinquième.',
-      note: 'Risque nul : on garde le voilier, donc l’identité déjà installée. C’est la piste à prendre si tu veux corriger le rendu sans changer de marque.',
-      base: 74
-    },
-    {
-      id: 'B', name: 'La Voile', short: 'Voile', rec: true,
-      pitch: 'On jette le bateau. Il ne reste que la voile : un mât, une grand-voile bombée, un foc. Deux masses, rien d’autre.',
-      note: 'Vela veut dire « voile ». À 16 px on lit encore deux triangles et un mât, là où le voilier complet devient une tache. C’est la seule piste qui gagne vraiment en petit.',
-      base: 92
-    },
-    {
-      id: 'C', name: 'L’Espace', short: 'Espace',
-      pitch: 'La voile devient un pli, et le pli devient deux panneaux ouverts : la vue scindée de Vela, tenue par un mât.',
-      note: 'La plus proche du produit — espaces et vue scindée sont le cœur de Vela. Un peu plus abstraite : à 16 px elle peut se lire comme un simple « V ».',
-      base: 81
-    },
-    {
-      id: 'D', name: 'Le Fanion', short: 'Fanion',
-      pitch: 'Un mât et un fanion corail qui claque, posés sur une ligne d’eau. Le geste minimal, la couleur en accent.',
-      note: 'Très nette en petit et très peu coûteuse à décliner en gabarit monochrome. Mais elle raconte moins : sans la coque, on quitte le bateau pour le signal.',
-      base: 86
-    }
-  ];
+        const TRACKS = [
+          {
+            id: 'A',
+            name: 'L’Héritière',
+            short: 'Héritière',
+            pitch:
+              'Le voilier actuel, remis d’aplomb : une seule grande voile bombée, un foc en retrait, une coque corail plus large, mer réduite à un cinquième.',
+            note: 'Risque nul : on garde le voilier, donc l’identité déjà installée. C’est la piste à prendre si tu veux corriger le rendu sans changer de marque.',
+            base: 74
+          },
+          {
+            id: 'B',
+            name: 'La Voile',
+            short: 'Voile',
+            rec: true,
+            pitch:
+              'On jette le bateau. Il ne reste que la voile : un mât, une grand-voile bombée, un foc. Deux masses, rien d’autre.',
+            note: 'Vela veut dire « voile ». À 16 px on lit encore deux triangles et un mât, là où le voilier complet devient une tache. C’est la seule piste qui gagne vraiment en petit.',
+            base: 92
+          },
+          {
+            id: 'C',
+            name: 'L’Espace',
+            short: 'Espace',
+            pitch:
+              'La voile devient un pli, et le pli devient deux panneaux ouverts : la vue scindée de Vela, tenue par un mât.',
+            note: 'La plus proche du produit — espaces et vue scindée sont le cœur de Vela. Un peu plus abstraite : à 16 px elle peut se lire comme un simple « V ».',
+            base: 81
+          },
+          {
+            id: 'D',
+            name: 'Le Fanion',
+            short: 'Fanion',
+            pitch:
+              'Un mât et un fanion corail qui claque, posés sur une ligne d’eau. Le geste minimal, la couleur en accent.',
+            note: 'Très nette en petit et très peu coûteuse à décliner en gabarit monochrome. Mais elle raconte moins : sans la coque, on quitte le bateau pour le signal.',
+            base: 86
+          }
+        ]
 
-  const ACCENTS = [
-    ['Indigo', '#5B5BD6'], ['Bleu', '#0091FF'], ['Turquoise', '#12A594'], ['Vert', '#30A46C'],
-    ['Ambre', '#E5A100'], ['Orange', '#F76B15'], ['Braise', '#B4451F'], ['Rouge', '#E5484D'],
-    ['Rose', '#E93D82'], ['Violet', '#8E4EC6'], ['Graphite', '#6E6E73']
-  ];
+        const ACCENTS = [
+          ['Indigo', '#5B5BD6'],
+          ['Bleu', '#0091FF'],
+          ['Turquoise', '#12A594'],
+          ['Vert', '#30A46C'],
+          ['Ambre', '#E5A100'],
+          ['Orange', '#F76B15'],
+          ['Braise', '#B4451F'],
+          ['Rouge', '#E5484D'],
+          ['Rose', '#E93D82'],
+          ['Violet', '#8E4EC6'],
+          ['Graphite', '#6E6E73']
+        ]
 
-  /* ============================================================
+        /* ============================================================
      Palette dérivée
      ============================================================ */
-  function palette(s) {
-    const hsl = hexToHsl(s.accent);
-    const sat = clamp(hsl.s * (s.sat / 100), 0, 1);
-    const d = s.depth / 100;
-    // Le fond reste sombre quelle que soit la teinte : une icône d'app doit
-    // porter son propre contraste, pas dépendre du fond d'écran.
-    const tileL = clamp(0.20 - d * 0.10, 0.06, 0.34);
-    const tile = hslToHex(hsl.h, clamp(sat * 0.78, 0, .85), tileL);
-    const tileHigh = hslToHex(hsl.h, clamp(sat * 0.82, 0, .9), clamp(tileL + 0.075 + d * 0.05, 0, .48));
-    const sea = hslToHex(hsl.h, clamp(sat * 0.9, 0, .95), clamp(tileL + 0.10, 0, .5));
-    const warmH = (hsl.h + 165) % 360;
-    // Le corail est la signature de Vela : il ne suit la teinte complémentaire
-    // que si l'accent s'éloigne franchement de l'indigo d'origine.
-    const drift = Math.min(Math.abs(((hsl.h - 240 + 540) % 360) - 180), 180);
-    const warmth = clamp((drift - 25) / 90, 0, 1);
-    const coralH = 16 + (((warmH - 16 + 540) % 360) - 180) * warmth;
-    const hull = hslToHex(coralH, clamp(0.68 * (s.sat / 100) + 0.12, 0, .92), 0.60);
-    const hullDark = hslToHex(coralH, clamp(0.66 * (s.sat / 100) + 0.12, 0, .92), 0.46);
-    const sail = mix('#F6EFE4', hslToHex(hsl.h, .5, .8), 0.06);
-    const sailSoft = mix('#B9BECB', tile, 0.18);
-    const foam = mix(hslToHex(hsl.h, clamp(sat, 0, 1), clamp(tileL + 0.30, 0, .72)), sail, 0.22);
-    return { tile, tileHigh, sea, foam, hull, hullDark, sail, sailSoft, accent: s.accent };
-  }
+        function palette(s) {
+          const hsl = hexToHsl(s.accent)
+          const sat = clamp(hsl.s * (s.sat / 100), 0, 1)
+          const d = s.depth / 100
+          // Le fond reste sombre quelle que soit la teinte : une icône d'app doit
+          // porter son propre contraste, pas dépendre du fond d'écran.
+          const tileL = clamp(0.2 - d * 0.1, 0.06, 0.34)
+          const tile = hslToHex(hsl.h, clamp(sat * 0.78, 0, 0.85), tileL)
+          const tileHigh = hslToHex(
+            hsl.h,
+            clamp(sat * 0.82, 0, 0.9),
+            clamp(tileL + 0.075 + d * 0.05, 0, 0.48)
+          )
+          const sea = hslToHex(hsl.h, clamp(sat * 0.9, 0, 0.95), clamp(tileL + 0.1, 0, 0.5))
+          const warmH = (hsl.h + 165) % 360
+          // Le corail est la signature de Vela : il ne suit la teinte complémentaire
+          // que si l'accent s'éloigne franchement de l'indigo d'origine.
+          const drift = Math.min(Math.abs(((hsl.h - 240 + 540) % 360) - 180), 180)
+          const warmth = clamp((drift - 25) / 90, 0, 1)
+          const coralH = 16 + (((warmH - 16 + 540) % 360) - 180) * warmth
+          const hull = hslToHex(coralH, clamp(0.68 * (s.sat / 100) + 0.12, 0, 0.92), 0.6)
+          const hullDark = hslToHex(coralH, clamp(0.66 * (s.sat / 100) + 0.12, 0, 0.92), 0.46)
+          const sail = mix('#F6EFE4', hslToHex(hsl.h, 0.5, 0.8), 0.06)
+          const sailSoft = mix('#B9BECB', tile, 0.18)
+          const foam = mix(
+            hslToHex(hsl.h, clamp(sat, 0, 1), clamp(tileL + 0.3, 0, 0.72)),
+            sail,
+            0.22
+          )
+          return { tile, tileHigh, sea, foam, hull, hullDark, sail, sailSoft, accent: s.accent }
+        }
 
-  /* ============================================================
+        /* ============================================================
      Dessin — repère 200, comme build/icon-voile/icon.svg.
      `full` = tuile pleine page (favicon) ; sinon marge macOS 96/1024.
      ============================================================ */
-  let uid = 0;
+        let uid = 0
 
-  function iconSVG(s, opts = {}) {
-    const { px = null, guides = false } = opts;
-    const p = palette(s);
-    const id = 'v' + (++uid);
-    const sfs = (n) => Number(n.toFixed(2));
-    const k = s.scale / 100;
-    const w = s.weight / 100;
-    const hy = s.horizon;
-    const R = clamp(s.radius, 0, 50) * 2; // % → unités du repère 200
-    const tileRect = s.margin ? { x: 18.75, y: 18.75, w: 162.5 } : { x: 0, y: 0, w: 200 };
-    // Le motif est toujours dessiné dans le repère 200 puis mis à l'échelle
-    // de la tuile : la marge macOS ne change jamais le dessin, seulement sa place.
-    const tScale = tileRect.w / 200;
-    const rTile = (R * tScale);
-    const grad = s.depth > 0;
+        function iconSVG(s, opts = {}) {
+          const { px = null, guides = false } = opts
+          const p = palette(s)
+          const id = 'v' + ++uid
+          const sfs = (n) => Number(n.toFixed(2))
+          const k = s.scale / 100
+          const w = s.weight / 100
+          const hy = s.horizon
+          const R = clamp(s.radius, 0, 50) * 2 // % → unités du repère 200
+          const tileRect = s.margin ? { x: 18.75, y: 18.75, w: 162.5 } : { x: 0, y: 0, w: 200 }
+          // Le motif est toujours dessiné dans le repère 200 puis mis à l'échelle
+          // de la tuile : la marge macOS ne change jamais le dessin, seulement sa place.
+          const tScale = tileRect.w / 200
+          const rTile = R * tScale
+          const grad = s.depth > 0
 
-    // Mer et bateau partagent le repère 200 ; le groupe de tuile (plus bas)
-    // les met ensemble à l'échelle de la tuile, donc ils s'alignent toujours.
-    const boat = (body) =>
-      `<g transform="translate(100 100) rotate(${sfs(s.tilt)}) scale(${sfs(k)}) translate(-100 -100)">${body}</g>`;
+          // Mer et bateau partagent le repère 200 ; le groupe de tuile (plus bas)
+          // les met ensemble à l'échelle de la tuile, donc ils s'alignent toujours.
+          const boat = (body) =>
+            `<g transform="translate(100 100) rotate(${sfs(s.tilt)}) scale(${sfs(k)}) translate(-100 -100)">${body}</g>`
 
-    let art = '';
-    const sailW = sfs(3 * w);
+          let art = ''
+          const sailW = sfs(3 * w)
 
-    if (s.track === 'A') {
-      const y = 162 + hy;
-      art += `<path d="M-20 ${sfs(y)} Q30 ${sfs(y - 6)} 60 ${sfs(y)} T140 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`;
-      art += `<path d="M-20 ${sfs(y + 2)} Q30 ${sfs(y - 4)} 60 ${sfs(y + 2)} T140 ${sfs(y + 2)} T220 ${sfs(y)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.4 * w)}" opacity=".85"/>`;
-      art += boat(
-        `<path d="M97 34 C74 68 56 104 48 132 L97 132 Z" fill="${p.sail}"/>` +
-        `<rect x="96" y="30" width="${sailW}" height="106" rx="${sfs(w)}" fill="${p.sail}"/>` +
-        `<path d="M104 62 L104 132 L142 132 Z" fill="${p.sailSoft}" opacity=".55"/>` +
-        `<path d="M34 136 L166 136 L148 158 L52 158 Z" fill="${p.hull}"/>` +
-        `<path d="M52 158 L148 158 L144 163 L56 163 Z" fill="${p.hullDark}"/>`
-      );
-    }
+          if (s.track === 'A') {
+            const y = 162 + hy
+            art += `<path d="M-20 ${sfs(y)} Q30 ${sfs(y - 6)} 60 ${sfs(y)} T140 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`
+            art += `<path d="M-20 ${sfs(y + 2)} Q30 ${sfs(y - 4)} 60 ${sfs(y + 2)} T140 ${sfs(y + 2)} T220 ${sfs(y)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.4 * w)}" opacity=".85"/>`
+            art += boat(
+              `<path d="M97 34 C74 68 56 104 48 132 L97 132 Z" fill="${p.sail}"/>` +
+                `<rect x="96" y="30" width="${sailW}" height="106" rx="${sfs(w)}" fill="${p.sail}"/>` +
+                `<path d="M104 62 L104 132 L142 132 Z" fill="${p.sailSoft}" opacity=".55"/>` +
+                `<path d="M34 136 L166 136 L148 158 L52 158 Z" fill="${p.hull}"/>` +
+                `<path d="M52 158 L148 158 L144 163 L56 163 Z" fill="${p.hullDark}"/>`
+            )
+          }
 
-    if (s.track === 'B') {
-      const y = 158 + hy;
-      art += `<path d="M-20 ${sfs(y)} Q40 ${sfs(y - 7)} 100 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`;
-      art += `<path d="M-20 ${sfs(y + 3)} Q40 ${sfs(y - 4)} 100 ${sfs(y + 3)} T220 ${sfs(y + 1)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.6 * w)}" opacity=".9"/>`;
-      art += boat(
-        // Grand-voile : le bord de fuite est bombé, pas droit. C'est ce bombé
-        // qui fait lire « voile » plutôt que « triangle » à 16 px.
-        `<path d="M104 26 C138 62 156 104 160 140 L104 140 Z" fill="${p.sail}"/>` +
-        `<path d="M92 62 C74 88 62 116 58 140 L92 140 Z" fill="${p.hull}"/>` +
-        `<rect x="${sfs(97 - 1.5 * w)}" y="22" width="${sfs(4.2 * w)}" height="126" rx="${sfs(2 * w)}" fill="${p.sail}"/>` +
-        `<path d="M46 150 L154 150" stroke="${p.hull}" stroke-width="${sfs(6.5 * w)}" stroke-linecap="round"/>`
-      );
-    }
+          if (s.track === 'B') {
+            const y = 158 + hy
+            art += `<path d="M-20 ${sfs(y)} Q40 ${sfs(y - 7)} 100 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`
+            art += `<path d="M-20 ${sfs(y + 3)} Q40 ${sfs(y - 4)} 100 ${sfs(y + 3)} T220 ${sfs(y + 1)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.6 * w)}" opacity=".9"/>`
+            art += boat(
+              // Grand-voile : le bord de fuite est bombé, pas droit. C'est ce bombé
+              // qui fait lire « voile » plutôt que « triangle » à 16 px.
+              `<path d="M104 26 C138 62 156 104 160 140 L104 140 Z" fill="${p.sail}"/>` +
+                `<path d="M92 62 C74 88 62 116 58 140 L92 140 Z" fill="${p.hull}"/>` +
+                `<rect x="${sfs(97 - 1.5 * w)}" y="22" width="${sfs(4.2 * w)}" height="126" rx="${sfs(2 * w)}" fill="${p.sail}"/>` +
+                `<path d="M46 150 L154 150" stroke="${p.hull}" stroke-width="${sfs(6.5 * w)}" stroke-linecap="round"/>`
+            )
+          }
 
-    if (s.track === 'C') {
-      const y = 164 + hy;
-      art += `<path d="M-20 ${sfs(y)} L220 ${sfs(y)} L220 220 L-20 220 Z" fill="${p.sea}"/>`;
-      art += `<path d="M-20 ${sfs(y)} L220 ${sfs(y)}" stroke="${p.foam}" stroke-width="${sfs(2.2 * w)}" opacity=".75"/>`;
-      art += boat(
-        `<path d="M94 34 L94 148 L34 128 L34 56 Z" fill="${p.sail}"/>` +
-        `<path d="M106 34 L106 148 L166 128 L166 56 Z" fill="${p.hull}"/>` +
-        `<path d="M106 34 L106 148 L118 144 L118 40 Z" fill="${p.hullDark}" opacity=".55"/>` +
-        `<rect x="${sfs(97 - 1.6 * w)}" y="28" width="${sfs(4.4 * w)}" height="128" rx="${sfs(2 * w)}" fill="${p.sail}"/>`
-      );
-    }
+          if (s.track === 'C') {
+            const y = 164 + hy
+            art += `<path d="M-20 ${sfs(y)} L220 ${sfs(y)} L220 220 L-20 220 Z" fill="${p.sea}"/>`
+            art += `<path d="M-20 ${sfs(y)} L220 ${sfs(y)}" stroke="${p.foam}" stroke-width="${sfs(2.2 * w)}" opacity=".75"/>`
+            art += boat(
+              `<path d="M94 34 L94 148 L34 128 L34 56 Z" fill="${p.sail}"/>` +
+                `<path d="M106 34 L106 148 L166 128 L166 56 Z" fill="${p.hull}"/>` +
+                `<path d="M106 34 L106 148 L118 144 L118 40 Z" fill="${p.hullDark}" opacity=".55"/>` +
+                `<rect x="${sfs(97 - 1.6 * w)}" y="28" width="${sfs(4.4 * w)}" height="128" rx="${sfs(2 * w)}" fill="${p.sail}"/>`
+            )
+          }
 
-    if (s.track === 'D') {
-      const y = 150 + hy;
-      art += `<path d="M-20 ${sfs(y)} Q40 ${sfs(y - 6)} 100 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`;
-      art += `<path d="M-20 ${sfs(y + 3)} Q40 ${sfs(y - 3)} 100 ${sfs(y + 3)} T220 ${sfs(y + 1)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.6 * w)}" opacity=".9"/>`;
-      art += boat(
-        `<rect x="${sfs(74 - 2.2 * w)}" y="34" width="${sfs(4.6 * w)}" height="116" rx="${sfs(2.3 * w)}" fill="${p.sail}"/>` +
-        `<path d="M78 40 L156 62 L78 84 Z" fill="${p.hull}"/>` +
-        `<path d="M78 84 L156 62 L120 73 Z" fill="${p.hullDark}" opacity=".45"/>` +
-        `<path d="M52 142 L148 142" stroke="${p.sail}" stroke-width="${sfs(7 * w)}" stroke-linecap="round"/>`
-      );
-    }
+          if (s.track === 'D') {
+            const y = 150 + hy
+            art += `<path d="M-20 ${sfs(y)} Q40 ${sfs(y - 6)} 100 ${sfs(y)} T220 ${sfs(y - 2)} L220 220 L-20 220 Z" fill="${p.sea}"/>`
+            art += `<path d="M-20 ${sfs(y + 3)} Q40 ${sfs(y - 3)} 100 ${sfs(y + 3)} T220 ${sfs(y + 1)}" fill="none" stroke="${p.foam}" stroke-width="${sfs(2.6 * w)}" opacity=".9"/>`
+            art += boat(
+              `<rect x="${sfs(74 - 2.2 * w)}" y="34" width="${sfs(4.6 * w)}" height="116" rx="${sfs(2.3 * w)}" fill="${p.sail}"/>` +
+                `<path d="M78 40 L156 62 L78 84 Z" fill="${p.hull}"/>` +
+                `<path d="M78 84 L156 62 L120 73 Z" fill="${p.hullDark}" opacity=".45"/>` +
+                `<path d="M52 142 L148 142" stroke="${p.sail}" stroke-width="${sfs(7 * w)}" stroke-linecap="round"/>`
+            )
+          }
 
-    const seaTop = { A: 162, B: 158, C: 164, D: 150 }[s.track] + hy;
-    const sun = s.sun
-      ? `<circle cx="100" cy="${sfs(Math.min(94, seaTop - 56))}" r="54" fill="${p.hull}" opacity="${s.track === 'B' || s.track === 'D' ? '.22' : '.3'}"/>`
-      : '';
+          const seaTop = { A: 162, B: 158, C: 164, D: 150 }[s.track] + hy
+          const sun = s.sun
+            ? `<circle cx="100" cy="${sfs(Math.min(94, seaTop - 56))}" r="54" fill="${p.hull}" opacity="${s.track === 'B' || s.track === 'D' ? '.22' : '.3'}"/>`
+            : ''
 
-    const defs =
-      `<defs>` +
-      `<clipPath id="${id}-clip"><rect x="${sfs(tileRect.x)}" y="${sfs(tileRect.y)}" width="${sfs(tileRect.w)}" height="${sfs(tileRect.w)}" rx="${sfs(rTile)}"/></clipPath>` +
-      (grad ? `<linearGradient id="${id}-g" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="${p.tileHigh}"/><stop offset="1" stop-color="${p.tile}"/></linearGradient>` : '') +
-      `</defs>`;
+          const defs =
+            `<defs>` +
+            `<clipPath id="${id}-clip"><rect x="${sfs(tileRect.x)}" y="${sfs(tileRect.y)}" width="${sfs(tileRect.w)}" height="${sfs(tileRect.w)}" rx="${sfs(rTile)}"/></clipPath>` +
+            (grad
+              ? `<linearGradient id="${id}-g" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="${p.tileHigh}"/><stop offset="1" stop-color="${p.tile}"/></linearGradient>`
+              : '') +
+            `</defs>`
 
-    const size = px ? ` width="${px}" height="${px}"` : '';
-    const body =
-      defs +
-      `<g clip-path="url(#${id}-clip)">` +
-      `<rect x="${sfs(tileRect.x)}" y="${sfs(tileRect.y)}" width="${sfs(tileRect.w)}" height="${sfs(tileRect.w)}" fill="${grad ? `url(#${id}-g)` : p.tile}"/>` +
-      `<g transform="translate(${tileRect.x} ${tileRect.y}) scale(${tScale})">${sun}${art}</g>` +
-      `</g>` +
-      (guides ? guidesSVG(tileRect, rTile) : '');
+          const size = px ? ` width="${px}" height="${px}"` : ''
+          const body =
+            defs +
+            `<g clip-path="url(#${id}-clip)">` +
+            `<rect x="${sfs(tileRect.x)}" y="${sfs(tileRect.y)}" width="${sfs(tileRect.w)}" height="${sfs(tileRect.w)}" fill="${grad ? `url(#${id}-g)` : p.tile}"/>` +
+            `<g transform="translate(${tileRect.x} ${tileRect.y}) scale(${tScale})">${sun}${art}</g>` +
+            `</g>` +
+            (guides ? guidesSVG(tileRect, rTile) : '')
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"${size} role="img" aria-label="Vela — piste ${s.track}">${body}</svg>`;
-  }
+          return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"${size} role="img" aria-label="Vela — piste ${s.track}">${body}</svg>`
+        }
 
-  function guidesSVG(t, r) {
-    const c = t.x + t.w / 2;
-    return `<g fill="none" stroke="#a8a3ff" stroke-width=".7" opacity=".55">` +
-      `<rect x="${t.x}" y="${t.y}" width="${t.w}" height="${t.w}" rx="${r}" stroke-dasharray="3 3"/>` +
-      `<rect x="${t.x + t.w * .1}" y="${t.y + t.w * .1}" width="${t.w * .8}" height="${t.w * .8}" stroke-dasharray="2 4" opacity=".6"/>` +
-      `<circle cx="${c}" cy="${c}" r="${t.w * .34}" stroke-dasharray="2 4" opacity=".6"/>` +
-      `<path d="M${c} ${t.y} V${t.y + t.w} M${t.x} ${c} H${t.x + t.w}" opacity=".45"/>` +
-      `</g>`;
-  }
+        function guidesSVG(t, r) {
+          const c = t.x + t.w / 2
+          return (
+            `<g fill="none" stroke="#a8a3ff" stroke-width=".7" opacity=".55">` +
+            `<rect x="${t.x}" y="${t.y}" width="${t.w}" height="${t.w}" rx="${r}" stroke-dasharray="3 3"/>` +
+            `<rect x="${t.x + t.w * 0.1}" y="${t.y + t.w * 0.1}" width="${t.w * 0.8}" height="${t.w * 0.8}" stroke-dasharray="2 4" opacity=".6"/>` +
+            `<circle cx="${c}" cy="${c}" r="${t.w * 0.34}" stroke-dasharray="2 4" opacity=".6"/>` +
+            `<path d="M${c} ${t.y} V${t.y + t.w} M${t.x} ${c} H${t.x + t.w}" opacity=".45"/>` +
+            `</g>`
+          )
+        }
 
-  // Silhouette seule, pour le gabarit de barre de menus (noir plein, 16 px).
-  function monoSVG(s, color) {
-    const w = s.weight / 100;
-    const k = s.scale / 100;
-    const sw = (n) => Number((n * w).toFixed(2));
-    let body;
-    if (s.track === 'A') {
-      body = `<path d="M97 34 C74 68 56 104 48 132 L97 132 Z"/><path d="M104 62 L104 132 L142 132 Z"/>` +
-        `<rect x="96" y="30" width="${sw(3)}" height="106"/><path d="M34 136 L166 136 L148 158 L52 158 Z"/>`;
-    } else if (s.track === 'B') {
-      body = `<path d="M104 26 C138 62 156 104 160 140 L104 140 Z"/><path d="M92 62 C74 88 62 116 58 140 L92 140 Z"/>` +
-        `<rect x="${97 - 1.5 * w}" y="22" width="${sw(4.2)}" height="126" rx="${sw(2)}"/>` +
-        `<path d="M46 150 L154 150" stroke="currentColor" stroke-width="${sw(6.5)}" stroke-linecap="round" fill="none"/>`;
-    } else if (s.track === 'C') {
-      body = `<path d="M94 34 L94 148 L34 128 L34 56 Z"/><path d="M106 34 L106 148 L166 128 L166 56 Z"/>` +
-        `<rect x="${97 - 1.6 * w}" y="28" width="${sw(4.4)}" height="128" rx="${sw(2)}"/>`;
-    } else {
-      body = `<rect x="${74 - 2.2 * w}" y="34" width="${sw(4.6)}" height="116" rx="${sw(2.3)}"/>` +
-        `<path d="M78 40 L156 62 L78 84 Z"/>` +
-        `<path d="M52 142 L148 142" stroke="currentColor" stroke-width="${sw(7)}" stroke-linecap="round" fill="none"/>`;
-    }
-    const box = s.track === 'D' ? '46 28 116 120' : s.track === 'B' ? '40 16 126 144' : '28 26 146 134';
-    const pad = 10;
-    const [bx, by, bw, bh] = box.split(' ').map(Number);
-    const side = Math.max(bw, bh) + pad * 2;
-    const vx = bx - (side - bw) / 2;
-    const vy = by - (side - bh) / 2;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${side} ${side}" style="color:${color}" role="img" aria-label="Vela">` +
-      `<g fill="currentColor" transform="translate(100 100) scale(${k}) translate(-100 -100)">${body}</g></svg>`;
-  }
+        // Silhouette seule, pour le gabarit de barre de menus (noir plein, 16 px).
+        function monoSVG(s, color) {
+          const w = s.weight / 100
+          const k = s.scale / 100
+          const sw = (n) => Number((n * w).toFixed(2))
+          let body
+          if (s.track === 'A') {
+            body =
+              `<path d="M97 34 C74 68 56 104 48 132 L97 132 Z"/><path d="M104 62 L104 132 L142 132 Z"/>` +
+              `<rect x="96" y="30" width="${sw(3)}" height="106"/><path d="M34 136 L166 136 L148 158 L52 158 Z"/>`
+          } else if (s.track === 'B') {
+            body =
+              `<path d="M104 26 C138 62 156 104 160 140 L104 140 Z"/><path d="M92 62 C74 88 62 116 58 140 L92 140 Z"/>` +
+              `<rect x="${97 - 1.5 * w}" y="22" width="${sw(4.2)}" height="126" rx="${sw(2)}"/>` +
+              `<path d="M46 150 L154 150" stroke="currentColor" stroke-width="${sw(6.5)}" stroke-linecap="round" fill="none"/>`
+          } else if (s.track === 'C') {
+            body =
+              `<path d="M94 34 L94 148 L34 128 L34 56 Z"/><path d="M106 34 L106 148 L166 128 L166 56 Z"/>` +
+              `<rect x="${97 - 1.6 * w}" y="28" width="${sw(4.4)}" height="128" rx="${sw(2)}"/>`
+          } else {
+            body =
+              `<rect x="${74 - 2.2 * w}" y="34" width="${sw(4.6)}" height="116" rx="${sw(2.3)}"/>` +
+              `<path d="M78 40 L156 62 L78 84 Z"/>` +
+              `<path d="M52 142 L148 142" stroke="currentColor" stroke-width="${sw(7)}" stroke-linecap="round" fill="none"/>`
+          }
+          const box =
+            s.track === 'D' ? '46 28 116 120' : s.track === 'B' ? '40 16 126 144' : '28 26 146 134'
+          const pad = 10
+          const [bx, by, bw, bh] = box.split(' ').map(Number)
+          const side = Math.max(bw, bh) + pad * 2
+          const vx = bx - (side - bw) / 2
+          const vy = by - (side - bh) / 2
+          return (
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${side} ${side}" style="color:${color}" role="img" aria-label="Vela">` +
+            `<g fill="currentColor" transform="translate(100 100) scale(${k}) translate(-100 -100)">${body}</g></svg>`
+          )
+        }
 
-  /* ============================================================
+        /* ============================================================
      Rendu
      ============================================================ */
-  const $ = (id) => document.getElementById(id);
-  const el = {
-    tracks: $('tracks'), segTrack: $('segTrack'), stage: $('stage'), hero: $('hero'),
-    ladder: $('ladder'), swatches: $('swatches'), dockDark: $('dockDark'), dockLight: $('dockLight'),
-    trayLight: $('trayLight'), trayDark: $('trayDark'), favDark: $('favDark'), favLight: $('favLight'),
-    appRow: $('appRow'), brandMark: $('brandMark'), toast: $('toast')
-  };
+        const $ = (id) => document.getElementById(id)
+        const el = {
+          tracks: $('tracks'),
+          segTrack: $('segTrack'),
+          stage: $('stage'),
+          hero: $('hero'),
+          ladder: $('ladder'),
+          swatches: $('swatches'),
+          dockDark: $('dockDark'),
+          dockLight: $('dockLight'),
+          trayLight: $('trayLight'),
+          trayDark: $('trayDark'),
+          favDark: $('favDark'),
+          favLight: $('favLight'),
+          appRow: $('appRow'),
+          brandMark: $('brandMark'),
+          toast: $('toast')
+        }
 
-  // Voisins du Dock : des formes génériques, pour juger Vela au milieu des autres.
-  function neighbour(kind) {
-    const g = {
-      mail: ['#2E6BE6', '#5AA9FF', '<path d="M46 74h108v76H46z" fill="#fff"/><path d="M46 74l54 44 54-44" fill="none" stroke="#2E6BE6" stroke-width="9"/>'],
-      notes: ['#F2C14E', '#FFE9A8', '<rect x="44" y="46" width="112" height="112" rx="8" fill="#fff"/><g stroke="#D9A93B" stroke-width="7"><path d="M60 78h80M60 100h80M60 122h52"/></g>'],
-      term: ['#2B2F3A', '#4A505F', '<rect x="40" y="52" width="120" height="96" rx="10" fill="#12151C"/><path d="M58 82l20 18-20 18M88 124h44" fill="none" stroke="#7DE2B0" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'],
-      music: ['#E8437A', '#FF8FB4', '<path d="M84 132V64l52-12v68" fill="none" stroke="#fff" stroke-width="10" stroke-linejoin="round"/><circle cx="74" cy="134" r="16" fill="#fff"/><circle cx="126" cy="122" r="16" fill="#fff"/>'],
-      photos: ['#7C4DCC', '#C89BFF', '<circle cx="100" cy="100" r="46" fill="none" stroke="#fff" stroke-width="12"/><circle cx="100" cy="100" r="14" fill="#fff"/>']
-    }[kind];
-    const id = 'n' + (++uid);
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-hidden="true">` +
-      `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g[1]}"/><stop offset="1" stop-color="${g[0]}"/></linearGradient></defs>` +
-      `<rect x="18.75" y="18.75" width="162.5" height="162.5" rx="37" fill="url(#${id})"/>${g[2]}</svg>`;
-  }
+        // Voisins du Dock : des formes génériques, pour juger Vela au milieu des autres.
+        function neighbour(kind) {
+          const g = {
+            mail: [
+              '#2E6BE6',
+              '#5AA9FF',
+              '<path d="M46 74h108v76H46z" fill="#fff"/><path d="M46 74l54 44 54-44" fill="none" stroke="#2E6BE6" stroke-width="9"/>'
+            ],
+            notes: [
+              '#F2C14E',
+              '#FFE9A8',
+              '<rect x="44" y="46" width="112" height="112" rx="8" fill="#fff"/><g stroke="#D9A93B" stroke-width="7"><path d="M60 78h80M60 100h80M60 122h52"/></g>'
+            ],
+            term: [
+              '#2B2F3A',
+              '#4A505F',
+              '<rect x="40" y="52" width="120" height="96" rx="10" fill="#12151C"/><path d="M58 82l20 18-20 18M88 124h44" fill="none" stroke="#7DE2B0" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'
+            ],
+            music: [
+              '#E8437A',
+              '#FF8FB4',
+              '<path d="M84 132V64l52-12v68" fill="none" stroke="#fff" stroke-width="10" stroke-linejoin="round"/><circle cx="74" cy="134" r="16" fill="#fff"/><circle cx="126" cy="122" r="16" fill="#fff"/>'
+            ],
+            photos: [
+              '#7C4DCC',
+              '#C89BFF',
+              '<circle cx="100" cy="100" r="46" fill="none" stroke="#fff" stroke-width="12"/><circle cx="100" cy="100" r="14" fill="#fff"/>'
+            ]
+          }[kind]
+          const id = 'n' + ++uid
+          return (
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-hidden="true">` +
+            `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g[1]}"/><stop offset="1" stop-color="${g[0]}"/></linearGradient></defs>` +
+            `<rect x="18.75" y="18.75" width="162.5" height="162.5" rx="37" fill="url(#${id})"/>${g[2]}</svg>`
+          )
+        }
 
-  function buildTracks() {
-    el.tracks.innerHTML = TRACKS.map((t) => {
-      const ts = { ...DEFAULTS, track: t.id, accent: state.accent };
-      return `<button class="track" type="button" data-track="${t.id}" aria-pressed="${state.track === t.id}">` +
-        `<span class="badge">${t.id}</span>` +
-        (t.rec ? `<span class="rec">Recommandée</span>` : '') +
-        `<span class="art">${iconSVG(ts)}</span>` +
-        `<h3>${t.name}</h3><p>${t.pitch}</p>` +
-        `<span class="mini">` +
-        [32, 24, 16].map((n) => `<i style="width:${n}px;height:${n}px">${iconSVG(ts, { px: n })}</i>`).join('') +
-        `</span></button>`;
-    }).join('');
-    el.tracks.querySelectorAll('.track').forEach((b) => {
-      b.addEventListener('click', () => { state.track = b.dataset.track; render(); });
-    });
+        function buildTracks() {
+          el.tracks.innerHTML = TRACKS.map((t) => {
+            const ts = { ...DEFAULTS, track: t.id, accent: state.accent }
+            return (
+              `<button class="track" type="button" data-track="${t.id}" aria-pressed="${state.track === t.id}">` +
+              `<span class="badge">${t.id}</span>` +
+              (t.rec ? `<span class="rec">Recommandée</span>` : '') +
+              `<span class="art">${iconSVG(ts)}</span>` +
+              `<h3>${t.name}</h3><p>${t.pitch}</p>` +
+              `<span class="mini">` +
+              [32, 24, 16]
+                .map((n) => `<i style="width:${n}px;height:${n}px">${iconSVG(ts, { px: n })}</i>`)
+                .join('') +
+              `</span></button>`
+            )
+          }).join('')
+          el.tracks.querySelectorAll('.track').forEach((b) => {
+            b.addEventListener('click', () => {
+              state.track = b.dataset.track
+              render()
+            })
+          })
 
-    el.segTrack.innerHTML = TRACKS.map((t) =>
-      `<button type="button" data-v="${t.id}" aria-pressed="${state.track === t.id}">${t.short}</button>`).join('');
-    el.segTrack.querySelectorAll('button').forEach((b) => {
-      b.addEventListener('click', () => { state.track = b.dataset.v; render(); });
-    });
-  }
+          el.segTrack.innerHTML = TRACKS.map(
+            (t) =>
+              `<button type="button" data-v="${t.id}" aria-pressed="${state.track === t.id}">${t.short}</button>`
+          ).join('')
+          el.segTrack.querySelectorAll('button').forEach((b) => {
+            b.addEventListener('click', () => {
+              state.track = b.dataset.v
+              render()
+            })
+          })
+        }
 
-  function refreshTrackArt() {
-    el.tracks.querySelectorAll('.track').forEach((b) => {
-      const ts = { ...state, track: b.dataset.track };
-      b.querySelector('.art').innerHTML = iconSVG(ts);
-      b.querySelector('.mini').innerHTML = [32, 24, 16]
-        .map((n) => `<i style="width:${n}px;height:${n}px">${iconSVG(ts, { px: n })}</i>`).join('');
-    });
-  }
+        function refreshTrackArt() {
+          el.tracks.querySelectorAll('.track').forEach((b) => {
+            const ts = { ...state, track: b.dataset.track }
+            b.querySelector('.art').innerHTML = iconSVG(ts)
+            b.querySelector('.mini').innerHTML = [32, 24, 16]
+              .map((n) => `<i style="width:${n}px;height:${n}px">${iconSVG(ts, { px: n })}</i>`)
+              .join('')
+          })
+        }
 
-  function buildDocks() {
-    const before = ['mail', 'notes'];
-    const after = ['term', 'music', 'photos'];
-    const html = () =>
-      before.map((n) => `<span class="slot"><i>${neighbour(n)}</i><span class="dot"></span></span>`).join('') +
-      `<span class="slot"><span class="tip">Vela</span><i class="vela-slot">${iconSVG(state)}</i><span class="dot"></span></span>` +
-      after.map((n) => `<span class="slot"><i>${neighbour(n)}</i><span class="dot${n === 'photos' ? ' off' : ''}"></span></span>`).join('');
-    el.dockDark.innerHTML = html();
-    el.dockLight.innerHTML = html();
-  }
+        function buildDocks() {
+          const before = ['mail', 'notes']
+          const after = ['term', 'music', 'photos']
+          const html = () =>
+            before
+              .map(
+                (n) => `<span class="slot"><i>${neighbour(n)}</i><span class="dot"></span></span>`
+              )
+              .join('') +
+            `<span class="slot"><span class="tip">Vela</span><i class="vela-slot">${iconSVG(state)}</i><span class="dot"></span></span>` +
+            after
+              .map(
+                (n) =>
+                  `<span class="slot"><i>${neighbour(n)}</i><span class="dot${n === 'photos' ? ' off' : ''}"></span></span>`
+              )
+              .join('')
+          el.dockDark.innerHTML = html()
+          el.dockLight.innerHTML = html()
+        }
 
-  function buildSwatches() {
-    const p = palette(state);
-    const rows = [
-      ['Fond de tuile', p.tile], ['Haut de tuile', p.tileHigh], ['Mer', p.sea], ['Écume', p.foam],
-      ['Voile crème', p.sail], ['Voile douce', p.sailSoft], ['Corail', p.hull], ['Corail sombre', p.hullDark]
-    ];
-    el.swatches.innerHTML = rows.map(([n, c]) =>
-      `<button class="sw" type="button" data-hex="${c.toUpperCase()}">` +
-      `<span class="chip" style="background:${c}"></span>` +
-      `<span class="meta"><b>${n}</b><code>${c.toUpperCase()}</code></span></button>`).join('');
-    el.swatches.querySelectorAll('.sw').forEach((b) => {
-      b.addEventListener('click', () => copy(b.dataset.hex));
-    });
-  }
+        function buildSwatches() {
+          const p = palette(state)
+          const rows = [
+            ['Fond de tuile', p.tile],
+            ['Haut de tuile', p.tileHigh],
+            ['Mer', p.sea],
+            ['Écume', p.foam],
+            ['Voile crème', p.sail],
+            ['Voile douce', p.sailSoft],
+            ['Corail', p.hull],
+            ['Corail sombre', p.hullDark]
+          ]
+          el.swatches.innerHTML = rows
+            .map(
+              ([n, c]) =>
+                `<button class="sw" type="button" data-hex="${c.toUpperCase()}">` +
+                `<span class="chip" style="background:${c}"></span>` +
+                `<span class="meta"><b>${n}</b><code>${c.toUpperCase()}</code></span></button>`
+            )
+            .join('')
+          el.swatches.querySelectorAll('.sw').forEach((b) => {
+            b.addEventListener('click', () => copy(b.dataset.hex))
+          })
+        }
 
-  function score() {
-    const t = TRACKS.find((x) => x.id === state.track);
-    let v = t.base;
-    v -= Math.max(0, 100 - state.scale) * 0.42;   // motif trop petit = illisible
-    v -= Math.max(0, state.scale - 108) * 0.30;   // trop gros = touche les bords
-    v -= Math.max(0, 100 - state.weight) * 0.30;  // trait trop fin disparaît
-    v -= Math.max(0, state.weight - 130) * 0.22;  // trait trop gras empâte
-    v -= (100 - Math.min(100, state.sat)) * 0.10;
-    v -= Math.abs(state.horizon) * 0.35;
-    v -= Math.abs(state.tilt) * 0.55;
-    v -= state.depth * 0.05;
-    if (!state.sun) v += 2;
-    const p = palette(state);
-    const c = contrast(p.sail, p.tile);
-    if (c < 4.5) v -= (4.5 - c) * 6;
-    return { value: clamp(Math.round(v), 0, 100), contrast: c };
-  }
+        function score() {
+          const t = TRACKS.find((x) => x.id === state.track)
+          let v = t.base
+          v -= Math.max(0, 100 - state.scale) * 0.42 // motif trop petit = illisible
+          v -= Math.max(0, state.scale - 108) * 0.3 // trop gros = touche les bords
+          v -= Math.max(0, 100 - state.weight) * 0.3 // trait trop fin disparaît
+          v -= Math.max(0, state.weight - 130) * 0.22 // trait trop gras empâte
+          v -= (100 - Math.min(100, state.sat)) * 0.1
+          v -= Math.abs(state.horizon) * 0.35
+          v -= Math.abs(state.tilt) * 0.55
+          v -= state.depth * 0.05
+          if (!state.sun) v += 2
+          const p = palette(state)
+          const c = contrast(p.sail, p.tile)
+          if (c < 4.5) v -= (4.5 - c) * 6
+          return { value: clamp(Math.round(v), 0, 100), contrast: c }
+        }
 
-  function render() {
-    const t = TRACKS.find((x) => x.id === state.track);
+        function render() {
+          const t = TRACKS.find((x) => x.id === state.track)
 
-    el.stage.dataset.bg = state.bg;
-    el.hero.style.width = state.size + 'px';
-    el.hero.classList.toggle('drop', state.shadow);
-    el.hero.innerHTML = iconSVG(state, { guides: state.guides });
-    $('stageCaption').textContent = `piste ${t.id} · ${state.size} px · ${state.margin ? 'tuile 832/1024' : 'pleine page'}`;
+          el.stage.dataset.bg = state.bg
+          el.hero.style.width = state.size + 'px'
+          el.hero.classList.toggle('drop', state.shadow)
+          el.hero.innerHTML = iconSVG(state, { guides: state.guides })
+          $('stageCaption').textContent =
+            `piste ${t.id} · ${state.size} px · ${state.margin ? 'tuile 832/1024' : 'pleine page'}`
 
-    // Échelle réelle : chaque marche est rendue à sa vraie taille en pixels.
-    const sc = score();
-    el.ladder.innerHTML = [64, 48, 32, 24, 16].map((n) => {
-      const bad = n <= 24 && sc.value < 65;
-      return `<span class="rung${bad ? ' bad' : ''}"><i style="width:${n}px;height:${n}px">${iconSVG(state, { px: n })}</i><span>${n}</span></span>`;
-    }).join('');
-    $('scoreVal').textContent = sc.value;
-    const bar = $('scoreBar');
-    bar.style.width = sc.value + '%';
-    bar.style.background = sc.value >= 80 ? 'linear-gradient(90deg,#12a594,#4fd6a8)'
-      : sc.value >= 62 ? 'linear-gradient(90deg,#e5a100,#ffc53d)'
-      : 'linear-gradient(90deg,#b4451f,#ff6b6b)';
-    $('scoreNote').textContent =
-      `Contraste voile/fond ${sc.contrast.toFixed(1)}:1. ` +
-      (sc.value >= 80 ? 'La silhouette survit à 16 px sans aide.'
-        : sc.value >= 62 ? 'Ça passe, mais le détail fin se perd dès 24 px.'
-        : 'À 16 px, le dessin devient une tache : remonte l’échelle du motif ou épaissis le trait.');
-    $('trackName').textContent = t.name;
-    $('trackNote').textContent = t.note;
-    $('atelierState').textContent = 'piste ' + t.id;
+          // Échelle réelle : chaque marche est rendue à sa vraie taille en pixels.
+          const sc = score()
+          el.ladder.innerHTML = [64, 48, 32, 24, 16]
+            .map((n) => {
+              const bad = n <= 24 && sc.value < 65
+              return `<span class="rung${bad ? ' bad' : ''}"><i style="width:${n}px;height:${n}px">${iconSVG(state, { px: n })}</i><span>${n}</span></span>`
+            })
+            .join('')
+          $('scoreVal').textContent = sc.value
+          const bar = $('scoreBar')
+          bar.style.width = sc.value + '%'
+          bar.style.background =
+            sc.value >= 80
+              ? 'linear-gradient(90deg,#12a594,#4fd6a8)'
+              : sc.value >= 62
+                ? 'linear-gradient(90deg,#e5a100,#ffc53d)'
+                : 'linear-gradient(90deg,#b4451f,#ff6b6b)'
+          $('scoreNote').textContent =
+            `Contraste voile/fond ${sc.contrast.toFixed(1)}:1. ` +
+            (sc.value >= 80
+              ? 'La silhouette survit à 16 px sans aide.'
+              : sc.value >= 62
+                ? 'Ça passe, mais le détail fin se perd dès 24 px.'
+                : 'À 16 px, le dessin devient une tache : remonte l’échelle du motif ou épaissis le trait.')
+          $('trackName').textContent = t.name
+          $('trackNote').textContent = t.note
+          $('atelierState').textContent = 'piste ' + t.id
 
-    el.tracks.querySelectorAll('.track').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.track === state.track)));
-    el.segTrack.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === state.track)));
+          el.tracks
+            .querySelectorAll('.track')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.track === state.track)))
+          el.segTrack
+            .querySelectorAll('button')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === state.track)))
 
-    refreshTrackArt();
-    buildDocks();
-    buildSwatches();
-    el.trayLight.innerHTML = monoSVG(state, '#141210');
-    el.trayDark.innerHTML = monoSVG(state, '#f2f0f6');
-    el.favDark.innerHTML = iconSVG({ ...state, margin: false }, { px: 16 });
-    el.favLight.innerHTML = iconSVG({ ...state, margin: false }, { px: 16 });
-    el.appRow.innerHTML = iconSVG(state, { px: 52 });
-    el.brandMark.innerHTML = iconSVG({ ...DEFAULTS, track: 'B', margin: false }, { px: 26 });
+          refreshTrackArt()
+          buildDocks()
+          buildSwatches()
+          el.trayLight.innerHTML = monoSVG(state, '#141210')
+          el.trayDark.innerHTML = monoSVG(state, '#f2f0f6')
+          el.favDark.innerHTML = iconSVG({ ...state, margin: false }, { px: 16 })
+          el.favLight.innerHTML = iconSVG({ ...state, margin: false }, { px: 16 })
+          el.appRow.innerHTML = iconSVG(state, { px: 52 })
+          el.brandMark.innerHTML = iconSVG({ ...DEFAULTS, track: 'B', margin: false }, { px: 26 })
 
-    $('oSize').textContent = state.size + ' px';
-    $('oSat').textContent = state.sat + ' %';
-    $('oDepth').textContent = state.depth + ' %';
-    $('oScale').textContent = state.scale + ' %';
-    $('oRadius').textContent = state.radius + ' %';
-    $('oWeight').textContent = state.weight + ' %';
-    $('oHorizon').textContent = (state.horizon > 0 ? '+' : '') + state.horizon;
-    $('oTilt').textContent = state.tilt + '°';
-    $('oAccent').textContent = state.accent.toUpperCase();
-    $('colAccent').value = state.accent;
-  }
+          $('oSize').textContent = state.size + ' px'
+          $('oSat').textContent = state.sat + ' %'
+          $('oDepth').textContent = state.depth + ' %'
+          $('oScale').textContent = state.scale + ' %'
+          $('oRadius').textContent = state.radius + ' %'
+          $('oWeight').textContent = state.weight + ' %'
+          $('oHorizon').textContent = (state.horizon > 0 ? '+' : '') + state.horizon
+          $('oTilt').textContent = state.tilt + '°'
+          $('oAccent').textContent = state.accent.toUpperCase()
+          $('colAccent').value = state.accent
+        }
 
-  /* ============================================================
+        /* ============================================================
      Contrôles
      ============================================================ */
-  const ranges = [['rSize', 'size'], ['rSat', 'sat'], ['rDepth', 'depth'], ['rScale', 'scale'],
-    ['rRadius', 'radius'], ['rWeight', 'weight'], ['rHorizon', 'horizon'], ['rTilt', 'tilt']];
-  ranges.forEach(([id, key]) => {
-    $(id).addEventListener('input', () => { state[key] = Number($(id).value); render(); });
-  });
-  [['cGuides', 'guides'], ['cShadow', 'shadow'], ['cMargin', 'margin'], ['cSun', 'sun']].forEach(([id, key]) => {
-    $(id).addEventListener('change', () => { state[key] = $(id).checked; render(); });
-  });
-  $('segBg').querySelectorAll('button').forEach((b) => {
-    b.addEventListener('click', () => {
-      state.bg = b.dataset.v;
-      $('segBg').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      render();
-    });
-  });
-  $('colAccent').addEventListener('input', () => { state.accent = $('colAccent').value; render(); });
-  $('accentDots').innerHTML = ACCENTS.map(([n, c]) =>
-    `<button type="button" title="${n}" data-c="${c}" style="background:${c}"></button>`).join('');
-  $('accentDots').querySelectorAll('button').forEach((b) => {
-    b.addEventListener('click', () => { state.accent = b.dataset.c.toLowerCase(); render(); });
-  });
+        const ranges = [
+          ['rSize', 'size'],
+          ['rSat', 'sat'],
+          ['rDepth', 'depth'],
+          ['rScale', 'scale'],
+          ['rRadius', 'radius'],
+          ['rWeight', 'weight'],
+          ['rHorizon', 'horizon'],
+          ['rTilt', 'tilt']
+        ]
+        ranges.forEach(([id, key]) => {
+          $(id).addEventListener('input', () => {
+            state[key] = Number($(id).value)
+            render()
+          })
+        })
+        ;[
+          ['cGuides', 'guides'],
+          ['cShadow', 'shadow'],
+          ['cMargin', 'margin'],
+          ['cSun', 'sun']
+        ].forEach(([id, key]) => {
+          $(id).addEventListener('change', () => {
+            state[key] = $(id).checked
+            render()
+          })
+        })
+        $('segBg')
+          .querySelectorAll('button')
+          .forEach((b) => {
+            b.addEventListener('click', () => {
+              state.bg = b.dataset.v
+              $('segBg')
+                .querySelectorAll('button')
+                .forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+              render()
+            })
+          })
+        $('colAccent').addEventListener('input', () => {
+          state.accent = $('colAccent').value
+          render()
+        })
+        $('accentDots').innerHTML = ACCENTS.map(
+          ([n, c]) =>
+            `<button type="button" title="${n}" data-c="${c}" style="background:${c}"></button>`
+        ).join('')
+        $('accentDots')
+          .querySelectorAll('button')
+          .forEach((b) => {
+            b.addEventListener('click', () => {
+              state.accent = b.dataset.c.toLowerCase()
+              render()
+            })
+          })
 
-  function syncInputs() {
-    ranges.forEach(([id, key]) => { $(id).value = state[key]; });
-    [['cGuides', 'guides'], ['cShadow', 'shadow'], ['cMargin', 'margin'], ['cSun', 'sun']].forEach(([id, key]) => { $(id).checked = state[key]; });
-    $('segBg').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === state.bg)));
-  }
+        function syncInputs() {
+          ranges.forEach(([id, key]) => {
+            $(id).value = state[key]
+          })
+          ;[
+            ['cGuides', 'guides'],
+            ['cShadow', 'shadow'],
+            ['cMargin', 'margin'],
+            ['cSun', 'sun']
+          ].forEach(([id, key]) => {
+            $(id).checked = state[key]
+          })
+          $('segBg')
+            .querySelectorAll('button')
+            .forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === state.bg)))
+        }
 
-  $('btnReset').addEventListener('click', () => {
-    const keepTrack = state.track;
-    Object.assign(state, DEFAULTS, { track: keepTrack });
-    syncInputs(); render(); toast('Réglages remis à neuf');
-  });
+        $('btnReset').addEventListener('click', () => {
+          const keepTrack = state.track
+          Object.assign(state, DEFAULTS, { track: keepTrack })
+          syncInputs()
+          render()
+          toast('Réglages remis à neuf')
+        })
 
-  $('btnRandom').addEventListener('click', () => {
-    const pick = (a) => a[Math.floor(Math.random() * a.length)];
-    const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-    state.accent = pick(ACCENTS)[1].toLowerCase();
-    state.sat = ri(80, 140);
-    state.depth = ri(0, 70);
-    state.scale = ri(92, 116);
-    state.radius = pick([20, 23, 26, 30, 44]);
-    state.weight = ri(90, 135);
-    state.horizon = ri(-6, 6);
-    state.tilt = pick([0, 0, 0, -4, 4]);
-    state.sun = Math.random() > 0.25;
-    syncInputs(); render(); toast('Variante tirée au sort');
-  });
+        $('btnRandom').addEventListener('click', () => {
+          const pick = (a) => a[Math.floor(Math.random() * a.length)]
+          const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1))
+          state.accent = pick(ACCENTS)[1].toLowerCase()
+          state.sat = ri(80, 140)
+          state.depth = ri(0, 70)
+          state.scale = ri(92, 116)
+          state.radius = pick([20, 23, 26, 30, 44])
+          state.weight = ri(90, 135)
+          state.horizon = ri(-6, 6)
+          state.tilt = pick([0, 0, 0, -4, 4])
+          state.sun = Math.random() > 0.25
+          syncInputs()
+          render()
+          toast('Variante tirée au sort')
+        })
 
-  let compareOn = false;
-  $('btnCompare').addEventListener('click', () => {
-    compareOn = !compareOn;
-    $('btnCompare').textContent = compareOn ? 'Revenir à la piste' : 'Comparer à l’actuelle';
-    $('btnCompare').setAttribute('aria-pressed', String(compareOn));
-    if (compareOn) {
-      el.hero.innerHTML = CURRENT_SVG;
-      $('stageCaption').textContent = 'icône livrée en 0.3.32 · build/icon-voile/icon.svg';
-      toast('Icône actuelle — mêmes taille et fond');
-    } else { render(); }
-  });
+        let compareOn = false
+        $('btnCompare').addEventListener('click', () => {
+          compareOn = !compareOn
+          $('btnCompare').textContent = compareOn ? 'Revenir à la piste' : 'Comparer à l’actuelle'
+          $('btnCompare').setAttribute('aria-pressed', String(compareOn))
+          if (compareOn) {
+            el.hero.innerHTML = CURRENT_SVG
+            $('stageCaption').textContent = 'icône livrée en 0.3.32 · build/icon-voile/icon.svg'
+            toast('Icône actuelle — mêmes taille et fond')
+          } else {
+            render()
+          }
+        })
 
-  /* Le dessin réellement livré, recopié tel quel pour servir de témoin. */
-  const CURRENT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vela — icône actuelle">
+        /* Le dessin réellement livré, recopié tel quel pour servir de témoin. */
+        const CURRENT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vela — icône actuelle">
     <defs><clipPath id="cur-tile"><rect x="18.75" y="18.75" width="162.5" height="162.5" rx="37.4"/></clipPath></defs>
     <g clip-path="url(#cur-tile)"><g transform="translate(18.75 18.75) scale(0.8125)">
       <rect width="200" height="200" fill="#1B2150"/>
@@ -1178,130 +2442,177 @@
       <rect x="95" y="34" width="3" height="98" fill="#F6EFE4"/>
       <path d="M32 132 L168 132 L150 152 L50 152 Z" fill="#E8805A"/>
       <path d="M50 152 L150 152 L146 156 L54 156 Z" fill="#C4623F"/>
-    </g></g></svg>`;
+    </g></g></svg>`
 
-  /* ============================================================
+        /* ============================================================
      Export
      ============================================================ */
-  function download(blob, name) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  }
-
-  function exportSVG() {
-    const svg = iconSVG(state, { px: 1024 });
-    const head = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Vela — piste ${state.track}, maquette. Accent ${state.accent}, motif ${state.scale} %, trait ${state.weight} %, rayon ${state.radius} %.\n     Repère 200, marge macOS incluse (tuile 162.5 = 832/1024). -->\n`;
-    download(new Blob([head + svg], { type: 'image/svg+xml' }), `vela-icone-piste-${state.track}.svg`);
-    toast('SVG téléchargé — piste ' + state.track);
-  }
-  $('btnExportSvg').addEventListener('click', exportSVG);
-  $('btnExportTop').addEventListener('click', exportSVG);
-
-  function rasterise(svg, size) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = size; c.height = size;
-        const ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0, size, size);
-        URL.revokeObjectURL(url);
-        resolve(c);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('rastérisation impossible')); };
-      img.src = url;
-    });
-  }
-
-  $('btnExportPng').addEventListener('click', async () => {
-    try {
-      const c = await rasterise(iconSVG(state, { px: 1024 }), 1024);
-      c.toBlob((b) => { download(b, `vela-icone-piste-${state.track}-1024.png`); toast('PNG 1024 téléchargé'); }, 'image/png');
-    } catch (e) { toast('Le PNG n’a pas pu être rendu — le SVG reste disponible'); }
-  });
-
-  $('btnExportSheet').addEventListener('click', async () => {
-    try {
-      const cell = 300, gap = 28, label = 54;
-      const W = cell * 4 + gap * 5;
-      const H = cell + gap * 2 + label + 150;
-      const out = document.createElement('canvas');
-      out.width = W; out.height = H;
-      const ctx = out.getContext('2d');
-      const bg = ctx.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, '#0a0c16'); bg.addColorStop(1, '#161a2a');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#eceaf4';
-      ctx.font = '600 22px -apple-system, system-ui, sans-serif';
-      ctx.fillText('Vela — quatre pistes d’icône', gap, 46);
-      ctx.fillStyle = '#6f7592';
-      ctx.font = '400 14px -apple-system, system-ui, sans-serif';
-      ctx.fillText(`accent ${state.accent.toUpperCase()} · motif ${state.scale} % · trait ${state.weight} %`, gap, 70);
-
-      for (let i = 0; i < TRACKS.length; i++) {
-        const t = TRACKS[i];
-        const ts = { ...state, track: t.id };
-        const x = gap + i * (cell + gap);
-        const y = 96;
-        const c = await rasterise(iconSVG(ts, { px: cell }), cell);
-        ctx.drawImage(c, x, y, cell, cell);
-        ctx.fillStyle = '#eceaf4';
-        ctx.font = '600 16px -apple-system, system-ui, sans-serif';
-        ctx.fillText(`${t.id} — ${t.short}`, x + 4, y + cell + 28);
-        let sx = x + 4;
-        for (const n of [48, 32, 16]) {
-          const small = await rasterise(iconSVG(ts, { px: n }), n);
-          ctx.drawImage(small, sx, y + cell + 44 + (48 - n), n, n);
-          sx += n + 14;
+        function download(blob, name) {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = name
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          setTimeout(() => URL.revokeObjectURL(url), 4000)
         }
-        ctx.fillStyle = '#6f7592';
-        ctx.font = '400 11px ui-monospace, Menlo, monospace';
-        ctx.fillText('48 · 32 · 16 px', sx + 4, y + cell + 78);
-      }
-      out.toBlob((b) => { download(b, 'vela-icone-planche-4-pistes.png'); toast('Planche téléchargée'); }, 'image/png');
-    } catch (e) { toast('La planche n’a pas pu être rendue'); }
-  });
 
-  function copy(text) {
-    const done = () => toast(text + ' copié');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(() => fallback());
-    } else fallback();
-    function fallback() {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); done(); } catch (e) { toast('Copie refusée par le navigateur'); }
-      ta.remove();
-    }
-  }
+        function exportSVG() {
+          const svg = iconSVG(state, { px: 1024 })
+          const head = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Vela — piste ${state.track}, maquette. Accent ${state.accent}, motif ${state.scale} %, trait ${state.weight} %, rayon ${state.radius} %.\n     Repère 200, marge macOS incluse (tuile 162.5 = 832/1024). -->\n`
+          download(
+            new Blob([head + svg], { type: 'image/svg+xml' }),
+            `vela-icone-piste-${state.track}.svg`
+          )
+          toast('SVG téléchargé — piste ' + state.track)
+        }
+        $('btnExportSvg').addEventListener('click', exportSVG)
+        $('btnExportTop').addEventListener('click', exportSVG)
 
-  let toastTimer = null;
-  function toast(msg) {
-    el.toast.textContent = msg;
-    el.toast.classList.add('on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.toast.classList.remove('on'), 2200);
-  }
+        function rasterise(svg, size) {
+          return new Promise((resolve, reject) => {
+            const img = new Image()
+            const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
+            img.onload = () => {
+              const c = document.createElement('canvas')
+              c.width = size
+              c.height = size
+              const ctx = c.getContext('2d')
+              ctx.drawImage(img, 0, 0, size, size)
+              URL.revokeObjectURL(url)
+              resolve(c)
+            }
+            img.onerror = () => {
+              URL.revokeObjectURL(url)
+              reject(new Error('rastérisation impossible'))
+            }
+            img.src = url
+          })
+        }
 
-  /* ---------- Navigation : lien actif au défilement ---------- */
-  const links = [...document.querySelectorAll('.navlinks a')];
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (!e.isIntersecting) return;
-      links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
-    });
-  }, { rootMargin: '-70px 0px -65% 0px', threshold: 0 });
-  ['pistes', 'echelle', 'situations', 'palette', 'impact'].forEach((id) => obs.observe($(id)));
+        $('btnExportPng').addEventListener('click', async () => {
+          try {
+            const c = await rasterise(iconSVG(state, { px: 1024 }), 1024)
+            c.toBlob((b) => {
+              download(b, `vela-icone-piste-${state.track}-1024.png`)
+              toast('PNG 1024 téléchargé')
+            }, 'image/png')
+          } catch (e) {
+            toast('Le PNG n’a pas pu être rendu — le SVG reste disponible')
+          }
+        })
 
-  buildTracks();
-  syncInputs();
-  render();
-})();
-</script>
-</body>
+        $('btnExportSheet').addEventListener('click', async () => {
+          try {
+            const cell = 300,
+              gap = 28,
+              label = 54
+            const W = cell * 4 + gap * 5
+            const H = cell + gap * 2 + label + 150
+            const out = document.createElement('canvas')
+            out.width = W
+            out.height = H
+            const ctx = out.getContext('2d')
+            const bg = ctx.createLinearGradient(0, 0, W, H)
+            bg.addColorStop(0, '#0a0c16')
+            bg.addColorStop(1, '#161a2a')
+            ctx.fillStyle = bg
+            ctx.fillRect(0, 0, W, H)
+            ctx.fillStyle = '#eceaf4'
+            ctx.font = '600 22px -apple-system, system-ui, sans-serif'
+            ctx.fillText('Vela — quatre pistes d’icône', gap, 46)
+            ctx.fillStyle = '#6f7592'
+            ctx.font = '400 14px -apple-system, system-ui, sans-serif'
+            ctx.fillText(
+              `accent ${state.accent.toUpperCase()} · motif ${state.scale} % · trait ${state.weight} %`,
+              gap,
+              70
+            )
+
+            for (let i = 0; i < TRACKS.length; i++) {
+              const t = TRACKS[i]
+              const ts = { ...state, track: t.id }
+              const x = gap + i * (cell + gap)
+              const y = 96
+              const c = await rasterise(iconSVG(ts, { px: cell }), cell)
+              ctx.drawImage(c, x, y, cell, cell)
+              ctx.fillStyle = '#eceaf4'
+              ctx.font = '600 16px -apple-system, system-ui, sans-serif'
+              ctx.fillText(`${t.id} — ${t.short}`, x + 4, y + cell + 28)
+              let sx = x + 4
+              for (const n of [48, 32, 16]) {
+                const small = await rasterise(iconSVG(ts, { px: n }), n)
+                ctx.drawImage(small, sx, y + cell + 44 + (48 - n), n, n)
+                sx += n + 14
+              }
+              ctx.fillStyle = '#6f7592'
+              ctx.font = '400 11px ui-monospace, Menlo, monospace'
+              ctx.fillText('48 · 32 · 16 px', sx + 4, y + cell + 78)
+            }
+            out.toBlob((b) => {
+              download(b, 'vela-icone-planche-4-pistes.png')
+              toast('Planche téléchargée')
+            }, 'image/png')
+          } catch (e) {
+            toast('La planche n’a pas pu être rendue')
+          }
+        })
+
+        function copy(text) {
+          const done = () => toast(text + ' copié')
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+              .writeText(text)
+              .then(done)
+              .catch(() => fallback())
+          } else fallback()
+          function fallback() {
+            const ta = document.createElement('textarea')
+            ta.value = text
+            ta.style.position = 'fixed'
+            ta.style.opacity = '0'
+            document.body.appendChild(ta)
+            ta.select()
+            try {
+              document.execCommand('copy')
+              done()
+            } catch (e) {
+              toast('Copie refusée par le navigateur')
+            }
+            ta.remove()
+          }
+        }
+
+        let toastTimer = null
+        function toast(msg) {
+          el.toast.textContent = msg
+          el.toast.classList.add('on')
+          clearTimeout(toastTimer)
+          toastTimer = setTimeout(() => el.toast.classList.remove('on'), 2200)
+        }
+
+        /* ---------- Navigation : lien actif au défilement ---------- */
+        const links = [...document.querySelectorAll('.navlinks a')]
+        const obs = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (!e.isIntersecting) return
+              links.forEach((a) =>
+                a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)
+              )
+            })
+          },
+          { rootMargin: '-70px 0px -65% 0px', threshold: 0 }
+        )
+        ;['pistes', 'echelle', 'situations', 'palette', 'impact'].forEach((id) =>
+          obs.observe($(id))
+        )
+
+        buildTracks()
+        syncInputs()
+        render()
+      })()
+    </script>
+  </body>
 </html>

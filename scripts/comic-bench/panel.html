@@ -1,59 +1,193 @@
-<!doctype html><meta charset="utf-8">
-<style>html,body{margin:0;background:#fff}svg{display:block}</style>
+<!doctype html><meta charset="utf-8" />
+<style>
+  html,
+  body {
+    margin: 0;
+    background: #fff;
+  }
+  svg {
+    display: block;
+  }
+</style>
 <svg width="900" height="1300" viewBox="0 0 900 1300" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="deg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#cfc7b6"/>
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#cfc7b6" />
     </linearGradient>
   </defs>
-  <rect width="900" height="1300" fill="#fff"/>
-  <rect x="20" y="20" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3"/>
-  <rect x="460" y="20" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3"/>
-  <rect x="20" y="420" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3"/>
-  <rect x="460" y="420" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3"/>
-  <rect x="20" y="820" width="860" height="460" fill="#ffffff" stroke="#111" stroke-width="3"/>
+  <rect width="900" height="1300" fill="#fff" />
+  <rect x="20" y="20" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3" />
+  <rect x="460" y="20" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3" />
+  <rect x="20" y="420" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3" />
+  <rect x="460" y="420" width="420" height="380" fill="#e9e7e2" stroke="#111" stroke-width="3" />
+  <rect x="20" y="820" width="860" height="460" fill="#ffffff" stroke="#111" stroke-width="3" />
 
   <!-- 1. ovale avec queue, un seul contour -->
   <g transform="translate(30,35) scale(0.8)">
-    <path d="M76.2 137.4 L80.4 131.0 L85.3 124.9 L90.9 118.9 L97.0 113.1 L103.8 107.6 L111.1 102.4 L118.9 97.4 L127.3 92.7 L136.1 88.3 L145.4 84.3 L155.0 80.6 L165.1 77.3 L175.4 74.3 L186.1 71.8 L196.9 69.6 L208.0 67.9 L219.3 66.5 L230.7 65.6 L242.1 65.1 L253.6 65.0 L265.1 65.4 L276.5 66.1 L287.8 67.3 L298.9 68.9 L309.9 70.9 L320.6 73.3 L331.1 76.1 L341.3 79.3 L351.1 82.9 L360.5 86.8 L369.5 91.0 L378.0 95.6 L386.0 100.4 L393.5 105.6 L400.5 111.0 L406.9 116.7 L412.7 122.6 L417.8 128.7 L422.3 135.0 L426.2 141.4 L429.3 148.0 L431.8 154.6 L433.6 161.4 L434.6 168.2 L435.0 175.0 L434.6 181.8 L433.6 188.6 L431.8 195.4 L429.3 202.0 L426.2 208.6 L422.3 215.0 L417.8 221.3 L412.7 227.4 L406.9 233.3 L400.5 239.0 L393.5 244.4 L386.0 249.6 L378.0 254.4 L369.5 259.0 L360.5 263.2 L351.1 267.1 L341.3 270.7 L331.1 273.9 L320.6 276.7 L309.9 279.1 L298.9 281.1 L287.8 282.7 L276.5 283.9 L265.1 284.6 L253.6 285.0 L242.1 284.9 L230.7 284.4 L219.3 283.5 L208.0 282.1 L196.9 280.4 L186.1 278.2 L175.4 275.7 L165.1 272.7 L155.0 269.4 L145.4 265.7 L136.1 261.7 L127.3 257.3 L118.9 252.6 L111.1 247.6 L103.8 242.4 L97.0 236.9 L90.9 231.1 L85.3 225.1 L80.4 219.0 L76.2 212.6 L118.0 372.0 Z" fill="#fff" stroke="#111" stroke-width="4"/>
-    <text x="250" y="150" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="23" font-weight="700" fill="#111"><tspan x="250" dy="0">WE SHOULD GO BACK</tspan><tspan x="250" dy="29">BEFORE THE</tspan><tspan x="250" dy="29">STORM HITS.</tspan></text>
+    <path
+      d="M76.2 137.4 L80.4 131.0 L85.3 124.9 L90.9 118.9 L97.0 113.1 L103.8 107.6 L111.1 102.4 L118.9 97.4 L127.3 92.7 L136.1 88.3 L145.4 84.3 L155.0 80.6 L165.1 77.3 L175.4 74.3 L186.1 71.8 L196.9 69.6 L208.0 67.9 L219.3 66.5 L230.7 65.6 L242.1 65.1 L253.6 65.0 L265.1 65.4 L276.5 66.1 L287.8 67.3 L298.9 68.9 L309.9 70.9 L320.6 73.3 L331.1 76.1 L341.3 79.3 L351.1 82.9 L360.5 86.8 L369.5 91.0 L378.0 95.6 L386.0 100.4 L393.5 105.6 L400.5 111.0 L406.9 116.7 L412.7 122.6 L417.8 128.7 L422.3 135.0 L426.2 141.4 L429.3 148.0 L431.8 154.6 L433.6 161.4 L434.6 168.2 L435.0 175.0 L434.6 181.8 L433.6 188.6 L431.8 195.4 L429.3 202.0 L426.2 208.6 L422.3 215.0 L417.8 221.3 L412.7 227.4 L406.9 233.3 L400.5 239.0 L393.5 244.4 L386.0 249.6 L378.0 254.4 L369.5 259.0 L360.5 263.2 L351.1 267.1 L341.3 270.7 L331.1 273.9 L320.6 276.7 L309.9 279.1 L298.9 281.1 L287.8 282.7 L276.5 283.9 L265.1 284.6 L253.6 285.0 L242.1 284.9 L230.7 284.4 L219.3 283.5 L208.0 282.1 L196.9 280.4 L186.1 278.2 L175.4 275.7 L165.1 272.7 L155.0 269.4 L145.4 265.7 L136.1 261.7 L127.3 257.3 L118.9 252.6 L111.1 247.6 L103.8 242.4 L97.0 236.9 L90.9 231.1 L85.3 225.1 L80.4 219.0 L76.2 212.6 L118.0 372.0 Z"
+      fill="#fff"
+      stroke="#111"
+      stroke-width="4"
+    />
+    <text
+      x="250"
+      y="150"
+      text-anchor="middle"
+      font-family="Helvetica,Arial,sans-serif"
+      font-size="23"
+      font-weight="700"
+      fill="#111"
+    >
+      <tspan x="250" dy="0">WE SHOULD GO BACK</tspan>
+      <tspan x="250" dy="29">BEFORE THE</tspan>
+      <tspan x="250" dy="29">STORM HITS.</tspan>
+    </text>
   </g>
 
   <!-- 2. nuage irrégulier avec queue -->
   <g transform="translate(95.7,-220.5) scale(0.85)">
-    <path d="M811.5 430.0 L810.0 434.5 L805.7 438.8 L799.3 442.8 L791.6 446.4 L783.9 449.6 L777.1 452.6 L772.0 455.7 L769.1 459.1 L768.4 463.0 L769.4 467.4 L771.4 472.4 L773.5 477.8 L774.8 483.3 L774.3 488.5 L771.6 493.0 L766.5 496.5 L759.2 498.9 L750.3 500.2 L740.5 500.5 L730.6 500.3 L721.3 500.1 L713.1 500.2 L706.2 501.2 L700.7 503.2 L696.0 506.4 L691.8 510.6 L687.5 515.4 L682.6 520.2 L676.8 524.5 L670.0 527.8 L662.4 529.6 L654.2 529.7 L645.9 528.3 L637.7 525.5 L630.0 522.0 L622.9 518.3 L616.3 515.0 L609.9 512.6 L603.5 511.5 L596.6 511.6 L589.0 512.8 L580.6 514.8 L571.5 516.9 L562.1 518.6 L552.8 519.4 L544.3 518.8 L537.0 516.8 L531.3 513.4 L527.3 508.8 L524.8 503.5 L523.4 498.0 L522.3 492.8 L520.7 488.3 L518.0 484.6 L513.6 481.8 L507.3 479.7 L499.4 478.1 L490.3 476.6 L480.8 474.8 L472.1 472.4 L464.9 469.3 L460.1 465.5 L458.2 461.1 L459.0 456.3 L462.2 451.4 L466.9 446.5 L472.2 441.9 L477.0 437.7 L480.3 433.7 L481.5 430.0 L480.3 426.3 L477.0 422.3 L472.2 418.1 L466.9 413.5 L462.2 408.6 L459.0 403.7 L458.2 398.9 L460.1 394.5 L464.9 390.7 L472.1 387.6 L480.8 385.2 L490.3 383.4 L499.4 381.9 L507.3 380.3 L513.6 378.2 L518.0 375.4 L520.7 371.7 L522.3 367.2 L523.4 362.0 L524.8 356.5 L527.3 351.2 L531.3 346.6 L537.0 343.2 L544.3 341.2 L552.8 340.6 L562.1 341.4 L571.5 343.1 L580.6 345.2 L589.0 347.2 L596.6 348.4 L603.5 348.5 L609.9 347.4 L616.3 345.0 L622.9 341.7 L630.0 338.0 L637.7 334.5 L645.9 331.7 L654.2 330.3 L662.4 330.4 L670.0 332.2 L676.8 335.5 L682.6 339.8 L687.5 344.6 L691.8 349.4 L696.0 353.6 L700.7 356.8 L706.2 358.8 L713.1 359.8 L721.3 359.9 L730.6 359.7 L740.5 359.5 L750.3 359.8 L759.2 361.1 L766.5 363.5 L771.6 367.0 L774.3 371.5 L774.8 376.7 L773.5 382.2 L771.4 387.6 L769.4 392.6 L768.4 397.0 L769.1 400.9 L772.0 404.3 L777.1 407.4 L783.9 410.4 L791.6 413.6 L799.3 417.2 L805.7 421.2 L810.0 425.5 Z" fill="#fff" stroke="#111" stroke-width="4"/>
-    <path d="M700 500 742 574 662 528 Z" fill="#fff" stroke="#111" stroke-width="4"/>
-    <text x="630" y="415" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="23" font-weight="700" fill="#111"><tspan x="630" dy="0">THE BRIDGE IS UNDER</tspan><tspan x="630" dy="29">WATER, AND SO IS</tspan><tspan x="630" dy="29">THE ROAD.</tspan></text>
+    <path
+      d="M811.5 430.0 L810.0 434.5 L805.7 438.8 L799.3 442.8 L791.6 446.4 L783.9 449.6 L777.1 452.6 L772.0 455.7 L769.1 459.1 L768.4 463.0 L769.4 467.4 L771.4 472.4 L773.5 477.8 L774.8 483.3 L774.3 488.5 L771.6 493.0 L766.5 496.5 L759.2 498.9 L750.3 500.2 L740.5 500.5 L730.6 500.3 L721.3 500.1 L713.1 500.2 L706.2 501.2 L700.7 503.2 L696.0 506.4 L691.8 510.6 L687.5 515.4 L682.6 520.2 L676.8 524.5 L670.0 527.8 L662.4 529.6 L654.2 529.7 L645.9 528.3 L637.7 525.5 L630.0 522.0 L622.9 518.3 L616.3 515.0 L609.9 512.6 L603.5 511.5 L596.6 511.6 L589.0 512.8 L580.6 514.8 L571.5 516.9 L562.1 518.6 L552.8 519.4 L544.3 518.8 L537.0 516.8 L531.3 513.4 L527.3 508.8 L524.8 503.5 L523.4 498.0 L522.3 492.8 L520.7 488.3 L518.0 484.6 L513.6 481.8 L507.3 479.7 L499.4 478.1 L490.3 476.6 L480.8 474.8 L472.1 472.4 L464.9 469.3 L460.1 465.5 L458.2 461.1 L459.0 456.3 L462.2 451.4 L466.9 446.5 L472.2 441.9 L477.0 437.7 L480.3 433.7 L481.5 430.0 L480.3 426.3 L477.0 422.3 L472.2 418.1 L466.9 413.5 L462.2 408.6 L459.0 403.7 L458.2 398.9 L460.1 394.5 L464.9 390.7 L472.1 387.6 L480.8 385.2 L490.3 383.4 L499.4 381.9 L507.3 380.3 L513.6 378.2 L518.0 375.4 L520.7 371.7 L522.3 367.2 L523.4 362.0 L524.8 356.5 L527.3 351.2 L531.3 346.6 L537.0 343.2 L544.3 341.2 L552.8 340.6 L562.1 341.4 L571.5 343.1 L580.6 345.2 L589.0 347.2 L596.6 348.4 L603.5 348.5 L609.9 347.4 L616.3 345.0 L622.9 341.7 L630.0 338.0 L637.7 334.5 L645.9 331.7 L654.2 330.3 L662.4 330.4 L670.0 332.2 L676.8 335.5 L682.6 339.8 L687.5 344.6 L691.8 349.4 L696.0 353.6 L700.7 356.8 L706.2 358.8 L713.1 359.8 L721.3 359.9 L730.6 359.7 L740.5 359.5 L750.3 359.8 L759.2 361.1 L766.5 363.5 L771.6 367.0 L774.3 371.5 L774.8 376.7 L773.5 382.2 L771.4 387.6 L769.4 392.6 L768.4 397.0 L769.1 400.9 L772.0 404.3 L777.1 407.4 L783.9 410.4 L791.6 413.6 L799.3 417.2 L805.7 421.2 L810.0 425.5 Z"
+      fill="#fff"
+      stroke="#111"
+      stroke-width="4"
+    />
+    <path d="M700 500 742 574 662 528 Z" fill="#fff" stroke="#111" stroke-width="4" />
+    <text
+      x="630"
+      y="415"
+      text-anchor="middle"
+      font-family="Helvetica,Arial,sans-serif"
+      font-size="23"
+      font-weight="700"
+      fill="#111"
+    >
+      <tspan x="630" dy="0">THE BRIDGE IS UNDER</tspan>
+      <tspan x="630" dy="29">WATER, AND SO IS</tspan>
+      <tspan x="630" dy="29">THE ROAD.</tspan>
+    </text>
   </g>
 
   <!-- 3. éclat irrégulier + texte sans contour -->
   <g transform="translate(30.5,-56.8) scale(0.72)">
-    <path d="M418.5 860.0 L412.2 867.1 L394.9 872.8 L371.8 876.6 L349.1 878.6 L333.2 880.3 L328.0 883.3 L334.4 889.3 L349.7 898.7 L368.7 911.1 L385.1 924.4 L393.5 935.9 L391.2 943.0 L378.4 944.4 L358.2 940.3 L335.8 932.7 L316.6 925.2 L304.5 921.4 L301.2 924.2 L305.6 934.6 L314.4 951.2 L323.1 970.5 L327.9 987.9 L326.3 999.0 L318.0 1001.0 L304.7 993.7 L289.3 979.6 L274.9 963.2 L263.9 950.0 L257.0 944.5 L253.5 948.9 L251.6 962.7 L249.2 982.2 L244.8 1002.2 L238.2 1017.0 L230.0 1022.5 L221.8 1017.0 L215.2 1002.2 L210.8 982.2 L208.4 962.7 L206.5 948.9 L203.0 944.5 L196.1 950.0 L185.1 963.2 L170.7 979.6 L155.3 993.7 L142.0 1001.0 L133.7 999.0 L132.1 987.9 L136.9 970.5 L145.6 951.2 L154.4 934.6 L158.8 924.2 L155.5 921.4 L143.4 925.2 L124.2 932.7 L101.8 940.3 L81.6 944.4 L68.8 943.0 L66.5 935.9 L74.9 924.4 L91.3 911.1 L110.3 898.7 L125.6 889.3 L132.0 883.3 L126.8 880.3 L110.9 878.6 L88.2 876.6 L65.1 872.8 L47.8 867.1 L41.5 860.0 L47.8 852.9 L65.1 847.2 L88.2 843.4 L110.9 841.4 L126.8 839.7 L132.0 836.7 L125.6 830.7 L110.3 821.3 L91.3 808.9 L74.9 795.6 L66.5 784.1 L68.8 777.0 L81.6 775.6 L101.8 779.7 L124.2 787.3 L143.4 794.8 L155.5 798.6 L158.8 795.8 L154.4 785.4 L145.6 768.8 L136.9 749.5 L132.1 732.1 L133.7 721.0 L142.0 719.0 L155.3 726.3 L170.7 740.4 L185.1 756.8 L196.1 770.0 L203.0 775.5 L206.5 771.1 L208.4 757.3 L210.8 737.8 L215.2 717.8 L221.8 703.0 L230.0 697.5 L238.2 703.0 L244.8 717.8 L249.2 737.8 L251.6 757.3 L253.5 771.1 L257.0 775.5 L263.9 770.0 L274.9 756.8 L289.3 740.4 L304.7 726.3 L318.0 719.0 L326.3 721.0 L327.9 732.1 L323.1 749.5 L314.4 768.8 L305.6 785.4 L301.2 795.8 L304.5 798.6 L316.6 794.8 L335.8 787.3 L358.2 779.7 L378.4 775.6 L391.2 777.0 L393.5 784.1 L385.1 795.6 L368.7 808.9 L349.7 821.3 L334.4 830.7 L328.0 836.7 L333.2 839.7 L349.1 841.4 L371.8 843.4 L394.9 847.2 L412.2 852.9 Z" fill="#fff" stroke="#111" stroke-width="4"/>
-    <text x="230" y="866" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#111"><tspan x="230" dy="0">RUN, NOW!</tspan></text>
+    <path
+      d="M418.5 860.0 L412.2 867.1 L394.9 872.8 L371.8 876.6 L349.1 878.6 L333.2 880.3 L328.0 883.3 L334.4 889.3 L349.7 898.7 L368.7 911.1 L385.1 924.4 L393.5 935.9 L391.2 943.0 L378.4 944.4 L358.2 940.3 L335.8 932.7 L316.6 925.2 L304.5 921.4 L301.2 924.2 L305.6 934.6 L314.4 951.2 L323.1 970.5 L327.9 987.9 L326.3 999.0 L318.0 1001.0 L304.7 993.7 L289.3 979.6 L274.9 963.2 L263.9 950.0 L257.0 944.5 L253.5 948.9 L251.6 962.7 L249.2 982.2 L244.8 1002.2 L238.2 1017.0 L230.0 1022.5 L221.8 1017.0 L215.2 1002.2 L210.8 982.2 L208.4 962.7 L206.5 948.9 L203.0 944.5 L196.1 950.0 L185.1 963.2 L170.7 979.6 L155.3 993.7 L142.0 1001.0 L133.7 999.0 L132.1 987.9 L136.9 970.5 L145.6 951.2 L154.4 934.6 L158.8 924.2 L155.5 921.4 L143.4 925.2 L124.2 932.7 L101.8 940.3 L81.6 944.4 L68.8 943.0 L66.5 935.9 L74.9 924.4 L91.3 911.1 L110.3 898.7 L125.6 889.3 L132.0 883.3 L126.8 880.3 L110.9 878.6 L88.2 876.6 L65.1 872.8 L47.8 867.1 L41.5 860.0 L47.8 852.9 L65.1 847.2 L88.2 843.4 L110.9 841.4 L126.8 839.7 L132.0 836.7 L125.6 830.7 L110.3 821.3 L91.3 808.9 L74.9 795.6 L66.5 784.1 L68.8 777.0 L81.6 775.6 L101.8 779.7 L124.2 787.3 L143.4 794.8 L155.5 798.6 L158.8 795.8 L154.4 785.4 L145.6 768.8 L136.9 749.5 L132.1 732.1 L133.7 721.0 L142.0 719.0 L155.3 726.3 L170.7 740.4 L185.1 756.8 L196.1 770.0 L203.0 775.5 L206.5 771.1 L208.4 757.3 L210.8 737.8 L215.2 717.8 L221.8 703.0 L230.0 697.5 L238.2 703.0 L244.8 717.8 L249.2 737.8 L251.6 757.3 L253.5 771.1 L257.0 775.5 L263.9 770.0 L274.9 756.8 L289.3 740.4 L304.7 726.3 L318.0 719.0 L326.3 721.0 L327.9 732.1 L323.1 749.5 L314.4 768.8 L305.6 785.4 L301.2 795.8 L304.5 798.6 L316.6 794.8 L335.8 787.3 L358.2 779.7 L378.4 775.6 L391.2 777.0 L393.5 784.1 L385.1 795.6 L368.7 808.9 L349.7 821.3 L334.4 830.7 L328.0 836.7 L333.2 839.7 L349.1 841.4 L371.8 843.4 L394.9 847.2 L412.2 852.9 Z"
+      fill="#fff"
+      stroke="#111"
+      stroke-width="4"
+    />
+    <text
+      x="230"
+      y="866"
+      text-anchor="middle"
+      font-family="Helvetica,Arial,sans-serif"
+      font-size="26"
+      font-weight="700"
+      fill="#111"
+    >
+      <tspan x="230" dy="0">RUN, NOW!</tspan>
+    </text>
   </g>
-  <text x="180" y="745" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#111">SILENCE.</text>
+  <text
+    x="180"
+    y="745"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="18"
+    font-weight="700"
+    fill="#111"
+  >
+    SILENCE.
+  </text>
 
   <!-- 9. bulle inclinée : l'angle doit être estimé puis appliqué au rendu -->
-  <rect x="702" y="1140" width="156" height="126" fill="#e9e7e2" stroke="#111" stroke-width="3"/>
-  <text transform="rotate(15 780 1203)" x="780" y="1203" text-anchor="middle"
-    font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="700" fill="#111">HEY!</text>
+  <rect x="702" y="1140" width="156" height="126" fill="#e9e7e2" stroke="#111" stroke-width="3" />
+  <text
+    transform="rotate(15 780 1203)"
+    x="780"
+    y="1203"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="20"
+    font-weight="700"
+    fill="#111"
+  >
+    HEY!
+  </text>
 
   <!-- 5. deux bulles côte à côte, même hauteur -->
-  <rect x="480" y="470" width="180" height="130" fill="#fff" stroke="#111" stroke-width="3"/>
-  <text x="570" y="542" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="17" font-weight="700" fill="#111">KEEP OUT.</text>
-  <rect x="690" y="470" width="180" height="130" fill="#fff" stroke="#111" stroke-width="3"/>
-  <text x="780" y="542" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="17" font-weight="700" fill="#111">IT IS LOCKED.</text>
+  <rect x="480" y="470" width="180" height="130" fill="#fff" stroke="#111" stroke-width="3" />
+  <text
+    x="570"
+    y="542"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="17"
+    font-weight="700"
+    fill="#111"
+  >
+    KEEP OUT.
+  </text>
+  <rect x="690" y="470" width="180" height="130" fill="#fff" stroke="#111" stroke-width="3" />
+  <text
+    x="780"
+    y="542"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="17"
+    font-weight="700"
+    fill="#111"
+  >
+    IT IS LOCKED.
+  </text>
 
   <!-- 7. grande bulle, peu de texte -->
-  <ellipse cx="690" cy="710" rx="160" ry="80" fill="#fff" stroke="#111" stroke-width="3"/>
-  <text x="690" y="722" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="24" font-weight="700" fill="#111">GO.</text>
+  <ellipse cx="690" cy="710" rx="160" ry="80" fill="#fff" stroke="#111" stroke-width="3" />
+  <text
+    x="690"
+    y="722"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="24"
+    font-weight="700"
+    fill="#111"
+  >
+    GO.
+  </text>
 
   <!-- 6. dégradé vertical -->
-  <rect x="40" y="850" width="300" height="280" fill="url(#deg)" stroke="#111" stroke-width="3"/>
-  <text x="190" y="958" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#111"><tspan x="190" dy="0">THE WATER IS</tspan><tspan x="190" dy="28">RISING FAST.</tspan></text>
+  <rect x="40" y="850" width="300" height="280" fill="url(#deg)" stroke="#111" stroke-width="3" />
+  <text
+    x="190"
+    y="958"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="18"
+    font-weight="700"
+    fill="#111"
+  >
+    <tspan x="190" dy="0">THE WATER IS</tspan>
+    <tspan x="190" dy="28">RISING FAST.</tspan>
+  </text>
 
   <!-- 8. bulle blanche sur fond blanc, contour interrompu -->
-  <path d="M470 850 L660 850 A 40 40 0 0 1 700 890 L700 1090 A 40 40 0 0 1 660 1130 L420 1130 A 40 40 0 0 1 380 1090 L380 890 A 40 40 0 0 1 420 850 L440 850" fill="#fff" stroke="#111" stroke-width="3"/>
-  <text x="540" y="1000" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#111">NO ONE SAW IT.</text>
+  <path
+    d="M470 850 L660 850 A 40 40 0 0 1 700 890 L700 1090 A 40 40 0 0 1 660 1130 L420 1130 A 40 40 0 0 1 380 1090 L380 890 A 40 40 0 0 1 420 850 L440 850"
+    fill="#fff"
+    stroke="#111"
+    stroke-width="3"
+  />
+  <text
+    x="540"
+    y="1000"
+    text-anchor="middle"
+    font-family="Helvetica,Arial,sans-serif"
+    font-size="18"
+    font-weight="700"
+    fill="#111"
+  >
+    NO ONE SAW IT.
+  </text>
 </svg>

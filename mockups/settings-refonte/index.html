@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vela — Réglages, maquette</title>
+    <style>
+      :root {
+        --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+        --sans: 'Geist', 'Geist Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+          'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;
+        --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+        --bg: #0e0e12;
+        --paper: #151518;
+        --panel: #1a1a1f;
+        --panel-2: rgba(255, 255, 255, 0.045);
+        --panel-3: rgba(255, 255, 255, 0.08);
+        --ink: #f3f1ee;
+        --ink-soft: #cbc6bf;
+        --muted: #a7a19a;
+        --faint: #7e7971;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-soft: rgba(255, 255, 255, 0.06);
+        --accent: #b3aeff;
+        --accent-strong: #8f8aff;
+        --accent-soft: rgba(168, 163, 255, 0.14);
+        --accent-ink: #d4d1ff;
+        --accent-btn-ink: #17151f;
+        --sage: #88d0b3;
+        --amber: #e6cb80;
+        --danger: #e0907c;
+        --shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        --radius: 18px;
+      }
+      body[data-theme='light'] {
+        --bg: #e9e3da;
+        --paper: #faf8f5;
+        --panel: #fffdfa;
+        --panel-2: rgba(255, 255, 255, 0.56);
+        --panel-3: rgba(255, 255, 255, 0.84);
+        --ink: #1b1a18;
+        --ink-soft: #45413c;
+        --muted: #6d675f;
+        --faint: #8a847b;
+        --line: rgba(27, 26, 22, 0.11);
+        --line-soft: rgba(27, 26, 22, 0.06);
+        --accent: #5b56d6;
+        --accent-strong: #4a45c0;
+        --accent-soft: #eeecff;
+        --accent-ink: #4a45c0;
+        --accent-btn-ink: #ffffff;
+        --sage: #1f8a6a;
+        --amber: #8d6b14;
+        --danger: #a8432c;
+        --shadow: 0 40px 100px rgba(72, 58, 38, 0.22);
+      }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+        background:
+          radial-gradient(900px 560px at 12% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 68%),
+          radial-gradient(760px 520px at 102% 104%, color-mix(in srgb, var(--sage) 8%, transparent), transparent 72%),
+          var(--bg);
+        overflow-x: hidden;
+      }
+      button, input, select { font: inherit; color: inherit; }
+      button { border: 0; background: none; padding: 0; cursor: pointer; }
+      a { color: var(--accent); }
+      .icon { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+      .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+      .stage { min-height: 100vh; display: grid; place-items: center; padding: 30px 30px 38px; position: relative; }
+      .ambient { position: fixed; inset: 0; pointer-events: none; opacity: 0.7; background: radial-gradient(400px 320px at 78% 18%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%); }
+      .settings-window {
+        width: min(1280px, calc(100vw - 60px));
+        height: min(850px, calc(100vh - 82px));
+        min-height: 620px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: color-mix(in srgb, var(--paper) 94%, transparent);
+        box-shadow: var(--shadow), inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        isolation: isolate;
+      }
+      .settings-window::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 36%, color-mix(in srgb, var(--sage) 4%, transparent));
+        pointer-events: none;
+        z-index: -1;
+      }
+      .window-bar {
+        height: 52px;
+        flex: 0 0 52px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line-soft);
+        background: color-mix(in srgb, var(--paper) 76%, transparent);
+      }
+      .traffic { display: flex; gap: 7px; }
+      .traffic i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+      .traffic i:nth-child(1) { background: #e06c5d; }
+      .traffic i:nth-child(2) { background: #e3b34f; }
+      .traffic i:nth-child(3) { background: #6bbd86; }
+      .window-title { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+      .window-title strong { color: var(--ink); font-weight: 500; }
+      .window-title .slash { color: var(--faint); }
+      .window-mark {
+        width: 19px; height: 19px; border-radius: 6px; display: grid; place-items: center;
+        font-family: var(--serif); font-size: 12px; color: #fff; background: linear-gradient(145deg, #8f8aff, #4a45c0);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+      }
+      .window-tools { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+      .saved { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); }
+      .saved i { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 12%, transparent); }
+      .theme-toggle, .close {
+        height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2);
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 10px;
+      }
+      .theme-toggle { padding: 0 9px; }
+      .close { width: 28px; font-size: 15px; }
+      .theme-toggle:hover, .close:hover { color: var(--ink); border-color: var(--line); }
+      .settings-shell { flex: 1; min-height: 0; display: grid; grid-template-columns: 236px minmax(0, 1fr) 294px; }
+      .nav { min-height: 0; display: flex; flex-direction: column; padding: 18px 13px 14px; border-right: 1px solid var(--line-soft); background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 52%, transparent), transparent 72%); }
+      .nav-brand { display: flex; align-items: center; justify-content: space-between; padding: 1px 9px 17px; }
+      .wordmark { font-family: var(--serif); font-size: 22px; letter-spacing: -0.03em; }
+      .wordmark span { color: var(--accent); }
+      .version { font-family: var(--mono); font-size: 8.5px; color: var(--faint); border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; }
+      .nav-search-wrap { position: relative; margin: 0 0 15px; }
+      .nav-search { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel-2); color: var(--muted); }
+      .nav-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 11px; }
+      .nav-search input::placeholder { color: var(--faint); }
+      .nav-search kbd { font-size: 8px; color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
+      .nav-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 0 10px; }
+      .nav-group { margin-top: 16px; }
+      .nav-group:first-child { margin-top: 0; }
+      .nav-group-label { margin: 0 0 5px; padding: 0 9px; font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+      .nav-item { width: 100%; height: 38px; display: flex; align-items: center; gap: 9px; padding: 0 9px; border-radius: 9px; color: var(--muted); font-size: 11.5px; text-align: left; position: relative; }
+      .nav-item .icon { width: 14px; height: 14px; color: var(--faint); }
+      .nav-item:hover { background: var(--panel-2); color: var(--ink); }
+      .nav-item.is-active { background: var(--accent-soft); color: var(--ink); }
+      .nav-item.is-active::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; border-radius: 2px; background: var(--accent); }
+      .nav-item.is-active .icon { color: var(--accent); }
+      .nav-count { margin-left: auto; min-width: 17px; height: 17px; border-radius: 999px; display: grid; place-items: center; background: var(--panel-3); color: var(--faint); font-size: 8.5px; }
+      .nav-item.is-active .nav-count { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+      .nav-foot { padding-top: 10px; }
+      .local-card { display: flex; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel-2); color: var(--muted); font-size: 9.5px; line-height: 1.45; }
+      .local-card .icon { color: var(--sage); width: 14px; height: 14px; margin-top: 1px; }
+      .local-card strong { display: block; color: var(--ink); font-size: 10px; font-weight: 500; margin-bottom: 2px; }
+      .help-link { display: flex; align-items: center; gap: 7px; padding: 9px; margin-top: 4px; color: var(--faint); font-size: 9.5px; }
+      .main { min-width: 0; overflow-y: auto; padding: 28px 34px 40px; scroll-behavior: smooth; }
+      .main::-webkit-scrollbar { width: 9px; }
+      .main::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink) 12%, transparent); border: 2px solid transparent; background-clip: padding-box; border-radius: 8px; }
+      .rail { min-width: 0; overflow-y: auto; padding: 25px 18px 30px; border-left: 1px solid var(--line-soft); background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 38%, transparent), transparent 74%); }
+      .prototype-note { position: fixed; left: 0; right: 0; bottom: 9px; text-align: center; color: color-mix(in srgb, var(--ink) 44%, transparent); font-size: 9px; letter-spacing: .06em; pointer-events: none; }
+      @media (max-width: 1080px) {
+        .settings-shell { grid-template-columns: 220px minmax(0, 1fr); }
+        .rail { display: none; }
+      }
+      @media (max-width: 760px) {
+        .stage { padding: 0; }
+        .settings-window { width: 100%; height: 100vh; min-height: 0; border-radius: 0; border: 0; }
+        .settings-shell { grid-template-columns: 1fr; }
+        .nav { display: none; }
+        .main { padding: 22px 18px 34px; }
+        .window-bar { grid-template-columns: auto 1fr; }
+        .window-title { justify-content: center; }
+        .window-tools .saved, .window-tools .theme-toggle span, .prototype-note { display: none; }
+      }
+      /* --- Pages et sections ------------------------------------- */
+      .page { display: none; max-width: 720px; margin: 0 auto; }
+      .page.is-active { display: block; animation: pageIn .28s var(--ease, ease) both; }
+      @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } }
+      .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+      .page-head > div:first-child { min-width: 0; }
+      .eyebrow { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+      .eyebrow b { font-family: var(--mono); font-weight: 500; color: var(--accent); }
+      .page h1 { margin: 9px 0 7px; font-family: var(--serif); font-size: 33px; font-weight: 400; line-height: 1.04; letter-spacing: -.028em; }
+      .page-head .lead { max-width: 540px; margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--muted); }
+      .page-actions { display: flex; flex: none; gap: 7px; padding-top: 2px; }
+      .subtabs { display: flex; gap: 0; margin: 0 0 17px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+      .subtab { position: relative; flex: none; margin-right: 18px; padding: 0 1px 9px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+      .subtab:hover { color: var(--ink); }
+      .subtab.is-active { color: var(--ink); }
+      .subtab.is-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+      .subpanel { display: none; }
+      .subpanel.is-active { display: block; animation: pageIn .22s ease both; }
+      .panel { margin: 0 0 11px; padding: 15px 17px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel-2); }
+      .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+      .panel-head > div { min-width: 0; }
+      .panel-kicker { margin: 0 0 4px; font-family: var(--mono); font-size: 8.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
+      .panel h2 { margin: 0 0 3px; font-size: 13px; font-weight: 600; letter-spacing: -.012em; }
+      .panel-head p { max-width: 470px; margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+      .panel-head .tag { flex: none; }
+      .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line-soft); }
+      .panel-body > .row:first-child { border-top: 0; padding-top: 1px; }
+      .row-label { font-size: 11.5px; font-weight: 500; }
+      .row-hint { max-width: 430px; margin: 3px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+      .row-control { display: flex; align-items: center; gap: 7px; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--ink); font-size: 10px; white-space: nowrap; }
+      .btn:hover { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
+      .btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-btn-ink); }
+      .btn.ghost { background: transparent; color: var(--muted); }
+      .btn.danger { color: var(--danger); }
+      .btn.wide { width: 100%; justify-content: center; }
+      .btn .icon { width: 13px; height: 13px; }
+      .switch { position: relative; width: 34px; height: 20px; flex: none; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-3); transition: background .18s ease, border-color .18s ease; }
+      .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: left .18s ease, background .18s ease; }
+      .switch[data-on='true'] { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 34%, var(--panel-3)); }
+      .switch[data-on='true']::after { left: 16px; background: var(--accent-ink); }
+      .tag { display: inline-flex; align-items: center; gap: 5px; height: 19px; padding: 0 7px; border-radius: 999px; background: var(--panel-3); color: var(--muted); font-size: 9px; white-space: nowrap; }
+      .tag.good { background: color-mix(in srgb, var(--sage) 13%, transparent); color: var(--sage); }
+      .tag.accent { background: var(--accent-soft); color: var(--accent-ink); }
+      .choices { display: flex; flex-wrap: wrap; gap: 6px; }
+      .choice { height: 30px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); color: var(--muted); font-size: 10px; }
+      .choice.is-active { border-color: color-mix(in srgb, var(--accent) 52%, var(--line)); background: var(--accent-soft); color: var(--ink); }
+      .mode-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .mode-card { position: relative; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); text-align: left; }
+      .mode-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+      .mode-card.is-active { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 3px var(--accent-soft); }
+      .mode-thumb { height: 48px; display: grid; grid-template-columns: 26% 1fr; overflow: hidden; margin-bottom: 8px; border: 1px solid var(--line-soft); border-radius: 8px; }
+      .mode-thumb i { display: block; }
+      .mode-thumb .mt-side { background: color-mix(in srgb, var(--ink) 7%, transparent); border-right: 1px solid var(--line-soft); }
+      .mode-thumb .mt-main { padding: 7px 6px; background: var(--paper); }
+      .mode-thumb .mt-main i { width: 62%; height: 4px; margin-bottom: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 18%, transparent); }
+      .mode-thumb .mt-main i:nth-child(2) { width: 88%; height: 11px; margin: 0 0 5px; border-radius: 4px; background: var(--accent-soft); }
+      .mode-thumb .mt-main i:nth-child(3) { width: 100%; height: 14px; margin: 0; border-radius: 4px; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+      .mode-thumb[data-mode='dark'] .mt-main { background: #17171b; }
+      .mode-thumb[data-mode='dark'] .mt-main i { background: rgba(255,255,255,.16); }
+      .mode-thumb[data-mode='dark'] .mt-main i:nth-child(2) { background: rgba(168,163,255,.18); }
+      .mode-thumb[data-mode='system'] { grid-template-columns: 26% 1fr; }
+      .mode-thumb[data-mode='system'] .mt-side { background: linear-gradient(90deg, #f2ede5 50%, #17171b 50%); }
+      .mode-thumb[data-mode='system'] .mt-main { background: linear-gradient(90deg, #faf8f5 50%, #17171b 50%); }
+      .mode-card strong { display: block; font-size: 11px; font-weight: 500; }
+      .mode-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+      .mode-check { position: absolute; top: 7px; right: 7px; width: 15px; height: 15px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-btn-ink); }
+      .mode-check[hidden] { display: none; }
+      .mode-check .icon { width: 10px; height: 10px; }
+      .swatches { display: flex; flex-wrap: wrap; gap: 11px; }
+      .swatch { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--muted); font-size: 8.5px; }
+      .swatch i { width: 26px; height: 26px; border: 1px solid color-mix(in srgb, #000 12%, transparent); border-radius: 50%; background: var(--c); }
+      .swatch.is-active i { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--c); }
+      .swatch.is-active { color: var(--ink); }
+      .engine-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+      .engine { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); text-align: left; }
+      .engine:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+      .engine.is-active { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--accent-soft); }
+      .engine-mark { width: 25px; height: 25px; flex: none; display: grid; place-items: center; border-radius: 7px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; }
+      .engine-copy { min-width: 0; }
+      .engine-name { display: block; font-size: 10.5px; font-weight: 500; }
+      .engine-host { display: block; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+      .engine .icon { margin-left: auto; color: var(--accent); }
+      .keyword-row { display: flex; flex-wrap: wrap; gap: 6px; }
+      .keyword { display: inline-flex; align-items: center; gap: 6px; height: 27px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); font-size: 9.5px; }
+      .keyword b { font-family: var(--mono); color: var(--accent); font-weight: 500; }
+      .level-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+      .level { padding: 10px 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); text-align: left; }
+      .level.is-active { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--accent-soft); }
+      .level-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+      .level-head strong { font-size: 11px; font-weight: 500; }
+      .level-head em { padding: 2px 5px; border-radius: 999px; background: color-mix(in srgb, var(--sage) 13%, transparent); color: var(--sage); font-size: 7.5px; font-style: normal; }
+      .level p { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.4; }
+      .level .level-risk { margin-top: 6px; color: var(--faint); }
+      .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 8px; border-top: 1px solid var(--line-soft); }
+      .stat { padding: 11px 0 0; }
+      .stat b { display: block; font-family: var(--serif); font-size: 23px; font-weight: 400; line-height: 1; }
+      .stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+      .agent-hero { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 13px; align-items: center; margin-bottom: 11px; padding: 16px; border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line)); border-radius: 17px; background: linear-gradient(135deg, var(--accent-soft), var(--panel-2) 72%); }
+      .agent-mark { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+      .agent-mark .icon { width: 22px; height: 22px; }
+      .agent-hero h2 { margin: 0 0 3px; font-size: 15px; font-weight: 500; }
+      .agent-hero p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+      .provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+      .provider { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); text-align: left; }
+      .provider.is-active { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); background: var(--accent-soft); }
+      .provider-mark { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 7px; background: var(--brand); color: #fff; font-size: 9px; font-weight: 700; }
+      .provider-name { display: block; font-size: 10.5px; font-weight: 500; }
+      .provider-state { display: block; margin-top: 1px; color: var(--muted); font-size: 8.5px; }
+      .provider .icon { margin-left: auto; color: var(--faint); }
+      .version-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+      .version-number { font-family: var(--serif); font-size: 32px; line-height: 1; letter-spacing: -.02em; }
+      .version-meta { color: var(--muted); font-size: 10px; line-height: 1.5; text-align: right; }
+      .shortcut-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 9px 0; border-top: 1px solid var(--line-soft); }
+      .shortcut-row:first-child { border-top: 0; }
+      .shortcut-row span { font-size: 11px; }
+      .shortcut-row kbd, kbd { padding: 2px 6px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); color: var(--muted); font-family: var(--sans); font-size: 9px; }
+      /* --- Recherche, rail et aperçu -------------------------------- */
+      .search-popover { position: absolute; z-index: 20; top: 45px; left: 0; right: 0; max-height: 300px; overflow: auto; padding: 7px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 18px 50px -20px rgba(0,0,0,.45); }
+      .search-popover[hidden] { display: none; }
+      .popover-label { margin: 3px 7px 6px; color: var(--faint); font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; }
+      .search-result { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px; border-radius: 8px; text-align: left; }
+      .search-result:hover { background: var(--panel-2); }
+      .search-result .icon { color: var(--accent); width: 13px; height: 13px; }
+      .search-result strong { display: block; font-size: 10.5px; font-weight: 500; }
+      .search-result small { display: block; margin-top: 1px; color: var(--muted); font-size: 8.5px; }
+      .search-empty { padding: 10px 8px; color: var(--muted); font-size: 10px; }
+      .rail-panel { display: none; }
+      .rail-panel.is-active { display: block; animation: pageIn .26s ease both; }
+      .rail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+      .rail-head p { margin: 0; color: var(--faint); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; }
+      .rail-card { margin-bottom: 10px; padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); }
+      .rail-card h3 { margin: 0 0 7px; font-size: 11px; font-weight: 500; }
+      .rail-card p { margin: 0; color: var(--muted); font-size: 9.5px; line-height: 1.5; }
+      .rail-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line-soft); font-size: 9.5px; }
+      .rail-row:first-of-type { border-top: 0; }
+      .rail-row span { color: var(--muted); }
+      .rail-row strong { font-weight: 500; }
+      .preview-shell { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 18px 34px -28px rgba(0,0,0,.7); }
+      .preview-bar { height: 24px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--line-soft); background: var(--panel-2); }
+      .preview-bar i { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+      .preview-body { display: grid; grid-template-columns: 43px minmax(0, 1fr); min-height: 138px; }
+      .preview-side { display: flex; flex-direction: column; gap: 5px; padding: 9px 5px; border-right: 1px solid var(--line-soft); background: var(--panel-2); }
+      .preview-side i { display: block; height: 5px; border-radius: 3px; background: var(--line); }
+      .preview-side i:nth-child(2) { width: 74%; background: var(--accent-soft); }
+      .preview-main { padding: 10px; }
+      .preview-date { width: 44px; height: 4px; margin-bottom: 8px; border-radius: 2px; background: var(--line); }
+      .preview-greeting { margin-bottom: 8px; font-family: var(--serif); font-size: 20px; line-height: 1; letter-spacing: -.03em; }
+      .preview-field { height: 21px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2); }
+      .preview-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+      .preview-tiles i { display: block; height: 27px; border: 1px solid var(--line-soft); border-radius: 6px; background: var(--panel-2); }
+      .preview-tiles i:first-child { background: var(--accent-soft); }
+      .rail-note { margin: 8px 0 0; color: var(--faint); font-size: 8.5px; line-height: 1.4; }
+      .shield-badge { display: grid; place-items: center; width: 46px; height: 46px; margin: 1px auto 9px; border: 1px solid color-mix(in srgb, var(--sage) 30%, var(--line)); border-radius: 50%; background: color-mix(in srgb, var(--sage) 10%, transparent); color: var(--sage); }
+      .shield-badge .icon { width: 20px; height: 20px; }
+      .rail-list { margin: 0; padding: 0; list-style: none; }
+      .rail-list li { display: flex; align-items: center; gap: 7px; padding: 5px 0; color: var(--muted); font-size: 9.5px; }
+      .rail-list .icon { color: var(--sage); width: 12px; height: 12px; }
+      .rail-kbd { display: flex; flex-wrap: wrap; gap: 5px; }
+      .rail-kbd span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2); color: var(--muted); font-size: 8.5px; }
+      .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 12px; }
+      .summary-card { position: relative; padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); text-align: left; transition: transform .18s ease, border-color .18s ease; }
+      .summary-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+      .summary-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .summary-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+      .summary-icon .icon { width: 14px; height: 14px; }
+      .summary-state { padding: 3px 6px; border-radius: 999px; background: color-mix(in srgb, var(--sage) 12%, transparent); color: var(--sage); font-size: 8px; }
+      .summary-card h2 { margin: 11px 0 3px; font-size: 13.5px; font-weight: 500; letter-spacing: -.01em; }
+      .summary-card p { margin: 0; color: var(--muted); font-size: 9.5px; line-height: 1.45; }
+      .summary-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 9px; color: var(--accent); font-size: 9.5px; }
+      .discover { display: flex; flex-direction: column; }
+      .discover button { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft); text-align: left; }
+      .discover button:first-child { border-top: 0; }
+      .discover button:hover strong { color: var(--accent); }
+      .discover .icon { color: var(--accent); }
+      .discover strong { display: block; font-size: 11px; font-weight: 500; }
+      .discover small { display: block; margin-top: 2px; color: var(--muted); font-size: 9.5px; }
+      .discover .icon:last-child { margin-left: auto; color: var(--faint); }
+      .page .panel:last-child { margin-bottom: 0; }
+      .settings-window, .nav, .rail, .panel, .summary-card, .btn, .tag, .switch { transition: background-color .22s ease, border-color .22s ease, color .22s ease; }
+      @media (max-width: 1180px) {
+        .main { padding: 25px 28px 36px; }
+        .page h1 { font-size: 30px; }
+        .summary-grid { grid-template-columns: 1fr; }
+        .summary-card { padding: 12px; }
+      }
+      @media (max-width: 760px) {
+        .page-head { display: block; }
+        .page-actions { margin-top: 12px; }
+        .mode-grid, .level-grid { grid-template-columns: 1fr; }
+        .engine-grid, .provider-grid { grid-template-columns: 1fr; }
+        .row { grid-template-columns: 1fr; gap: 8px; }
+        .row-control { justify-content: flex-start; flex-wrap: wrap; }
+        .stats { gap: 10px; }
+        .stat b { font-size: 21px; }
+        .search-popover { position: fixed; top: 120px; left: 16px; right: 16px; }
+      }
+    </style>
+  </head>
+  <body data-theme="light" data-page="overview">
+    <svg class="svg-defs" aria-hidden="true"><defs><symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2.2-.9 2.2-2.1 0-1.4-1.1-2.2-1.1-3.3 0-1.2 1-2.1 2.3-2.1h2.1a3 3 0 0 0 3-3A8.5 8.5 0 0 0 12 3.5Z"/><path d="M7.5 11h.01M9.5 7.2h.01M13.6 6.6h.01M6.9 15.1h.01"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m14.8 9.2-1.7 4.1-4.1 1.7 1.7-4.1 4.1-1.7Z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v5.1c0 4.4-2.9 7.5-7 9.5-4.1-2-7-5.1-7-9.5V6l7-2.6Z"/><path d="m9.2 12 1.9 1.9 3.8-4"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/><path d="m5.2 15 .6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7Z"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h13M21 17h-1"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="19" cy="17" r="2"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.2"/><path d="m15.1 15.1 4.4 4.4"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.3A8.2 8.2 0 0 1 9.7 4a8.3 8.3 0 1 0 10.3 10.3Z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10M12 14v2.5"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+<symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2 2M14 9l2 2"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 0 4 23V5.5Z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19v1.5h16V19"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M4 5v5h5"/><path d="M4.8 9.5A8.5 8.5 0 1 1 12 20.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M3 12s3.3-6 9-6 9 6 9 6-3.3 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.7"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.5h6l2 2h9v10.5a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19V6.5Z"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-note" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.4 3.2 5.3 3.2 8.5S14.2 18.1 12 20.5C9.8 18.1 8.8 15.2 8.8 12S9.8 5.9 12 3.5Z"/></symbol>
+<symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></symbol></defs></svg>
+    <div class="stage">
+      <div class="ambient" aria-hidden="true"></div>
+      <div class="settings-window" role="dialog" aria-label="Réglages Vela — maquette">
+        <header class="window-bar">
+          <div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="window-title"><span class="window-mark">V</span><strong>Réglages</strong><span class="slash">/</span><span id="crumb">Vue d’ensemble</span></div>
+          <div class="window-tools">
+            <span class="saved"><i></i> Enregistré</span>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Changer de thème"><svg class="icon"><use href="#i-moon"></use></svg><span>Sombre</span></button>
+            <button class="close" type="button" aria-label="Fermer">×</button>
+          </div>
+        </header>
+        <div class="settings-shell">
+          <aside class="nav">
+            <div class="nav-brand"><span class="wordmark">Vela<span>.</span></span><span class="version">0.3.35</span></div>
+            <div class="nav-search-wrap">
+              <label class="nav-search"><svg class="icon"><use href="#i-search"></use></svg><input id="settingsSearch" type="search" placeholder="Chercher un réglage…" autocomplete="off" aria-label="Chercher un réglage" /><kbd>⌘F</kbd></label>
+              <div class="search-popover" id="searchPopover" hidden></div>
+            </div>
+            <nav class="nav-scroll" aria-label="Sections des réglages">
+              <div class="nav-group">
+                <p class="nav-group-label">Repères</p>
+                <button type="button" class="nav-item is-active" data-page="overview"><svg class="icon"><use href="#i-grid"></use></svg><span>Vue d’ensemble</span><span class="nav-count">3</span></button>
+              </div>
+              <div class="nav-group">
+                <p class="nav-group-label">Expérience</p>
+                <button type="button" class="nav-item" data-page="appearance"><svg class="icon"><use href="#i-palette"></use></svg><span>Apparence</span></button>
+                <button type="button" class="nav-item" data-page="navigation"><svg class="icon"><use href="#i-compass"></use></svg><span>Navigation</span></button>
+              </div>
+              <div class="nav-group">
+                <p class="nav-group-label">Contrôle</p>
+                <button type="button" class="nav-item" data-page="privacy"><svg class="icon"><use href="#i-shield"></use></svg><span>Confidentialité</span></button>
+                <button type="button" class="nav-item" data-page="agent"><svg class="icon"><use href="#i-sparkles"></use></svg><span>Agent</span></button>
+              </div>
+              <div class="nav-group">
+                <p class="nav-group-label">Application</p>
+                <button type="button" class="nav-item" data-page="system"><svg class="icon"><use href="#i-sliders"></use></svg><span>Système</span></button>
+              </div>
+            </nav>
+            <div class="nav-foot">
+              <div class="local-card"><svg class="icon"><use href="#i-lock"></use></svg><span><strong>100 % local</strong>Aucun compte, aucune synchronisation.</span></div>
+              <button type="button" class="help-link"><svg class="icon"><use href="#i-info"></use></svg> Centre d’aide</button>
+            </div>
+          </aside>
+          <main class="main" id="main"><section class="page is-active" data-page="overview">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>00</b> Réglages / Vue d’ensemble</p>
+                <h1>Tout Vela, en un coup d’œil.</h1>
+                <p class="lead">Les choix qui façonnent l’interface, la navigation et la confidentialité. Tout est local, tout s’applique immédiatement.</p>
+              </div>
+              <div class="page-actions">
+                <button class="btn primary" type="button" data-goto="appearance"><svg class="icon"><use href="#i-palette"></use></svg>Personnaliser</button>
+              </div>
+            </div>
+            <div class="summary-grid">
+              <button class="summary-card" type="button" data-goto="appearance" data-goto-tab="appearance-mode">
+                <div class="summary-top"><span class="summary-icon"><svg class="icon"><use href="#i-palette"></use></svg></span><span class="summary-state">Personnalisé</span></div>
+                <p class="panel-kicker">Apparence</p><h2>Clair · Indigo</h2><p>Mode clair, accent indigo, densité normale.</p><span class="summary-link">Modifier <svg class="icon"><use href="#i-arrow"></use></svg></span>
+              </button>
+              <button class="summary-card" type="button" data-goto="navigation" data-goto-tab="navigation-search">
+                <div class="summary-top"><span class="summary-icon"><svg class="icon"><use href="#i-compass"></use></svg></span><span class="summary-state">Prêt</span></div>
+                <p class="panel-kicker">Navigation</p><h2>DuckDuckGo · Reprise</h2><p>Recherche privée, onglets restaurés au lancement.</p><span class="summary-link">Modifier <svg class="icon"><use href="#i-arrow"></use></svg></span>
+              </button>
+              <button class="summary-card" type="button" data-goto="privacy" data-goto-tab="privacy-protection">
+                <div class="summary-top"><span class="summary-icon"><svg class="icon"><use href="#i-shield"></use></svg></span><span class="summary-state">Actif</span></div>
+                <p class="panel-kicker">Confidentialité</p><h2>Traqueurs bloqués</h2><p>24 requêtes arrêtées depuis le lancement.</p><span class="summary-link">Voir le bilan <svg class="icon"><use href="#i-arrow"></use></svg></span>
+              </button>
+              <button class="summary-card" type="button" data-goto="agent" data-goto-tab="agent-model">
+                <div class="summary-top"><span class="summary-icon"><svg class="icon"><use href="#i-sparkles"></use></svg></span><span class="summary-state">Local</span></div>
+                <p class="panel-kicker">Agent</p><h2>Démo locale</h2><p>Aucune clé, aucun texte envoyé à un modèle.</p><span class="summary-link">Configurer <svg class="icon"><use href="#i-arrow"></use></svg></span>
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div><p class="panel-kicker">À découvrir</p><h2>Trois réglages qui changent le quotidien</h2><p>Des chemins directs, sans parcourir toutes les sections.</p></div><span class="tag">3 suggestions</span></div>
+              <div class="discover">
+                <button type="button" data-goto="appearance" data-goto-tab="appearance-interface"><svg class="icon"><use href="#i-palette"></use></svg><span><strong>Accordez l’interface à votre rythme</strong><small>Densité, taille du texte, position de la barre latérale.</small></span><svg class="icon"><use href="#i-chevron"></use></svg></button>
+                <button type="button" data-goto="navigation" data-goto-tab="navigation-startup"><svg class="icon"><use href="#i-compass"></use></svg><span><strong>Reprenez vos onglets au lancement</strong><small>Choisissez ce que Vela ouvre au démarrage.</small></span><svg class="icon"><use href="#i-chevron"></use></svg></button>
+                <button type="button" data-goto="privacy" data-goto-tab="privacy-flows"><svg class="icon"><use href="#i-eye"></use></svg><span><strong>Vérifiez ce qui sort de l’appareil</strong><small>Chaque flux réseau, son déclencheur et ses données.</small></span><svg class="icon"><use href="#i-chevron"></use></svg></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" data-page="appearance">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>01</b> Expérience</p>
+                <h1>Apparence</h1>
+                <p class="lead">Une seule section pour la lumière, la couleur et le mouvement. Les anciens réglages Tweaks et Thèmes vivent désormais ici.</p>
+              </div>
+              <div class="page-actions"><button class="btn ghost" type="button"><svg class="icon"><use href="#i-refresh"></use></svg>Réinitialiser</button></div>
+            </div>
+            <div class="subtabs" role="tablist" aria-label="Sous-sections de l’apparence">
+              <button class="subtab is-active" type="button" role="tab" data-tab="appearance-mode">Mode &amp; couleur</button>
+              <button class="subtab" type="button" role="tab" data-tab="appearance-home">Accueil</button>
+              <button class="subtab" type="button" role="tab" data-tab="appearance-interface">Interface</button>
+              <button class="subtab" type="button" role="tab" data-tab="appearance-accessibility">Accessibilité</button>
+            </div>
+            <div class="subpanel is-active" data-subpanel="appearance-mode">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Mode</p><h2>Choisir la lumière</h2><p>Le mode s’applique à toute l’interface Vela, jamais au contenu des pages.</p></div><span class="tag">Immédiat</span></div>
+                <div class="mode-grid">
+                  <button class="mode-card is-active" type="button" data-mode-card="light"><div class="mode-thumb" data-mode="light"><i class="mt-side"></i><div class="mt-main"><i></i><i></i><i></i></div></div><strong>Clair</strong><small>Toujours clair</small><span class="mode-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+                  <button class="mode-card" type="button" data-mode-card="dark"><div class="mode-thumb" data-mode="dark"><i class="mt-side"></i><div class="mt-main"><i></i><i></i><i></i></div></div><strong>Sombre</strong><small>Toujours sombre</small><span class="mode-check" hidden><svg class="icon"><use href="#i-check"></use></svg></span></button>
+                  <button class="mode-card" type="button" data-mode-card="system"><div class="mode-thumb" data-mode="system"><i class="mt-side"></i><div class="mt-main"><i></i><i></i><i></i></div></div><strong>Système</strong><small>Suit votre appareil</small><span class="mode-check" hidden><svg class="icon"><use href="#i-check"></use></svg></span></button>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Accent</p><h2>La couleur de Vela</h2><p>Une teinte, déclinée sur le châssis. Le contenu des sites n’est jamais recoloré.</p></div><span class="tag accent">Indigo</span></div>
+                <div class="swatches">
+                  <button class="swatch is-active" type="button" style="--c:#5b56d6"><i></i><span>Indigo</span></button>
+                  <button class="swatch" type="button" style="--c:#3f6f8f"><i></i><span>Ardoise</span></button>
+                  <button class="swatch" type="button" style="--c:#2f7d5b"><i></i><span>Sauge</span></button>
+                  <button class="swatch" type="button" style="--c:#a87526"><i></i><span>Ambre</span></button>
+                  <button class="swatch" type="button" style="--c:#b7533c"><i></i><span>Corail</span></button>
+                  <button class="swatch" type="button" style="--c:#a65078"><i></i><span>Rose</span></button>
+                  <button class="swatch" type="button" style="--c:#2f8a8c"><i></i><span>Cyan</span></button>
+                  <button class="swatch" type="button" style="--c:var(--accent)"><i></i><span>Libre</span></button>
+                </div>
+                <div class="row" style="margin-top:9px"><div><div class="row-label">Teinte libre</div><p class="row-hint">HEX ou RVB, avec correction automatique du contraste.</p></div><div class="row-control"><span class="tag">#5B56D6</span><button class="btn" type="button">Modifier</button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Automatique</p><h2>Ce qui change sans vous</h2><p>Deux automatismes facultatifs, visibles et réversibles.</p></div></div>
+                <div class="row"><div><div class="row-label">Thème selon l’heure</div><p class="row-hint">Clair de 07 h à 19 h, sombre le soir, avec la même couleur.</p></div><div class="row-control"><span class="tag good">Actif</span><button class="switch" type="button" data-on="true" role="switch" aria-checked="true" aria-label="Thème selon l’heure"><span></span></button></div></div>
+                <div class="row"><div><div class="row-label">Un thème par espace</div><p class="row-hint">Chaque espace garde son ambiance ; sinon le thème global s’applique.</p></div><div class="row-control"><span class="tag">Désactivé</span><button class="switch" type="button" data-on="false" role="switch" aria-checked="false" aria-label="Un thème par espace"><span></span></button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Avancé</p><h2>Personnalisation fine</h2><p>Les réglages qui n’ont pas besoin d’être visibles au quotidien.</p></div><svg class="icon" style="color:var(--faint)"><use href="#i-chevron"></use></svg></div>
+                <div class="row"><div><div class="row-label">Verre dépoli</div><p class="row-hint">Intensité du flou sur les panneaux et le châssis.</p></div><div class="row-control"><span class="tag">18 px</span><button class="btn ghost" type="button">Ajuster</button></div></div>
+                <div class="row"><div><div class="row-label">Réinitialiser l’apparence</div><p class="row-hint">Couleur, verre, fond et options d’interface reviennent à l’origine.</p></div><button class="btn danger" type="button">Réinitialiser</button></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="appearance-home">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Accueil</p><h2>Le fond derrière le mot d’accueil</h2><p>Une ambiance douce, une couleur unie ou une image qui reste sur cet appareil.</p></div><span class="tag">Local</span></div>
+                <div class="choices">
+                  <button class="choice is-active" type="button">Dégradé du thème</button>
+                  <button class="choice" type="button">Ciel</button>
+                  <button class="choice" type="button">Couleur unie</button>
+                  <button class="choice" type="button">Image locale</button>
+                </div>
+                <div class="row" style="margin-top:10px"><div><div class="row-label">Intensité</div><p class="row-hint">La présence du fond derrière le contenu.</p></div><div class="choices"><button class="choice" type="button">Discret</button><button class="choice is-active" type="button">Normal</button><button class="choice" type="button">Marqué</button></div></div>
+                <div class="row"><div><div class="row-label">Flou de l’image</div><p class="row-hint">Adoucit une photo locale sans la quitter.</p></div><div class="row-control"><span class="tag">18 px</span><button class="btn ghost" type="button">Choisir une image</button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Ciel</p><h2>Braises ou nuit étoilée</h2><p>Le ciel animé accompagne le thème Braise. Il se fige avec « Réduire les animations ».</p></div><span class="tag">Braise</span></div>
+                <div class="choices"><button class="choice is-active" type="button">Braises</button><button class="choice" type="button">Nuit étoilée</button></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="appearance-interface">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Interface</p><h2>La densité du châssis</h2><p>Ces réglages ne touchent jamais la taille du contenu des pages web.</p></div></div>
+                <div class="row"><div><div class="row-label">Densité</div><p class="row-hint">Compacte pour voir plus, aérée pour respirer.</p></div><div class="choices"><button class="choice" type="button">Compacte</button><button class="choice is-active" type="button">Normale</button><button class="choice" type="button">Aérée</button></div></div>
+                <div class="row"><div><div class="row-label">Taille du texte</div><p class="row-hint">S’applique aux libellés et aux contrôles de Vela.</p></div><div class="choices"><button class="choice" type="button">Petite</button><button class="choice is-active" type="button">Normale</button><button class="choice" type="button">Grande</button></div></div>
+                <div class="row"><div><div class="row-label">Barre latérale</div><p class="row-hint">À gauche dans le sens de lecture, ou à droite.</p></div><div class="choices"><button class="choice is-active" type="button">Gauche</button><button class="choice" type="button">Droite</button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Aperçu</p><h2>Le châssis, pas les pages</h2><p>La densité choisie s’applique aux réglages, à la barre latérale, aux onglets et aux panneaux.</p></div><svg class="icon" style="color:var(--faint)"><use href="#i-eye"></use></svg></div>
+                <div class="rail-kbd"><span>Barre latérale</span><span>Onglets</span><span>Panneaux</span><span>Réglages</span></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="appearance-accessibility">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Accessibilité</p><h2>Lire et naviguer autrement</h2><p>Deux réglages globaux, appliqués instantanément à toute l’interface.</p></div><span class="tag good">Sans redémarrage</span></div>
+                <div class="row"><div><div class="row-label">Contraste élevé</div><p class="row-hint">Bordures renforcées, transparences supprimées.</p></div><div class="row-control"><span class="tag">Désactivé</span><button class="switch" type="button" data-on="false" role="switch" aria-checked="false" aria-label="Contraste élevé"><span></span></button></div></div>
+                <div class="row"><div><div class="row-label">Réduire les animations</div><p class="row-hint">Fige aussi les ciels animés de l’accueil.</p></div><div class="choices"><button class="choice is-active" type="button">Système</button><button class="choice" type="button">Oui</button><button class="choice" type="button">Non</button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Repère</p><h2>Le contenu des pages reste intact</h2><p>Le zoom des sites est réglé dans Navigation › Pages web. L’accessibilité de Vela ne modifie pas leur rendu.</p></div><button class="btn ghost" type="button" data-goto="navigation" data-goto-tab="navigation-web">Ouvrir <svg class="icon"><use href="#i-arrow"></use></svg></button></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" data-page="navigation">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>02</b> Expérience</p>
+                <h1>Navigation</h1>
+                <p class="lead">La recherche, les onglets et ce que Vela garde. Cinq sous-sections au lieu d’une longue page unique.</p>
+              </div>
+              <div class="page-actions"><button class="btn" type="button"><svg class="icon"><use href="#i-book"></use></svg>Bibliothèque</button></div>
+            </div>
+            <div class="subtabs" role="tablist" aria-label="Sous-sections de la navigation">
+              <button class="subtab is-active" type="button" role="tab" data-tab="navigation-search">Recherche</button>
+              <button class="subtab" type="button" role="tab" data-tab="navigation-startup">Démarrage</button>
+              <button class="subtab" type="button" role="tab" data-tab="navigation-library">Bibliothèque</button>
+              <button class="subtab" type="button" role="tab" data-tab="navigation-downloads">Téléchargements</button>
+              <button class="subtab" type="button" role="tab" data-tab="navigation-web">Pages web</button>
+            </div>
+            <div class="subpanel is-active" data-subpanel="navigation-search">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Moteur</p><h2>Le moteur qui reçoit vos mots</h2><p>Un choix par défaut, des moteurs ajoutés à la demande, et rien qui passe par Vela.</p></div><span class="tag good">Aucun serveur Vela</span></div>
+                <div class="engine-grid">
+                  <button class="engine is-active" type="button" style="--brand:#de5833"><span class="engine-mark">D</span><span class="engine-copy"><span class="engine-name">DuckDuckGo</span><span class="engine-host">duckduckgo.com</span></span><svg class="icon"><use href="#i-check"></use></svg></button>
+                  <button class="engine" type="button" style="--brand:#4285f4"><span class="engine-mark">G</span><span class="engine-copy"><span class="engine-name">Google</span><span class="engine-host">google.com</span></span></button>
+                  <button class="engine" type="button" style="--brand:#5c97ff"><span class="engine-mark">Q</span><span class="engine-copy"><span class="engine-name">Qwant</span><span class="engine-host">qwant.com</span></span></button>
+                  <button class="engine" type="button" style="--brand:#3b5bdb"><span class="engine-mark">S</span><span class="engine-copy"><span class="engine-name">Startpage</span><span class="engine-host">startpage.com</span></span></button>
+                  <button class="engine" type="button" style="--brand:#fb542b"><span class="engine-mark">B</span><span class="engine-copy"><span class="engine-name">Brave</span><span class="engine-host">search.brave.com</span></span></button>
+                  <button class="engine" type="button" style="--brand:#2f7d4f"><span class="engine-mark">E</span><span class="engine-copy"><span class="engine-name">Ecosia</span><span class="engine-host">ecosia.org</span></span></button>
+                  <button class="engine" type="button" style="--brand:#6b7280"><span class="engine-mark">S</span><span class="engine-copy"><span class="engine-name">SearXNG</span><span class="engine-host">searx.be</span></span></button>
+                  <button class="engine" type="button" style="--brand:var(--panel-3)"><span class="engine-mark" style="color:var(--accent);background:var(--accent-soft)">+</span><span class="engine-copy"><span class="engine-name">Ajouter un moteur</span><span class="engine-host">https://… avec %s</span></span></button>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Moteurs ajoutés</p><h2>Recherche locale</h2><p>Votre instance SearXNG, utilisée uniquement quand vous la choisissez.</p></div><span class="tag">1 moteur</span></div>
+                <div class="row"><div><div class="row-label">searx.local</div><p class="row-hint">https://searx.local/search?q=%s</p></div><div class="row-control"><button class="btn ghost" type="button">Modifier</button><button class="btn danger" type="button"><svg class="icon"><use href="#i-close"></use></svg></button></div></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Raccourcis</p><h2>Mots-clés rapides</h2><p>Un mot puis un espace dans la barre d’adresse pour chercher sur un autre moteur.</p></div><button class="btn ghost" type="button"><svg class="icon"><use href="#i-plus"></use></svg>Ajouter</button></div>
+                <div class="keyword-row"><span class="keyword"><b>g</b> → Google</span><span class="keyword"><b>w</b> → Wikipédia</span><span class="keyword"><b>yt</b> → YouTube</span></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="navigation-startup">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Démarrage</p><h2>Ce que Vela ouvre au lancement</h2><p>Reprendre vos onglets, ouvrir l’accueil, ou une page précise.</p></div></div>
+                <div class="choices"><button class="choice is-active" type="button">Reprendre</button><button class="choice" type="button">Accueil</button><button class="choice" type="button">Page précise</button></div>
+                <div class="row" style="margin-top:9px"><div><div class="row-label">Nouvel onglet</div><p class="row-hint">L’accueil garde les raccourcis et la recherche.</p></div><div class="choices"><button class="choice is-active" type="button">Accueil</button><button class="choice" type="button">Page vide</button></div></div>
+              </div>
+              <div class="panel"><div class="panel-head"><div><p class="panel-kicker">Liens</p><h2>Ouvrir dans un nouvel onglet</h2><p>Un lien externe s’ouvre dans l’espace actif, jamais dans une fenêtre séparée.</p></div><span class="tag good">Toujours</span></div></div>
+            </div>
+            <div class="subpanel" data-subpanel="navigation-library">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Marque-pages</p><h2>24 pages gardées</h2><p>Sur cet appareil, jamais synchronisées.</p></div><div class="row-control"><button class="btn ghost" type="button">Importer</button><button class="btn" type="button">Exporter</button></div></div>
+                <div class="row"><div><div class="row-label">Garder la page affichée</div><p class="row-hint"><kbd>⌘D</kbd> garde la page, <kbd>⇧⌘O</kbd> ouvre la liste.</p></div><button class="btn" type="button">Gérer</button></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Historique</p><h2>312 entrées</h2><p>Purge automatique au lancement selon la durée choisie.</p></div><button class="btn danger" type="button">Effacer…</button></div>
+                <div class="choices"><button class="choice" type="button">1 jour</button><button class="choice is-active" type="button">1 semaine</button><button class="choice" type="button">1 mois</button><button class="choice" type="button">Toujours</button></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="navigation-downloads">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Téléchargements</p><h2>Dossier de destination</h2><p>Par défaut, le dossier Téléchargements du système.</p></div><button class="btn" type="button"><svg class="icon"><use href="#i-folder"></use></svg>Choisir</button></div>
+                <div class="row"><div><div class="row-label">Demander où enregistrer</div><p class="row-hint">Une boîte système à chaque fichier.</p></div><div class="row-control"><span class="tag">Désactivé</span><button class="switch" type="button" data-on="false" role="switch" aria-checked="false" aria-label="Demander où enregistrer"><span></span></button></div></div>
+                <div class="row"><div><div class="row-label">Ouvrir après le téléchargement</div><p class="row-hint">Le fichier s’ouvre dans l’app associée, une fois complet.</p></div><div class="row-control"><span class="tag good">Activé</span><button class="switch" type="button" data-on="true" role="switch" aria-checked="true" aria-label="Ouvrir après le téléchargement"><span></span></button></div></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="navigation-web">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Pages web</p><h2>Langue et taille d’affichage</h2><p>La langue annoncée aux sites, et le zoom appliqué à l’ouverture.</p></div></div>
+                <div class="row"><div><div class="row-label">Langue préférée</div><p class="row-hint">Envoyée dans l’en-tête Accept-Language.</p></div><div class="row-control"><span class="tag">Français</span><button class="btn ghost" type="button">Modifier</button></div></div>
+                <div class="row"><div><div class="row-label">Zoom par défaut</div><p class="row-hint"><kbd>⌘0</kbd> revient à 100 %.</p></div><div class="row-control"><span class="tag">100 %</span><button class="btn ghost" type="button">Modifier</button></div></div>
+              </div>
+            </div>
+          </section>
+          <section class="page" data-page="privacy">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>03</b> Contrôle</p>
+                <h1>Confidentialité</h1>
+                <p class="lead">Ce qui reste local, ce qui sort, et ce qui est arrêté avant de partir. Le blocage se fait dans Chromium, avant la requête.</p>
+              </div>
+              <div class="page-actions"><span class="tag good"><svg class="icon" style="width:11px;height:11px"><use href="#i-check"></use></svg>Aucune télémétrie</span></div>
+            </div>
+            <div class="subtabs" role="tablist" aria-label="Sous-sections de la confidentialité">
+              <button class="subtab is-active" type="button" role="tab" data-tab="privacy-protection">Protection</button>
+              <button class="subtab" type="button" role="tab" data-tab="privacy-data">Données locales</button>
+              <button class="subtab" type="button" role="tab" data-tab="privacy-permissions">Permissions</button>
+              <button class="subtab" type="button" role="tab" data-tab="privacy-flows">Flux réseau</button>
+            </div>
+            <div class="subpanel is-active" data-subpanel="privacy-protection">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Niveau</p><h2>Choisir ce qui est arrêté</h2><p>Un niveau lisible, une liste de blocage embarquée, aucun abonnement distant.</p></div><span class="tag good">Recommandé</span></div>
+                <div class="level-grid">
+                  <button class="level" type="button"><span class="level-head"><strong>Aucun</strong></span><p>Rien n’est filtré.</p><p class="level-risk">Publicités et traqueurs passent.</p></button>
+                  <button class="level is-active" type="button"><span class="level-head"><strong>Traqueurs</strong><em>Conseillé</em></span><p>Publicités et mesure d’audience.</p><p class="level-risk">Page cassée : rare.</p></button>
+                  <button class="level" type="button"><span class="level-head"><strong>Renforcé</strong></span><p>Scripts et cadres tiers.</p><p class="level-risk">Page cassée : possible.</p></button>
+                </div>
+                <div class="stats">
+                  <div class="stat"><b>24</b><span>Requêtes bloquées</span></div>
+                  <div class="stat"><b>6</b><span>Sites concernés</span></div>
+                  <div class="stat"><b>4</b><span>Onglets protégés</span></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Exceptions</p><h2>Les sites qui gardent leurs traqueurs</h2><p>Une exception se pose site par site, et se retire aussi facilement.</p></div><span class="tag">3 sites</span></div>
+                <div class="row"><div><div class="row-label">lemonde.fr</div><p class="row-hint">Blocage désactivé pour ce site.</p></div><button class="btn ghost" type="button">Réactiver</button></div>
+                <div class="row"><div><div class="row-label">figma.com</div><p class="row-hint">Blocage désactivé pour ce site.</p></div><button class="btn ghost" type="button">Réactiver</button></div>
+              </div>
+              <div class="panel"><div class="panel-head"><div><p class="panel-kicker">Liste</p><h2>Embarquée, mise à jour avec Vela</h2><p>Aucune connexion à un service de listes : la protection fonctionne hors ligne.</p></div><span class="tag good">Locale</span></div></div>
+            </div>
+            <div class="subpanel" data-subpanel="privacy-data">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Données locales</p><h2>Ce que Vela garde sur l’appareil</h2><p>Chaque donnée est optionnelle, sauf ce qui fait fonctionner l’historique et les sessions.</p></div></div>
+                <div class="row"><div><div class="row-label">Vignettes des pages récentes</div><p class="row-hint">Une capture par onglet fermé ; rien pour un espace privé.</p></div><div class="row-control"><span class="tag good">Activé</span><button class="switch" type="button" data-on="true" role="switch" aria-checked="true" aria-label="Vignettes des pages récentes"><span></span></button></div></div>
+                <div class="row"><div><div class="row-label">Icônes de sites</div><p class="row-hint">Une requête par domaine, gardée sept jours.</p></div><button class="btn ghost" type="button">Vider le cache</button></div>
+                <div class="row"><div><div class="row-label">Cookies et stockage</div><p class="row-hint">Isolés par espace : trois partitions distinctes.</p></div><span class="tag">3 espaces</span></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Effacement</p><h2>Repartir de zéro</h2><p>L’historique part immédiatement ; vignettes et icônes suivent après huit secondes.</p></div></div>
+                <button class="btn danger wide" type="button"><svg class="icon"><use href="#i-close"></use></svg>Effacer des données…</button>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="privacy-permissions">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Permissions</p><h2>Refusées par défaut</h2><p>Aucune page n’obtient caméra, micro, position ou notifications. Aucune exception n’est demandée.</p></div><span class="tag good">Par défaut</span></div>
+                <div class="row"><div><div class="row-label">Caméra</div><p class="row-hint">Refusée à chaque demande de page.</p></div><span class="tag">Refusée</span></div>
+                <div class="row"><div><div class="row-label">Micro</div><p class="row-hint">Refusé, y compris pour les pages de réunion.</p></div><span class="tag">Refusé</span></div>
+                <div class="row"><div><div class="row-label">Position</div><p class="row-hint">Refusée ; l’accueil utilise la ville saisie.</p></div><span class="tag">Refusée</span></div>
+                <div class="row"><div><div class="row-label">Notifications</div><p class="row-hint">Refusées ; aucune notification de site.</p></div><span class="tag">Refusées</span></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="privacy-flows">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Audit</p><h2>Chaque flux, sans angle mort</h2><p>Le même calcul que le bouclier de la page, avec le déclencheur et les données envoyées.</p></div><div class="row-control"><button class="btn ghost" type="button">Filtrer</button><button class="btn" type="button">Exporter</button></div></div>
+                <div class="row"><div><div class="row-label"><span style="color:var(--sage)">●</span> Moteur de recherche</div><p class="row-hint">Vos mots partent vers DuckDuckGo, uniquement au moment de la recherche.</p></div><span class="tag good">Actif</span></div>
+                <div class="row"><div><div class="row-label"><span style="color:var(--amber)">●</span> Agent · modèle</div><p class="row-hint">Inactif en démo locale. Aucun fournisseur n’est configuré.</p></div><span class="tag">Sur demande</span></div>
+                <div class="row"><div><div class="row-label"><span style="color:var(--sage)">●</span> Météo de l’accueil</div><p class="row-hint">La ville saisie, sans position système.</p></div><span class="tag good">Actif</span></div>
+                <div class="row"><div><div class="row-label"><span style="color:var(--faint)">●</span> Mises à jour</div><p class="row-hint">Vérification du manifeste de release, sans identifiant utilisateur.</p></div><span class="tag good">Actif</span></div>
+              </div>
+            </div>
+          </section>
+          <section class="page" data-page="agent">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>04</b> Contrôle</p>
+                <h1>Agent</h1>
+                <p class="lead">Le modèle, les fournisseurs et les notes, au même endroit. L’agent suit toujours le modèle actif.</p>
+              </div>
+              <div class="page-actions"><span class="tag good"><svg class="icon" style="width:11px;height:11px"><use href="#i-lock"></use></svg>Local</span></div>
+            </div>
+            <div class="subtabs" role="tablist" aria-label="Sous-sections de l’agent">
+              <button class="subtab is-active" type="button" role="tab" data-tab="agent-model">Modèle actif</button>
+              <button class="subtab" type="button" role="tab" data-tab="agent-providers">Fournisseurs</button>
+              <button class="subtab" type="button" role="tab" data-tab="agent-notes">Notes</button>
+            </div>
+            <div class="subpanel is-active" data-subpanel="agent-model">
+              <div class="agent-hero">
+                <span class="agent-mark"><svg class="icon"><use href="#i-sparkles"></use></svg></span>
+                <div><p class="panel-kicker">Moteur de l’agent</p><h2>Démo locale</h2><p>Des rapports simulés à partir des titres d’onglets. Aucune clé, aucun texte envoyé.</p></div>
+                <div class="choices"><button class="choice is-active" type="button">Démo</button><button class="choice" type="button">Modèle</button></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Fournisseurs</p><h2>Une clé par fournisseur</h2><p>Gardée par le trousseau du système, jamais exposée à l’interface.</p></div><span class="tag">6 disponibles</span></div>
+                <div class="provider-grid">
+                  <button class="provider" type="button" style="--brand:#10a37f"><span class="provider-mark">O</span><span><span class="provider-name">OpenAI</span><span class="provider-state">Aucune clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                  <button class="provider" type="button" style="--brand:#c77b4e"><span class="provider-mark">A</span><span><span class="provider-name">Anthropic</span><span class="provider-state">Aucune clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                  <button class="provider" type="button" style="--brand:#4285f4"><span class="provider-mark">G</span><span><span class="provider-name">Google</span><span class="provider-state">Aucune clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                  <button class="provider" type="button" style="--brand:#6b7280"><span class="provider-mark">L</span><span><span class="provider-name">Ollama</span><span class="provider-state">Serveur local · sans clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                  <button class="provider" type="button" style="--brand:#7c5cff"><span class="provider-mark">M</span><span><span class="provider-name">Mistral</span><span class="provider-state">Aucune clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                  <button class="provider" type="button" style="--brand:#f0b429"><span class="provider-mark">R</span><span><span class="provider-name">OpenRouter</span><span class="provider-state">Aucune clé</span></span><svg class="icon"><use href="#i-plus"></use></svg></button>
+                </div>
+                <div class="row" style="margin-top:9px"><div><div class="row-label">Tester dans l’agent</div><p class="row-hint">Un vrai tour de parole, avec une page jointe ou non.</p></div><button class="btn primary" type="button"><svg class="icon"><use href="#i-sparkles"></use></svg>Tester</button></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="agent-providers">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Fournisseurs</p><h2>Configurer un accès</h2><p>Sélectionnez un fournisseur, puis vérifiez la clé et le modèle.</p></div><span class="tag">Trousseau</span></div>
+                <div class="row"><div><div class="row-label">OpenAI</div><p class="row-hint">Clé absente · modèle par défaut gpt-4.1-mini.</p></div><div class="row-control"><button class="btn ghost" type="button">Configurer</button><button class="btn" type="button">Tester</button></div></div>
+                <div class="row"><div><div class="row-label">Ollama</div><p class="row-hint">Serveur local sur 127.0.0.1 · aucune clé requise.</p></div><div class="row-control"><span class="tag good">Local</span><button class="btn ghost" type="button">Configurer</button></div></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="agent-notes">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Notes</p><h2>Des fichiers Markdown que vous possédez</h2><p>Dans le dossier de données de Vela, lisibles sans Vela.</p></div><button class="btn" type="button"><svg class="icon"><use href="#i-folder"></use></svg>Ouvrir</button></div>
+                <div class="row"><div><div class="row-label">0 note</div><p class="row-hint">Chaque note reste un fichier .md, sauvegardé immédiatement.</p></div><button class="btn ghost" type="button">Ouvrir le carnet</button></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" data-page="system">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow"><b>05</b> Application</p>
+                <h1>Système</h1>
+                <p class="lead">Les raccourcis, les mises à jour et l’identité de Vela. Les trois anciennes pages sont réunies.</p>
+              </div>
+              <div class="page-actions"><span class="tag good">Version 0.3.35</span></div>
+            </div>
+            <div class="subtabs" role="tablist" aria-label="Sous-sections du système">
+              <button class="subtab" type="button" role="tab" data-tab="system-shortcuts">Raccourcis</button>
+              <button class="subtab is-active" type="button" role="tab" data-tab="system-updates">Mises à jour</button>
+              <button class="subtab" type="button" role="tab" data-tab="system-about">À propos</button>
+            </div>
+            <div class="subpanel is-active" data-subpanel="system-updates">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Version installée</p><h2>Vela est à jour</h2><p>Dernière vérification il y a 2 heures. Le téléchargement est vérifié par son empreinte SHA-512.</p></div><span class="tag good">À jour</span></div>
+                <div class="version-line"><div><div class="version-number">0.3.35</div><div class="version-meta">macOS · installateur<br />Canal stable</div></div><button class="btn primary" type="button"><svg class="icon"><use href="#i-refresh"></use></svg>Vérifier</button></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Automatique</p><h2>Quand Vela vérifie</h2><p>Le bouton reste disponible dans tous les cas.</p></div></div>
+                <div class="row"><div><div class="row-label">Fréquence</div><p class="row-hint">Au démarrage, puis toutes les 3 heures.</p></div><div class="row-control"><span class="tag">Toutes les 3 h</span><button class="btn ghost" type="button">Modifier</button></div></div>
+                <div class="row"><div><div class="row-label">Version disponible</div><p class="row-hint">Aucune pour le moment.</p></div><button class="btn ghost" type="button"><svg class="icon"><use href="#i-external"></use></svg>Releases</button></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="system-shortcuts">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Clavier</p><h2>Tous les raccourcis</h2><p>Ils fonctionnent depuis une page comme depuis l’interface.</p></div><span class="tag">24 raccourcis</span></div>
+                <div class="shortcut-row"><span>Barre de commande</span><kbd>⌘K</kbd></div>
+                <div class="shortcut-row"><span>Barre d’adresse</span><kbd>⌘L</kbd></div>
+                <div class="shortcut-row"><span>Notes</span><kbd>⌘E</kbd></div>
+                <div class="shortcut-row"><span>Agent</span><kbd>⌘J</kbd></div>
+                <div class="shortcut-row"><span>Vue scindée</span><kbd>⇧⌘D</kbd></div>
+              </div>
+            </div>
+            <div class="subpanel" data-subpanel="system-about">
+              <div class="panel">
+                <div class="panel-head"><div><p class="panel-kicker">Identité</p><h2>Vela<span style="color:var(--accent)">.</span></h2><p>Le web, votre atelier. Navigateur de travail · macOS, Windows, Linux. Gratuit, libre (MIT), sans compte.</p></div><span class="wordmark">Vela<span>.</span></span></div>
+                <div class="row"><div><div class="row-label">Agent</div><p class="row-hint">Démo locale · aucun modèle configuré.</p></div><span class="tag">Local</span></div>
+                <div class="row"><div><div class="row-label">Données</div><p class="row-hint">Sur cet appareil, sans synchronisation.</p></div><span class="tag good">Privé</span></div>
+              </div>
+            </div>
+          </section>
+</main>
+          <aside class="rail"><div class="rail-panel is-active" data-rail="overview">
+              <div class="rail-head"><p>État de Vela</p><span class="tag good">Prêt</span></div>
+              <div class="rail-card" style="text-align:center"><div class="shield-badge"><svg class="icon"><use href="#i-shield"></use></svg></div><h3>Tout reste ici</h3><p>Aucun compte, aucune synchronisation. Les notes, l’historique et les réglages vivent dans le dossier de données de Vela.</p></div>
+              <div class="rail-card"><h3>Raccourcis essentiels</h3><div class="rail-kbd"><span><kbd>⌘K</kbd> Palette</span><span><kbd>⌘E</kbd> Notes</span><span><kbd>⌘J</kbd> Agent</span></div></div>
+              <div class="rail-card"><div class="rail-row"><span>Version</span><strong>0.3.35</strong></div><div class="rail-row"><span>Canal</span><strong>Stable</strong></div><div class="rail-row"><span>Dernière vérification</span><strong>Il y a 2 h</strong></div></div>
+            </div>
+            <div class="rail-panel" data-rail="appearance">
+              <div class="rail-head"><p>Aperçu en direct</p><span class="tag good">Appliqué</span></div>
+              <div class="preview-shell" aria-hidden="true"><div class="preview-bar"><i></i><i></i><i></i></div><div class="preview-body"><div class="preview-side"><i></i><i></i><i></i><i></i><i></i></div><div class="preview-main"><div class="preview-date"></div><div class="preview-greeting">Bonjour.</div><div class="preview-field"></div><div class="preview-tiles"><i></i><i></i><i></i><i></i></div></div></div></div>
+              <p class="rail-note">L’aperçu suit le thème et l’accent choisis. Il ne modifie jamais le contenu des sites.</p>
+              <div class="rail-card" style="margin-top:10px"><h3>Ce que ça change</h3><ul class="rail-list"><li><svg class="icon"><use href="#i-check"></use></svg>Le châssis, pas les pages</li><li><svg class="icon"><use href="#i-check"></use></svg>Appliqué immédiatement</li><li><svg class="icon"><use href="#i-check"></use></svg>Un thème par espace possible</li></ul></div>
+              <button class="btn wide ghost" type="button"><svg class="icon"><use href="#i-refresh"></use></svg>Rétablir l’apparence</button>
+            </div>
+            <div class="rail-panel" data-rail="navigation">
+              <div class="rail-head"><p>Votre navigation</p><span class="tag good">Locale</span></div>
+              <div class="rail-card"><div class="rail-row"><span>Moteur</span><strong>DuckDuckGo</strong></div><div class="rail-row"><span>Au lancement</span><strong>Reprendre</strong></div><div class="rail-row"><span>Nouvel onglet</span><strong>Accueil</strong></div><div class="rail-row"><span>Marque-pages</span><strong>24</strong></div><div class="rail-row"><span>Historique</span><strong>312 entrées</strong></div></div>
+              <div class="rail-card"><h3>Ce qui sort</h3><p>Vos recherches partent vers le moteur choisi, jamais vers un serveur Vela.</p><button class="btn wide ghost" type="button" style="margin-top:9px" data-goto="privacy" data-goto-tab="privacy-flows">Voir les flux <svg class="icon"><use href="#i-arrow"></use></svg></button></div>
+            </div>
+            <div class="rail-panel" data-rail="privacy">
+              <div class="rail-head"><p>Bilan de protection</p><span class="tag good">Actif</span></div>
+              <div class="rail-card" style="text-align:center"><div class="shield-badge"><svg class="icon"><use href="#i-shield"></use></svg></div><div class="version-number" style="font-size:29px">24</div><p style="margin-top:4px">requêtes arrêtées depuis le lancement</p></div>
+              <div class="rail-card"><div class="rail-row"><span>Sites concernés</span><strong>6</strong></div><div class="rail-row"><span>Onglets protégés</span><strong>4</strong></div><div class="rail-row"><span>Exceptions</span><strong>3 sites</strong></div></div>
+              <div class="rail-card"><h3>Aucune télémétrie</h3><p>Pas de compte, pas de mesure d’usage, pas de synchronisation.</p></div>
+            </div>
+            <div class="rail-panel" data-rail="agent">
+              <div class="rail-head"><p>État de l’agent</p><span class="tag good">Local</span></div>
+              <div class="rail-card" style="text-align:center"><div class="shield-badge"><svg class="icon"><use href="#i-sparkles"></use></svg></div><h3>Démo locale</h3><p>Aucune clé enregistrée. Les réponses sont simulées à partir des titres d’onglets.</p></div>
+              <div class="rail-card"><div class="rail-row"><span>Modèle</span><strong>Démo</strong></div><div class="rail-row"><span>Fournisseur</span><strong>Aucun</strong></div><div class="rail-row"><span>Notes</span><strong>0</strong></div></div>
+              <button class="btn wide primary" type="button"><svg class="icon"><use href="#i-sparkles"></use></svg>Tester l’agent</button>
+            </div>
+            <div class="rail-panel" data-rail="system">
+              <div class="rail-head"><p>Votre installation</p><span class="tag good">À jour</span></div>
+              <div class="rail-card"><div class="version-number" style="font-size:27px">0.3.35</div><p style="margin-top:4px">macOS · installateur · canal stable</p><div class="rail-row" style="margin-top:7px"><span>Dernière vérification</span><strong>Il y a 2 h</strong></div></div>
+              <div class="rail-card"><h3>Identité</h3><p>Vela — navigateur de travail. Gratuit, libre (MIT), sans compte.</p></div>
+              <button class="btn wide ghost" type="button"><svg class="icon"><use href="#i-external"></use></svg>Voir les releases</button>
+            </div></aside>
+        </div>
+      </div>
+      <p class="prototype-note">Maquette statique · Vela 0.3.35 · navigation, thème et recherche fonctionnels</p>
+    </div>
+    <script>(() => {
+        const pageLabels = {
+          overview: 'Vue d’ensemble', appearance: 'Apparence', navigation: 'Navigation',
+          privacy: 'Confidentialité', agent: 'Agent', system: 'Système'
+        };
+        const searchIndex = [
+          { label: 'Mode de l’interface', meta: 'Apparence · Mode & couleur', page: 'appearance', tab: 'appearance-mode', icon: 'i-palette' },
+          { label: 'Couleur d’accent', meta: 'Apparence · Mode & couleur', page: 'appearance', tab: 'appearance-mode', icon: 'i-palette' },
+          { label: 'Fond de l’accueil', meta: 'Apparence · Accueil', page: 'appearance', tab: 'appearance-home', icon: 'i-sun' },
+          { label: 'Densité de l’interface', meta: 'Apparence · Interface', page: 'appearance', tab: 'appearance-interface', icon: 'i-sliders' },
+          { label: 'Réduire les animations', meta: 'Apparence · Accessibilité', page: 'appearance', tab: 'appearance-accessibility', icon: 'i-eye' },
+          { label: 'Moteur de recherche', meta: 'Navigation · Recherche', page: 'navigation', tab: 'navigation-search', icon: 'i-compass' },
+          { label: 'Page au démarrage', meta: 'Navigation · Démarrage', page: 'navigation', tab: 'navigation-startup', icon: 'i-compass' },
+          { label: 'Marque-pages et historique', meta: 'Navigation · Bibliothèque', page: 'navigation', tab: 'navigation-library', icon: 'i-book' },
+          { label: 'Dossier de téléchargement', meta: 'Navigation · Téléchargements', page: 'navigation', tab: 'navigation-downloads', icon: 'i-download' },
+          { label: 'Langue et zoom des pages', meta: 'Navigation · Pages web', page: 'navigation', tab: 'navigation-web', icon: 'i-globe' },
+          { label: 'Blocage des traqueurs', meta: 'Confidentialité · Protection', page: 'privacy', tab: 'privacy-protection', icon: 'i-shield' },
+          { label: 'Données locales', meta: 'Confidentialité · Données locales', page: 'privacy', tab: 'privacy-data', icon: 'i-lock' },
+          { label: 'Permissions des sites', meta: 'Confidentialité · Permissions', page: 'privacy', tab: 'privacy-permissions', icon: 'i-eye' },
+          { label: 'Flux réseau', meta: 'Confidentialité · Flux réseau', page: 'privacy', tab: 'privacy-flows', icon: 'i-globe' },
+          { label: 'Modèle de l’agent', meta: 'Agent · Modèle actif', page: 'agent', tab: 'agent-model', icon: 'i-sparkles' },
+          { label: 'Clés des fournisseurs', meta: 'Agent · Fournisseurs', page: 'agent', tab: 'agent-providers', icon: 'i-key' },
+          { label: 'Notes Markdown', meta: 'Agent · Notes', page: 'agent', tab: 'agent-notes', icon: 'i-note' },
+          { label: 'Raccourcis clavier', meta: 'Système · Raccourcis', page: 'system', tab: 'system-shortcuts', icon: 'i-key' },
+          { label: 'Mises à jour', meta: 'Système · Mises à jour', page: 'system', tab: 'system-updates', icon: 'i-refresh' },
+          { label: 'À propos de Vela', meta: 'Système · À propos', page: 'system', tab: 'system-about', icon: 'i-info' }
+        ];
+
+        const body = document.body;
+        const main = document.querySelector('#main');
+        const crumb = document.querySelector('#crumb');
+        const themeToggle = document.querySelector('#themeToggle');
+        const searchInput = document.querySelector('#settingsSearch');
+        const popover = document.querySelector('#searchPopover');
+        const icon = (name) => `<svg class="icon"><use href="#${name}"></use></svg>`;
+
+        function selectModeCard(mode) {
+          document.querySelectorAll('[data-mode-card]').forEach((card) => {
+            const active = card.dataset.modeCard === mode;
+            card.classList.toggle('is-active', active);
+            const check = card.querySelector('.mode-check');
+            if (check) check.hidden = !active;
+          });
+        }
+
+        function setTheme(theme) {
+          body.dataset.theme = theme;
+          selectModeCard(theme);
+          const dark = theme === 'dark';
+          themeToggle.querySelector('use').setAttribute('href', dark ? '#i-sun' : '#i-moon');
+          themeToggle.querySelector('span').textContent = dark ? 'Clair' : 'Sombre';
+        }
+
+        function setTab(page, tab) {
+          const pageEl = document.querySelector(`.page[data-page="${page}"]`);
+          if (!pageEl) return;
+          pageEl.querySelectorAll('.subtab').forEach((button) => {
+            button.classList.toggle('is-active', button.dataset.tab === tab);
+            button.setAttribute('aria-selected', button.dataset.tab === tab ? 'true' : 'false');
+          });
+          pageEl.querySelectorAll('.subpanel').forEach((panel) => {
+            panel.classList.toggle('is-active', panel.dataset.subpanel === tab);
+          });
+        }
+
+        function go(page, tab) {
+          body.dataset.page = page;
+          document.querySelectorAll('.nav-item').forEach((item) => {
+            const active = item.dataset.page === page;
+            item.classList.toggle('is-active', active);
+            item.setAttribute('aria-current', active ? 'page' : 'false');
+          });
+          document.querySelectorAll('.page').forEach((panel) => {
+            panel.classList.toggle('is-active', panel.dataset.page === page);
+          });
+          document.querySelectorAll('.rail-panel').forEach((panel) => {
+            panel.classList.toggle('is-active', panel.dataset.rail === page);
+          });
+          crumb.textContent = pageLabels[page] || page;
+          if (tab) {
+            setTab(page, tab);
+          } else {
+            const pageEl = document.querySelector(`.page[data-page="${page}"]`);
+            const visible = pageEl?.querySelector('.subpanel.is-active');
+            const fallbackTab = pageEl?.querySelector('.subtab.is-active') || pageEl?.querySelector('.subtab');
+            if (!visible && fallbackTab) setTab(page, fallbackTab.dataset.tab);
+          }
+          main.scrollTop = 0;
+        }
+
+        document.querySelectorAll('.nav-item').forEach((item) => {
+          item.addEventListener('click', () => go(item.dataset.page));
+        });
+
+        document.querySelectorAll('.subtab').forEach((tab) => {
+          tab.addEventListener('click', () => {
+            const page = tab.closest('.page').dataset.page;
+            setTab(page, tab.dataset.tab);
+          });
+        });
+
+        document.addEventListener('click', (event) => {
+          const target = event.target.closest('[data-goto]');
+          if (!target) return;
+          event.preventDefault();
+          go(target.dataset.goto, target.dataset.gotoTab);
+        });
+
+        document.querySelectorAll('[data-mode-card]').forEach((card) => {
+          card.addEventListener('click', () => {
+            const mode = card.dataset.modeCard;
+            if (mode === 'system') {
+              selectModeCard('system');
+              return;
+            }
+            setTheme(mode);
+          });
+        });
+
+        document.querySelectorAll('.swatch').forEach((swatch) => {
+          swatch.addEventListener('click', () => {
+            document.querySelectorAll('.swatch').forEach((item) => item.classList.toggle('is-active', item === swatch));
+          });
+        });
+
+        document.querySelectorAll('.choices').forEach((group) => {
+          group.addEventListener('click', (event) => {
+            const choice = event.target.closest('.choice');
+            if (!choice || !group.contains(choice)) return;
+            group.querySelectorAll('.choice').forEach((item) => item.classList.toggle('is-active', item === choice));
+          });
+        });
+
+        document.querySelectorAll('.switch').forEach((switcher) => {
+          switcher.addEventListener('click', () => {
+            const on = switcher.getAttribute('data-on') !== 'true';
+            switcher.setAttribute('data-on', String(on));
+            switcher.setAttribute('aria-checked', String(on));
+          });
+        });
+
+        themeToggle.addEventListener('click', () => {
+          setTheme(body.dataset.theme === 'dark' ? 'light' : 'dark');
+        });
+
+        function renderSearch(query) {
+          const needle = query.trim().toLowerCase();
+          const matches = needle
+            ? searchIndex.filter((item) => `${item.label} ${item.meta}`.toLowerCase().includes(needle))
+            : searchIndex.slice(0, 6);
+          if (matches.length === 0) {
+            popover.innerHTML = '<p class="search-empty">Aucun réglage ne correspond.</p>';
+            popover.hidden = false;
+            return;
+          }
+          popover.innerHTML = `<p class="popover-label">${needle ? 'Résultats' : 'Suggestions'}</p>` + matches.map((item) =>
+            `<button type="button" class="search-result" data-page="${item.page}" data-tab="${item.tab}">${icon(item.icon)}<span><strong>${item.label}</strong><small>${item.meta}</small></span></button>`
+          ).join('');
+          popover.hidden = false;
+        }
+
+        searchInput.addEventListener('input', () => renderSearch(searchInput.value));
+        searchInput.addEventListener('focus', () => renderSearch(searchInput.value));
+        searchInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            popover.hidden = true;
+            searchInput.blur();
+          }
+        });
+        popover.addEventListener('click', (event) => {
+          const result = event.target.closest('.search-result');
+          if (!result) return;
+          searchInput.value = '';
+          popover.hidden = true;
+          go(result.dataset.page, result.dataset.tab);
+        });
+        document.addEventListener('click', (event) => {
+          if (!event.target.closest('.nav-search-wrap')) popover.hidden = true;
+        });
+        window.addEventListener('keydown', (event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+            event.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+          }
+        });
+
+        setTheme('light');
+        go('overview');
+      })();</script>
+  </body>
+</html>

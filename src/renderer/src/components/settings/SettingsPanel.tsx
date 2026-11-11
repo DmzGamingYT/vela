@@ -1,69 +1,59 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useModalFocus } from '../../lib/useModalFocus'
 import { useSystemDark } from '../../lib/useSystemDark'
 import SavedIndicator from '../SavedIndicator'
-import AboutPage from './AboutPage'
 import AmbienceScene from '../AmbienceScene'
 import AppearancePage from './AppearancePage'
 import NavigationPage from './NavigationPage'
 import PrivacyPage from './PrivacyPage'
-import ThemesPage from './ThemesPage'
-import TweaksPage from './TweaksPage'
-import UpdatesPage from './UpdatesPage'
-import { resolveMode, resolveThemeId, type HomeBackground } from '@shared/theme'
-import { APP_SHORTCUTS } from '@shared/shortcuts'
-import { plural, shortcut, spokenShortcut, timeAgo } from '../../lib/format'
+import { resolveMode, resolveMotion, resolveThemeId, type HomeBackground } from '@shared/theme'
+import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
-import ModelsPage from './ModelsPage'
+import AgentPage from './AgentPage'
+import OverviewPage from './OverviewPage'
+import SystemPage from './SystemPage'
+import {
+  normalizeSettingText,
+  searchSettings,
+  type SettingsPage,
+  type SettingsTarget
+} from './settingsSearch'
 import { Icon, type IconName } from '../Icon'
 
-type Page =
-  | 'appearance'
-  | 'tweaks'
-  | 'themes'
-  | 'navigation'
-  | 'privacy'
-  | 'models'
-  | 'notes'
-  | 'shortcuts'
-  | 'updates'
-  | 'about'
+type Page = SettingsPage
 
 const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[] }[] = [
+  {
+    group: 'Repères',
+    items: [{ id: 'overview', label: 'Vue d’ensemble', icon: 'list' }]
+  },
   {
     group: 'Général',
     items: [
       { id: 'appearance', label: 'Apparence', icon: 'palette' },
-      { id: 'tweaks', label: 'Tweaks', icon: 'settings' },
-      { id: 'themes', label: 'Thèmes', icon: 'sparkles' },
       { id: 'navigation', label: 'Navigation', icon: 'compass' },
       { id: 'privacy', label: 'Confidentialité', icon: 'shield' }
     ]
   },
   {
     group: 'Agent',
-    items: [
-      { id: 'models', label: 'Modèles', icon: 'key' },
-      { id: 'notes', label: 'Notes', icon: 'notes' }
-    ]
+    items: [{ id: 'agent', label: 'Agent', icon: 'sparkles' }]
   },
   {
-    group: 'Application',
-    items: [
-      { id: 'shortcuts', label: 'Raccourcis', icon: 'keyboard' },
-      { id: 'updates', label: 'Mises à jour', icon: 'arrow-down' },
-      { id: 'about', label: 'À propos', icon: 'info' }
-    ]
+    group: 'Système',
+    items: [{ id: 'system', label: 'Système', icon: 'info' }]
   }
 ]
 
 const COPY: Record<Page, { title: string; lede: string }> = {
+  overview: {
+    title: 'Vue d’ensemble',
+    lede: 'Les choix qui façonnent l’interface, la navigation et la confidentialité. Tout est local, tout s’applique immédiatement.'
+  },
   appearance: {
     title: 'Apparence',
-    lede: 'Mode, couleur, fond de l’accueil et accessibilité.'
+    lede: 'Une seule section pour la lumière, la couleur et le mouvement. Les anciens réglages Tweaks et Thèmes vivent désormais ici.'
   },
-  tweaks: { title: 'Tweaks', lede: 'Accent, teinte libre et intensité du verre dépoli.' },
-  themes: { title: 'Thèmes', lede: 'Ambiances animées, portée et présence.' },
   navigation: {
     title: 'Navigation',
     lede: 'Recherche, démarrage, marque-pages, historique et téléchargements.'
@@ -72,110 +62,73 @@ const COPY: Record<Page, { title: string; lede: string }> = {
     title: 'Confidentialité',
     lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.'
   },
-  models: { title: 'Modèles', lede: 'Le mode de l’agent, les fournisseurs et les clés associées.' },
-  notes: {
-    title: 'Notes',
-    lede: 'Des fichiers Markdown que vous possédez, dans le dossier de données de Vela.'
+  agent: {
+    title: 'Agent',
+    lede: 'Le modèle, les fournisseurs et les notes, au même endroit. L’agent suit toujours le modèle actif.'
   },
-  shortcuts: {
-    title: 'Raccourcis',
-    lede: 'Tous les raccourcis fonctionnent depuis une page comme depuis l’interface.'
-  },
-  updates: {
-    title: 'Mises à jour',
-    lede: 'La version installée, le mode de lancement et l’installateur vérifié de la dernière release.'
-  },
-  about: { title: 'À propos', lede: 'Vela — Electron, React et Chromium.' }
-}
-
-/** Comparaison sans accent ni casse : « precedente » trouve « Précédente ». */
-function normalize(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
-/** Les touches aussi se cherchent en mots : « cmd », « maj », « option ». */
-function spokenKeys(keys: string): string {
-  return keys
-    .replace(/⌘/g, ' commande cmd ')
-    .replace(/⇧/g, ' maj shift ')
-    .replace(/⌥/g, ' option alt ')
-    .replace(/⌫/g, ' retour arriere ')
-}
-
-const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
-  {
-    title: 'Navigation',
-    items: [
-      ['Barre de commande', shortcut('K')],
-      ['Barre d’adresse', shortcut('L')],
-      ['Précédente', shortcut('[')],
-      ['Suivante', shortcut(']')],
-      ['Recharger', shortcut('R')],
-      ['Rechercher dans la page', shortcut('F')],
-      ['Imprimer', shortcut('P')]
-    ]
-  },
-  {
-    title: 'Onglets et pages',
-    items: [
-      ['Nouvel onglet', shortcut('T')],
-      ['Fermer l’onglet', shortcut('W')],
-      ['Rouvrir l’onglet', shortcut('⇧T')],
-      ['Onglets 1 à 9', `${shortcut('1')} … ${shortcut('9')}`],
-      ['Vue scindée', shortcut('⇧D')],
-      ['Garder cette page', shortcut('D')],
-      ['Historique', shortcut('Y')],
-      ['Marque-pages', shortcut('⇧O')],
-      ['Accueil', shortcut('⇧H')]
-    ]
-  },
-  {
-    title: 'Surfaces',
-    items: [
-      ['Notes', shortcut(APP_SHORTCUTS.notes.key)],
-      ['Agent', shortcut(APP_SHORTCUTS.agent.key)],
-      ['Protection de la page', shortcut(APP_SHORTCUTS.shield.key)],
-      ['Atelier', shortcut('⇧A')],
-      ['Sessions', shortcut('⇧B')],
-      ['Replier la barre latérale', shortcut('S')],
-      ['Coup d’œil', shortcut('⌥N')],
-      ['Réglages', shortcut(APP_SHORTCUTS.settings.key)]
-    ]
-  },
-  {
-    title: 'Lecture',
-    items: [
-      ['Zoom avant', shortcut('+')],
-      ['Zoom arrière', shortcut('−')],
-      ['Taille normale', shortcut('0')]
-    ]
+  system: {
+    title: 'Système',
+    lede: 'Les raccourcis, les mises à jour et l’identité de Vela. Les trois anciennes pages sont réunies.'
   }
-]
+}
 
 export default function SettingsPanel() {
   const view = useBrowser((state) => state.view)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const updateSettings = useBrowser((state) => state.updateSettings)
-  const saveAgentNote = useBrowser((state) => state.saveAgentNote)
-  const toggleNotes = useBrowser((state) => state.toggleNotes)
-  const hasReport = useBrowser((state) => Boolean(state.agent.markdown))
   const toast = useBrowser((state) => state.toast)
   const sheetRef = useModalFocus<HTMLDivElement>({ initialFocus: 'container' })
 
-  const [page, setPage] = useState<Page>('appearance')
-  const [shortcutQuery, setShortcutQuery] = useState('')
+  const [page, setPage] = useState<Page>('overview')
+  const [tabRequest, setTabRequest] = useState<string | undefined>(undefined)
+  const [scrollAnchor, setScrollAnchor] = useState<string | null>(null)
   const [navQuery, setNavQuery] = useState('')
+  const [resultIndex, setResultIndex] = useState(0)
   const navInput = useRef<HTMLInputElement | null>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const systemDark = useSystemDark()
+  const systemReduced =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reducedMotion = view ? resolveMotion(view.settings.reduceMotion, systemReduced) : false
+  const searching = navQuery.trim().length > 0
+  const results = searching ? searchSettings(navQuery) : []
+  const activeResult = results.length ? Math.min(resultIndex, results.length - 1) : 0
   const navGroups = NAV.map((group) => ({
     group: group.group,
-    items: group.items.filter(
-      (item) => !navQuery.trim() || normalize(item.label).includes(normalize(navQuery.trim()))
+    items: group.items.filter((item) =>
+      normalizeSettingText(item.label).includes(normalizeSettingText(navQuery.trim()))
     )
   })).filter((group) => group.items.length > 0)
+
+  const goTo = (next: SettingsPage, tab?: string, anchor?: string): void => {
+    setTabRequest(tab)
+    setScrollAnchor(anchor ?? null)
+    setPage(next)
+    setNavQuery('')
+    setResultIndex(0)
+  }
+
+  const openTarget = (target: SettingsTarget): void => {
+    goTo(target.page, target.tab, target.anchor)
+  }
+
+  useEffect(() => {
+    if (!scrollAnchor) return
+    const scope = scrollRef.current
+    if (!scope) return
+    const target =
+      scope.querySelector(`[data-settings-anchor="${scrollAnchor}"]`) ??
+      scope.querySelector(`#${scrollAnchor}`)
+    if (!target) {
+      setScrollAnchor(null)
+      return
+    }
+    target.scrollIntoView?.({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' })
+    target.classList.add('settings-search-target')
+    window.setTimeout(() => target.classList.remove('settings-search-target'), 1800)
+    setScrollAnchor(null)
+  }, [scrollAnchor, page, tabRequest, reducedMotion])
 
   if (!view) return null
 
@@ -260,10 +213,18 @@ export default function SettingsPanel() {
     toast('Apparence réinitialisée.')
   }
 
-  const renderModels = () => <ModelsPage settings={settings} />
-
   const renderPage = () => {
     switch (page) {
+      case 'overview':
+        return (
+          <OverviewPage
+            settings={settings}
+            mode={mode}
+            previewThemeId={previewThemeId}
+            onOpenPage={(next) => goTo(next)}
+          />
+        )
+
       case 'appearance':
         return (
           <AppearancePage
@@ -272,195 +233,38 @@ export default function SettingsPanel() {
             previewThemeId={previewThemeId}
             updateSettings={updateSettings}
             chooseBackground={chooseBackground}
-          />
-        )
-
-      case 'tweaks':
-        return (
-          <TweaksPage
-            settings={settings}
-            mode={mode}
-            updateSettings={updateSettings}
             resetAppearance={resetAppearance}
+            initialTab={tabRequest}
           />
         )
-
-      case 'themes':
-        return <ThemesPage settings={settings} mode={mode} updateSettings={updateSettings} />
 
       case 'navigation':
         return (
           <NavigationPage
             settings={settings}
             updateSettings={updateSettings}
-            onOpenPrivacy={() => setPage('privacy')}
+            onOpenPrivacy={() => goTo('privacy')}
             bookmarkCount={view.bookmarks.length}
             historyCount={view.history.length}
             downloadCount={view.downloads.length}
+            initialTab={tabRequest}
           />
         )
 
       case 'privacy':
-        return <PrivacyPage settings={settings} onOpenNavigation={() => setPage('navigation')} />
-
-      case 'models':
-        return renderModels()
-
-      case 'notes': {
-        const openNotes = (): void => {
-          setOverlay(null)
-          toggleNotes(true)
-        }
-        const recent = [...view.notes].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 6)
         return (
-          <>
-            <section className="setting-block">
-              <div className="setting-head">
-                <h2>Fichiers</h2>
-                <p>{plural(view.notes.length, 'note')} · sauvegarde immédiate, aucun serveur.</p>
-              </div>
-              <div className="setting-row">
-                <div>
-                  <label>Dossier des notes</label>
-                  <p className="setting-hint">
-                    Du Markdown lisible par n’importe quelle autre app.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="action"
-                  onClick={() => void window.vela.notes.openFolder()}
-                >
-                  <Icon name="folder" size={13} />
-                  Ouvrir
-                </button>
-              </div>
-              <button
-                type="button"
-                className="action wide"
-                onClick={() => void saveAgentNote()}
-                disabled={!hasReport}
-              >
-                <Icon name="notes" size={13} />
-                Enregistrer le dernier rapport de l’agent
-              </button>
-            </section>
-
-            {/* La page ne montrait qu'un compteur et un dossier : les dernières
-                notes donnent une raison d'y venir et un chemin vers le tiroir. */}
-            <section className="setting-block">
-              <div className="setting-head">
-                <h2>Notes récentes</h2>
-                <p>
-                  {recent.length === 0
-                    ? 'Rien encore : le tiroir de notes garde les extraits d’une page en un clic.'
-                    : 'Les six dernières, tous espaces confondus.'}
-                </p>
-              </div>
-              {recent.length === 0 ? (
-                <p className="setting-hint">
-                  Chaque note reste un fichier <code>.md</code>, lisible sans Vela.
-                </p>
-              ) : (
-                <ul className="settings-note-list">
-                  {recent.map((note) => (
-                    <li key={note.id}>
-                      <button type="button" className="settings-note-row" onClick={openNotes}>
-                        <Icon name={note.pinned ? 'star' : 'notes'} size={13} />
-                        <span className="settings-note-copy">
-                          <strong>{note.title || 'Note sans titre'}</strong>
-                          <span>{note.preview || 'Note vide'}</span>
-                        </span>
-                        <span className="settings-note-date">{timeAgo(note.updatedAt)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button type="button" className="action wide" onClick={openNotes}>
-                <Icon name="notes" size={13} />
-                Ouvrir le tiroir de notes
-              </button>
-            </section>
-          </>
+          <PrivacyPage
+            settings={settings}
+            onOpenNavigation={() => goTo('navigation')}
+            initialTab={tabRequest}
+          />
         )
-      }
 
-      case 'shortcuts': {
-        const search = normalize(shortcutQuery.trim())
-        const query = (label: string, keys: string): string =>
-          normalize(`${label} ${keys} ${spokenKeys(keys)}`)
-        const groups = SHORTCUT_GROUPS.map((group) => ({
-          title: group.title,
-          items: group.items.filter(
-            ([label, keys]) => !search || query(label, keys).includes(search)
-          )
-        })).filter((group) => group.items.length > 0)
-        const total = groups.reduce((count, group) => count + group.items.length, 0)
-        const all = SHORTCUT_GROUPS.reduce((count, group) => count + group.items.length, 0)
-        return (
-          <section className="setting-block">
-            <div className="shortcut-toolbar">
-              <input
-                className="shortcut-search"
-                value={shortcutQuery}
-                onChange={(event) => setShortcutQuery(event.target.value)}
-                placeholder="Filtrer les raccourcis"
-                aria-label="Filtrer les raccourcis"
-                spellCheck={false}
-                onKeyDown={(event) => {
-                  // Échap vide le filtre sans quitter les réglages.
-                  if (event.key !== 'Escape' || !shortcutQuery) return
-                  event.preventDefault()
-                  setShortcutQuery('')
-                }}
-              />
-              <button
-                type="button"
-                className="action"
-                onClick={() => setShortcutQuery('')}
-                disabled={!search}
-                title={search ? 'Effacer le filtre' : 'Aucun filtre actif'}
-              >
-                <Icon name="reload" size={13} />
-                Réinitialiser
-              </button>
-            </div>
-            <p className="shortcut-count" role="status">
-              {search
-                ? `${total} sur ${all} raccourcis`
-                : `${all} raccourcis, en ${SHORTCUT_GROUPS.length} groupes`}
-            </p>
-            {total === 0 && <p className="shortcut-empty">Aucun raccourci ne correspond.</p>}
-            {groups.map((group) => (
-              <div className="shortcut-group" key={group.title}>
-                <h3 className="shortcut-group-title">
-                  {group.title}
-                  <span className="shortcut-group-count">{group.items.length}</span>
-                </h3>
-                <div className="shortcut-table">
-                  {group.items.map(([label, keys]) => (
-                    <div className="shortcut-table-row" key={label}>
-                      <span>{label}</span>
-                      <kbd aria-label={spokenShortcut(keys)}>{keys}</kbd>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <p className="shortcut-note">
-              Les combinaisons viennent du menu de l’application : cette version ne les remappe pas
-              encore.
-            </p>
-          </section>
-        )
-      }
+      case 'agent':
+        return <AgentPage settings={settings} initialTab={tabRequest} />
 
-      case 'updates':
-        return <UpdatesPage />
-
-      case 'about':
-        return <AboutPage onOpenUpdates={() => setPage('updates')} />
+      case 'system':
+        return <SystemPage initialTab={tabRequest} />
 
       default:
         return null
@@ -502,39 +306,107 @@ export default function SettingsPanel() {
               <Icon name="search" size={13} />
               <input
                 ref={navInput}
+                role="combobox"
                 value={navQuery}
-                onChange={(event) => setNavQuery(event.target.value)}
-                placeholder="Chercher"
-                aria-label="Chercher une section des réglages"
+                onChange={(event) => {
+                  setNavQuery(event.target.value)
+                  setResultIndex(0)
+                }}
+                placeholder="Rechercher"
+                aria-label="Rechercher dans les réglages"
+                aria-autocomplete="list"
+                aria-haspopup="listbox"
+                aria-expanded={results.length > 0}
+                aria-controls={results.length > 0 ? 'settings-search-results' : undefined}
+                aria-activedescendant={
+                  results.length > 0 ? `settings-search-result-${activeResult}` : undefined
+                }
                 spellCheck={false}
                 onKeyDown={(event) => {
-                  if (event.key !== 'Escape' || !navQuery) return
-                  event.preventDefault()
-                  setNavQuery('')
+                  if (event.key === 'Escape') {
+                    if (!navQuery) return
+                    event.preventDefault()
+                    setNavQuery('')
+                    setResultIndex(0)
+                    return
+                  }
+                  if (results.length === 0) return
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    setResultIndex((index) => Math.min(index + 1, results.length - 1))
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    setResultIndex((index) => Math.max(index - 1, 0))
+                  } else if (event.key === 'Enter') {
+                    event.preventDefault()
+                    openTarget(results[activeResult])
+                  }
                 }}
               />
               <kbd aria-hidden="true">{shortcut('F')}</kbd>
             </div>
-            <nav className="settings-nav-scroll" aria-label="Sections des réglages">
-              {navGroups.map((group) => (
-                <div className="settings-nav-group" key={group.group}>
-                  <p className="settings-nav-label">{group.group}</p>
-                  {group.items.map((item) => (
-                    <button
-                      type="button"
-                      key={item.id}
-                      className="settings-nav-item"
-                      data-active={page === item.id}
-                      aria-current={page === item.id ? 'page' : undefined}
-                      onClick={() => setPage(item.id)}
-                    >
-                      <Icon name={item.icon} size={14} />
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </nav>
+            {searching ? (
+              <div className="settings-search-results">
+                <p className="settings-search-label" role="status">
+                  {results.length === 0
+                    ? 'Aucun résultat'
+                    : `${results.length} résultat${results.length > 1 ? 's' : ''}`}
+                </p>
+                {results.length === 0 ? (
+                  <p className="settings-search-empty">
+                    Essayez « thème », « notes » ou « mises à jour ».
+                  </p>
+                ) : (
+                  <div
+                    id="settings-search-results"
+                    role="listbox"
+                    aria-label="Résultats de recherche"
+                  >
+                    {results.map((entry, index) => (
+                      <button
+                        key={`${entry.page}-${entry.tab ?? 'root'}-${entry.anchor ?? entry.label}`}
+                        type="button"
+                        role="option"
+                        id={`settings-search-result-${index}`}
+                        className="settings-search-result"
+                        aria-selected={index === activeResult}
+                        onClick={() => openTarget(entry)}
+                        onMouseEnter={() => setResultIndex(index)}
+                      >
+                        <span className="settings-search-result-copy">
+                          <span className="settings-search-result-head">
+                            <strong>{entry.label}</strong>
+                            <span className="settings-search-result-group">{entry.group}</span>
+                          </span>
+                          <span className="settings-search-result-hint">{entry.hint}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <nav className="settings-nav-scroll" aria-label="Sections des réglages">
+                {navGroups.map((group) => (
+                  <div className="settings-nav-group" key={group.group}>
+                    <p className="settings-nav-label">{group.group}</p>
+                    {group.items.map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className="settings-nav-item"
+                        data-active={page === item.id}
+                        aria-current={page === item.id ? 'page' : undefined}
+                        onClick={() => goTo(item.id)}
+                      >
+                        <Icon name={item.icon} size={14} />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </nav>
+            )}
           </aside>
 
           <div className="settings-pane">
@@ -558,7 +430,7 @@ export default function SettingsPanel() {
             </header>
             {/* La clé change la courbe d’entrée à chaque section : le panneau
                 glisse sans faire sauter le défilement du parent. */}
-            <div className="settings-scroll" key={page}>
+            <div ref={scrollRef} className="settings-scroll" key={`${page}:${tabRequest ?? ''}`}>
               {renderPage()}
             </div>
           </div>

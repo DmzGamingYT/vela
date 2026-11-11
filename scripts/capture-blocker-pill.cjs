@@ -117,11 +117,15 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(DATA, { recursive: true })
 
-  const child = spawn(require('electron'), ['.', `--inspect=${INSPECT}`, `--remote-debugging-port=${PORT}`], {
-    cwd: ROOT,
-    env: { ...process.env, VELA_USER_DATA: DATA },
-    stdio: 'ignore'
-  })
+  const child = spawn(
+    require('electron'),
+    ['.', `--inspect=${INSPECT}`, `--remote-debugging-port=${PORT}`],
+    {
+      cwd: ROOT,
+      env: { ...process.env, VELA_USER_DATA: DATA },
+      stdio: 'ignore'
+    }
+  )
 
   let renderer
   let main
@@ -135,14 +139,20 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
 
     const mainWindow = `process.mainModule.require("electron").BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Vela")`
     const mainEval = (expression) => main.evaluate(expression)
-    const shortcut = (action) => mainEval(`${mainWindow}.webContents.send("shortcut", { action: ${JSON.stringify(action)} })`)
-    const focus = () => mainEval(`(() => { const w = ${mainWindow}; w.show(); w.focus(); return true })()`)
+    const shortcut = (action) =>
+      mainEval(`${mainWindow}.webContents.send("shortcut", { action: ${JSON.stringify(action)} })`)
+    const focus = () =>
+      mainEval(`(() => { const w = ${mainWindow}; w.show(); w.focus(); return true })()`)
     const resize = async (width, height) => {
-      await mainEval(`(() => { const w = ${mainWindow}; w.setSize(${width}, ${height}); w.center(); return true })()`)
+      await mainEval(
+        `(() => { const w = ${mainWindow}; w.setSize(${width}, ${height}); w.center(); return true })()`
+      )
       await sleep(700)
     }
     const fullScreen = async (value) => {
-      await mainEval(`(() => { const w = ${mainWindow}; w.setFullScreen(${value}); return true })()`)
+      await mainEval(
+        `(() => { const w = ${mainWindow}; w.setFullScreen(${value}); return true })()`
+      )
       await sleep(1100)
     }
     const shoot = async (name) => {
@@ -153,17 +163,23 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
       console.log('capturé', path.relative(ROOT, file))
     }
     const click = async (selector) => {
-      const done = await renderer.evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)}); if (!node) return false; node.click(); return true })()`)
+      const done = await renderer.evaluate(
+        `(() => { const node = document.querySelector(${JSON.stringify(selector)}); if (!node) return false; node.click(); return true })()`
+      )
       if (!done) console.warn('  cible absente :', selector)
       await sleep(900)
       return Boolean(done)
     }
     const escape = async () => {
-      await renderer.evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`)
+      await renderer.evaluate(
+        `window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`
+      )
       await sleep(600)
     }
 
-    await renderer.evaluate(`window.vela.settings.update({ onboarded: true, themeId: 'indigo', theme: 'light' })`)
+    await renderer.evaluate(
+      `window.vela.settings.update({ onboarded: true, themeId: 'indigo', theme: 'light' })`
+    )
     await sleep(2400)
     const homeId = await renderer.evaluate(`(async () => (await window.vela.view()).activeTabId)()`)
     const page = await renderer.evaluate(
@@ -222,7 +238,9 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
       await resize(1380, 880)
     }
 
-    const after = await renderer.evaluate(`(() => ({ pills: document.querySelectorAll('.statusbar-blocked').length, live: document.querySelectorAll('[aria-live]').length }))()`)
+    const after = await renderer.evaluate(
+      `(() => ({ pills: document.querySelectorAll('.statusbar-blocked').length, live: document.querySelectorAll('[aria-live]').length }))()`
+    )
     console.log('pastilles dans le DOM :', JSON.stringify(after))
   } finally {
     try {

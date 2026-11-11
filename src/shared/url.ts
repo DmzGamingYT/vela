@@ -260,6 +260,36 @@ export function prettyUrl(url: string): string {
   }
 }
 
+const LOGIN_HOSTS: readonly string[] = [
+  'accounts.google.com',
+  'accounts.youtube.com',
+  'myaccount.google.com',
+  'login.microsoftonline.com',
+  'login.microsoft.com',
+  'login.live.com',
+  'account.microsoft.com',
+  'appleid.apple.com',
+  'idmsa.apple.com',
+  'login.yahoo.com'
+]
+
+const LOGIN_PATH = /(?:^|\/)(?:login|signin|sign_in|auth|session|sso|oauth)(?:\/|$)/i
+
+/** Page de connexion : elle ne doit pas devenir une « dernière page utile ». */
+export function isLoginUrl(url: string): boolean {
+  const host = hostOf(url)
+  if (!host) return false
+  const loginHost = LOGIN_HOSTS.some(
+    (candidate) => host === candidate || host.endsWith(`.${candidate}`)
+  )
+  if (loginHost) return true
+  try {
+    return LOGIN_PATH.test(new URL(url).pathname)
+  } catch {
+    return false
+  }
+}
+
 export interface Target {
   url: string
   kind: 'url' | 'search'

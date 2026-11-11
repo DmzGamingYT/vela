@@ -45,12 +45,20 @@ const fresh = (source, target) =>
 const avif = (source, target, width) => {
   if (fresh(source, target)) return false
   run('ffmpeg', [
-    '-hide_banner', '-loglevel', 'error', '-y',
-    '-i', source,
-    '-vf', `scale=${width}:-2:flags=lanczos`,
-    '-c:v', 'libsvtav1',
-    '-crf', String(AVIF_CRF),
-    '-f', 'avif',
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-i',
+    source,
+    '-vf',
+    `scale=${width}:-2:flags=lanczos`,
+    '-c:v',
+    'libsvtav1',
+    '-crf',
+    String(AVIF_CRF),
+    '-f',
+    'avif',
     target
   ])
   return true
@@ -60,10 +68,14 @@ const webp = (source, target, width) => {
   if (fresh(source, target)) return false
   run('cwebp', [
     '-quiet',
-    '-q', String(WEBP_QUALITY),
-    '-resize', String(width), '0',
+    '-q',
+    String(WEBP_QUALITY),
+    '-resize',
+    String(width),
+    '0',
     source,
-    '-o', target
+    '-o',
+    target
   ])
   return true
 }

@@ -83,9 +83,15 @@ reste ouverte pour la suite.</p>
     const ws = await connect(target.webSocketDebuggerUrl)
     const send = client(ws)
     const evaluate = async (expression) => {
-      const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
+      const result = await send('Runtime.evaluate', {
+        expression,
+        awaitPromise: true,
+        returnByValue: true
+      })
       if (result.exceptionDetails) {
-        throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
+        throw new Error(
+          result.exceptionDetails.exception?.description ?? result.exceptionDetails.text
+        )
       }
       return result.result.value
     }

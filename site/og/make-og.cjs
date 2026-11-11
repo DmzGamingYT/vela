@@ -36,9 +36,14 @@ app.whenReady().then(async () => {
   const image = await win.webContents.capturePage()
   const { width, height } = image.getSize()
   // Sur un écran Retina, la capture sort en 2× : on redescend à 1200×630.
-  const final = width === 1200 && height === 630 ? image : image.resize({ width: 1200, height: 630, quality: 'best' })
+  const final =
+    width === 1200 && height === 630
+      ? image
+      : image.resize({ width: 1200, height: 630, quality: 'best' })
   writeFileSync(target, final.toPNG())
-  console.log(`og-vela.png ${final.getSize().width}×${final.getSize().height} → site/public/og-vela.png`)
+  console.log(
+    `og-vela.png ${final.getSize().width}×${final.getSize().height} → site/public/og-vela.png`
+  )
   if (final.getSize().width !== 1200 || final.getSize().height !== 630) {
     console.error('attention : le visuel devrait faire 1200×630')
     app.exit(1)

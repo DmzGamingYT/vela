@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react'
-import { AGENT_EXAMPLES } from '@shared/agent'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AGENT_BUDGET, type AgentToolName } from '@shared/agentLoop'
 import { hostOf } from '@shared/url'
 import { Markdown } from '../../lib/markdown'
 import type { AgentUi } from '../../store/types'
 import { Icon, type IconName } from '../Icon'
 import AgentCost from './AgentCost'
+import type { AgentSuggestion } from './suggestions'
 
 /** Chaque outil garde le même pictogramme d’un tour à l’autre. */
 const TOOL_ICON: Record<AgentToolName, IconName> = {
@@ -34,11 +34,13 @@ function durationLabel(ms: number): string {
  */
 export default function ChatTranscript({
   agent,
-  mode,
   draft = '',
   approved,
   engineLabel,
   engineLocal,
+  suggestions,
+  showPrice = false,
+  onOpenAtelier,
   onPick,
   onCopy,
   onApprove,
@@ -46,13 +48,15 @@ export default function ChatTranscript({
   onReset
 }: {
   agent: AgentUi
-  /** Mode choisi dans le composeur : l’état vide en dépend. */
-  mode: 'answer' | 'act'
   /** Texte en cours de saisie : il retire les suggestions de relance. */
   draft?: string
   approved: boolean
   engineLabel: string
   engineLocal: boolean
+  suggestions: AgentSuggestion[]
+  /** La page jointe ressemble à une fiche produit : « Comparer les prix » a du sens. */
+  showPrice?: boolean
+  onOpenAtelier?: () => void
   onPick: (prompt: string) => void
   onCopy: () => void
   onApprove: () => void
@@ -63,6 +67,24 @@ export default function ChatTranscript({
   const running = agent.status === 'running'
   const empty = agent.status === 'idle' && !agent.markdown && agent.turns.length === 0
   const failed = agent.journal.filter((entry) => !entry.ok).length
+  const suggestionKey = suggestions.map((suggestion) => suggestion.id).join('|')
+  // La clé garde la présélection sans effet de remise à zéro : quand la
+  // sélection change, la première ligne redevient active au rendu suivant.
+  const [pick, setPick] = useState<{ key: string; index: number }>({
+    key: suggestionKey,
+    index: 0
+  })
+  const active = pick.key === suggestionKey ? pick.index : 0
+  const setActive = useCallback(
+    (next: number | ((current: number) => number)): void => {
+      setPick((current) => {
+        const base = current.key === suggestionKey ? current.index : 0
+        const index = typeof next === 'function' ? next(base) : next
+        return { key: suggestionKey, index }
+      })
+    },
+    [suggestionKey]
+  )
 
   // Le fil suit la réponse jusqu’au bout : sans cela, la ligne des actions
   // restait sous le pli, coupée par le composeur.
@@ -71,29 +93,75 @@ export default function ChatTranscript({
     endRef.current?.scrollIntoView({ block: 'end' })
   }, [agent.markdown, agent.journal.length, agent.status])
 
+  // La première suggestion est présélectionnée : ↵ la pose dans le champ,
+  // même quand le focus est encore dans la saisie vide. Les flèches changent
+  // de ligne, sans jamais voler une frappe destinée au champ.
+  useEffect(() => {
+    if (!empty || suggestions.length === 0) return
+    const onKey = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement | null
+      const typing = Boolean(
+        target &&
+          (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable)
+      )
+      const buttonLike = Boolean(target?.closest('button, a, select'))
+      if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        if ((typing && draft.trim()) || buttonLike) return
+        const suggestion = suggestions[active]
+        if (!suggestion) return
+        event.preventDefault()
+        onPick(suggestion.prompt)
+        return
+      }
+      if (typing || buttonLike) return
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActive((current) => (current + 1) % suggestions.length)
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActive((current) => (current - 1 + suggestions.length) % suggestions.length)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [empty, suggestions, active, draft, onPick, setActive])
+
   if (empty) {
     return (
       <div className="chat-thread" data-empty="true" aria-label="Conversation">
         <div className="chat-empty">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            Atelier
-          </p>
           <h2>Que fait-on ?</h2>
           <p className="chat-lede">
-            {mode === 'act'
-              ? 'L’agent ouvre son propre onglet de travail et demande votre accord à chaque action.'
-              : 'Une demande, des pages jointes : l’agent lit et répond.'}
-            {engineLocal ? ' Rien ne quitte cet appareil.' : ''}
+            Posez une question sur la page ouverte ou sur vos onglets. L’agent lit ; il n’agit sur
+            une page qu’avec votre accord.
           </p>
-          <div className="chat-picks">
-            {AGENT_EXAMPLES.slice(0, 3).map((example) => (
-              <button key={example} type="button" onClick={() => onPick(example)}>
-                <Icon name="sparkles" size={12} />
-                {example}
-              </button>
-            ))}
-          </div>
+          {suggestions.length > 0 && (
+            <div className="chat-picks">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={suggestion.id}
+                  type="button"
+                  data-active={index === active}
+                  onMouseEnter={() => setActive(index)}
+                  onClick={() => onPick(suggestion.prompt)}
+                >
+                  <Icon name={suggestion.icon} size={13} />
+                  <span>{suggestion.label}</span>
+                  {index === active && (
+                    <span className="pick-key" aria-hidden="true">
+                      ↵
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          {onOpenAtelier && (
+            <button type="button" className="chat-atelier" onClick={onOpenAtelier}>
+              <Icon name="compass" size={12} />
+              Ouvrir l’Atelier
+            </button>
+          )}
         </div>
       </div>
     )
@@ -191,13 +259,18 @@ export default function ChatTranscript({
         )}
 
         {running && agent.requestMode === 'act' && (
-          <p className="act-budget">
-            <b>
-              {agent.journal.length} / {AGENT_BUDGET.steps}
-            </b>
-            actions
-            <span>{Math.round(AGENT_BUDGET.ms / 60_000)} min au plus</span>
-          </p>
+          <div className="act-banner" role="status">
+            <Icon name="shield" size={13} />
+            <span>
+              <b>L’agent agit.</b> Chaque action demande votre accord.
+            </span>
+            <span className="act-budget">
+              <b>
+                {agent.journal.length} / {AGENT_BUDGET.steps}
+              </b>
+              actions · {Math.round(AGENT_BUDGET.ms / 60_000)} min au plus
+            </span>
+          </div>
         )}
 
         {agent.error && (
@@ -235,6 +308,22 @@ export default function ChatTranscript({
         {agent.status === 'done' && agent.markdown && !draft.trim() && (
           <div className="chat-followups" aria-label="Questions de suivi">
             <span>Continuer</span>
+            <button type="button" onClick={onSave}>
+              <Icon name="notes" size={12} />
+              Garder dans Notes
+            </button>
+            {showPrice && (
+              <button
+                type="button"
+                onClick={() =>
+                  onPick(
+                    'Compare les prix et les conditions des offres citées : prix total, abonnement, limites et ce qui change.'
+                  )
+                }
+              >
+                Comparer les prix
+              </button>
+            )}
             <button
               type="button"
               onClick={() =>

@@ -40,7 +40,9 @@ if (out) {
   Promise.resolve(waitForElectron()).then(({ app, BrowserWindow, screen }) => {
     app.whenReady().then(() => {
       const timer = setInterval(() => {
-        const target = BrowserWindow.getAllWindows().find((win) => !win.isDestroyed() && win.isVisible())
+        const target = BrowserWindow.getAllWindows().find(
+          (win) => !win.isDestroyed() && win.isVisible()
+        )
         if (!target) return
         clearInterval(timer)
 

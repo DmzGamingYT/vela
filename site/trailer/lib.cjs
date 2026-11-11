@@ -28,7 +28,9 @@ function connect(url) {
         send(method, params = {}) {
           return new Promise((res, rej) => {
             const n = ++id
-            pending.set(n, (m) => (m.error ? rej(new Error(`${method}: ${JSON.stringify(m.error)}`)) : res(m.result)))
+            pending.set(n, (m) =>
+              m.error ? rej(new Error(`${method}: ${JSON.stringify(m.error)}`)) : res(m.result)
+            )
             ws.send(JSON.stringify({ id: n, method, params }))
           })
         },
@@ -56,7 +58,15 @@ function connect(url) {
  * `size` est la taille logique de la fenêtre ; le screencast produit des
  * images à cette taille, sans facteur d'échelle.
  */
-async function launchApp({ dataDir, port = 9371, width = 1440, height = 900, seed, extraEnv, resize = true } = {}) {
+async function launchApp({
+  dataDir,
+  port = 9371,
+  width = 1440,
+  height = 900,
+  seed,
+  extraEnv,
+  resize = true
+} = {}) {
   fs.rmSync(dataDir, { recursive: true, force: true })
   fs.mkdirSync(dataDir, { recursive: true })
 
@@ -131,7 +141,11 @@ async function launchApp({ dataDir, port = 9371, width = 1440, height = 900, see
 /** Outils d'interaction : de vrais événements souris et clavier. */
 function makeInputs(client) {
   const evaluate = async (expression) => {
-    const result = await client.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
+    const result = await client.send('Runtime.evaluate', {
+      expression,
+      awaitPromise: true,
+      returnByValue: true
+    })
     return result.result?.value
   }
 
@@ -168,7 +182,10 @@ function makeInputs(client) {
     for (let i = 1; i <= steps; i += 1) {
       const t = i / steps
       const eased = t * t * (3 - 2 * t)
-      await moveRaw(Math.round(from.x + (to.x - from.x) * eased), Math.round(from.y + (to.y - from.y) * eased))
+      await moveRaw(
+        Math.round(from.x + (to.x - from.x) * eased),
+        Math.round(from.y + (to.y - from.y) * eased)
+      )
       await sleep(stepMs)
     }
   }
@@ -178,9 +195,23 @@ function makeInputs(client) {
   const click = async (x, y, { pause = 120 } = {}) => {
     await glide(pointer, { x, y })
     pointer = { x, y }
-    await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 })
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x,
+      y,
+      button: 'left',
+      buttons: 1,
+      clickCount: 1
+    })
     await sleep(60)
-    await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 })
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x,
+      y,
+      button: 'left',
+      buttons: 0,
+      clickCount: 1
+    })
     await sleep(pause)
   }
 
@@ -229,7 +260,12 @@ function makeInputs(client) {
           nativeVirtualKeyCode: named.vk,
           modifiers: mask
         }
-      : { key: keyName, code: `Key${keyName.toUpperCase()}`, windowsVirtualKeyCode: keyName.toUpperCase().charCodeAt(0), modifiers: mask }
+      : {
+          key: keyName,
+          code: `Key${keyName.toUpperCase()}`,
+          windowsVirtualKeyCode: keyName.toUpperCase().charCodeAt(0),
+          modifiers: mask
+        }
     await client.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...base })
     // C'est l'événement de caractère qui valide un formulaire : sans lui, la
     // touche Entrée reste sans effet.
@@ -318,7 +354,13 @@ async function attachPage(port, pattern, timeout = 15000) {
         return {
           url: target.url,
           evaluate: async (expression) =>
-            (await client.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })).result?.value,
+            (
+              await client.send('Runtime.evaluate', {
+                expression,
+                returnByValue: true,
+                awaitPromise: true
+              })
+            ).result?.value,
           /** Défilement réel : petites impulsions de molette, comme une main. */
           wheel: async (x, y, steps = 6, dy = 170, pause = 95) => {
             for (let i = 0; i < steps; i += 1) {

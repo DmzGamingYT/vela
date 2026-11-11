@@ -51,7 +51,10 @@
 
   const PRESETS = {
     openai: { endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' },
-    openrouter: { endpoint: 'https://openrouter.ai/api/v1/chat/completions', model: 'openai/gpt-4o-mini' },
+    openrouter: {
+      endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+      model: 'openai/gpt-4o-mini'
+    },
     ollama: { endpoint: 'http://localhost:11434/v1/chat/completions', model: 'llama3.1' },
     google: { endpoint: 'https://translation.googleapis.com/language/translate/v2', model: '' }
   }
@@ -305,7 +308,8 @@
       naturalWidth: img.naturalWidth || 0,
       naturalHeight: img.naturalHeight || 0,
       complete: Boolean(img.complete),
-      crossOrigin: img.crossOrigin === null || img.crossOrigin === undefined ? '(aucun)' : img.crossOrigin,
+      crossOrigin:
+        img.crossOrigin === null || img.crossOrigin === undefined ? '(aucun)' : img.crossOrigin,
       loading: attr('loading') || '(aucun)'
     }
   }
@@ -325,7 +329,8 @@
     if (/d[ée]lai d[ée]pass[ée]|timeout/i.test(text)) return `timeout — ${text}`
     if (/SecurityError|tainted|CORS/i.test(text)) return `CORS — ${text}`
     if (/capture/i.test(text)) return `capture échouée — ${text}`
-    if (!declared.naturalWidth && declared.complete === false) return `image jamais chargée — ${text}`
+    if (!declared.naturalWidth && declared.complete === false)
+      return `image jamais chargée — ${text}`
     return text || 'cause inconnue'
   }
 
@@ -354,9 +359,23 @@
     if (!/^(https?:|blob:|data:image)/i.test(src)) return Promise.resolve(false)
     return new Promise((resolve) => {
       const finish = (value) => resolve(value > 0)
-      const timer = setTimeout(() => { img.onload = null; img.onerror = null; finish(img.naturalWidth) }, 4000)
-      img.onload = () => { clearTimeout(timer); img.onload = null; img.onerror = null; finish(img.naturalWidth) }
-      img.onerror = () => { clearTimeout(timer); img.onload = null; img.onerror = null; finish(img.naturalWidth) }
+      const timer = setTimeout(() => {
+        img.onload = null
+        img.onerror = null
+        finish(img.naturalWidth)
+      }, 4000)
+      img.onload = () => {
+        clearTimeout(timer)
+        img.onload = null
+        img.onerror = null
+        finish(img.naturalWidth)
+      }
+      img.onerror = () => {
+        clearTimeout(timer)
+        img.onload = null
+        img.onerror = null
+        finish(img.naturalWidth)
+      }
       // Sans peinture, l'attribut `loading="lazy"` ne déclenche jamais le
       // chargement : on relit la source que Tesseract utilisera de toute façon.
       img.loading = 'eager'
@@ -503,7 +522,9 @@
 
   /** Bitmap non teinté + agrandissement modéré pour les pages basses résolutions. */
   async function canvasFrom(url) {
-    const blob = /^(blob:|data:)/i.test(url) ? await (await fetch(url)).blob() : await requestBinary(url)
+    const blob = /^(blob:|data:)/i.test(url)
+      ? await (await fetch(url)).blob()
+      : await requestBinary(url)
     const bitmap = await createImageBitmap(blob)
     const scale = bitmap.width < 1600 ? Math.min(2, 1600 / bitmap.width) : 1
     const canvas = document.createElement('canvas')
@@ -522,11 +543,14 @@
 
   /** Luminance et pixels d'une planche, relus une seule fois. */
   function panelPixels(canvas) {
-    const image = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, canvas.width, canvas.height)
+    const image = canvas
+      .getContext('2d', { willReadFrequently: true })
+      .getImageData(0, 0, canvas.width, canvas.height)
     const { data, width, height } = image
     const lum = new Uint8Array(width * height)
     for (let index = 0; index < lum.length; index += 1) {
-      lum[index] = (data[index * 4] * 299 + data[index * 4 + 1] * 587 + data[index * 4 + 2] * 114) / 1000
+      lum[index] =
+        (data[index * 4] * 299 + data[index * 4 + 1] * 587 + data[index * 4 + 2] * 114) / 1000
     }
     return { image, lum, width, height }
   }
@@ -557,7 +581,16 @@
       if (!flag[start] || labels[start] >= 0) continue
       if (regions.length >= limit) break
       const id = regions.length
-      const region = { id, area: 0, x0: width, y0: height, x1: -1, y1: -1, border: false, pixels: [] }
+      const region = {
+        id,
+        area: 0,
+        x0: width,
+        y0: height,
+        x1: -1,
+        y1: -1,
+        border: false,
+        pixels: []
+      }
       labels[start] = id
       stack.push(start)
       while (stack.length) {
@@ -622,8 +655,10 @@
   /** Fermeture : un contour interrompu (trou, antialias) se referme. */
   function closing(flag, width, height, radius) {
     let current = flag
-    for (const horizontal of [false, true]) current = dilateLine(current, width, height, radius, horizontal)
-    for (const horizontal of [false, true]) current = erodeLine(current, width, height, radius, horizontal)
+    for (const horizontal of [false, true])
+      current = dilateLine(current, width, height, radius, horizontal)
+    for (const horizontal of [false, true])
+      current = erodeLine(current, width, height, radius, horizontal)
     return current
   }
 
@@ -633,7 +668,12 @@
     let darkEdge = 0
     for (const index of region.pixels) {
       const x = index % width
-      const neighbours = [x > 0 ? index - 1 : -1, x < width - 1 ? index + 1 : -1, index - width, index + width]
+      const neighbours = [
+        x > 0 ? index - 1 : -1,
+        x < width - 1 ? index + 1 : -1,
+        index - width,
+        index + width
+      ]
       for (const neighbour of neighbours) {
         if (neighbour < 0 || neighbour >= labels.length) continue
         if (labels[neighbour] === region.id) continue
@@ -737,7 +777,9 @@
     for (const region of candidates) {
       const inside = bubbles.some((bubble) => {
         const box = bubble.bbox
-        return box.x0 >= region.x0 && box.y0 >= region.y0 && box.x1 <= region.x1 && box.y1 <= region.y1
+        return (
+          box.x0 >= region.x0 && box.y0 >= region.y0 && box.x1 <= region.x1 && box.y1 <= region.y1
+        )
       })
       if (inside) continue
       const solid = solidMask(region, width)
@@ -750,7 +792,12 @@
       if (solid.w * solid.h < Math.max(1500, lum.length * 0.0015)) continue
       if (solid.w / solid.h > 5 || solid.w / solid.h < 0.2) continue
       bubbles.push({
-        bbox: { x0: solid.x0, y0: solid.y0, x1: solid.x0 + solid.w - 1, y1: solid.y0 + solid.h - 1 },
+        bbox: {
+          x0: solid.x0,
+          y0: solid.y0,
+          x1: solid.x0 + solid.w - 1,
+          y1: solid.y0 + solid.h - 1
+        },
         mask: solid,
         kind: 'bulle',
         text: ''
@@ -763,7 +810,8 @@
   function stableId(text, bbox) {
     const seed = `${text}|${Math.round((bbox.x0 + bbox.x1) / 2)}|${Math.round((bbox.y0 + bbox.y1) / 2)}`
     let hash = 5381
-    for (let index = 0; index < seed.length; index += 1) hash = ((hash << 5) + hash + seed.charCodeAt(index)) >>> 0
+    for (let index = 0; index < seed.length; index += 1)
+      hash = ((hash << 5) + hash + seed.charCodeAt(index)) >>> 0
     return hash.toString(36)
   }
 
@@ -783,7 +831,10 @@
     // Trop court pour une réplique et aucun mot réel (« V4 », « La », « hb »,
     // « 0d He PRN ») : les lectures fantômes de la texture. Une vraie réplique
     // d'un seul mot tient dans son mot (« LOCATED. » compte 8 lettres).
-    if (letters < 8 && !brut.split(/\s+/).some((mot) => mot.replace(/[^\p{L}\p{N}]/gu, '').length >= 5)) {
+    if (
+      letters < 8 &&
+      !brut.split(/\s+/).some((mot) => mot.replace(/[^\p{L}\p{N}]/gu, '').length >= 5)
+    ) {
       return false
     }
     return true
@@ -799,7 +850,9 @@
     const part = document.createElement('canvas')
     part.width = sw
     part.height = sh
-    part.getContext('2d', { willReadFrequently: true }).drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh)
+    part
+      .getContext('2d', { willReadFrequently: true })
+      .drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh)
     return { canvas: part, sx, sy, sw, sh }
   }
 
@@ -871,7 +924,11 @@
         tessedit_pageseg_mode: variant.mode,
         preserve_interword_spaces: '1'
       })
-      const text = lines.map((line) => line.text).join(' ').replace(/\s+/g, ' ').trim()
+      const text = lines
+        .map((line) => line.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
       const letters = text.replace(/[^\p{L}\p{N}]/gu, '').length
       const confidence =
         lines.reduce((total, line) => total + (line.confidence || 0), 0) / Math.max(1, lines.length)
@@ -896,7 +953,9 @@
     const part = cropBox(canvas, box, 0)
     if (!part) return ''
     const grid = 16
-    const { data } = part.canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, part.sw, part.sh)
+    const { data } = part.canvas
+      .getContext('2d', { willReadFrequently: true })
+      .getImageData(0, 0, part.sw, part.sh)
     let hash = 2166136261
     for (let gy = 0; gy < grid; gy += 1) {
       for (let gx = 0; gx < grid; gx += 1) {
@@ -915,13 +974,16 @@
   function burstProbe(canvas, box, zoneMask) {
     const part = cropBox(canvas, box, 2)
     if (!part) return null
-    const { data } = part.canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, part.sw, part.sh)
+    const { data } = part.canvas
+      .getContext('2d', { willReadFrequently: true })
+      .getImageData(0, 0, part.sw, part.sh)
     const lum = new Uint8Array(part.sw * part.sh)
     let sum = 0
     let min = 255
     let max = 0
     for (let index = 0; index < lum.length; index += 1) {
-      const value = (data[index * 4] * 299 + data[index * 4 + 1] * 587 + data[index * 4 + 2] * 114) / 1000
+      const value =
+        (data[index * 4] * 299 + data[index * 4 + 1] * 587 + data[index * 4 + 2] * 114) / 1000
       lum[index] = value
       sum += value
       if (value < min) min = value
@@ -939,7 +1001,12 @@
         for (let x = 0; x < part.sw; x += 1) {
           const mx = x + part.sx - zoneMask.x0
           const my = y + part.sy - zoneMask.y0
-          const inside = mx >= 0 && my >= 0 && mx < zoneMask.w && my < zoneMask.h && zoneMask.mask[my * zoneMask.w + mx]
+          const inside =
+            mx >= 0 &&
+            my >= 0 &&
+            mx < zoneMask.w &&
+            my < zoneMask.h &&
+            zoneMask.mask[my * zoneMask.w + mx]
           if (!inside) ink[y * part.sw + x] = 0
         }
       }
@@ -978,7 +1045,8 @@
       }
     }
     const perRow = transitions / Math.max(1, rows)
-    if (rows < sh * 0.2 || perRow < 2) return { ok: false, raison: `peu de traits (${perRow.toFixed(1)}/ligne)` }
+    if (rows < sh * 0.2 || perRow < 2)
+      return { ok: false, raison: `peu de traits (${perRow.toFixed(1)}/ligne)` }
     let eroded = 0
     for (let y = 1; y < sh - 1; y += 1) {
       for (let x = 1; x < sw - 1; x += 1) {
@@ -1001,7 +1069,17 @@
       scaled.width = 220
       scaled.height = Math.max(12, Math.round((box.y1 - box.y0) * factor))
       const context = scaled.getContext('2d', { willReadFrequently: true })
-      context.drawImage(canvas, box.x0, box.y0, width, box.y1 - box.y0, 0, 0, scaled.width, scaled.height)
+      context.drawImage(
+        canvas,
+        box.x0,
+        box.y0,
+        width,
+        box.y1 - box.y0,
+        0,
+        0,
+        scaled.width,
+        scaled.height
+      )
       return estimateAngle(scaled, { x0: 0, y0: 0, x1: scaled.width, y1: scaled.height })
     }
     const probe = burstProbe(canvas, box, zoneMask)
@@ -1066,12 +1144,19 @@
       clean.width = sw
       clean.height = sh
       const cleanContext = clean.getContext('2d', { willReadFrequently: true })
-      const inside = source.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, sw, sh)
+      const inside = source
+        .getContext('2d', { willReadFrequently: true })
+        .getImageData(0, 0, sw, sh)
       for (let y = 0; y < sh; y += 1) {
         for (let x = 0; x < sw; x += 1) {
           const mx = x + sx - zoneMask.x0
           const my = y + sy - zoneMask.y0
-          const kept = mx >= 0 && my >= 0 && mx < zoneMask.w && my < zoneMask.h && zoneMask.mask[my * zoneMask.w + mx]
+          const kept =
+            mx >= 0 &&
+            my >= 0 &&
+            mx < zoneMask.w &&
+            my < zoneMask.h &&
+            zoneMask.mask[my * zoneMask.w + mx]
           if (kept) continue
           const offset = (y * sw + x) * 4
           inside.data[offset] = 255
@@ -1133,11 +1218,20 @@
         tessedit_pageseg_mode: mode,
         preserve_interword_spaces: '1'
       })
-      const text = lines.map((line) => line.text).join(' ').replace(/\s+/g, ' ').trim()
+      const text = lines
+        .map((line) => line.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
       const letters = text.replace(/[^\p{L}\p{N}]/gu, '').length
-      const confidence = lines.reduce((total, line) => total + (line.confidence || 0), 0) / Math.max(1, lines.length)
+      const confidence =
+        lines.reduce((total, line) => total + (line.confidence || 0), 0) / Math.max(1, lines.length)
       if (letters >= 2 && confidence >= 55) {
-        return { text, lineHeight: lineHeightOf(lines) / prepared.scale, confidence: Math.round(confidence) }
+        return {
+          text,
+          lineHeight: lineHeightOf(lines) / prepared.scale,
+          confidence: Math.round(confidence)
+        }
       }
     }
     return null
@@ -1219,7 +1313,17 @@
     for (let index = 1; index < words.length; index += 1) {
       const word = words[index]
       const gap = word.bbox.x0 - current.bbox.x1
-      const crossed = gap > height * 0.4 ? darkColumnBetween(pixels, current.bbox.x1, word.bbox.x0, line.bbox.y0, line.bbox.y1, cut) : -1
+      const crossed =
+        gap > height * 0.4
+          ? darkColumnBetween(
+              pixels,
+              current.bbox.x1,
+              word.bbox.x0,
+              line.bbox.y0,
+              line.bbox.y1,
+              cut
+            )
+          : -1
       if (gap > height * 2 || crossed >= 0) {
         segments.push(current)
         current = { text: word.text.trim(), bbox: { ...word.bbox } }
@@ -1283,7 +1387,8 @@
       for (let y = y0; y <= y1; y += 1) for (let x = x0; x <= x1; x += 1) blocked[y * width + x] = 1
     }
     const ink = new Uint8Array(lum.length)
-    for (let index = 0; index < lum.length; index += 1) ink[index] = !blocked[index] && lum[index] < cut ? 1 : 0
+    for (let index = 0; index < lum.length; index += 1)
+      ink[index] = !blocked[index] && lum[index] < cut ? 1 : 0
     const grown = dilateLine(dilateLine(ink, width, height, 8, true), width, height, 8, false)
     const { regions } = regionsOf(grown, width, height, 400)
     const clusters = []
@@ -1313,7 +1418,8 @@
     // vraies bulles sont les plus grandes régions closes. Sans plafond, une page
     // bruitée fait relire des dizaines de creux d'encrage avant la première
     // réplique — c'est là que passait l'essentiel du temps d'analyse.
-    const parAire = (bubble) => (bubble.bbox.x1 - bubble.bbox.x0) * (bubble.bbox.y1 - bubble.bbox.y0)
+    const parAire = (bubble) =>
+      (bubble.bbox.x1 - bubble.bbox.x0) * (bubble.bbox.y1 - bubble.bbox.y0)
     const gardees = new Set([...bubbles].sort((a, b) => parAire(b) - parAire(a)).slice(0, 24))
     for (const bubble of bubbles) {
       if (!gardees.has(bubble)) {
@@ -1341,14 +1447,23 @@
     const lines = await ocrPass(canvas, { preserve_interword_spaces: '1' })
     console.debug(
       '[BD] bulles :',
-      bubbles.map((bubble) => `« ${bubble.text || '—'} » @${bubble.bbox.x0},${bubble.bbox.y0},${bubble.bbox.x1},${bubble.bbox.y1}`).join(' | ')
+      bubbles
+        .map(
+          (bubble) =>
+            `« ${bubble.text || '—'} » @${bubble.bbox.x0},${bubble.bbox.y0},${bubble.bbox.x1},${bubble.bbox.y1}`
+        )
+        .join(' | ')
     )
     const outside = []
     const inBubble = (bbox) => {
       const cx = (bbox.x0 + bbox.x1) / 2
       const cy = (bbox.y0 + bbox.y1) / 2
       return bubbles.some(
-        (bubble) => cx >= bubble.bbox.x0 && cx <= bubble.bbox.x1 && cy >= bubble.bbox.y0 && cy <= bubble.bbox.y1
+        (bubble) =>
+          cx >= bubble.bbox.x0 &&
+          cx <= bubble.bbox.x1 &&
+          cy >= bubble.bbox.y0 &&
+          cy <= bubble.bbox.y1
       )
     }
     for (const line of lines) {
@@ -1367,8 +1482,13 @@
 
     // Zones muettes : une bulle close que l'OCR n'a pas lue, et les amas d'encre
     // hors de tout texte connu. On tente l'OCR agrandi, puis la vision.
-    const silent = bubbles.filter((bubble) => !bubble.text && !bubble.skipped).map((bubble) => ({ bbox: bubble.bbox, mask: bubble.mask }))
-    const clusters = inkClusters(pixels, cut, [...bubbles.map((bubble) => bubble.bbox), ...zones.map((zone) => zone.bbox)])
+    const silent = bubbles
+      .filter((bubble) => !bubble.text && !bubble.skipped)
+      .map((bubble) => ({ bbox: bubble.bbox, mask: bubble.mask }))
+    const clusters = inkClusters(pixels, cut, [
+      ...bubbles.map((bubble) => bubble.bbox),
+      ...zones.map((zone) => zone.bbox)
+    ])
     // Crible AVANT l'OCR : un amas d'encre qui n'a pas la forme de texte coûte
     // une passe complète pour rien. Le motif du rejet est gardé pour la capture.
     const filtered = !window.__vtNoFilter
@@ -1378,7 +1498,16 @@
       if (extra >= 4) break
       const cx = (bbox.x0 + bbox.x1) / 2
       const cy = (bbox.y0 + bbox.y1) / 2
-      if (bubbles.some((bubble) => cx >= bubble.bbox.x0 && cx <= bubble.bbox.x1 && cy >= bubble.bbox.y0 && cy <= bubble.bbox.y1)) continue
+      if (
+        bubbles.some(
+          (bubble) =>
+            cx >= bubble.bbox.x0 &&
+            cx <= bubble.bbox.x1 &&
+            cy >= bubble.bbox.y0 &&
+            cy <= bubble.bbox.y1
+        )
+      )
+        continue
       if (filtered) {
         const verdict = burstVerdict(canvas, bbox)
         if (!verdict.ok) {
@@ -1438,8 +1567,12 @@
     for (const zone of zones) {
       zone.id = stableId(zone.text, zone.bbox)
     }
-    console.debug('[BD] zones :', zones.map((zone) => `${zone.kind}:${zone.text || '—'}`).join(' | '))
-    if (rejets.length) console.debug('[BD] rejets :', rejets.map((entry) => entry.raison).join(' | '))
+    console.debug(
+      '[BD] zones :',
+      zones.map((zone) => `${zone.kind}:${zone.text || '—'}`).join(' | ')
+    )
+    if (rejets.length)
+      console.debug('[BD] rejets :', rejets.map((entry) => entry.raison).join(' | '))
     return { bubbles, zones, pixels, rejets }
   }
 
@@ -1493,7 +1626,12 @@
             zone.traduit = translated[index]
           })
         }
-        state = { canvas, zones: analysis.zones, bubbles: analysis.bubbles, rejets: analysis.rejets || [] }
+        state = {
+          canvas,
+          zones: analysis.zones,
+          bubbles: analysis.bubbles,
+          rejets: analysis.rejets || []
+        }
         analysed.set(source, state)
       }
       activeState = state
@@ -1548,7 +1686,17 @@
     let drawn = 0
     for (const zone of activeState.zones) {
       if (!zone.traduit) continue
-      if (drawZone(activeLayer, activeImg, zone, activeState.canvas, edits[zone.id], activeState.bubbles)) drawn += 1
+      if (
+        drawZone(
+          activeLayer,
+          activeImg,
+          zone,
+          activeState.canvas,
+          edits[zone.id],
+          activeState.bubbles
+        )
+      )
+        drawn += 1
     }
     drawRejected(activeLayer, activeState)
     window.__vtStats = {
@@ -1585,7 +1733,12 @@
         ...options,
         onload: (response) => {
           if (response.status >= 200 && response.status < 300) resolve(response)
-          else reject(new Error(`traducteur HTTP ${response.status} : ${String(response.responseText).slice(0, 140)}`))
+          else
+            reject(
+              new Error(
+                `traducteur HTTP ${response.status} : ${String(response.responseText).slice(0, 140)}`
+              )
+            )
         },
         onerror: () => reject(new Error('traducteur injoignable')),
         ontimeout: () => reject(new Error('traducteur : délai dépassé'))
@@ -1732,7 +1885,11 @@
     let seed = -1
     let best = -1
     for (let y = Math.max(0, Math.floor(box.y0)); y < Math.min(height, Math.ceil(box.y1)); y += 1) {
-      for (let x = Math.max(0, Math.floor(box.x0)); x < Math.min(width, Math.ceil(box.x1)); x += 1) {
+      for (
+        let x = Math.max(0, Math.floor(box.x0));
+        x < Math.min(width, Math.ceil(box.x1));
+        x += 1
+      ) {
         const value = luminance(data, (y * width + x) * 4)
         if (value > best) {
           best = value
@@ -1820,7 +1977,13 @@
       for (let x = 1; x < width - 1; x += 1) {
         const index = y * width + x
         if (!solid[index]) continue
-        if (!solid[index - 1] || !solid[index + 1] || !solid[index - width] || !solid[index + width]) continue
+        if (
+          !solid[index - 1] ||
+          !solid[index + 1] ||
+          !solid[index - width] ||
+          !solid[index + width]
+        )
+          continue
         core[index] = 1
         kept += 1
         sumX += x
@@ -1890,8 +2053,16 @@
       rows.set(y, values[Math.floor(values.length * 0.75)])
     }
 
-    const normal = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    const sums = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    const normal = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
+    const sums = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0]
+    ]
     let samples = 0
     for (const [y, light] of rows) {
       for (let x = region.minX; x <= region.maxX; x += 1) {
@@ -1902,7 +2073,8 @@
         samples += 1
         for (let a = 0; a < 3; a += 1) {
           for (let b = 0; b < 3; b += 1) normal[a][b] += basis[a] * basis[b]
-          for (let channel = 0; channel < 3; channel += 1) sums[channel][a] += basis[a] * data[index * 4 + channel]
+          for (let channel = 0; channel < 3; channel += 1)
+            sums[channel][a] += basis[a] * data[index * 4 + channel]
         }
       }
     }
@@ -1953,7 +2125,8 @@
       if (share < 0.28) beforeTop.push(light)
       else if (share > 0.72) beforeBottom.push(light)
     }
-    const average = (list) => (list.length ? list.reduce((total, value) => total + value, 0) / list.length : 0)
+    const average = (list) =>
+      list.length ? list.reduce((total, value) => total + value, 0) / list.length : 0
     return {
       avant: Math.round(average(beforeTop) - average(beforeBottom)),
       apres: Math.round(average(top) - average(bottom)),
@@ -1968,7 +2141,11 @@
    */
   function inscribedRect(region) {
     const inside = (x, y) =>
-      x >= 0 && y >= 0 && x < region.width && y < region.height && region.mask[y * region.width + x] === 1
+      x >= 0 &&
+      y >= 0 &&
+      x < region.width &&
+      y < region.height &&
+      region.mask[y * region.width + x] === 1
     const cx = Math.round(region.cx)
     const cy = Math.round(region.cy)
     const maxHalfW = Math.max(4, Math.round((region.maxX - region.minX) * 0.35))
@@ -1988,11 +2165,19 @@
     let grew = true
     while (grew && (halfW < maxHalfW || halfH < maxHalfH)) {
       grew = false
-      if (halfW < maxHalfW && columnFree(cx - halfW - 1, cy - halfH, cy + halfH) && columnFree(cx + halfW + 1, cy - halfH, cy + halfH)) {
+      if (
+        halfW < maxHalfW &&
+        columnFree(cx - halfW - 1, cy - halfH, cy + halfH) &&
+        columnFree(cx + halfW + 1, cy - halfH, cy + halfH)
+      ) {
         halfW += 1
         grew = true
       }
-      if (halfH < maxHalfH && rowFree(cy - halfH - 1, cx - halfW, cx + halfW) && rowFree(cy + halfH + 1, cx - halfW, cx + halfW)) {
+      if (
+        halfH < maxHalfH &&
+        rowFree(cy - halfH - 1, cx - halfW, cx + halfW) &&
+        rowFree(cy + halfH + 1, cx - halfW, cx + halfW)
+      ) {
         halfH += 1
         grew = true
       }
@@ -2060,7 +2245,8 @@
 
   function imageKeyOf(source) {
     let hash = 5381
-    for (let index = 0; index < source.length; index += 1) hash = ((hash << 5) + hash + source.charCodeAt(index)) >>> 0
+    for (let index = 0; index < source.length; index += 1)
+      hash = ((hash << 5) + hash + source.charCodeAt(index)) >>> 0
     return hash.toString(36)
   }
 
@@ -2114,8 +2300,10 @@
   function importEdits(json) {
     const parsed = typeof json === 'string' ? JSON.parse(json) : json
     const planches = parsed && parsed.planches ? parsed.planches : parsed
-    if (!planches || typeof planches !== 'object') throw new Error('fichier de corrections illisible')
-    for (const [key, value] of Object.entries(planches)) EDITS[key] = { ...(EDITS[key] || {}), ...value }
+    if (!planches || typeof planches !== 'object')
+      throw new Error('fichier de corrections illisible')
+    for (const [key, value] of Object.entries(planches))
+      EDITS[key] = { ...(EDITS[key] || {}), ...value }
     GM_setValue('edits', EDITS)
     return EDITS
   }
@@ -2147,7 +2335,18 @@
       }
     }
     if (area < 400) return null
-    return { mask, width: sw, height: sh, area, cx: sumX / area, cy: sumY / area, minX, minY, maxX, maxY }
+    return {
+      mask,
+      width: sw,
+      height: sh,
+      area,
+      cx: sumX / area,
+      cy: sumY / area,
+      minX,
+      minY,
+      maxX,
+      maxY
+    }
   }
 
   const pixelCache = new WeakMap()
@@ -2179,7 +2378,8 @@
     const textY = (box.y0 + box.y1) / 2
     let best = null
     for (const region of regions) {
-      if (region.x0 > box.x0 || region.x1 < box.x1 || region.y0 > box.y0 || region.y1 < box.y1) continue
+      if (region.x0 > box.x0 || region.x1 < box.x1 || region.y0 > box.y0 || region.y1 < box.y1)
+        continue
       if (region.area < 200) continue
       const area = (region.x1 - region.x0 + 1) * (region.y1 - region.y0 + 1)
       if (area > lum.length * 0.25) continue
@@ -2201,8 +2401,16 @@
 
     let seed = -1
     let bestValue = -1
-    for (let y = Math.max(frame.y0, Math.floor(box.y0)); y <= Math.min(frame.y1, Math.ceil(box.y1)); y += 1) {
-      for (let x = Math.max(frame.x0, Math.floor(box.x0)); x <= Math.min(frame.x1, Math.ceil(box.x1)); x += 1) {
+    for (
+      let y = Math.max(frame.y0, Math.floor(box.y0));
+      y <= Math.min(frame.y1, Math.ceil(box.y1));
+      y += 1
+    ) {
+      for (
+        let x = Math.max(frame.x0, Math.floor(box.x0));
+        x <= Math.min(frame.x1, Math.ceil(box.x1));
+        x += 1
+      ) {
         const value = lum[y * width + x]
         if (value > bestValue) {
           bestValue = value
@@ -2248,8 +2456,10 @@
     // tout déborde. Le trait du contour, lui, touche le bord : il reste exclu.
     const seen = new Uint8Array(lum.length)
     const queue = []
-    for (let x = frame.x0; x <= frame.x1; x += 1) queue.push(frame.y0 * width + x, frame.y1 * width + x)
-    for (let y = frame.y0; y <= frame.y1; y += 1) queue.push(y * width + frame.x0, y * width + frame.x1)
+    for (let x = frame.x0; x <= frame.x1; x += 1)
+      queue.push(frame.y0 * width + x, frame.y1 * width + x)
+    for (let y = frame.y0; y <= frame.y1; y += 1)
+      queue.push(y * width + frame.x0, y * width + frame.x1)
     while (queue.length) {
       const index = queue.pop()
       if (seen[index] || mask[index]) continue
@@ -2281,7 +2491,7 @@
   /** Recadre la zone et efface son texte ; renvoie la plaque et le masque. */
   function plateFor(canvas, zone, bubbles) {
     const box = zone.bbox
-    const lineHeight = zone.lineHeight || (box.y1 - box.y0)
+    const lineHeight = zone.lineHeight || box.y1 - box.y0
     const pad = Math.max(8, Math.round(lineHeight * 0.8))
     const crop = cropBox(canvas, box, pad)
     if (!crop) return null
@@ -2307,13 +2517,19 @@
       if (region) fond = 'masque'
     }
     if (!region) {
-      region = interiorMask(work.image, { x0: box.x0 - work.sx, y0: box.y0 - work.sy, x1: box.x1 - work.sx, y1: box.y1 - work.sy })
+      region = interiorMask(work.image, {
+        x0: box.x0 - work.sx,
+        y0: box.y0 - work.sy,
+        x1: box.x1 - work.sx,
+        y1: box.y1 - work.sy
+      })
       fond = 'remplissage'
     }
     if (!region || region.area > work.sw * work.sh * 0.9) {
       // Fuite (contour ouvert) ou bulle invisible : on récupère le vrai contour.
       const wide = contourRegion(canvas, box, bubbles)
-      const next = wide && cropBox(canvas, { x0: wide.minX, y0: wide.minY, x1: wide.maxX, y1: wide.maxY }, 8)
+      const next =
+        wide && cropBox(canvas, { x0: wide.minX, y0: wide.minY, x1: wide.maxX, y1: wide.maxY }, 8)
       if (next) {
         const rebuilt = build(next)
         const mask = new Uint8Array(next.sw * next.sh)
@@ -2339,12 +2555,28 @@
         }
         if (area >= 400) {
           work = rebuilt
-          region = { mask, width: next.sw, height: next.sh, area, cx: sumX / area, cy: sumY / area, minX, minY, maxX, maxY }
+          region = {
+            mask,
+            width: next.sw,
+            height: next.sh,
+            area,
+            cx: sumX / area,
+            cy: sumY / area,
+            minX,
+            minY,
+            maxX,
+            maxY
+          }
           fond = 'contour'
         }
       }
       if (fond !== 'contour') {
-        return { ...work, region: null, fond: 'plaque arrondie', warning: 'contour introuvable : plaque arrondie' }
+        return {
+          ...work,
+          region: null,
+          fond: 'plaque arrondie',
+          warning: 'contour introuvable : plaque arrondie'
+        }
       }
     }
     const gradient = inpaint(work.context, work.image, region)
@@ -2427,7 +2659,7 @@
 
     const rect = inscribedRect(work.region)
     const drawRect = { ...rect, cx: rect.cx + dx, cy: rect.cy + dy }
-    const original = zone.lineHeight || (zone.bbox.y1 - zone.bbox.y0)
+    const original = zone.lineHeight || zone.bbox.y1 - zone.bbox.y0
     const cap = Math.max(10, Math.round(original * 1.3))
     const ceiling = Math.min(cap, Math.max(9, Math.floor(rect.h / 1.18)))
     const weight = zone.kind === 'eclat' ? 800 : 600
@@ -2452,7 +2684,10 @@
     }
     const fits = best > 0
     const size = best || 9
-    paintText(work.plate, text, drawRect, size, '#111', CFG.font, { weight, angle: zone.angle || 0 })
+    paintText(work.plate, text, drawRect, size, '#111', CFG.font, {
+      weight,
+      angle: zone.angle || 0
+    })
 
     work.plate.className = 'vt-bubble'
     work.plate.title = zone.text
@@ -2631,7 +2866,11 @@
     }
     const panels = findPanels()
     if (!panels.length) {
-      setStatus(redrawn ? `${redrawn} planche(s) redessinée(s) avec les corrections` : 'aucune planche détectée')
+      setStatus(
+        redrawn
+          ? `${redrawn} planche(s) redessinée(s) avec les corrections`
+          : 'aucune planche détectée'
+      )
       return
     }
     setStatus(`${panels.length} planche(s) en file`)
@@ -2744,7 +2983,8 @@
     // Dans Vela, le fournisseur et la clé vivent dans Réglages › Modèles.
     if (viaVela()) {
       panel.querySelector('[data-provider-fields]')?.remove()
-      if (note) note.textContent = 'Traduction via Vela : le modèle se choisit dans Réglages › Modèles.'
+      if (note)
+        note.textContent = 'Traduction via Vela : le modèle se choisit dans Réglages › Modèles.'
     } else if (note) {
       note.textContent = 'La clé et le modèle restent dans ce navigateur, jamais dans la page.'
     }

@@ -2,17 +2,49 @@
   "version": 1,
   "contexte": "polar rural, deux amis d'enfance, tutoiement, registre parlé",
   "bulles": [
-    { "id": 0, "source": "WE NEED TO LEAVE BEFORE THE STORM HITS.", "reference": "On doit partir avant que l'orage éclate." },
-    { "id": 1, "source": "AND THE BRIDGE IS ALREADY UNDER WATER.", "reference": "Et le pont est déjà sous l'eau." },
-    { "id": 2, "source": "YOU NEVER LISTENED TO ME, DID YOU?", "reference": "Tu ne m'as jamais écouté, hein ?" },
+    {
+      "id": 0,
+      "source": "WE NEED TO LEAVE BEFORE THE STORM HITS.",
+      "reference": "On doit partir avant que l'orage éclate."
+    },
+    {
+      "id": 1,
+      "source": "AND THE BRIDGE IS ALREADY UNDER WATER.",
+      "reference": "Et le pont est déjà sous l'eau."
+    },
+    {
+      "id": 2,
+      "source": "YOU NEVER LISTENED TO ME, DID YOU?",
+      "reference": "Tu ne m'as jamais écouté, hein ?"
+    },
     { "id": 3, "source": "THREE HOURS EARLIER", "reference": "TROIS HEURES PLUS TÔT" },
-    { "id": 4, "source": "I TOLD YOU THE ROAD WOULD BE CLOSED.", "reference": "Je t'avais dit que la route serait fermée." },
-    { "id": 5, "source": "NOBODY COMES BACK FROM THAT VALLEY.", "reference": "Personne ne revient de cette vallée." },
+    {
+      "id": 4,
+      "source": "I TOLD YOU THE ROAD WOULD BE CLOSED.",
+      "reference": "Je t'avais dit que la route serait fermée."
+    },
+    {
+      "id": 5,
+      "source": "NOBODY COMES BACK FROM THAT VALLEY.",
+      "reference": "Personne ne revient de cette vallée."
+    },
     { "id": 6, "source": "KEEP YOUR VOICE DOWN.", "reference": "Baisse la voix." },
     { "id": 7, "source": "RUN!", "reference": "COUREZ !" },
-    { "id": 8, "source": "THE SHERIFF WILL NEVER BELIEVE US.", "reference": "Le shérif ne nous croira jamais." },
-    { "id": 9, "source": "WE HAVE ONE HOUR LEFT, MAYBE LESS.", "reference": "Il nous reste une heure, peut-être moins." },
-    { "id": 10, "source": "LOOK AT THE TRACKS, THEY STOP HERE.", "reference": "Regarde les traces, elles s'arrêtent ici." },
+    {
+      "id": 8,
+      "source": "THE SHERIFF WILL NEVER BELIEVE US.",
+      "reference": "Le shérif ne nous croira jamais."
+    },
+    {
+      "id": 9,
+      "source": "WE HAVE ONE HOUR LEFT, MAYBE LESS.",
+      "reference": "Il nous reste une heure, peut-être moins."
+    },
+    {
+      "id": 10,
+      "source": "LOOK AT THE TRACKS, THEY STOP HERE.",
+      "reference": "Regarde les traces, elles s'arrêtent ici."
+    },
     { "id": 11, "source": "I AM NOT AFRAID OF HIM.", "reference": "Je n'ai pas peur de lui." }
   ]
 }

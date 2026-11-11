@@ -1,0 +1,118 @@
+/* ---------------------------------------------------------------
+   Réglages — recherche globale section + sous-onglet
+   --------------------------------------------------------------- */
+
+.settings-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: -8px 0 12px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ink) 8%, transparent);
+  max-height: min(360px, 52vh);
+  overflow-y: auto;
+}
+
+.settings-search-label {
+  margin: 4px 7px 3px;
+  color: var(--faint);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-search-empty {
+  margin: 0;
+  padding: 10px 8px 12px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.settings-search-result {
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.settings-search-result:hover,
+.settings-search-result[aria-selected='true'] {
+  background: var(--fill);
+}
+
+.settings-search-result:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.settings-search-result-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.settings-search-result-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-search-result-head strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-search-result-hint {
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.settings-search-result-group {
+  flex: 0 0 auto;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.settings-search-result[aria-selected='true'] .settings-search-result-group {
+  color: var(--accent-label);
+}
+
+[data-settings-anchor] {
+  scroll-margin-block: 32px;
+}
+
+.settings-search-target {
+  border-radius: 10px;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  animation: settings-search-target 1.8s var(--ease-standard);
+}
+
+@keyframes settings-search-target {
+  0%,
+  100% {
+    outline-color: transparent;
+  }
+  15%,
+  70% {
+    outline-color: var(--accent);
+  }
+}

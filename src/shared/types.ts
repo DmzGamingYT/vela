@@ -480,6 +480,8 @@ export interface AgentSource {
   tabId?: string
   title: string
   url: string
+  /** D'où vient la pièce jointe : page, sélection, fichier ou note. */
+  kind?: 'tab' | 'selection' | 'file' | 'note'
   /** Texte extrait de la page au moment du lancement (mode API uniquement). */
   excerpt?: string
   /** Ancre textuelle du passage précis, comme texte sélectionnable dans l’URL. */

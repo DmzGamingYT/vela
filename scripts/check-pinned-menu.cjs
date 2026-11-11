@@ -71,7 +71,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
           returnByValue: true
         })
         if (result.exceptionDetails) {
-          notes.push(`exception évaluée : ${result.exceptionDetails.text} — ${expression.slice(0, 90)}`)
+          notes.push(
+            `exception évaluée : ${result.exceptionDetails.text} — ${expression.slice(0, 90)}`
+          )
           return null
         }
         return result.result.value
@@ -131,13 +133,23 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     })()`)
     check('menu ouvert au clavier', Boolean(keyboardMenu), JSON.stringify(keyboardMenu))
     check('premier élément focalisé', keyboardMenu?.focused === 'menuitem')
-    check('en-tête présent', (await evaluate(`Boolean(document.querySelector('.tile-menu-head-title'))`)) === true)
-    const labels = await evaluate(`Array.from(document.querySelectorAll('[role="menuitem"]')).map((node) => node.textContent)`)
+    check(
+      'en-tête présent',
+      (await evaluate(`Boolean(document.querySelector('.tile-menu-head-title'))`)) === true
+    )
+    const labels = await evaluate(
+      `Array.from(document.querySelectorAll('[role="menuitem"]')).map((node) => node.textContent)`
+    )
     check(
       'actions attendues dans le menu épinglé',
-      ['Recharger', 'Copier comme lien Markdown', 'Ouvrir en vue scindée', 'Dupliquer dans un nouvel onglet', 'Désépingler', 'Fermer'].every(
-        (label) => (labels ?? []).some((text) => String(text).includes(label))
-      ),
+      [
+        'Recharger',
+        'Copier comme lien Markdown',
+        'Ouvrir en vue scindée',
+        'Dupliquer dans un nouvel onglet',
+        'Désépingler',
+        'Fermer'
+      ].every((label) => (labels ?? []).some((text) => String(text).includes(label))),
       JSON.stringify(labels)
     )
 
@@ -170,7 +182,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     await sleep(1000)
     await openMouse()
     await sleep(350)
-    check('menu ouvert à la souris', (await evaluate(`Boolean(document.querySelector('[role="menu"]'))`)) === true)
+    check(
+      'menu ouvert à la souris',
+      (await evaluate(`Boolean(document.querySelector('[role="menu"]'))`)) === true
+    )
     const beside = await evaluate(`(() => {
       const tile = document.querySelector('.mini-tile[data-tab-id]').getBoundingClientRect()
       const menu = document.querySelector('[role="menu"]')?.getBoundingClientRect()
@@ -182,9 +197,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     await evaluate(`document.querySelector('[data-item="move-right"]')?.click()`)
     await sleep(800)
     const movedIds = (await pinned()).map((tab) => tab.id)
-    check('déplacement à droite', movedIds[0] === before[1] && movedIds[1] === firstId, movedIds.join(','))
-    const announce = await evaluate(`document.querySelector('.sidebar [role="status"]')?.textContent ?? ''`)
-    check('déplacement annoncé', /Épinglé déplacé en position 2 sur 4/.test(String(announce)), String(announce))
+    check(
+      'déplacement à droite',
+      movedIds[0] === before[1] && movedIds[1] === firstId,
+      movedIds.join(',')
+    )
+    const announce = await evaluate(
+      `document.querySelector('.sidebar [role="status"]')?.textContent ?? ''`
+    )
+    check(
+      'déplacement annoncé',
+      /Épinglé déplacé en position 2 sur 4/.test(String(announce)),
+      String(announce)
+    )
     check(
       'focus conservé sur la tuile déplacée',
       (await evaluate(`document.activeElement?.getAttribute('data-tab-id')`)) === firstId
@@ -213,7 +238,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
     // 5. Mise en veille puis rechargement au clic.
     const awake = (await pinned()).find((tab) => tab.asleep === false)
-    if (awake) await evaluate(`document.querySelector('.mini-tile[data-tab-id="${awake.id}"]')?.click()`)
+    if (awake)
+      await evaluate(`document.querySelector('.mini-tile[data-tab-id="${awake.id}"]')?.click()`)
     await sleep(900)
     await openMouse()
     await sleep(350)
@@ -270,7 +296,11 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     await sleep(900)
     const view = await evaluate(`window.vela.view()`)
     const unpinned = view?.tabs.find((tab) => tab.id === restoredId)
-    check('désépingler conserve l’onglet', Boolean(unpinned) && unpinned.pinned === false, JSON.stringify({ exists: Boolean(unpinned), pinned: unpinned?.pinned }))
+    check(
+      'désépingler conserve l’onglet',
+      Boolean(unpinned) && unpinned.pinned === false,
+      JSON.stringify({ exists: Boolean(unpinned), pinned: unpinned?.pinned })
+    )
 
     const errors = await evaluate(`window.__velaErrors ?? []`)
     check('aucune exception', Array.isArray(errors) && errors.length === 0, JSON.stringify(errors))

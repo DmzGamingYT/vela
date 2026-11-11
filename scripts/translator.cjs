@@ -18,7 +18,8 @@ const clean = (value) => String(value || '').trim()
 function config() {
   const base = clean(process.env.TRANSLATOR_BASE_URL).replace(/\/+$/, '')
   const explicit = clean(process.env.TRANSLATOR_URL)
-  const url = explicit || (base ? `${base}/chat/completions` : 'https://api.openai.com/v1/chat/completions')
+  const url =
+    explicit || (base ? `${base}/chat/completions` : 'https://api.openai.com/v1/chat/completions')
   const model = clean(process.env.TRANSLATOR_MODEL)
   const key = clean(process.env.TRANSLATOR_API_KEY)
   const visionModel = clean(process.env.VISION_MODEL) || model
@@ -39,7 +40,8 @@ function config() {
 function describe(cfg) {
   if (!cfg.configured) return `aucun fournisseur — ${cfg.reason}`
   const kind = cfg.local ? 'local' : 'distant'
-  const vision = cfg.visionModel && cfg.visionModel !== cfg.model ? ` · vision ${cfg.visionModel}` : ''
+  const vision =
+    cfg.visionModel && cfg.visionModel !== cfg.model ? ` · vision ${cfg.visionModel}` : ''
   return `${kind} · ${cfg.host || cfg.url} · modèle ${cfg.model}${vision}`
 }
 
@@ -67,7 +69,9 @@ async function request(url, init, timeoutMs) {
   } catch (error) {
     const aborted = error && (error.name === 'AbortError' || error.code === 'ABORT_ERR')
     return {
-      error: aborted ? `délai dépassé (${timeoutMs} ms)` : String((error && error.message) || error),
+      error: aborted
+        ? `délai dépassé (${timeoutMs} ms)`
+        : String((error && error.message) || error),
       ms: Date.now() - started
     }
   } finally {
@@ -78,13 +82,19 @@ async function request(url, init, timeoutMs) {
 /** Le serveur répond-il ? Sert au démarrage, avant de promettre quoi que ce soit. */
 async function ping(cfg, timeoutMs = 4000) {
   if (!cfg.configured) return { ok: false, error: cfg.reason, ms: 0 }
-  const { response, error, ms } = await request(modelsUrl(cfg.url), { headers: headers(cfg) }, timeoutMs)
+  const { response, error, ms } = await request(
+    modelsUrl(cfg.url),
+    { headers: headers(cfg) },
+    timeoutMs
+  )
   if (error) return { ok: false, error, ms }
   if (response.ok) {
     let models = []
     try {
       const body = await response.json()
-      models = (body.data || body.models || []).map((entry) => entry.id || entry.name).filter(Boolean)
+      models = (body.data || body.models || [])
+        .map((entry) => entry.id || entry.name)
+        .filter(Boolean)
     } catch {
       /* liste illisible : le serveur répond quand même */
     }
@@ -116,7 +126,8 @@ async function chat(cfg, messages, options = {}) {
     options.timeoutMs || 60_000
   )
   if (error) return { ok: false, error, ms }
-  if (!response.ok) return { ok: false, error: `HTTP ${response.status}`, status: response.status, ms }
+  if (!response.ok)
+    return { ok: false, error: `HTTP ${response.status}`, status: response.status, ms }
   let body
   try {
     body = await response.json()
@@ -124,7 +135,9 @@ async function chat(cfg, messages, options = {}) {
     return { ok: false, error: 'réponse illisible', ms }
   }
   const content = body?.choices?.[0]?.message?.content
-  const text = Array.isArray(content) ? content.map((part) => part.text || '').join('') : String(content || '')
+  const text = Array.isArray(content)
+    ? content.map((part) => part.text || '').join('')
+    : String(content || '')
   if (!text.trim()) return { ok: false, error: 'réponse vide', ms }
   return { ok: true, content: text, ms }
 }
@@ -140,7 +153,10 @@ async function vision(cfg, dataUrl, timeoutMs = 60_000) {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.' },
+          {
+            type: 'text',
+            text: 'Lis le texte de cette case de bande dessinée. Réponds uniquement par {"texte":"…"}.'
+          },
           { type: 'image_url', image_url: { url: dataUrl } }
         ]
       }

@@ -1,0 +1,105 @@
+/* Tranche 69 — largeur des modules de l'accueil.
+   « Tâches du jour » et « Mémoire de l'espace » vivaient dans une colonne
+   forcée à deux pistes sous 900 px : avec un panneau ouvert, chaque carte
+   tombait à ~65 px. La grille auto-fit garde 280 px minimum et empile les
+   blocs quand la place manque. */
+
+.home-grid > .home-recent,
+.home-grid > .home-side {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+  /* Le conteneur est le wrapper, pas la carte : sa largeur vient de la
+     grille et ne dépend pas de son contenu. */
+  container-type: inline-size;
+  container-name: home-side;
+}
+
+.home-tasks,
+.home-tasks[data-empty='true'],
+.home-quicknotes {
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+}
+
+/* Mémoire de l'espace : titre souple, actions insécables. */
+.home-quicknotes .home-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.home-quicknotes .quicknotes-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-quicknotes .home-card-tools {
+  flex: 0 0 auto;
+}
+
+.quicknotes-scope {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La ligne de saisie garde une hauteur de contrôle, même à 280 px. */
+.quicknotes-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+}
+
+.quicknotes-placeholder {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.quicknotes-add-btn {
+  flex: 0 0 26px;
+}
+
+/* Tâches du jour : le champ reste seul sur sa ligne, en pleine largeur. */
+.home-tasks .tasks-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 10px;
+}
+
+.home-tasks .tasks-add input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-tasks .tasks-add button {
+  flex: 0 0 30px;
+}
+
+/* À 280 px, les libellés « Voix » et « Toutes » ne tiennent plus à côté du
+   titre : les icônes et leurs infobulles restent. La requête porte sur le
+   wrapper de largeur définie, jamais sur la carte elle-même. */
+@container home-side (max-width: 300px) {
+  .home-quicknotes .home-card-action span {
+    display: none;
+  }
+}

@@ -1,0 +1,65 @@
+/* ---------------------------------------------------------------
+   Réglages › Agent — trois sous-sections
+   --------------------------------------------------------------- */
+
+.agent-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agent-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  overflow-x: auto;
+}
+
+.agent-tab {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.agent-tab:hover {
+  color: var(--ink);
+}
+
+.agent-tab[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.agent-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.agent-panel:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: fade var(--dur-2) var(--ease-standard);
+}
+
+@media (max-width: 620px) {
+  .agent-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .agent-tab {
+    flex: 1 1 45%;
+  }
+}

@@ -80,7 +80,8 @@ const api: VelaApi = {
     focus: (id: string) => ipcRenderer.invoke('tab:focus', id),
     discard: (id: string) => ipcRenderer.invoke('tab:discard', id),
     reorder: (input: ReorderTabsInput) => ipcRenderer.invoke('tab:reorder', input),
-    print: (id: string) => ipcRenderer.invoke('tab:print', id)
+    print: (id: string) => ipcRenderer.invoke('tab:print', id),
+    selection: (id: string) => ipcRenderer.invoke('tab:selection', id)
   },
   groups: {
     create: (input?: CreateGroupInput) => ipcRenderer.invoke('group:create', input ?? {}),

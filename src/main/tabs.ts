@@ -140,6 +140,21 @@ export class TabManager {
     this.host.changed()
   }
 
+  /** Texte sélectionné dans la page, sans le quitter ni l'enregistrer. */
+  async selection(tabId: string): Promise<string> {
+    const view = this.views.get(tabId)
+    if (!view || view.webContents.isDestroyed()) return ''
+    try {
+      const text = await view.webContents.executeJavaScript(
+        'String(window.getSelection()?.toString() ?? "")',
+        false
+      )
+      return typeof text === 'string' ? text.trim().slice(0, 12_000) : ''
+    } catch {
+      return ''
+    }
+  }
+
   /**
    * Défilement d'une page, ramené à son onglet puis à la coque : la pilule du
    * bas se replie quand on descend.
@@ -1051,9 +1066,11 @@ export class TabManager {
    */
   private freeze(): void {
     if (this.frozen) return
-    this.frozen = true
     const ids = [...this.visible]
+    // L'accueil n'a pas de vue native : marquer l'épreuve comme active ici
+    // empêchait la première page ouverte ensuite d'être capturée.
     if (!ids.length) return
+    this.frozen = true
     const hide = (): void => {
       if (!this.frozen) return
       for (const id of ids) this.views.get(id)?.setVisible(false)

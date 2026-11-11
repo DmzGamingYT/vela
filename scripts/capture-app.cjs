@@ -37,8 +37,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
         ws.addEventListener('message', onMessage)
         ws.send(JSON.stringify({ id, method, params }))
       })
-    await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject })
-    await send('Runtime.evaluate', { expression: `window.vela.settings.update({ onboarded: true })`, awaitPromise: true })
+    await new Promise((resolve, reject) => {
+      ws.onopen = resolve
+      ws.onerror = reject
+    })
+    await send('Runtime.evaluate', {
+      expression: `window.vela.settings.update({ onboarded: true })`,
+      awaitPromise: true
+    })
     await sleep(2600)
     const shoot = async (name) => {
       const shot = await send('Page.captureScreenshot', { format: 'png' })
@@ -46,7 +52,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
       console.log('capturé', name)
     }
     await shoot('accueil.png')
-    await send('Runtime.evaluate', { expression: `window.vela.tabs.create({ url: 'https://fr.wikipedia.org/wiki/Navigateur_web' })`, awaitPromise: true })
+    await send('Runtime.evaluate', {
+      expression: `window.vela.tabs.create({ url: 'https://fr.wikipedia.org/wiki/Navigateur_web' })`,
+      awaitPromise: true
+    })
     await sleep(3200)
     await shoot('page.png')
     ws.close()
@@ -54,4 +63,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     await sleep(200)
     child.kill('SIGTERM')
   }
-})().catch((error) => { console.error('ÉCHEC', error.message); process.exit(1) })
+})().catch((error) => {
+  console.error('ÉCHEC', error.message)
+  process.exit(1)
+})

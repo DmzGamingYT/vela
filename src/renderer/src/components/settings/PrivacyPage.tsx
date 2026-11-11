@@ -10,6 +10,7 @@ import { plural } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 import { groupedFlows } from './privacyGroups'
+import { resolveTab } from './settingsSearch'
 
 type Tab = 'protection' | 'local' | 'permissions' | 'flows'
 
@@ -87,16 +88,18 @@ function stateOf(
 
 export default function PrivacyPage({
   settings,
-  onOpenNavigation
+  onOpenNavigation,
+  initialTab
 }: {
   settings: Settings
   onOpenNavigation: () => void
+  initialTab?: string
 }) {
   const view = useBrowser((state) => state.view)
   const updateSettings = useBrowser((state) => state.updateSettings)
   const toggleSiteProtection = useBrowser((state) => state.toggleSiteProtection)
   const toast = useBrowser((state) => state.toast)
-  const [tab, setTab] = useState<Tab>(lastTab)
+  const [tab, setTab] = useState<Tab>(() => resolveTab(initialTab, TABS, lastTab))
   const tabRefs = useRef(new Map<Tab, HTMLButtonElement | null>())
   const [thumbs, setThumbs] = useState<number | null>(null)
   const [open, setOpen] = useState<Record<string, boolean>>({})
@@ -319,7 +322,12 @@ export default function PrivacyPage({
           aria-labelledby="privacy-tab-protection"
           className="privacy-panel"
         >
-          <div className="privacy-levels" role="radiogroup" aria-label="Niveau de blocage">
+          <div
+            className="privacy-levels"
+            role="radiogroup"
+            aria-label="Niveau de blocage"
+            data-settings-anchor="privacy-levels"
+          >
             {[
               {
                 id: 'off' as const,
@@ -405,7 +413,7 @@ export default function PrivacyPage({
             <span className="tag">Locale</span>
           </div>
 
-          <div className="privacy-subhead">
+          <div className="privacy-subhead" data-settings-anchor="privacy-exceptions">
             <h3>Exceptions par site</h3>
             <p>Un site exempté garde ses publicités et ses traqueurs.</p>
           </div>
@@ -496,7 +504,7 @@ export default function PrivacyPage({
             </div>
           </div>
 
-          <div className="setting-row">
+          <div className="setting-row" data-settings-anchor="privacy-favicons">
             <div>
               <label>Icônes de sites</label>
               <p
@@ -522,7 +530,7 @@ export default function PrivacyPage({
             </button>
           </div>
 
-          <div className="setting-row">
+          <div className="setting-row" data-settings-anchor="privacy-history">
             <div>
               <label>Historique</label>
               <p className="setting-hint">
@@ -534,7 +542,7 @@ export default function PrivacyPage({
             </button>
           </div>
 
-          <div className="setting-row">
+          <div className="setting-row" data-settings-anchor="privacy-cookies">
             <div>
               <label>Cookies et stockage des sites</label>
               <p className="setting-hint">
@@ -545,7 +553,7 @@ export default function PrivacyPage({
             <span className="tag">{plural(view.spaces.length, 'espace', 'espaces')}</span>
           </div>
 
-          <div className="privacy-subhead">
+          <div className="privacy-subhead" data-settings-anchor="privacy-clear">
             <h3>Effacer des données</h3>
             <p>
               L’historique part tout de suite ; vignettes et icônes suivent après huit secondes.

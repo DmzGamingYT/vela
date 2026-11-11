@@ -157,10 +157,3 @@ export function historyContext(history: AgentHistoryTurn[] | undefined, limit = 
     .map((turn) => `${turn.role === 'user' ? 'Utilisateur' : 'Vela'} : ${turn.content}`)
     .join('\n\n')}\n\n`
 }
-
-export const AGENT_EXAMPLES = [
-  'Compare les onglets ouverts et dis-moi lequel garder',
-  'Résume ce que je dois retenir aujourd’hui',
-  'Transforme ces pages en plan d’action en trois étapes',
-  'Résume les sources jointes pour un collègue pressé'
-]

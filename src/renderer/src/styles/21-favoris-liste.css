@@ -77,26 +77,16 @@
   text-overflow: ellipsis;
 }
 
-/* Sous 300 px de contenu — le tiroir de notes ouvre l'accueil sur une colonne
-   étroite — « Mémoire de l'espace » ne tenait plus à côté de « Voix » et
-   « Toutes » et se coupait sur deux lignes. Les actions gardent leur icône et
-   leur infobulle, seul leur libellé s'efface. */
-.home-quicknotes {
-  container-type: inline-size;
-}
-
-@container (max-width: 300px) {
-  .home-quicknotes .home-card-action span {
-    display: none;
-  }
-}
-
 .quicknotes-scope {
   display: block;
+  min-width: 0;
   color: var(--faint);
   font-size: 11px;
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quicknotes-collapsed {

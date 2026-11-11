@@ -53,3 +53,10 @@ export const SPLIT_MIN_WIDTH = 900
  * moitié de la fenêtre : elle se replie seule, sauf choix explicite inverse.
  */
 export const AUTO_COLLAPSE_WIDTH = 900
+
+/**
+ * Avec un tiroir de notes ou d'agent ouvert, la barre latérale se replie plus
+ * tôt : à 1 100 px, elle ne laisserait plus 280 px aux cartes de l'accueil.
+ * Le seuil garde une marge au-dessus des 1 060 px nécessaires à l'agent.
+ */
+export const DRAWER_AUTO_COLLAPSE_WIDTH = 1120

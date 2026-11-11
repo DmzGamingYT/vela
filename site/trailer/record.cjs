@@ -98,7 +98,8 @@ const marks = []
     for (let i = 0; i < 200 && !geometry; i += 1) {
       if (fs.existsSync(WINDOW_JSON)) {
         geometry = JSON.parse(fs.readFileSync(WINDOW_JSON, 'utf8'))
-        if (geometry.error || !geometry.content) throw new Error(geometry.error || 'géométrie absente')
+        if (geometry.error || !geometry.content)
+          throw new Error(geometry.error || 'géométrie absente')
       } else {
         await sleep(100)
       }
@@ -163,7 +164,9 @@ const marks = []
     mark('défilement')
 
     // 3. Vue scindée : la page de gauche reste, la documentation arrive à droite.
-    const docs = await input.evaluate(`window.vela.tabs.create({ url: 'https://developer.mozilla.org/fr/docs/Learn' })`)
+    const docs = await input.evaluate(
+      `window.vela.tabs.create({ url: 'https://developer.mozilla.org/fr/docs/Learn' })`
+    )
     await sleep(2200)
     if (docs?.id) await input.evaluate(`window.vela.tabs.splitSet(${JSON.stringify(docs.id)})`)
     await sleep(2600)
@@ -173,7 +176,9 @@ const marks = []
     //    clique donc le bouton du rail, le vrai chemin de l'interface.
     await input.clickSelector('.rail-ghost', { index: 0, pause: 700 })
     await sleep(1500)
-    await input.hoverSelector('.notes-drawer li, .notes-drawer article, .notes-drawer button', 0).catch(() => {})
+    await input
+      .hoverSelector('.notes-drawer li, .notes-drawer article, .notes-drawer button', 0)
+      .catch(() => {})
     await sleep(1300)
     mark('notes')
     await input.clickSelector('.rail-ghost', { index: 0, pause: 500 })
@@ -182,7 +187,9 @@ const marks = []
     await input.clickSelector('.rail-mode', { index: 1, pause: 800 })
     await sleep(1400)
     mark('travail')
-    await input.clickSelector('input[placeholder="Un sujet, une question, un angle"]', { pause: 400 })
+    await input.clickSelector('input[placeholder="Un sujet, une question, un angle"]', {
+      pause: 400
+    })
     await input.type('hébergement d’un site vitrine', { perChar: 36 })
     await sleep(520)
     mark('requête')
@@ -202,9 +209,16 @@ const marks = []
     mark('tunnel')
 
     // 6. Le détail d'une source : la carte dit d'où elle vient.
-    await input.clickSelector('.tunnel-node[data-kind="site"]', { index: 0, pause: 900 }).catch(() => {})
+    await input
+      .clickSelector('.tunnel-node[data-kind="site"]', { index: 0, pause: 900 })
+      .catch(() => {})
     await sleep(2400)
-    await input.glide({ x: width * 0.72, y: height * 0.42 }, { x: width * 0.6, y: height * 0.58 }, 22, 22)
+    await input.glide(
+      { x: width * 0.72, y: height * 0.42 },
+      { x: width * 0.6, y: height * 0.58 },
+      22,
+      22
+    )
     await sleep(700)
     mark('détail')
 
@@ -219,10 +233,7 @@ const marks = []
     // fichier. Mais si elle s'est déjà arrêtée, on n'attend pas un événement
     // qui ne reviendra jamais.
     if (recorder && recorderExit === null) {
-      await Promise.race([
-        new Promise((resolve) => recorder.once('exit', resolve)),
-        sleep(25000)
-      ])
+      await Promise.race([new Promise((resolve) => recorder.once('exit', resolve)), sleep(25000)])
     }
     try {
       app.client.close()
@@ -230,7 +241,10 @@ const marks = []
       /* la connexion est peut-être déjà fermée */
     }
     app.close()
-    fs.writeFileSync(path.join(TAKE, 'timeline.json'), JSON.stringify({ videoStart, marks }, null, 2))
+    fs.writeFileSync(
+      path.join(TAKE, 'timeline.json'),
+      JSON.stringify({ videoStart, marks }, null, 2)
+    )
     console.log('vidéo :', VIDEO)
   }
 })()

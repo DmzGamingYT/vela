@@ -54,7 +54,10 @@ async function translate(texts, contexte) {
     return {
       ok: true,
       mode: 'mock',
-      translations: clean.map((t, id) => ({ id, texte: FRENCH[t.trim()] || CANNED[id % CANNED.length] }))
+      translations: clean.map((t, id) => ({
+        id,
+        texte: FRENCH[t.trim()] || CANNED[id % CANNED.length]
+      }))
     }
   }
   const result = await translator.chat(
@@ -63,7 +66,10 @@ async function translate(texts, contexte) {
       { role: 'system', content: PROMPT },
       {
         role: 'user',
-        content: JSON.stringify({ contexte: contexte || '', repliques: clean.map((texte, id) => ({ id, texte })) })
+        content: JSON.stringify({
+          contexte: contexte || '',
+          repliques: clean.map((texte, id) => ({ id, texte }))
+        })
       }
     ],
     { temperature: 0.2, timeoutMs: 120_000 }
@@ -80,7 +86,10 @@ async function translate(texts, contexte) {
   return {
     ok: true,
     mode: 'real',
-    translations: clean.map((t, id) => ({ id, texte: list.find((x) => Number(x.id) === id)?.texte || t }))
+    translations: clean.map((t, id) => ({
+      id,
+      texte: list.find((x) => Number(x.id) === id)?.texte || t
+    }))
   }
 }
 
@@ -212,8 +221,13 @@ ${rows
   .join('\n')}`
   const file = path.join(OUT, 'comparaison.html')
   fs.writeFileSync(file, html)
-  fs.writeFileSync(path.join(OUT, 'comparaison.size.json'), JSON.stringify({ width, height: height + 40 }))
-  console.log(`comparaison : screenshots/comic-check/comparaison.html (${width}×${height + 40}) — capturée par le banc lui-même`)
+  fs.writeFileSync(
+    path.join(OUT, 'comparaison.size.json'),
+    JSON.stringify({ width, height: height + 40 })
+  )
+  console.log(
+    `comparaison : screenshots/comic-check/comparaison.html (${width}×${height + 40}) — capturée par le banc lui-même`
+  )
 }
 
 async function main() {
@@ -224,9 +238,15 @@ async function main() {
   } else {
     console.log(`TRADUCTEUR : ${translator.describe(CFG)}`)
     const reachable = await translator.ping(CFG)
-    console.log(reachable.ok ? `CONNEXION : OK en ${reachable.ms} ms` : `CONNEXION : ÉCHEC — ${reachable.error}`)
+    console.log(
+      reachable.ok
+        ? `CONNEXION : OK en ${reachable.ms} ms`
+        : `CONNEXION : ÉCHEC — ${reachable.error}`
+    )
     if (!reachable.ok) {
-      console.log('ECHEC : fournisseur configuré mais injoignable — relancer avec --mock pour la démonstration locale.')
+      console.log(
+        'ECHEC : fournisseur configuré mais injoignable — relancer avec --mock pour la démonstration locale.'
+      )
       app.exit(2)
       return
     }
@@ -249,7 +269,11 @@ async function main() {
       return res.end('absente')
     }
     res.writeHead(200, {
-      'content-type': file.endsWith('.png') ? 'image/png' : file.endsWith('.js') ? 'text/javascript' : 'text/html; charset=utf-8'
+      'content-type': file.endsWith('.png')
+        ? 'image/png'
+        : file.endsWith('.js')
+          ? 'text/javascript'
+          : 'text/html; charset=utf-8'
     })
     fs.createReadStream(file).pipe(res)
   })
@@ -318,14 +342,20 @@ async function main() {
   }
 
   await sleep(600)
-  await win.webContents.executeJavaScript('window.__vtReport = []; document.querySelector("#vt-run").click(); true')
+  await win.webContents.executeJavaScript(
+    'window.__vtReport = []; document.querySelector("#vt-run").click(); true'
+  )
 
   let zones = 0
   let status = ''
   for (let i = 0; i < 200; i += 1) {
     await sleep(1000)
-    status = await win.webContents.executeJavaScript(`(document.querySelector('#vt-status') || {}).textContent || ''`)
-    zones = await win.webContents.executeJavaScript(`document.querySelectorAll('.vt-bubble').length`)
+    status = await win.webContents.executeJavaScript(
+      `(document.querySelector('#vt-status') || {}).textContent || ''`
+    )
+    zones = await win.webContents.executeJavaScript(
+      `document.querySelectorAll('.vt-bubble').length`
+    )
     if (/traduite\\(s\\)/.test(status)) break
     if (/aucune planche|ignorée|refus|expirée/i.test(status)) break
   }
@@ -374,31 +404,61 @@ async function main() {
   check(
     'le pont BD ne dépasse pas la fermeture injectée',
     !Array.isArray(portes) || portes.length === 0,
-    Array.isArray(portes) && portes.length ? `window porte encore ${portes.join(', ')}` : 'window ne porte que le pont sans jeton'
+    Array.isArray(portes) && portes.length
+      ? `window porte encore ${portes.join(', ')}`
+      : 'window ne porte que le pont sans jeton'
   )
 
   const burst = found(/RUN/i)[0]
-  check('1 éclat lu et traduit', Boolean(burst && /COUREZ/i.test(burst.traduit) && burst.fits), burst ? `« ${burst.texte} » → « ${burst.traduit} » (${burst.taille} px)` : 'zone absente')
+  check(
+    '1 éclat lu et traduit',
+    Boolean(burst && /COUREZ/i.test(burst.traduit) && burst.fits),
+    burst ? `« ${burst.texte} » → « ${burst.traduit} » (${burst.taille} px)` : 'zone absente'
+  )
 
   const locks = report.filter((entry) => /KEEP OUT|IT IS LOCKED/i.test(entry.texte || ''))
   const split =
     locks.length >= 2 &&
     new Set(locks.map((entry) => entry.id)).size >= 2 &&
     Math.abs(locks[0].boite.x0 - locks[1].boite.x0) > 150
-  check('2 bulles adjacentes séparées', split, `${locks.length} bulle(s) : ${locks.map((entry) => `« ${entry.texte} »`).join(' | ') || 'fusionnées'}`)
+  check(
+    '2 bulles adjacentes séparées',
+    split,
+    `${locks.length} bulle(s) : ${locks.map((entry) => `« ${entry.texte} »`).join(' | ') || 'fusionnées'}`
+  )
 
   const large = found(/^GO\.?$/i)[0]
-  check('4 grande bulle, corps adapté', Boolean(large && large.taille > 24 && large.fits), large ? `${large.taille} px (ancien plafond 24, plafond relatif ${large.plafond})` : 'zone absente')
+  check(
+    '4 grande bulle, corps adapté',
+    Boolean(large && large.taille > 24 && large.fits),
+    large
+      ? `${large.taille} px (ancien plafond 24, plafond relatif ${large.plafond})`
+      : 'zone absente'
+  )
 
   const gradient = report.find((entry) => entry.gradient && Math.abs(entry.gradient.avant) >= 20)
   const kept = gradient && Math.abs(gradient.gradient.apres - gradient.gradient.avant) <= 10
-  check('6 dégradé conservé', Boolean(kept), gradient ? `écart haut/bas avant ${gradient.gradient.avant}, après ${gradient.gradient.apres}` : 'aucune bulle en dégradé')
+  check(
+    '6 dégradé conservé',
+    Boolean(kept),
+    gradient
+      ? `écart haut/bas avant ${gradient.gradient.avant}, après ${gradient.gradient.apres}`
+      : 'aucune bulle en dégradé'
+  )
 
   const open = found(/NO ONE/i)[0]
-  check('5 contour ouvert refermé', Boolean(open && /contour|enveloppe/.test(open.fond) && !open.warning), open ? `fond : ${open.fond}${open.warning ? ' — ' + open.warning : ''}` : 'zone absente')
+  check(
+    '5 contour ouvert refermé',
+    Boolean(open && /contour|enveloppe/.test(open.fond) && !open.warning),
+    open ? `fond : ${open.fond}${open.warning ? ' — ' + open.warning : ''}` : 'zone absente'
+  )
 
   const plain = found(/SILENCE/i)[0]
-  check('5bis dernier recours signalé', Boolean(plain && plain.fond === 'plaque arrondie' && plain.warning), plain ? `${plain.fond} — ${plain.warning}` : 'zone absente')
+  check(
+    '5bis dernier recours signalé',
+    Boolean(plain && plain.fond === 'plaque arrondie' && plain.warning),
+    plain ? `${plain.fond} — ${plain.warning}` : 'zone absente'
+  )
 
   const overflow = report.filter((entry) => !entry.fits)
   check('3 aucun débordement', overflow.length === 0, `${overflow.length} sur ${report.length}`)
@@ -417,13 +477,23 @@ async function main() {
     await win.webContents.executeJavaScript(
       `window.__vtEdits.set(${JSON.stringify(target.id)}, { texte: 'ELLE EST FERMÉE, J’AI DIT.', dx: 4, dy: -2, echelle: 1.2 }); true`
     )
-    const painted = (await win.webContents.executeJavaScript('window.__vtReport || []')).find((entry) => entry.id === target.id)
+    const painted = (await win.webContents.executeJavaScript('window.__vtReport || []')).find(
+      (entry) => entry.id === target.id
+    )
     const stored = await win.webContents.executeJavaScript('window.__vtEdits.export()')
     await win.webContents.executeJavaScript('document.querySelector("#vt-run").click(); true')
     await sleep(1500)
-    const rerun = (await win.webContents.executeJavaScript('window.__vtReport || []')).find((entry) => entry.id === target.id)
+    const rerun = (await win.webContents.executeJavaScript('window.__vtReport || []')).find(
+      (entry) => entry.id === target.id
+    )
     const edited = 'ELLE EST FERMÉE, J’AI DIT.'
-    editOk = Boolean(painted && painted.traduit === edited && stored.includes('J’AI DIT') && rerun && rerun.traduit === edited)
+    editOk = Boolean(
+      painted &&
+      painted.traduit === edited &&
+      stored.includes('J’AI DIT') &&
+      rerun &&
+      rerun.traduit === edited
+    )
     editDetail = `corps ${beforeSize} → ${painted ? painted.taille : '?'} px · après relance : ${rerun ? `« ${rerun.traduit} »` : 'absente'}`
     // Aller-retour disque : le fichier écrit par le pont doit être relu par le
     // script, pas seulement gardé en mémoire.
@@ -434,10 +504,10 @@ async function main() {
       .join('')
     const disqueOk = Boolean(
       loaded &&
-        loaded.ok &&
-        loaded.disque &&
-        JSON.stringify(loaded.disque).includes('J’AI DIT') &&
-        disque.includes('J’AI DIT')
+      loaded.ok &&
+      loaded.disque &&
+      JSON.stringify(loaded.disque).includes('J’AI DIT') &&
+      disque.includes('J’AI DIT')
     )
     editOk = editOk && disqueOk
     editDetail += ` · disque : ${fichiers.join(', ') || 'aucun fichier'} ${disqueOk ? 'relu' : 'NON relu'}`
@@ -468,21 +538,29 @@ async function main() {
   const angles = await win.webContents.executeJavaScript(
     '[0, 12, -20].map((deg) => Object.assign({ attendu: deg }, window.__vtTestAngle(deg)))'
   )
-  const zonesAngles = await win.webContents.executeJavaScript('window.__vtAngles ? window.__vtAngles() : []')
+  const zonesAngles = await win.webContents.executeJavaScript(
+    'window.__vtAngles ? window.__vtAngles() : []'
+  )
   const tilted = (zonesAngles || []).find((zone) => /HEY/i.test(zone.texte || ''))
   const angleOk =
-    Array.isArray(angles) && angles.length === 3 && angles.every((entry) => Math.abs(entry.deg - entry.attendu) <= 5)
+    Array.isArray(angles) &&
+    angles.length === 3 &&
+    angles.every((entry) => Math.abs(entry.deg - entry.attendu) <= 5)
   check(
     '8 angle estimé à ±5°',
     angleOk,
     `${(angles || []).map((entry) => `${entry.attendu}° → ${entry.deg}°`).join(' · ')}${
-      tilted ? ` · planche inclinée : ${tilted.angleDeg}° (gain ${tilted.gain})` : ' · éclat incliné non lu'
+      tilted
+        ? ` · planche inclinée : ${tilted.angleDeg}° (gain ${tilted.gain})`
+        : ' · éclat incliné non lu'
     }`
   )
 
   // Crible des amas d'encre : rejets affichés et temps mesuré.
   const stats = await win.webContents.executeJavaScript('window.__vtStats || {}')
-  const badges = await win.webContents.executeJavaScript(`document.querySelectorAll('.vt-reject').length`)
+  const badges = await win.webContents.executeJavaScript(
+    `document.querySelectorAll('.vt-reject').length`
+  )
   const timing = await win.webContents.executeJavaScript('window.__vtTimeBursts()')
   if ((stats.rejets || 0) > 0) {
     check(
@@ -491,7 +569,10 @@ async function main() {
       `${stats.rejets} rejet(s), ${badges} cadre(s) gris · OCR ${stats.ocrMs} ms en ${stats.ocrCalls} appel(s) · cache ${stats.cacheHits}`
     )
   } else {
-    skip('9 crible des éclats', `aucun amas rejeté · OCR ${stats.ocrMs} ms en ${stats.ocrCalls} appel(s)`)
+    skip(
+      '9 crible des éclats',
+      `aucun amas rejeté · OCR ${stats.ocrMs} ms en ${stats.ocrCalls} appel(s)`
+    )
   }
   if (timing) {
     console.log(
@@ -515,7 +596,10 @@ async function main() {
 
   if (errors.length) console.log('ERREURS CONSOLE:', errors.slice(0, 4))
   if (ignores.length) console.log(`TESTS IGNORÉS (${ignores.length}) : ${ignores.join(' · ')}`)
-  if (!MOCK) console.log(`RAPPORT : modèle ${MODEL} · vision ${CFG.visionModel || MODEL} · ${new Date().toISOString()}`)
+  if (!MOCK)
+    console.log(
+      `RAPPORT : modèle ${MODEL} · vision ${CFG.visionModel || MODEL} · ${new Date().toISOString()}`
+    )
 
   const rows = []
   // Les boîtes du rapport sont en pixels du canvas agrandi (1600 de large) ;
@@ -536,7 +620,10 @@ async function main() {
       y0: Math.min(...locks.map((entry) => entry.boite.y0)),
       y1: Math.max(...locks.map((entry) => entry.boite.y1))
     }
-    rows.push({ titre: 'deux bulles adjacentes', box: boxOf({ boite: box, toile: locks[0].toile }) })
+    rows.push({
+      titre: 'deux bulles adjacentes',
+      box: boxOf({ boite: box, toile: locks[0].toile })
+    })
   }
   if (large) rows.push({ titre: 'grande bulle, peu de texte', box: boxOf(large) })
   if (gradient) rows.push({ titre: 'bulle en dégradé', box: boxOf(gradient) })
@@ -550,15 +637,25 @@ async function main() {
   win.setContentSize(size.width, size.height)
   await win.loadFile(path.join(OUT, 'comparaison.html'))
   await sleep(700)
-  const compareShot = await win.webContents.capturePage({ x: 0, y: 0, width: size.width, height: size.height })
+  const compareShot = await win.webContents.capturePage({
+    x: 0,
+    y: 0,
+    width: size.width,
+    height: size.height
+  })
   fs.writeFileSync(path.join(OUT, 'comparaison.png'), compareShot.toPNG())
-  console.log(`comparaison : screenshots/comic-check/comparaison.png (${size.width}×${size.height})`)
+  console.log(
+    `comparaison : screenshots/comic-check/comparaison.png (${size.width}×${size.height})`
+  )
 
   server.close()
   app.exit(checks.every((entry) => entry.ok) ? 0 : 1)
 }
 
-app.whenReady().then(main).catch((error) => {
-  console.error('banc en échec :', error && error.message)
-  app.exit(1)
-})
+app
+  .whenReady()
+  .then(main)
+  .catch((error) => {
+    console.error('banc en échec :', error && error.message)
+    app.exit(1)
+  })

@@ -22,12 +22,16 @@
         --warn: #a8432c;
         --warn-soft: rgba(168, 67, 44, 0.08);
         --gold: #8d6b14;
-        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-        --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
-        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+        --serif:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+        --sans:
+          -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, system-ui, sans-serif;
+        --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
       }
 
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
       body {
         margin: 0;
@@ -40,7 +44,10 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      .board { max-width: 1320px; margin: 0 auto; }
+      .board {
+        max-width: 1320px;
+        margin: 0 auto;
+      }
 
       /* --- En-tête de planche ------------------------------------ */
 
@@ -79,7 +86,9 @@
         color: var(--ink-soft);
       }
 
-      .board-head .lede strong { color: var(--ink); }
+      .board-head .lede strong {
+        color: var(--ink);
+      }
 
       .meta {
         display: flex;
@@ -143,7 +152,12 @@
         color: var(--faint);
       }
 
-      .panel-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+      .panel-body {
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
 
       /* --- Capacité --------------------------------------------- */
 
@@ -169,9 +183,20 @@
         background: var(--accent-soft);
       }
 
-      .cap-copy { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-      .cap-copy b { font-size: 11.5px; font-weight: 600; }
-      .cap-copy small { font-size: 9.5px; color: var(--muted); }
+      .cap-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .cap-copy b {
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+      .cap-copy small {
+        font-size: 9.5px;
+        color: var(--muted);
+      }
 
       .cap-state {
         margin-left: auto;
@@ -186,9 +211,14 @@
         white-space: nowrap;
       }
 
-      .cap[data-off="true"] { opacity: 0.62; }
-      .cap[data-off="true"] .cap-mark { color: var(--faint); background: var(--line-soft); }
-      .cap[data-off="true"] .cap-state {
+      .cap[data-off='true'] {
+        opacity: 0.62;
+      }
+      .cap[data-off='true'] .cap-mark {
+        color: var(--faint);
+        background: var(--line-soft);
+      }
+      .cap[data-off='true'] .cap-state {
         color: var(--muted);
         background: transparent;
         border-color: var(--line);
@@ -210,7 +240,11 @@
         background: var(--surface);
       }
 
-      .composer p { margin: 0; font-size: 12.5px; line-height: 1.5; }
+      .composer p {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
       .composer .cursor {
         display: inline-block;
         width: 1.5px;
@@ -242,7 +276,10 @@
         background: var(--paper);
       }
 
-      .attach-chip b { font-weight: 500; color: var(--muted); }
+      .attach-chip b {
+        font-weight: 500;
+        color: var(--muted);
+      }
 
       /* --- Plan typé -------------------------------------------- */
 
@@ -266,7 +303,11 @@
         color: var(--faint);
       }
 
-      .steps { display: flex; flex-direction: column; gap: 6px; }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
       .step-row {
         display: grid;
@@ -280,7 +321,11 @@
         font-size: 10.5px;
       }
 
-      .step-index { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+      .step-index {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--faint);
+      }
 
       .tool {
         justify-self: start;
@@ -293,7 +338,10 @@
         border: 1px solid rgba(91, 86, 214, 0.2);
       }
 
-      .step-row small { color: var(--muted); font-size: 10px; }
+      .step-row small {
+        color: var(--muted);
+        font-size: 10px;
+      }
 
       .filtered {
         display: flex;
@@ -306,7 +354,10 @@
         color: var(--muted);
       }
 
-      .filtered b { color: var(--ink-soft); font-weight: 600; }
+      .filtered b {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
 
       .filtered .struck {
         font-family: var(--mono);
@@ -323,8 +374,17 @@
         color: var(--muted);
       }
 
-      .budget span { display: inline-flex; align-items: center; gap: 5px; }
-      .budget i { width: 4px; height: 4px; border-radius: 50%; background: var(--faint); }
+      .budget span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .budget i {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--faint);
+      }
 
       .cta {
         display: flex;
@@ -348,7 +408,10 @@
         border-color: var(--line);
       }
 
-      .cta-row { display: flex; gap: 7px; }
+      .cta-row {
+        display: flex;
+        gap: 7px;
+      }
 
       /* --- Décision --------------------------------------------- */
 
@@ -370,7 +433,10 @@
         color: var(--muted);
       }
 
-      .decision-head b { color: var(--ink); font-weight: 600; }
+      .decision-head b {
+        color: var(--ink);
+        font-weight: 600;
+      }
 
       .choice {
         display: flex;
@@ -388,8 +454,16 @@
         border-color: rgba(31, 138, 106, 0.25);
       }
 
-      .choice span { font-size: 10.5px; color: var(--ink-soft); }
-      .choice em { margin-left: auto; font-style: normal; font-size: 9px; color: var(--sage); }
+      .choice span {
+        font-size: 10.5px;
+        color: var(--ink-soft);
+      }
+      .choice em {
+        margin-left: auto;
+        font-style: normal;
+        font-size: 9px;
+        color: var(--sage);
+      }
 
       .rejected {
         display: flex;
@@ -411,7 +485,10 @@
         text-decoration: line-through;
       }
 
-      .rejected b { color: var(--ink); font-weight: 600; }
+      .rejected b {
+        color: var(--ink);
+        font-weight: 600;
+      }
 
       .trace {
         font-family: var(--mono);
@@ -426,7 +503,10 @@
         word-break: break-word;
       }
 
-      .trace b { color: var(--faint); font-weight: 400; }
+      .trace b {
+        color: var(--faint);
+        font-weight: 400;
+      }
 
       .confirm {
         display: flex;
@@ -438,12 +518,21 @@
         background: var(--accent-soft);
       }
 
-      .confirm strong { font-size: 11px; }
-      .confirm small { font-size: 9.5px; color: var(--muted); }
+      .confirm strong {
+        font-size: 11px;
+      }
+      .confirm small {
+        font-size: 9.5px;
+        color: var(--muted);
+      }
 
       /* --- Journal ---------------------------------------------- */
 
-      .journal { display: flex; flex-direction: column; gap: 5px; }
+      .journal {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
 
       .journal-row {
         display: grid;
@@ -454,12 +543,27 @@
         color: var(--ink-soft);
       }
 
-      .journal-row .n { font-family: var(--mono); font-size: 9px; color: var(--faint); }
-      .journal-row .ok { color: var(--sage); font-size: 10px; }
-      .journal-row .ko { color: var(--warn); font-size: 10px; }
-      .journal-row span:last-child { text-align: right; }
+      .journal-row .n {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--faint);
+      }
+      .journal-row .ok {
+        color: var(--sage);
+        font-size: 10px;
+      }
+      .journal-row .ko {
+        color: var(--warn);
+        font-size: 10px;
+      }
+      .journal-row span:last-child {
+        text-align: right;
+      }
 
-      .journal-row .tool { font-size: 9px; padding: 1px 5px; }
+      .journal-row .tool {
+        font-size: 9px;
+        padding: 1px 5px;
+      }
 
       /* --- Rapport ---------------------------------------------- */
 
@@ -478,9 +582,21 @@
         letter-spacing: -0.015em;
       }
 
-      .report ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; }
-      .report li { font-size: 10.5px; line-height: 1.5; color: var(--ink-soft); }
-      .report li::marker { color: var(--faint); }
+      .report ul {
+        margin: 0;
+        padding-left: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .report li {
+        font-size: 10.5px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+      .report li::marker {
+        color: var(--faint);
+      }
 
       .report-foot {
         display: flex;
@@ -493,7 +609,10 @@
         color: var(--muted);
       }
 
-      .report-foot b { color: var(--ink-soft); font-weight: 500; }
+      .report-foot b {
+        color: var(--ink-soft);
+        font-weight: 500;
+      }
 
       .src {
         display: inline-flex;
@@ -538,7 +657,10 @@
         background: var(--accent-soft);
       }
 
-      .note strong { color: var(--ink-soft); font-weight: 600; }
+      .note strong {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
 
       /* --- Avant / après ---------------------------------------- */
 
@@ -591,10 +713,20 @@
         color: var(--ink-soft);
       }
 
-      table.compare tr:last-child td { border-bottom: none; }
-      table.compare td:first-child { color: var(--ink); font-weight: 500; white-space: nowrap; }
-      table.compare .was { color: var(--muted); }
-      table.compare .now { color: var(--ink); }
+      table.compare tr:last-child td {
+        border-bottom: none;
+      }
+      table.compare td:first-child {
+        color: var(--ink);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      table.compare .was {
+        color: var(--muted);
+      }
+      table.compare .now {
+        color: var(--ink);
+      }
 
       .cost {
         display: grid;
@@ -619,7 +751,12 @@
         color: var(--muted);
       }
 
-      .cost-card p { margin: 0; font-size: 11px; line-height: 1.55; color: var(--ink-soft); }
+      .cost-card p {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
       .cost-card code {
         font-family: var(--mono);
         font-size: 10px;
@@ -640,10 +777,15 @@
         color: var(--ink-soft);
       }
 
-      .limit b { color: var(--warn); font-weight: 600; }
+      .limit b {
+        color: var(--warn);
+        font-weight: 600;
+      }
 
       @media (max-width: 720px) {
-        body { padding: 26px 18px 48px; }
+        body {
+          padding: 26px 18px 48px;
+        }
       }
     </style>
   </head>
@@ -740,10 +882,10 @@
           <p class="note">
             <b>1</b>
             <span
-              ><strong>La capacité passe avant la demande.</strong> Aujourd’hui un seul mot
-              (« Démo » ou « Modèle connecté ») mélange trois choses : où tourne le modèle, ce
-              qu’il coûte, et ce qui sort. Ici, chaque moteur est une ligne lisible, avec son état
-              — le motif des cartes WebAI d’Opera, appliqué au réglage plutôt qu’à la vitrine.</span
+              ><strong>La capacité passe avant la demande.</strong> Aujourd’hui un seul mot (« Démo
+              » ou « Modèle connecté ») mélange trois choses : où tourne le modèle, ce qu’il coûte,
+              et ce qui sort. Ici, chaque moteur est une ligne lisible, avec son état — le motif des
+              cartes WebAI d’Opera, appliqué au réglage plutôt qu’à la vitrine.</span
             >
           </p>
         </figure>
@@ -779,7 +921,9 @@
                 <button class="cta" type="button">Autoriser cette action</button>
                 <button class="cta ghost" type="button">Voir ce qui a été lu</button>
               </div>
-              <small>Rien n’est exécuté sans votre accord. Une saisie demande un second accord.</small>
+              <small
+                >Rien n’est exécuté sans votre accord. Une saisie demande un second accord.</small
+              >
             </div>
 
             <p class="plan-head">Journal <em>2 actions · 0 échec</em></p>
@@ -803,9 +947,9 @@
             <span
               ><strong>La décision devient visible et corrigeable.</strong> Le modèle a répondu
               <code>type</code> ; la page ne contient aucun champ, donc Vela propose
-              <code>read</code> et montre la réponse brute. C’est exactement l’échec mesuré
-              (11 fois « type » sur 18 essais) transformé en interface : on ne cache plus le
-              tâtonnement, on le rend arbitrable.</span
+              <code>read</code> et montre la réponse brute. C’est exactement l’échec mesuré (11 fois
+              « type » sur 18 essais) transformé en interface : on ne cache plus le tâtonnement, on
+              le rend arbitrable.</span
             >
           </p>
         </figure>
@@ -854,10 +998,10 @@
           <p class="note">
             <b>3</b>
             <span
-              ><strong>La sortie dit ce qu’elle a coûté.</strong> Sources, nombre d’actions,
-              échecs, moteur et localité sur une seule ligne : de quoi juger un rapport sans
-              ouvrir le journal. « Rejouer avec l’autre capacité » rend le compromis local/cloud
-              tangible au lieu d’en faire un réglage abstrait.</span
+              ><strong>La sortie dit ce qu’elle a coûté.</strong> Sources, nombre d’actions, échecs,
+              moteur et localité sur une seule ligne : de quoi juger un rapport sans ouvrir le
+              journal. « Rejouer avec l’autre capacité » rend le compromis local/cloud tangible au
+              lieu d’en faire un réglage abstrait.</span
             >
           </p>
         </figure>
@@ -875,8 +1019,12 @@
         <tbody>
           <tr>
             <td>Moteur</td>
-            <td class="was">Une pastille « Démo » ou « Modèle connecté » ; le reste vit dans Réglages.</td>
-            <td class="now">Une ligne par capacité : nom du modèle, taille, localité, état, réseau.</td>
+            <td class="was">
+              Une pastille « Démo » ou « Modèle connecté » ; le reste vit dans Réglages.
+            </td>
+            <td class="now">
+              Une ligne par capacité : nom du modèle, taille, localité, état, réseau.
+            </td>
           </tr>
           <tr>
             <td>Outils</td>
@@ -886,12 +1034,16 @@
           <tr>
             <td>Décision</td>
             <td class="was">Invisible : on lit le journal une fois l’action faite.</td>
-            <td class="now">Proposée, justifiée, corrigée si incohérente, révocable avant exécution.</td>
+            <td class="now">
+              Proposée, justifiée, corrigée si incohérente, révocable avant exécution.
+            </td>
           </tr>
           <tr>
             <td>Sortie</td>
             <td class="was">Rapport Markdown + bouton « Enregistrer en note ».</td>
-            <td class="now">Rapport + coût (actions, échecs, moteur) + rejouer avec l’autre capacité.</td>
+            <td class="now">
+              Rapport + coût (actions, échecs, moteur) + rejouer avec l’autre capacité.
+            </td>
           </tr>
         </tbody>
       </table>
@@ -910,25 +1062,24 @@
           <h3>À ajouter</h3>
           <p>
             Une fonction pure <code>availableTools(page)</code> qui décide quels outils ont une
-            cible, et un champ <code>reason</code> sur chaque action refusée. Le reste est du
-            rendu.
+            cible, et un champ <code>reason</code> sur chaque action refusée. Le reste est du rendu.
           </p>
         </div>
         <div class="cost-card">
           <h3>À ne pas ajouter</h3>
           <p>
-            Aucun service, aucune dépendance, aucun réglage de plus. Le filtre est déterministe :
-            il lit la page, il ne devine pas.
+            Aucun service, aucune dépendance, aucun réglage de plus. Le filtre est déterministe : il
+            lit la page, il ne devine pas.
           </p>
         </div>
       </div>
 
       <p class="limit">
-        <b>Ce que la maquette ne promet pas.</b> Filtrer les outils ne rend pas un 1 B bon : le
-        test a montré 6 bons outils sur 18 avec le meilleur protocole. Retirer trois mauvaises
-        options sur sept aide, mais la décision reste faible — c’est pour ça que l’écran montre la
-        réponse brute au lieu de la masquer. Le filtre exact, et le gain réel, se mesurent avec le
-        banc <code>agentLocal.test.ts</code> avant d’être annoncés.
+        <b>Ce que la maquette ne promet pas.</b> Filtrer les outils ne rend pas un 1 B bon : le test
+        a montré 6 bons outils sur 18 avec le meilleur protocole. Retirer trois mauvaises options
+        sur sept aide, mais la décision reste faible — c’est pour ça que l’écran montre la réponse
+        brute au lieu de la masquer. Le filtre exact, et le gain réel, se mesurent avec le banc
+        <code>agentLocal.test.ts</code> avant d’être annoncés.
       </p>
     </div>
   </body>

@@ -202,7 +202,10 @@ const rendrePage = (version, charpente, voisines) => {
     .replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${echappe(description)}$2`)
     // Les attributs sont répartis sur plusieurs lignes dans la charpente : `\s+`
     // les traverse, sinon la page gardait le canonical du journal.
-    .replace(/(<link\s+rel="canonical"\s+href=")[^"]*(")/, `$1${ORIGINE}/nouveautes/${version.slug}/$2`)
+    .replace(
+      /(<link\s+rel="canonical"\s+href=")[^"]*(")/,
+      `$1${ORIGINE}/nouveautes/${version.slug}/$2`
+    )
     .replace(
       /(<meta\s+property="og:url"\s+content=")[^"]*(")/,
       `$1${ORIGINE}/nouveautes/${version.slug}/$2`

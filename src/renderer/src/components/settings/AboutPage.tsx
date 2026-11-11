@@ -22,7 +22,7 @@ export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void
 
   return (
     <section className="setting-block">
-      <div className="about-hero">
+      <div className="about-hero" data-settings-anchor="system-about">
         <VelaMark size={52} brand />
         <div>
           <div className="about-title">
@@ -43,7 +43,7 @@ export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void
           </p>
         </div>
       </div>
-      <div className="setting-row">
+      <div className="setting-row" data-settings-anchor="system-about-update">
         <div>
           <strong>Mise à jour</strong>
           <p className="setting-hint">{updateLabel}</p>

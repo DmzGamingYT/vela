@@ -330,6 +330,8 @@ export interface VelaApi {
     discard(id: string): Promise<void>
     reorder(input: ReorderTabsInput): Promise<void>
     print(id: string): Promise<boolean>
+    /** Texte sélectionné dans la page, sans rien enregistrer. */
+    selection(id: string): Promise<string>
   }
   groups: {
     create(input?: CreateGroupInput): Promise<TabGroup>

@@ -29,7 +29,8 @@ export default function AccentColorSection({
   updateSettings,
   className = 'appearance-section',
   title = 'Couleur',
-  help = 'Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.'
+  help = 'Une seule teinte, déclinée sur tout le châssis. Le contenu des sites n’est jamais recoloré.',
+  anchor
 }: {
   settings: Settings
   mode: ResolvedMode
@@ -37,6 +38,7 @@ export default function AccentColorSection({
   className?: string
   title?: string
   help?: string
+  anchor?: string
 }) {
   const sectionId = useId()
   const [colorNote, setColorNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
@@ -88,7 +90,7 @@ export default function AccentColorSection({
   }
 
   return (
-    <section className={className} aria-labelledby={sectionId}>
+    <section className={className} aria-labelledby={sectionId} data-settings-anchor={anchor}>
       <div className="setting-head">
         <h2 id={sectionId}>{title}</h2>
         <p>{help}</p>
