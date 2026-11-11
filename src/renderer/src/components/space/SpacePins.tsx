@@ -6,8 +6,6 @@ import { Icon } from '../Icon'
 import { countLabel } from './spaceParts'
 
 interface SpacePinsProps {
-  pinsOpen: boolean
-  onPinsOpen(value: boolean): void
   shortcuts: SpaceShortcut[]
   suggestedSet: string | null
   suggestedLabel: string | null
@@ -32,8 +30,6 @@ interface SpacePinsProps {
 
 /** Section 4 : sites épinglés, réordonnables au clavier ou à la souris. */
 export default function SpacePins({
-  pinsOpen,
-  onPinsOpen,
   shortcuts,
   suggestedSet,
   suggestedLabel,
@@ -56,22 +52,13 @@ export default function SpacePins({
   onRemove
 }: SpacePinsProps) {
   return (
-    <details
-      className="space-fold"
-      open={pinsOpen}
-      onToggle={(event) => onPinsOpen(event.currentTarget.open)}
-    >
-      <summary className="space-fold-summary">
-        <span className="space-section-index" aria-hidden="true">
-          4
+    <section className="space-section">
+      <div className="space-section-head">
+        <h2 className="space-section-title">Sites épinglés</h2>
+        <span className="space-section-hint">
+          Optionnel · {shortcuts.length}/{MAX_SHORTCUTS}
         </span>
-        <span className="space-fold-title">Sites épinglés</span>
-        <span className="space-fold-hint">Optionnel</span>
-        <span className="space-fold-count">
-          {shortcuts.length}/{MAX_SHORTCUTS}
-        </span>
-        <Icon name="chevron-down" size={13} />
-      </summary>
+      </div>
       <div
         className="space-fold-body"
         onDragOver={(event) => {
@@ -217,6 +204,6 @@ export default function SpacePins({
           flèches.
         </p>
       </div>
-    </details>
+    </section>
   )
 }

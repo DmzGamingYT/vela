@@ -12,12 +12,11 @@ export default function SpaceHead({ existingName, onClose }: SpaceHeadProps) {
       <div>
         <p className="eyebrow">
           <span className="eyebrow-dot" />
-          {existingName ? 'Modifier l’espace' : 'Nouvel espace'}
+          {existingName ? 'Modifier le profil' : 'Nouveau profil'}
         </p>
-        <h1>{existingName ?? 'Un espace à part'}</h1>
+        <h2>{existingName ?? 'Un profil à vous.'}</h2>
         <p className="sheet-lede">
-          Un espace garde ses propres cookies et sessions : deux comptes sur le même site, sans
-          conflit.
+          Ses cookies et ses sessions restent à lui : deux comptes sur le même site, sans conflit.
         </p>
       </div>
       <button

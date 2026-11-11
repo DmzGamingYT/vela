@@ -1,10 +1,11 @@
 /**
  * Thèmes de couleur de Vela.
  *
- * Un thème n'est pas une liste de couleurs par composant : c'est une seule
- * teinte d'accent dont on dérive tout le reste (survol, fond doux, texte sur
- * accent, verre, focus, sélection, liens). Une couleur personnalisée passe donc
- * par exactement la même logique que les thèmes fournis.
+ * Un thème porte deux choses indépendantes : sa lumière (papier, surface
+ * profonde, encre, lavis) et sa teinte d'accent, dont on dérive tout le reste
+ * (survol, fond doux, texte sur accent, verre, focus, sélection, liens). Un
+ * accent libre remplace la teinte sans toucher à la lumière : le papier et le
+ * lavis restent ceux du thème, et l'accent est corrigé contre ce papier-là.
  *
  * Aucune dépendance à Electron ni à React : ce fichier est testable seul.
  */
@@ -153,28 +154,182 @@ export const GLASS_BLUR: Record<GlassIntensity, number> = { light: 8, normal: 18
 export const DEFAULT_GLASS_BLUR = GLASS_BLUR.normal
 export const MAX_GLASS_BLUR = 40
 
+/**
+ * Les trois neutres d'un thème : le papier sur lequel on lit, le fond des
+ * surfaces profondes (rail, feuilles) et l'encre du texte. Un thème n'est pas
+ * seulement une teinte d'accent : c'est une lumière. Un vert sur papier crème
+ * et un vert sur papier sauge ne racontent pas la même chose.
+ */
+export interface ThemeNeutrals {
+  paper: string
+  deep: string
+  ink: string
+}
+
+export interface ThemePalette {
+  light: ThemeNeutrals
+  dark: ThemeNeutrals
+  /**
+   * Deux teintes de lavis : la signature du thème, indépendante de l'accent.
+   * Elles composent le fond du châssis et servent de repli aux ambiances.
+   */
+  wash: { light: [string, string]; dark: [string, string] }
+}
+
 export interface ThemePreset {
   id: ThemePresetId
   label: string
   light: string
   dark: string
+  palette: ThemePalette
+}
+
+/**
+ * Les neutres de la maison, quand aucune palette n'est fournie (thème
+ * personnalisé, ou valeur relue d'un fichier plus ancien).
+ */
+export const NEUTRAL_PALETTE: ThemePalette = {
+  light: { paper: '#faf8f5', deep: '#f2ede5', ink: '#1b1a18' },
+  dark: { paper: '#151518', deep: '#101013', ink: '#f3f1ee' },
+  wash: { light: ['#8f8aff', '#5b56d6'], dark: ['#a8a3ff', '#6f6ad8'] }
 }
 
 /** Les thèmes fournis, dans l'ordre de la grille des réglages. */
 export const THEME_PRESETS: ThemePreset[] = [
-  { id: 'indigo', label: 'Indigo', light: '#5B5BD6', dark: '#B3AEFF' },
-  { id: 'rouge', label: 'Rouge', light: '#E5484D', dark: '#FF6369' },
-  { id: 'orange', label: 'Orange', light: '#F76B15', dark: '#FF8B3E' },
-  { id: 'ambre', label: 'Ambre', light: '#E5A100', dark: '#FFC53D' },
-  { id: 'vert', label: 'Vert', light: '#30A46C', dark: '#3DD68C' },
-  { id: 'turquoise', label: 'Turquoise', light: '#12A594', dark: '#0BD8B6' },
-  { id: 'bleu', label: 'Bleu', light: '#0091FF', dark: '#52A9FF' },
-  { id: 'violet', label: 'Violet', light: '#8E4EC6', dark: '#BF7AF0' },
-  { id: 'rose', label: 'Rose', light: '#E93D82', dark: '#FF6BA7' },
-  { id: 'graphite', label: 'Graphite', light: '#6E6E73', dark: '#A1A1A6' },
+  {
+    id: 'indigo',
+    label: 'Indigo',
+    light: '#5B5BD6',
+    dark: '#B3AEFF',
+    // Papier d'atelier, encre d'imprimerie : la référence du produit.
+    palette: {
+      light: { paper: '#faf8f5', deep: '#f2ede5', ink: '#1b1a18' },
+      dark: { paper: '#151518', deep: '#101013', ink: '#f3f1ee' },
+      wash: { light: ['#8f8aff', '#5b56d6'], dark: ['#a8a3ff', '#6f6ad8'] }
+    }
+  },
+  {
+    id: 'rouge',
+    label: 'Rouge',
+    light: '#E5484D',
+    dark: '#FF6369',
+    // Papier légèrement rosé, encre presque noire : le rouge ne crie pas seul.
+    palette: {
+      light: { paper: '#fbf6f4', deep: '#f3e9e6', ink: '#1e1716' },
+      dark: { paper: '#171314', deep: '#110e0f', ink: '#f4efee' },
+      wash: { light: ['#e5484d', '#f0958f'], dark: ['#ff6f74', '#a33438'] }
+    }
+  },
+  {
+    id: 'orange',
+    label: 'Orange',
+    light: '#F76B15',
+    dark: '#FF8B3E',
+    // Ocre : un papier chaud, mais moins jaune que l'ambre.
+    palette: {
+      light: { paper: '#fbf7f0', deep: '#f3ebdd', ink: '#1f1913' },
+      dark: { paper: '#171410', deep: '#110e0b', ink: '#f5f0e9' },
+      wash: { light: ['#f76b15', '#ffb27a'], dark: ['#ff8b3e', '#b04a12'] }
+    }
+  },
+  {
+    id: 'ambre',
+    label: 'Ambre',
+    light: '#E5A100',
+    dark: '#FFC53D',
+    // Parchemin : le seul papier franchement jaune de la grille.
+    palette: {
+      light: { paper: '#fbf8ee', deep: '#f3eddb', ink: '#1f1b10' },
+      dark: { paper: '#17150e', deep: '#110f0a', ink: '#f5f1e4' },
+      wash: { light: ['#e5a100', '#d9c37a'], dark: ['#ffc53d', '#a37a12'] }
+    }
+  },
+  {
+    id: 'vert',
+    label: 'Vert',
+    light: '#30A46C',
+    dark: '#3DD68C',
+    // Sauge : le papier refroidit, l'encre prend une pointe de vert.
+    palette: {
+      light: { paper: '#f7faf5', deep: '#e9f0e6', ink: '#161b17' },
+      dark: { paper: '#121714', deep: '#0d110f', ink: '#eef3ee' },
+      wash: { light: ['#30a46c', '#9fd6a8'], dark: ['#3dd68c', '#21764d'] }
+    }
+  },
+  {
+    id: 'turquoise',
+    label: 'Turquoise',
+    light: '#12A594',
+    dark: '#0BD8B6',
+    // Eau peu profonde : le papier le plus froid de la grille.
+    palette: {
+      light: { paper: '#f5faf9', deep: '#e6f0ee', ink: '#131c1b' },
+      dark: { paper: '#101716', deep: '#0b100f', ink: '#edf4f3' },
+      wash: { light: ['#12a594', '#8fd8ce'], dark: ['#0bd8b6', '#0f7a6f'] }
+    }
+  },
+  {
+    id: 'bleu',
+    label: 'Bleu',
+    light: '#0091FF',
+    dark: '#52A9FF',
+    // Jour froid : bleu de ciel, pas bleu d'écran.
+    palette: {
+      light: { paper: '#f6f9fc', deep: '#e8eef5', ink: '#14181d' },
+      dark: { paper: '#111519', deep: '#0c0f12', ink: '#eef2f6' },
+      wash: { light: ['#0091ff', '#9dc9f5'], dark: ['#52a9ff', '#1567b8'] }
+    }
+  },
+  {
+    id: 'violet',
+    label: 'Violet',
+    light: '#8E4EC6',
+    dark: '#BF7AF0',
+    // Lilas : le seul papier qui tire franchement vers le magenta.
+    palette: {
+      light: { paper: '#f9f7fc', deep: '#efeaf6', ink: '#191720' },
+      dark: { paper: '#151320', deep: '#0f0d17', ink: '#f1eef7' },
+      wash: { light: ['#8e4ec6', '#c9a8e8'], dark: ['#bf7af0', '#6b3596'] }
+    }
+  },
+  {
+    id: 'rose',
+    label: 'Rose',
+    light: '#E93D82',
+    dark: '#FF6BA7',
+    // Blush : rose poudré, sans sucre ajouté.
+    palette: {
+      light: { paper: '#fcf6f8', deep: '#f5e9ee', ink: '#1e1519' },
+      dark: { paper: '#171215', deep: '#110c0f', ink: '#f5eef1' },
+      wash: { light: ['#e93d82', '#f0a3bf'], dark: ['#ff6ba7', '#ab2b60'] }
+    }
+  },
+  {
+    id: 'graphite',
+    label: 'Graphite',
+    light: '#6E6E73',
+    dark: '#A1A1A6',
+    // Le seul thème sans température : gris neutre, encre franche.
+    palette: {
+      light: { paper: '#f8f8f7', deep: '#eeeeec', ink: '#161616' },
+      dark: { paper: '#151515', deep: '#101010', ink: '#f2f2f0' },
+      wash: { light: ['#6e6e73', '#b4b4b8'], dark: ['#a1a1a6', '#5c5c60'] }
+    }
+  },
   // Braise : le thème du ciel de l'accueil, seul à ouvrir ses braises et sa
   // nuit étoilée (et la lueur sous les cases du rail).
-  { id: 'braise', label: 'Braise', light: '#B4451F', dark: '#FF8F5E' }
+  {
+    id: 'braise',
+    label: 'Braise',
+    light: '#B4451F',
+    dark: '#FF8F5E',
+    // Fumée : papier fumé, encre de suie.
+    palette: {
+      light: { paper: '#faf5f1', deep: '#f1e7e0', ink: '#1d1512' },
+      dark: { paper: '#171310', deep: '#110d0b', ink: '#f5eee9' },
+      wash: { light: ['#b4451f', '#e0a184'], dark: ['#ff8f5e', '#8c3a18'] }
+    }
+  }
 ]
 
 /** Le thème qui porte le ciel de l'accueil ; les autres n'ouvrent pas « Ciel ». */
@@ -411,7 +566,9 @@ export function fillAccent(accent: string): string {
  */
 export function adjustAccent(
   hex: string,
-  mode: ResolvedMode
+  mode: ResolvedMode,
+  /** Papier réellement posé derrière l'accent : celui du thème choisi. */
+  paper: string = PAPER[mode]
 ): { color: string; adjusted: boolean; reason?: string } {
   const parsed = parseHex(hex)
   if (!parsed)
@@ -420,7 +577,6 @@ export function adjustAccent(
       adjusted: true,
       reason: 'Couleur invalide : indigo conservé.'
     }
-  const paper = PAPER[mode]
   if (contrast(parsed, paper) >= 4.5) return { color: parsed, adjusted: false }
   const tone = mode === 'light' ? 'assombrie' : 'éclaircie'
   return {
@@ -437,6 +593,11 @@ export function adjustAccent(
 export interface ThemeChoice {
   themeId: ThemeId
   customAccent: string
+  /**
+   * Vrai quand l'utilisateur a choisi sa propre teinte : elle remplace l'accent
+   * du thème, sans changer son papier ni son lavis.
+   */
+  accentOverride?: boolean
 }
 
 export interface AppearanceInput extends ThemeChoice {
@@ -455,14 +616,30 @@ export interface AppearanceInput extends ThemeChoice {
 
 export type Tokens = Record<string, string>
 
+/**
+ * La palette effective : celle du thème choisi, ou les neutres de la maison
+ * pour une couleur personnalisée (dont le lavis se dérive de l'accent).
+ */
+export function presetPalette({ themeId }: ThemeChoice & { mode: ResolvedMode }): ThemePalette {
+  const preset = themeId === 'custom' ? undefined : presetById(themeId)
+  // Sans thème nommé, on garde les neutres de la maison — et son lavis : le
+  // lavis appartient toujours au thème, jamais à l'accent. Une teinte libre ne
+  // doit donc pas le déplacer.
+  return preset ? preset.palette : NEUTRAL_PALETTE
+}
+
 export function accentColor({
   themeId,
   customAccent,
+  accentOverride,
   mode
 }: ThemeChoice & { mode: ResolvedMode }): string {
-  if (themeId === 'custom') return adjustAccent(customAccent, mode).color
-  const preset = presetById(themeId) ?? THEME_PRESETS[0]
-  return mode === 'dark' ? preset.dark : preset.light
+  const preset = presetById(themeId)
+  if (preset && !accentOverride) return mode === 'dark' ? preset.dark : preset.light
+  // L'accent libre est corrigé contre le papier du thème : c'est cette
+  // surface-là qu'il doit éclairer, pas un neutre générique.
+  const paper = (preset ? preset.palette : NEUTRAL_PALETTE)[mode].paper
+  return adjustAccent(customAccent, mode, paper).color
 }
 
 /**
@@ -474,8 +651,13 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   const { mode, glass, highContrast } = input
   const raw = accentColor(input)
   const accent = fillAccent(raw)
-  const paper = PAPER[mode]
-  const ink = INK[mode]
+  // Les neutres viennent de la palette du thème : chaque papier a sa
+  // température, et tous les calculs de contraste en découlent.
+  const palette = presetPalette(input)
+  const neutrals = palette[mode]
+  const wash = palette.wash[mode]
+  const paper = neutrals.paper
+  const ink = neutrals.ink
   const dark = mode === 'dark'
 
   // Le texte d'accent doit rester lisible sur le fond de page, y compris
@@ -493,7 +675,11 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
       : glass === 'strong'
         ? 0.92
         : 0.76
-  const tintMix = highContrast ? 0.04 : glass === 'strong' ? 0.14 : glass === 'light' ? 0.07 : 0.1
+  // L'accent ne teint plus les surfaces : à 10 %, chaque panneau de verre
+  // prenait la couleur de l'espace, et toute l'application virait au rose dès
+  // que l'accent était magenta. Il reste un souffle (3 %) pour que le verre ne
+  // soit pas strictement du papier ; l'accent franc vit dans les indicateurs.
+  const tintMix = highContrast ? 0 : glass === 'strong' ? 0.05 : glass === 'light' ? 0.02 : 0.03
   const blur = sanitizeGlassBlur(input.glassBlur, GLASS_BLUR[glass])
   // Le wordmark de la barre latérale est posé sur le verre (teinté par
   // l'accent) puis sur le reflet blanc du haut : le point final doit rester à
@@ -506,8 +692,8 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
   // de ses calques. Sans ambiance, ce sont les teintes du thème qui servent
   // de repli pour que les feuilles de style n'aient jamais de valeur vide.
   const ambience = ambiencePreset(input.ambience ?? 'none')
-  const ambA = ambience ? (dark ? ambience.dark[0] : ambience.light[0]) : accent
-  const ambB = ambience ? (dark ? ambience.dark[1] : ambience.light[1]) : hover
+  const ambA = ambience ? (dark ? ambience.dark[0] : ambience.light[0]) : wash[0]
+  const ambB = ambience ? (dark ? ambience.dark[1] : ambience.light[1]) : wash[1]
   const ambMix = mix(ambA, ambB, 0.5)
   const rgb = (color: string): string => {
     const { r, g, b } = hexToRgb(color)
@@ -556,7 +742,24 @@ export function appearanceTokens(input: AppearanceInput): Tokens {
     '--amb-halo': alpha(ambMix, dark ? 0.22 : 0.16),
     // Présence de la scène derrière la page, lue par `.ambience-chrome`.
     '--amb-opacity': String(sanitizeAmbienceIntensity(input.ambienceIntensity) / 100),
-    '--ink-strong': ink
+    // Neutres du thème : le papier, la surface profonde et l'encre. Ils
+    // écrasent ceux de la feuille de base, qui ne sert plus que de repli
+    // avant le premier rendu (voir le script en ligne d'index.html).
+    '--paper': paper,
+    '--paper-deep': neutrals.deep,
+    '--ink': ink,
+    '--ink-strong': ink,
+    '--ink-soft': mix(ink, paper, dark ? 0.18 : 0.16),
+    // Les gris portent du texte : le secondaire vise 5:1 sur le papier du
+    // thème, le tertiaire (libellés de section) 4,3:1. À 62 % d'encre, le
+    // gris secondaire tombait à 4,8:1 sur le papier clair.
+    '--muted': alpha(ink, dark ? 0.64 : 0.68),
+    '--faint': alpha(ink, dark ? 0.5 : 0.6),
+    // Le lavis signature : deux teintes, lues par le fond du châssis et par
+    // le repli des ambiances.
+    '--wash-1': wash[0],
+    '--wash-2': wash[1],
+    '--wash-rgb': rgb(wash[0])
   }
 }
 
@@ -607,9 +810,34 @@ export function resolveThemeId(options: {
   return options.globalTheme
 }
 
+/**
+ * Accent effectif. Un espace peut porter sa propre teinte : elle remplace
+ * l'accent global sans toucher au papier ni au lavis de son thème — c'est
+ * exactement le même contrat qu'un accent libre choisi dans les réglages.
+ * Une valeur illisible retombe sur l'accent global plutôt que de casser
+ * l'affichage.
+ */
+export function resolveAccent(options: {
+  globalAccent: string
+  globalOverride?: boolean
+  perSpace?: boolean
+  spaceAccent?: string | null
+}): { customAccent: string; accentOverride: boolean } {
+  const spaceAccent = parseHex(options.spaceAccent ?? '')
+  if (options.perSpace && spaceAccent) {
+    return { customAccent: spaceAccent, accentOverride: true }
+  }
+  return { customAccent: options.globalAccent, accentOverride: options.globalOverride === true }
+}
+
 export interface AppearancePrefs {
   themeId: ThemeId
   customAccent: string
+  /**
+   * Une teinte libre remplace l'accent du thème choisi ; son papier et son
+   * lavis restent ceux de la palette.
+   */
+  accentOverride: boolean
   glass: GlassIntensity
   /** Intensité continue du verre dépoli, en pixels de flou. */
   glassBlur: number
@@ -674,6 +902,7 @@ export function sanitizeAppearance(
   return {
     themeId,
     customAccent: parseHex(input.customAccent ?? '') ?? DEFAULT_CUSTOM_ACCENT,
+    accentOverride: input.accentOverride === true,
     glass: input.glass === 'light' || input.glass === 'strong' ? input.glass : 'normal',
     // Un fichier d'avant le curseur n'a que le cran : on en dérive le flou.
     glassBlur: sanitizeGlassBlur(

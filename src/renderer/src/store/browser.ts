@@ -14,6 +14,7 @@ import { createPrivacySlice, type PrivacySlice } from './slices/privacy'
 import { createSpacesSlice, type SpacesSlice } from './slices/spaces'
 import { createTabsSlice, type TabsSlice } from './slices/tabs'
 import { createUpdatesSlice, type UpdatesSlice } from './slices/updates'
+import { captureTrigger } from './trigger'
 import type { Overlay, Toast } from './types'
 
 export type { AgentStep, AgentUi, Overlay, Toast, WorkMode } from './types'
@@ -69,6 +70,12 @@ export interface CoreSlice {
   ready: boolean
   view: AppView | null
   overlay: Overlay
+  /**
+   * Élément qui avait le focus quand le panneau s'est ouvert. Le fond passe
+   * en `inert`, ce qui floute le déclencheur avant que la feuille ne monte :
+   * sans cette copie, la fermeture rendait le focus au `body`.
+   */
+  overlayTrigger: HTMLElement | null
   /**
    * Menus flottants ouverts (clic droit, touche Menu). Les vues natives des
    * pages passent au-dessus du HTML : elles quittent la scène tant qu'un menu
@@ -142,6 +149,7 @@ function createCoreSlice(
     ready: false,
     view: null,
     overlay: null,
+    overlayTrigger: null,
     menuOpen: 0,
     peekOpen: false,
     toasts: [],
@@ -287,7 +295,13 @@ function createCoreSlice(
     },
 
     setOverlay(overlay) {
-      set({ overlay, spaceEditId: overlay === 'space' ? get().spaceEditId : null })
+      set({
+        overlay,
+        // Capturé avant que le fond ne devienne `inert` : à ce moment le bouton
+        // déclencheur a encore le focus, une image plus tard il l'a perdu.
+        overlayTrigger: overlay ? captureTrigger(get().overlayTrigger) : null,
+        spaceEditId: overlay === 'space' ? get().spaceEditId : null
+      })
     },
 
     setPeekOpen(open) {

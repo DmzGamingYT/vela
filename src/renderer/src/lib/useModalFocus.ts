@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
+import { useBrowser } from '../store/browser'
 
 const FOCUSABLE = [
   'a[href]',
@@ -42,7 +43,11 @@ export function useModalFocus<T extends HTMLElement>(
   useEffect(() => {
     const node = ref.current
     if (!node) return
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    // Le fond passe en `inert` à l'ouverture : le déclencheur a déjà perdu le
+    // focus quand cet effet s'exécute. On reprend celui mémorisé au clic.
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const previous =
+      active && active !== document.body ? active : useBrowser.getState().overlayTrigger
 
     // Après le premier rendu : les champs et boutons de la feuille existent.
     const frame = requestAnimationFrame(() => {

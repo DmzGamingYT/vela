@@ -21,7 +21,7 @@ interface CommandItem {
     | 'Actions'
     | 'Skills'
     | 'Onglets'
-    | 'Espaces'
+    | 'Profils'
     | 'Historique'
     | 'Notes'
     | 'Tâches'
@@ -191,7 +191,7 @@ export default function CommandBar() {
       {
         id: 'action-new-space',
         group: 'Actions',
-        label: 'Nouvel espace',
+        label: 'Nouveau profil',
         hint: 'Isoler un contexte',
         icon: 'circle',
         run: run(() => openSpaceDialog())
@@ -387,9 +387,9 @@ export default function CommandBar() {
 
     const spaces: CommandItem[] = view.spaces.map((item) => ({
       id: `space-${item.id}`,
-      group: 'Espaces',
+      group: 'Profils',
       label: item.name,
-      hint: item.id === view.activeSpaceId ? 'Espace actif' : 'Changer d’espace',
+      hint: item.id === view.activeSpaceId ? 'Profil actif' : 'Changer de profil',
       icon: 'circle',
       run: run(() => activateSpace(item.id))
     }))

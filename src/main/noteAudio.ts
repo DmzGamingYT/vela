@@ -47,7 +47,7 @@ export function isAudioName(value: unknown): value is string {
 
 function spaceFolder(spaceId: unknown): string {
   const raw = typeof spaceId === 'string' ? spaceId.toLowerCase().replace(/[^a-z0-9-]/g, '-') : ''
-  return raw.slice(0, 64) || 'espace'
+  return raw.slice(0, 64) || 'profil'
 }
 
 /** Décode une data URL audio ; `null` si le type ou la taille ne convient pas. */

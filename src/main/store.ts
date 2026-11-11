@@ -240,6 +240,11 @@ export function normalizeState(raw: unknown): PersistedState {
     // Chromium refuse la session et l'ouverture d'un onglet plante l'app.
     partition: partitionFor(space),
     theme: isThemeId(space.theme) ? space.theme : null,
+    // Teinte propre à l'espace : un code hexadécimal valide, rien d'autre.
+    accent:
+      typeof space.accent === 'string' && /^#[0-9a-f]{6}$/i.test(space.accent.trim())
+        ? space.accent.trim().toLowerCase()
+        : null,
     avatar: sanitizeSpaceAvatar(space.avatar),
     background: sanitizeSpaceBackground(space.background),
     shortcuts: sanitizeSpaceShortcuts(space.shortcuts),

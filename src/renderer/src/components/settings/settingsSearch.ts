@@ -206,10 +206,10 @@ const ITEMS: SettingsSearchEntry[] = [
   {
     page: 'appearance',
     tab: 'mode',
-    label: 'Un thème par espace',
+    label: 'Un thème et un accent par profil',
     group: 'Apparence',
-    hint: 'Chaque espace garde son propre thème.',
-    keywords: 'espace thème',
+    hint: 'Chaque profil garde son propre thème.',
+    keywords: 'profil thème',
     anchor: 'appearance-per-space'
   },
   {
@@ -469,7 +469,7 @@ const ITEMS: SettingsSearchEntry[] = [
     tab: 'local',
     label: 'Cookies et stockage',
     group: 'Confidentialité',
-    hint: 'Partitions par espace.',
+    hint: 'Partitions par profil.',
     keywords: 'cookies stockage partition',
     anchor: 'privacy-cookies'
   },

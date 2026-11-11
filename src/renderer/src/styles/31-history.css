@@ -18,7 +18,8 @@
   border-bottom: 1px solid var(--edge);
 }
 
-.history-head h1 {
+.history-head h1,
+.history-head h2 {
   margin: 4px 0 5px;
   font-family: var(--serif);
   font-size: 34px;
@@ -513,7 +514,8 @@
     padding: 20px 18px 16px;
   }
 
-  .history-head h1 {
+  .history-head h1,
+  .history-head h2 {
     font-size: 28px;
   }
 

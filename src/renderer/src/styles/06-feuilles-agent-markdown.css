@@ -131,7 +131,8 @@
   box-shadow: none;
 }
 
-.agent-identity h1 {
+.agent-identity h1,
+.agent-identity h2 {
   margin: 0;
   font-family: var(--sans);
   font-size: 21px;

@@ -1,0 +1,196 @@
+/* ------------------------------------------------------------------
+   Tranche 76 — le contact et la lisibilité
+   ------------------------------------------------------------------
+   Deux principes ont guidé cette passe, et rien d'autre :
+
+   1. L'interface répond au contact, pas au relâchement. Un onglet, une
+      tuile épinglée, une ligne de réglage ou de palette s'allume dès
+      l'appui (`:active`), en 90 ms — le survol, lui, garde son fondu de
+      160 ms. Une seule échelle d'appui : 0,95 pour les cibles carrées,
+      un cran de fond pour les lignes de texte.
+
+   2. Un micro-libellé reste lisible. Les capitales de section tombaient
+      à 8,5 px sur `--faint` (48 % d'encre) : à cette taille, le gris
+      décoratif devient du bruit. Elles passent à 10 px, chasse 0,10 em
+      (positive, comme toute petite capitale) et `--label`, soit 74 %
+      d'encre — 8:1 dans les deux modes.
+
+   Le reste traite les préférences système qu'un navigateur de bureau se
+   doit d'honorer : mouvement réduit (on garde le retour, on retire le
+   déplacement), transparence réduite (le verre redevient une plaque),
+   contraste renforcé (filets et gris montent d'un cran).
+
+   Aucune boîte ne bouge ici : uniquement couleur, échelle d'appui et
+   matière. C'est ce qui rend la tranche sûre à poser en dernier.
+   ------------------------------------------------------------------ */
+
+/* ── 1. Un seul traitement pour les micro-libellés ─────────────────── */
+
+:root {
+  /* Les capitales de section et les champs de formulaire. Posé sur l'encre,
+     il suit les deux modes et les dix teintes sans nouveau jeton à régler. */
+  --label: color-mix(in srgb, var(--ink) 74%, transparent);
+  /* L'appui est une encre, pas un blanc : un voile blanc à 12 % éclaircit
+     une ligne en mode sombre mais blanchit du papier en mode clair, où
+     l'appui doit au contraire assombrir. Une seule valeur, deux sens. */
+  --press: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.sidebar .tabs-scroll > .tabs-head,
+.settings-nav-label,
+.command-group-title,
+.eyebrow,
+.brief-label,
+.field > span {
+  color: var(--label);
+  letter-spacing: 0.1em;
+}
+
+.settings-nav-label,
+.brief-label,
+.eyebrow,
+.field > span {
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* Le compte d'une section reste plus discret que son nom : c'est une
+   quantité, pas un titre. */
+.sidebar .tabs-head .tabs-count {
+  color: var(--label);
+  opacity: 0.72;
+}
+
+/* ── 2. L'appui, tout de suite ─────────────────────────────────────── */
+
+/* Lignes de texte : un cran de fond, sans déplacement (une ligne qui se
+   soulève sous le curseur fait bouger la liste qu'on vise). */
+.sidebar .tab-row:active,
+.group-head:active,
+.settings-nav-item:active,
+.command-item:active,
+.chip:active,
+.segment:active,
+.rail-mode:active,
+.rail-settings:active,
+.tabs-pin-add:active {
+  background-color: var(--press);
+  transition-duration: 90ms;
+  transition-timing-function: var(--ease-out);
+}
+
+/* Cibles carrées : elles seules s'enfoncent. */
+.pin-tile:active .pin-tile-main,
+.rail .space-chip:active:not([data-active='true']),
+.tabs-fold:active {
+  transform: scale(0.95);
+  transition-duration: 90ms;
+  transition-timing-function: var(--ease-out);
+}
+
+/* La tuile épinglée garde son ombre à l'appui : sans cela, l'ombre saute
+   d'un coup au moment précis où l'œil regarde la cible. */
+.pin-tile:active .pin-tile-main {
+  box-shadow: 0 1px 2px rgba(3, 5, 12, 0.18);
+}
+
+/* ── 3. Mouvement réduit : le retour reste ─────────────────────────── */
+
+/* La règle globale de la tranche 08 ramène toute transition à 0,01 ms,
+   ce qui supprime aussi le retour d'appui et de survol. Ici on garde la
+   couleur — elle n'a jamais donné le vertige à personne — et on retire
+   le déplacement. */
+@media (prefers-reduced-motion: reduce) {
+  .action,
+  .icon-btn,
+  .tab-row,
+  .chip,
+  .segment,
+  .command-item,
+  .settings-nav-item,
+  .foot-btn,
+  .rail-ghost,
+  .rail-mode,
+  .space-chip,
+  .pin-tile-main,
+  .group-head {
+    transition-property: background-color, color, border-color, opacity !important;
+    transition-duration: 120ms !important;
+    transition-timing-function: linear !important;
+  }
+
+  .action:active,
+  .icon-btn:active,
+  .space-chip:active,
+  .pin-tile-main:active,
+  .tabs-fold:active,
+  .foot-btn:active {
+    transform: none;
+  }
+}
+
+/* ── 4. Transparence réduite : le verre redevient une plaque ───────── */
+
+@media (prefers-reduced-transparency: reduce) {
+  .rail::before,
+  .sidebar::before,
+  .pane-head,
+  .command,
+  .sheet,
+  .agent,
+  .notes-drawer,
+  .toast,
+  .brief-card,
+  .settings-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .rail::before,
+  .sidebar::before {
+    background: var(--paper-deep);
+  }
+
+  .pane-head {
+    background: var(--paper);
+  }
+
+  .command,
+  .sheet,
+  .agent,
+  .notes-drawer,
+  .toast {
+    background: var(--surface-elevated);
+  }
+
+  .overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(3, 4, 8, 0.72);
+  }
+
+  :root[data-mode='light'] .overlay {
+    background: rgba(226, 234, 247, 0.84);
+  }
+}
+
+/* ── 5. Contraste renforcé ─────────────────────────────────────────── */
+
+/* Le réglage « Contraste élevé » de Vela reste la commande de l'app ;
+   ces valeurs suivent en plus la préférence du système, pour qu'un
+   utilisateur qui l'a demandée une fois n'ait pas à la redemander. */
+@media (prefers-contrast: more) {
+  /* `!important` est nécessaire depuis la tranche 77 : le thème pose
+     `--muted` et `--faint` en style en ligne sur `:root`, et une règle de
+     feuille de style perd contre une déclaration en ligne. Une préférence
+     système d'accessibilité doit gagner sur le thème, pas l'inverse. */
+  :root,
+  :root[data-mode='light'] {
+    --muted: color-mix(in srgb, var(--ink) 80%, transparent) !important;
+    --faint: color-mix(in srgb, var(--ink) 70%, transparent) !important;
+    --label: color-mix(in srgb, var(--ink) 88%, transparent);
+    --line: color-mix(in srgb, var(--ink) 24%, transparent);
+    --line-soft: color-mix(in srgb, var(--ink) 16%, transparent);
+    --edge: color-mix(in srgb, var(--ink) 26%, transparent);
+  }
+}

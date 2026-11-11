@@ -48,7 +48,7 @@ export default function SpaceFooter({
         </div>
       ) : null}
       <footer className="space-foot-v2">
-        <p className="space-summary" aria-label="Résumé de l’espace">
+        <p className="space-summary" aria-label="Résumé du profil">
           <i style={{ background: color }} aria-hidden="true" />
           {summary}
         </p>
@@ -62,7 +62,7 @@ export default function SpaceFooter({
             disabled={saving || Boolean(letterboxdError)}
           >
             <Icon name={existingName ? 'check' : 'plus'} size={14} />
-            {existingName ? 'Enregistrer' : 'Créer l’espace'}
+            {existingName ? 'Enregistrer' : 'Créer le profil'}
             <kbd className="space-kbd">⌘↵</kbd>
           </button>
         </div>

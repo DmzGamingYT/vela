@@ -23,12 +23,16 @@ export interface BentoModules {
   quickNotes: boolean
 }
 
+// Deux modules à l'ouverture : les favoris et les pages récentes. Les autres
+// (météo, tâches, notes) se demandent depuis « Personnaliser » — un accueil
+// qui montre quatre cartes vides avant tout contenu se lit comme un écran
+// inachevé. Les profils qui ont déjà choisi leurs modules gardent les leurs.
 const DEFAULT_BENTO_MODULES: BentoModules = {
-  weather: true,
+  weather: false,
   shortcuts: true,
   recent: true,
-  tasks: true,
-  quickNotes: true
+  tasks: false,
+  quickNotes: false
 }
 
 const BENTO_STORAGE_KEY = 'vela.home.bento.modules'
@@ -278,11 +282,18 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const openPages = view.tabs.filter((tab) => tab.spaceId === spaceId && !isHomeUrl(tab.url)).length
   const weekStart = today - 7 * 86_400_000
   const pages = view.history.filter((entry) => entry.visitedAt >= weekStart).length
-  const pagesLabel = `${pages} page${pages > 1 ? 's' : ''} cette semaine`
-  const lede =
+  // Pas de zéros en ouverture : la ligne ne dit que ce qui existe. Une fenêtre
+  // encore vide l'annonce une fois, et indique par où commencer, au lieu
+  // d'aligner « 0 page ouverte · 0 page cette semaine ».
+  const pagesLabel = pages > 0 ? `${pages} page${pages > 1 ? 's' : ''} cette semaine` : ''
+  const openLabel =
     openPages === 0
-      ? `Aucune page ouverte · ${pagesLabel}`
-      : `${openPages} page${openPages > 1 ? 's' : ''} ouverte${openPages > 1 ? 's' : ''} · ${pagesLabel}`
+      ? 'Aucune page ouverte'
+      : `${openPages} page${openPages > 1 ? 's' : ''} ouverte${openPages > 1 ? 's' : ''}`
+  const lede =
+    openPages === 0 && pages === 0
+      ? 'Rien d’ouvert pour l’instant — commencez par une adresse.'
+      : [openLabel, pagesLabel].filter(Boolean).join(' · ')
 
   const paintHover = (): void => {
     frameRef.current = 0
@@ -602,14 +613,14 @@ export default function StartPage({ tabId }: { tabId: string }) {
               type="button"
               className="home-field-button home-field-open"
               title="Saisir dans la barre d’adresse"
-              aria-label={`Chercher, saisir une adresse ou demander à l’agent — ${shortcut('L')}`}
+              aria-label={`Adresse, recherche ou agent — ${shortcut('L')}`}
               onClick={() => focusAddress()}
             >
               <span className="home-field-icon">
                 <Icon name="search" size={16} />
               </span>
               <span className="home-field-text">
-                Chercher, saisir une adresse ou demander à l’agent
+                Adresse, recherche ou agent
               </span>
             </button>
 

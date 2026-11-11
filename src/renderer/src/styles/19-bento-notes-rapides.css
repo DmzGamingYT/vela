@@ -46,7 +46,7 @@
   gap: 12px;
   padding: 14px 18px;
   border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--space-accent) 30%, var(--edge));
+  border: 1px solid var(--edge);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)), var(--surface);
   backdrop-filter: blur(24px);

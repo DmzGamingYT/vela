@@ -874,7 +874,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           type="button"
           className="space-name"
           onClick={() => openSpaceDialog(space.id)}
-          title={`Espace « ${space.name} » — modifier`}
+          title={`Profil « ${space.name} » — modifier`}
           aria-haspopup="dialog"
         >
           <span className="space-name-text">{space.name}</span>

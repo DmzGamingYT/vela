@@ -1,0 +1,214 @@
+/* ------------------------------------------------------------------
+   Tranche 77 — palettes de thème, échelle de rayons, lavis signature
+   ------------------------------------------------------------------
+   Jusqu'ici, tous les thèmes partageaient le papier crème et le charbon de
+   l'indigo : choisir « Vert » ne changeait que la couleur des boutons. La
+   palette du thème porte désormais son papier, sa surface profonde, son
+   encre (voir `presetPalette` dans shared/theme.ts) et un lavis à deux
+   teintes — c'est lui qui donne à chaque thème son air, indépendamment de
+   l'accent.
+
+   Cette tranche pose trois choses, et rien d'autre :
+   1. le lavis du thème, sur le fond du châssis ;
+   2. une seule échelle de rayons (carte, contrôle, feuille) ;
+   3. une entrée orchestrée pour l'accueil, et un repère d'onglet qui se
+      pose au lieu d'apparaître.
+
+   Aucune largeur, aucune position : la disposition reste celle des tranches
+   39 à 69.
+   ------------------------------------------------------------------ */
+
+:root {
+  --r-card: 16px;
+  --r-control: 10px;
+  --r-sheet: 22px;
+}
+
+/* ── 1. Le lavis : deux teintes, une signature ─────────────────────── */
+
+/* La teinte du haut reste discrète (elle passe derrière la barre d'adresse),
+   celle du bas porte la profondeur de la fenêtre. Les deux viennent du thème,
+   jamais de l'accent : changer d'accent ne doit pas changer d'atmosphère. */
+body {
+  background:
+    radial-gradient(
+        72% 58% at 78% -10%,
+        color-mix(in srgb, var(--wash-2, var(--accent-a)) 10%, transparent),
+        transparent 70%
+      )
+      no-repeat,
+    var(--paper);
+  background-attachment: fixed;
+}
+
+.app::before {
+  background:
+    radial-gradient(
+      820px 600px at 16% 96%,
+      color-mix(in srgb, var(--wash-1, var(--accent-b)) 12%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      560px 380px at 92% 6%,
+      color-mix(in srgb, var(--wash-2, var(--accent-a)) 9%, transparent),
+      transparent 70%
+    );
+}
+
+/* ── 2. Une seule échelle de rayons ────────────────────────────────── */
+
+.home-card,
+.home-tasks,
+.home-quicknotes,
+.home-side > *,
+.brief-card,
+.capability,
+.theme-card,
+.models-hero,
+.about-hero {
+  border-radius: var(--r-card);
+}
+
+.address,
+.foot-search,
+.select,
+.field input,
+.action,
+.segment,
+.model-mark {
+  border-radius: var(--r-control);
+}
+
+.command,
+.sheet,
+.settings-sheet,
+.agent {
+  border-radius: var(--r-sheet);
+}
+
+/* Le conteneur de la feuille reçoit le focus à l'ouverture (piège de focus).
+   L'anneau global dessinait alors un liseré d'accent de 2 px autour de toute
+   la feuille — un faux état d'erreur. Le focus reste piégé, sans peinture. */
+.sheet.settings-sheet:focus,
+.sheet.settings-sheet:focus-visible {
+  outline: none !important;
+  box-shadow: var(--shadow);
+}
+
+/* La pastille de l'espace actif : un filet d'encre, pas un aplat de couleur.
+   Le rail n'a plus qu'un repère coloré, la barre de 3 px sur le bord. Le
+   sélecteur est ancré à `:root` et posé en fin de cascade pour passer devant
+   le halo d'espace de `[data-mode='light']`. L'initiale est peinte en style
+   inline par SpaceAvatar (`readableOn`), d'où le `!important` : sans lui elle
+   resterait blanche sur du papier. */
+:root .rail .space-chip[data-avatar='true'][data-active='true'] .space-avatar {
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+  color: var(--ink) !important;
+  box-shadow: none;
+}
+
+/* ── 3. Le mouvement qui répond à l'action ─────────────────────────── */
+
+/* L'accueil s'installe en deux temps, une seule fois. Deux pistes, deux pas :
+   la colonne de gauche d'abord, celle de droite juste après. */
+.home-grid > * {
+  animation: rise-in var(--dur-4) var(--ease-out) both;
+}
+
+.home-grid > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.home-grid > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+/* Le repère de l'onglet actif se pose : il grandit depuis son centre, avec
+   un ressort court. C'est le seul endroit où le châssis a le droit de
+   rebondir — un changement d'onglet est un geste, pas un décor. */
+.sidebar .tab-row[data-active='true']::before {
+  animation: tab-mark var(--dur-3) var(--ease-spring) both;
+}
+
+@keyframes tab-mark {
+  from {
+    transform: scaleY(0.35);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-grid > *,
+  .sidebar .tab-row[data-active='true']::before {
+    animation: none;
+  }
+}
+
+/* Marque de l'accent réellement appliqué quand il vient d'un espace : un anneau
+   autour de la pastille et un point d'angle, pour distinguer « coché » (le
+   réglage global) de « à l'écran » (ce que l'espace impose). */
+.theme-dot[data-applied='true'] .theme-dot-disc {
+  position: relative;
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 3.5px var(--accent);
+}
+
+.theme-dot[data-applied='true'] .theme-dot-disc::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+
+/* Portée de l'accent : toute l'application, ou l'espace actif. */
+.theme-scope-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.theme-scope {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.theme-scope button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font: 500 11.5px/1.2 inherit;
+  cursor: pointer;
+  transition:
+    background 120ms var(--ease),
+    color 120ms var(--ease);
+}
+
+.theme-scope button[data-active='true'] {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.theme-scope-block .app-help,
+.theme-scope-block .link-btn {
+  margin: 0;
+}

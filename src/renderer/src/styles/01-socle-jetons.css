@@ -179,3 +179,12 @@ kbd {
   height: 100vh;
   overflow: hidden;
 }
+
+/* Rail, barre, page et tiroirs. Un seul bloc pour pouvoir l'inerter d'un coup
+   à l'ouverture d'une feuille modale ; la rangée reste la même qu'avant. */
+.app-bg {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}

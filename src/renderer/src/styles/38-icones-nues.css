@@ -78,11 +78,14 @@
   border-color: transparent;
 }
 
+/* Le mode actif ne se peint plus : l'icône reste de l'encre, et la barre de
+   2,5 px posée à gauche suffit à dire où l'on est. Une icône d'accent pleine
+   faisait une tache rose dans une colonne par ailleurs sans couleur. */
 .rail-mode[data-active='true'] {
   background: none;
   border-color: transparent;
   box-shadow: none;
-  color: var(--clay);
+  color: var(--ink);
 }
 
 .rail-mode[data-active='true']::before {

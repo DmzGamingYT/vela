@@ -46,8 +46,8 @@ export default function SidebarFoot({ query, onQuery, asleep }: SidebarFootProps
           onKeyDown={(event) => {
             if (event.key === 'Escape') onQuery('')
           }}
-          placeholder="Rechercher dans les onglets"
-          aria-label="Rechercher dans les onglets"
+          placeholder="Filtrer les onglets"
+          aria-label="Filtrer les onglets de ce profil"
           spellCheck={false}
           autoComplete="off"
         />

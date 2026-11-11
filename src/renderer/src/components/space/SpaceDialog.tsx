@@ -26,12 +26,13 @@ import {
 import { useModalFocus } from '../../lib/useModalFocus'
 import { useBrowser } from '../../store/browser'
 import SpaceAdvanced from './SpaceAdvanced'
+import SpaceAmbience from './SpaceAmbience'
 import SpaceFooter from './SpaceFooter'
 import SpaceHead from './SpaceHead'
-import SpaceAppearance from './SpaceAppearance'
+import SpaceIdentity from './SpaceIdentity'
 import SpaceManage, { type ManageAction } from './SpaceManage'
-import SpaceNameSection from './SpaceNameSection'
 import SpacePins from './SpacePins'
+import SpaceTint from './SpaceTint'
 import SpacePreview, { type PreviewMode } from './SpacePreview'
 import SpaceTemplates from './SpaceTemplates'
 import { countLabel, sourceOf, type AvatarSource } from './spaceParts'
@@ -39,6 +40,7 @@ import { countLabel, sourceOf, type AvatarSource } from './spaceParts'
 interface DraftState extends SpaceTemplateDraft {
   blockTrackers: boolean
   theme: ThemeId | null
+  accent: string | null
   watchlist: boolean
   letterboxd: string
 }
@@ -50,6 +52,7 @@ function comparable(draft: DraftState): string {
     avatar: draft.avatar,
     background: draft.background,
     theme: draft.theme,
+    accent: draft.accent?.toLowerCase() ?? null,
     shortcuts: draft.shortcuts.map((shortcut) => `${shortcut.url}|${shortcut.title}`),
     blockTrackers: draft.blockTrackers,
     watchlist: draft.watchlist,
@@ -84,6 +87,7 @@ export default function SpaceDialog() {
   const [background, setBackground] = useState<SpaceBackground>(existing?.background ?? 'none')
   const [blockTrackers, setBlockTrackers] = useState(existing?.blockTrackers !== false)
   const [theme, setTheme] = useState<ThemeId | null>(existing?.theme ?? null)
+  const [accent, setAccent] = useState<string | null>(existing?.accent ?? null)
   const [shortcuts, setShortcuts] = useState<SpaceShortcut[]>(() => [
     ...(existing?.shortcuts ?? [])
   ])
@@ -108,7 +112,6 @@ export default function SpaceDialog() {
   const [tintError, setTintError] = useState<string | null>(null)
   const [starter, setStarter] = useState<string | null>(existing ? null : 'blank')
   const [appliedTemplate, setAppliedTemplate] = useState<string | null>(null)
-  const [pinsOpen, setPinsOpen] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [dirtyClose, setDirtyClose] = useState(false)
   const [manageAction, setManageAction] = useState<ManageAction>(null)
@@ -138,6 +141,7 @@ export default function SpaceDialog() {
     shortcuts: [...(existing?.shortcuts ?? [])],
     blockTrackers: existing?.blockTrackers !== false,
     theme: existing?.theme ?? null,
+    accent: existing?.accent ?? null,
     watchlist: existing?.watchlist === true,
     letterboxd: existing?.letterboxd ?? ''
   }))
@@ -150,6 +154,7 @@ export default function SpaceDialog() {
     shortcuts,
     blockTrackers,
     theme,
+    accent,
     watchlist,
     letterboxd
   }
@@ -173,8 +178,9 @@ export default function SpaceDialog() {
   const dirty = comparable(draft) !== comparable(initial)
   const suggestedSet = shortcuts.length === 0 ? suggestShortcutSet(name) : null
   const suggestedLabel = suggestedSet
-    ? (SPACE_PRESETS.find((preset) => preset.id === suggestedSet)?.label ?? 'ce type d’espace')
+    ? (SPACE_PRESETS.find((preset) => preset.id === suggestedSet)?.label ?? 'ce type de profil')
     : null
+  const previewSuggestions = suggestedSet ? shortcutsForSet(suggestedSet) : []
 
   // Le nom reçoit le focus à l’ouverture, comme dans la fenêtre d’origine.
   useEffect(() => {
@@ -319,8 +325,8 @@ export default function SpaceDialog() {
     setStarter('blank')
     setPhoto(null)
     setSiteError(null)
-    markApplied('Espace vierge')
-    announce('Espace vierge : aucun site, aucune ambiance.')
+    markApplied('Profil vierge')
+    announce('Profil vierge : aucun site, aucune ambiance.')
   }
 
   const commitCustomTint = (raw: string): void => {
@@ -467,6 +473,7 @@ export default function SpaceDialog() {
       background,
       blockTrackers,
       theme,
+      accent,
       shortcuts,
       watchlist,
       letterboxd: normalizedLetterboxd
@@ -541,7 +548,7 @@ export default function SpaceDialog() {
         className="sheet space-sheet space-sheet-v2"
         role="dialog"
         aria-modal="true"
-        aria-label={existing ? `Modifier ${existing.name}` : 'Nouvel espace'}
+        aria-label={existing ? `Modifier ${existing.name}` : 'Nouveau profil'}
         style={{ '--space-color': color } as CSSProperties}
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -549,7 +556,7 @@ export default function SpaceDialog() {
 
         <form ref={formRef} className="space-body" onSubmit={submit}>
           <div className="space-fields-v2">
-            <SpaceNameSection
+            <SpaceIdentity
               name={name}
               onName={setName}
               onBlur={() => setNameTouched(true)}
@@ -557,31 +564,25 @@ export default function SpaceDialog() {
               nameProblem={nameProblem}
               suggestedName={suggestedName}
               inputRef={inputRef}
+              portrait={{
+                color,
+                avatar,
+                monogram,
+                storedImage,
+                photo,
+                photoError,
+                avatarSource,
+                onSource: setAvatarSource,
+                onAvatar: chooseAvatar,
+                fileRef,
+                onImport: importPhoto,
+                onRemovePhoto: removePhoto,
+                onEditPhoto: setPhoto
+              }}
             />
 
-            <SpaceTemplates
-              starter={starter}
-              appliedTemplate={appliedTemplate}
-              iconSpaceId={iconSpaceId}
-              onBlank={applyBlank}
-              onPreset={applyPreset}
-              onRestore={restoreSnapshot}
-            />
-
-            <SpaceAppearance
-              avatarSource={avatarSource}
-              onSource={setAvatarSource}
-              avatar={avatar}
-              onAvatar={chooseAvatar}
+            <SpaceTint
               color={color}
-              monogram={monogram}
-              storedImage={storedImage}
-              photo={photo}
-              photoError={photoError}
-              fileRef={fileRef}
-              onImport={importPhoto}
-              onRemovePhoto={removePhoto}
-              onEditPhoto={setPhoto}
               tint={tint}
               tintError={tintError}
               tintNotice={tintNotice}
@@ -591,13 +592,19 @@ export default function SpaceDialog() {
               onToggleCustom={toggleCustom}
               onCommitTint={commitCustomTint}
               onTint={setTint}
-              background={background}
-              onBackground={chooseBackground}
             />
 
+            <SpaceTemplates
+              starter={starter}
+              appliedTemplate={appliedTemplate}
+              onBlank={applyBlank}
+              onPreset={applyPreset}
+              onRestore={restoreSnapshot}
+            />
+
+            <SpaceAmbience color={color} background={background} onBackground={chooseBackground} />
+
             <SpacePins
-              pinsOpen={pinsOpen}
-              onPinsOpen={setPinsOpen}
               shortcuts={shortcuts}
               suggestedSet={suggestedSet}
               suggestedLabel={suggestedLabel}
@@ -627,6 +634,9 @@ export default function SpaceDialog() {
               onBlockTrackers={setBlockTrackers}
               theme={theme}
               onTheme={setTheme}
+              accent={accent}
+              onAccent={setAccent}
+              globalAccent={view.settings.customAccent}
               perSpaceThemes={view.settings.perSpaceThemes}
               globalThemeLabel={presetById(view.settings.themeId)?.label ?? 'personnalisé'}
               watchlist={watchlist}
@@ -659,6 +669,7 @@ export default function SpaceDialog() {
             avatar={avatar}
             otherSpaces={otherSpaces}
             shortcuts={shortcuts}
+            suggestedShortcuts={previewSuggestions}
             iconSpaceId={iconSpaceId}
             tintLabel={tintLabel}
             ambienceLabel={ambienceLabel}

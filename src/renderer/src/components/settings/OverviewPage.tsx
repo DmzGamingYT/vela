@@ -104,20 +104,28 @@ export default function OverviewPage({
   settings,
   mode,
   previewThemeId,
+  previewAccent,
   onOpenPage
 }: {
   settings: Settings
   mode: ResolvedMode
   previewThemeId: ThemeId
+  /** Accent effectif (celui de l'espace s'il en porte un). */
+  previewAccent?: { customAccent: string; accentOverride: boolean }
   onOpenPage: (page: OverviewTarget) => void
 }) {
   const view = useBrowser((state) => state.view)
   if (!view) return null
 
   const themeLabel = presetById(previewThemeId)?.label ?? 'Personnalisé'
-  const accentLabel = themeLabel === 'Personnalisé' ? 'personnalisé' : themeLabel.toLowerCase()
+  // L'accent affiché est celui que le châssis applique : un espace peut porter
+  // sa propre teinte, et elle prime sur l'accent global.
+  const accentOverride = previewAccent?.accentOverride ?? settings.accentOverride
+  const accentLabel =
+    accentOverride || themeLabel === 'Personnalisé' ? 'personnalisé' : themeLabel.toLowerCase()
   const appearanceStatus =
     settings.themeId === 'indigo' &&
+    !accentOverride &&
     settings.customAccent.toUpperCase() === '#5B5BD6' &&
     settings.density === 'normal' &&
     settings.theme === 'system' &&
@@ -174,7 +182,7 @@ export default function OverviewPage({
     },
     { value: view.history.length, label: 'historique' },
     { value: view.notes.length, label: countLabel(view.notes.length, 'note', 'notes') },
-    { value: view.spaces.length, label: countLabel(view.spaces.length, 'espace', 'espaces') },
+    { value: view.spaces.length, label: countLabel(view.spaces.length, 'profil', 'profils') },
     {
       value: view.downloads.length,
       label: countLabel(view.downloads.length, 'téléchargement', 'téléchargements')

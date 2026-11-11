@@ -37,7 +37,7 @@ const STEPS: Step[] = [
   {
     kicker: 'Habitués',
     title: 'Vos habitués, un clic plus loin.',
-    lede: 'Épinglés dans l’espace, ouverts seulement quand vous cliquez.'
+    lede: 'Épinglés dans le profil, ouverts seulement quand vous cliquez.'
   },
   {
     kicker: 'Teinte',
@@ -246,7 +246,8 @@ export default function Onboarding() {
           </header>
 
           <div className="onboarding-copy">
-            <h1>{current.title}</h1>
+            {/* h2 : l'accueil reste monté derrière, il garde le seul h1. */}
+            <h2>{current.title}</h2>
             <p className="onboarding-lede">{current.lede}</p>
           </div>
 
@@ -479,7 +480,7 @@ export default function Onboarding() {
                     <span>
                       <strong>Pas de compte, pas de serveur Vela</strong>
                       <small>
-                        Espaces, onglets, favoris et réglages vivent dans un dossier sur cet
+                        Profils, onglets, favoris et réglages vivent dans un dossier sur cet
                         appareil.
                       </small>
                     </span>

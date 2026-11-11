@@ -1,0 +1,369 @@
+/* Dialogue « Espace » — refonte : identité compacte, teinte en pastilles,
+   modèles en chips, ambiance en vignettes, sites dépliés, aperçu qui porte
+   les faits. Le chrome reste neutre ; la teinte ne vit que dans l’aperçu. */
+
+.space-sheet-v2 {
+  width: min(1240px, 96vw);
+}
+
+.space-sheet-v2 .space-dialog-head {
+  padding: 16px 32px 12px;
+}
+
+.space-sheet-v2 .space-dialog-head h2 {
+  font-size: 30px;
+}
+
+.space-sheet-v2 .space-body {
+  grid-template-columns: minmax(0, 1.1fr) minmax(330px, 0.9fr);
+}
+
+.space-sheet-v2 .space-fields-v2 {
+  padding: 16px 32px 14px;
+  gap: 10px;
+}
+
+/* Sans cela le flex comprime « Sites » et « Avancé » jusqu’à les faire
+   disparaître sous la ligne de flottaison. */
+.space-sheet-v2 .space-fields-v2 > * {
+  flex: 0 0 auto;
+}
+
+.space-sheet-v2 .space-section {
+  gap: 8px;
+}
+
+.space-sheet-v2 .space-section-head {
+  margin-bottom: 8px;
+  align-items: baseline;
+}
+
+.space-sheet-v2 .space-section-head .space-section-index {
+  display: none;
+}
+
+.space-sheet-v2 .space-section-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.space-sheet-v2 .space-section-hint {
+  font-size: 10.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--faint);
+}
+
+/* ── Identité ─────────────────────────────────────────────────────── */
+
+.space-identity {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.space-identity-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.space-identity-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.space-sheet-v2 .space-identity .space-name-input {
+  width: 100%;
+  max-width: none;
+  padding: 2px 0 5px;
+  border: 0;
+  border-bottom: 1px solid var(--hairline-strong);
+  background: none;
+  font-family: var(--serif);
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+/* La règle globale de focus impose un contour !important ; ici le champ se
+   signale par son filet et un fond très léger, pas par un anneau. */
+.space-sheet-v2 .space-identity .space-name-input:focus,
+.space-sheet-v2 .space-identity .space-name-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-bottom-color: var(--ink);
+  background: color-mix(in srgb, var(--fill) 45%, transparent);
+}
+
+.space-identity-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.space-identity .space-suggestions {
+  margin-top: 6px;
+}
+
+.space-identity .space-suggestion {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+}
+
+/* Portrait : un bouton, un panneau. */
+.space-portrait {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.space-portrait-face {
+  width: 62px;
+  height: 62px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 19px;
+  background: var(--fill);
+  cursor: pointer;
+}
+
+.space-portrait-face .space-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 19px;
+}
+
+.space-portrait-plus {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  color: var(--ink-soft);
+}
+
+.space-portrait-panel {
+  position: absolute;
+  z-index: 8;
+  top: 72px;
+  left: 0;
+  width: min(360px, 60vw);
+  padding: 12px;
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+}
+
+/* ── Teinte : des pastilles ───────────────────────────────────────── */
+
+.space-sheet-v2 .space-tints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.space-sheet-v2 .space-tint {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  display: grid;
+  place-items: center;
+}
+
+.space-sheet-v2 .space-tint-dot {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.space-sheet-v2 .space-tint[data-active='true']::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+}
+
+.space-sheet-v2 .space-tint-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.space-sheet-v2 .space-tint-custom .space-tint-dot {
+  background: conic-gradient(#d6455d, #c99a2e, #3f8a5f, #3f74c9, #8a54c4, #d6455d);
+}
+
+/* ── Point de départ : des chips ─────────────────────────────────── */
+
+.space-sheet-v2 .space-templates {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.space-sheet-v2 .space-template {
+  width: auto;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.space-sheet-v2 .space-template:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.space-sheet-v2 .space-template[data-active='true'] {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+  background: var(--fill);
+}
+
+.space-sheet-v2 .space-template .space-template-mark,
+.space-sheet-v2 .space-template .space-template-icons,
+.space-sheet-v2 .space-template .space-check,
+.space-sheet-v2 .space-template .space-template-copy small {
+  display: none;
+}
+
+.space-template-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.space-template-count {
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.space-sheet-v2 .space-template-status {
+  margin-top: 6px;
+}
+
+/* ── Ambiance : des vignettes ────────────────────────────────────── */
+
+.space-sheet-v2 .space-ambiences {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.space-sheet-v2 .space-ambience {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: none;
+  text-align: left;
+}
+
+.space-sheet-v2 .space-ambience-swatch {
+  display: block;
+  height: 26px;
+}
+
+.space-sheet-v2 .space-ambience-copy {
+  display: block;
+  padding: 5px 7px 6px;
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.space-sheet-v2 .space-ambience-copy small {
+  display: none;
+}
+
+.space-sheet-v2 .space-ambience[data-active='true'] {
+  border-color: var(--ink-soft);
+}
+
+.space-sheet-v2 .space-ambience[data-active='true'] .space-ambience-copy {
+  color: var(--ink);
+}
+
+.space-sheet-v2 .space-ambience .space-check {
+  display: none;
+}
+
+/* ── Sites épinglés : dépliés ────────────────────────────────────── */
+
+.space-sheet-v2 .space-pins {
+  margin: 0;
+  padding: 0;
+}
+
+.space-sheet-v2 .space-pin-add {
+  margin-top: 8px;
+}
+
+/* ── Aperçu : les faits remplacent les pastilles ─────────────────── */
+
+.space-preview-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.space-preview-facts li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.space-preview-facts i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--sage);
+}
+
+.space-preview-facts span {
+  color: var(--muted);
+}
+
+.space-sheet-v2 .space-fold-summary {
+  padding: 9px 14px;
+}

@@ -13,7 +13,7 @@ interface SpaceManageProps {
   onClear(): void
 }
 
-/** Section 6 : dupliquer, vider ou supprimer l’espace existant. */
+/** Fin du dialogue : dupliquer, vider ou supprimer l’espace existant. */
 export default function SpaceManage({
   space,
   spaceCount,
@@ -25,11 +25,11 @@ export default function SpaceManage({
 }: SpaceManageProps) {
   return (
     <section className="space-section space-manage">
-      <SectionTitle index={6} title="Gérer cet espace" />
+      <SectionTitle title="Gérer ce profil" />
       <div className="space-manage-actions">
         <button type="button" className="space-manage-btn" onClick={onDuplicate}>
           <Icon name="copy" size={13} />
-          Dupliquer l’espace
+          Dupliquer le profil
         </button>
         <button type="button" className="space-manage-btn" onClick={() => onAction('clear')}>
           <Icon name="refresh" size={13} />
@@ -42,7 +42,7 @@ export default function SpaceManage({
             onClick={() => onAction('delete')}
           >
             <Icon name="trash" size={13} />
-            Supprimer l’espace…
+            Supprimer le profil…
           </button>
         ) : null}
       </div>
@@ -60,7 +60,7 @@ export default function SpaceManage({
           <p>
             {action === 'delete'
               ? 'Ses onglets, ses cookies et son historique seront perdus. Cette action est définitive et ne peut pas être annulée.'
-              : 'Cookies, stockage, cache et historique de cet espace seront effacés. Ses réglages et sites épinglés restent. Action définitive.'}
+              : 'Cookies, stockage, cache et historique de ce profil seront effacés. Ses réglages et sites épinglés restent. Action définitive.'}
           </p>
           <div className="space-confirm-actions">
             <button type="button" className="space-small-btn" onClick={() => onAction(null)}>

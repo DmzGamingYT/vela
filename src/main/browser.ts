@@ -955,7 +955,7 @@ export class Browser {
   private addSpace(input: unknown): void {
     const payload = (input ?? {}) as CreateSpaceInput
     const state = this.store.get()
-    const name = asString(payload.name).trim().slice(0, 40) || `Espace ${state.spaces.length + 1}`
+    const name = asString(payload.name).trim().slice(0, 40) || `Profil ${state.spaces.length + 1}`
     const color = /^#[0-9a-f]{6}$/i.test(asString(payload.color))
       ? asString(payload.color)
       : SPACE_COLORS[state.spaces.length % SPACE_COLORS.length]
@@ -971,6 +971,7 @@ export class Browser {
     space.letterboxdLog = []
     space.letterboxdLogAt = null
     if (isThemeId(payload.theme)) space.theme = payload.theme
+    space.accent = parseHex(asString(payload.accent)) ?? null
     const tab = createTabState(space.id, now)
     state.spaces.push(space)
     state.tabs.push(tab)
@@ -993,6 +994,9 @@ export class Browser {
     if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
       space.color = payload.color
     if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
+    if ('accent' in payload) {
+      space.accent = parseHex(typeof payload.accent === 'string' ? payload.accent : '') ?? null
+    }
     if ('avatar' in payload) space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
     if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
     if ('shortcuts' in payload) space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
@@ -1023,7 +1027,7 @@ export class Browser {
 
   private removeSpace(id: string): void {
     const state = this.store.get()
-    if (state.spaces.length <= 1) throw new Error('Vela garde toujours au moins un espace.')
+    if (state.spaces.length <= 1) throw new Error('Vela garde toujours au moins un profil.')
     const space = state.spaces.find((item) => item.id === id)
     if (!space) return
     this.tabs.destroySpace(id)
@@ -1308,6 +1312,9 @@ export class Browser {
       if (isThemeId(input.themeId)) settings.themeId = input.themeId
       if (typeof input.customAccent === 'string') {
         settings.customAccent = parseHex(input.customAccent) ?? settings.customAccent
+      }
+      if (typeof input.accentOverride === 'boolean') {
+        settings.accentOverride = input.accentOverride
       }
       if (input.glass === 'light' || input.glass === 'normal' || input.glass === 'strong') {
         settings.glass = input.glass

@@ -1,0 +1,87 @@
+<!-- Vela — icône de l'app : « le compas » (0.3.36).
+     Un cadran de boussole dans le langage de Safari : tuile pleine, anneau
+     d'indigo, double graduation et aiguille à deux facettes. Le sujet reste
+     Vela : la voile sert d'aiguille (indigo au nord, violet au sud) et le
+     pivot est d'encre.
+     Source : ce fichier.
+     Rendu et export : `env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs`
+     (icns, ico, iconset, icon-1024/512, gabarit de barre de menus). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
+     role="img" aria-labelledby="vela-title vela-desc">
+  <title id="vela-title">Vela</title>
+  <desc id="vela-desc">Un cadran crème cerclé d'indigo, gradué comme une boussole, avec une aiguille en forme de voile — indigo au nord, violet au sud — et un pivot d'encre au centre.</desc>
+  <defs>
+    <linearGradient id="tile" x1="200" y1="120" x2="840" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFCF4"/>
+      <stop offset="0.55" stop-color="#F6EBD9"/>
+      <stop offset="1" stop-color="#E4D2B6"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="330" cy="200" r="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="300" y1="180" x2="740" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A2F9E"/>
+      <stop offset="0.42" stop-color="#BCB5F0"/>
+      <stop offset="0.62" stop-color="#5B4CC4"/>
+      <stop offset="1" stop-color="#1B1450"/>
+    </linearGradient>
+    <radialGradient id="face" cx="440" cy="420" r="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFEFA"/>
+      <stop offset="0.58" stop-color="#F8EEDB"/>
+      <stop offset="1" stop-color="#E0CDAB"/>
+    </radialGradient>
+    <linearGradient id="northLeft" x1="512" y1="196" x2="424" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2E2480"/>
+      <stop offset="1" stop-color="#1D1656"/>
+    </linearGradient>
+    <linearGradient id="northRight" x1="600" y1="196" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#574CD4"/>
+      <stop offset="1" stop-color="#4034A6"/>
+    </linearGradient>
+    <linearGradient id="southLeft" x1="440" y1="512" x2="512" y2="828" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8C7EF6"/>
+      <stop offset="1" stop-color="#7161E8"/>
+    </linearGradient>
+    <linearGradient id="southRight" x1="584" y1="512" x2="512" y2="828" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6B5AE4"/>
+      <stop offset="1" stop-color="#4B3FC0"/>
+    </linearGradient>
+    <filter id="needleShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="13" flood-color="#6B5A38" flood-opacity="0.26"/>
+    </filter>
+  </defs>
+
+  <!-- La tuile : pleine, jusqu'aux bords du squircle, comme une icône macOS. -->
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="url(#tile)"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="url(#sheen)"/>
+
+  <!-- L'anneau, puis le cadran. Le liseré intérieur donne l'épaisseur du verre. -->
+  <circle cx="512" cy="512" r="356" fill="none" stroke="url(#rim)" stroke-width="24"/>
+  <circle cx="512" cy="512" r="338" fill="url(#face)"/>
+  <circle cx="512" cy="512" r="338" fill="none" stroke="#2A2178" stroke-opacity="0.28" stroke-width="6"/>
+
+  <!-- Deux rangs de graduation : 60 minutes dehors, 12 heures dedans,
+       et quatre repères cardinaux plus longs. -->
+  <circle cx="512" cy="512" r="308" fill="none" stroke="#2A2178" stroke-opacity="0.3" stroke-width="7"
+          stroke-dasharray="7 25.2"/>
+  <circle cx="512" cy="512" r="286" fill="none" stroke="#2A2178" stroke-opacity="0.46" stroke-width="16"
+          stroke-dasharray="12 137.6"/>
+  <circle cx="512" cy="512" r="276" fill="none" stroke="#2A2178" stroke-opacity="0.62" stroke-width="30"
+          stroke-dasharray="14 419.5"/>
+
+  <!-- L'aiguille est une voile : base large au sud, pointe au nord, quatre
+       facettes éclairées du même côté. Aucun détail ne traverse le pli, donc
+       la forme tient encore à 16 px. -->
+  <g filter="url(#needleShadow)">
+    <path d="M512 196c-42 148-66 252-88 316h88Z" fill="url(#northLeft)"/>
+    <path d="M512 196c42 148 66 252 88 316h-88Z" fill="url(#northRight)"/>
+    <path d="M512 828c-34-140-54-244-72-316h72Z" fill="url(#southLeft)"/>
+    <path d="M512 828c34-140 54-244 72-316h-72Z" fill="url(#southRight)"/>
+  </g>
+
+  <!-- Le pivot : une pastille crème, un point d'encre. -->
+  <circle cx="512" cy="512" r="30" fill="#FFFDF7" stroke="#241C6E" stroke-opacity="0.26" stroke-width="4"/>
+  <circle cx="512" cy="512" r="13" fill="#241C6E"/>
+</svg>

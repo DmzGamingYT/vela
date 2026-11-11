@@ -262,7 +262,7 @@ export default function NotesList({
 
       {!noNotes && (
         <footer className="note-foot note-foot-inset">
-          <span>{spaceName ? `Espace ${spaceName}` : 'Vela'} · fichiers .md</span>
+          <span>{spaceName ? `Profil ${spaceName}` : 'Vela'} · fichiers .md</span>
           <div className="note-foot-actions">
             <button type="button" className="text-btn" onClick={onTrash} title="Notes supprimées">
               <Icon name="trash" size={13} />

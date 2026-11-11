@@ -40,6 +40,9 @@ export default function App() {
     return view.spaces.find((item) => item.id === view.activeSpaceId) ?? null
   })
   const ambience = useBrowser((state) => state.view?.settings.ambience ?? 'none')
+  // L'accueil de bienvenue couvre la fenêtre comme une feuille : le fond doit
+  // être inerte pendant qu'il est ouvert, pas seulement sous un overlay.
+  const backgroundInert = Boolean(overlay) || !onboarded
 
   useEffect(() => {
     void useBrowser.getState().init()
@@ -189,16 +192,24 @@ export default function App() {
       {/* L’ambiance habille le châssis : un calque fixe derrière le verre,
           jamais au-dessus du contenu des pages (WebContentsView séparées). */}
       <AmbienceScene ambience={ambience} className="ambience-chrome" />
-      <SpaceRail />
-      <Sidebar collapsed={collapsed} />
-      <Workspace />
+      {/* Rail, barre, page et tiroirs forment le fond : `inert` les retire
+          ensemble du clavier et de l'arbre d'accessibilité dès qu'une feuille
+          modale s'ouvre. Sans cela, le titre de la feuille et celui de
+          l'accueil étaient annoncés tous les deux comme des h1. */}
+      <div className="app-bg" inert={backgroundInert ? true : undefined}>
+        <SpaceRail />
+        <Sidebar collapsed={collapsed} />
+        <Workspace />
+        <Suspense fallback={null}>
+          <Presence open={agentOpen} exit={!notesOpen}>
+            <AgentCanvas docked />
+          </Presence>
+          <Presence open={notesOpen} exit={!agentOpen}>
+            <NotesDrawer />
+          </Presence>
+        </Suspense>
+      </div>
       <Suspense fallback={null}>
-        <Presence open={agentOpen} exit={!notesOpen}>
-          <AgentCanvas docked />
-        </Presence>
-        <Presence open={notesOpen} exit={!agentOpen}>
-          <NotesDrawer />
-        </Presence>
         <Presence open={overlay === 'command'} exit={!overlay}>
           <CommandBar />
         </Presence>

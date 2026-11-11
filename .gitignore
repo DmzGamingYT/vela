@@ -32,6 +32,8 @@ build/proposals/
 build/icon-square-*
 build/icon-template-*
 build/icons-apercu.*
+build/icone-kit-apercu.*
+build/icone-zoom.*
 build/mark-preview.png
 # Compétences fournies par le harnais de développement, pas par ce projet.
 skills/

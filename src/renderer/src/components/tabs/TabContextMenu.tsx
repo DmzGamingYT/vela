@@ -144,7 +144,7 @@ export default function TabContextMenu({
       id: 'capture',
       label: 'Capturer dans les notes',
       icon: 'notes',
-      hint: 'Ajoute la sélection de la page aux notes de l’espace.',
+      hint: 'Ajoute la sélection de la page aux notes du profil.',
       onSelect: () => void captureSelection()
     }
   ]
@@ -274,7 +274,7 @@ export default function TabContextMenu({
       label: 'Dupliquer',
       icon: 'external',
       keys: shortcut('⇧K'),
-      hint: 'Ouvre la même adresse dans un onglet de cet espace, sans reprendre l’historique.',
+      hint: 'Ouvre la même adresse dans un onglet de ce profil, sans reprendre l’historique.',
       onSelect: () => newTab(tab.url)
     },
     { id: 'agent-menu', label: 'Demander à l’Agent', icon: 'sparkles', submenu: agentItems },

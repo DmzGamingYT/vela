@@ -32,7 +32,7 @@ export default function SessionsPanel() {
   const save = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     if (!space || openTabs.length === 0) {
-      setNotice('Ouvrez au moins une page dans cet espace avant d’enregistrer une session.')
+      setNotice('Ouvrez au moins une page dans ce profil avant d’enregistrer une session.')
       return
     }
     const next = saveSession({
@@ -80,7 +80,7 @@ export default function SessionsPanel() {
               <span className="eyebrow-dot" />
               {weekdayLabel(today)}
             </p>
-            <h1>Sessions</h1>
+            <h2>Sessions</h2>
             <p className="sheet-lede">
               Gardez un ensemble d’onglets pour le rouvrir en un clic. Tout reste sur cet appareil.
             </p>

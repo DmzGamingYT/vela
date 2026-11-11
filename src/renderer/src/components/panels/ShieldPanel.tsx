@@ -111,7 +111,7 @@ export default function ShieldPanel() {
               <span className="eyebrow-dot" />
               Protection
             </p>
-            <h1>Requêtes arrêtées</h1>
+            <h2>Requêtes arrêtées</h2>
           </div>
           <button
             type="button"

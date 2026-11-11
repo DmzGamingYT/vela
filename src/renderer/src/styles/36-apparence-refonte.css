@@ -100,7 +100,8 @@
   min-width: 0;
 }
 
-.settings-head h1 {
+.settings-head h1,
+.settings-head h2 {
   margin: 0 0 4px;
   font-family: var(--serif);
   font-size: 30px;
@@ -535,8 +536,101 @@
 }
 
 .appearance-section .choice-segment .choice {
-  min-height: 44px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 13px;
+}
+
+.appearance-section .choice-segment .choice[data-active='true'] .choice-name {
+  font-weight: 600;
+}
+
+/* Options décrites : dès qu'une option porte une phrase, la coche cède la
+   place à un vrai bouton radio et la teinte tombe à 5 %, pour que la phrase
+   garde sa couleur neutre. Au-delà de trois options (l'historique), le groupe
+   reste un rail : cinq cartes décrites feraient un mur. */
+.appearance-section
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4))) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  width: 100%;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.appearance-section
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 11px 12px;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: transparent;
+}
+
+.appearance-section
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice::before {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 26%, transparent);
+  background: transparent;
+  opacity: 1;
+  transform: none;
+}
+
+.appearance-section
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice[data-active='true'] {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  box-shadow: none;
+}
+
+.appearance-section
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice[data-active='true']::before {
+  border-color: var(--accent);
+  /* Le point est percé dans le disque lui-même : aucune couleur de fond à
+     égaler, donc le bouton radio tient sur le papier comme sur le verre. */
+  background: radial-gradient(circle, var(--accent) 0 4.5px, transparent 5px);
+}
+
+/* Contraste élevé : les surfaces teintées perdent leur teinte et les traits
+   reprennent l'encre, comme partout ailleurs dans ce mode. */
+:root[data-contrast='high'] .choice-segment {
+  border-color: var(--ink);
+}
+
+:root[data-contrast='high'] .choice-segment .choice[data-active='true'] {
+  background: var(--paper);
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+:root[data-contrast='high']
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice {
+  border-color: var(--ink);
+}
+
+:root[data-contrast='high']
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice::before {
+  border-color: var(--ink);
+}
+
+/* Sans teinte de fond, c'est le trait qui dit la carte choisie. */
+:root[data-contrast='high']
+  .choice-segment:has(.choice-hint):not(:has(> .choice:nth-child(4)))
+  .choice[data-active='true'] {
+  border-color: var(--accent);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .appearance-section .choice-card .choice {

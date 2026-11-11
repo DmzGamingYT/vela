@@ -51,7 +51,7 @@ export default function DownloadsPanel() {
               <Icon name="download" size={12} />
               Fichiers locaux
             </span>
-            <h1>Téléchargements</h1>
+            <h2>Téléchargements</h2>
             <p title={destination ?? undefined}>
               {destination
                 ? `Enregistrés dans ${destination}.`

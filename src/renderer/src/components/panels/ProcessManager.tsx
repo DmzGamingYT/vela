@@ -67,7 +67,7 @@ export default function ProcessManager() {
       >
         <header className="settings-head">
           <div>
-            <h1>Processus · {liveLabel}</h1>
+            <h2>Processus · {liveLabel}</h2>
             <p>Chaque onglet non suspendu garde un renderer. Déchargez pour libérer la RAM.</p>
           </div>
           <button

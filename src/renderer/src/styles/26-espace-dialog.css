@@ -40,7 +40,8 @@
   color: var(--muted);
 }
 
-.space-sheet-v2 .space-dialog-head h1 {
+.space-sheet-v2 .space-dialog-head h1,
+.space-sheet-v2 .space-dialog-head h2 {
   margin: 8px 0 0;
   font-size: 35px;
   line-height: 1.06;
@@ -1535,7 +1536,8 @@
     padding: 16px 28px 12px;
   }
 
-  .space-sheet-v2 .space-dialog-head h1 {
+  .space-sheet-v2 .space-dialog-head h1,
+  .space-sheet-v2 .space-dialog-head h2 {
     font-size: 27px;
   }
 
@@ -1623,4 +1625,53 @@
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* Accent propre à l'espace : la pastille, sa valeur, le retour au global. */
+.space-accent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.space-accent-input {
+  width: 36px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: none;
+  cursor: pointer;
+}
+
+.space-accent-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.space-accent-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+
+.space-accent-value {
+  font: 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.space-accent-reset {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 120ms var(--ease), border-color 120ms var(--ease);
+}
+
+.space-accent-reset:hover {
+  color: var(--ink);
+  border-color: var(--ink);
 }

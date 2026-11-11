@@ -90,10 +90,12 @@
   outline: none;
 }
 
+/* L'anneau est une ombre : il épouse déjà le rayon de l'élément. Forcer
+   10 px ici redessinait les pilules et les cibles carrées au moment même
+   où le clavier s'y posait. */
 :focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: 10px;
 }
 
 .action,

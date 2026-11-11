@@ -40,7 +40,7 @@ export default function TunnelProjects() {
         <header>
           <div>
             <h2>Cartes enregistrées</h2>
-            <p>Chaque tunnel lancé est conservé dans cet espace.</p>
+            <p>Chaque tunnel lancé est conservé dans ce profil.</p>
           </div>
           <button
             type="button"

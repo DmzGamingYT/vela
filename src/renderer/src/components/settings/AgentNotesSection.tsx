@@ -62,7 +62,7 @@ export default function AgentNotesSection() {
           <p>
             {recent.length === 0
               ? 'Rien encore : le tiroir de notes garde les extraits d’une page en un clic.'
-              : 'Les six dernières, tous espaces confondus.'}
+              : 'Les six dernières, tous profils confondus.'}
           </p>
         </div>
         {recent.length === 0 ? (

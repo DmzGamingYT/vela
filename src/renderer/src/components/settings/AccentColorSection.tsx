@@ -5,7 +5,9 @@ import {
   adjustAccent,
   hexToRgb,
   parseHex,
+  presetPalette,
   readableOn,
+  resolveAccent,
   rgbToHex,
   type ResolvedMode,
   type Rgb,
@@ -14,14 +16,17 @@ import {
 import type { SettingsPatch } from '@shared/api'
 import type { Settings } from '@shared/types'
 import { swatchColor } from '../../lib/appearance'
+import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 
 /**
  * Section « Couleur » commune à Apparence et à Tweaks.
  *
  * La palette garde le comportement historique : une teinte d'accent, une
- * teinte libre en HEX ou RVB, et une coche sur la pastille active. Le nom
- * accessible de chaque pastille reste son libellé, jamais sa seule couleur.
+ * teinte libre en HEX ou RVB, et une coche sur la pastille active. Quand un
+ * espace porte sa propre teinte, un sélecteur de portée permet de la changer
+ * ici, sans ouvrir la fenêtre de l'espace. Le nom accessible de chaque pastille
+ * reste son libellé, jamais sa seule couleur.
  */
 export default function AccentColorSection({
   settings,
@@ -44,8 +49,50 @@ export default function AccentColorSection({
   const [colorNote, setColorNote] = useState<{ text: string; tone: 'info' | 'error' } | null>(null)
   const [draft, setDraft] = useState<{ from: string; rgb: Rgb } | null>(null)
   const [rgbNote, setRgbNote] = useState<string | null>(null)
+  /** Portée de l'édition : toute l'application, ou l'espace actif seul. */
+  const [scope, setScope] = useState<'global' | 'space'>('global')
   const rgb =
     draft && draft.from === settings.customAccent ? draft.rgb : hexToRgb(settings.customAccent)
+
+  const view = useBrowser((state) => state.view)
+  const updateSpace = useBrowser((state) => state.updateSpace)
+  const activeSpace = view?.spaces.find((space) => space.id === view.activeSpaceId) ?? null
+  // Éditer un espace n'a de sens que si les apparences par espace sont actives
+  // et qu'un espace est réellement ouvert.
+  const canScope = Boolean(activeSpace) && settings.perSpaceThemes
+  const spaceMode = scope === 'space' && canScope
+  const spaceAccent = activeSpace?.accent ?? null
+
+  /**
+   * L'accent que le châssis applique vraiment : un espace peut porter la sienne,
+   * et elle l'emporte sur le réglage global. La grille le signale d'une marque,
+   * sinon la pastille cochée ne dit pas ce qui est à l'écran.
+   */
+  const applied = resolveAccent({
+    globalAccent: settings.customAccent,
+    globalOverride: settings.accentOverride,
+    perSpace: settings.perSpaceThemes,
+    spaceAccent: activeSpace?.accent ?? null
+  })
+  const appliedHex = applied.accentOverride ? applied.customAccent.toLowerCase() : null
+  const presetApplied = (id: ThemeId): boolean =>
+    appliedHex !== null && swatchColor(id, settings.customAccent, mode).toLowerCase() === appliedHex
+  const spaceAccentKey = spaceAccent?.toLowerCase() ?? null
+  const customApplied = spaceMode
+    ? spaceAccentKey !== null &&
+      !ACCENT_THEMES.some(
+        (preset) => swatchColor(preset.id, settings.customAccent, mode).toLowerCase() === spaceAccentKey
+      )
+    : appliedHex !== null && !ACCENT_THEMES.some((preset) => presetApplied(preset.id))
+
+  /** Écrit la teinte à la bonne portée. */
+  const writeAccent = (hex: string): void => {
+    if (spaceMode && activeSpace) {
+      void updateSpace(activeSpace.id, { accent: hex })
+      return
+    }
+    void updateSettings({ customAccent: hex, accentOverride: true })
+  }
 
   const applyCustom = (value: string): void => {
     const parsed = parseHex(value)
@@ -53,22 +100,66 @@ export default function AccentColorSection({
       setColorNote({ text: 'Couleur invalide : utilisez un code #RRGGBB.', tone: 'error' })
       return
     }
-    const result = adjustAccent(parsed, mode)
-    void updateSettings({ customAccent: result.color, themeId: 'custom' })
+    // Le papier du thème est la surface réelle derrière l'accent : c'est
+    // contre lui que la teinte libre doit rester lisible. Choisir une couleur
+    // ne change donc ni le papier ni le lavis du thème.
+    const palette = presetPalette({
+      themeId: spaceMode && activeSpace ? (activeSpace.theme ?? settings.themeId) : settings.themeId,
+      customAccent: settings.customAccent,
+      mode
+    })
+    const result = adjustAccent(parsed, mode, palette[mode].paper)
+    writeAccent(result.color)
+    const where = spaceMode && activeSpace ? `pour « ${activeSpace.name} »` : ''
     setColorNote(
       result.adjusted && result.reason
         ? { text: result.reason, tone: 'info' }
-        : { text: `Couleur appliquée : ${result.color.toUpperCase()}.`, tone: 'info' }
+        : { text: `Couleur appliquée ${where}: ${result.color.toUpperCase()}.`, tone: 'info' }
     )
   }
 
   const chooseTheme = (id: ThemeId): void => {
-    const patch: SettingsPatch = { themeId: id }
+    const patch: SettingsPatch = { themeId: id, accentOverride: id === 'custom' }
     // Le ciel n'appartient qu'au thème Braise : un autre thème de couleur
     // revient au dégradé pour ne pas laisser un fond inactif.
     if (id !== SKY_THEME && settings.homeBackground === 'sky') patch.homeBackground = 'gradient'
     setColorNote(null)
     void updateSettings(patch)
+  }
+
+  /**
+   * Clic sur une pastille. En portée « Cet espace », la pastille est un thème
+   * complet — papier, lavis et accent de l'espace — et une teinte libre
+   * éventuelle tombe, sinon la pastille ne dirait pas ce que l'espace affiche.
+   */
+  const choosePresetAccent = (id: ThemeId): void => {
+    if (spaceMode && activeSpace) {
+      setColorNote(null)
+      void updateSpace(activeSpace.id, { theme: id, accent: null })
+      return
+    }
+    chooseTheme(id)
+  }
+
+  const chooseCustom = (): void => {
+    if (spaceMode && activeSpace) {
+      setColorNote(null)
+      void updateSpace(activeSpace.id, { accent: settings.customAccent })
+      return
+    }
+    chooseTheme('custom')
+  }
+
+  const clearSpaceAccent = (): void => {
+    if (!activeSpace) return
+    setColorNote(null)
+    void updateSpace(activeSpace.id, { accent: null })
+  }
+
+  const clearSpaceTheme = (): void => {
+    if (!activeSpace) return
+    setColorNote(null)
+    void updateSpace(activeSpace.id, { theme: null })
   }
 
   const commitRgb = (): void => {
@@ -89,6 +180,10 @@ export default function AccentColorSection({
     })
   }
 
+  const customActive = spaceMode
+    ? customApplied
+    : settings.accentOverride || settings.themeId === 'custom'
+
   return (
     <section className={className} aria-labelledby={sectionId} data-settings-anchor={anchor}>
       <div className="setting-head">
@@ -96,20 +191,64 @@ export default function AccentColorSection({
         <p>{help}</p>
       </div>
 
+      {canScope ? (
+        <div className="theme-scope-block">
+          <div className="theme-scope" role="group" aria-label="Portée de l’accent">
+            <button
+              type="button"
+              aria-pressed={scope === 'global'}
+              data-active={scope === 'global'}
+              onClick={() => setScope('global')}
+            >
+              Global
+            </button>
+            <button
+              type="button"
+              aria-pressed={scope === 'space'}
+              data-active={scope === 'space'}
+              onClick={() => setScope('space')}
+            >
+              Ce profil
+            </button>
+          </div>
+          <p className="app-help">
+            {spaceMode
+              ? `Thème et accent de « ${activeSpace?.name} » seulement.`
+              : 'Thème et accent de toute l’application.'}
+          </p>
+          {spaceMode && activeSpace?.theme ? (
+            <button type="button" className="link-btn" onClick={clearSpaceTheme}>
+              Revenir au thème global
+            </button>
+          ) : null}
+          {spaceMode && spaceAccent ? (
+            <button type="button" className="link-btn" onClick={clearSpaceAccent}>
+              Revenir à l’accent global
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="theme-grid" role="group" aria-label="Palette d’accentuation">
         {ACCENT_THEMES.map((preset) => {
-          const active = settings.themeId === preset.id
           const teinte = swatchColor(preset.id, settings.customAccent, mode)
+          const active = spaceMode
+            ? activeSpace?.theme === preset.id
+            : settings.themeId === preset.id && !settings.accentOverride
+          const appliedToPreset = spaceMode ? active : presetApplied(preset.id)
           return (
             <button
               type="button"
               key={preset.id}
               aria-pressed={active}
-              aria-label={preset.label}
+              aria-label={
+                appliedToPreset ? `${preset.label} — accent du profil actif` : preset.label
+              }
               className="theme-dot"
               data-active={active}
+              data-applied={appliedToPreset ? 'true' : 'false'}
               style={{ '--swatch': teinte, '--swatch-ink': readableOn(teinte) } as CSSProperties}
-              onClick={() => chooseTheme(preset.id)}
+              onClick={() => choosePresetAccent(preset.id)}
             >
               <span className="theme-dot-disc">{active && <Icon name="check" size={15} />}</span>
               <span className="theme-dot-name">{preset.label}</span>
@@ -118,26 +257,27 @@ export default function AccentColorSection({
         })}
         <button
           type="button"
-          aria-pressed={settings.themeId === 'custom'}
-          aria-label="Teinte personnalisée"
+          aria-pressed={customActive}
+          aria-label={
+            customApplied ? 'Teinte personnalisée — accent du profil actif' : 'Teinte personnalisée'
+          }
           className="theme-dot"
-          data-active={settings.themeId === 'custom'}
+          data-active={customActive}
+          data-applied={customApplied ? 'true' : 'false'}
           style={
             {
               '--swatch': settings.customAccent,
               '--swatch-ink': readableOn(settings.customAccent)
             } as CSSProperties
           }
-          onClick={() => chooseTheme('custom')}
+          onClick={chooseCustom}
         >
-          <span className="theme-dot-disc">
-            {settings.themeId === 'custom' && <Icon name="check" size={15} />}
-          </span>
+          <span className="theme-dot-disc">{customActive && <Icon name="check" size={15} />}</span>
           <span className="theme-dot-name">Personnalisé</span>
         </button>
       </div>
 
-      <div className="theme-custom" data-active={settings.themeId === 'custom'}>
+      <div className="theme-custom" data-active={customActive}>
         <span
           className="theme-custom-swatch"
           style={{ '--swatch': settings.customAccent } as CSSProperties}
@@ -146,7 +286,7 @@ export default function AccentColorSection({
         <div className="theme-custom-copy">
           <span className="theme-custom-name">Teinte libre</span>
           <span className="theme-custom-hint">
-            Saisie en HEX ou en RVB, elle prend la case « Personnalisé ».
+            Saisie en HEX ou en RVB : elle remplace l’accent, le papier et le lavis du thème restent.
           </span>
         </div>
         <div className="custom-color">
@@ -172,7 +312,7 @@ export default function AccentColorSection({
             }}
           />
         </div>
-        {settings.themeId === 'custom' && (
+        {customActive && (
           <span className="theme-custom-state">
             <Icon name="check" size={12} />
             Active

@@ -83,8 +83,8 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
         return
       }
       const reasons: Record<string, string> = {
-        'no-profile': 'Ajoutez d’abord votre nom Letterboxd dans les réglages de l’espace.',
-        'not-found': 'Profil introuvable. Vérifiez le nom dans les réglages de l’espace.',
+        'no-profile': 'Ajoutez d’abord votre nom Letterboxd dans les réglages du profil.',
+        'not-found': 'Profil introuvable. Vérifiez le nom dans les réglages du profil.',
         private: 'Ce profil est privé : son flux public n’est pas lisible.',
         empty: 'Le flux ne contient aucune entrée pour l’instant.',
         timeout: 'Letterboxd n’a pas répondu à temps. Réessayez plus tard.',

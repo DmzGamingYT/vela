@@ -45,7 +45,8 @@
   text-align: left;
 }
 
-.shield-pop-head h1 {
+.shield-pop-head h1,
+.shield-pop-head h2 {
   margin: 4px 0 0;
   font-family: var(--serif);
   font-size: 19px;

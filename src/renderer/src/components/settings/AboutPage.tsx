@@ -1,7 +1,7 @@
 import { providerById, providerReady, providerState } from '@shared/providers'
 import { updateDescription } from '@shared/update'
 import { useBrowser } from '../../store/browser'
-import { VelaMark } from '../BrandMark'
+import iconeApp from '../../assets/icone-app.svg'
 import { Icon } from '../Icon'
 
 /**
@@ -23,7 +23,7 @@ export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void
   return (
     <section className="setting-block">
       <div className="about-hero" data-settings-anchor="system-about">
-        <VelaMark size={52} brand />
+        <img className="about-icon" src={iconeApp} alt="" width={64} height={64} />
         <div>
           <div className="about-title">
             <strong className="about-name">

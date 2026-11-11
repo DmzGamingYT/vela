@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand'
 import type { CreateSpaceInput, UpdateSpaceInput } from '@shared/api'
 import type { SpaceShortcut } from '@shared/space'
 import type { BrowserState } from '../browser'
+import { captureTrigger } from '../trigger'
 
 export interface SpacesSlice {
   spaceEditId: string | null
@@ -20,23 +21,29 @@ export const createSpacesSlice: StateCreator<BrowserState, [], [], SpacesSlice> 
   spaceEditId: null,
 
   openSpaceDialog(id) {
-    set({ overlay: 'space', spaceEditId: id ?? null })
+    // Même capture que `setOverlay` : ce chemin n'y passe pas, et sans elle le
+    // dialogue rendait le focus au `body` à la fermeture.
+    set({
+      overlay: 'space',
+      overlayTrigger: captureTrigger(get().overlayTrigger),
+      spaceEditId: id ?? null
+    })
   },
 
   activateSpace(id) {
-    void get().call(() => window.vela.spaces.activate(id), 'Espace introuvable.')
+    void get().call(() => window.vela.spaces.activate(id), 'Profil introuvable.')
   },
 
   async createSpace(input) {
-    await get().call(() => window.vela.spaces.create(input), 'Impossible de créer l’espace.')
+    await get().call(() => window.vela.spaces.create(input), 'Impossible de créer le profil.')
     set({ overlay: null })
-    get().toast('Nouvel espace prêt.')
+    get().toast('Nouveau profil prêt.')
   },
 
   async updateSpace(id, patch) {
     await get().call(
       () => window.vela.spaces.update({ id, ...patch }),
-      'Impossible de modifier l’espace.'
+      'Impossible de modifier le profil.'
     )
     set({ overlay: null })
   },
@@ -58,40 +65,40 @@ export const createSpacesSlice: StateCreator<BrowserState, [], [], SpacesSlice> 
     )
     await get().call(
       () => window.vela.spaces.update({ id, shortcuts }),
-      'Impossible d’enregistrer les sites de cet espace.'
+      'Impossible d’enregistrer les sites de ce profil.'
     )
   },
 
   async removeSpace(id) {
     const result = await get().call(
       () => window.vela.spaces.remove(id),
-      'Impossible de supprimer l’espace.'
+      'Impossible de supprimer le profil.'
     )
     if (result !== null) {
       set({ overlay: null })
-      get().toast('Espace supprimé.')
+      get().toast('Profil supprimé.')
     }
   },
 
   async duplicateSpace(id) {
     const result = await get().call(
       () => window.vela.spaces.duplicate(id),
-      'Impossible de dupliquer l’espace.'
+      'Impossible de dupliquer le profil.'
     )
     if (result !== null) {
       set({ overlay: null })
-      get().toast('Espace dupliqué.')
+      get().toast('Profil dupliqué.')
     }
   },
 
   async clearSpaceData(id) {
     const result = await get().call(
       () => window.vela.spaces.clearData(id),
-      'Impossible de vider les données de l’espace.'
+      'Impossible de vider les données du profil.'
     )
     if (result !== null) {
       set({ overlay: null })
-      get().toast('Données de l’espace effacées.')
+      get().toast('Données du profil effacées.')
     }
   }
 })

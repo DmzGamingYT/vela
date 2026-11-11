@@ -8,6 +8,7 @@ import {
   type SkyVariant,
   type ThemeId
 } from '@shared/theme'
+import { SPACE_BACKGROUNDS, type SpaceBackground } from '@shared/space'
 import type { SettingsPatch } from '@shared/api'
 import type { Settings } from '@shared/types'
 import { Icon } from '../Icon'
@@ -70,6 +71,13 @@ const SKIES: ChoiceOption<SkyVariant>[] = [
     visual: <span className="sky-thumb" data-sky="nuit-etoilee" />
   }
 ]
+
+/** Les cinq fonds propres à un espace, repris de sa fenêtre. */
+const SPACE_AMBIENCE: ChoiceOption<SpaceBackground>[] = SPACE_BACKGROUNDS.map((entry) => ({
+  value: entry.id,
+  label: entry.label,
+  hint: entry.detail
+}))
 
 type Tab = 'mode' | 'home' | 'interface' | 'accessibility'
 
@@ -238,6 +246,7 @@ export default function AppearancePage({
   settings,
   mode,
   previewThemeId,
+  previewAccent,
   updateSettings,
   chooseBackground,
   resetAppearance,
@@ -247,12 +256,20 @@ export default function AppearancePage({
   mode: ResolvedMode
   /** Thème effectif (celui de l'espace s'il en a un). */
   previewThemeId: ThemeId
+  /** Accent effectif (celui de l'espace s'il en porte un). */
+  previewAccent?: { customAccent: string; accentOverride: boolean }
   updateSettings: (patch: SettingsPatch) => Promise<void>
   chooseBackground: (value: HomeBackground) => Promise<void>
   resetAppearance: () => void
   initialTab?: string
 }) {
   const setOverlay = useBrowser((state) => state.setOverlay)
+  const view = useBrowser((state) => state.view)
+  const updateSpace = useBrowser((state) => state.updateSpace)
+  // L'ambiance de fond appartient à l'espace : elle ne se règle ici que quand
+  // les apparences par espace sont actives et qu'un espace est ouvert.
+  const activeSpace = view?.spaces.find((space) => space.id === view.activeSpaceId) ?? null
+  const spaceAmbience = activeSpace && settings.perSpaceThemes ? activeSpace : null
   const skyTheme = settings.themeId === SKY_THEME
   const [tab, setTab] = useState<Tab>(() => resolveTab(initialTab, TABS, 'mode'))
   const tabRefs = useRef(new Map<Tab, HTMLButtonElement | null>())
@@ -304,8 +321,14 @@ export default function AppearancePage({
   return (
     <div className="appearance-page">
       <section className="appearance-preview-block" aria-label="Aperçu">
-        <AppearancePreview settings={settings} mode={mode} themeId={previewThemeId} />
-        <p className="pv-caption">Aperçu</p>
+        <AppearancePreview
+          settings={settings}
+          mode={mode}
+          themeId={previewThemeId}
+          accent={previewAccent}
+          activeSpace={activeSpace}
+          onMode={(value) => void updateSettings({ theme: value })}
+        />
       </section>
 
       <div className="appearance-tabs" role="tablist" aria-label="Sous-sections de l’apparence">
@@ -410,17 +433,46 @@ export default function AppearancePage({
               </div>
             )}
             <ToggleRow
-              label="Un thème par espace"
+              label="Un thème et un accent par profil"
               anchor="appearance-per-space"
-              hint="Chaque espace garde son thème ; sinon le thème global s’applique."
+              hint="Chaque profil garde son thème et sa teinte ; sinon le thème et l’accent globaux s’appliquent."
               checked={settings.perSpaceThemes}
               onChange={() => void updateSettings({ perSpaceThemes: !settings.perSpaceThemes })}
             >
               <button type="button" className="link-btn" onClick={() => setOverlay('space')}>
-                Modifier un espace
+                Modifier un profil
               </button>
             </ToggleRow>
           </section>
+
+          {spaceAmbience ? (
+            <section
+              className="appearance-section"
+              aria-labelledby="appearance-space-ambience"
+              data-settings-anchor="appearance-space-ambience"
+            >
+              <div className="setting-head">
+                <h2 id="appearance-space-ambience">Ambiance du profil</h2>
+                <p>
+                  Le fond du châssis pour « {spaceAmbience.name} » seulement. « Aucune » rend à
+                  le profil le fond du produit.
+                </p>
+              </div>
+
+              <div className="appearance-field">
+                <span className="appearance-field-label" id="space-ambience-label">
+                  Ambiance
+                </span>
+                <RadioCards
+                  ariaLabel="Ambiance du profil"
+                  value={spaceAmbience.background ?? 'none'}
+                  options={SPACE_AMBIENCE}
+                  variant="segment"
+                  onChange={(value) => void updateSpace(spaceAmbience.id, { background: value })}
+                />
+              </div>
+            </section>
+          ) : null}
 
           <section className="appearance-section" aria-labelledby="appearance-advanced">
             <div className="setting-head">

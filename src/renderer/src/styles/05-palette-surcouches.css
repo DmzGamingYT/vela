@@ -236,7 +236,8 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
-.sheet-head h1 {
+.sheet-head h1,
+.sheet-head h2 {
   margin: 6px 0 7px;
   font-family: var(--serif);
   font-size: 34px;

@@ -135,7 +135,7 @@ export default function HistoryPanel() {
               <Icon name="history" size={12} />
               Journal local
             </span>
-            <h1>Historique</h1>
+            <h2>Historique</h2>
             <p>Conservé sur cet appareil uniquement, jamais synchronisé.</p>
           </div>
           <div className="history-head-actions">

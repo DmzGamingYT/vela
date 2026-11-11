@@ -19,7 +19,9 @@
   margin-bottom: 12px;
   font-size: 10.5px;
   letter-spacing: 0.16em;
-  color: var(--faint);
+  /* `--faint` plafonnait à 4,5:1 en clair et 4,8:1 en sombre, pour un texte de
+     10,5 px : la date est de l'information, pas de la décoration. */
+  color: var(--muted);
 }
 
 .home-title {
@@ -107,7 +109,8 @@
 .home-card-head h2 {
   font-size: 10px;
   letter-spacing: 0.16em;
-  color: var(--faint);
+  /* Le titre de carte est un repère de lecture : 4,5:1 ne suffisait pas. */
+  color: var(--muted);
 }
 
 /* --- Tuiles --------------------------------------------------------
@@ -143,8 +146,12 @@
    Une lueur d'accent en haut à gauche ; les deux autres nappes tombent
    à un tiers d'opacité pour ne plus laver la page entière. */
 
+/* L'accent éclaire, il ne peint plus : les nappes restent (elles donnent la
+   profondeur du papier) mais baissent et se désaturent. La teinte de l'espace
+   se lit désormais dans le point de la date, l'onglet actif et la pastille. */
 .home-aurora {
-  opacity: 0.5;
+  opacity: 0.26;
+  filter: saturate(0.4);
 }
 
 .aurora-blob[data-i='1'] {
@@ -167,7 +174,8 @@
   margin-top: 2px;
   padding-top: 12px;
   border-top: 1px solid var(--line-soft);
-  color: var(--faint);
+  /* Même raison que la date : 4,5:1 tout juste, à 11 px. */
+  color: var(--muted);
 }
 
 .home-foot-customize {

@@ -37,21 +37,12 @@ export function countLabel(count: number): string {
   return `${count} ${count === 1 ? 'site' : 'sites'}`
 }
 
-/** Pastille numérotée neutre : le chrome ne prend jamais la teinte de l’espace. */
-export function SectionTitle({
-  index,
-  title,
-  hint
-}: {
-  index: number
-  title: string
-  hint?: string
-}) {
+/** Intitulé de section : un libellé, une valeur. Plus de numérotation — le
+    dialogue n'est pas un assistant et les numéros 4 et 5 tombaient sous la
+    ligne de flottaison. */
+export function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="space-section-head">
-      <span className="space-section-index" aria-hidden="true">
-        {index}
-      </span>
       <h2 className="space-section-title">{title}</h2>
       {hint ? <span className="space-section-hint">{hint}</span> : null}
     </div>

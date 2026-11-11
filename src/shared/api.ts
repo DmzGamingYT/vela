@@ -61,6 +61,8 @@ export interface CreateSpaceInput {
   watchItems?: import('./space').SpaceWatchItem[]
   blockTrackers?: boolean
   theme?: string | null
+  /** Teinte propre à l'espace : remplace l'accent, pas le papier. */
+  accent?: string | null
 }
 
 export interface UpdateSpaceInput {
@@ -68,6 +70,7 @@ export interface UpdateSpaceInput {
   name?: string
   color?: string
   theme?: string | null
+  accent?: string | null
   avatar?: string | null
   background?: import('./space').SpaceBackground
   shortcuts?: import('./space').SpaceShortcut[]
@@ -127,6 +130,7 @@ export interface SettingsPatch {
   defaultZoom?: number
   themeId?: Settings['themeId']
   customAccent?: string
+  accentOverride?: boolean
   glass?: Settings['glass']
   glassBlur?: Settings['glassBlur']
   ambience?: Settings['ambience']

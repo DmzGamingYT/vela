@@ -1,6 +1,7 @@
 import {
   appearanceTokens,
   presetById,
+  resolveAccent,
   resolveMode,
   resolveMotion,
   resolveThemeId,
@@ -15,6 +16,7 @@ const CACHE_KEY = 'vela.appearance'
 export interface AppearanceState {
   themeId: ThemeId
   customAccent: string
+  accentOverride: boolean
   mode: ResolvedMode
   glass: Settings['glass']
   glassBlur: number
@@ -46,13 +48,20 @@ function systemReduce(): boolean {
  * celui de l'espace actif, et les réglages d'interface qui en découlent.
  */
 export function appearanceState(settings: Settings, space?: Space | null): AppearanceState {
+  const accent = resolveAccent({
+    globalAccent: settings.customAccent,
+    globalOverride: settings.accentOverride,
+    perSpace: settings.perSpaceThemes,
+    spaceAccent: space?.accent ?? null
+  })
   return {
     themeId: resolveThemeId({
       globalTheme: settings.themeId,
       perSpace: settings.perSpaceThemes,
       spaceTheme: space?.theme ?? null
     }),
-    customAccent: settings.customAccent,
+    customAccent: accent.customAccent,
+    accentOverride: accent.accentOverride,
     mode: resolveMode(settings.theme, {
       hourTheme: settings.hourTheme,
       hourStart: settings.hourStart,

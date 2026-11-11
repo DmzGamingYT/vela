@@ -590,32 +590,63 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
 
-/* Segments : même bordure d'accent, plus compacte. */
+/* Segments : un rail discret, et une feuille claire posée dessus.
+   La sélection se lit à la graisse et à l'ombre ; l'accent se réduit à un point
+   devant le libellé, réservé même éteint pour que rien ne se décale au clic.
+   La coche disparaît : avec l'aplat et la bordure, elle faisait un troisième
+   signal pour un seul état. */
 .choice-segment {
   display: inline-flex;
   width: fit-content;
   gap: 2px;
-  padding: 2px;
-  border-radius: 9px;
-  border: 1px solid var(--edge);
-  background: var(--paper-deep);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .choice-segment .choice {
-  gap: 5px;
-  padding: 5px 9px;
+  gap: 7px;
+  padding: 6px 10px;
   border-color: transparent;
-  border-radius: 7px;
+  border-radius: 9px;
   background: transparent;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.choice-segment .choice::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--dur-2) var(--ease-standard),
+    transform var(--dur-2) var(--ease-standard);
 }
 
 .choice-segment .choice[data-active='true'] {
-  background: color-mix(in srgb, var(--accent) 10%, var(--fill-2));
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(12, 10, 6, 0.16);
+  color: var(--ink);
+}
+
+.choice-segment .choice[data-active='true']::before {
+  opacity: 1;
+  transform: none;
+}
+
+.choice-segment .choice-name svg {
+  display: none;
 }
 
 .choice-segment .choice-name {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 450;
 }
 
@@ -1132,7 +1163,8 @@ body {
   font-size: calc(13px * var(--ui-text-scale));
 }
 
-.settings-head h1 {
+.settings-head h1,
+.settings-head h2 {
   font-size: calc(27px * var(--ui-text-scale));
 }
 
@@ -1159,13 +1191,13 @@ body {
 
 /* Barre latérale à droite : le rail reste à gauche, la colonne passe après
    le contenu. Les vues des pages suivent leur conteneur. */
-:root[data-sidebar='right'] .app > .sidebar {
+:root[data-sidebar='right'] .app-bg > .sidebar {
   order: 3;
   border-right: none;
   border-left: 1px solid var(--line-soft);
 }
 
-:root[data-sidebar='right'] .app > .workspace {
+:root[data-sidebar='right'] .app-bg > .workspace {
   order: 2;
 }
 

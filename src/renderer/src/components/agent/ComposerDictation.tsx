@@ -236,7 +236,7 @@ export default function ComposerDictation({
             <>
               <p>
                 Le micro ne s’ouvre qu’après votre accord. L’enregistrement est envoyé au modèle
-                choisi pour être transcrit, puis supprimé de l’espace.
+                choisi pour être transcrit, puis supprimé du profil.
               </p>
               <div className="mic-pop-actions">
                 <button type="button" className="action" onClick={reset}>

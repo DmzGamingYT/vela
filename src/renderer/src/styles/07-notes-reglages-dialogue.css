@@ -42,8 +42,11 @@
   border-radius: 8px;
   display: grid;
   place-items: center;
-  color: var(--clay);
-  background: color-mix(in srgb, var(--clay) 10%, transparent);
+  /* Le carré du titre n'est plus une pastille d'accent : il accompagne le
+     libellé, il ne le désigne pas. L'accent reste au curseur, aux états et
+     aux surlignages de recherche. */
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .notes-title h2 {
@@ -1345,7 +1348,8 @@
   padding: 24px 26px 18px;
 }
 
-.space-sheet .sheet-head h1 {
+.space-sheet .sheet-head h1,
+.space-sheet .sheet-head h2 {
   font-size: 28px;
 }
 

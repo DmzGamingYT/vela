@@ -216,3 +216,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* La feuille de réglages est une page, pas une vitre. Posée au-dessus de
+   l'accueil, son fond translucide laissait passer l'accent de l'espace : le
+   panneau entier prenait la teinte de la page qu'il recouvre. Papier plein.
+   Et l'anneau de focus global ne s'applique pas à son conteneur : c'est le
+   piège de focus qui le reçoit, pas un contrôle — un liseré d'accent de 2 px
+   faisait le tour de 1100 px à chaque ouverture au clavier. */
+.settings-sheet {
+  background: var(--paper);
+}
+
+.settings-sheet:focus,
+.settings-sheet:focus-visible {
+  box-shadow: var(--shadow);
+}
+
+/* Contraste élevé : les cartes de l'accueil se séparaient du papier par un
+   cheveu à 8 % de blanc, illisible comme structure. Le mode renforce le trait
+   partout ailleurs ; il le fait aussi ici. */
+:root[data-contrast='high'] .home-card,
+:root[data-contrast='high'] .recent-empty,
+:root[data-contrast='high'] .home-field {
+  border-color: var(--hairline-strong);
+}
+
+:root[data-contrast='high'] .home-customize-btn,
+:root[data-contrast='high'] .home-resume {
+  color: var(--ink-soft);
+  border-color: var(--hairline-strong);
+}

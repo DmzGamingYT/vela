@@ -27,10 +27,10 @@ export default function SpaceRail() {
 
   const settingsTitle = `Réglages (${shortcut(APP_SHORTCUTS.settings.key)})`
 
-  if (!view) return <aside className="rail" aria-label="Espaces" />
+  if (!view) return <aside className="rail" aria-label="Profils" />
 
   return (
-    <aside className="rail" aria-label="Espaces">
+    <aside className="rail" aria-label="Profils">
       <div className="rail-drag drag" />
 
       {/* Dans la rangée du titre : la bascule se lit à la hauteur du mot
@@ -97,7 +97,7 @@ export default function SpaceRail() {
           type="button"
           className="space-chip space-add"
           onClick={() => openSpaceDialog()}
-          title="Nouvel espace"
+          title="Nouveau profil"
         >
           <Icon name="plus" size={16} />
         </button>

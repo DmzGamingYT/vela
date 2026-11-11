@@ -104,7 +104,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
     const [entry] = sanitizeSpaceShortcuts([{ url }])
     if (!entry || shortcuts.some((item) => item.url === entry.url)) return
     if (shortcuts.length >= MAX_SHORTCUTS) {
-      toast(`${MAX_SHORTCUTS} sites au maximum dans cet espace.`, 'error')
+      toast(`${MAX_SHORTCUTS} sites au maximum dans ce profil.`, 'error')
       return
     }
     commit([...shortcuts, entry])
@@ -193,7 +193,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
       return
     }
     if (shortcuts.some((item) => item.id !== editing.id && item.url === url)) {
-      setEditError('Cette adresse est déjà dans cet espace.')
+      setEditError('Cette adresse est déjà dans ce profil.')
       return
     }
     const next = shortcuts.map((item) => (item.id === editing.id ? { ...item, url } : item))
@@ -342,7 +342,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
               type="button"
               className="home-card-action"
               onClick={() => openSpaceDialog(space.id)}
-              title="Choisir les sites de cet espace"
+              title="Choisir les sites de ce profil"
             >
               <span>Modifier</span>
               <Icon name="arrow-right" size={12} />
@@ -502,10 +502,10 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
               type="button"
               className="pin-add"
               onClick={() => openSpaceDialog(space.id)}
-              title="Épingler un site dans cet espace — ou glissez une adresse ici"
+              title="Épingler un site dans ce profil — ou glissez une adresse ici"
             >
               <Icon name="plus" size={18} />
-              <span className="sr-only">Épingler un site dans cet espace</span>
+              <span className="sr-only">Épingler un site dans ce profil</span>
             </button>
           )}
         </div>
@@ -523,7 +523,7 @@ export default function SpaceShortcuts({ spaceId }: { spaceId: string }) {
           <Icon name={transfer.action === 'copy' ? 'copy' : 'arrow-right'} size={12} />
           <span>
             {transfer.action === 'copy' ? 'Copié' : 'Déplacé'} vers{' '}
-            {view?.spaces.find((item) => item.id === transfer.to)?.name ?? 'un autre espace'} —{' '}
+            {view?.spaces.find((item) => item.id === transfer.to)?.name ?? 'un autre profil'} —{' '}
             {transfer.shortcut.title}
           </span>
           <button type="button" className="pin-undo" onClick={undoTransfer}>

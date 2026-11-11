@@ -27,7 +27,7 @@ export default function BookmarksPanel() {
       >
         <header className="settings-head">
           <div>
-            <h1>Marque-pages</h1>
+            <h2>Marque-pages</h2>
             <p>Vos pages gardées, dans l’ordre où vous les avez ajoutées.</p>
           </div>
           {/* Pas d’étoile ici : celle de la barre d’adresse garde déjà la page

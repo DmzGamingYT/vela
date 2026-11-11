@@ -59,10 +59,10 @@ export default function QuickNotesCard({ spaceId }: QuickNotesCardProps) {
   }
 
   return (
-    <section className="home-card home-quicknotes" aria-label="Mémoire de l’espace">
+    <section className="home-card home-quicknotes" aria-label="Mémoire du profil">
       <div className="home-card-head">
         <div className="quicknotes-heading">
-          <h2>Mémoire de l’espace</h2>
+          <h2>Mémoire du profil</h2>
           <span className="quicknotes-scope">
             {plural(spaceNotes.length, 'note')} · sur cet appareil
           </span>

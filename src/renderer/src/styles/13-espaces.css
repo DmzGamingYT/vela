@@ -166,7 +166,8 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
-.space-dialog-head h1 {
+.space-dialog-head h1,
+.space-dialog-head h2 {
   margin: 6px 0 0;
   font-family: var(--serif);
   font-size: 30px;

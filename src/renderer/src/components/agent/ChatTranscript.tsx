@@ -39,6 +39,7 @@ export default function ChatTranscript({
   engineLabel,
   engineLocal,
   suggestions,
+  recent = [],
   showPrice = false,
   onOpenAtelier,
   onPick,
@@ -54,6 +55,8 @@ export default function ChatTranscript({
   engineLabel: string
   engineLocal: boolean
   suggestions: AgentSuggestion[]
+  /** Trois dernières demandes de cet appareil, les plus récentes d'abord. */
+  recent?: string[]
   /** La page jointe ressemble à une fiche produit : « Comparer les prix » a du sens. */
   showPrice?: boolean
   onOpenAtelier?: () => void
@@ -130,6 +133,13 @@ export default function ChatTranscript({
     return (
       <div className="chat-thread" data-empty="true" aria-label="Conversation">
         <div className="chat-empty">
+          {/* L'état vide dit aussi où l'on est : sans cela, le panneau ouvert
+              ressemblait à un écran qui charge indéfiniment. */}
+          <p className="chat-status">
+            <span className="chat-status-dot" aria-hidden="true" />
+            Prêt · {engineLabel}
+            {engineLocal ? ' · sur cet appareil' : ''}
+          </p>
           <h2>Que fait-on ?</h2>
           <p className="chat-lede">
             Posez une question sur la page ouverte ou sur vos onglets. L’agent lit ; il n’agit sur
@@ -152,6 +162,23 @@ export default function ChatTranscript({
                       ↵
                     </span>
                   )}
+                </button>
+              ))}
+            </div>
+          )}
+          {recent.length > 0 && (
+            <div className="chat-recent">
+              <p className="chat-recent-title">Dernières demandes</p>
+              {recent.map((text) => (
+                <button
+                  key={text}
+                  type="button"
+                  className="chat-recent-row"
+                  title={text}
+                  onClick={() => onPick(text)}
+                >
+                  <Icon name="clock" size={12} />
+                  <span>{text}</span>
                 </button>
               ))}
             </div>

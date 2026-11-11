@@ -1,0 +1,15 @@
+<!-- Vela — maître pour les petites tailles (16, 24, 32, 48 px).
+     Même dessin, mais réglé pour le pixel : anneau épaissi, aiguille élargie,
+     aucune graduation et aucun pivot, couleurs plates et pas d'ombre. À 16 px
+     un trait de 24 px de large ne fait plus qu'un quart de pixel — c'est ce
+     qui faisait disparaître le cadran, pas la forme elle-même.
+     Rendu : build/make-icons.cjs. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#F5E9D6"/>
+  <circle cx="512" cy="512" r="344" fill="none" stroke="#3B31A8" stroke-width="92"/>
+  <circle cx="512" cy="512" r="296" fill="#FFFBF1"/>
+  <path d="M512 176c-40 130-64 232-110 336h110Z" fill="#1E1760"/>
+  <path d="M512 176c40 130 64 232 110 336H512Z" fill="#3B2FA8"/>
+  <path d="M512 848c-40-130-64-232-110-336h110Z" fill="#8B7CF3"/>
+  <path d="M512 848c40-130 64-232 110-336H512Z" fill="#5B4BD2"/>
+</svg>

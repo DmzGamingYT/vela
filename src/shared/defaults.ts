@@ -76,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
   zoomByHost: {},
   themeId: 'indigo',
   customAccent: '#5b5bd6',
+  accentOverride: false,
   glass: 'normal',
   glassBlur: DEFAULT_GLASS_BLUR,
   ambience: 'none',

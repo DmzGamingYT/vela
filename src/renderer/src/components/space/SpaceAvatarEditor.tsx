@@ -161,7 +161,7 @@ export default function SpaceAvatarEditor({
         <p className="avatar-editor-hint">Cette image n’a pas pu être lue.</p>
       ) : (
         <p className="avatar-editor-hint">
-          Glissez pour cadrer, zoomez au curseur. Le cadre devient l’avatar de l’espace.
+          Glissez pour cadrer, zoomez au curseur. Le cadre devient l’avatar du profil.
         </p>
       )}
 
@@ -190,7 +190,7 @@ export default function SpaceAvatarEditor({
         >
           <span />
         </button>
-        <span>Teinter de la couleur de l’espace</span>
+        <span>Teinter de la couleur du profil</span>
       </div>
 
       <div className="avatar-editor-actions">

@@ -71,7 +71,8 @@
 
 /* ── Halo d'ambiance : atténué derrière le contenu ────────────────────── */
 :root[data-mode='dark'] .home-aurora {
-  opacity: 0.28;
+  opacity: 0.2;
+  filter: saturate(0.5);
 }
 
 /* ── Pastilles de couleur : désaturées la nuit ──────────────────────────

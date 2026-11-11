@@ -8,6 +8,10 @@ interface SpaceAdvancedProps {
   onBlockTrackers(value: boolean): void
   theme: ThemeId | null
   onTheme(value: ThemeId | null): void
+  /** Teinte propre à l'espace ; null → l'accent global. */
+  accent: string | null
+  onAccent(value: string | null): void
+  globalAccent: string
   perSpaceThemes: boolean
   globalThemeLabel: string
   watchlist: boolean
@@ -25,6 +29,9 @@ export default function SpaceAdvanced({
   onBlockTrackers,
   theme,
   onTheme,
+  accent,
+  onAccent,
+  globalAccent,
   perSpaceThemes,
   globalThemeLabel,
   watchlist,
@@ -40,18 +47,15 @@ export default function SpaceAdvanced({
       onToggle={(event) => onOpen(event.currentTarget.open)}
     >
       <summary className="space-fold-summary">
-        <span className="space-section-index" aria-hidden="true">
-          5
-        </span>
         <span className="space-fold-title">Avancé</span>
-        <span className="space-fold-hint">Réglages propres à cet espace</span>
+        <span className="space-fold-hint">Réglages propres à ce profil</span>
         <Icon name="chevron-down" size={13} />
       </summary>
       <div className="space-fold-body">
         <div className="space-toggle-row">
           <div>
             <span>Filtrer les traqueurs</span>
-            <small>Publicités et mesure, pour cet espace seulement.</small>
+            <small>Publicités et mesure, pour ce profil seulement.</small>
           </div>
           <button
             type="button"
@@ -60,7 +64,7 @@ export default function SpaceAdvanced({
             aria-checked={blockTrackers}
             data-on={blockTrackers ? 'true' : 'false'}
             onClick={() => onBlockTrackers(!blockTrackers)}
-            aria-label="Filtrer les traqueurs dans cet espace"
+            aria-label="Filtrer les traqueurs dans ce profil"
           >
             <span />
           </button>
@@ -68,7 +72,7 @@ export default function SpaceAdvanced({
 
         {perSpaceThemes ? (
           <label className="field">
-            <span>Thème de couleur de l’espace</span>
+            <span>Thème de couleur du profil</span>
             <select
               className="select"
               value={theme ?? ''}
@@ -85,11 +89,38 @@ export default function SpaceAdvanced({
           </label>
         ) : null}
 
+        {perSpaceThemes ? (
+          <div className="field">
+            <span>Accent du profil</span>
+            <span className="space-accent-row">
+              <input
+                type="color"
+                className="space-accent-input"
+                aria-label="Accent propre au profil"
+                value={accent ?? globalAccent}
+                onChange={(event) => onAccent(event.target.value)}
+              />
+              <span className="space-accent-value">
+                {accent ? accent.toUpperCase() : 'Accent global'}
+              </span>
+              {accent ? (
+                <button
+                  type="button"
+                  className="space-accent-reset"
+                  onClick={() => onAccent(null)}
+                >
+                  Accent global
+                </button>
+              ) : null}
+            </span>
+          </div>
+        ) : null}
+
         <div className="space-toggle-row">
           <div>
             <span>Liste à voir</span>
             <small>
-              Une carte sur l’accueil de cet espace : titres à voir et tirage « Ce soir ».
+              Une carte sur l’accueil de ce profil : titres à voir et tirage « Ce soir ».
             </small>
           </div>
           <button

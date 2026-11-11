@@ -64,6 +64,8 @@ export interface Space {
   color: string
   /** Thème de couleur propre à l'espace (null → thème global). */
   theme?: ThemeId | null
+  /** Teinte propre à l'espace : elle remplace l'accent, pas le papier. */
+  accent?: string | null
   /** `monogram`, `icon:<id>` ou `image:data:image/...` — validé par shared/space. */
   avatar?: string | null
   /** Ambiance de fond propre à l'espace, posée sur tout le châssis. */
@@ -227,8 +229,13 @@ export interface Settings {
   zoomByHost: Record<string, number>
   /** Thème de couleur du châssis (indigo, rouge, custom…). */
   themeId: ThemeId
-  /** Teinte utilisée quand themeId vaut « custom ». */
+  /** Teinte libre, utilisée quand themeId vaut « custom » ou que l'accent est remplacé. */
   customAccent: string
+  /**
+   * La teinte libre remplace l'accent du thème choisi ; son papier et son
+   * lavis restent ceux de la palette.
+   */
+  accentOverride: boolean
   /** Cran historique du verre dépoli (migration, compatibilité). */
   glass: GlassIntensity
   /** Intensité continue du verre dépoli, en pixels de flou (0 à 40). */

@@ -6,7 +6,8 @@ import AmbienceScene from '../AmbienceScene'
 import AppearancePage from './AppearancePage'
 import NavigationPage from './NavigationPage'
 import PrivacyPage from './PrivacyPage'
-import { resolveMode, resolveMotion, resolveThemeId, type HomeBackground } from '@shared/theme'
+import { resolveMode, resolveMotion,  resolveAccent,
+  resolveThemeId, type HomeBackground } from '@shared/theme'
 import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import AgentPage from './AgentPage'
@@ -48,27 +49,27 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
 const COPY: Record<Page, { title: string; lede: string }> = {
   overview: {
     title: 'Vue d’ensemble',
-    lede: 'Les choix qui façonnent l’interface, la navigation et la confidentialité. Tout est local, tout s’applique immédiatement.'
+    lede: 'Ce qui définit votre interface, votre navigation et votre vie privée. Tout s’applique aussitôt et reste sur cet appareil.'
   },
   appearance: {
     title: 'Apparence',
-    lede: 'Une seule section pour la lumière, la couleur et le mouvement. Les anciens réglages Tweaks et Thèmes vivent désormais ici.'
+    lede: 'La lumière, la couleur, la matière et le mouvement, réglés au même endroit.'
   },
   navigation: {
     title: 'Navigation',
-    lede: 'Recherche, démarrage, marque-pages, historique et téléchargements.'
+    lede: 'Le moteur de recherche, la page de démarrage, les favoris, l’historique et les téléchargements.'
   },
   privacy: {
     title: 'Confidentialité',
-    lede: 'Le blocage se fait dans Chromium, avant le départ de la requête.'
+    lede: 'Ce qui reste ici, ce qui sort, et ce qui est arrêté avant même de partir.'
   },
   agent: {
     title: 'Agent',
-    lede: 'Le modèle, les fournisseurs et les notes, au même endroit. L’agent suit toujours le modèle actif.'
+    lede: 'Le modèle, les clés et les notes de l’agent. Il suit le modèle que vous activez.'
   },
   system: {
     title: 'Système',
-    lede: 'Les raccourcis, les mises à jour et l’identité de Vela. Les trois anciennes pages sont réunies.'
+    lede: 'Les raccourcis, les mises à jour et l’identité de l’application.'
   }
 }
 
@@ -146,12 +147,21 @@ export default function SettingsPanel() {
     perSpace: settings.perSpaceThemes,
     spaceTheme: activeSpace?.theme ?? null
   })
+  // L'aperçu suit l'accent effectif, pas seulement le thème effectif : un
+  // espace qui porte sa propre teinte la montre ici aussi.
+  const previewAccent = resolveAccent({
+    globalAccent: settings.customAccent,
+    globalOverride: settings.accentOverride,
+    perSpace: settings.perSpaceThemes,
+    spaceAccent: activeSpace?.accent ?? null
+  })
   // Seuls les réglages d'apparence réarment l'accusé : changer d'onglet ou
   // recevoir un état sans rapport ne doit pas le faire clignoter.
   const savedSignature = [
     settings.theme,
     settings.themeId,
     settings.customAccent,
+    settings.accentOverride,
     settings.homeBackground,
     settings.homeIntensity,
     settings.homeImage ?? '',
@@ -190,6 +200,7 @@ export default function SettingsPanel() {
     void updateSettings({
       themeId: 'indigo',
       customAccent: '#5b5bd6',
+      accentOverride: false,
       glass: 'normal',
       glassBlur: 18,
       ambience: 'none',
@@ -221,6 +232,7 @@ export default function SettingsPanel() {
             settings={settings}
             mode={mode}
             previewThemeId={previewThemeId}
+            previewAccent={previewAccent}
             onOpenPage={(next) => goTo(next)}
           />
         )
@@ -231,6 +243,7 @@ export default function SettingsPanel() {
             settings={settings}
             mode={mode}
             previewThemeId={previewThemeId}
+            previewAccent={previewAccent}
             updateSettings={updateSettings}
             chooseBackground={chooseBackground}
             resetAppearance={resetAppearance}
@@ -312,8 +325,8 @@ export default function SettingsPanel() {
                   setNavQuery(event.target.value)
                   setResultIndex(0)
                 }}
-                placeholder="Rechercher"
-                aria-label="Rechercher dans les réglages"
+                placeholder="Un réglage…"
+                aria-label="Rechercher un réglage"
                 aria-autocomplete="list"
                 aria-haspopup="listbox"
                 aria-expanded={results.length > 0}
@@ -412,7 +425,9 @@ export default function SettingsPanel() {
           <div className="settings-pane">
             <header className="settings-head">
               <div className="settings-head-copy">
-                <h1>{COPY[page].title}</h1>
+                {/* h2 : l'accueil garde le seul h1 de la fenêtre. Deux titres
+                    de niveau 1 simultanés faisaient annoncer deux pages. */}
+                <h2>{COPY[page].title}</h2>
                 <p>{COPY[page].lede}</p>
               </div>
               <div className="settings-head-actions">

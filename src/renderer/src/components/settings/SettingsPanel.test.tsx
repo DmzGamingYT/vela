@@ -57,7 +57,7 @@ describe('fenêtre de réglages', () => {
     expect(screen.getByRole('heading', { name: 'Vue d’ensemble' })).toBeTruthy()
     expect(
       screen.getByText(
-        'Les choix qui façonnent l’interface, la navigation et la confidentialité. Tout est local, tout s’applique immédiatement.'
+        'Ce qui définit votre interface, votre navigation et votre vie privée. Tout s’applique aussitôt et reste sur cet appareil.'
       )
     ).toBeTruthy()
     expect(screen.getByText('Repères')).toBeTruthy()
@@ -73,7 +73,7 @@ describe('fenêtre de réglages', () => {
     expect(useBrowser.getState().overlay).toBeNull()
 
     open()
-    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    const search = screen.getByRole('combobox', { name: 'Rechercher un réglage' })
     fireEvent.change(search, { target: { value: 'notes' } })
     fireEvent.keyDown(search, { key: 'Escape' })
     expect(useBrowser.getState().overlay).toBe('settings')
@@ -90,7 +90,7 @@ describe('fenêtre de réglages', () => {
   it('ouvre une page et son sous-onglet depuis la recherche globale', () => {
     render(<SettingsPanel />)
 
-    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    const search = screen.getByRole('combobox', { name: 'Rechercher un réglage' })
     fireEvent.change(search, { target: { value: 'notes' } })
     fireEvent.keyDown(search, { key: 'ArrowDown' })
     fireEvent.keyDown(search, { key: 'Enter' })
@@ -110,7 +110,7 @@ describe('fenêtre de réglages', () => {
   it('ouvre un réglage individuel et fait défiler jusqu’à sa ligne', () => {
     render(<SettingsPanel />)
 
-    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    const search = screen.getByRole('combobox', { name: 'Rechercher un réglage' })
     fireEvent.change(search, { target: { value: 'densité' } })
     fireEvent.click(screen.getByRole('option', { name: /^Densité/ }))
 
@@ -139,7 +139,7 @@ describe('fenêtre de réglages', () => {
     )
     render(<SettingsPanel />)
 
-    const search = screen.getByRole('combobox', { name: 'Rechercher dans les réglages' })
+    const search = screen.getByRole('combobox', { name: 'Rechercher un réglage' })
     fireEvent.change(search, { target: { value: 'densité' } })
     fireEvent.click(screen.getByRole('option', { name: /^Densité/ }))
 

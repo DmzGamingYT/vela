@@ -643,7 +643,7 @@ export default function NavigationPage({
             <div>
               <label>Liens externes</label>
               <p className="setting-hint">
-                Un lien cliqué s’ouvre dans un nouvel onglet de l’espace actif.
+                Un lien cliqué s’ouvre dans un nouvel onglet du profil actif.
               </p>
             </div>
             <span className="tag">Nouvel onglet</span>

@@ -20,7 +20,8 @@
   color: var(--muted);
 }
 
-.downloads-head h1 {
+.downloads-head h1,
+.downloads-head h2 {
   margin: 6px 0 5px;
 }
 

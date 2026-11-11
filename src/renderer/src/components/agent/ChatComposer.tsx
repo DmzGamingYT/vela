@@ -303,7 +303,7 @@ export default function ChatComposer({
               >
                 <Icon name="notes" size={13} />
                 <span>Note</span>
-                <small>{spaceNotes.length} dans cet espace</small>
+                <small>{spaceNotes.length} dans ce profil</small>
               </button>
             </>
           ) : (
@@ -321,7 +321,7 @@ export default function ChatComposer({
                 Choisir une note
               </div>
               <div className="attach-note-list">
-                {spaceNotes.length === 0 && <p>Aucune note dans cet espace.</p>}
+                {spaceNotes.length === 0 && <p>Aucune note dans ce profil.</p>}
                 {spaceNotes.map((note) => (
                   <button
                     key={note.id}
@@ -346,7 +346,7 @@ export default function ChatComposer({
         <div className="pages-pop" role="dialog" aria-label="Joindre des pages">
           <div className="pages-head">
             <span>
-              {tabs.length} page{tabs.length > 1 ? 's' : ''} dans cet espace
+              {tabs.length} page{tabs.length > 1 ? 's' : ''} dans ce profil
             </span>
             {tabs.length > 0 && (
               <button type="button" onClick={() => onJoinAll(selected.length !== tabs.length)}>
@@ -355,7 +355,7 @@ export default function ChatComposer({
             )}
           </div>
           <div className="pages-list">
-            {tabs.length === 0 && <p>Aucune page ouverte dans cet espace.</p>}
+            {tabs.length === 0 && <p>Aucune page ouverte dans ce profil.</p>}
             {tabs.map((tab) => (
               <label key={tab.id} className="pages-row" data-selected={selected.includes(tab.id)}>
                 <input

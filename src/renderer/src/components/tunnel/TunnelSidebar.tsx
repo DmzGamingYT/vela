@@ -146,7 +146,7 @@ export default function TunnelSidebar({ spaceId }: { spaceId: string }) {
       </div>
 
       <p className="work-hint">
-        <Icon name="lock" size={11} /> Les cartes restent dans cet espace.
+        <Icon name="lock" size={11} /> Les cartes restent dans ce profil.
       </p>
     </div>
   )

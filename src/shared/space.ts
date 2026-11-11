@@ -385,7 +385,7 @@ export function spaceNameProblem(
 }
 
 /** Premier nom libre de la forme « Espace N », à partir de 1. */
-export function suggestSpaceName(existing: readonly string[], base = 'Espace'): string {
+export function suggestSpaceName(existing: readonly string[], base = 'Profil'): string {
   const keys = new Set(existing.map((other) => spaceNameKey(other)))
   for (let index = 1; index <= existing.length + 1000; index += 1) {
     const candidate = `${base} ${index}`

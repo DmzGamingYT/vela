@@ -20,6 +20,20 @@ const MAX_WIDTH = 640
 const WIDE_WIDTH = 560
 const WIDTH_KEY = 'vela.agent.width'
 const NOTICE_KEY = 'vela.agent.notice'
+const RECENT_KEY = 'vela.agent.recent'
+
+/** Trois dernières demandes, gardées sur l'appareil comme le brouillon. */
+function readRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string' && item.trim() !== '').slice(0, 3)
+      : []
+  } catch {
+    return []
+  }
+}
 
 function readWidths(): Record<string, number> {
   try {
@@ -88,6 +102,7 @@ export default function AgentCanvas({
       return true
     }
   })
+  const [recent, setRecent] = useState<string[]>(readRecent)
 
   const spaceId = view?.activeSpaceId ?? ''
   const [width, setWidth] = useState(() => readWidths()[spaceId] ?? DEFAULT_WIDTH)
@@ -272,6 +287,20 @@ export default function AgentCanvas({
   const floating = windowWidth < 900
   const expanded = width > DEFAULT_WIDTH
 
+  const rememberPrompt = (text: string): void => {
+    const clean = text.trim()
+    if (!clean) return
+    setRecent((current) => {
+      const next = [clean, ...current.filter((item) => item !== clean)].slice(0, 3)
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+      } catch {
+        /* stockage indisponible : la liste vaut pour la session */
+      }
+      return next
+    })
+  }
+
   const run = (): void => {
     setApproved(false)
     if (running) return
@@ -291,6 +320,7 @@ export default function AgentCanvas({
       toast('Joignez une page, une note ou un fichier à lire.', 'error')
       return
     }
+    rememberPrompt(prompt)
     void startAgent(prompt, effectiveSelected, mode, extraSources)
     setPrompt('')
   }
@@ -419,7 +449,8 @@ export default function AgentCanvas({
           <span className="agent-mark">
             <Icon name="sparkles" size={18} />
           </span>
-          <h1>{embedded ? 'Atelier' : 'Agent'}</h1>
+          {/* h2 : le panneau cohabite avec l'accueil, qui garde le seul h1. */}
+          <h2>{embedded ? 'Atelier' : 'Agent'}</h2>
         </div>
         <div className="agent-head-actions">
           <button
@@ -490,6 +521,7 @@ export default function AgentCanvas({
           engineLabel={engineLabel}
           engineLocal={engineLocal}
           suggestions={suggestions}
+          recent={recent}
           showPrice={showPrice}
           onOpenAtelier={embedded ? undefined : openAtelier}
           onPick={(text) => {

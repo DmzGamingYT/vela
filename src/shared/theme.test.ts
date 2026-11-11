@@ -5,7 +5,6 @@ import {
   DEFAULT_CUSTOM_ACCENT,
   DEFAULT_GLASS_BLUR,
   GLASS_BLUR,
-  INK,
   PAPER,
   THEME_PRESETS,
   adjustAccent,
@@ -15,6 +14,7 @@ import {
   isAmbienceId,
   parseHex,
   presetById,
+  resolveAccent,
   resolveMode,
   resolveMotion,
   resolveThemeId,
@@ -51,7 +51,7 @@ describe('contrastes des 10 couleurs et de Braise, × 2 modes', () => {
           glass: 'normal',
           highContrast: false
         })
-        const paper = PAPER[mode]
+        const paper = tokens['--paper']
 
         // Texte d'accent (liens, libellés) sur le fond de page.
         expect(contrast(tokens['--link'], paper)).toBeGreaterThanOrEqual(4.5)
@@ -108,10 +108,10 @@ describe('contraste du wordmark dans la barre latérale', () => {
             highContrast: false,
             ambience: ambience.id
           })
-          const glass = composeOver(tokens['--glass'], PAPER[mode])
+          const glass = composeOver(tokens['--glass'], tokens['--paper'])
           const background = composeOver('rgba(255, 255, 255, 0.05)', glass)
 
-          expect(contrast(INK[mode], background)).toBeGreaterThanOrEqual(4.5)
+          expect(contrast(tokens['--ink'], background)).toBeGreaterThanOrEqual(4.5)
           expect(contrast(tokens['--wordmark-accent'], background)).toBeGreaterThanOrEqual(4.5)
         })
       }
@@ -448,4 +448,224 @@ describe('migration de l’apparence 0.3.24', () => {
   it('refuse une variante de ciel inconnue', () => {
     expect(sanitizeAppearance({ skyVariant: 'aurore' as never }).skyVariant).toBe('braise')
   })
+})
+
+/* Les palettes de la tranche 77 : chaque thème a son papier, son encre et son
+   lavis. Ces tests tiennent les deux promesses : distincts, et lisibles. */
+describe('palettes de thème', () => {
+  it('donne à chaque thème un papier et un lavis qui lui sont propres', () => {
+    const papers = THEME_PRESETS.map(
+      (preset) => `${preset.palette.light.paper}/${preset.palette.dark.paper}`
+    )
+    expect(new Set(papers).size).toBe(THEME_PRESETS.length)
+    const washes = THEME_PRESETS.map((preset) => preset.palette.wash.light.join())
+    expect(new Set(washes).size).toBe(THEME_PRESETS.length)
+  })
+
+  for (const preset of THEME_PRESETS) {
+    for (const mode of MODES) {
+      it(`${preset.label} en ${mode} : des neutres lisibles`, () => {
+        const tokens = appearanceTokens({
+          themeId: preset.id,
+          customAccent: DEFAULT_CUSTOM_ACCENT,
+          mode,
+          glass: 'normal',
+          highContrast: false
+        })
+        const paper = tokens['--paper']
+        // L'encre de lecture, pas seulement le minimum légal.
+        expect(contrast(tokens['--ink'], paper)).toBeGreaterThanOrEqual(7)
+        // Les gris qui portent du texte réel.
+        expect(contrast(composeOver(tokens['--muted'], paper), paper)).toBeGreaterThanOrEqual(5)
+        // Les micro-libellés décoratifs : plancher de 4:1 (la tranche 76 a
+        // remonté à 74 % d'encre ceux qui portent du sens).
+        expect(contrast(composeOver(tokens['--faint'], paper), paper)).toBeGreaterThanOrEqual(4)
+        // Le lavis vient bien de la palette, pas de l'accent.
+        expect(tokens['--wash-1']).toBe(preset.palette.wash[mode][0])
+        expect(tokens['--paper-deep']).toBe(preset.palette[mode].deep)
+      })
+    }
+  }
+})
+
+/* Un accent libre se pose sur n'importe quel thème sans en changer la
+   lumière : papier, surface profonde et lavis viennent toujours de la palette,
+   et l'accent est corrigé contre le papier du thème, pas contre un neutre. */
+describe('accent libre sur chaque thème', () => {
+  // Les onze teintes du produit, plus les cas qui cassent un moteur naïf :
+  // un jaune pâle, un quasi-noir, du blanc pur et un magenta saturé.
+  const ACCENTS = [
+    '#5b5bd6',
+    '#e5484d',
+    '#f76b15',
+    '#e5a100',
+    '#30a46c',
+    '#12a594',
+    '#0091ff',
+    '#8e4ec6',
+    '#e93d82',
+    '#6e6e73',
+    '#b4451f',
+    '#fff3b0',
+    '#0b0b0b',
+    '#ffffff',
+    '#ff00aa'
+  ]
+
+  const custom = (
+    themeId: ThemeId,
+    customAccent: string,
+    mode: ResolvedMode
+  ): ReturnType<typeof appearanceTokens> =>
+    appearanceTokens({
+      themeId,
+      customAccent,
+      accentOverride: true,
+      mode,
+      glass: 'normal',
+      highContrast: false
+    })
+
+  for (const preset of THEME_PRESETS) {
+    for (const mode of MODES) {
+      it(`${preset.label} en ${mode} : l'accent libre laisse la palette intacte`, () => {
+        for (const accent of ACCENTS) {
+          const tokens = custom(preset.id, accent, mode)
+          expect(tokens['--paper']).toBe(preset.palette[mode].paper)
+          expect(tokens['--paper-deep']).toBe(preset.palette[mode].deep)
+          expect(tokens['--ink']).toBe(preset.palette[mode].ink)
+          expect(tokens['--wash-1']).toBe(preset.palette.wash[mode][0])
+          expect(tokens['--wash-2']).toBe(preset.palette.wash[mode][1])
+        }
+      })
+
+      it(`${preset.label} en ${mode} : chaque accent reste lisible sur ce papier`, () => {
+        for (const accent of ACCENTS) {
+          const tokens = custom(preset.id, accent, mode)
+          const paper = tokens['--paper']
+          expect(contrast(tokens['--accent-label'], paper)).toBeGreaterThanOrEqual(4.5)
+          expect(contrast(tokens['--link'], paper)).toBeGreaterThanOrEqual(4.5)
+          // Le texte posé sur l'aplat d'accent (boutons pleins) suit la même règle.
+          expect(contrast(tokens['--accent-contrast'], tokens['--accent'])).toBeGreaterThanOrEqual(
+            4.5
+          )
+        }
+      })
+    }
+  }
+
+  it('applique la teinte demandée, pas celle du thème', () => {
+    const magenta = custom('vert', '#ff00aa', 'light')
+    const cyan = custom('vert', '#00aaff', 'light')
+    expect(magenta['--accent']).not.toBe(presetById('vert')?.light)
+    expect(magenta['--accent']).not.toBe(cyan['--accent'])
+  })
+
+  it('laisse le thème intact quand l’accent libre est désactivé', () => {
+    const themed = appearanceTokens({
+      themeId: 'vert',
+      customAccent: '#ff00aa',
+      accentOverride: false,
+      mode: 'light',
+      glass: 'normal',
+      highContrast: false
+    })
+    const plain = appearanceTokens({
+      themeId: 'vert',
+      customAccent: DEFAULT_CUSTOM_ACCENT,
+      mode: 'light',
+      glass: 'normal',
+      highContrast: false
+    })
+    expect(themed['--accent']).toBe(plain['--accent'])
+    expect(themed['--wash-1']).toBe(plain['--wash-1'])
+  })
+
+  it('corrige un accent trop clair contre le papier du thème', () => {
+    const adjusted = adjustAccent('#fff3b0', 'light', '#f7faf5')
+    expect(adjusted.adjusted).toBe(true)
+    expect(contrast(adjusted.color, '#f7faf5')).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+/* Un accent par espace suit le même contrat qu'un accent libre : il change la
+   teinte, jamais le papier ni le lavis du thème de l'espace. */
+describe('accent par espace', () => {
+  const ACCENTS = [
+    '#5b5bd6',
+    '#e5484d',
+    '#f76b15',
+    '#e5a100',
+    '#30a46c',
+    '#12a594',
+    '#0091ff',
+    '#8e4ec6',
+    '#e93d82',
+    '#6e6e73',
+    '#b4451f',
+    '#fff3b0',
+    '#0b0b0b',
+    '#ffffff',
+    '#ff00aa'
+  ]
+
+  it('suit la teinte de l’espace quand l’option est active', () => {
+    expect(
+      resolveAccent({ globalAccent: '#5b5bd6', perSpace: true, spaceAccent: '#E5484D' })
+    ).toEqual({ customAccent: '#e5484d', accentOverride: true })
+  })
+
+  it('garde l’accent global sans option, sans teinte d’espace ou si elle est illisible', () => {
+    expect(
+      resolveAccent({ globalAccent: '#5b5bd6', perSpace: false, spaceAccent: '#e5484d' })
+    ).toEqual({ customAccent: '#5b5bd6', accentOverride: false })
+    expect(resolveAccent({ globalAccent: '#5b5bd6', perSpace: true, spaceAccent: null })).toEqual({
+      customAccent: '#5b5bd6',
+      accentOverride: false
+    })
+    expect(
+      resolveAccent({ globalAccent: '#5b5bd6', perSpace: true, spaceAccent: 'rouge' })
+    ).toEqual({ customAccent: '#5b5bd6', accentOverride: false })
+  })
+
+  it('conserve le remplacement global quand aucun espace ne le supplante', () => {
+    expect(
+      resolveAccent({
+        globalAccent: '#e93d82',
+        globalOverride: true,
+        perSpace: true,
+        spaceAccent: null
+      })
+    ).toEqual({ customAccent: '#e93d82', accentOverride: true })
+  })
+
+  for (const preset of THEME_PRESETS) {
+    for (const mode of MODES) {
+      it(`${preset.label} en ${mode} : l’accent d’espace ne touche pas la palette`, () => {
+        for (const accent of ACCENTS) {
+          const resolved = resolveAccent({
+            globalAccent: DEFAULT_CUSTOM_ACCENT,
+            perSpace: true,
+            spaceAccent: accent
+          })
+          const tokens = appearanceTokens({
+            themeId: preset.id,
+            ...resolved,
+            mode,
+            glass: 'normal',
+            highContrast: false
+          })
+          expect(tokens['--paper']).toBe(preset.palette[mode].paper)
+          expect(tokens['--paper-deep']).toBe(preset.palette[mode].deep)
+          expect(tokens['--ink']).toBe(preset.palette[mode].ink)
+          expect(tokens['--wash-1']).toBe(preset.palette.wash[mode][0])
+          expect(tokens['--wash-2']).toBe(preset.palette.wash[mode][1])
+          expect(contrast(tokens['--accent-label'], tokens['--paper'])).toBeGreaterThanOrEqual(4.5)
+          expect(contrast(tokens['--accent-contrast'], tokens['--accent'])).toBeGreaterThanOrEqual(
+            4.5
+          )
+        }
+      })
+    }
+  }
 })

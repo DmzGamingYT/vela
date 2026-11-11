@@ -134,7 +134,8 @@
   height: 16px;
 }
 
-.agent[data-docked='true'] .agent-identity h1 {
+.agent[data-docked='true'] .agent-identity h1,
+.agent[data-docked='true'] .agent-identity h2 {
   font-size: 16px;
 }
 

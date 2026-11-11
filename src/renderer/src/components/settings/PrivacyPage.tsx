@@ -472,7 +472,7 @@ export default function PrivacyPage({
                 className="setting-hint"
                 title="Capture réduite prise à la fermeture de l’onglet, gardée dans le dossier de données."
               >
-                Une capture par onglet fermé ; rien pour un espace privé.
+                Une capture par onglet fermé ; rien pour un profil privé.
                 {thumbs !== null ? ` ${plural(thumbs, 'vignette', 'vignettes')}.` : ''}
               </p>
             </div>
@@ -546,11 +546,11 @@ export default function PrivacyPage({
             <div>
               <label>Cookies et stockage des sites</label>
               <p className="setting-hint">
-                Isolés par espace : {plural(view.spaces.length, 'partition', 'partitions')}{' '}
+                Isolés par profil : {plural(view.spaces.length, 'partition', 'partitions')}{' '}
                 distinctes. Rien n’est partagé entre elles.
               </p>
             </div>
-            <span className="tag">{plural(view.spaces.length, 'espace', 'espaces')}</span>
+            <span className="tag">{plural(view.spaces.length, 'profil', 'profils')}</span>
           </div>
 
           <div className="privacy-subhead" data-settings-anchor="privacy-clear">

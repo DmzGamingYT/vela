@@ -195,7 +195,7 @@ export default function NoteRecorder({
       setStage('intro')
       setProblem({
         reason: 'unknown',
-        message: 'L’enregistrement n’a pas pu être écrit dans le dossier de l’espace.',
+        message: 'L’enregistrement n’a pas pu être écrit dans le dossier du profil.',
         system: false
       })
     }
@@ -239,7 +239,7 @@ export default function NoteRecorder({
               macOS affichera ensuite sa propre demande d’autorisation.
             </p>
             <p className="note-recorder-hint">
-              <Icon name="lock" size={12} /> L’audio est écrit dans le dossier de l’espace, sur cet
+              <Icon name="lock" size={12} /> L’audio est écrit dans le dossier du profil, sur cet
               appareil. Rien n’est envoyé tant que vous ne demandez pas la transcription.
             </p>
             {problem && (

@@ -16,7 +16,16 @@
 }
 
 body {
-  background: radial-gradient(72% 58% at 78% -10%, var(--sky-1), transparent 70%), var(--paper);
+  /* Lavis neutre, et non plus teinté par l'accent : un dégradé de 72 % de la
+     largeur suffisait à colorer le fond de toute l'application, barre latérale
+     comprise. L'accent reste aux indicateurs (onglet actif, pastille, point). */
+  background:
+    radial-gradient(
+      72% 58% at 78% -10%,
+      color-mix(in srgb, var(--ink) 4%, transparent),
+      transparent 70%
+    ),
+    var(--paper);
   background-attachment: fixed;
 }
 
@@ -32,7 +41,12 @@ body {
   z-index: 0;
   pointer-events: none;
   /* Dégradés larges et mous déjà calculés : pas de filtre floutant (GPU). */
-  background: radial-gradient(820px 600px at 16% 96%, rgba(var(--glow), 0.1), transparent 72%);
+  /* Halo neutre : l'accent éclairait le coin bas-gauche de la coque. */
+  background: radial-gradient(
+    820px 600px at 16% 96%,
+    color-mix(in srgb, var(--ink) 5%, transparent),
+    transparent 72%
+  );
 }
 
 .rail,
@@ -643,7 +657,8 @@ kbd {
   border-bottom: 1px solid var(--edge);
 }
 
-.sheet-head h1 {
+.sheet-head h1,
+.sheet-head h2 {
   font-family: var(--serif);
   font-size: 30px;
   font-weight: 400;
@@ -858,9 +873,11 @@ kbd {
 /* L'icône suivait un bleu très clair, illisible sur la pastille lavande en
    mode clair. Elle prend l'accent lisible du thème, dans les deux modes. */
 .notes-mark {
-  background: linear-gradient(120deg, rgba(var(--glow), 0.24), rgba(var(--glow), 0.24));
-  border: 1px solid rgba(var(--glow), 0.35);
-  color: var(--accent-label);
+  /* Filet et glyphe neutres : le carré accompagne le titre, il ne le désigne
+     pas. C'était le dernier objet coloré de l'en-tête des notes. */
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
 }
 
 .notes-search,
@@ -1048,7 +1065,8 @@ kbd {
   border-bottom: none;
 }
 
-.settings-head h1 {
+.settings-head h1,
+.settings-head h2 {
   margin: 0 0 5px;
   font-family: var(--serif);
   font-size: 27px;
@@ -1939,10 +1957,16 @@ kbd {
   box-shadow: var(--inner-light);
 }
 
-/* Verrouillage de marque : l'icône, le nom, la promesse, les plateformes. */
-.about-hero .vela-mark {
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(40, 26, 150, 0.28);
+/* Verrouillage de marque : l'icône, le nom, la promesse, les plateformes.
+   La page montre l'icône empaquetée de l'app (build/icon.icns), à la taille où
+   elle se lit dans le Dock, au lieu d'un glyphe réinventé pour les réglages. */
+/* L'icône est le SVG maître de l'app : la tuile et sa marge sont dessinées
+   dedans, donc l'ombre suit l'alpha et aucun cadre ne vient s'ajouter. */
+.about-hero .about-icon {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 6px 14px rgba(24, 16, 60, 0.26));
 }
 
 .about-name {
@@ -2491,7 +2515,8 @@ kbd {
   opacity: 0.35;
 }
 
-.onboarding-copy h1 {
+.onboarding-copy h1,
+.onboarding-copy h2 {
   margin: 0;
   font-family: var(--serif);
   font-size: clamp(30px, 3.1vw, 42px);

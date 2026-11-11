@@ -261,10 +261,10 @@ describe('nom, modèles et ordre des sites', () => {
     expect(spaceNameProblem('x'.repeat(MAX_SPACE_NAME))).toBeNull()
   })
 
-  it('propose le premier « Espace N » libre', () => {
-    expect(suggestSpaceName([])).toBe('Espace 1')
-    expect(suggestSpaceName(['Espace 1'])).toBe('Espace 2')
-    expect(suggestSpaceName(['Espace 1', 'espace 2', 'Espace 4'])).toBe('Espace 3')
+  it('propose le premier « Profil N » libre', () => {
+    expect(suggestSpaceName([])).toBe('Profil 1')
+    expect(suggestSpaceName(['Profil 1'])).toBe('Profil 2')
+    expect(suggestSpaceName(['Profil 1', 'profil 2', 'Profil 4'])).toBe('Profil 3')
   })
 
   it('applique un modèle sans écraser un nom déjà saisi', () => {

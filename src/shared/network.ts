@@ -176,8 +176,8 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     category: 'journal',
     trigger:
       'Quand vous cliquez sur « Importer le journal » dans la carte À voir. Jamais au démarrage, jamais en arrière-plan.',
-    data: 'Le nom du profil public et la demande du flux. Aucun cookie, aucune session d’espace. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.',
-    off: 'Ne pas importer, ou retirer le compte Letterboxd de l’espace.'
+    data: 'Le nom du profil public et la demande du flux. Aucun cookie, aucune session du profil. Comme toute requête, elle expose l’adresse IP et les métadonnées de transport à Letterboxd.',
+    off: 'Ne pas importer, ou retirer le compte Letterboxd du profil.'
   },
   {
     id: 'favicons',
@@ -196,7 +196,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: [],
     category: 'pages',
     trigger: 'Chaque navigation, chaque rechargement.',
-    data: 'La requête normale du navigateur, avec les cookies de l’espace actif.',
+    data: 'La requête normale du navigateur, avec les cookies du profil actif.',
     off: 'Fermer l’onglet, ou ne pas ouvrir la page.'
   }
 ]
@@ -249,13 +249,13 @@ export const IGNORED_HOSTS: readonly string[] = ['www.w3.org', 'vela.local']
 
 /** Ce qui ne quitte jamais l'appareil, sans requête aucune. */
 export const LOCAL_ONLY = [
-  'Historique, onglets, espaces, réglages et sessions',
+  'Historique, onglets, profils, réglages et sessions',
   'Notes Markdown et surlignages, dans un dossier à vous',
-  'Notes vocales, en fichiers audio dans le dossier de données de l’espace : lues sur place, jamais téléversées sans votre accord',
+  'Notes vocales, en fichiers audio dans le dossier de données du profil : lues sur place, jamais téléversées sans votre accord',
   'Clés d’API, chiffrées par le trousseau du système',
   'Liste de blocage des traqueurs, embarquée dans l’app',
   'Rapports de l’agent en mode démo, simulés sur place',
-  'Cartes du tunnel, enregistrées avec l’espace',
+  'Cartes du tunnel, enregistrées avec le profil',
   'Photos d’avatar et vignettes des pages récentes, en fichiers dans le dossier de données',
   'Journal Letterboxd importé : titres, notes et dates restent dans vela.json, lisibles hors ligne',
   'Correction orthographique désactivée : aucun dictionnaire n’est téléchargé'
