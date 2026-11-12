@@ -128,6 +128,24 @@
   margin-top: 34px;
 }
 
+/* Le libellé du bouton devient « Télécharger pour macOS/Windows/Linux » au
+   chargement de site.js. Sous 500 px, la rangée ne le porte plus : le lien
+   passait sur une deuxième ligne et le héros descendait de 54 px (CLS 0,057).
+   Empilées d'emblée, les actions gardent la même hauteur avant et après. */
+@media (max-width: 500px) {
+  .hero-actions {
+    flex-direction: column;
+    gap: 12px;
+    /* Même largeur avant et après : sinon la boîte s'élargit avec le libellé
+       et son rect se déplace, ce qui compte encore comme un décalage. */
+    width: 100%;
+  }
+
+  .hero-actions .btn-hero {
+    width: 100%;
+  }
+}
+
 /* Un seul bouton plein : « Voir le navigateur » reste un lien de lecture. */
 .hero-link {
   display: inline-flex;
