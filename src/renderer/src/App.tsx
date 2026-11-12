@@ -9,6 +9,7 @@ import Toasts from './components/Toasts'
 import Workspace from './components/chrome/Workspace'
 import { useBrowser } from './store/browser'
 import { appearanceState, applyAppearance } from './lib/appearance'
+import { differe } from './lib/differe'
 
 // Les panneaux ne sont chargés qu'à leur première ouverture : le démarrage ne
 // paie plus l'analyse des réglages, des notes, de l'agent et des overlays
@@ -22,8 +23,14 @@ const CommandBar = lazy(() => import('./components/chrome/CommandBar'))
 const DownloadsPanel = lazy(() => import('./components/panels/DownloadsPanel'))
 const ProcessManager = lazy(() => import('./components/panels/ProcessManager'))
 const NotesDrawer = lazy(() => import('./components/panels/NotesDrawer'))
-const SettingsPanel = lazy(() => import('./components/settings/SettingsPanel'))
-const SpaceDialog = lazy(() => import('./components/space/SpaceDialog'))
+// Les deux feuilles du rail se chargent sans Suspense : `lazy` imposait à la
+// première ouverture le délai de reprise de React (~300 ms, même module déjà
+// en mémoire). Ici le module est préchargé au repos et la surface s'ouvre à
+// l'image suivante, sans revenir au bundle de démarrage.
+const reglages = differe(() => import('./components/settings/SettingsPanel'))
+const profil = differe(() => import('./components/space/SpaceDialog'))
+const SettingsPanel = reglages.Panneau
+const SpaceDialog = profil.Panneau
 
 export default function App() {
   const ready = useBrowser((state) => state.ready)
@@ -47,6 +54,31 @@ export default function App() {
   useEffect(() => {
     void useBrowser.getState().init()
   }, [])
+
+  // Préchargement pendant un temps mort : le châssis est déjà peint quand le
+  // navigateur analyse les deux modules, donc le démarrage ne les attend pas.
+  // La première ouverture des Réglages ou du dialogue de profil ne paie plus
+  // les ~300 ms de chargement du module. Si le temps mort tarde, le délai de
+  // repli le déclenche ; au démontage, la tâche est annulée.
+  useEffect(() => {
+    if (!ready) return
+    let annule = false
+    const charger = (): void => {
+      if (annule) return
+      void reglages.precharger()
+      void profil.precharger()
+    }
+    const tempsMort =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(charger, { timeout: 1500 })
+        : null
+    const repli = tempsMort === null ? window.setTimeout(charger, 800) : null
+    return () => {
+      annule = true
+      if (tempsMort !== null) window.cancelIdleCallback(tempsMort)
+      if (repli !== null) window.clearTimeout(repli)
+    }
+  }, [ready])
 
   // Largeur de la coque : le repli automatique de la barre latérale et la garde
   // de la vue scindée en dépendent. `ready` relance la mesure une fois l'état
