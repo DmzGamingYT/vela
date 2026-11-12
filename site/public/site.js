@@ -84,31 +84,31 @@
     mac: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.37-universal.dmg',
-      size: '226,1 Mo',
+      size: '226,4 Mo',
       href: download('Vela-0.3.37-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.37-arm64.dmg',
-      size: '122,4 Mo',
+      size: '122,7 Mo',
       href: download('Vela-0.3.37-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
       file: 'Vela-0.3.37-x64.dmg',
-      size: '129,7 Mo',
+      size: '130,0 Mo',
       href: download('Vela-0.3.37-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
       file: 'Vela-0.3.37-x64.exe',
-      size: '122,3 Mo',
+      size: '122,4 Mo',
       href: download('Vela-0.3.37-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
       file: 'Vela-0.3.37-x86_64.AppImage',
-      size: '127,0 Mo',
+      size: '127,1 Mo',
       href: download('Vela-0.3.37-x86_64.AppImage')
     },
     other: {
