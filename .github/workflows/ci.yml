@@ -1,0 +1,45 @@
+name: CI
+
+# Types, lint et tests sur chaque poussée et chaque pull request. Ce workflow
+# ne publie rien et ne touche pas à release.yml, qui garde son propre
+# déclenchement et ses trois builds.
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  # Deux poussées rapprochées sur la même branche : seule la dernière compte.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Types, lint et tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Aucune vérification n'ouvre de fenêtre : inutile de télécharger le
+      # binaire Electron (~100 Mo) pour typer, linter et tester.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test
