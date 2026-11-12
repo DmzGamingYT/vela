@@ -77,45 +77,45 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.36/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.37/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.36-universal.dmg',
+      file: 'Vela-0.3.37-universal.dmg',
       size: '226,1 Mo',
-      href: download('Vela-0.3.36-universal.dmg')
+      href: download('Vela-0.3.37-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.36-arm64.dmg',
+      file: 'Vela-0.3.37-arm64.dmg',
       size: '122,4 Mo',
-      href: download('Vela-0.3.36-arm64.dmg')
+      href: download('Vela-0.3.37-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.36-x64.dmg',
+      file: 'Vela-0.3.37-x64.dmg',
       size: '129,7 Mo',
-      href: download('Vela-0.3.36-x64.dmg')
+      href: download('Vela-0.3.37-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
-      file: 'Vela-0.3.36-x64.exe',
+      file: 'Vela-0.3.37-x64.exe',
       size: '122,3 Mo',
-      href: download('Vela-0.3.36-x64.exe')
+      href: download('Vela-0.3.37-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
-      file: 'Vela-0.3.36-x86_64.AppImage',
+      file: 'Vela-0.3.37-x86_64.AppImage',
       size: '127,0 Mo',
-      href: download('Vela-0.3.36-x86_64.AppImage')
+      href: download('Vela-0.3.37-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
-      file: 'Vela-0.3.36',
+      file: 'Vela-0.3.37',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.36`
+      href: `${RELEASE}/tag/v0.3.37`
     }
   }
 
@@ -337,7 +337,7 @@
   if (diagnostic) {
     diagnostic.addEventListener('click', async () => {
       const texte = [
-        'Vela 0.3.36',
+        'Vela 0.3.37',
         `Système : ${navigator.userAgentData?.platform || navigator.platform || 'inconnu'}`,
         `Langue : ${navigator.language}`,
         `Page : ${location.href}`,
