@@ -40,6 +40,9 @@
   color: var(--ink);
   font-size: 11.5px;
   outline: none;
+  /* Le champ prend la hauteur de la pastille (30 px) : sans fond ni bordure,
+     rien ne bouge à l'œil, mais la zone cliquable dépasse les 24 px. */
+  align-self: stretch;
 }
 
 .foot-search input::placeholder {
