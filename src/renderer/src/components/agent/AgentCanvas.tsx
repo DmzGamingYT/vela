@@ -105,10 +105,13 @@ export default function AgentCanvas({
   const [recent, setRecent] = useState<string[]>(readRecent)
 
   const spaceId = view?.activeSpaceId ?? ''
-  const [width, setWidth] = useState(() => readWidths()[spaceId] ?? DEFAULT_WIDTH)
+  // Une largeur par espace, gardée en état : la largeur affichée s'en déduit,
+  // donc changer d'espace ne demande ni effet ni rendu supplémentaire.
+  const [widths, setWidths] = useState<Record<string, number>>(readWidths)
   const [windowWidth, setWindowWidth] = useState(() =>
     typeof window === 'undefined' ? 1440 : window.innerWidth
   )
+  const width = clampWidth(widths[spaceId] ?? DEFAULT_WIDTH, windowWidth)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const frameRef = useRef(0)
   const pendingWidth = useRef(0)
@@ -116,22 +119,12 @@ export default function AgentCanvas({
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // Largeur de la fenêtre : elle décide du mode flottant et de la borne haute.
+  // La largeur du panneau s'en déduit, donc rien à resserrer ici.
   useEffect(() => {
-    const onResize = (): void => {
-      setWindowWidth(window.innerWidth)
-      // Rétrécir la fenêtre resserre le panneau : il ne doit jamais dépasser
-      // la moitié de la place disponible.
-      setWidth((current) => clampWidth(current, window.innerWidth))
-    }
+    const onResize = (): void => setWindowWidth(window.innerWidth)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
-
-  // Une largeur par espace : changer d'espace rend la sienne.
-  useEffect(() => {
-    if (!spaceId) return
-    setWidth(clampWidth(readWidths()[spaceId] ?? DEFAULT_WIDTH, window.innerWidth))
-  }, [spaceId])
 
   const remember = (value: number): void => {
     if (!spaceId) return
@@ -146,7 +139,7 @@ export default function AgentCanvas({
 
   const commit = (value: number): void => {
     const next = clampWidth(value, windowWidth)
-    setWidth(next)
+    setWidths((current) => ({ ...current, [spaceId]: next }))
     remember(next)
   }
 
@@ -159,7 +152,10 @@ export default function AgentCanvas({
     if (frameRef.current) return
     frameRef.current = requestAnimationFrame(() => {
       frameRef.current = 0
-      setWidth(clampWidth(pendingWidth.current, windowWidth))
+      const next = clampWidth(pendingWidth.current, windowWidth)
+      setWidths((current) =>
+        current[spaceId] === next ? current : { ...current, [spaceId]: next }
+      )
     })
   }
 
@@ -172,17 +168,18 @@ export default function AgentCanvas({
     }
     window.removeEventListener('pointermove', onResizeMove)
     window.removeEventListener('pointerup', endResize)
-    setWidth((current) => {
-      const next = clampWidth(current, windowWidth)
-      remember(next)
-      return next
-    })
+    const next = clampWidth(pendingWidth.current, windowWidth)
+    setWidths((current) => ({ ...current, [spaceId]: next }))
+    remember(next)
   }
 
   const startResize = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (embedded) return
     event.preventDefault()
     dragRef.current = { startX: event.clientX, startWidth: width }
+    // Point de départ du glissement : sans lui, un clic sans mouvement
+    // rappellerait la largeur du glissement précédent.
+    pendingWidth.current = width
     window.addEventListener('pointermove', onResizeMove)
     window.addEventListener('pointerup', endResize)
   }

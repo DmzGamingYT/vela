@@ -11,6 +11,10 @@
 
 .shield-pop {
   position: fixed;
+  /* Position de repli : la mesure sur le bouton du rail l'ajuste au montage,
+     et le panneau reste lisible même si le bouton est absent. */
+  top: 92px;
+  right: 58px;
   width: 400px;
   max-width: calc(100vw - 20px);
   max-height: min(74vh, 660px);

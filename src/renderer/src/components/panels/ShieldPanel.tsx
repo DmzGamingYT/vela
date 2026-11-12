@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { hostOf, isHomeUrl } from '@shared/url'
 import {
   CATEGORY_LABEL,
@@ -31,19 +31,22 @@ export default function ShieldPanel() {
   const [confirmHost, setConfirmHost] = useState<string | null>(null)
   const confirmTimer = useRef<number | null>(null)
   const [openParent, setOpenParent] = useState<string | null>(null)
-  const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 92, right: 58 })
 
   // Ancrage sur le bouton du rail : le panneau s’ouvre sous l’icône, pas au
-  // centre de l’écran. Mesure après le premier rendu, jamais avant.
-  useLayoutEffect(() => {
-    const button = document.querySelector<HTMLElement>(ANCHOR)
-    if (!button) return
-    const rect = button.getBoundingClientRect()
-    setAnchor({
-      top: Math.max(12, rect.top - 12),
-      right: Math.max(12, window.innerWidth - rect.left + 10)
-    })
-  }, [])
+  // centre de l’écran. La mesure se fait dans la ref, pendant le montage et
+  // avant la peinture : pas d’état, donc pas de second rendu à l’ouverture.
+  const placer = useCallback(
+    (node: HTMLDivElement | null): void => {
+      panelRef.current = node
+      if (!node) return
+      const button = document.querySelector<HTMLElement>(ANCHOR)
+      if (!button) return
+      const rect = button.getBoundingClientRect()
+      node.style.top = `${Math.max(12, rect.top - 12)}px`
+      node.style.right = `${Math.max(12, window.innerWidth - rect.left + 10)}px`
+    },
+    [panelRef]
+  )
 
   // À la fermeture, le focus revient au bouclier du rail, même si le panneau
   // a été ouvert au clavier.
@@ -97,12 +100,11 @@ export default function ShieldPanel() {
   return (
     <div className="shield-layer" onMouseDown={() => setOverlay(null)}>
       <div
-        ref={panelRef}
+        ref={placer}
         className="shield-pop"
         role="dialog"
         aria-modal="false"
         aria-label="Protection de la page"
-        style={{ top: anchor.top, right: anchor.right }}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="shield-pop-head">
