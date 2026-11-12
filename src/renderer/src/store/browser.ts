@@ -422,6 +422,11 @@ function createCoreSlice(
           state.setOverlay(state.overlay === 'sessions' ? null : 'sessions')
           break
         case 'settings':
+          // L'assistant de premier lancement est la seule surface tant qu'il
+          // est ouvert : le menu natif ne doit pas poser les Réglages par-dessus
+          // (le rail, lui, est déjà inerte). L'assistant ouvre les Réglages
+          // lui-même après `completeOnboarding`, sans passer par ici.
+          if (view.settings.onboarded === false) break
           state.setOverlay(state.overlay === 'settings' ? null : 'settings')
           break
         case 'sidebar':

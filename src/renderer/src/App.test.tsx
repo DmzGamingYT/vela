@@ -176,6 +176,24 @@ describe('coque de l’application', () => {
     await waitFor(() => expect(fond()?.hasAttribute('inert')).toBe(false))
   })
 
+  it('ignore les Réglages du menu tant que l’assistant n’est pas terminé', () => {
+    const accueil = {
+      ...view,
+      settings: { ...view.settings, onboarded: false }
+    }
+    useBrowser.setState({ view: accueil })
+
+    // Le menu natif envoie la même action que la palette : elle ne doit pas
+    // poser la feuille par-dessus l'assistant, seule surface de ce moment-là.
+    useBrowser.getState().handleShortcut({ action: 'settings' })
+    expect(useBrowser.getState().overlay).toBeNull()
+
+    // Une fois l'assistant terminé, l'action reprend son effet.
+    useBrowser.setState({ view })
+    useBrowser.getState().handleShortcut({ action: 'settings' })
+    expect(useBrowser.getState().overlay).toBe('settings')
+  })
+
   it('ne rend jamais deux h1 à la fois, surface par surface', async () => {
     render(<App />)
     await waitFor(() => expect(h1s()).toHaveLength(1))
