@@ -129,6 +129,8 @@ const api: VelaApi = {
     get: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:get', { host, spaceId }),
     peek: (host: string, spaceId?: string) =>
       ipcRenderer.invoke('favicons:peek', { host, spaceId }),
+    peekMany: (hosts: string[], spaceId?: string) =>
+      ipcRenderer.invoke('favicons:peek-many', { hosts, spaceId }),
     purge: () => ipcRenderer.invoke('favicons:purge')
   },
   bookmarks: {

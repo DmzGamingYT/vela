@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+// `memo` est déjà le nom du cache de requêtes ci-dessous : l'enveloppe React
+// entre sous un autre nom pour ne pas l'écraser.
+import { memo as memoComponent, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, SyntheticEvent } from 'react'
 import { hostOf } from '@shared/url'
 import { domainLetter, isDarkMonoLogo, needsUpgrade } from '../lib/favicon'
@@ -27,6 +29,49 @@ function setBounded<T>(store: Map<string, T>, key: string, value: T): void {
   store.set(key, value)
 }
 
+type PeekWaiter = (value: string | null) => void
+interface PeekBatch {
+  hosts: Set<string>
+  waiters: Map<string, PeekWaiter[]>
+}
+
+// Les lignes d'une même liste demandent leur icône dans la même passe : on les
+// regroupe par espace et une seule requête ramène tout le lot. L'historique
+// ouvrait jusqu'ici un aller-retour IPC par domaine (une soixantaine).
+const peekBatches = new Map<string, PeekBatch>()
+let peekScheduled = false
+
+function schedulePeek(spaceId: string, host: string, resolve: PeekWaiter): void {
+  const batch = peekBatches.get(spaceId) ?? { hosts: new Set<string>(), waiters: new Map() }
+  batch.hosts.add(host)
+  const waiting = batch.waiters.get(host)
+  if (waiting) waiting.push(resolve)
+  else batch.waiters.set(host, [resolve])
+  peekBatches.set(spaceId, batch)
+  if (peekScheduled) return
+  peekScheduled = true
+  queueMicrotask(flushPeeks)
+}
+
+function flushPeeks(): void {
+  peekScheduled = false
+  const batches = [...peekBatches]
+  peekBatches.clear()
+  for (const [spaceId, batch] of batches) {
+    void window.vela.favicons
+      .peekMany([...batch.hosts], spaceId)
+      .then((icons) => {
+        for (const [host, waiters] of batch.waiters) {
+          const icon = icons[host] ?? null
+          for (const waiter of waiters) waiter(icon)
+        }
+      })
+      .catch(() => {
+        for (const waiters of batch.waiters.values()) for (const waiter of waiters) waiter(null)
+      })
+  }
+}
+
 export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promise<string | null> {
   const host = hostOf(url)
   if (!host) return Promise.resolve(null)
@@ -34,9 +79,9 @@ export function iconRequest(url: string, spaceId = '', cacheOnly = false): Promi
   const store = cacheOnly ? memoCached : memo
   const pending = store.get(key)
   if (pending) return pending
-  const task = (
-    cacheOnly ? window.vela.favicons.peek(host, spaceId) : window.vela.favicons.get(host, spaceId)
-  ).catch(() => null)
+  const task = cacheOnly
+    ? new Promise<string | null>((resolve) => schedulePeek(spaceId, host, resolve))
+    : window.vela.favicons.get(host, spaceId).catch(() => null)
   setBounded(store, key, task)
   return task
 }
@@ -76,7 +121,49 @@ function detectDarkMono(image: HTMLImageElement, src: string): boolean {
   return dark
 }
 
-export default function Favicon({
+/**
+ * Un seul observateur pour toutes les icônes : la demande réseau attend que
+ * l'icône approche de l'écran. L'historique rend jusqu'à cent cinquante lignes
+ * dont une douzaine est vue ; une icône demandée n'est plus observée, et
+ * `iconRequest` ramène les lignes d'un même domaine à une seule demande.
+ */
+type Sight = () => void
+const watchers = new Map<Element, Sight>()
+let watcher: IntersectionObserver | null = null
+
+function watchOnce(element: Element, onSight: Sight): () => void {
+  // Sans observateur (environnement de test), on demande sans attendre :
+  // l'icône doit arriver dans les cas où rien ne signalera la visibilité.
+  if (typeof IntersectionObserver === 'undefined') {
+    onSight()
+    return () => undefined
+  }
+  watcher ??= new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        const sight = watchers.get(entry.target)
+        if (!sight) continue
+        watchers.delete(entry.target)
+        watcher?.unobserve(entry.target)
+        sight()
+      }
+    },
+    { rootMargin: '200px 0px' }
+  )
+  watchers.set(element, onSight)
+  watcher.observe(element)
+  return () => {
+    watchers.delete(element)
+    watcher?.unobserve(element)
+  }
+}
+
+/**
+ * Mémoïsé : ses props sont des valeurs simples, et les listes (historique,
+ * favoris, onglets) en montent des dizaines à chaque rendu du parent.
+ */
+function Favicon({
   src,
   url,
   label,
@@ -102,20 +189,41 @@ export default function Favicon({
   const [better, setBetter] = useState<string | null>(null)
   const [cached, setCached] = useState<string | null>(null)
   const [darkMono, setDarkMono] = useState<{ src: string; dark: boolean } | null>(null)
+  const [seen, setSeen] = useState(false)
+  const node = useRef<HTMLSpanElement | null>(null)
   const upgraded = useRef(false)
   const tint = tintFor(label || hostOf(url ?? '') || 'vela')
 
+  // Ce que l'appareil connaît déjà : lecture locale, sans réseau, même hors
+  // écran. Une ligne d'historique garde donc son icône en arrivant.
   useEffect(() => {
     if (src || !url) return
-    const address = url
     let alive = true
-    void iconRequest(address, spaceId, cacheOnly).then((data) => {
-      if (alive) setCached(data)
+    void iconRequest(url, spaceId, true).then((data) => {
+      if (alive && data) setCached(data)
     })
     return () => {
       alive = false
     }
-  }, [src, url, spaceId, cacheOnly])
+  }, [src, url, spaceId])
+
+  // Le réseau, lui, attend l'écran : rien ne part pour une ligne jamais vue.
+  useEffect(() => {
+    const element = node.current
+    if (src || !url || cacheOnly || seen || !element) return
+    return watchOnce(element, () => setSeen(true))
+  }, [src, url, cacheOnly, seen])
+
+  useEffect(() => {
+    if (!seen || src || !url) return
+    let alive = true
+    void iconRequest(url, spaceId).then((data) => {
+      if (alive && data) setCached(data)
+    })
+    return () => {
+      alive = false
+    }
+  }, [seen, src, url, spaceId])
 
   // La page fournit souvent un 16 ou 32 px. On ne l'agrandit pas : on demande
   // une fois la meilleure icône du site, qui remplacera celle de la page.
@@ -138,6 +246,7 @@ export default function Favicon({
 
   return (
     <span
+      ref={node}
       className="favicon"
       // La teinte sert de graine : la feuille de style la ramène vers l'encre
       // du thème pour que la lettre de secours reste lisible sur les deux fonds.
@@ -165,3 +274,5 @@ export default function Favicon({
     </span>
   )
 }
+
+export default memoComponent(Favicon)

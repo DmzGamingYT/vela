@@ -1,5 +1,6 @@
 import { app, net } from 'electron'
-import { readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { readdirSync, readFileSync, unlinkSync } from 'node:fs'
+import { rename as renameAsync, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
   createIconCache,
@@ -39,12 +40,32 @@ function load(spaceId: string): IconStore {
   }
 }
 
+/** Écritures en attente, une chaîne par fichier : la dernière gagne. */
+const ecritures = new Map<string, Promise<void>>()
+
 function save(spaceId: string, store: IconStore): void {
-  try {
-    writeFileSync(cacheFile(spaceId), JSON.stringify(store))
-  } catch {
-    /* disque plein ou en lecture seule : le cache reste en mémoire */
-  }
+  const file = cacheFile(spaceId)
+  const payload = JSON.stringify(store)
+  const previous = ecritures.get(file) ?? Promise.resolve()
+  // Chaîne par fichier : deux enregistrements rapprochés ne se mélangent pas,
+  // et l'écriture la plus récente est toujours la dernière à renommer.
+  const next = previous
+    .catch(() => undefined)
+    .then(async () => {
+      const tmp = `${file}.tmp`
+      try {
+        await writeFile(tmp, payload, 'utf8')
+        await renameAsync(tmp, file)
+      } catch {
+        /* disque plein ou en lecture seule : le cache reste en mémoire */
+      }
+    })
+  ecritures.set(file, next)
+}
+
+/** Attend les écritures en cours avant d'effacer les fichiers du cache. */
+function attendreEcritures(): Promise<void> {
+  return Promise.all(ecritures.values()).then(() => undefined)
 }
 
 /**
@@ -156,10 +177,28 @@ export function faviconCachedDataUrl(host: string, spaceId = ''): string | null 
   return cacheFor(spaceId).peek(host)
 }
 
+/**
+ * Même lecture, en lot : une liste de plusieurs dizaines de lignes demande une
+ * seule réponse au lieu d'un aller-retour par domaine. Les domaines inconnus
+ * sont absents de la réponse plutôt que présents à `null`.
+ */
+export function faviconsCachedDataUrls(hosts: string[], spaceId = ''): Record<string, string> {
+  const cache = cacheFor(spaceId)
+  const found: Record<string, string> = {}
+  for (const host of hosts) {
+    const icon = cache.peek(host)
+    if (icon) found[host] = icon
+  }
+  return found
+}
+
 /** Vide le cache de tous les espaces, et les fichiers correspondants. */
-export function purgeFavicons(): number {
+export async function purgeFavicons(): Promise<number> {
   let total = 0
   for (const cache of caches.values()) total += cache.purge()
+  // Une purge programme l'écriture d'un cache vide : si on effaçait tout de
+  // suite, cette écriture recréerait les fichiers après coup.
+  await attendreEcritures()
   try {
     const dir = app.getPath('userData')
     for (const name of readdirSync(dir)) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { HistoryEntry } from '@shared/types'
 import { hostOf } from '@shared/url'
 import { shortDate, timeAgo } from '../../lib/format'
@@ -18,6 +18,19 @@ const PERIODS: { id: Period; label: string }[] = [
 
 const DAY = 86_400_000
 
+/** Lignes rendues d'un coup : au-delà, l'ouverture du panneau saccadait. */
+const PAGE = 150
+
+const EMPTY: HistoryEntry[] = []
+
+// Un formateur unique pour tout le panneau : `dayLabel` en construisait un par
+// entrée, soit jusqu'à cinq cents instances ICU à chaque frappe dans le filtre.
+const DAY_FMT = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long'
+})
+
 function startOfDay(timestamp: number): number {
   const date = new Date(timestamp)
   date.setHours(0, 0, 0, 0)
@@ -31,22 +44,21 @@ function periodStart(period: Period, now: number): number {
   return 0
 }
 
-function dayLabel(timestamp: number, now: number): string {
+/** Clé de regroupement : le minuit local du jour, en millisecondes. */
+function dayKeyOf(timestamp: number): number {
   const date = new Date(timestamp)
-  const today = new Date(now)
-  const yesterday = new Date(now)
-  yesterday.setDate(today.getDate() - 1)
-  const same = (a: Date, b: Date): boolean =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  if (same(date, today)) return 'Aujourd’hui'
-  if (same(date, yesterday)) return 'Hier'
-  return new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  }).format(date)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime()
+}
+
+/** Libellé d'un groupe : calculé une fois par groupe, jamais par entrée. */
+function dayLabel(dayKey: number, now: number): string {
+  const today = dayKeyOf(now)
+  if (dayKey === today) return 'Aujourd’hui'
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (dayKey === yesterday.getTime()) return 'Hier'
+  return DAY_FMT.format(new Date(dayKey))
 }
 
 function countLabel(count: number, singular: string, plural: string): string {
@@ -61,6 +73,7 @@ export default function HistoryPanel() {
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null)
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState<Period>('all')
+  const [limit, setLimit] = useState(PAGE)
   const [now] = useState(() => Date.now())
 
   useEffect(() => {
@@ -78,29 +91,41 @@ export default function HistoryPanel() {
     }
   }, [])
 
-  const rows = entries ?? []
-  const counts: Record<Period, number> = {
-    all: rows.length,
-    today: rows.filter((entry) => entry.visitedAt >= periodStart('today', now)).length,
-    week: rows.filter((entry) => entry.visitedAt >= periodStart('week', now)).length,
-    month: rows.filter((entry) => entry.visitedAt >= periodStart('month', now)).length
-  }
-  const needle = query.trim().toLowerCase()
-  const from = periodStart(period, now)
-  const filtered = rows.filter((entry) => {
-    if (period !== 'all' && entry.visitedAt < from) return false
-    if (!needle) return true
-    const host = hostOf(entry.url)
-    return `${entry.title}\n${entry.url}\n${host}`.toLowerCase().includes(needle)
-  })
-  const sites = new Set(filtered.map((entry) => hostOf(entry.url))).size
-  const days = new Map<string, HistoryEntry[]>()
-  for (const entry of filtered) {
-    const key = dayLabel(entry.visitedAt, now)
-    const bucket = days.get(key)
-    if (bucket) bucket.push(entry)
-    else days.set(key, [entry])
-  }
+  const rows = entries ?? EMPTY
+  // Tout le filtrage est mémorisé : une frappe ne refaisait jusqu'ici que les
+  // mêmes parcours sur les cinq cents entrées, plus le regroupement.
+  const counts = useMemo<Record<Period, number>>(
+    () => ({
+      all: rows.length,
+      today: rows.filter((entry) => entry.visitedAt >= periodStart('today', now)).length,
+      week: rows.filter((entry) => entry.visitedAt >= periodStart('week', now)).length,
+      month: rows.filter((entry) => entry.visitedAt >= periodStart('month', now)).length
+    }),
+    [rows, now]
+  )
+  const needle = useMemo(() => query.trim().toLowerCase(), [query])
+  const filtered = useMemo(() => {
+    const from = periodStart(period, now)
+    return rows.filter((entry) => {
+      if (period !== 'all' && entry.visitedAt < from) return false
+      if (!needle) return true
+      const host = hostOf(entry.url)
+      return `${entry.title}\n${entry.url}\n${host}`.toLowerCase().includes(needle)
+    })
+  }, [rows, needle, period, now])
+  const sites = useMemo(() => new Set(filtered.map((entry) => hostOf(entry.url))).size, [filtered])
+  const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit])
+  const remaining = filtered.length - visible.length
+  const days = useMemo(() => {
+    const byDay = new Map<number, HistoryEntry[]>()
+    for (const entry of visible) {
+      const key = dayKeyOf(entry.visitedAt)
+      const bucket = byDay.get(key)
+      if (bucket) bucket.push(entry)
+      else byDay.set(key, [entry])
+    }
+    return Array.from(byDay).sort((a, b) => b[0] - a[0])
+  }, [visible])
 
   const remove = async (url: string): Promise<void> => {
     setEntries((current) => (current ? current.filter((item) => item.url !== url) : current))
@@ -117,6 +142,7 @@ export default function HistoryPanel() {
   const resetFilters = (): void => {
     setQuery('')
     setPeriod('all')
+    setLimit(PAGE)
   }
 
   return (
@@ -182,7 +208,10 @@ export default function HistoryPanel() {
                   className="history-filter"
                   data-active={period === item.id}
                   aria-pressed={period === item.id}
-                  onClick={() => setPeriod(item.id)}
+                  onClick={() => {
+                    setPeriod(item.id)
+                    setLimit(PAGE)
+                  }}
                 >
                   <span>{item.label}</span>
                   <span className="history-filter-count">{counts[item.id]}</span>
@@ -202,7 +231,10 @@ export default function HistoryPanel() {
                 <Icon name="search" size={14} />
                 <input
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    setQuery(event.target.value)
+                    setLimit(PAGE)
+                  }}
                   placeholder="Filtrer par titre, site ou adresse"
                   aria-label="Rechercher dans l’historique"
                   spellCheck={false}
@@ -242,10 +274,10 @@ export default function HistoryPanel() {
                 </p>
               )}
 
-              {Array.from(days, ([label, list]) => (
-                <section key={label} className="history-day">
+              {days.map(([dayKey, list]) => (
+                <section key={dayKey} className="history-day">
                   <div className="history-day-head">
-                    <h2>{label}</h2>
+                    <h2>{dayLabel(dayKey, now)}</h2>
                     <span>{list.length}</span>
                   </div>
                   <ul className="history-list">
@@ -262,6 +294,10 @@ export default function HistoryPanel() {
                             }}
                             title={entry.url}
                           >
+                            {/* L'icône vient du disque si l'appareil la
+                                connaît, sinon du site une fois la ligne
+                                visible : une liste de cent cinquante lignes
+                                ne demande plus un domaine par ligne. */}
                             <Favicon
                               src={entry.favicon}
                               url={entry.url}
@@ -293,6 +329,16 @@ export default function HistoryPanel() {
                   </ul>
                 </section>
               ))}
+
+              {remaining > 0 && (
+                <button
+                  type="button"
+                  className="ghost-btn history-more"
+                  onClick={() => setLimit((current) => current + PAGE)}
+                >
+                  Afficher {Math.min(remaining, PAGE)} page{remaining > 1 ? 's' : ''} de plus
+                </button>
+              )}
             </div>
           </section>
         </div>

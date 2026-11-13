@@ -404,6 +404,11 @@ export interface VelaApi {
     get(host: string, spaceId?: string): Promise<string | null>
     /** Même lecture, sans requête : seulement ce qui est déjà sur l'appareil. */
     peek(host: string, spaceId?: string): Promise<string | null>
+    /**
+     * Même lecture pour une liste : une seule réponse, les domaines inconnus
+     * étant absents. Les lignes d'une liste demandent en une fois.
+     */
+    peekMany(hosts: string[], spaceId?: string): Promise<Record<string, string>>
     /** Vide mémoire et disque ; renvoie le nombre d'entrées supprimées. */
     purge(): Promise<number>
   }

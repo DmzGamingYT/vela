@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { engineLabel, hostOf, isHomeUrl, isLoginUrl, readableTitle } from '@shared/url'
 import { SKY_THEME, resolveThemeId } from '@shared/theme'
+import type { HistoryEntry } from '@shared/types'
 import { greeting, shortcut, weekdayLabel } from '../../lib/format'
 import { listSessions } from '../../lib/sessions'
 import { useBrowser } from '../../store/browser'
@@ -75,6 +76,9 @@ function tileLabel(raw: string | null | undefined, url: string, host: string): s
   }
   return host
 }
+
+/** Liste vide stable : les mémos ci-dessous ne repartent pas sans état. */
+const EMPTY_HISTORY: HistoryEntry[] = []
 
 interface RecentCard {
   host: string
@@ -210,6 +214,45 @@ export default function StartPage({ tabId }: { tabId: string }) {
     []
   )
 
+  // Trois parcours de l'historique (cartes récentes, reprise, compteur de la
+  // semaine) se refaisaient à chaque rendu : à chaque diffusion d'état — donc
+  // plusieurs fois par seconde pendant un chargement — et au battement de la
+  // minute. Ils ne dépendent que de la liste d'historique.
+  const history = view?.history ?? EMPTY_HISTORY
+  const recentCards = useMemo(() => {
+    const cards: RecentCard[] = []
+    const indexOfHost = new Map<string, number>()
+    for (const entry of history) {
+      if (!/^https?:/i.test(entry.url)) continue
+      const host = hostOf(entry.url)
+      const index = indexOfHost.get(host)
+      if (index === undefined) {
+        indexOfHost.set(host, cards.length)
+        cards.push({
+          host,
+          url: entry.url,
+          title: historyTitle(entry.title, entry.url, host),
+          favicon: entry.favicon,
+          spaceId: entry.spaceId,
+          visitedAt: entry.visitedAt,
+          visits: 1
+        })
+      } else {
+        cards[index].visits += 1
+      }
+    }
+    return cards.sort((a, b) => b.visitedAt - a.visitedAt)
+  }, [history])
+  const visibleCards = recentCards.slice(0, 5)
+  // « Reprendre » ne doit pas rouvrir un formulaire de connexion : la dernière
+  // page utile est la première page de l'historique qui n'en est pas une.
+  const usefulHistory = useMemo(() => history.filter((entry) => !isLoginUrl(entry.url)), [history])
+  const weekPages = useMemo(
+    () => history.filter((entry) => entry.visitedAt >= today - 7 * 86_400_000).length,
+    [history, today]
+  )
+  const hello = greeting()
+
   // Avant le premier état : trois braises, pas un écran vide.
   if (!view) {
     return (
@@ -246,42 +289,11 @@ export default function StartPage({ tabId }: { tabId: string }) {
       spaceTheme: space?.theme ?? null
     }) === SKY_THEME
 
-  // Une carte par domaine : cinq adresses du même site ne font pas cinq
-  // cartes. La plus récente porte le titre et l'heure, le compte dit la
-  // fréquence. Cinq cartes au plus, puis « Tout l'historique ».
-  const cards: RecentCard[] = []
-  const indexOfHost = new Map<string, number>()
-  for (const entry of view.history) {
-    if (!/^https?:/i.test(entry.url)) continue
-    const host = hostOf(entry.url)
-    const index = indexOfHost.get(host)
-    if (index === undefined) {
-      indexOfHost.set(host, cards.length)
-      cards.push({
-        host,
-        url: entry.url,
-        title: historyTitle(entry.title, entry.url, host),
-        favicon: entry.favicon,
-        spaceId: entry.spaceId,
-        visitedAt: entry.visitedAt,
-        visits: 1
-      })
-    } else {
-      cards[index].visits += 1
-    }
-  }
-  cards.sort((a, b) => b.visitedAt - a.visitedAt)
-  const visibleCards = cards.slice(0, 5)
-  // « Reprendre » ne doit pas rouvrir un formulaire de connexion : la dernière
-  // page utile est la première page de l'historique qui n'en est pas une.
-  const usefulHistory = view.history.filter((entry) => !isLoginUrl(entry.url))
-
   // L'accueil ne compte pas comme une page : une fenêtre qui ne montre que son
   // accueil n'affichait « aucun onglet » que pour se contredire avec la barre
   // latérale, où ce même accueil figure comme un onglet.
   const openPages = view.tabs.filter((tab) => tab.spaceId === spaceId && !isHomeUrl(tab.url)).length
-  const weekStart = today - 7 * 86_400_000
-  const pages = view.history.filter((entry) => entry.visitedAt >= weekStart).length
+  const pages = weekPages
   // Pas de zéros en ouverture : la ligne ne dit que ce qui existe. Une fenêtre
   // encore vide l'annonce une fois, et indique par où commencer, au lieu
   // d'aligner « 0 page ouverte · 0 page cette semaine ».
@@ -473,8 +485,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
                 {weekdayLabel(today)}
               </p>
             </div>
-            <h1 className="home-title" aria-label={greeting()}>
-              {greeting()
+            <h1 className="home-title" aria-label={hello}>
+              {hello
                 .split(' ')
                 .map((word, index) => (
                   <span

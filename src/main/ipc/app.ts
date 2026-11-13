@@ -10,7 +10,12 @@ import {
   updateStatus
 } from '../updater'
 import { readAvatarDataUrl } from '../avatars'
-import { faviconCachedDataUrl, faviconDataUrl, purgeFavicons } from '../favicons'
+import {
+  faviconCachedDataUrl,
+  faviconDataUrl,
+  faviconsCachedDataUrls,
+  purgeFavicons
+} from '../favicons'
 import type { IpcHost } from './host'
 import type { Handle, On } from './types'
 import { asId, readImageDataUrl } from './util'
@@ -22,6 +27,17 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
     const payload = (input ?? {}) as { host?: unknown; spaceId?: unknown }
     if (typeof payload.host !== 'string') return null
     return faviconDataUrl(payload.host, typeof payload.spaceId === 'string' ? payload.spaceId : '')
+  })
+  handle('favicons:peek-many', (input) => {
+    const payload = (input ?? {}) as { hosts?: unknown; spaceId?: unknown }
+    if (!Array.isArray(payload.hosts)) return {}
+    const hosts = payload.hosts
+      .filter((host): host is string => typeof host === 'string')
+      .slice(0, 200)
+    return faviconsCachedDataUrls(
+      hosts,
+      typeof payload.spaceId === 'string' ? payload.spaceId : ''
+    )
   })
   handle('favicons:purge', () => purgeFavicons())
   handle('favicons:peek', (input) => {
