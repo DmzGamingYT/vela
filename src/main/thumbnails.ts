@@ -1,12 +1,6 @@
 import { createHash } from 'node:crypto'
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  unlinkSync,
-  writeFileSync
-} from 'node:fs'
+import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { WebContents } from 'electron'
 
@@ -58,8 +52,10 @@ export class Thumbnails {
       })
       const jpeg = resized.toJPEG(QUALITY)
       if (!jpeg.byteLength || jpeg.byteLength > MAX_BYTES) return false
-      mkdirSync(thumbnailDir(this.dir), { recursive: true })
-      writeFileSync(this.path(url), jpeg)
+      // Écriture hors du thread principal : la fermeture d'un onglet ne doit
+      // pas attendre le disque, même pour 90 ko.
+      await mkdir(thumbnailDir(this.dir), { recursive: true })
+      await writeFile(this.path(url), jpeg)
       return true
     } catch {
       return false

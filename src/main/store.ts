@@ -9,6 +9,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { join } from 'node:path'
+import { rename as renameAsync, unlink as unlinkAsync, writeFile } from 'node:fs/promises'
 import { safeStorage } from 'electron'
 import {
   migrateBookmarkOrder,
@@ -470,6 +471,8 @@ export class Store {
   private timer: NodeJS.Timeout | null = null
   /** Dernier contenu écrit : évite de réécrire le même fichier inutilement. */
   private lastPayload: string | null = null
+  /** Numéro de l'écriture la plus récente ; invalide les écritures dépassées. */
+  private writeGeneration = 0
 
   constructor(dir: string) {
     this.dir = dir
@@ -647,7 +650,47 @@ export class Store {
 
   schedule(): void {
     if (this.timer) clearTimeout(this.timer)
-    this.timer = setTimeout(() => this.flush(), 800)
+    this.timer = setTimeout(() => void this.flushAsync(), 800)
+  }
+
+  /** Contenu à écrire, ou null quand l'état n'est pas sérialisable. */
+  private payload(): string | null {
+    try {
+      return JSON.stringify(this.state)
+    } catch (error) {
+      console.error('[vela] état non sérialisable', error)
+      return null
+    }
+  }
+
+  /**
+   * Écriture différée, hors du thread principal : une navigation ou une frappe
+   * ne paie plus la sérialisation sur le disque. `flush()` reste synchrone
+   * pour la fermeture, où il faut avoir fini avant que le processus quitte.
+   */
+  async flushAsync(): Promise<void> {
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = null
+    }
+    const payload = this.payload()
+    if (payload === null || payload === this.lastPayload) return
+    // Chaque écriture porte son numéro : une plus récente (ou la fermeture
+    // synchrone) invalide celle-ci, qui n'écrase alors rien.
+    const generation = ++this.writeGeneration
+    const tmp = `${this.file}.${generation}.tmp`
+    try {
+      await writeFile(tmp, payload, 'utf8')
+      if (generation !== this.writeGeneration) {
+        await unlinkAsync(tmp).catch(() => undefined)
+        return
+      }
+      await renameAsync(tmp, this.file)
+      this.lastPayload = payload
+    } catch (error) {
+      console.error('[vela] sauvegarde impossible', error)
+      await unlinkAsync(tmp).catch(() => undefined)
+    }
   }
 
   flush(): void {
@@ -658,14 +701,9 @@ export class Store {
     // Une navigation programme une sauvegarde, mais peu de choses changent :
     // réécrire le même JSON toutes les 800 ms bloquait le processus principal
     // pour rien. On ne touche au disque que si le contenu a bougé.
-    let payload: string
-    try {
-      payload = JSON.stringify(this.state)
-    } catch (error) {
-      console.error('[vela] état non sérialisable', error)
-      return
-    }
-    if (payload === this.lastPayload) return
+    const payload = this.payload()
+    if (payload === null || payload === this.lastPayload) return
+    this.writeGeneration += 1
     const tmp = `${this.file}.tmp`
     try {
       writeFileSync(tmp, payload, 'utf8')

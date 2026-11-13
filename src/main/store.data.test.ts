@@ -173,3 +173,41 @@ describe('plafond des cartes du tunnel', () => {
     expect(store.listTunnelMaps()).toHaveLength(TUNNEL_MAP_LIMIT)
   })
 })
+
+describe('sauvegarde différée', () => {
+  it('écrit le même état qu’une sauvegarde synchrone, sans bloquer l’appel', async () => {
+    const dir = tempDir()
+    const store = new Store(dir)
+    store.update((state) => {
+      state.settings.theme = 'dark'
+    })
+
+    // La promesse rend la main avant l'écriture : on l'attend explicitement.
+    await store.flushAsync()
+
+    const saved = JSON.parse(readFileSync(join(dir, 'vela.json'), 'utf8')) as {
+      settings: { theme: string }
+    }
+    expect(saved.settings.theme).toBe('dark')
+  })
+
+  it('n’écrase pas une écriture plus récente avec un contenu périmé', async () => {
+    const dir = tempDir()
+    const store = new Store(dir)
+    store.update((state) => {
+      state.settings.theme = 'dark'
+    })
+    const ancienne = store.flushAsync()
+
+    store.update((state) => {
+      state.settings.theme = 'light'
+    })
+    const recente = store.flushAsync()
+    await Promise.all([ancienne, recente])
+
+    const saved = JSON.parse(readFileSync(join(dir, 'vela.json'), 'utf8')) as {
+      settings: { theme: string }
+    }
+    expect(saved.settings.theme).toBe('light')
+  })
+})
