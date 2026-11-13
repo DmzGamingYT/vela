@@ -13,7 +13,9 @@ const VISIBLE_FAVORITES = 11
  * dans leur ordre, et renvoie vers la liste complète quand il y en a trop.
  */
 export default function HomeFavorites({ spaceId }: { spaceId: string }) {
-  const view = useBrowser((state) => state.view)
+  // Seule la liste des favoris compte ici : un changement d'onglet ou
+  // d'historique ne redessine plus la rangée.
+  const bookmarksAll = useBrowser((state) => state.view?.bookmarks)
   const newTab = useBrowser((state) => state.newTab)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const [collapsed, setCollapsed] = useState(() => {
@@ -24,9 +26,9 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
     }
   })
 
-  if (!view) return null
+  if (!bookmarksAll) return null
 
-  const bookmarks = view.bookmarks.filter((entry) => /^https?:/i.test(entry.url))
+  const bookmarks = bookmarksAll.filter((entry) => /^https?:/i.test(entry.url))
   const visible = bookmarks.slice(0, VISIBLE_FAVORITES)
   const hidden = bookmarks.length - visible.length
   const empty = bookmarks.length === 0

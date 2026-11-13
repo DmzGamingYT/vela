@@ -137,6 +137,12 @@ export class Browser {
   private downloads: DownloadItem[] = []
   private trackedSessions = new Set<string>()
   private agentSentTabIds = new Set<string>()
+  /**
+   * Dernière vue émise par onglet. La coque la reçoit à chaque diffusion ;
+   * rendre le même objet quand rien n'a bougé lui permet de comparer par
+   * identité au lieu de resérialiser et de redessiner chaque ligne.
+   */
+  private tabViews = new Map<string, TabView>()
   private agentSentTimer: NodeJS.Timeout | null = null
   private broadcastTimer: NodeJS.Timeout | null = null
   private sweepTimer: NodeJS.Timeout | null = null
@@ -662,17 +668,48 @@ export class Browser {
     return { live: live.size, processes: processes.slice(0, 60) }
   }
 
+  /**
+   * Même référence tant que la vue d'un onglet est identique champ par champ
+   * (tous scalaires) : `stableView` cesse de la sérialiser à chaque diffusion,
+   * et `memo(TabRow)` peut retenir la ligne.
+   */
+  private stableTabView(next: TabView): TabView {
+    const known = this.tabViews.get(next.id)
+    if (known) {
+      const keys = Object.keys(next) as (keyof TabView)[]
+      if (keys.length === Object.keys(known).length) {
+        let same = true
+        for (const key of keys) {
+          if (known[key] !== next[key]) {
+            same = false
+            break
+          }
+        }
+        if (same) return known
+      }
+    }
+    this.tabViews.set(next.id, next)
+    return next
+  }
+
   view(): AppView {
     const state = this.store.get()
     const activeTabId = state.activeTabBySpace[state.activeSpaceId] ?? ''
     const candidate = state.split ? (state.secondTabBySpace[state.activeSpaceId] ?? null) : null
     const secondTabId =
       candidate && state.tabs.some((tab) => tab.id === candidate) ? candidate : null
-    const tabs: TabView[] = state.tabs.map((tab) => ({
-      ...tab,
-      ...this.tabs.runtimeOf(tab.id),
-      agentSent: this.agentSentTabIds.has(tab.id)
-    }))
+    const tabs: TabView[] = state.tabs.map((tab) =>
+      this.stableTabView({
+        ...tab,
+        ...this.tabs.runtimeOf(tab.id),
+        agentSent: this.agentSentTabIds.has(tab.id)
+      })
+    )
+    // Un onglet fermé ne doit pas garder sa vue en mémoire.
+    if (this.tabViews.size > tabs.length) {
+      const live = new Set(tabs.map((tab) => tab.id))
+      for (const id of this.tabViews.keys()) if (!live.has(id)) this.tabViews.delete(id)
+    }
     const blockedTotal = this.tabs.blockedTotal()
 
     return {

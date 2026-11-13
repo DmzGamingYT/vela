@@ -15,6 +15,7 @@ import { Icon, type IconName } from '../Icon'
 import TabContextMenu from '../tabs/TabContextMenu'
 import TabRow from '../tabs/TabRow'
 import PinnedTabTile from '../tabs/PinnedTabTile'
+import { bindTabGestures } from '../tabs/tabGestures'
 import TileMenu, { type TileMenuItem } from '../tabs/TileMenu'
 import TunnelSidebar from '../tunnel/TunnelSidebar'
 import SpaceAvatar from '../space/SpaceAvatar'
@@ -73,8 +74,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const sessionCount = useSessionCount()
-  const selectTab = useBrowser((state) => state.selectTab)
-  const toggleMute = useBrowser((state) => state.toggleMute)
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const workMode = useBrowser((state) => state.workMode)
   const newTab = useBrowser((state) => state.newTab)
@@ -102,7 +101,10 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     null
   )
   // Dernier dossier supprimé : ⌘Z et le bouton du toast le remettent en place.
-  const lastDeletedGroup = useRef<{
+  // État et non référence : le menu d'un dossier construit ses entrées pendant
+  // le rendu, et une fonction qui lit une référence y était refusée par la
+  // règle `react-hooks/refs`.
+  const [lastDeletedGroup, setLastDeletedGroup] = useState<{
     name: string
     color: string
     icon?: string
@@ -242,6 +244,46 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     }
   })
 
+  // Gestes du rendu courant, publiés sous une identité stable : sans cela
+  // chaque ligne recevait des fonctions neuves et `memo(TabRow)` ne retenait
+  // jamais rien — huit rendus de ligne par diffusion d'état.
+  //
+  // L'ordre est volontaire : les gestes se définissent plus bas, avec la vue
+  // (espace courant, onglets épinglés) ; ce pont doit rester avant le retour
+  // anticipé pour être appelé à chaque rendu. Le corps ne s'exécute que si la
+  // vue existe, donc après l'initialisation de tout ce qu'il lit.
+  /* eslint-disable react-hooks/immutability */
+  useEffect(() => {
+    // Les gestes n'existent qu'avec une vue : le retour anticipé ci-dessous
+    // laisse leurs définitions non initialisées.
+    if (!view) return
+    bindTabGestures({
+      startDrag: (event, tab) => {
+        hideTip()
+        beginDrag(event, tab)
+      },
+      endDrag,
+      overTab,
+      dropOnTab,
+      overTile,
+      dropOnTile,
+      openMenu: (event, tab) => {
+        event.preventDefault()
+        event.stopPropagation()
+        const rect = event.currentTarget.getBoundingClientRect()
+        openTabMenu(tab, event.clientX, event.clientY, false, rect)
+      },
+      keyTile: (event, tab) => {
+        moveTile(event, tab, pinned)
+        if (event.defaultPrevented) return
+        if (!menuKey(event)) return
+        const rect = event.currentTarget.getBoundingClientRect()
+        openTabMenu(tab, rect.left, rect.bottom, true, rect)
+      }
+    })
+  })
+  /* eslint-enable react-hooks/immutability */
+
   if (!view) {
     return (
       <aside
@@ -359,7 +401,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     return Boolean(source && source.id !== target.id)
   }
 
-  const overTab = (event: DragEvent<HTMLDivElement>, tab: TabView): void => {
+  const overTab = (event: DragEvent<HTMLElement>, tab: TabView): void => {
     if (!canDropOnTab(tab)) return
     event.preventDefault()
     event.stopPropagation()
@@ -372,7 +414,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     })
   }
 
-  const dropOnTab = (event: DragEvent<HTMLDivElement>, tab: TabView): void => {
+  const dropOnTab = (event: DragEvent<HTMLElement>, tab: TabView): void => {
     if (!canDropOnTab(tab)) return
     event.preventDefault()
     event.stopPropagation()
@@ -712,9 +754,9 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     unpinned.filter((tab) => tab.groupId === group.id)
 
   const undoGroupDelete = async (): Promise<void> => {
-    const saved = lastDeletedGroup.current
+    const saved = lastDeletedGroup
     if (!saved) return
-    lastDeletedGroup.current = null
+    setLastDeletedGroup(null)
     const group = await createGroup()
     if (!group) return
     await updateGroup(group.id, {
@@ -737,14 +779,14 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       icon: group.icon,
       tabIds: groupTabsOf(group).map((tab) => tab.id)
     }
-    lastDeletedGroup.current = saved
+    setLastDeletedGroup(saved)
     void removeGroup(group.id)
     toast(`Dossier « ${group.name} » supprimé`, 'info', {
       label: 'Annuler',
       run: () => void undoGroupDelete()
     }, 8000)
     window.setTimeout(() => {
-      if (lastDeletedGroup.current === saved) lastDeletedGroup.current = null
+      setLastDeletedGroup((current) => (current === saved ? null : current))
     }, 8000)
   }
 
@@ -840,10 +882,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       secondary={view.split && tab.id === view.secondTabId}
       dragging={draggingId === tab.id}
       dropEdge={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
-      onDragStart={beginDrag}
-      onDragEnd={endDrag}
-      onDragOver={overTab}
-      onDrop={dropOnTab}
     />
   )
 
@@ -860,7 +898,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       style={{ '--space': 'var(--space-color)' } as CSSProperties}
     >
       <UndoGroupShortcut
-        hasDeleted={() => lastDeletedGroup.current !== null}
+        hasDeleted={() => lastDeletedGroup !== null}
         undo={undoGroupDelete}
       />
       <SidebarHeader />
@@ -978,33 +1016,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                     secondary={Boolean(view.split && tab.id === view.secondTabId)}
                     dragging={draggingId === tab.id}
                     drop={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
-                    onActivate={() => selectTab(tab.id)}
-                    onToggleMute={() => toggleMute(tab.id, !tab.muted)}
-                    onContextMenu={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      openTabMenu(
-                        tab,
-                        event.clientX,
-                        event.clientY,
-                        false,
-                        event.currentTarget.getBoundingClientRect()
-                      )
-                    }}
-                    onDragStart={(event) => {
-                      hideTip()
-                      beginDrag(event, tab)
-                    }}
-                    onDragEnd={endDrag}
-                    onDragOver={(event) => overTile(event, tab)}
-                    onDrop={(event) => dropOnTile(event, tab)}
-                    onKeyDown={(event) => {
-                      moveTile(event, tab, pinned)
-                      if (event.defaultPrevented) return
-                      if (!menuKey(event)) return
-                      const rect = event.currentTarget.getBoundingClientRect()
-                      openTabMenu(tab, rect.left, rect.bottom, true, rect)
-                    }}
                   />
                 ))}
                 {/* Un emplacement vide reste un emplacement : au survol, un

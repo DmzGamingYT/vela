@@ -53,6 +53,7 @@ export default function App() {
 
   useEffect(() => {
     void useBrowser.getState().init()
+    return () => useBrowser.getState().disposeSubscriptions()
   }, [])
 
   // Préchargement pendant un temps mort : le châssis est déjà peint quand le

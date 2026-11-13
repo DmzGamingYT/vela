@@ -155,16 +155,21 @@ function RailButton({
  * latérale. Le rail réserve sa bande par `.workspace[data-rail]`.
  */
 export default function ReadingRail() {
-  const view = useBrowser((state) => state.view)
+  // Quatre tranches au lieu de l'objet `view` : le rail ne suit que la page
+  // active, son partage et les exemptions du bouclier.
+  const tabs = useBrowser((state) => state.view?.tabs)
+  const activeTabId = useBrowser((state) => state.view?.activeTabId)
+  const split = useBrowser((state) => state.view?.split)
+  const exemptions = useBrowser((state) => state.view?.privacyExemptions)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
   const splitToggle = useBrowser((state) => state.splitToggle)
 
-  const tab = view?.tabs.find((item) => item.id === view.activeTabId)
-  if (!view || !tab || isHomeUrl(tab.url)) return null
+  const tab = tabs?.find((item) => item.id === activeTabId)
+  if (!tabs || !tab || isHomeUrl(tab.url)) return null
 
   const host = hostOf(tab.url)
-  const exempt = view.privacyExemptions.includes(host)
+  const exempt = exemptions?.includes(host) ?? false
   const blocked = tab.blocked
 
   return (
@@ -185,7 +190,7 @@ export default function ReadingRail() {
         tip="Vue scindée"
         keys={shortcut('⇧D')}
         icon="split"
-        active={view.split}
+        active={split}
         onClick={() => splitToggle()}
       />
       <span className="rr-sep" aria-hidden="true" />

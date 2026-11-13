@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import type { DragEvent } from 'react'
+import { memo, useState } from 'react'
 import type { TabView } from '@shared/types'
 import { hostOf, isHomeUrl, prettyUrl } from '@shared/url'
 import { initials, tintFor } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 import TabContextMenu from './TabContextMenu'
+import { tabGestures } from './tabGestures'
 
 interface TabRowProps {
   tab: TabView
@@ -13,29 +13,17 @@ interface TabRowProps {
   secondary: boolean
   dragging: boolean
   dropEdge: 'before' | 'after' | null
-  onDragStart: (event: DragEvent<HTMLDivElement>, tab: TabView) => void
-  onDragEnd: () => void
-  onDragOver: (event: DragEvent<HTMLDivElement>, tab: TabView) => void
-  onDrop: (event: DragEvent<HTMLDivElement>, tab: TabView) => void
 }
 
-export default function TabRow({
-  tab,
-  active,
-  secondary,
-  dragging,
-  dropEdge,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop
-}: TabRowProps) {
+function TabRow({ tab, active, secondary, dragging, dropEdge }: TabRowProps) {
   const selectTab = useBrowser((state) => state.selectTab)
   const closeTab = useBrowser((state) => state.closeTab)
   const pin = useBrowser((state) => state.pin)
   const splitWith = useBrowser((state) => state.splitWith)
   const toggleMute = useBrowser((state) => state.toggleMute)
-  const [broken, setBroken] = useState(false)
+  // L'adresse fautive, pas un simple drapeau : une page qui publie ensuite une
+  // icône valide retrouve donc son image, au lieu de garder ses initiales.
+  const [brokenSrc, setBrokenSrc] = useState<string | null>(null)
   // Menu contextuel : clic droit sur la ligne, comme dans un navigateur.
   const [menu, setMenu] = useState<{ x: number; y: number; keyboard: boolean } | null>(null)
 
@@ -78,14 +66,19 @@ export default function TabRow({
           setMenu({ x: rect.left + 12, y: rect.bottom, keyboard: true })
         }
       }}
-      onDragStart={(event) => onDragStart(event, tab)}
-      onDragEnd={onDragEnd}
-      onDragOver={(event) => onDragOver(event, tab)}
-      onDrop={(event) => onDrop(event, tab)}
+      onDragStart={(event) => tabGestures.startDrag(event, tab)}
+      onDragEnd={tabGestures.endDrag}
+      onDragOver={(event) => tabGestures.overTab(event, tab)}
+      onDrop={(event) => tabGestures.dropOnTab(event, tab)}
     >
       <span className="tab-icon" style={{ color: tint, background: `${tint}1c` }}>
-        {tab.favicon && !broken ? (
-          <img src={tab.favicon} alt="" onError={() => setBroken(true)} draggable={false} />
+        {tab.favicon && tab.favicon !== brokenSrc ? (
+          <img
+            src={tab.favicon}
+            alt=""
+            onError={() => setBrokenSrc(tab.favicon ?? null)}
+            draggable={false}
+          />
         ) : (
           <span aria-hidden="true">
             {home ? <Icon name="home" size={13} /> : initials(tab.title || host)}
@@ -188,3 +181,6 @@ export default function TabRow({
     </div>
   )
 }
+
+/** Mémoïsé : l'identité de `tab` est stable côté principal, ses gestes ici. */
+export default memo(TabRow)

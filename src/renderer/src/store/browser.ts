@@ -27,6 +27,16 @@ export type { AgentStep, AgentUi, Overlay, Toast, WorkMode } from './types'
  * quand rien de ce qu'il affiche n'avait changé (une page qui charge produit
  * plusieurs diffusions par seconde). On garde la référence précédente des
  * parties identiques, et React s'arrête là.
+ *
+ * Le même objet `view` est rendu quand **aucune** partie n'a changé : sans
+ * cela, les vingt-cinq sélecteurs `state => state.view` (barre latérale,
+ * espace de travail, barre d'adresse, accueil…) se redessinaient à chaque
+ * diffusion — y compris celles qui ne portaient aucune différence — avec tout
+ * leur sous-arbre (onglets, favoris, cartes d'historique).
+ *
+ * Le coût de la comparaison est borné : une partie identique par référence
+ * n'est jamais sérialisée, et seules les parties qui ont réellement bougé
+ * passent par `JSON.stringify`.
  */
 let previousView: AppView | null = null
 let previousPrints = new Map<string, string>()
@@ -39,16 +49,38 @@ function stableView(next: AppView): AppView {
     )
     return next
   }
-  const merged: Record<string, unknown> = { ...next }
+  const previous = previousView
+  // La boucle reconstruit l'objet à partir des clés de `next` : une partie
+  // apparue est prise telle quelle, une partie retirée disparaît d'elle-même.
+  const keys = Object.keys(next) as (keyof AppView)[]
+  const merged: Record<string, unknown> = {}
   const prints = new Map<string, string>()
-  for (const key of Object.keys(next)) {
-    const print = JSON.stringify(next[key as keyof AppView])
+  let changed = false
+  for (const key of keys) {
+    const value = next[key]
+    const old = previous[key]
+    // Même référence : rien à comparer, rien à sérialiser.
+    if (value === old) {
+      merged[key] = old
+      const print = previousPrints.get(key)
+      if (print !== undefined) prints.set(key, print)
+      continue
+    }
+    // Référence différente : on ne sérialise que cette partie.
+    const print = JSON.stringify(value)
     prints.set(key, print)
-    if (previousPrints.get(key) === print) merged[key] = previousView[key as keyof AppView]
+    if (previousPrints.get(key) === print) merged[key] = old
+    else {
+      merged[key] = value
+      changed = true
+    }
   }
-  previousView = merged as unknown as AppView
+  // Aucune partie n'a changé : on rend l'objet précédent, React s'arrête là.
+  if (!changed) return previous
+  const view = merged as unknown as AppView
+  previousView = view
   previousPrints = prints
-  return previousView
+  return view
 }
 
 /** Sortie d'un toast : `--dur-2` dans la feuille, plus une image de marge. */
@@ -62,6 +94,23 @@ function cleanError(error: unknown, fallback: string): string {
       .replace(/^Error:\s*/, '')
       .trim() || fallback
   )
+}
+
+/**
+ * Abonnements IPC de la coque. Le preload renvoie un désabonnement pour
+ * chacun : les garder permet de les retirer au démontage (HMR, tests) au lieu
+ * d'empiler un écouteur de plus à chaque remontage.
+ */
+let appDisposers: (() => void)[] = []
+let subscriptionsDisposed = false
+
+function track(unsubscribe: (() => void) | void): void {
+  // Un pont de test ou une version antérieure du preload peut ne rien rendre.
+  if (typeof unsubscribe !== 'function') return
+  // Un démontage survenu pendant l'initialisation asynchrone : on retire tout
+  // de suite, sinon l'écouteur survivrait à la surface qui l'a demandé.
+  if (subscriptionsDisposed) unsubscribe()
+  else appDisposers.push(unsubscribe)
 }
 
 /** Coque de l'application : chargement, pont, toasts et raccourcis. */
@@ -109,6 +158,8 @@ export interface CoreSlice {
   /** Repli/dépli explicite : annule la restauration automatique. */
   toggleSidebar(): void
   init(): Promise<void>
+  /** Retire les abonnements IPC posés par `init` (démontage, HMR, tests). */
+  disposeSubscriptions(): void
   call<T>(task: () => Promise<T>, fallback: string): Promise<T | null>
   toast(text: string, tone?: Toast['tone'], action?: Toast['action'], duration?: number): void
   dismissToast(id: string): void
@@ -227,6 +278,7 @@ function createCoreSlice(
     async init() {
       if (get().initialized) return
       set({ initialized: true })
+      subscriptionsDisposed = false
       if (!window.vela) {
         get().toast('Le pont Vela est indisponible.', 'error')
         return
@@ -237,34 +289,46 @@ function createCoreSlice(
       } catch (error) {
         get().toast(cleanError(error, 'Impossible de charger Vela.'), 'error')
       }
-      window.vela.onState((incoming) =>
-        set((state) => ({
-          view: stableView(incoming),
-          splitRatioLive:
-            state.splitRatioLive !== null &&
-            Math.abs(incoming.splitRatio - state.splitRatioLive) < 0.002
-              ? null
-              : state.splitRatioLive
-        }))
+      track(
+        window.vela.onState((incoming) =>
+          set((state) => ({
+            view: stableView(incoming),
+            splitRatioLive:
+              state.splitRatioLive !== null &&
+              Math.abs(incoming.splitRatio - state.splitRatioLive) < 0.002
+                ? null
+                : state.splitRatioLive
+          }))
+        )
       )
-      window.vela.onShortcut((event) => get().handleShortcut(event))
-      window.vela.agent.onEvent((event) => get().handleAgentEvent(event))
-      window.vela.selection.onSelect((payload) => get().handleSelection(payload))
+      track(window.vela.onShortcut((event) => get().handleShortcut(event)))
+      track(window.vela.agent.onEvent((event) => get().handleAgentEvent(event)))
+      track(window.vela.selection.onSelect((payload) => get().handleSelection(payload)))
       try {
         const status = await window.vela.updates.status()
         set({ update: status })
       } catch {
         /* mises à jour indisponibles en dev */
       }
-      window.vela.updates.onEvent((info) => {
-        set({ update: info })
-        // Silencieux pendant la préparation : la barre d'état suit la progression.
-        if (info.state === 'downloaded') {
-          get().toast(updateReadyMessage(info, window.vela.platform))
-        } else if (info.state === 'error' && info.message) {
-          get().toast(info.message, 'error')
-        }
-      })
+      track(
+        window.vela.updates.onEvent((info) => {
+          set({ update: info })
+          // Silencieux pendant la préparation : la barre d'état suit la progression.
+          if (info.state === 'downloaded') {
+            get().toast(updateReadyMessage(info, window.vela.platform))
+          } else if (info.state === 'error' && info.message) {
+            get().toast(info.message, 'error')
+          }
+        })
+      )
+    },
+
+    disposeSubscriptions() {
+      subscriptionsDisposed = true
+      for (const unsubscribe of appDisposers) unsubscribe()
+      appDisposers = []
+      // Un remontage (HMR, test) doit pouvoir réinitialiser le pont.
+      set({ initialized: false })
     },
 
     async call(task, fallback) {

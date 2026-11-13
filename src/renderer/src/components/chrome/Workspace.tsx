@@ -120,6 +120,9 @@ export default function Workspace() {
 
   const panesRef = useRef<HTMLDivElement>(null)
   const resizingRef = useRef(false)
+  // Fin du glissement en cours, à appeler au démontage : les écouteurs sont
+  // posés dans un gestionnaire, pas dans un effet.
+  const dragCleanup = useRef<(() => void) | null>(null)
   const [resizing, setResizing] = useState(false)
   const [shots, setShots] = useState<Record<string, string>>({})
   // Épreuves des pages pendant qu'un menu, une feuille ou un popover couvre la
@@ -144,6 +147,7 @@ export default function Workspace() {
   useEffect(
     () => () => {
       if (findDebounce.current) clearTimeout(findDebounce.current)
+      dragCleanup.current?.()
     },
     []
   )
@@ -207,12 +211,17 @@ export default function Workspace() {
     window.vela.views.layout({ panes, overlay: false, splitFits })
   }, [])
 
+  // La mesure possède ses ressources une seule fois. Elle était détruite puis
+  // réinstallée à chaque changement d'onglet, d'overlay ou d'erreur — vingt
+  // dépendances — avec un `views.layout` complet à chaque fois.
+  const scheduleRef = useRef<() => void>(() => undefined)
   useEffect(() => {
     let frame = 0
-    const schedule = () => {
+    const schedule = (): void => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(sendLayout)
     }
+    scheduleRef.current = schedule
     schedule()
     const observer = new ResizeObserver(() => {
       const width = panesRef.current?.clientWidth ?? 0
@@ -226,8 +235,12 @@ export default function Workspace() {
       observer.disconnect()
       window.removeEventListener('resize', schedule)
     }
+  }, [sendLayout])
+
+  // Seule la replanification dépend de ce qui est affiché.
+  useEffect(() => {
+    scheduleRef.current()
   }, [
-    sendLayout,
     view?.activeTabId,
     view?.secondTabId,
     view?.split,
@@ -321,23 +334,30 @@ export default function Workspace() {
       pendingX = moveEvent.clientX
       if (!frame) frame = requestAnimationFrame(paint)
     }
-    const up = (upEvent: PointerEvent): void => {
+    const finish = (clientX: number): void => {
       finished = true
       clearTimeout(guard)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      dragCleanup.current = null
       if (frame) cancelAnimationFrame(frame)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
       resizingRef.current = false
       // Le ratio final part avant l’état : la coque ne réaffiche pas l’ancien
       // partage le temps que le processus principal confirme.
-      commitSplitRatio(apply(upEvent.clientX))
+      commitSplitRatio(apply(clientX))
       setResizing(false)
       setShots({})
     }
+    const up = (upEvent: PointerEvent): void => finish(upEvent.clientX)
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    // Un démontage en plein glissement (onglet fermé, overlay ouvert) retire
+    // les deux écouteurs au lieu de les laisser sur `window`.
+    dragCleanup.current = () => finish(pendingX)
   }
 
   if (workMode === 'work') {

@@ -19,7 +19,9 @@ import { Icon } from '../Icon'
  * letterboxd.com uniquement — c'est le flux `letterboxd-journal` de l'audit.
  */
 export default function WatchlistCard({ spaceId }: { spaceId: string }) {
-  const view = useBrowser((state) => state.view)
+  // Seule la liste des profils compte : les onglets et l'historique ne font
+  // plus redessiner la carte.
+  const spaces = useBrowser((state) => state.view?.spaces)
   const updateSpace = useBrowser((state) => state.updateSpace)
   const navigate = useBrowser((state) => state.navigate)
   const newTab = useBrowser((state) => state.newTab)
@@ -29,7 +31,7 @@ export default function WatchlistCard({ spaceId }: { spaceId: string }) {
   const [importing, setImporting] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const space = view?.spaces.find((item) => item.id === spaceId)
+  const space = spaces?.find((item) => item.id === spaceId)
   const items = useMemo(() => sanitizeWatchlist(space?.watchItems), [space?.watchItems])
   if (!space) return null
 

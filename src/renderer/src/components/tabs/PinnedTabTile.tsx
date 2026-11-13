@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { memo, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import type { TabView } from '@shared/types'
 import { displayTitle, hostOf, titleBadge } from '@shared/url'
+import { useBrowser } from '../../store/browser'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
+import { tabGestures } from './tabGestures'
 
 export interface PinnedTabTileProps {
   tab: TabView
@@ -12,14 +13,6 @@ export interface PinnedTabTileProps {
   secondary?: boolean
   dragging?: boolean
   drop?: 'before' | 'after' | null
-  onActivate: () => void
-  onToggleMute: () => void
-  onContextMenu: (event: MouseEvent<HTMLElement>) => void
-  onDragStart: (event: DragEvent<HTMLElement>) => void
-  onDragEnd: () => void
-  onDragOver: (event: DragEvent<HTMLElement>) => void
-  onDrop: (event: DragEvent<HTMLElement>) => void
-  onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
 }
 
 /**
@@ -28,25 +21,21 @@ export interface PinnedTabTileProps {
  * son ne doit jamais activer l'onglet. L'infobulle est portée dans `body` pour
  * échapper au défilement de la barre latérale.
  */
-export default function PinnedTabTile({
+function PinnedTabTile({
   tab,
   active,
   secondary = false,
   dragging = false,
-  drop = null,
-  onActivate,
-  onToggleMute,
-  onContextMenu,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
-  onKeyDown
+  drop = null
 }: PinnedTabTileProps) {
   const [tipOpen, setTipOpen] = useState(false)
   const [tipAt, setTipAt] = useState({ x: 0, y: 0 })
   const main = useRef<HTMLButtonElement>(null)
   const tipId = useId()
+  // Activation et son sont des actions du store : lues ici plutôt que reçues en
+  // props, elles ne cassent plus la mémoïsation de la tuile.
+  const selectTab = useBrowser((state) => state.selectTab)
+  const toggleMute = useBrowser((state) => state.toggleMute)
 
   const title = displayTitle(tab.title) || hostOf(tab.url) || 'Page'
   const host = hostOf(tab.url)
@@ -107,12 +96,15 @@ export default function PinnedTabTile({
       }}
       onContextMenu={(event) => {
         setTipOpen(false)
-        onContextMenu(event)
+        tabGestures.openMenu(event, tab)
       }}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDragStart={(event) => {
+        setTipOpen(false)
+        tabGestures.startDrag(event, tab)
+      }}
+      onDragEnd={tabGestures.endDrag}
+      onDragOver={(event) => tabGestures.overTile(event, tab)}
+      onDrop={(event) => tabGestures.dropOnTile(event, tab)}
     >
       <button
         ref={main}
@@ -121,8 +113,8 @@ export default function PinnedTabTile({
         data-tab-id={tab.id}
         aria-label={ariaLabel}
         aria-describedby={tipOpen ? tipId : undefined}
-        onClick={onActivate}
-        onKeyDown={onKeyDown}
+        onClick={() => selectTab(tab.id)}
+        onKeyDown={(event) => tabGestures.keyTile(event, tab)}
       >
         <Favicon
           src={tab.favicon}
@@ -150,7 +142,7 @@ export default function PinnedTabTile({
           title={tab.muted ? 'Rétablir le son' : 'Couper le son'}
           onClick={(event) => {
             event.stopPropagation()
-            onToggleMute()
+            toggleMute(tab.id, !tab.muted)
           }}
         >
           <span className="pin-sound-dot" aria-hidden="true">
@@ -176,3 +168,6 @@ export default function PinnedTabTile({
     </div>
   )
 }
+
+/** Mémoïsé : la tuile ne reçoit plus que des valeurs simples. */
+export default memo(PinnedTabTile)

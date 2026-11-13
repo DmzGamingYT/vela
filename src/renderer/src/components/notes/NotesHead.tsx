@@ -34,19 +34,32 @@ export default function NotesHead({
           event.preventDefault()
           const startX = event.clientX
           const startWidth = width
+          let pending = startWidth
+          let frame = 0
+          // Une écriture par image : chaque pas du pointeur redessinait tout le
+          // tiroir (liste, éditeur, aperçu Markdown) deux à trois fois de trop.
+          const paint = (): void => {
+            frame = 0
+            onWidth(pending)
+          }
           const move = (moveEvent: PointerEvent): void => {
-            const next = Math.min(760, Math.max(320, startWidth + (startX - moveEvent.clientX)))
-            onWidth(next)
+            pending = Math.min(760, Math.max(320, startWidth + (startX - moveEvent.clientX)))
+            if (!frame) frame = requestAnimationFrame(paint)
           }
           const up = (): void => {
+            if (frame) cancelAnimationFrame(frame)
             window.removeEventListener('pointermove', move)
             window.removeEventListener('pointerup', up)
+            // Un geste interrompu par le système ne doit pas laisser les deux
+            // écouteurs accrochés à `window`.
+            window.removeEventListener('pointercancel', up)
             document.body.style.cursor = ''
             onCommitWidth()
           }
           document.body.style.cursor = 'col-resize'
           window.addEventListener('pointermove', move)
           window.addEventListener('pointerup', up)
+          window.addEventListener('pointercancel', up)
         }}
       />
 

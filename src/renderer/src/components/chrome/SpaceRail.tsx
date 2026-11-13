@@ -16,7 +16,13 @@ import SpaceAvatar from '../space/SpaceAvatar'
  * l’espace actif, posé sur le bord extérieur, n’est plus rogné.
  */
 export default function SpaceRail() {
-  const view = useBrowser((state) => state.view)
+  // Trois tranches plutôt que l'objet `view` entier : le rail ne se redessine
+  // plus quand seuls les onglets ou l'historique ont bougé.
+  const spaces = useBrowser((state) => state.view?.spaces)
+  const activeSpaceId = useBrowser((state) => state.view?.activeSpaceId)
+  const sidebarCollapsed = useBrowser(
+    (state) => state.view?.settings.sidebarCollapsed ?? false
+  )
   const workMode = useBrowser((state) => state.workMode)
   const setWorkMode = useBrowser((state) => state.setWorkMode)
   const activateSpace = useBrowser((state) => state.activateSpace)
@@ -27,7 +33,7 @@ export default function SpaceRail() {
 
   const settingsTitle = `Réglages (${shortcut(APP_SHORTCUTS.settings.key)})`
 
-  if (!view) return <aside className="rail" aria-label="Profils" />
+  if (!spaces) return <aside className="rail" aria-label="Profils" />
 
   return (
     <aside className="rail" aria-label="Profils">
@@ -39,9 +45,9 @@ export default function SpaceRail() {
         <button
           type="button"
           className="rail-ghost"
-          aria-expanded={!view.settings.sidebarCollapsed}
+          aria-expanded={!sidebarCollapsed}
           onClick={() => toggleSidebar()}
-          title={`${view.settings.sidebarCollapsed ? 'Afficher' : 'Replier'} la barre latérale (${shortcut('S')})`}
+          title={`${sidebarCollapsed ? 'Afficher' : 'Replier'} la barre latérale (${shortcut('S')})`}
         >
           <Icon name="panel" size={17} />
         </button>
@@ -75,8 +81,8 @@ export default function SpaceRail() {
       </div>
 
       <div className="rail-spaces">
-        {view.spaces.map((space) => {
-          const active = space.id === view.activeSpaceId
+        {spaces.map((space) => {
+          const active = space.id === activeSpaceId
           return (
             <button
               key={space.id}

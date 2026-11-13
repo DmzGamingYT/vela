@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TabView } from '@shared/types'
+import { useBrowser } from '../../store/browser'
 import PinnedTabTile from './PinnedTabTile'
 
 afterEach(cleanup)
@@ -29,18 +30,12 @@ const tab = (over: Partial<TabView> = {}): TabView => ({
 })
 
 function setup(over: Partial<TabView> = {}, active = false) {
-  const handlers = {
-    onActivate: vi.fn(),
-    onToggleMute: vi.fn(),
-    onContextMenu: vi.fn(),
-    onDragStart: vi.fn(),
-    onDragEnd: vi.fn(),
-    onDragOver: vi.fn(),
-    onDrop: vi.fn(),
-    onKeyDown: vi.fn()
-  }
-  const view = render(<PinnedTabTile tab={tab(over)} active={active} {...handlers} />)
-  return { ...handlers, container: view.container }
+  // La tuile lit ses actions du store : on les remplace par des espions.
+  const selectTab = vi.fn()
+  const toggleMute = vi.fn()
+  useBrowser.setState({ selectTab, toggleMute })
+  const view = render(<PinnedTabTile tab={tab(over)} active={active} />)
+  return { selectTab, toggleMute, container: view.container }
 }
 
 describe('tuile d’onglet épinglé', () => {
@@ -87,10 +82,10 @@ describe('tuile d’onglet épinglé', () => {
   })
 
   it('coupe le son sans activer l’onglet', () => {
-    const { onActivate, onToggleMute } = setup({ audible: true })
+    const { selectTab, toggleMute } = setup({ audible: true })
     fireEvent.click(screen.getByRole('button', { name: 'Son en cours' }))
-    expect(onToggleMute).toHaveBeenCalledTimes(1)
-    expect(onActivate).not.toHaveBeenCalled()
+    expect(toggleMute).toHaveBeenCalledWith('tab-1', true)
+    expect(selectTab).not.toHaveBeenCalled()
   })
 
   it('montre l’infobulle au focus et la ferme avec Échap', () => {

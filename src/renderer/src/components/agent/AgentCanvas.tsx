@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { estimateAgentCost, formatUsd } from '@shared/agentCost'
 import { isLoopbackEndpoint, providerById, providerReady, providerState } from '@shared/providers'
 import type { AgentSource } from '@shared/types'
@@ -126,52 +126,69 @@ export default function AgentCanvas({
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const remember = (value: number): void => {
-    if (!spaceId) return
+  /** Espace et largeur courants, lus par les fonctions stables du glissement. */
+  const live = useRef({ spaceId, windowWidth })
+  useEffect(() => {
+    live.current = { spaceId, windowWidth }
+  }, [spaceId, windowWidth])
+
+  const remember = useCallback((value: number, space: string): void => {
+    if (!space) return
     try {
       const map = readWidths()
-      map[spaceId] = value
+      map[space] = value
       localStorage.setItem(WIDTH_KEY, JSON.stringify(map))
     } catch {
       /* stockage indisponible : la largeur vaut pour la session */
     }
-  }
+  }, [])
 
   const commit = (value: number): void => {
     const next = clampWidth(value, windowWidth)
     setWidths((current) => ({ ...current, [spaceId]: next }))
-    remember(next)
+    remember(next, spaceId)
   }
 
   // Glissement : une écriture par image au plus (≈ 60 par seconde), puis une
-  // dernière application au relâchement.
-  const onResizeMove = (event: PointerEvent): void => {
-    const drag = dragRef.current
-    if (!drag) return
-    pendingWidth.current = drag.startWidth + (drag.startX - event.clientX)
-    if (frameRef.current) return
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = 0
-      const next = clampWidth(pendingWidth.current, windowWidth)
-      setWidths((current) =>
-        current[spaceId] === next ? current : { ...current, [spaceId]: next }
-      )
-    })
-  }
-
-  const endResize = (): void => {
-    if (!dragRef.current) return
-    dragRef.current = null
-    if (frameRef.current) {
-      cancelAnimationFrame(frameRef.current)
-      frameRef.current = 0
+  // dernière application au relâchement. La paire de gestionnaires est créée
+  // **une seule fois** : elle ne lit que des références (glissement, largeur,
+  // espace), donc aucune valeur ne peut y être périmée — et
+  // `removeEventListener` retire exactement ce qui a été ajouté, là où une
+  // fonction recréée à chaque rendu ne retirait rien.
+  const [resizeHandlers] = useState(() => {
+    const handlers = {
+      move: (event: PointerEvent): void => {
+        const drag = dragRef.current
+        if (!drag) return
+        pendingWidth.current = drag.startWidth + (drag.startX - event.clientX)
+        if (frameRef.current) return
+        frameRef.current = requestAnimationFrame(() => {
+          frameRef.current = 0
+          const { windowWidth: ceiling, spaceId: space } = live.current
+          const next = clampWidth(pendingWidth.current, ceiling)
+          setWidths((current) =>
+            current[space] === next ? current : { ...current, [space]: next }
+          )
+        })
+      },
+      end: (): void => {
+        if (!dragRef.current) return
+        dragRef.current = null
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current)
+          frameRef.current = 0
+        }
+        window.removeEventListener('pointermove', handlers.move)
+        window.removeEventListener('pointerup', handlers.end)
+        window.removeEventListener('pointercancel', handlers.end)
+        const { windowWidth: ceiling, spaceId: space } = live.current
+        const next = clampWidth(pendingWidth.current, ceiling)
+        setWidths((current) => ({ ...current, [space]: next }))
+        remember(next, space)
+      }
     }
-    window.removeEventListener('pointermove', onResizeMove)
-    window.removeEventListener('pointerup', endResize)
-    const next = clampWidth(pendingWidth.current, windowWidth)
-    setWidths((current) => ({ ...current, [spaceId]: next }))
-    remember(next)
-  }
+    return handlers
+  })
 
   const startResize = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (embedded) return
@@ -180,18 +197,19 @@ export default function AgentCanvas({
     // Point de départ du glissement : sans lui, un clic sans mouvement
     // rappellerait la largeur du glissement précédent.
     pendingWidth.current = width
-    window.addEventListener('pointermove', onResizeMove)
-    window.addEventListener('pointerup', endResize)
+    window.addEventListener('pointermove', resizeHandlers.move)
+    window.addEventListener('pointerup', resizeHandlers.end)
+    window.addEventListener('pointercancel', resizeHandlers.end)
   }
 
   useEffect(
     () => () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current)
-      window.removeEventListener('pointermove', onResizeMove)
-      window.removeEventListener('pointerup', endResize)
+      window.removeEventListener('pointermove', resizeHandlers.move)
+      window.removeEventListener('pointerup', resizeHandlers.end)
+      window.removeEventListener('pointercancel', resizeHandlers.end)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [resizeHandlers]
   )
 
   // Échap arrête un agent en cours, sans fermer le panneau.
