@@ -51,6 +51,12 @@ export default defineConfig({
     },
     plugins: [react(), devWebSocket()],
     build: {
+      // electron-vite désactive la minification par défaut (main, preload et
+      // renderer). Ici la coque paie ce confort à chaque lancement : les 78
+      // tranches de styles et le bundle React pesaient 2,5 Mo à lire et
+      // parser. Minifié, `out/renderer` tombe à 1,4 Mo (JS 1,0 Mo → 487 ko,
+      // CSS 733 ko → 501 ko), sans changer une seule ligne de source.
+      minify: true,
       rollupOptions: {
         output: {
           manualChunks(id) {
