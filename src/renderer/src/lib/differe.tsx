@@ -18,10 +18,21 @@ export function differe(charger: () => Promise<{ default: ComponentType }>): {
   let module: ComponentType | null = null
   let promesse: Promise<void> | null = null
 
-  const precharger = (): Promise<void> =>
-    (promesse ??= charger().then((charge) => {
-      module = charge.default
-    }))
+  // Une tentative échouée n'est jamais retenue : le prochain appel (ou le
+  // prochain montage) relance l'import. L'échec est avalé ici pour qu'aucun
+  // appelant ne laisse une promesse rejetée non gérée ; la surface reste
+  // simplement vide, comme le repli `null` qu'elle remplace.
+  const precharger = (): Promise<void> => {
+    promesse ??= Promise.resolve()
+      .then(charger)
+      .then((charge) => {
+        module = charge.default
+      })
+      .catch(() => {
+        promesse = null
+      })
+    return promesse
+  }
 
   function Differe(): JSX.Element | null {
     const [, forcer] = useReducer((compteur: number) => compteur + 1, 0)

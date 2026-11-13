@@ -6,6 +6,22 @@ export function greeting(date = new Date()): string {
   return 'Bonsoir'
 }
 
+// Un formateur `Intl` coûte cher à construire : les listes (historique,
+// favoris) en créaient un par ligne et par rendu. Trois instances suffisent
+// pour toute l'application — elles sont immuables.
+const SHORT_DAY = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
+const SHORT_DATE = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+const WEEKDAY = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long'
+})
+
 export function timeAgo(timestamp: number, now = Date.now()): string {
   const delta = Math.max(0, now - timestamp)
   const minutes = Math.floor(delta / 60_000)
@@ -16,26 +32,15 @@ export function timeAgo(timestamp: number, now = Date.now()): string {
   const days = Math.floor(hours / 24)
   if (days === 1) return 'hier'
   if (days < 7) return `il y a ${days} j`
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-    new Date(timestamp)
-  )
+  return SHORT_DAY.format(new Date(timestamp))
 }
 
 export function shortDate(timestamp: number): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(timestamp))
+  return SHORT_DATE.format(new Date(timestamp))
 }
 
 export function weekdayLabel(timestamp: number): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  }).format(new Date(timestamp))
+  return WEEKDAY.format(new Date(timestamp))
 }
 
 export function initials(value: string): string {

@@ -8,6 +8,10 @@
  *
  * Pour ajouter du style, ouvrez la feuille du domaine concerné ; pour une
  * nouvelle passe de refonte, ajoutez une tranche en fin de liste.
+ *
+ * Toutes les tranches partent ensemble : Vela charge son interface depuis le
+ * disque, où découper le CSS ne gagne rien de mesurable, alors que chaque
+ * tranche déplacée ajoute une contrainte d'ordre dans le code des composants.
  */
 @import './styles/01-socle-jetons.css';
 @import './styles/02-lancement-rail-barre-laterale.css';
@@ -63,7 +67,6 @@
 @import './styles/52-dossiers-actions-0.4.css';
 @import './styles/53-bouclier-0.4.css';
 @import './styles/54-menu-onglet-0.4.css';
-@import './styles/55-menu-onglet-0.4.css';
 @import './styles/57-accueil-ergonomie-0.4.css';
 @import './styles/58-sombre-0.4.css';
 @import './styles/59-barre-laterale-sans-cadres-0.4.css';
@@ -84,6 +87,5 @@
 @import './styles/75-recherche-reglages.css';
 @import './styles/76-tactile-et-lisibilite.css';
 @import './styles/77-palettes-et-mouvement.css';
-
 @import './styles/78-espace-nouveau-profil.css';
 @import './styles/79-apercus-live.css';

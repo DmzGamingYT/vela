@@ -1,6 +1,11 @@
 /* Tranche 54 — menu d’un onglet.
    Les raccourcis forment une colonne : même bord droit pour tous, que la ligne
-   en porte un ou pas. */
+   en porte un ou pas.
+
+   L’ancienne tranche 55 est reprise ici, à sa place dans la cascade : elle
+   portait le même nom de fichier sans redéfinir une seule règle de celle-ci —
+   seulement la surface du menu, son survol et le rouge des actions
+   destructrices. Deux passes distinctes, donc, mais un seul sujet. */
 
 /* Le libellé prend la place restante ; les touches ne grandissent jamais.
    `(0,2,0)` passe devant `.tile-menu-item > span` (`0,1,1`). */
@@ -18,4 +23,50 @@
 /* Les touches d'une même colonne gardent la même hauteur de ligne. */
 .tile-menu-keys kbd.tile-menu-key {
   font-variant-numeric: tabular-nums;
+}
+
+/* Une ombre légère, un rayon de 12 px, et le rouge réservé au survol de la
+   fermeture : au repos, le menu ne sonne pas l’alarme. */
+.tile-menu,
+.tile-submenu {
+  border-radius: 12px;
+  box-shadow:
+    0 18px 44px -32px rgba(20, 16, 10, 0.5),
+    0 2px 8px rgba(20, 16, 10, 0.06);
+}
+
+/* Survol : le fond de l’onglet actif, pas une teinte d’accent. */
+.tile-menu-item:hover,
+.tile-menu-item[data-open='true'] {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* La première entrée, focalisée à l’ouverture, reste surlignée même quand le
+   menu a été ouvert à la souris : on voit où l’on est avant de bouger. */
+.tile-menu-item:focus {
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Fermer (et les actions destructrices) : encre normale, rouge au survol. */
+.tile-menu-item[data-danger='true'] {
+  color: var(--ink-soft, var(--ink));
+}
+
+.tile-menu-item[data-danger='true'] svg {
+  color: var(--muted);
+}
+
+.tile-menu-item[data-danger='true']:hover,
+.tile-menu-item[data-danger='true']:focus-visible,
+.tile-menu-item[data-danger='true'][data-open='true'] {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+}
+
+.tile-menu-item[data-danger='true']:hover svg,
+.tile-menu-item[data-danger='true']:focus-visible svg {
+  color: currentColor;
 }
