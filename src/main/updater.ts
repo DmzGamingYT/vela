@@ -15,7 +15,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { app, powerMonitor, shell } from 'electron'
-import { autoUpdater, CancellationToken } from 'electron-updater'
+import type { CancellationToken } from 'electron-updater'
 import type { UpdateChannel } from '@shared/api'
 import type { UpdateChecks } from '@shared/types'
 import {
@@ -54,6 +54,22 @@ export interface UpdateInfo {
 }
 
 const RELEASE_URL = 'https://github.com/DmzGamingYT/vela/releases/latest'
+
+type ModuleMisesAJour = typeof import('electron-updater')
+
+let moduleMisesAJour: ModuleMisesAJour | null = null
+
+/**
+ * `electron-updater` pèse ~38 ms de chargement (mesuré) et n'est utile qu'au
+ * premier contrôle, douze secondes après l'initialisation. Le charger ici,
+ * gardé en mémoire ensuite, laisse le lancement de la fenêtre libre : c'est la
+ * seule dépendance lourde du processus principal.
+ */
+function misesAJour(): ModuleMisesAJour {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- dépendance externe au bundle, chargée à la demande et jamais à l'import.
+  moduleMisesAJour ??= require('electron-updater') as ModuleMisesAJour
+  return moduleMisesAJour
+}
 
 /**
  * Sur Linux, l'AppImage est le seul format que Vela peut remplacer lui-même.
@@ -538,7 +554,7 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
     if (process.platform === 'linux') {
       await checkLinuxUpdate()
     } else {
-      const result = await autoUpdater.checkForUpdates()
+      const result = await misesAJour().autoUpdater.checkForUpdates()
       const version = result?.updateInfo ? versionOf(result.updateInfo) : null
       if (!result || !version || version === app.getVersion()) {
         set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
@@ -571,14 +587,14 @@ export async function downloadUpdate(): Promise<UpdateInfo> {
     await downloadLinuxUpdate()
     return updateStatus()
   }
-  windowsCancellation = new CancellationToken()
+  windowsCancellation = new (misesAJour().CancellationToken)()
   set({
     state: 'downloading',
     progress: 0,
     message: 'Téléchargement en arrière-plan…'
   })
   try {
-    await autoUpdater.downloadUpdate(windowsCancellation)
+    await misesAJour().autoUpdater.downloadUpdate(windowsCancellation)
   } catch (error) {
     if (downloadCancelled()) return updateStatus()
     set({
@@ -668,7 +684,7 @@ export function installUpdate(): void {
     // Silencieux : aucun assistant NSIS ne s’ouvre, Vela relance la nouvelle
     // version. C’est le même geste que l’installation à la fermeture, mais
     // tout de suite.
-    autoUpdater.quitAndInstall(true, true)
+    misesAJour().autoUpdater.quitAndInstall(true, true)
   } catch {
     void shell.openExternal(snapshot.releaseUrl)
   }
@@ -683,6 +699,8 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   if (started) return
   started = true
   emit = (info) => send('update:event', info)
+  // Chargé ici seulement : l'appel est différé après la première peinture.
+  const { autoUpdater } = misesAJour()
 
   // Seul Windows reste piloté par electron-updater (NSIS silencieux). macOS
   // prépare un .dmg vérifié, Linux télécharge une AppImage vérifiée : les deux

@@ -77,6 +77,24 @@ process.on('unhandledRejection', (reason) => journalFault('promesse rejetée', r
 
 let browser: Browser | null = null
 let win: BrowserWindow | null = null
+let updatesStarted = false
+
+/**
+ * Branche les mises à jour après la première peinture : `electron-updater`
+ * pèse ~38 ms de chargement (mesuré) et le premier contrôle est prévu douze
+ * secondes plus tard. Le lancement de la coque n'attend donc plus cette
+ * dépendance, ni le réseau.
+ */
+function startUpdates(): void {
+  if (updatesStarted) return
+  updatesStarted = true
+  // Le rythme enregistré est lu avant l'init : le premier contrôle le suit.
+  setUpdaterPolicy(browser?.store.get().settings.updateChecks ?? 'auto')
+  initUpdater((channel, payload) => {
+    if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
+      win.webContents.send(channel, payload)
+  })
+}
 
 /** Autorise uniquement l'origine Vite en développement ou le HTML empaqueté exact. */
 function isAllowedShellNavigation(url: string): boolean {
@@ -144,7 +162,10 @@ function createWindow(): void {
   browser!.registerIpc()
   installMenu((action) => browser?.sendShortcut(action))
 
-  shellWindow.once('ready-to-show', () => shellWindow.show())
+  shellWindow.once('ready-to-show', () => {
+    shellWindow.show()
+    startUpdates()
+  })
   // Comparaison avec la fenêtre courante : sinon la fermeture de l'ancienne
   // châssis (après un plantage du renderer) effaçait la nouvelle.
   shellWindow.on('closed', () => {
@@ -279,12 +300,6 @@ function main(): void {
       app.quit()
       return
     }
-    initUpdater((channel, payload) => {
-      if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
-        win.webContents.send(channel, payload)
-    })
-    // Le rythme enregistré s'applique dès le démarrage, avant le premier contrôle.
-    setUpdaterPolicy(browser?.store.get().settings.updateChecks ?? 'auto')
     createWindow()
     installStatusItem()
     // Fenêtres ouvertes par une page (connexion OAuth, popup d'un site) : elles
