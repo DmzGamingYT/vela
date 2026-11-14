@@ -53,18 +53,6 @@ export default function SpaceRail() {
         </button>
       </div>
 
-      {/* La marque, en haut à gauche de la fenêtre : la miniature de l’icône
-          de l’app. Décorative — rien à cliquer, la bascule juste au-dessus
-          garde son rôle. */}
-      <div className="rail-mark" aria-hidden="true">
-        <svg viewBox="0 0 1024 1024" width="28" height="28" focusable="false">
-          <rect width="1024" height="1024" rx="235" fill="#F7F6F2" />
-          <path d="M386 168 C 508 300 600 462 648 612 H386 Z" fill="#E8805A" />
-          <path d="M306 636 H732 L664 736 C 606 756 392 756 334 736 Z" fill="#131512" />
-          <rect x="346" y="792" width="344" height="34" rx="17" fill="#E8805A" opacity="0.8" />
-        </svg>
-      </div>
-
       <div className="rail-modes" role="tablist" aria-label="Mode">
         <button
           type="button"

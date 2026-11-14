@@ -138,6 +138,22 @@ body {
 
 .sidebar-top {
   padding-left: 24px;
+  /* La marque et le mot forment une seule ligne : 7 px, la largeur d'un mot. */
+  gap: 7px;
+}
+
+/* La miniature de l'icône, juste avant le wordmark. Décorative : la ligne
+   entière reste la zone de déplacement de la fenêtre. */
+.wordmark-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.wordmark-mark svg {
+  display: block;
+  border-radius: 4.5px;
+  box-shadow: 0 1px 1.5px rgba(19, 21, 18, 0.16);
 }
 
 .wordmark {

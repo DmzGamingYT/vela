@@ -39,23 +39,6 @@
   z-index: 1;
 }
 
-/* La marque de l'app, sous la rangée du titre : la miniature de l'icône, à
-   gauche de la fenêtre. Décorative, aucune interaction — la bascule au-dessus
-   reste le seul bouton de cette rangée. */
-.rail-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  margin: 4px 0 10px;
-  opacity: 0.95;
-}
-
-.rail-mark svg {
-  display: block;
-  border-radius: 7px;
-  box-shadow: 0 1px 2px rgba(19, 21, 18, 0.16);
-}
-
 /* Au milieu, entre la bascule et les espaces. Deux marges automatiques se
    partagent l'espace restant : les modes tombent au centre, les espaces au
    pied. */
