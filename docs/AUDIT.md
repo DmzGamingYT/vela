@@ -535,3 +535,11 @@ Création avec rattachement d'un onglet, renommage, repli, suppression. Vérifi�
 `SECURITY.md` existait depuis la phase 1, mais renvoyait à `contact@example.com` : une adresse de documentation, pas un canal. Le signalement privé GitHub du dépôt était désactivé — la politique annonçait donc un chemin qui n'existait pas.
 
 Corrigé : le signalement privé est activé sur le dépôt (`private-vulnerability-reporting: true`) et `SECURITY.md` le désigne comme seul canal, avec la consigne de ne pas détailler une faille dans une issue publique. Les sections versions prises en charge, délais et limites connues sont conservées telles quelles.
+
+## 21. Phase 2 — lot 11 : le site public était en retard de sept versions
+
+En publiant la 0.3.44, vérification de la page publique : elle annonçait **0.3.37**, déployée le 12 novembre, et donc six empreintes qui ne correspondaient plus à aucun fichier installable. Rien dans la CI ne relie le dépôt au site : `site:check` compare la page du dépôt à la release GitHub, jamais la page servie. Six releases se sont succédé sans que la page bouge.
+
+Corrigé : `site:build` puis déploiement des deux environnements. Preview d'abord, puis production, chacune vérifiée en direct — version annoncée, six empreintes comparées aux empreintes SHA-256 des fichiers de la release, et feuilles/scripts minifiés servis en 200 avec leur type (`text/css`, `text/javascript`).
+
+**Ce qui manque encore** : une garde qui compare la page **servie** à la release. `site:check` lit `site/public/index.html` ; il ne sait pas si ce fichier a été déployé. C'est exactement le trou qui a laissé la page en 0.3.37 pendant six releases.
