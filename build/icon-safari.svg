@@ -1,30 +1,75 @@
-<!-- Vela — icône de l'app : « le sillage » (0.3.45).
+<!-- Vela — icône de l'app : « le sillage », en liquid glass (0.3.45).
 
-     Tuile papier, voile corail, coque d'encre, deux rides corail : le bateau
-     porte la couleur, la tuile reste neutre. Aucun dégradé, aucune ombre, un
-     aplat par forme — et trois formes seulement, pour que le dessin tienne à
-     16 px.
+     La matière suit ce que macOS 26/27 appelle Liquid Glass : une tuile de
+     verre teinté (dégradé papier), un reflet spéculaire en haut à gauche, un
+     liseré de lumière sur le bord, et une ombre douce sous le bateau, qui le
+     fait flotter. Le dessin, lui, ne change pas : voile corail, coque d'encre,
+     deux rides.
 
-     Repère : tuile macOS de 832 px (marge de 96), motif à l'intérieur.
-     Petites tailles : `icon-safari-small.svg` (voile plus large, coque plus
-     épaisse, rides plus courtes). Barre de menus : `icon-template-safari.svg`.
+     Un .icns est une image plate : le verre est donc cuit dans le SVG, pas
+     appliqué par le système.
 
-     Rendu et export :
-       env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs -->
+     Repère : tuile de 832 px (marge de 96). Petites tailles :
+     `icon-safari-small.svg` (sans flou : à 16 px une ombre floue devient de la
+     salissure). Barre de menus : `icon-template-safari.svg`.
+
+     Rendu : env -u ELECTRON_RUN_AS_NODE \
+       node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
      role="img" aria-labelledby="vela-title vela-desc">
   <title id="vela-title">Vela</title>
-  <desc id="vela-desc">Une barque corail et encre sur une tuile papier, suivie de deux rides : le sillage.</desc>
+  <desc id="vela-desc">Une tuile de verre papier, une voile corail, une coque d’encre et deux rides : le sillage, en relief.</desc>
+  <defs>
+    <clipPath id="tile">
+      <rect x="96" y="96" width="832" height="832" rx="186"/>
+    </clipPath>
+    <linearGradient id="verre" x1="512" y1="96" x2="512" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFDFA"/>
+      <stop offset="0.55" stop-color="#F6F3EC"/>
+      <stop offset="1" stop-color="#E9E3D7"/>
+    </linearGradient>
+    <radialGradient id="reflet" cx="330" cy="180" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.75"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="400" y1="176" x2="600" y2="606" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F4A283"/>
+      <stop offset="1" stop-color="#D96A45"/>
+    </linearGradient>
+    <linearGradient id="coque" x1="512" y1="626" x2="512" y2="728" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#242020"/>
+      <stop offset="1" stop-color="#0C0B0A"/>
+    </linearGradient>
+    <filter id="ombre" x="-30%" y="-120%" width="160%" height="340%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <linearGradient id="epaisseur" x1="512" y1="700" x2="512" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A6A50" stop-opacity="0"/>
+      <stop offset="1" stop-color="#7A6A50" stop-opacity="0.09"/>
+    </linearGradient>
+  </defs>
 
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#F7F6F2"/>
+  <g clip-path="url(#tile)">
+    <rect x="96" y="96" width="832" height="832" fill="url(#verre)"/>
+    <rect x="96" y="96" width="832" height="832" fill="url(#reflet)"/>
 
-  <!-- La voile. -->
-  <path d="M372 176 C 484 296 570 460 618 606 H372 Z" fill="#E8805A"/>
+    <!-- L'ombre portée du bateau : c'est elle qui donne l'épaisseur du verre. -->
+    <ellipse cx="512" cy="742" rx="222" ry="26" fill="#0F1311" opacity="0.12" filter="url(#ombre)"/>
 
-  <!-- La coque. -->
-  <path d="M318 626 H706 L652 712 C 602 728 422 728 372 712 Z" fill="#131512"/>
+    <path d="M372 176 C 484 296 570 460 618 606 H372 Z" fill="url(#voile)"/>
+    <path d="M372 176 C 400 300 430 470 452 606 L372 606 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M318 626 H706 L652 712 C 602 728 422 728 372 712 Z" fill="url(#coque)"/>
 
-  <!-- Les deux rides : le sillage, en corail plus clair vers l'arrière. -->
-  <rect x="312" y="764" width="400" height="24" rx="12" fill="#E8805A" opacity="0.8"/>
-  <rect x="360" y="820" width="304" height="20" rx="10" fill="#E8805A" opacity="0.45"/>
+    <rect x="312" y="764" width="400" height="24" rx="12" fill="#E8805A" opacity="0.8"/>
+    <rect x="360" y="820" width="304" height="20" rx="10" fill="#E8805A" opacity="0.45"/>
+
+    <!-- Une ombre interne en bas de tuile : le verre a une épaisseur. Elle
+         monte en dégradé, sinon elle dessine une ligne franche à mi-tuile. -->
+    <rect x="96" y="700" width="832" height="228" fill="url(#epaisseur)"/>
+  </g>
+
+  <!-- Le liseré de lumière, posé par-dessus la tuile. -->
+  <rect x="102" y="102" width="820" height="820" rx="180" fill="none"
+        stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="7"/>
 </svg>
