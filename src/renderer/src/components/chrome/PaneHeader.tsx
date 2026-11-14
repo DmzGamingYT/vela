@@ -424,9 +424,14 @@ export default function PaneHeader({ tab, primary, secondary = false }: PaneHead
         />
       )}
 
+      {/* Les outils de la page vivent ici, au bout de la barre : la vue scindée
+          pour le volet principal, sa fermeture pour le volet secondaire. Le
+          bouclier est resté dans le champ d'adresse, là où la connexion se lit. */}
       <div className="pane-tools">
-        {secondary && (
+        {secondary ? (
           <BarButton icon="close" label="Fermer la vue scindée" onClick={() => splitToggle()} />
+        ) : (
+          !home && <BarButton icon="split" label="Vue scindée" onClick={() => splitToggle()} />
         )}
       </div>
 

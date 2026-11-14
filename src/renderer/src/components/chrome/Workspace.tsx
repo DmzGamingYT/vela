@@ -6,7 +6,6 @@ import { hostOf, isHomeUrl } from '@shared/url'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 import PaneHeader from './PaneHeader'
-import ReadingRail from './ReadingRail'
 import StartPage from '../start/StartPage'
 
 // La carte de recherche n'est chargée qu'en mode Atelier : elle pèse à elle
@@ -422,10 +421,6 @@ export default function Workspace() {
       data-compact={compactViewport}
       data-split={split}
       data-collapsed={view.settings.sidebarCollapsed}
-      // La bande du rail n’est réservée que s’il y a un rail : sur l’accueil,
-      // ReadingRail ne se dessine pas, donc `active` seul laissait une colonne
-      // vide de 52 px collée au bord droit.
-      data-rail={active && !isHomeUrl(active.url) ? 'true' : undefined}
     >
       {findOpen && (
         <div className="find-bar" role="search" aria-label="Rechercher dans la page">
@@ -515,7 +510,6 @@ export default function Workspace() {
           </>
         )}
       </div>
-      <ReadingRail />
     </main>
   )
 }

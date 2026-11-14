@@ -77,17 +77,6 @@
   color: var(--ink);
 }
 
-/* --- Rail droit -------------------------------------------------- */
-
-.reading-rail {
-  background: var(--paper);
-}
-
-/* Un filet qui respire : 8 px de pas + 4 px de marge de chaque côté. */
-.rr-sep {
-  margin: 4px 0;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .rail-settings {
     transition: none;

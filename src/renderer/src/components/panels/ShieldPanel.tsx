@@ -10,13 +10,13 @@ import { useModalFocus } from '../../lib/useModalFocus'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 
-/** Le bouton du rail qui ouvre le panneau : ancre et cible du focus. */
-const ANCHOR = '.reading-rail .rr-btn[aria-label="Protection de la page"]'
+/** Le champ d'adresse, qui porte l'icône de connexion : ancre et cible du focus. */
+const ANCHOR = '.address-shield'
 
 /**
  * Bouclier : un coup d’œil, pas une page.
  *
- * Petit panneau posé sous l’icône du rail de droite, sans voile flouté : on
+ * Petit panneau posé sous le champ d'adresse, sans voile flouté : on
  * ouvre, on lit, on referme. Il montre les requêtes arrêtées sur la page,
  * regroupées par domaine parent et étiquetées par usage ; l’interrupteur du
  * site est l’action la plus cherchée, il est donc en haut.
@@ -32,18 +32,22 @@ export default function ShieldPanel() {
   const confirmTimer = useRef<number | null>(null)
   const [openParent, setOpenParent] = useState<string | null>(null)
 
-  // Ancrage sur le bouton du rail : le panneau s’ouvre sous l’icône, pas au
-  // centre de l’écran. La mesure se fait dans la ref, pendant le montage et
-  // avant la peinture : pas d’état, donc pas de second rendu à l’ouverture.
+  // Ancrage sous le champ d’adresse : le bouclier y vit, donc le panneau
+  // s’ouvre sous le champ et non au centre de l’écran. La mesure se fait dans
+  // la ref, pendant le montage et avant la peinture : pas d’état, donc pas de
+  // second rendu à l’ouverture.
   const placer = useCallback(
     (node: HTMLDivElement | null): void => {
       panelRef.current = node
       if (!node) return
       const button = document.querySelector<HTMLElement>(ANCHOR)
       if (!button) return
-      const rect = button.getBoundingClientRect()
-      node.style.top = `${Math.max(12, rect.top - 12)}px`
-      node.style.right = `${Math.max(12, window.innerWidth - rect.left + 10)}px`
+      const field = button.closest<HTMLElement>('.address') ?? button
+      const rect = field.getBoundingClientRect()
+      const width = node.offsetWidth
+      node.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))}px`
+      node.style.right = 'auto'
+      node.style.top = `${Math.min(rect.bottom + 10, window.innerHeight - 96)}px`
     },
     [panelRef]
   )

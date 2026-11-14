@@ -1,4 +1,4 @@
-/* Tranche 53 — panneau Protection, en popover sous l’icône du rail.
+/* Tranche 53 — panneau Protection, en popover sous le champ d’adresse.
    Pas de voile flouté : un coup d’œil rapide, posé près du bouton qui l’ouvre. */
 
 /* ── Le calque : transparent, ferme au clic extérieur ──────────────────── */
@@ -11,10 +11,10 @@
 
 .shield-pop {
   position: fixed;
-  /* Position de repli : la mesure sur le bouton du rail l'ajuste au montage,
-     et le panneau reste lisible même si le bouton est absent. */
+  /* Position de repli : la mesure sur le champ d'adresse l'ajuste au montage,
+     et le panneau reste lisible même si le champ est absent. */
   top: 92px;
-  right: 58px;
+  left: 24px;
   width: 400px;
   max-width: calc(100vw - 20px);
   max-height: min(74vh, 660px);
