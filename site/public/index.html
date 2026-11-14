@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vela — le web, votre atelier</title>
+    <title>Vela — un navigateur qui range</title>
     <meta
       name="description"
-      content="Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, sessions gardées, notes locales et tunnel de recherche. Sans compte, sans mesure d’usage."
+      content="Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, sessions gardées, notes locales. Sans compte, sans serveur Vela, sans mesure d’usage."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f6efe4" media="(prefers-color-scheme: light)" />
@@ -19,7 +19,7 @@
       property="og:url"
       content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/"
     />
-    <meta property="og:title" content="Vela — le web, votre atelier" />
+    <meta property="og:title" content="Vela — un navigateur qui range" />
     <meta
       property="og:description"
       content="Onglets verticaux, espaces isolés, sessions gardées, notes locales. Un navigateur de travail qui reste à bord de votre machine."
@@ -33,10 +33,10 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Vela, le web votre atelier — capture de l’accueil avec onglets verticaux, espaces et palette de commande."
+      content="Vela, un navigateur qui range — capture de l’accueil avec onglets verticaux, espaces et palette de commande."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Vela — le web, votre atelier" />
+    <meta name="twitter:title" content="Vela — un navigateur qui range" />
     <meta
       name="twitter:description"
       content="Onglets verticaux, espaces isolés, sessions gardées, notes locales. Sans compte Vela, sans mesure d’usage."
@@ -63,7 +63,7 @@
         "url": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/",
         "downloadUrl": "https://github.com/DmzGamingYT/vela/releases/tag/v0.3.44",
         "screenshot": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/captures/accueil-clair.webp",
-        "description": "Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, sessions gardées, notes locales et tunnel de recherche. Sans compte Vela, sans mesure d’usage.",
+        "description": "Navigateur de travail pour macOS, Windows et Linux : onglets verticaux, espaces isolés, sessions gardées, notes locales. Sans compte Vela, sans serveur Vela, sans mesure d’usage.",
         "isAccessibleForFree": true,
         "license": "https://opensource.org/licenses/MIT",
         "offers": {
@@ -124,13 +124,14 @@
       </symbol>
     </svg>
 
-    <div class="head-wrap">
-      <header class="head">
+    <header class="masthead">
+      <div class="shell masthead-in">
         <a class="brand" href="/" aria-label="Vela, accueil">
           <span class="brand-mark" aria-hidden="true">
-            <img src="/favicon.svg" width="26" height="26" alt="Vela" />
+            <img src="/favicon.svg" width="24" height="24" alt="Vela" />
           </span>
           <span class="brand-name">Vela</span>
+          <span class="brand-version">0.3.44</span>
         </a>
 
         <nav class="nav" id="nav" aria-label="Sections">
@@ -140,7 +141,7 @@
           <a href="/nouveautes/">Nouveautés</a>
         </nav>
 
-        <div class="head-actions">
+        <div class="masthead-actions">
           <button
             class="icon-btn"
             type="button"
@@ -151,9 +152,9 @@
             <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun" /></svg>
             <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
           </button>
-          <a class="btn btn-solid" href="#telecharger">
+          <a class="btn btn-solid masthead-cta" href="#telecharger">
             <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-            Télécharger
+            <span data-platform-label>Télécharger</span>
           </a>
           <button
             class="icon-btn nav-toggle"
@@ -165,49 +166,51 @@
             <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
           </button>
         </div>
-      </header>
-    </div>
+      </div>
+    </header>
 
     <main id="contenu">
-      <!-- Héros scindé : le texte tient la colonne de lecture, l’écran réel
-           occupe la moitié droite, puis les trois zéros ferment la bande. -->
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="wrap hero-grid">
-          <div class="hero-copy">
-            <a class="hero-version" href="/nouveautes/0-3-38/">
-              <span class="dot" aria-hidden="true"></span>
-              Version 0.3.44 · journal de bord
+      <!-- Ouverture : une seule phrase, un seul bouton, une capture. C’est la
+           page entière qui tient dans cet écran. -->
+      <section class="opening" aria-labelledby="opening-title">
+        <div class="shell">
+          <p class="kicker">
+            <span>macOS · Windows · Linux</span>
+            <span class="kicker-sep" aria-hidden="true">/</span>
+            <a href="/nouveautes/">Version 0.3.44</a>
+          </p>
+
+          <h1 class="opening-title" id="opening-title">
+            Un navigateur qui <em>range</em>, pendant que vous travaillez.
+          </h1>
+
+          <p class="opening-lede">
+            Onglets verticaux, espaces isolés, sessions gardées, notes locales. Vela tient le décor
+            à votre place — et ne rend de comptes à personne.
+          </p>
+
+          <div class="opening-actions">
+            <a
+              class="btn btn-solid btn-big"
+              href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.44/Vela-0.3.44-universal.dmg"
+              data-platform-cta
+              data-platform-href
+            >
+              <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+              <span data-platform-label>Télécharger</span>
+            </a>
+            <a class="text-link" href="#gestes">
+              Voir les trois gestes
               <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
             </a>
-
-            <h1 class="hero-title" id="hero-title">Le web, votre <em>atelier</em>.</h1>
-
-            <p class="hero-lede">
-              Onglets verticaux, espaces isolés, sessions gardées, notes locales. Un navigateur de
-              travail qui reste à bord de votre machine.
-            </p>
-
-            <div class="hero-actions">
-              <a
-                class="btn btn-hero btn-big"
-                href="#telecharger"
-                data-platform-cta
-                data-platform-href
-              >
-                <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-                <span data-platform-label>Télécharger</span>
-              </a>
-              <a class="hero-link" href="/navigateur/">
-                Voir le navigateur
-                <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
-              </a>
-            </div>
-
-            <p class="hero-alt">Gratuit · MIT · sans compte Vela · sans mesure d’usage</p>
           </div>
 
-          <div class="hero-shot">
-            <picture class="window-shot shot-light">
+          <p class="opening-fine">
+            Gratuit · MIT · sans compte Vela · sans serveur Vela · sans mesure d’usage
+          </p>
+
+          <figure class="stage">
+            <picture class="shot shot-light">
               <source
                 type="image/avif"
                 srcset="
@@ -215,7 +218,7 @@
                   /captures/accueil-clair-1080.avif 1080w,
                   /captures/accueil-clair.avif      1440w
                 "
-                sizes="(max-width: 900px) calc(100vw - 40px), 520px"
+                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
               />
               <img
                 src="/captures/accueil-clair-1080.webp"
@@ -224,7 +227,7 @@
                   /captures/accueil-clair-1080.webp 1080w,
                   /captures/accueil-clair.webp      1440w
                 "
-                sizes="(max-width: 900px) calc(100vw - 40px), 520px"
+                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
                 width="1440"
                 height="900"
                 fetchpriority="high"
@@ -232,7 +235,7 @@
                 alt="Accueil de Vela en thème clair : rail des espaces, deux onglets (Accueil et Navigateur web — Wikipédia), carte Sessions, heure locale, champ de commande, et raccourcis GitHub, Hacker News et Le Monde."
               />
             </picture>
-            <picture class="window-shot shot-dark">
+            <picture class="shot shot-dark">
               <source
                 type="image/avif"
                 srcset="
@@ -240,7 +243,7 @@
                   /captures/accueil-sombre-1080.avif 1080w,
                   /captures/accueil-sombre.avif      1440w
                 "
-                sizes="(max-width: 900px) calc(100vw - 40px), 520px"
+                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
               />
               <img
                 src="/captures/accueil-sombre-1080.webp"
@@ -249,7 +252,7 @@
                   /captures/accueil-sombre-1080.webp 1080w,
                   /captures/accueil-sombre.webp      1440w
                 "
-                sizes="(max-width: 900px) calc(100vw - 40px), 520px"
+                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
                 width="1440"
                 height="900"
                 loading="lazy"
@@ -257,42 +260,44 @@
                 alt="Le même accueil de Vela en thème sombre : mêmes onglets, même carte Sessions, mêmes raccourcis."
               />
             </picture>
-          </div>
+          </figure>
         </div>
+      </section>
 
-        <div class="zeros">
-          <div class="wrap zeros-grid">
-            <div class="zero">
-              <b>0</b>
-              <span>Compte Vela</span>
-            </div>
-            <div class="zero">
-              <b>0</b>
-              <span>Serveur Vela</span>
-            </div>
-            <div class="zero">
-              <b>0</b>
-              <span>Mesure d’usage</span>
-            </div>
-            <div class="zero zero-os">
-              <p class="zero-label">Télécharger pour</p>
-              <ul class="platforms-list">
-                <li><a href="#telecharger" data-set-os="mac">macOS</a></li>
-                <li><a href="#telecharger" data-set-os="win">Windows</a></li>
-                <li><a href="#telecharger" data-set-os="linux">Linux</a></li>
-              </ul>
-            </div>
+      <section class="ledger" aria-label="Ce que Vela ne fait pas">
+        <div class="shell ledger-grid">
+          <div class="fact">
+            <b>0</b>
+            <span>compte à créer</span>
+          </div>
+          <div class="fact">
+            <b>0</b>
+            <span>serveur Vela</span>
+          </div>
+          <div class="fact">
+            <b>0</b>
+            <span>mesure d’usage</span>
+          </div>
+          <div class="fact fact-os">
+            <p class="fact-label">Télécharger pour</p>
+            <ul class="os-list">
+              <li><a href="#telecharger" data-set-os="mac">macOS</a></li>
+              <li><a href="#telecharger" data-set-os="win">Windows</a></li>
+              <li><a href="#telecharger" data-set-os="linux">Linux</a></li>
+            </ul>
           </div>
         </div>
       </section>
 
-      <section class="section" id="gestes" aria-labelledby="gestes-title">
-        <div class="wrap">
-          <div class="sec-head reveal">
-            <p class="eyebrow">Trois gestes</p>
-            <h2 class="sec-title" id="gestes-title">Ce que Vela fait, et rien d’autre.</h2>
-            <p class="sec-lede">
-              Chacun se démontre ici sur l’application réelle, sans maquette, et s’ouvre au clavier.
+      <!-- Trois gestes, chacun montré sur l’application réelle. -->
+      <section class="story" id="gestes" aria-labelledby="gestes-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">01 — 03</p>
+            <h2 class="chapter-title" id="gestes-title">Trois gestes, et le reste s’efface.</h2>
+            <p class="chapter-lede">
+              Chaque capture vient de l’application, sans maquette. Les raccourcis suivent votre
+              système :
             </p>
             <div
               class="keys-switch"
@@ -300,212 +305,208 @@
               role="group"
               aria-label="Afficher les raccourcis pour"
             >
-              <span class="keys-switch-label">Raccourcis</span>
               <button type="button" data-os="mac" aria-pressed="true">macOS</button>
               <button type="button" data-os="win" aria-pressed="false">Windows</button>
               <button type="button" data-os="linux" aria-pressed="false">Linux</button>
             </div>
-          </div>
+          </header>
 
-          <div class="gestes">
-            <article class="geste reveal">
-              <figure class="geste-shot">
-                <picture>
-                  <source
-                    type="image/avif"
-                    srcset="
-                      /captures/espaces-720.avif   720w,
-                      /captures/espaces-1080.avif 1080w,
-                      /captures/espaces.avif      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                  />
-                  <img
-                    src="/captures/espaces-1080.webp"
-                    srcset="
-                      /captures/espaces-720.webp   720w,
-                      /captures/espaces-1080.webp 1080w,
-                      /captures/espaces.webp      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                    width="1440"
-                    height="900"
-                    loading="lazy"
-                    decoding="async"
-                    alt="Fenêtre de création d’espace : nom « Recherche », choix d’un point de départ (Travail, Vie personnelle, Gaming, Études, Développement, Cinéma), teinte et ambiance, et l’aperçu de l’espace à droite."
-                  />
-                </picture>
-              </figure>
-              <div class="geste-body">
-                <p class="geste-index">01</p>
-                <h3>Un espace, une session</h3>
-                <p class="geste-text">
-                  Chaque espace garde ses cookies, son avatar, sa teinte et sa barre de sites
-                  épinglés. Ses onglets se gardent en session sous un nom. Deux comptes sur le même
-                  site, sans fenêtre privée.
-                </p>
-                <p class="keys">
-                  <kbd data-key="mod+k">⌘K</kbd>
-                  <span class="keys-plus">puis « Nouvel espace »</span>
-                </p>
-              </div>
-            </article>
+          <article class="row">
+            <figure class="row-shot">
+              <picture>
+                <source
+                  type="image/avif"
+                  srcset="
+                    /captures/espaces-720.avif   720w,
+                    /captures/espaces-1080.avif 1080w,
+                    /captures/espaces.avif      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                />
+                <img
+                  src="/captures/espaces-1080.webp"
+                  srcset="
+                    /captures/espaces-720.webp   720w,
+                    /captures/espaces-1080.webp 1080w,
+                    /captures/espaces.webp      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Fenêtre de création d’espace : nom « Recherche », choix d’un point de départ (Travail, Vie personnelle, Gaming, Études, Développement, Cinéma), teinte et ambiance, et l’aperçu de l’espace à droite."
+                />
+              </picture>
+            </figure>
+            <div class="row-copy">
+              <p class="row-index">01</p>
+              <h3>Un espace, une session</h3>
+              <p>
+                Chaque espace garde ses cookies, son avatar, sa teinte et sa barre de sites épinglés.
+                Ses onglets se mettent de côté sous un nom et se rouvrent intacts. Deux comptes sur le
+                même site, sans fenêtre privée.
+              </p>
+              <p class="keys">
+                <kbd data-key="mod+k">⌘K</kbd>
+                <span>puis « Nouvel espace »</span>
+              </p>
+            </div>
+          </article>
 
-            <article class="geste reveal">
-              <figure class="geste-shot">
-                <picture>
-                  <source
-                    type="image/avif"
-                    srcset="
-                      /captures/coup-d-oeil-720.avif   720w,
-                      /captures/coup-d-oeil-1080.avif 1080w,
-                      /captures/coup-d-oeil.avif      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                  />
-                  <img
-                    src="/captures/coup-d-oeil-1080.webp"
-                    srcset="
-                      /captures/coup-d-oeil-720.webp   720w,
-                      /captures/coup-d-oeil-1080.webp 1080w,
-                      /captures/coup-d-oeil.webp      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                    width="1440"
-                    height="900"
-                    loading="lazy"
-                    decoding="async"
-                    alt="Carte du coup d’œil posée au-dessus de l’accueil de Vela : en-tête avec le domaine de la page, action Épingler, page affichée, et pied « Depuis Personnel · aucun onglet créé » avec Scindée et Ouvrir."
-                  />
-                </picture>
-              </figure>
-              <div class="geste-body">
-                <p class="geste-index">02</p>
-                <h3>Un coup d’œil</h3>
-                <p class="geste-text">
-                  Un lien s’ouvre dans une carte posée sur la page en cours : sa page, son adresse,
-                  et trois actions — épingler, scinder, ouvrir. La carte emprunte la session de
-                  l’espace et la page reste au premier plan.
-                </p>
-                <p class="keys">
-                  <kbd data-key="mod+alt+n">⌘⌥N</kbd>
-                  <span class="keys-plus">ou <kbd data-key="mod+alt">⌘⌥</kbd> + clic</span>
-                </p>
-              </div>
-            </article>
+          <article class="row row-flip">
+            <figure class="row-shot">
+              <picture>
+                <source
+                  type="image/avif"
+                  srcset="
+                    /captures/coup-d-oeil-720.avif   720w,
+                    /captures/coup-d-oeil-1080.avif 1080w,
+                    /captures/coup-d-oeil.avif      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                />
+                <img
+                  src="/captures/coup-d-oeil-1080.webp"
+                  srcset="
+                    /captures/coup-d-oeil-720.webp   720w,
+                    /captures/coup-d-oeil-1080.webp 1080w,
+                    /captures/coup-d-oeil.webp      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Carte du coup d’œil posée au-dessus de l’accueil de Vela : en-tête avec le domaine de la page, action Épingler, page affichée, et pied « Depuis Personnel · aucun onglet créé » avec Scindée et Ouvrir."
+                />
+              </picture>
+            </figure>
+            <div class="row-copy">
+              <p class="row-index">02</p>
+              <h3>Un coup d’œil</h3>
+              <p>
+                Un lien s’ouvre dans une carte posée sur la page en cours : sa page, son adresse, et
+                trois actions — épingler, scinder, ouvrir. La carte emprunte la session de l’espace ;
+                la page reste au premier plan.
+              </p>
+              <p class="keys">
+                <kbd data-key="mod+alt+n">⌘⌥N</kbd>
+                <span>ou <kbd data-key="mod+alt">⌘⌥</kbd> + clic</span>
+              </p>
+            </div>
+          </article>
 
-            <article class="geste reveal">
-              <figure class="geste-shot">
-                <picture>
-                  <source
-                    type="image/avif"
-                    srcset="
-                      /captures/atelier-720.avif   720w,
-                      /captures/atelier-1080.avif 1080w,
-                      /captures/atelier.avif      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                  />
-                  <img
-                    src="/captures/atelier-1080.webp"
-                    srcset="
-                      /captures/atelier-720.webp   720w,
-                      /captures/atelier-1080.webp 1080w,
-                      /captures/atelier.webp      1440w
-                    "
-                    sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1040px) 45vw, 340px"
-                    width="1440"
-                    height="900"
-                    loading="lazy"
-                    decoding="async"
-                    alt="Tunnel de recherche de Vela : sujet « Comparer les hébergeurs d’images libres », deux angles, cartes des pages retenues avec leur domaine, légende des types de cartes et source écartée par l’entonnoir."
-                  />
-                </picture>
-              </figure>
-              <div class="geste-body">
-                <p class="geste-index">03</p>
-                <h3>Un tunnel de recherche</h3>
-                <p class="geste-text">
-                  Le mode Atelier descend d’un sujet vers ses angles, puis vers des pages réellement
-                  récupérées, avec leurs contradictions.
-                </p>
-                <p class="keys">
-                  <kbd data-key="mod+shift+a">⌘⇧A</kbd>
-                </p>
-              </div>
-            </article>
-          </div>
+          <article class="row">
+            <figure class="row-shot">
+              <picture>
+                <source
+                  type="image/avif"
+                  srcset="
+                    /captures/atelier-720.avif   720w,
+                    /captures/atelier-1080.avif 1080w,
+                    /captures/atelier.avif      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                />
+                <img
+                  src="/captures/atelier-1080.webp"
+                  srcset="
+                    /captures/atelier-720.webp   720w,
+                    /captures/atelier-1080.webp 1080w,
+                    /captures/atelier.webp      1440w
+                  "
+                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Tunnel de recherche de Vela : sujet « Comparer les hébergeurs d’images libres », deux angles, cartes des pages retenues avec leur domaine, légende des types de cartes et source écartée par l’entonnoir."
+                />
+              </picture>
+            </figure>
+            <div class="row-copy">
+              <p class="row-index">03</p>
+              <h3>Un tunnel de recherche</h3>
+              <p>
+                Le mode Atelier descend d’un sujet vers ses angles, puis vers des pages réellement
+                récupérées, avec leurs contradictions — et la source écartée, nommée.
+              </p>
+              <p class="keys">
+                <kbd data-key="mod+shift+a">⌘⇧A</kbd>
+              </p>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section class="section log" id="nouveau" aria-labelledby="new-title">
-        <div class="wrap">
-          <div class="sec-head reveal">
-            <p class="eyebrow">Depuis la 0.3.26</p>
-            <h2 class="sec-title" id="new-title">Trois ajouts, pas trois réglages.</h2>
-            <p class="sec-lede">
-              Sessions, bouclier, agent : les dernières versions ont ajouté ce qui manquait au
-              quotidien, sans nouveau panneau à configurer.
-            </p>
-          </div>
+      <!-- Ce que le navigateur règle, en une phrase par carte. -->
+      <section class="cards-section" aria-labelledby="regle-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Le reste du temps</p>
+            <h2 class="chapter-title" id="regle-title">Réglé pour travailler, pas pour configurer.</h2>
+          </header>
 
-          <div class="updates">
-            <a class="update reveal" href="/nouveautes/0-3-26/">
-              <span class="update-ver">0.3.26</span>
-              <strong>Sessions gardées</strong>
-              <span
-                >Un ensemble d’onglets se met de côté sous un nom et se rouvre dans son espace,
-                intact.</span
-              >
-              <span class="update-more"
-                >Lire la note <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg
-              ></span>
-            </a>
-            <a class="update reveal" href="/nouveautes/0-3-27/">
-              <span class="update-ver">0.3.27</span>
-              <strong>Le bouclier dans la barre</strong>
-              <span
-                >Le bouclier compte les requêtes arrêtées ; traduction, épingle et actions du site
-                vivent dans la même barre.</span
-              >
-              <span class="update-more"
-                >Lire la note <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg
-              ></span>
-            </a>
-            <a class="update reveal" href="/nouveautes/0-3-29/">
-              <span class="update-ver">0.3.29</span>
-              <strong>L’agent en fil</strong>
-              <span
-                >L’agent suit la carte dans un fil latéral, sans masquer le tunnel ni ses
-                sources.</span
-              >
-              <span class="update-more"
-                >Lire la note <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg
-              ></span>
-            </a>
-          </div>
-
-          <p class="log-more reveal">
-            <a class="hero-link" href="/nouveautes/">
-              Tout le journal des versions
-              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
-            </a>
-          </p>
+          <ul class="cards">
+            <li class="card">
+              <h3>Onglets verticaux</h3>
+              <p>
+                Les titres se lisent en entier, les dossiers se plient, l’adresse reste au-dessus. La
+                bande d’onglets ne rétrécit jamais jusqu’à l’icône.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Espaces isolés</h3>
+              <p>
+                Travail, personnel, études : chacun son jeu de cookies, sa teinte, ses sites épinglés,
+                son historique. Un glissement d’un espace à l’autre.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Sessions gardées</h3>
+              <p>
+                Un ensemble d’onglets se range sous un nom, puis revient dans son espace, dans l’ordre
+                où il était.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Notes et surlignages locaux</h3>
+              <p>
+                Une note par page, ancrée au passage, lue et écrite en fichiers sur votre disque — pas
+                dans un compte.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Bouclier</h3>
+              <p>
+                Les requêtes arrêtées sont comptées dans la barre. Traduction, épingle et actions du
+                site vivent dans la même barre.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Agent en fil</h3>
+              <p>
+                L’agent suit la carte dans un fil latéral, sans masquer le tunnel ni ses sources. Il
+                ne part que sur votre demande, et avec votre clé.
+              </p>
+            </li>
+          </ul>
         </div>
       </section>
 
-      <section class="section" id="confidentialite" aria-labelledby="privacy-title">
-        <div class="wrap">
-          <div class="sec-head reveal">
-            <p class="eyebrow">Confidentialité</p>
-            <h2 class="sec-title" id="privacy-title">Ce qui reste ici, ce qui sort.</h2>
-            <p class="sec-lede">
-              Zéro compte, zéro serveur Vela, zéro mesure — puis la liste honnête des sorties
-              réseau. Chaque flux est décrit dans la page Confidentialité.
+      <section class="privacy-section" aria-labelledby="privacy-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Confidentialité</p>
+            <h2 class="chapter-title" id="privacy-title">Ce qui reste ici, ce qui sort.</h2>
+            <p class="chapter-lede">
+              Zéro compte, zéro serveur Vela, zéro mesure — puis la liste honnête des sorties réseau.
+              Chaque flux est décrit dans la page Confidentialité.
             </p>
-          </div>
+          </header>
 
-          <div class="privacy reveal">
+          <div class="privacy-grid">
             <div class="privacy-col">
               <p class="privacy-tag">
                 <svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg>
@@ -518,6 +519,7 @@
                 <li>Blocage des traqueurs, calculé sur place</li>
               </ul>
             </div>
+
             <div class="privacy-col">
               <p class="privacy-tag">
                 <svg class="ico" aria-hidden="true"><use href="#i-globe" /></svg>
@@ -537,25 +539,29 @@
                 </li>
               </ul>
               <p class="privacy-more">
-                <a href="/confidentialite/">Le tableau complet des flux</a>
+                <a class="text-link" href="/confidentialite/">
+                  Le tableau complet des flux
+                  <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+                </a>
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section" id="telecharger" aria-labelledby="dl-title">
-        <div class="wrap">
-          <div class="sec-head reveal">
-            <p class="eyebrow">Télécharger</p>
-            <h2 class="sec-title" id="dl-title">Vela 0.3.44, pour les trois plateformes.</h2>
-            <p class="sec-lede">
-              Un fichier par plateforme. Chaque empreinte est écrite en entier : vous pouvez la
-              comparer à la main avant d’ouvrir le fichier.
+      <!-- Téléchargement : les six fichiers et leurs empreintes, sans détour. -->
+      <section class="get" id="telecharger" aria-labelledby="dl-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Télécharger</p>
+            <h2 class="chapter-title" id="dl-title">Vela 0.3.44, pour les trois plateformes.</h2>
+            <p class="chapter-lede">
+              Un fichier par plateforme, une empreinte SHA-256 écrite en entier pour chacun. Vous
+              pouvez la comparer à la main avant d’ouvrir le fichier.
             </p>
-          </div>
+          </header>
 
-          <div class="dl reveal">
+          <div class="dl">
             <div class="dl-tabs" role="tablist" aria-label="Choisir la plateforme">
               <button
                 type="button"
@@ -591,30 +597,31 @@
               </button>
             </div>
 
-            <div class="dl-cta">
-              <a
-                class="btn btn-solid btn-big"
-                href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.44/Vela-0.3.44-universal.dmg"
-                data-platform-cta
-                data-platform-href
-              >
-                <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-                <span data-platform-label>Télécharger</span>
-              </a>
-              <p class="dl-file">
-                <code data-platform-file>Vela-0.3.44-universal.dmg</code>
-                <span data-platform-size> · 224,4 Mo</span>
+            <div class="dl-lead">
+              <div class="dl-cta">
+                <a
+                  class="btn btn-solid btn-big"
+                  href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.44/Vela-0.3.44-universal.dmg"
+                  data-platform-cta
+                  data-platform-href
+                >
+                  <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+                  <span data-platform-label>Télécharger</span>
+                </a>
+                <p class="dl-file">
+                  <code data-platform-file>Vela-0.3.44-universal.dmg</code>
+                  <span data-platform-size> · 224,4 Mo</span>
+                </p>
+              </div>
+
+              <p class="dl-warn">
+                <svg class="ico" aria-hidden="true"><use href="#i-warning" /></svg>
+                <span>
+                  <strong>Builds non signés.</strong> Le premier lancement demande un clic de plus :
+                  la consigne est sous chaque fichier, le pas-à-pas dans l’<a href="/aide/">aide</a>.
+                </span>
               </p>
             </div>
-
-            <p class="dl-warn">
-              <svg class="ico" aria-hidden="true"><use href="#i-warning" /></svg>
-              <span>
-                <strong>Builds non signés.</strong> Le premier lancement demande un clic de plus :
-                la consigne exacte est sous le fichier, le pas-à-pas dans l’<a href="/aide/">aide</a
-                >.
-              </span>
-            </p>
 
             <div class="dl-panels">
               <div
@@ -625,7 +632,6 @@
                 data-dl-panel="mac"
                 tabindex="0"
               >
-                <p class="dl-panel-note">Empreintes SHA-256 · le bouton copie la valeur entière.</p>
                 <ul class="dl-rows">
                   <li class="dl-row" data-file="Vela-0.3.44-universal.dmg">
                     <div class="dl-row-head">
@@ -716,7 +722,6 @@
                 tabindex="0"
                 hidden
               >
-                <p class="dl-panel-note">Empreintes SHA-256 · le bouton copie la valeur entière.</p>
                 <ul class="dl-rows">
                   <li class="dl-row" data-file="Vela-0.3.44-x64.exe">
                     <div class="dl-row-head">
@@ -756,7 +761,6 @@
                 tabindex="0"
                 hidden
               >
-                <p class="dl-panel-note">Empreintes SHA-256 · le bouton copie la valeur entière.</p>
                 <ul class="dl-rows">
                   <li class="dl-row" data-file="Vela-0.3.44-x86_64.AppImage">
                     <div class="dl-row-head">
@@ -819,25 +823,25 @@
                 <code>Get-FileHash</code> (Windows).</span
               >
               <a href="/aide/">Comment ouvrir Vela la première fois</a>
-              <a href="/nouveautes/0-3-35/">Notes de version</a>
+              <a href="/nouveautes/">Notes de version</a>
             </p>
             <p class="sr-only" aria-live="polite" data-copy-status></p>
           </div>
         </div>
       </section>
 
-      <section class="final" aria-labelledby="final-title">
-        <div class="wrap">
-          <h2 id="final-title">Il n’y a pas de compte à créer.</h2>
+      <section class="closing" aria-labelledby="closing-title">
+        <div class="shell">
+          <h2 id="closing-title">Il n’y a pas de compte à créer.</h2>
           <p>
             Le fichier s’installe ou se lance selon la plateforme, et Vela se souvient de vous sur
             cet appareil seulement.
           </p>
-          <a class="btn btn-night btn-big" href="#telecharger" data-platform-cta>
+          <a class="btn btn-solid btn-big" href="#telecharger" data-platform-cta>
             <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
             <span data-platform-label>Télécharger</span>
           </a>
-          <p class="fine">
+          <p class="closing-fine">
             Gratuit · MIT ·
             <a href="/aide/#mises-a-jour">Mises à jour : ce qui est automatique par plateforme</a>
           </p>
@@ -845,13 +849,13 @@
       </section>
     </main>
 
-    <footer class="foot">
-      <div class="wrap">
+    <footer class="site-foot">
+      <div class="shell">
         <div class="foot-grid">
           <div class="foot-brand">
             <p class="brand">
               <span class="brand-mark" aria-hidden="true">
-                <img src="/favicon.svg" width="26" height="26" alt="Vela" />
+                <img src="/favicon.svg" width="24" height="24" alt="Vela" />
               </span>
               <span class="brand-name">Vela</span>
             </p>
@@ -874,6 +878,12 @@
             <a href="/aide/">Aide</a>
             <a href="https://github.com/DmzGamingYT/vela">GitHub</a>
           </nav>
+
+          <div class="foot-col">
+            <h2>Licence</h2>
+            <a href="https://opensource.org/licenses/MIT">MIT</a>
+            <a href="https://github.com/DmzGamingYT/vela/releases">Versions</a>
+          </div>
         </div>
 
         <p class="foot-note">
