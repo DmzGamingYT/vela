@@ -1,0 +1,45 @@
+{
+  "version": "0.3.43",
+  "slug": "0-3-43",
+  "date": "2026-11-14",
+  "headline": "Plus petit texte à 11 px, cibles à 28 px",
+  "intro": "Une passe de finition mesurée : les libellés les plus petits passent à 11 px, les cibles trop étroites gagnent une zone de clic de 28 px sans que le dessin bouge, et les replis des fichiers de données disent désormais pourquoi ils sont sans conséquence — avec un test qui l’exige.",
+  "tags": ["lisibilité", "accessibilité", "fiabilité"],
+  "stats": {
+    "commits": 3,
+    "files": 7,
+    "insertions": 211,
+    "deletions": 25
+  },
+  "sections": [
+    {
+      "title": "Ce qui était trop petit",
+      "body": [
+        "Mesuré dans l’application, styles calculés : les titres de carte de l’accueil tombaient à 9,5 px, les libellés de section et la touche « ⌘K » à 10 px, la date du jour et « via DuckDuckGo » à 10,5 px. Ce sont des informations, pas des ornements.",
+        "Plancher à 11 px. Après la correction, plus aucun texte de l’accueil ni de la barre latérale ne descend sous 11 px."
+      ]
+    },
+    {
+      "title": "Ce qui était trop étroit",
+      "body": [
+        "Trois cibles mesuraient moins de 28 px : la pastille du nom d’espace (26 px de haut), le bouton de dossier (24 × 24) et la puce de l’accueil (26 px). La zone cliquable déborde maintenant du dessin par un débordement invisible : l’icône et le texte gardent leur taille, seule la cible grandit.",
+        "Après la correction, aucune cible de ces deux surfaces ne mesure moins de 28 px."
+      ]
+    },
+    {
+      "title": "Des replis qui s’expliquent",
+      "body": [
+        "Le code comptait 229 `catch` muets. Treize d’entre eux se trouvaient sur les fichiers qui portent vos données — stockage, notes, mises à jour — et chacun dit maintenant pourquoi son repli est sans conséquence : « l’index n’est pas réécrit par-dessus », « la clé reste sur le disque, rien n’est supprimé ».",
+        "Un test l’exige pour ces trois fichiers. Il a trouvé deux oublis que la relecture manuelle avait laissés passer."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir Vela et lire l’accueil : « Favoris », la date et les puces doivent être lisibles sans plisser les yeux.",
+    "Survoler puis cliquer le bouton « Nouveau dossier » dans la barre latérale : la cible est plus large qu’avant, l’icône est identique.",
+    "Cliquer la pastille du nom d’espace : elle répond sur 28 px de haut.",
+    "Créer une note, la renommer, la corbeille : rien ne change à l’usage, c’est le comportement en cas d’erreur disque qui est désormais documenté sur place.",
+    "Après publication, vérifier que le site annonce 0.3.43 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.42...v0.3.43"
+}
