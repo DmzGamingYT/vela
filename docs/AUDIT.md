@@ -63,7 +63,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | B6 | mineur | B | [réglages](captures/audit-phase1-reglages-apparence.png), `SettingsPanel.tsx:45`, `Icon.tsx:188-193` | L'icône de « Modèles » (clé) se lit comme un symbole masculin ♂. L'entrée « Raccourcis » utilise désormais un clavier, ce qui règle le premier point mais laisse l'ambiguïté sur les clés API. | Capture de la barre latérale des réglages. | Dessiner une clé franche (anneau + tige horizontale) ou réutiliser l'icône de clé des champs API. | Corrigé : la clé a un anneau percé (donut) et une tige longue à deux dents de même longueur, ce qui la distingue du symbole ♂ où la flèche part du cercle. Captures [avant](captures/lot4-avant-reglages-nav-zoom.png) / [après](captures/lot4-apres-reglages-nav-zoom.png). | corrigé — lot 4 |
 | B7 | finition | B | [notes](captures/audit-phase1-notes.png), `NotesDrawer.tsx:1087-1147` | La grille d'actions des notes alterne deux colonnes puis une action pleine largeur ; l'alignement paraît accidentel. | Capture de Notes, zéro note. | Grille régulière 2×2, ou une seule rangée secondaire. | corrigé — lot 5 |
 | C1 | majeur | C | `package.json:34-45`, sortie `npm audit` | `tinypool` critique, `vitest` critique par dépendance, `@vitest/mocker` modéré. Outils de développement ; exploitabilité dans cette CI non démontrée. La correction proposée par npm est un changement majeur de Vitest. | `npm audit --json` : 2 critiques, 1 modérée. | Analyser les conditions des avis ; monter Vitest après accord (changement majeur). | résolu — lot 8 (audit vide) |
-| C2 | mineur | C | `wc -l` | Concentration : `styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434, `NotesDrawer.tsx` 1 306. Coût de revue et risque de régression. | `wc -l src/main/browser.ts src/renderer/src/styles.css`. | Extraction progressive, après accord (réécriture de module > 300 lignes). | relevé — phase 2 |
+| C2 | mineur | C | `wc -l` | Concentration : `styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434, `NotesDrawer.tsx` 1 306. Coût de revue et risque de régression. | `wc -l src/main/browser.ts src/renderer/src/styles.css`. | Extraction progressive, après accord (réécriture de module > 300 lignes). | en cours — lot 9 |
 | C3 | mineur | C | `src/main/index.ts:227` | `console.log('[vela] barre de menus prête…')` reste dans le processus principal de production. | Lancer l'app empaquetée et lire la console. | Retirer ou conditionner au mode développement. | corrigé — lot 5 |
 | C4 | finition | C | `grep -rn "} catch {" src` | 152 blocs `catch` vides ou silencieux. Beaucoup sont des replis assumés, mais certains masquent des pertes (A3, A4). | Comptage ; revue des cas sensibles. | Commenter chaque repli et journaliser les échecs de données. | corrigé — lot 7 |
 | D1 | critique | D | `src/main/agent.ts:452-490` | Le mode « agir » exécutait directement l'action du modèle. Une confirmation native par action et une confirmation distincte pour Entrée ont été ajoutées, avec test de refus. Le scénario d'injection réelle n'a pas été joué. | `npx vitest run src/main/agent.test.ts src/shared/agentLoop.test.ts` ; dialogue non testé dans Electron. | Vérifier le dialogue réel, le changement de page entre confirmation et action, et un scénario hostile. | corrigé — lot 1 |
@@ -505,3 +505,21 @@ Mesure instrumentée dans l'application réelle : touches `Tab` et `Échap` envo
 ### Reste ouvert
 
 **C2** seul : concentration des fichiers (`styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434). C'est un découpage de modules, donc une réécriture de plus de 300 lignes : hors de ce que je fais sans accord explicite. Et le coût de peinture du flou pendant une animation, qui demande le profileur de rendu.
+
+## 19. Phase 2 — lot 9 : découpage de `Browser` (en cours)
+
+Le constat de C2 était partiellement périmé : `styles.css` fait **91 lignes** — les 15 455 lignes comptées sont les 79 tranches qu'elle importe, déjà séparées par thème. `SettingsPanel.tsx` fait 456 lignes, pas 1 434. Le vestige réel était la classe `Browser` : **1 896 lignes**, une seule classe pour les espaces, les dossiers, les onglets, les téléchargements, l'état et l'IPC.
+
+Méthode : un bloc cohérent à la fois, code copié sans changement de comportement, hôte explicite exposé par `Browser`, puis vérification en trois temps — `typecheck`, `lint`, `build`, tests, et une sonde d'exécution qui rejoue les gestes réels.
+
+### Tranche 1 — espaces (`src/main/spaces.ts`, 206 lignes)
+
+Les six mutations d'espace (création, modification, duplication, suppression, activation, vidage) sortent. Vérifié en exécution : création (1 → 2 espaces, un onglet, espace actif), renommage, duplication puis suppression de la copie, activation, vidage des données (2 → 1 onglet), retour à l'état initial.
+
+### Tranche 2 — dossiers (`src/main/tabGroups.ts`, 58 lignes)
+
+Création avec rattachement d'un onglet, renommage, repli, suppression. Vérifié : l'onglet rejoint le dossier, le nom et le repli persistent, la suppression détache l'onglet **sans le fermer**.
+
+### Bilan intermédiaire
+
+`Browser` : 1 896 → **1 718 lignes**. Blocs encore dans la classe, par taille décroissante : IPC (≈ 90), `updateSettings` (≈ 250), onglets (`createTab`/`activateTab`/`reopenTab`/scission/épinglage/réordonnancement, ≈ 350), téléchargements (≈ 90), état et diffusion (≈ 350), métriques et veille (≈ 150). Chacun demande sa propre sonde ; je les prends un par un.

@@ -1,4 +1,5 @@
 import { asId, asString } from './coerce'
+import { createGroup, removeGroup, updateGroup } from './tabGroups'
 import {
   activateSpace,
   addSpace,
@@ -25,22 +26,18 @@ import {
 } from 'electron'
 import type {
   AppStatePayload,
-  CreateGroupInput,
   CreateTabInput,
   ReorderTabsInput,
   SaveNoteInput,
   SettingsPatch,
-  UpdateGroupInput
 } from '@shared/api'
 import { TunnelService } from './tunnel'
 import {
-  createGroup as createGroupState,
   createTab as createTabState,
   dayKey,
   newId,
   weekKey
 } from '@shared/defaults'
-import { GROUP_COLORS, isGroupIcon } from '@shared/groupColors'
 import { moveTab } from '@shared/ordering'
 import { SPLIT_MIN_WIDTH } from '@shared/layout'
 import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
@@ -1157,58 +1154,17 @@ export class Browser {
     this.broadcast()
   }
 
+  // Les dossiers d'onglets vivent dans `tabGroups.ts`.
   private createGroup(input: unknown): TabGroup {
-    const payload = (input ?? {}) as CreateGroupInput
-    const state = this.store.get()
-    const count = state.groups.filter((group) => group.spaceId === state.activeSpaceId).length
-    const name = asString(payload.name).trim().slice(0, 40) || `Dossier ${count + 1}`
-    const color = /^#[0-9a-f]{6}$/i.test(asString(payload.color))
-      ? asString(payload.color)
-      : GROUP_COLORS[count % GROUP_COLORS.length]
-    const group = createGroupState(state.activeSpaceId, name, color, Date.now())
-    const icon = (payload as { icon?: unknown }).icon
-    if (isGroupIcon(icon)) group.icon = icon
-    state.groups.push(group)
-
-    if (typeof payload.tabId === 'string') {
-      const tab = state.tabs.find(
-        (item) => item.id === payload.tabId && item.spaceId === group.spaceId && !item.pinned
-      )
-      if (tab) tab.groupId = group.id
-    }
-
-    this.store.schedule()
-    this.broadcast()
-    return group
+    return createGroup(this, input)
   }
 
   private updateGroup(input: unknown): void {
-    const payload = (input ?? {}) as UpdateGroupInput
-    const id = asId(payload.id)
-    const state = this.store.get()
-    const group = state.groups.find((item) => item.id === id)
-    if (!group) return
-    if (typeof payload.name === 'string' && payload.name.trim())
-      group.name = payload.name.trim().slice(0, 40)
-    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
-      group.color = payload.color
-    const icon = (payload as { icon?: unknown }).icon
-    if (icon === null) group.icon = undefined
-    else if (isGroupIcon(icon)) group.icon = icon
-    if (typeof payload.collapsed === 'boolean') group.collapsed = payload.collapsed
-    this.store.schedule()
-    this.broadcast()
+    updateGroup(this, input)
   }
 
   private removeGroup(id: string): void {
-    const state = this.store.get()
-    if (!state.groups.some((group) => group.id === id)) return
-    for (const tab of state.tabs) {
-      if (tab.groupId === id) tab.groupId = null
-    }
-    state.groups = state.groups.filter((group) => group.id !== id)
-    this.store.schedule()
-    this.broadcast()
+    removeGroup(this, id)
   }
 
   /** Une requête arrêtée : compteurs du jour et de la semaine, persistés. */
