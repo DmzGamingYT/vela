@@ -8,7 +8,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 ;(async () => {
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(path.join(OUT, 'data'), { recursive: true })
-  const child = spawn(require('electron'), ['.', `--remote-debugging-port=${PORT}`], {
+  // Le commutateur doit précéder le chemin de l'app : placé après, Electron le
+  // transmet à l'application et n'ouvre aucun port DevTools (capture muette).
+  const child = spawn(require('electron'), [`--remote-debugging-port=${PORT}`, '.'], {
     cwd: ROOT,
     env: { ...process.env, VELA_USER_DATA: path.join(OUT, 'data') },
     stdio: 'ignore'
