@@ -1,0 +1,47 @@
+{
+  "version": "0.3.44",
+  "slug": "0-3-44",
+  "date": "2026-11-14",
+  "headline": "Le cœur découpé, à gestes identiques",
+  "intro": "La classe qui portait à elle seule les espaces, les dossiers, les onglets et l’état du navigateur a perdu trois blocs. Aucun geste ne change à l’usage — c’est le contrat de ce lot. La sonde qui rejoue chaque geste dans l’application a rattrapé au passage un défaut que la compilation ne pouvait pas voir.",
+  "tags": ["maintenance", "fiabilité", "sécurité"],
+  "stats": {
+    "commits": 5,
+    "files": 6,
+    "insertions": 798,
+    "deletions": 463
+  },
+  "sections": [
+    {
+      "title": "Une classe de 1 896 lignes",
+      "body": [
+        "`browser.ts` tenait ensemble les espaces, les dossiers d’onglets, les gestes d’onglet, les téléchargements, les réglages et la diffusion vers l’interface. L’audit y voyait le dernier vrai vestige du projet — les feuilles de style, souvent citées, étaient déjà découpées en quatre-vingts tranches thématiques.",
+        "Trois blocs en sont sortis : `spaces.ts` (création, duplication, suppression, vidage, activation), `tabGroups.ts` (dossiers) et `tabsOps.ts` (création, activation, fermeture, réouverture, scission, épinglage, réordonnancement). Le code est copié à l’identique ; la classe ne garde qu’une délégation par geste.",
+        "`browser.ts` passe de 1 896 à 1 521 lignes. Chaque geste a été rejoué dans l’application réelle avant d’être validé : création d’espace, duplication puis suppression, renommage, vidage des données, dossier avec rattachement d’un onglet, fermeture du dernier onglet d’un espace, réouverture, épinglage, réordonnancement, scission."
+      ]
+    },
+    {
+      "title": "Un défaut que seul le geste révèle",
+      "body": [
+        "En sortant la scission, la nouvelle couture s’appelait `splitAllowed` mais renvoyait `splitBlocked` : la garde refusait donc la scission dans les deux sens. Compilation, lint et tests étaient verts — la fonction ne faisait simplement plus rien, sans écrire la moindre erreur.",
+        "C’est la sonde d’exécution qui l’a montré : aucun état ne changeait après la commande. Corrigé, puis figé par un test qui vérifie qu’autorisé veut dire autorisé — et que la garde refuse bien quand la place manque."
+      ]
+    },
+    {
+      "title": "Un canal de signalement qui existait sur le papier",
+      "body": [
+        "La politique de sécurité du dépôt renvoyait à une adresse de documentation (`contact@example.com`), et le signalement privé de GitHub était désactivé : la page annonçait un chemin qui n’existait pas.",
+        "Le signalement privé est maintenant activé et devient le seul canal — un rapport reste privé jusqu’à l’accord sur la divulgation. La consigne inverse est écrite noir sur blanc : ne pas détailler une faille non corrigée dans une issue publique."
+      ]
+    }
+  ],
+  "verify": [
+    "Créer un espace, le dupliquer, le renommer, vider ses données puis le supprimer : les onglets et l’état suivent comme avant.",
+    "Créer un dossier et y glisser un onglet, le renommer, le replier, puis le supprimer : l’onglet est détaché, pas fermé.",
+    "Appuyer deux fois sur ⌘T : la seconde ramène à la page d’accueil existante au lieu d’en ouvrir une autre.",
+    "Fermer un onglet puis ⌘⇧T : l’adresse revient, une seule fois.",
+    "Ouvrir deux pages côte à côte dans une fenêtre large, puis refermer la scission.",
+    "Après publication, vérifier que le site annonce 0.3.44 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.43...v0.3.44"
+}
