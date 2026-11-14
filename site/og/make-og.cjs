@@ -10,8 +10,10 @@
  */
 
 const { app, BrowserWindow } = require('electron')
-const { writeFileSync } = require('node:fs')
+const { readFileSync, writeFileSync, rmSync } = require('node:fs')
 const { join } = require('node:path')
+
+const { version } = require('../../package.json')
 
 // Le rendu doit sortir en 1200×630, quel que soit l’écran de la machine.
 app.commandLine.appendSwitch('force-device-scale-factor', '1')
@@ -29,7 +31,18 @@ app.whenReady().then(async () => {
     webPreferences: { contextIsolation: true, sandbox: true }
   })
 
-  await win.loadFile(join(root, 'site/og/og.html'))
+  /* Le gabarit est rempli avant rendu : la version vient de package.json et la
+     vignette de la capture d’accueil réellement publiée (WebP, pas de JPEG
+     intermédiaire qui n’existe plus). */
+  const template = join(root, 'site/og/og.html')
+  const filled = join(root, 'site/og/.og-filled.html')
+  writeFileSync(
+    filled,
+    readFileSync(template, 'utf8')
+      .replace(/\{\{version\}\}/g, version)
+      .replace(/\{\{shot\}\}/g, '../public/captures/accueil-clair-1080.webp')
+  )
+  await win.loadFile(filled)
   // Laisse le temps à la capture JPEG et aux polices système de se poser.
   await new Promise((resolve) => setTimeout(resolve, 1200))
 
@@ -41,6 +54,7 @@ app.whenReady().then(async () => {
       ? image
       : image.resize({ width: 1200, height: 630, quality: 'best' })
   writeFileSync(target, final.toPNG())
+  rmSync(filled, { force: true })
   console.log(
     `og-vela.png ${final.getSize().width}×${final.getSize().height} → site/public/og-vela.png`
   )

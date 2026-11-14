@@ -19,7 +19,9 @@
  *
  *   node site/tools/captures.mjs [--force]
  *
- * Dépendances : `ffmpeg` avec l’encodeur SVT-AV1, et `cwebp`.
+ * Dépendances : `cwebp` pour le WebP. Pour l’AVIF, `sips` suffit sur macOS
+ * récent (il sait écrire l’AVIF) ; ailleurs, `ffmpeg` avec SVT-AV1 prend le
+ * relais. Le format est choisi une fois au démarrage, pas par fichier.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -34,16 +36,43 @@ const force = process.argv.includes('--force')
 
 const WIDTHS = [720, 1080]
 const AVIF_CRF = 30
+/* Même intention que le CRF 30 de SVT-AV1 : la capture doit rester lisible au
+   zoom, pas fidèle au pixel près. */
+const AVIF_QUALITY = 60
 const WEBP_QUALITY = 82
 
 const run = (cmd, args) => execFileSync(cmd, args, { stdio: 'pipe' })
+const available = (cmd) => {
+  try {
+    run('which', [cmd])
+    return true
+  } catch {
+    return false
+  }
+}
+const SIPS = process.platform === 'darwin' && available('sips')
 
 const kb = (path) => `${(statSync(path).size / 1024).toFixed(1)} Ko`
 const fresh = (source, target) =>
   !force && existsSync(target) && statSync(target).mtimeMs >= statSync(source).mtimeMs
 
-const avif = (source, target, width) => {
-  if (fresh(source, target)) return false
+const avifSips = (source, target, width) => {
+  run('sips', [
+    '-s',
+    'format',
+    'avif',
+    '-s',
+    'formatOptions',
+    String(AVIF_QUALITY),
+    '--resampleWidth',
+    String(width),
+    source,
+    '--out',
+    target
+  ])
+}
+
+const avifFfmpeg = (source, target, width) => {
   run('ffmpeg', [
     '-hide_banner',
     '-loglevel',
@@ -61,6 +90,12 @@ const avif = (source, target, width) => {
     'avif',
     target
   ])
+}
+
+const avif = (source, target, width) => {
+  if (fresh(source, target)) return false
+  if (SIPS) avifSips(source, target, width)
+  else avifFfmpeg(source, target, width)
   return true
 }
 

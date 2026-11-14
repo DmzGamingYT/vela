@@ -13,6 +13,7 @@
    et les feux macOS font partie de l’image. macOS uniquement.
 */
 const { execFileSync, spawn } = require('node:child_process')
+const http = require('node:http')
 const fs = require('node:fs')
 const path = require('node:path')
 
@@ -132,6 +133,60 @@ async function waitForTarget(url, pick, attempts = 600) {
     await sleep(100)
   }
   throw new Error(`cible DevTools introuvable sur ${url}`)
+}
+
+/* Les scènes des pages intérieures ont besoin d’une page à lire : une page
+   locale, servie en data: — rien ne part sur le réseau et la légende de la
+   capture (« une page locale ouverte ») reste vraie. */
+const PAGE_ARTICLE = `
+  <h1>Article de fond</h1>
+  <p class="chapeau">La page sert de décor : elle est chargée depuis une adresse
+     locale et ne contacte aucun serveur.</p>
+  <h2>Le poids avant le nombre</h2>
+  <p>Une image qui pèse trois fois trop coûte trois fois plus cher, sans rien
+     montrer de plus.</p>
+  <h2>La sauvegarde n’est pas un luxe</h2>
+  <p>Un hébergeur qui ne propose pas d’export complet garde vos fichiers en
+     otage le jour où vous partez.</p>`
+
+const pageArticle = (titre, corps) => `<h1>${titre}</h1>
+<p class="chapeau">${corps}</p>${PAGE_ARTICLE}`
+
+const PAGE_STYLE = `
+  body { margin: 0; padding: 64px 88px; background: #f7f6f2; color: #131512;
+    font: 18px/1.65 'Iowan Old Style', Palatino, Georgia, serif }
+  h1 { font-size: 44px; line-height: 1.1; margin: 0 0 20px; letter-spacing: -0.02em }
+  h2 { font-size: 26px; margin: 44px 0 12px; letter-spacing: -0.01em }
+  p { max-width: 30em; margin: 0 0 16px }
+  .chapeau { font-size: 21px; color: #4d514a }`
+
+const pageHtml = (titre, corps) =>
+  '<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>' +
+  titre +
+  '</title><style>' +
+  PAGE_STYLE +
+  '</style></head><body>' +
+  corps +
+  '</body></html>'
+
+/* L’app n’ouvre que http et https : la page de démonstration est servie par un
+   serveur local le temps de la capture, comme une vraie page. */
+const DOCS_PORT = 9575
+const DOCS = []
+let docServer = null
+
+const docUrl = (titre, corps) => {
+  const id = DOCS.push(pageHtml(titre, corps)) - 1
+  if (!docServer) {
+    docServer = http.createServer((request, response) => {
+      const found = /^\/p\/(\d+)$/.exec(request.url || '')
+      const html = found ? DOCS[Number(found[1])] : null
+      response.writeHead(html ? 200 : 404, { 'content-type': 'text/html; charset=utf-8' })
+      response.end(html ?? '<!doctype html><meta charset="utf-8"><title>404</title>')
+    })
+    docServer.listen(DOCS_PORT, '127.0.0.1')
+  }
+  return `http://127.0.0.1:${DOCS_PORT}/p/${id}`
 }
 
 ;(async () => {
@@ -408,6 +463,118 @@ async function waitForTarget(url, pick, attempts = 600) {
       await shoot('atelier')
     }
 
+    /* --- Navigation : une page réelle ouverte ------------------------------ */
+
+    if (want('navigation')) {
+      await closeSheet()
+      await setTheme('light')
+      const pageDemo = await evaluate(
+        `window.vela.tabs.create({ url: ${JSON.stringify(docUrl('Article de fond', PAGE_ARTICLE))} })`
+      )
+      await shoot('navigation')
+      if (pageDemo && pageDemo.id) await evaluate(`window.vela.tabs.close(${JSON.stringify(pageDemo.id)})`)
+      await sleep(600)
+    }
+
+    /* --- Sessions : des sessions vraiment gardées ------------------------- */
+
+    if (want('sessions')) {
+      await closeSheet()
+      await setTheme('light')
+      const noms = ['Veille du vendredi', 'Comparatif images', 'Lectures de la semaine']
+      const sujets = [
+        ['Héberger ses images', 'Une image qui pèse trois fois trop coûte trois fois plus cher.'],
+        ['Le poids avant le nombre', 'L’AVIF réduit encore le fichier, à condition de garder un repli JPEG.'],
+        ['La sauvegarde n’est pas un luxe', 'Un hébergeur sans export complet garde vos fichiers en otage.']
+      ]
+      for (const nom of noms) {
+        for (const [titre, corps] of sujets) {
+          const url = docUrl(`${titre} — ${nom}`, pageArticle(titre, corps))
+          await evaluate(`window.vela.tabs.create({ url: ${JSON.stringify(url)} })`)
+          await sleep(700)
+        }
+        if (homeTab) await evaluate(`window.vela.tabs.activate(${JSON.stringify(homeTab.id)})`)
+        await sleep(700)
+        await evaluate(
+          `(() => { const carte = document.querySelector('.sessions-card'); if (!carte) return false; carte.click(); return true })()`
+        )
+        await sleep(900)
+        await evaluate(
+          `(() => {
+            const input = document.querySelector('.sessions-save input')
+            if (!input) return false
+            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+            setter.call(input, ${JSON.stringify(nom)})
+            input.dispatchEvent(new Event('input', { bubbles: true }))
+            return true
+          })()`
+        )
+        await sleep(400)
+        await evaluate(
+          `(() => { const bouton = document.querySelector('.sessions-save .action.primary'); if (!bouton) return false; bouton.click(); return true })()`
+        )
+        await sleep(900)
+        await pressEscape()
+        await sleep(500)
+      }
+      await evaluate(
+        `(() => { const carte = document.querySelector('.sessions-card'); if (!carte) return false; carte.click(); return true })()`
+      )
+      await sleep(1200)
+      await shoot('sessions')
+      await closeSheet()
+    }
+
+    /* --- Notes : un tiroir avec une note ouverte --------------------------- */
+
+    if (want('notes')) {
+      await closeSheet()
+      await setTheme('light')
+      const corpsNote = [
+        'Trois questions avant de publier les captures du site.',
+        '',
+        '## Le poids avant le nombre',
+        '',
+        '- Vérifier la bande passante du mois',
+        '- Garder un repli JPEG à côté de l’AVIF',
+        '',
+        'Voir [Comparer les hébergeurs](https://example.com) pour les tarifs et l’export.',
+        '',
+        '> Une image qui pèse trois fois trop coûte trois fois plus cher, sans rien montrer de plus.'
+      ].join('\n')
+      await evaluate(
+        `window.vela.notes.save(${JSON.stringify({
+          title: 'Héberger ses images — notes',
+          body: corpsNote,
+          tags: ['images', 'veille'],
+          pinned: true
+        })})`
+      )
+      await sleep(800)
+      const titre = 'Héberger ses images sans se tromper'
+      const url = docUrl(titre, PAGE_ARTICLE)
+      await evaluate(`window.vela.tabs.create({ url: ${JSON.stringify(url)} })`)
+      await sleep(2200)
+      await evaluate(
+        `(() => { const bouton = document.querySelector('[aria-label="Notes"]'); if (!bouton) return false; bouton.click(); return true })()`
+      )
+      await sleep(1200)
+      await evaluate(
+        `(() => {
+          const entree = document.querySelector('.notes-list-wrap [class*="note"], .notes-list-wrap li, .notes-list-wrap button')
+          if (!entree) return false
+          entree.click()
+          return true
+        })()`
+      )
+      await sleep(1400)
+      await shoot('notes')
+      await evaluate(
+        `(() => { const bouton = document.querySelector('[aria-label="Notes"]'); if (!bouton) return false; bouton.click(); return true })()`
+      )
+      await sleep(700)
+    }
+
     console.log('\nTerminé. Dériver les variantes :')
     console.log('  node site/tools/captures.mjs --force')
   } finally {
@@ -419,6 +586,8 @@ async function waitForTarget(url, pick, attempts = 600) {
     }
     await sleep(200)
     child.kill('SIGTERM')
+    docServer?.close()
+    docServer = null
   }
 })().catch((error) => {
   console.error('ÉCHEC', error.message)

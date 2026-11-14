@@ -10,17 +10,17 @@
       }
 
       :root {
-        --navy: #1b2150;
-        --night: #12173b;
-        --sea: #26307a;
-        --coral: #e8805a;
-        --cream: #f6efe4;
-        --paper: #f6efe4;
-        --ink: #161b3f;
-        --ink-2: #41476a;
-        --ink-3: #5a6078;
-        --shell: #b9becb;
-        --line: rgba(22, 27, 63, 0.18);
+        --navy: #131512;
+        --night: #0f1311;
+        --sea: #1a7a5e;
+        --coral: #1a7a5e;
+        --cream: #f7f6f2;
+        --paper: #f7f6f2;
+        --ink: #131512;
+        --ink-2: #4d514a;
+        --ink-3: #666b62;
+        --shell: #b9beb8;
+        --line: rgba(19, 21, 18, 0.14);
       }
 
       body {
@@ -84,7 +84,7 @@
         align-items: center;
         gap: 9px;
         margin-top: 34px;
-        color: #c6cad9;
+        color: #b9beb6;
         font-family: ui-monospace, Menlo, monospace;
         font-size: 12.5px;
         letter-spacing: 0.14em;
@@ -110,7 +110,7 @@
         position: relative;
         max-width: 17ch;
         margin-top: 22px;
-        color: #c6cad9;
+        color: #b9beb6;
         font-size: 19px;
         line-height: 1.5;
       }
@@ -178,7 +178,7 @@
         align-items: center;
         justify-content: center;
         border: 1px solid rgba(246, 239, 228, 0.22);
-        color: #c6cad9;
+        color: #b9beb6;
         font-family: ui-monospace, Menlo, monospace;
         font-size: 10px;
       }
@@ -205,7 +205,7 @@
       <section class="panel">
         <span class="sun"></span>
         <img class="icon" src="../public/favicon.svg" alt="" />
-        <p class="kicker"><i></i> Navigateur de travail · v0.3.30</p>
+        <p class="kicker"><i></i> Navigateur de travail · v{{version}}</p>
         <h1>Le web,<br />votre atelier.</h1>
         <p class="sub">
           Onglets verticaux, espaces isolés, notes locales. L’atelier s’ouvre quand vous en avez
@@ -220,9 +220,9 @@
             <span class="dots"><span></span><span></span><span></span></span>
             <span class="addr">vela.local — Accueil</span>
           </div>
-          <img src="../public/captures/accueil-clair-1080.jpg" alt="" />
+          <img src="{{shot}}" alt="" />
         </figure>
-        <p class="caption">Vela 0.3.30 — l’accueil, ses espaces et sa palette</p>
+        <p class="caption">Vela {{version}} — l’accueil, ses espaces et sa palette</p>
       </section>
     </div>
   </body>
