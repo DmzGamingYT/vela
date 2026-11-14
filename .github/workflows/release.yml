@@ -71,6 +71,26 @@ jobs:
         run: npm run lint
       - name: Lancer les tests
         run: npm test
+      # Phase 1 Rust : la crate du filtre de traqueurs est compilée et testée à
+      # chaque poussée. Si elle ne compile plus, aucune release ne part.
+      #
+      # Les étapes sont conditionnées à la présence de la crate dans le dépôt :
+      # elle vit encore dans l'arbre de travail (`native/` non suivi). Sans la
+      # condition, la CI échouerait sur un clone qui ne la contient pas encore.
+      - name: Installer la chaîne Rust
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+      - name: Tester la crate du filtre
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        run: cargo test --release --manifest-path native/vela-blocklist/Cargo.toml
+      # Les listes vivent dans `src/main/blocklist.ts` et sont recopiées en Rust
+      # par `scripts/gen-blocklist-rs.cjs` : sans cette garde, la promesse
+      # « dérive impossible » du README de la crate n'était vérifiée nulle part.
+      - name: Vérifier que les listes Rust suivent le TypeScript
+        if: hashFiles('native/vela-blocklist/Cargo.toml', 'scripts/gen-blocklist-rs.cjs') != ''
+        run: |
+          npm run native:gen
+          git diff --exit-code -- native/vela-blocklist/src/hosts.rs
       # Le site annonce une version et six empreintes : si elles ne
       # correspondent plus à la release publiée, la vérification échoue ici
       # plutôt que sur la page publique.
@@ -90,6 +110,32 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Installer la chaîne Rust
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      # Un seul `.node` universel : `@electron/universal` refuse de fusionner
+      # deux bundles dont un fichier diffère (il ne sait pas réconcilier un
+      # binaire qui n'existe que d'un côté). `lipo` règle le problème en amont
+      # — même fichier des deux côtés, et chaque tranche se charge selon
+      # l'architecture du processus hôte.
+      - name: Construire le filtre de traqueurs (universel)
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        run: |
+          set -euo pipefail
+          cargo build --release --manifest-path native/vela-blocklist/Cargo.toml --target aarch64-apple-darwin
+          cargo build --release --manifest-path native/vela-blocklist/Cargo.toml --target x86_64-apple-darwin
+          lipo -create \
+            native/vela-blocklist/target/aarch64-apple-darwin/release/libvela_blocklist.dylib \
+            native/vela-blocklist/target/x86_64-apple-darwin/release/libvela_blocklist.dylib \
+            -output native/vela-blocklist/vela-blocklist.node
+          for ARCH in arm64 x86_64; do
+            lipo -archs native/vela-blocklist/vela-blocklist.node | tr ' ' '\n' | grep -qx "$ARCH" || {
+              echo "::error::Le filtre universel n'a pas de tranche $ARCH."
+              exit 1
+            }
+          done
       - name: Détecter les secrets de signature
         id: detect
         env:
@@ -168,6 +214,24 @@ jobs:
             echo "— $APP"
             echo "  nom : $(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$APP/Contents/Info.plist")"
             echo "  tranches : $(lipo -archs "$APP/Contents/MacOS/Vela")"
+            # Le filtre Rust doit être DANS le bundle, avec ses deux tranches.
+            # C'est le défaut qu'on vient de corriger : la crate compilait mais
+            # `extraResources` ne la copiait pas, et l'app retombait en silence
+            # sur le TypeScript chez tous les utilisateurs.
+            if [ -f native/vela-blocklist/vela-blocklist.node ]; then
+              FILTRE="$APP/Contents/Resources/native/vela-blocklist/vela-blocklist.node"
+              if [ ! -f "$FILTRE" ]; then
+                echo "::error::Filtre Rust absent du bundle : $APP"
+                exit 1
+              fi
+              echo "  filtre : $(lipo -archs "$FILTRE")"
+              for ARCH in arm64 x86_64; do
+                lipo -archs "$FILTRE" | tr ' ' '\n' | grep -qx "$ARCH" || {
+                  echo "::error::Le filtre du bundle n'a pas de tranche $ARCH : $APP"
+                  exit 1
+                }
+              done
+            fi
             codesign --verify --deep --strict --verbose=2 "$APP"
             if [ "$SIGNED" = "true" ]; then
               codesign -dv --verbose=4 "$APP" 2>&1 | grep -E "Authority|TeamIdentifier|Runtime|Identifier" || true
@@ -216,6 +280,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Installer la chaîne Rust
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+      - name: Construire le filtre de traqueurs
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build --release --manifest-path native/vela-blocklist/Cargo.toml
+          cp native/vela-blocklist/target/release/vela_blocklist.dll \
+             native/vela-blocklist/vela-blocklist.node
       - name: Construire l’installateur
         shell: bash
         env:
@@ -227,6 +302,17 @@ jobs:
             echo "::warning::Aucun certificat Windows (secret WIN_CSC_LINK) : l’installateur reste non signé, SmartScreen avertira."
           fi
           npm run dist:win -- --publish never
+      - name: Vérifier que le filtre Rust est dans le paquet
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILTRE=$(find release/win -path '*resources/native/vela-blocklist/vela-blocklist.node' | head -1)
+          if [ -z "$FILTRE" ]; then
+            echo "::error::Filtre Rust absent du paquet Windows."
+            exit 1
+          fi
+          ls -l "$FILTRE"
       - uses: actions/upload-artifact@v4
         with:
           name: win
@@ -247,7 +333,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Installer la chaîne Rust
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+      - name: Construire le filtre de traqueurs
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        run: |
+          set -euo pipefail
+          cargo build --release --manifest-path native/vela-blocklist/Cargo.toml
+          cp native/vela-blocklist/target/release/libvela_blocklist.so \
+             native/vela-blocklist/vela-blocklist.node
       - run: npm run dist:linux -- --publish never
+      - name: Vérifier que le filtre Rust est dans le paquet
+        if: hashFiles('native/vela-blocklist/Cargo.toml') != ''
+        run: |
+          set -euo pipefail
+          FILTRE=$(find release/linux -path '*resources/native/vela-blocklist/vela-blocklist.node' | head -1)
+          if [ -z "$FILTRE" ]; then
+            echo "::error::Filtre Rust absent du paquet Linux."
+            exit 1
+          fi
+          ls -l "$FILTRE"
       - uses: actions/upload-artifact@v4
         with:
           name: linux

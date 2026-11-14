@@ -1,5 +1,6 @@
 import { session, webContents, type Session } from 'electron'
-import { isAuthPage, isStrictType, isThirdParty, isTracker, type BlockLevel } from './blocklist'
+import { isAuthPage, isStrictType, isThirdParty, isTracker } from './blocklistNative'
+import type { BlockLevel } from './blocklist'
 import { applySessionIdentity } from './identity'
 
 const attached = new WeakSet<Session>()

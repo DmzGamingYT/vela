@@ -1,0 +1,16 @@
+[package]
+name = "vela-blocklist"
+version = "0.1.0"
+edition = "2021"
+description = "Vela — blocklist de traqueurs en Rust (spike phase 1, NAPI)"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3", features = ["napi4"] }
+napi-derive = "3"
+
+[profile.release]
+opt-level = 3
+lto = true

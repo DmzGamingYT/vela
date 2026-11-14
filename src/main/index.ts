@@ -18,6 +18,7 @@ import { installMenu } from './menu'
 import { initUpdater, setUpdaterPolicy } from './updater'
 import { CHROME_UA, applyBrowserIdentity, applySessionIdentity } from './identity'
 import { attachPermissions } from './privacy'
+import { BLOCKLIST_NATIVE } from './blocklistNative'
 
 // Le nom du produit est fixé avant toute autre chose : `app.name` alimente le
 // premier menu macOS, la fenêtre « À propos » et les dossiers de données. Sans
@@ -286,6 +287,16 @@ function main(): void {
     // Seul le micro du dictaphone passe, avec l'écriture dans le
     // presse-papier et le plein écran.
     attachPermissions(session.defaultSession, ['media'])
+    // Phase 1 Rust : une ligne dans le journal quand le filtre natif n'a pas pu
+    // être chargé. Sans elle, un `.node` oublié au packaging ou compilé pour
+    // une autre architecture retombait sur le TypeScript en silence, et rien
+    // dans l'application ne permettait de le savoir.
+    if (app.isPackaged && !BLOCKLIST_NATIVE) {
+      journalFault(
+        'filtre natif absent',
+        'vela-blocklist.node introuvable ou illisible : repli sur le filtre TypeScript'
+      )
+    }
     try {
       // Les clés du trousseau sont lues avant la fenêtre : le premier état
       // diffusé dit déjà quels fournisseurs ont une clé.

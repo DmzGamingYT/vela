@@ -23,7 +23,6 @@ export default tseslint.config(
       'out/**',
       'release/**',
       'build/**',
-      'rust/**',
       '.scratch/**',
       'docs/maquettes/**',
       '.audit-*/**',

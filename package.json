@@ -24,7 +24,10 @@
     "dist:linux": "npm run build && electron-builder --linux -c.directories.output=release/linux",
     "site:build": "node site/tools/releases.mjs && node site/tools/build.mjs",
     "site:check": "node scripts/check-site-release.cjs",
-    "site:releases": "node site/tools/releases.mjs"
+    "site:releases": "node site/tools/releases.mjs",
+    "native:gen": "node scripts/gen-blocklist-rs.cjs",
+    "native:build": "node scripts/gen-blocklist-rs.cjs && cargo build --release --manifest-path native/vela-blocklist/Cargo.toml && cp native/vela-blocklist/target/release/libvela_blocklist.dylib native/vela-blocklist/vela-blocklist.node",
+    "native:store": "node scripts/build-store.cjs"
   },
   "dependencies": {
     "electron-chrome-extensions": "^4.10.0",

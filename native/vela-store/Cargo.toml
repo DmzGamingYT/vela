@@ -1,0 +1,17 @@
+[package]
+name = "vela-store"
+version = "0.1.0"
+edition = "2021"
+description = "Vela — lecture et écriture de vela.json en Rust (spike mesuré, NAPI)"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3", features = ["napi4", "serde-json"] }
+napi-derive = "3"
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[profile.release]
+opt-level = 3
+lto = true

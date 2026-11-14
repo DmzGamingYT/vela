@@ -15,6 +15,14 @@ extraResources:
     to: iconTemplate.png
   - from: build/iconTemplate@2x.png
     to: iconTemplate@2x.png
+  # Filtre de traqueurs en Rust. Le fichier est produit avant le packaging
+  # (`npm run native:build` en local, étape dédiée dans la CI) et n'est jamais
+  # versionné ; s'il manque, le glob ne copie rien et l'application retombe sur
+  # l'implémentation TypeScript, exactement comme avant.
+  - from: native/vela-blocklist
+    to: native/vela-blocklist
+    filter:
+      - vela-blocklist.node
 afterPack: ./scripts/after-pack.cjs
 artifactName: ${productName}-${version}-${arch}.${ext}
 publish:

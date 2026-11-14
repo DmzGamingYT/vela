@@ -1,7 +1,9 @@
 release/
 node_modules/
 out/
-rust/target/
+# Modules Rust (phase 1) : la crate se construit, le binaire ne se versionne pas.
+native/**/target/
+native/**/*.node
 build/Vela.iconset/
 build/icon.iconset/
 # Moitié privée de la clé de signature des manifestes : elle ne quitte pas la
