@@ -7,18 +7,9 @@
   </defs>
   <g clip-path="url(#tile)">
     <rect width="200" height="200" fill="#1B2150" />
-    <circle cx="100" cy="98" r="52" fill="#E8805A" opacity=".28" />
-    <path d="M0 156 Q30 146 60 156 T120 156 T180 156 T200 154 L200 200 L0 200 Z" fill="#26307A" />
-    <path
-      d="M0 158 Q30 148 60 158 T120 158 T180 158 L200 156"
-      fill="none"
-      stroke="#3B4AA8"
-      stroke-width="2"
-    />
-    <path d="M96 38 L96 128 L46 128 Z" fill="#F6EFE4" />
-    <path d="M106 64 L106 128 L142 128 Z" fill="#B9BECB" />
-    <rect x="95" y="34" width="3" height="98" fill="#F6EFE4" />
-    <path d="M32 132 L168 132 L150 152 L50 152 Z" fill="#E8805A" />
-    <path d="M50 152 L150 152 L146 156 L54 156 Z" fill="#C4623F" />
+    <path d="M0 158 C 45 152 75 158 100 158 C 125 158 155 152 200 158 L200 200 L0 200 Z" fill="#26307A" />
+    <path d="M96 37 L96 136 L37 136 Z" fill="#F6EFE4" />
+    <path d="M110 68 L110 136 L164 136 Z" fill="#E8805A" />
+    <path d="M33 145 L168 145 L156 168 L44 168 Z" fill="#E8805A" />
   </g>
 </svg>
