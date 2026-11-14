@@ -1,3 +1,12 @@
+import { asId, asString } from './coerce'
+import {
+  activateSpace,
+  addSpace,
+  clearSpaceData,
+  duplicateSpace,
+  removeSpace,
+  updateSpace
+} from './spaces'
 import { existsSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
@@ -17,22 +26,18 @@ import {
 import type {
   AppStatePayload,
   CreateGroupInput,
-  CreateSpaceInput,
   CreateTabInput,
   ReorderTabsInput,
   SaveNoteInput,
   SettingsPatch,
-  UpdateGroupInput,
-  UpdateSpaceInput
+  UpdateGroupInput
 } from '@shared/api'
 import { TunnelService } from './tunnel'
 import {
   createGroup as createGroupState,
-  createSpace as createSpaceState,
   createTab as createTabState,
   dayKey,
   newId,
-  SPACE_COLORS,
   weekKey
 } from '@shared/defaults'
 import { GROUP_COLORS, isGroupIcon } from '@shared/groupColors'
@@ -52,21 +57,14 @@ import {
   startupAddress
 } from '@shared/navigation'
 import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur, sanitizeHour } from '@shared/theme'
-import {
-  normalizeLetterboxd,
-  partitionFor,
-  sanitizeSpaceAvatar,
-  sanitizeSpaceBackground,
-  sanitizeSpaceShortcuts,
-  sanitizeWatchlist,
-  suggestSpaceName
-} from '@shared/space'
+import { partitionFor } from '@shared/space'
 import {
   HOME_URL,
   type AppView,
   type DownloadItem,
   type HistoryEntry,
   type NoteMeta,
+  type PersistedState,
   type ProcessInfo,
   type ProviderId,
   type Settings,
@@ -81,7 +79,6 @@ import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
 import { setSessionLanguage } from './identity'
-import { pruneAvatars, saveAvatarDataUrl } from './avatars'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
@@ -100,15 +97,6 @@ import { registerSpacesIpc } from './ipc/spaces'
 import { registerTabsIpc } from './ipc/tabs'
 import { registerTunnelIpc } from './ipc/tunnel'
 import type { Handle, On } from './ipc/types'
-
-function asString(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback
-}
-
-function asId(value: unknown): string {
-  if (typeof value !== 'string' || !value) throw new Error('Identifiant invalide.')
-  return value
-}
 
 /** Raccourcis qui ouvrent une surface de l'interface et attendent le clavier. */
 const UI_SHORTCUTS: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
@@ -1070,173 +1058,55 @@ export class Browser {
     this.broadcast()
   }
 
+  // Les mutations d'espace vivent dans `spaces.ts` (voir ce module) : `Browser`
+  // ne garde que la délégation et l'hôte qui expose état, sauvegarde et vues.
   private addSpace(input: unknown): void {
-    const payload = (input ?? {}) as CreateSpaceInput
-    const state = this.store.get()
-    const name = asString(payload.name).trim().slice(0, 40) || `Profil ${state.spaces.length + 1}`
-    const color = /^#[0-9a-f]{6}$/i.test(asString(payload.color))
-      ? asString(payload.color)
-      : SPACE_COLORS[state.spaces.length % SPACE_COLORS.length]
-    const now = Date.now()
-    const space = createSpaceState(name, color, now)
-    space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
-    space.background = sanitizeSpaceBackground(payload.background)
-    space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
-    space.blockTrackers = payload.blockTrackers !== false
-    space.watchlist = payload.watchlist === true
-    space.letterboxd = normalizeLetterboxd(payload.letterboxd)
-    space.watchItems = sanitizeWatchlist(payload.watchItems)
-    space.letterboxdLog = []
-    space.letterboxdLogAt = null
-    if (isThemeId(payload.theme)) space.theme = payload.theme
-    space.accent = parseHex(asString(payload.accent)) ?? null
-    const tab = createTabState(space.id, now)
-    state.spaces.push(space)
-    state.tabs.push(tab)
-    state.activeSpaceId = space.id
-    state.activeTabBySpace[space.id] = tab.id
-    state.secondTabBySpace[space.id] = null
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
+    addSpace(this, input)
   }
 
   private updateSpace(input: unknown): void {
-    const payload = (input ?? {}) as UpdateSpaceInput & { id?: unknown }
-    const id = asId(payload.id)
-    const state = this.store.get()
-    const space = state.spaces.find((item) => item.id === id)
-    if (!space) return
-    if (typeof payload.name === 'string' && payload.name.trim())
-      space.name = payload.name.trim().slice(0, 40)
-    if (typeof payload.color === 'string' && /^#[0-9a-f]{6}$/i.test(payload.color))
-      space.color = payload.color
-    if ('theme' in payload) space.theme = isThemeId(payload.theme) ? payload.theme : null
-    if ('accent' in payload) {
-      space.accent = parseHex(typeof payload.accent === 'string' ? payload.accent : '') ?? null
-    }
-    if ('avatar' in payload) space.avatar = this.storedAvatar(sanitizeSpaceAvatar(payload.avatar))
-    if ('background' in payload) space.background = sanitizeSpaceBackground(payload.background)
-    if ('shortcuts' in payload) space.shortcuts = sanitizeSpaceShortcuts(payload.shortcuts)
-    if ('watchlist' in payload) space.watchlist = payload.watchlist === true
-    if ('letterboxd' in payload) space.letterboxd = normalizeLetterboxd(payload.letterboxd)
-    if ('watchItems' in payload) space.watchItems = sanitizeWatchlist(payload.watchItems)
-    if (typeof payload.blockTrackers === 'boolean') space.blockTrackers = payload.blockTrackers
-    this.store.schedule()
-    this.pruneAvatars()
-    this.broadcast()
+    updateSpace(this, input)
   }
 
-  /**
-   * Une photo choisie dans la fenêtre arrive en data URL : elle part sur le
-   * disque et vela.json ne garde qu'un nom de fichier. En cas d'échec, la
-   * data URL est conservée pour ne rien perdre.
-   */
-  private storedAvatar(value: string | null): string | null {
-    if (!value || !value.startsWith('image:data:')) return value
-    const saved = saveAvatarDataUrl(this.store.dir, value)
-    return saved ?? value
-  }
-
-  /** Les photos remplacées ne restent pas sur le disque. */
-  private pruneAvatars(): void {
-    pruneAvatars(this.store.dir, this.store.referencedAvatars())
+  private async clearSpaceData(id: string): Promise<void> {
+    await clearSpaceData(this, id)
   }
 
   private removeSpace(id: string): void {
-    const state = this.store.get()
-    if (state.spaces.length <= 1) throw new Error('Vela garde toujours au moins un profil.')
-    const space = state.spaces.find((item) => item.id === id)
-    if (!space) return
-    this.tabs.destroySpace(id)
-    state.spaces = state.spaces.filter((item) => item.id !== id)
-    state.tabs = state.tabs.filter((tab) => tab.spaceId !== id)
-    delete state.activeTabBySpace[id]
-    delete state.secondTabBySpace[id]
-    if (state.activeSpaceId === id) {
-      state.activeSpaceId = state.spaces[0].id
-      const next = state.tabs.find((tab) => tab.spaceId === state.activeSpaceId)
-      if (next) state.activeTabBySpace[state.activeSpaceId] = next.id
-    }
-    this.store.schedule()
-    this.pruneAvatars()
-    this.broadcast()
-    this.focusActive()
+    removeSpace(this, id)
   }
 
-  /**
-   * Duplique la configuration d'un espace — nom, apparence, sites, gadgets et
-   * compte public — sans copier ses cookies, son historique ni sa partition.
-   * Le nouvel espace reçoit donc une session Chromium neuve.
-   */
   private duplicateSpace(id: string): void {
-    const state = this.store.get()
-    const source = state.spaces.find((item) => item.id === id)
-    if (!source) return
-    const now = Date.now()
-    const name = suggestSpaceName(state.spaces.map((item) => item.name))
-    const copy = createSpaceState(name, source.color, now)
-    copy.theme = source.theme ?? null
-    copy.avatar = source.avatar ?? null
-    copy.background = source.background ?? 'none'
-    copy.shortcuts = sanitizeSpaceShortcuts(source.shortcuts)
-    copy.blockTrackers = source.blockTrackers !== false
-    copy.watchlist = source.watchlist === true
-    copy.letterboxd = normalizeLetterboxd(source.letterboxd)
-    copy.watchItems = sanitizeWatchlist(source.watchItems)
-    // Le journal importé est un historique de lecture : il reste à la source.
-    copy.letterboxdLog = []
-    copy.letterboxdLogAt = null
-    const tab = createTabState(copy.id, now)
-    state.spaces.push(copy)
-    state.tabs.push(tab)
-    state.activeSpaceId = copy.id
-    state.activeTabBySpace[copy.id] = tab.id
-    state.secondTabBySpace[copy.id] = null
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
-  }
-
-  /**
-   * Vide les données de navigation d'un espace : cookies, stockage, cache et
-   * historique de sa partition. Les autres espaces, qui ont chacun la leur,
-   * ne sont pas touchés. L'espace et ses réglages restent en place.
-   */
-  private async clearSpaceData(id: string): Promise<void> {
-    const state = this.store.get()
-    const space = state.spaces.find((item) => item.id === id)
-    if (!space) return
-    try {
-      const ses = session.fromPartition(partitionFor(space))
-      await ses.clearStorageData()
-      await ses.clearCache()
-    } catch {
-      /* partition déjà libérée : l'historique local part quand même */
-    }
-    state.history = state.history.filter((entry) => entry.spaceId !== id)
-    state.closed = state.closed.filter((tab) => tab.spaceId !== id)
-    this.tabs.destroySpace(id)
-    state.tabs = state.tabs.filter((tab) => tab.spaceId !== id)
-    const tab = createTabState(id)
-    state.tabs.push(tab)
-    state.activeTabBySpace[id] = tab.id
-    state.secondTabBySpace[id] = null
-    if (state.activeSpaceId === id) state.split = false
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
+    duplicateSpace(this, id)
   }
 
   private activateSpace(id: string): void {
-    const state = this.store.get()
-    if (!state.spaces.some((space) => space.id === id)) return
-    state.activeSpaceId = id
-    const tab = state.tabs.find((item) => item.id === state.activeTabBySpace[id])
-    if (tab) tab.lastActiveAt = Date.now()
+    activateSpace(this, id)
+  }
+
+  // ── Hôte des mutations d'espace ──────────────────────────────────────
+  get profileDir(): string {
+    return this.store.dir
+  }
+
+  state(): PersistedState {
+    return this.store.get()
+  }
+
+  persist(): void {
     this.store.schedule()
-    this.broadcast()
+  }
+
+  focusWindow(): void {
     this.focusActive()
+  }
+
+  destroySpaceViews(spaceId: string): void {
+    this.tabs.destroySpace(spaceId)
+  }
+
+  referencedAvatars(): Set<string> {
+    return this.store.referencedAvatars()
   }
 
   private pinTab(input: unknown): void {
