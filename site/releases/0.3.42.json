@@ -1,0 +1,46 @@
+{
+  "version": "0.3.42",
+  "slug": "0-3-42",
+  "date": "2026-11-14",
+  "headline": "Les panneaux s’ouvrent tout de suite",
+  "intro": "Le premier clic sur une fonctionnalité donnait l’impression que rien ne se passait : trois cents millisecondes avant que quoi que ce soit apparaisse, quelle que soit la fonctionnalité. La cause n’était pas le poids des modules mais la façon dont ils étaient montés. Notes, historique, favoris, téléchargements, sessions, agent et palette ouvrent maintenant en une image.",
+  "tags": ["performance", "fluidité", "ouverture"],
+  "stats": {
+    "commits": 2,
+    "files": 3,
+    "insertions": 51,
+    "deletions": 41
+  },
+  "sections": [
+    {
+      "title": "Trois cents millisecondes, partout",
+      "body": [
+        "Les panneaux sont chargés à la demande : c’est ce qui garde le démarrage léger. Mais ils passaient par `Suspense`, et React retient alors la surface jusqu’à ce qu’il reprenne son rendu. Sur ce châssis, cette reprise coûte environ trois cents millisecondes — même quand le module est déjà en mémoire.",
+        "Le symptôme était net une fois mesuré : notes 317 ms, historique 315 ms, favoris 313 ms, téléchargements 313 ms, sessions 312 ms. Des panneaux de tailles très différentes, exactement le même délai. Ce n’était donc pas le module, mais l’attente de React."
+      ]
+    },
+    {
+      "title": "Ce qui change",
+      "body": [
+        "Les neuf dernières surfaces passent par le même mécanisme que les Réglages : le module est chargé à la demande, sans `Suspense`, et la surface peint à l’image suivante. Notes, historique, favoris, téléchargements, sessions, bouclier, palette, gestionnaire de processus et tiroir agent.",
+        "Résultat mesuré, module à froid, page rechargée avant chaque clic : 15 à 26 ms d’ouverture. Le tiroir agent, qui figeait une image pendant 117 ms au premier affichage, ne produit plus aucune image au-dessus de 50 ms."
+      ]
+    },
+    {
+      "title": "Rien de moins, rien de plus",
+      "body": [
+        "Le chargement reste paresseux : le démarrage n’analyse toujours que la coque, la barre latérale et l’espace de travail, et la mémoire du renderer reste la même. Seul le montage change.",
+        "La palette s’ouvre en moins de cent millisecondes, champ déjà focalisé."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir Vela, puis cliquer Notes : le tiroir doit apparaître immédiatement, sans temps mort perceptible.",
+    "Faire de même avec Historique, Favoris, Téléchargements, Sessions et Réglages.",
+    "Ouvrir le tiroir Agent : il ne doit plus y avoir d’à-coup à l’apparition.",
+    "Ouvrir la palette (⌘K) : elle doit s’afficher avec le curseur déjà dans le champ.",
+    "Vérifier que le démarrage n’a pas ralenti : la fenêtre doit apparaître comme avant.",
+    "Après publication, vérifier que le site annonce 0.3.42 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.41...v0.3.42"
+}
