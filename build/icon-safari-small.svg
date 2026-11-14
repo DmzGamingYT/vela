@@ -1,10 +1,10 @@
 <!-- Vela — maître pour les petites tailles (16, 24, 32, 48 px).
-     Même barque, réglée sur la grille du pixel : la voile s'élargit, la coque
-     s'épaissit et le creux sous la coque disparaît (à 16 px, un pixel vaut
-     64 unités : ce creux devenait une salissure).
+     Même sillage, réglé sur la grille du pixel : voile élargie, coque épaissie,
+     ride arrière supprimée (à 16 px elle devenait un pixel sale sous la coque).
      Rendu : build/make-icons.cjs. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#1A7A5E"/>
-  <path d="M344 214 C 450 350 552 528 600 648 H344 Z" fill="#F7F6F2"/>
-  <path d="M272 668 H744 L676 792 C 622 812 400 812 346 792 Z" fill="#F7F6F2"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#F7F6F2"/>
+  <path d="M358 168 C 484 300 580 462 630 612 H358 Z" fill="#E8805A"/>
+  <path d="M290 632 H734 L672 726 C 616 744 408 744 352 726 Z" fill="#131512"/>
+  <rect x="330" y="782" width="364" height="34" rx="17" fill="#E8805A" opacity="0.8"/>
 </svg>

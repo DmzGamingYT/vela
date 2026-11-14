@@ -1,27 +1,30 @@
-<!-- Vela — icône de l'app : « la barque, d'un seul aplat » (0.3.45).
+<!-- Vela — icône de l'app : « le sillage » (0.3.45).
 
-     Le signe suit la leçon de Dia : une tuile pleine, une seule forme claire,
-     aucun dégradé, aucun détail. La voile et la coque se touchent, donc le
-     dessin se lit comme une silhouette unique — un bateau — et non comme une
-     scène. Le vert de la tuile est l'accent du site (#1A7A5E), le papier aussi
-     (#F7F6F2) : l'icône et le site sont la même matière.
+     Tuile papier, voile corail, coque d'encre, deux rides corail : le bateau
+     porte la couleur, la tuile reste neutre. Aucun dégradé, aucune ombre, un
+     aplat par forme — et trois formes seulement, pour que le dessin tienne à
+     16 px.
 
-     Repère : tuile macOS de 832 px (marge de 96), motif à l'intérieur de la
-     tuile. Petites tailles : `icon-safari-small.svg` (voile plus large, coque
-     plus épaisse). Barre de menus : `icon-template-safari.svg`.
+     Repère : tuile macOS de 832 px (marge de 96), motif à l'intérieur.
+     Petites tailles : `icon-safari-small.svg` (voile plus large, coque plus
+     épaisse, rides plus courtes). Barre de menus : `icon-template-safari.svg`.
 
      Rendu et export :
        env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
      role="img" aria-labelledby="vela-title vela-desc">
   <title id="vela-title">Vela</title>
-  <desc id="vela-desc">Une barque blanche d’un seul tenant — voile et coque réunies — sur une tuile vert profond.</desc>
+  <desc id="vela-desc">Une barque corail et encre sur une tuile papier, suivie de deux rides : le sillage.</desc>
 
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#1A7A5E"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#F7F6F2"/>
 
-  <!-- La voile : bord gauche droit (le mât est dans la forme), toile bombée. -->
-  <path d="M356 208 C 462 340 556 520 604 660 H356 Z" fill="#F7F6F2"/>
+  <!-- La voile. -->
+  <path d="M372 176 C 484 296 570 460 618 606 H372 Z" fill="#E8805A"/>
 
-  <!-- La coque, qui déborde de la voile et ferme la silhouette. -->
-  <path d="M296 680 H716 L660 782 C 610 800 410 800 360 782 Z" fill="#F7F6F2"/>
+  <!-- La coque. -->
+  <path d="M318 626 H706 L652 712 C 602 728 422 728 372 712 Z" fill="#131512"/>
+
+  <!-- Les deux rides : le sillage, en corail plus clair vers l'arrière. -->
+  <rect x="312" y="764" width="400" height="24" rx="12" fill="#E8805A" opacity="0.8"/>
+  <rect x="360" y="820" width="304" height="20" rx="10" fill="#E8805A" opacity="0.45"/>
 </svg>

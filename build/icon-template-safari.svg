@@ -1,9 +1,9 @@
 <!-- Vela — gabarit de barre de menus macOS (noir sur transparent).
      macOS inverse ce fichier selon le thème : aucune couleur, seulement la
-     silhouette. C'est la même barque que l'icône, sans tuile, posée au centre
-     du carré et élargie pour tenir à 16 px.
+     silhouette. C'est le sillage sans tuile, élargi pour tenir à 16 px.
      Rendu : build/make-icons.cjs. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <path d="M378 190 C 500 330 604 500 648 640 H378 Z" fill="#000000"/>
-  <path d="M296 664 H732 L664 792 C 606 814 386 814 330 792 Z" fill="#000000"/>
+  <path d="M386 168 C 508 300 600 462 648 612 H386 Z" fill="#000000"/>
+  <path d="M306 636 H732 L664 736 C 606 756 392 756 334 736 Z" fill="#000000"/>
+  <rect x="346" y="792" width="344" height="34" rx="17" fill="#000000"/>
 </svg>
