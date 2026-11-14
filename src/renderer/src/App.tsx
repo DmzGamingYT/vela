@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react'
+import { useEffect } from 'react'
 import AmbienceScene from './components/AmbienceScene'
 import Onboarding from './components/chrome/Onboarding'
 import PeekOverlay from './components/chrome/PeekOverlay'
@@ -14,21 +14,31 @@ import { differe } from './lib/differe'
 // Les panneaux ne sont chargés qu'à leur première ouverture : le démarrage ne
 // paie plus l'analyse des réglages, des notes, de l'agent et des overlays
 // (plus de la moitié du bundle) et la mémoire du renderer reste plus basse.
-const AgentCanvas = lazy(() => import('./components/agent/AgentCanvas'))
-const BookmarksPanel = lazy(() => import('./components/panels/BookmarksPanel'))
-const SessionsPanel = lazy(() => import('./components/panels/SessionsPanel'))
-const ShieldPanel = lazy(() => import('./components/panels/ShieldPanel'))
-const HistoryPanel = lazy(() => import('./components/panels/HistoryPanel'))
-const CommandBar = lazy(() => import('./components/chrome/CommandBar'))
-const DownloadsPanel = lazy(() => import('./components/panels/DownloadsPanel'))
-const ProcessManager = lazy(() => import('./components/panels/ProcessManager'))
-const NotesDrawer = lazy(() => import('./components/panels/NotesDrawer'))
-// Les deux feuilles du rail se chargent sans Suspense : `lazy` imposait à la
-// première ouverture le délai de reprise de React (~300 ms, même module déjà
-// en mémoire). Ici le module est préchargé au repos et la surface s'ouvre à
-// l'image suivante, sans revenir au bundle de démarrage.
+//
+// Aucune surface ne passe par `Suspense` : `lazy` retenait le panneau jusqu'à
+// la reprise du rendu (~300 ms mesurées, module déjà en mémoire), donc le
+// premier clic sur une fonctionnalité semblait ne rien faire. `differe`
+// n'attend que le module et peint à l'image suivante.
+const agent = differe(() => import('./components/agent/AgentCanvas'))
+const favoris = differe(() => import('./components/panels/BookmarksPanel'))
+const sessions = differe(() => import('./components/panels/SessionsPanel'))
+const bouclier = differe(() => import('./components/panels/ShieldPanel'))
+const historique = differe(() => import('./components/panels/HistoryPanel'))
+const palette = differe(() => import('./components/chrome/CommandBar'))
+const telechargements = differe(() => import('./components/panels/DownloadsPanel'))
+const processus = differe(() => import('./components/panels/ProcessManager'))
+const notes = differe(() => import('./components/panels/NotesDrawer'))
 const reglages = differe(() => import('./components/settings/SettingsPanel'))
 const profil = differe(() => import('./components/space/SpaceDialog'))
+const AgentCanvas = agent.Panneau
+const BookmarksPanel = favoris.Panneau
+const SessionsPanel = sessions.Panneau
+const ShieldPanel = bouclier.Panneau
+const HistoryPanel = historique.Panneau
+const CommandBar = palette.Panneau
+const DownloadsPanel = telechargements.Panneau
+const ProcessManager = processus.Panneau
+const NotesDrawer = notes.Panneau
 const SettingsPanel = reglages.Panneau
 const SpaceDialog = profil.Panneau
 
@@ -233,16 +243,14 @@ export default function App() {
         <SpaceRail />
         <Sidebar collapsed={collapsed} />
         <Workspace />
-        <Suspense fallback={null}>
-          <Presence open={agentOpen} exit={!notesOpen}>
-            <AgentCanvas docked />
-          </Presence>
-          <Presence open={notesOpen} exit={!agentOpen}>
-            <NotesDrawer />
-          </Presence>
-        </Suspense>
+        <Presence open={agentOpen} exit={!notesOpen}>
+          <AgentCanvas docked />
+        </Presence>
+        <Presence open={notesOpen} exit={!agentOpen}>
+          <NotesDrawer />
+        </Presence>
       </div>
-      <Suspense fallback={null}>
+      <>
         <Presence open={overlay === 'command'} exit={!overlay}>
           <CommandBar />
         </Presence>
@@ -274,7 +282,7 @@ export default function App() {
             les réglages ouverts depuis « Votre clé ou Ollama » et le bouton
             semblait ne rien faire. */}
         {!onboarded && !overlay && <Onboarding />}
-      </Suspense>
+      </>
       <Toasts />
       <PeekOverlay />
     </div>

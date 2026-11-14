@@ -11,11 +11,13 @@ import type { ComponentType, JSX } from 'react'
  * la surface apparaît à l'image suivante ; tant qu'il n'est pas là, elle ne
  * rend rien — le repli était déjà `null`.
  */
-export function differe(charger: () => Promise<{ default: ComponentType }>): {
-  Panneau: ComponentType
+export function differe<P extends object = Record<string, never>>(
+  charger: () => Promise<{ default: ComponentType<P> }>
+): {
+  Panneau: ComponentType<P>
   precharger: () => Promise<void>
 } {
-  let module: ComponentType | null = null
+  let module: ComponentType<P> | null = null
   let promesse: Promise<void> | null = null
 
   // Une tentative échouée n'est jamais retenue : le prochain appel (ou le
@@ -34,7 +36,7 @@ export function differe(charger: () => Promise<{ default: ComponentType }>): {
     return promesse
   }
 
-  function Differe(): JSX.Element | null {
+  function Differe(props: P): JSX.Element | null {
     const [, forcer] = useReducer((compteur: number) => compteur + 1, 0)
 
     useEffect(() => {
@@ -51,7 +53,7 @@ export function differe(charger: () => Promise<{ default: ComponentType }>): {
 
     if (!module) return null
     const Composant = module
-    return <Composant />
+    return <Composant {...props} />
   }
 
   return { Panneau: Differe, precharger }
