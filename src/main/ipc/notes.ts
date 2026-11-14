@@ -7,6 +7,13 @@
  * mal formées sont ignorées.
  */
 import { shell } from 'electron'
+import type {
+  NoteAudioSaveInput,
+  NotePatchInput,
+  NoteRenameInput,
+  NoteTranscribeInput,
+  TaskCreateInput
+} from '@shared/api'
 import { newId } from '@shared/defaults'
 import { isHomeUrl, titleFromUrl } from '@shared/url'
 import type { TabState } from '@shared/types'
@@ -38,29 +45,39 @@ const NoteAi = field<{ action: string; body: string; title: string }>('note IA',
   }
 })
 
-const Rename = shape<{ id: string; title: string }>({ id: Id, title: Text })
+const Rename = shape<NoteRenameInput>({ id: Id, title: Text })
 
-const AudioSave = shape<{ spaceId?: string; dataUrl: string }>({
+const AudioSave = shape<NoteAudioSaveInput>({
   spaceId: optional(Text),
   dataUrl: Text
 })
 
-const Transcribe = shape<{ name: unknown; consent: boolean }>({ name: Any, consent: flag() })
+/** Nom de fichier : tout ce qui n'est pas un texte vaut « aucun ». */
+const Name = field<string>('nom', (value) => (typeof value === 'string' ? value : ''))
+
+const Transcribe = shape<NoteTranscribeInput>({ name: Name, consent: flag() })
 
 /**
  * `id` reste `Text` : une note sans identifiant rend `null` comme avant, au lieu
  * d'être ignorée — l'éditeur distingue les deux.
  */
-const Patch = shape<{ id: string; title?: string; pinned?: boolean; tags?: unknown }>({
+/** Étiquettes : les entrées non textuelles sont écartées, pas la requête. */
+const Tags = field<string[]>('étiquettes', (value) =>
+  Array.isArray(value) ? value.filter((tag): tag is string => typeof tag === 'string') : []
+)
+
+const Patch = shape<NotePatchInput>({
   id: Text,
   title: optional(Text),
   pinned: optional(flag()),
-  tags: optional(Any)
+  tags: optional(Tags)
 })
 
-const TaskCreate = shape<{ title: string; dueAt: number | null }>({
+const TaskCreate = shape<TaskCreateInput>({
   title: Text,
-  dueAt: field<number | null>('échéance', (value) => (typeof value === 'number' ? value : null))
+  dueAt: field<number | null | undefined>('échéance', (value) =>
+    typeof value === 'number' ? value : null
+  )
 })
 
 export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
@@ -283,7 +300,7 @@ export function registerNotesIpc(host: IpcHost, handle: Handle, on: On): void {
           title: clean,
           done: false,
           createdAt: Date.now(),
-          dueAt
+          dueAt: dueAt ?? null
         }
         host.store.update((state) => {
           state.tasks = [task, ...state.tasks].slice(0, 200)

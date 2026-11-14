@@ -90,6 +90,87 @@ export interface SaveNoteInput {
   pinned?: boolean
 }
 
+/**
+ * Charges partagées entre les trois côtés.
+ *
+ * Elles vivent ici, et non dans `src/main/ipc` : le renderer les emploie pour
+ * appeler, le preload pour transmettre, le processus principal pour valider
+ * (`shape<T>` dans `ipc/contract.ts`). Changer un champ ici casse la
+ * compilation du côté qui n'a pas suivi — c'est le but de tout ce fichier.
+ */
+
+/** Charge de `notes:patch` : seul l'identifiant est obligatoire. */
+export interface NotePatchInput {
+  id: string
+  title?: string
+  pinned?: boolean
+  tags?: string[]
+}
+
+/** Charge de `notes:rename` : le nouveau titre est réécrit dans les liens. */
+export interface NoteRenameInput {
+  id: string
+  title: string
+}
+
+/** Charge de `notes:audio-save` : sans espace, l'espace actif est pris. */
+export interface NoteAudioSaveInput {
+  spaceId?: string
+  dataUrl: string
+}
+
+/** Charge de `notes:transcribe` : le consentement distant est explicite. */
+export interface NoteTranscribeInput {
+  name: string
+  consent: boolean
+}
+
+/** Charge de `tasks:create` : une échéance absente vaut « aucune ». */
+export interface TaskCreateInput {
+  title: string
+  dueAt?: number | null
+}
+
+/** Charge de `tunnel:rename`. */
+export interface TunnelRenameInput {
+  id: string
+  title: string
+}
+
+/** Charge de `tunnel:save-png`. */
+export interface TunnelSavePngInput {
+  dataUrl: string
+  name: string
+}
+
+/** Charge de `tunnel:export-pdf`. */
+export interface TunnelExportPdfInput {
+  html: string
+  name: string
+}
+
+/** Entrée de marque-page, telle qu'elle traverse l'IPC. */
+export interface BookmarkEntry {
+  url: string
+  title?: string
+  favicon?: string
+}
+
+/** Charge de `bookmark:toggle`. */
+export type BookmarkToggleInput = BookmarkEntry
+
+/** Charge de `bookmark:move`. */
+export interface BookmarkMoveInput {
+  id: string
+  position: number
+}
+
+/** Charge de `peek:open` : sans adresse, la carte ouvre son champ. */
+export interface PeekOpenInput {
+  url?: string
+  spaceId?: string
+}
+
 export type NoteAiAction =
   'generate' | 'reformulate' | 'summarize' | 'translate' | 'correct' | 'beautify'
 
@@ -369,7 +450,7 @@ export interface VelaApi {
      * s'ouvre sur son champ d'adresse ; l'espace actif prête sa session.
      * `false` si aucun espace ne peut l'accueillir.
      */
-    open(input?: { url?: string; spaceId?: string }): Promise<boolean>
+    open(input?: PeekOpenInput): Promise<boolean>
     close(): Promise<void>
     navigate(input: string): Promise<void>
     back(): Promise<void>
@@ -414,12 +495,12 @@ export interface VelaApi {
   }
   bookmarks: {
     /** Ajoute la page aux favoris, ou l'en retire : renvoie l'état final. */
-    toggle(input: { url: string; title?: string; favicon?: string }): Promise<boolean>
+    toggle(input: BookmarkToggleInput): Promise<boolean>
     remove(id: string): Promise<void>
     /** Favoris des navigateurs installés (lecture locale, rien n'est modifié). */
     detect(): Promise<BookmarkImportSource[]>
     /** Import en masse ; renvoie le nombre réellement ajouté, dans l'ordre du fichier. */
-    addMany(entries: { url: string; title?: string }[]): Promise<number>
+    addMany(entries: BookmarkEntry[]): Promise<number>
     /** Déplace un favori à une position absolue ; false si la demande est invalide. */
     move(id: string, position: number): Promise<boolean>
     /** Applique une permutation complète ; false si un doublon ou un inconnu apparaît. */
@@ -430,7 +511,7 @@ export interface VelaApi {
     importHtml(): Promise<{ added: number; cancelled: boolean }>
   }
   tasks: {
-    create(input: { title: string; dueAt?: number | null }): Promise<import('./types').Task>
+    create(input: TaskCreateInput): Promise<import('./types').Task>
     toggle(id: string): Promise<void>
     remove(id: string): Promise<void>
   }
@@ -449,12 +530,7 @@ export interface VelaApi {
     search(query: string): Promise<string[]>
     save(input: SaveNoteInput): Promise<Note>
     /** Change le titre, les étiquettes ou l'épinglage sans réécrire le corps. */
-    patch(input: {
-      id: string
-      title?: string
-      pinned?: boolean
-      tags?: string[]
-    }): Promise<Note | null>
+    patch(input: NotePatchInput): Promise<Note | null>
     remove(id: string): Promise<void>
     /** Notes passées par la corbeille, les plus récentes d'abord. */
     trash(): Promise<import('./types').TrashedNote[]>
@@ -470,18 +546,18 @@ export interface VelaApi {
     /** Génère ou réécrit une note avec le modèle configuré. */
     ai(input: NoteAiInput): Promise<NoteAiResult>
     /** Renomme et réécrit les liens qui citaient l'ancien titre. */
-    rename(input: { id: string; title: string }): Promise<NoteRenameResult | null>
+    rename(input: NoteRenameInput): Promise<NoteRenameResult | null>
     /** Liens entrants, sortants et cassés de la note ouverte. */
     graph(id: string): Promise<NoteGraph>
     /** Enregistrements vocaux, en fichiers dans le dossier de l'espace. */
     audio: {
-      save(input: { spaceId: string; dataUrl: string }): Promise<{ name: string } | null>
+      save(input: NoteAudioSaveInput): Promise<{ name: string } | null>
       /** Data URL pour le lecteur, ou null si le fichier a disparu. */
       get(name: string): Promise<string | null>
       remove(name: string): Promise<boolean>
     }
     /** Transcription locale, ou distante avec un consentement explicite. */
-    transcribe(input: { name: string; consent: boolean }): Promise<NoteTranscriptionResult>
+    transcribe(input: NoteTranscribeInput): Promise<NoteTranscriptionResult>
   }
   privacy: {
     /** Désactive ou réactive le bloqueur pour un site ; true = exempté. */
@@ -494,11 +570,11 @@ export interface VelaApi {
     maps(): Promise<TunnelMapSummary[]>
     load(id: string): Promise<TunnelMap | null>
     save(map: TunnelMap): Promise<{ ok: boolean }>
-    rename(input: { id: string; title: string }): Promise<void>
+    rename(input: TunnelRenameInput): Promise<void>
     remove(id: string): Promise<void>
     duplicate(id: string): Promise<TunnelMap | null>
-    savePng(input: { dataUrl: string; name: string }): Promise<string | null>
-    exportPdf(input: { html: string; name: string }): Promise<boolean>
+    savePng(input: TunnelSavePngInput): Promise<string | null>
+    exportPdf(input: TunnelExportPdfInput): Promise<boolean>
   }
   selection: {
     onSelect(callback: (payload: SelectionPayload) => void): () => void

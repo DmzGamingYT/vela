@@ -8,6 +8,7 @@
 import { app, dialog } from 'electron'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import type { BookmarkMoveInput, BookmarkToggleInput } from '@shared/api'
 import { bookmarksToHtml, parseBookmarksHtml } from '@shared/bookmarksHtml'
 import { historyRangeFloor, isHistoryRange, type HistoryRange } from '@shared/navigation'
 import { isHomeUrl } from '@shared/url'
@@ -31,13 +32,13 @@ const Range = field<HistoryRange>('période', (value) =>
   isHistoryRange(value) ? value : 'all'
 )
 
-const Toggle = shape<{ url: string; title?: string; favicon?: string }>({
+const Toggle = shape<BookmarkToggleInput>({
   url: Text,
   title: optional(Text),
   favicon: optional(Text)
 })
 
-const Move = shape<{ id: string; position: number }>({ id: Text, position: Num })
+const Move = shape<BookmarkMoveInput>({ id: Text, position: Num })
 
 /** Permutation complète : les entrées non textuelles sont écartées. */
 const Ids = field<string[]>('identifiants', (value) =>

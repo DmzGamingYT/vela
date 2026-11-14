@@ -7,7 +7,12 @@
 import { app, BrowserWindow, dialog } from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { TunnelRunInput } from '@shared/api'
+import type {
+  TunnelExportPdfInput,
+  TunnelRenameInput,
+  TunnelRunInput,
+  TunnelSavePngInput
+} from '@shared/api'
 import { newId } from '@shared/defaults'
 import { sanitizeMap, type TunnelMap } from '@shared/tunnel'
 import {
@@ -46,11 +51,11 @@ const TunnelRun = field<TunnelRunInput>('tunnel', (value) => {
 /** Carte de tunnel : `sanitizeMap` la reconstruit, ou rend `null`. */
 const MapInput = field<TunnelMap | null>('carte', (value) => sanitizeMap(value))
 
-const Rename = shape<{ id: string; title: string }>({ id: Text, title: Text })
+const Rename = shape<TunnelRenameInput>({ id: Text, title: Text })
 
-const SavePng = shape<{ dataUrl: string; name: string }>({ dataUrl: Text, name: Text })
+const SavePng = shape<TunnelSavePngInput>({ dataUrl: Text, name: Text })
 
-const ExportPdf = shape<{ html: string; name: string }>({ html: Text, name: Text })
+const ExportPdf = shape<TunnelExportPdfInput>({ html: Text, name: Text })
 
 export function registerTunnelIpc(host: IpcHost, handle: Handle, on: On): void {
   bindContracts(

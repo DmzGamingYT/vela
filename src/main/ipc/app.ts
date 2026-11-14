@@ -6,6 +6,7 @@
  * forme complète du patch, et c'est déjà là qu'elle est normalisée.
  */
 import { app, dialog, shell } from 'electron'
+import type { PeekOpenInput } from '@shared/api'
 import { isProviderId } from '@shared/providers'
 import {
   cancelUpdate as cancelUpdateDownload,
@@ -103,7 +104,7 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
 
       // Coup d'œil : la carte vit dans la coque, la page est une vue native.
       // Seuls ces quelques échanges traversent l'IPC.
-      request('peek:open', shape<{ url?: string; spaceId?: string }>({
+      request('peek:open', shape<PeekOpenInput>({
         url: optional(Text),
         spaceId: optional(Text)
       }), (input) => host.openPeek(input)),
