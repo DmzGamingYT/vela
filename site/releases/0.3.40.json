@@ -1,0 +1,45 @@
+{
+  "version": "0.3.40",
+  "slug": "0-3-40",
+  "date": "2026-11-14",
+  "headline": "Sous charge, l’état ne repart plus en entier",
+  "intro": "Une session de cinquante onglets, deux cents favoris et cent vingt notes a été mesurée pour de vrai. L’application tient la charge sans une saccade ; ce qui grossissait avec l’usage, c’était l’état complet renvoyé à chaque changement. Il ne part plus qu’en tranches.",
+  "tags": ["performance", "interne", "fiabilité"],
+  "stats": {
+    "commits": 1,
+    "files": 6,
+    "insertions": 268,
+    "deletions": 44
+  },
+  "sections": [
+    {
+      "title": "La mesure d’abord",
+      "body": [
+        "L’audit laissait un trou nommé : aucune mesure de fluidité avec cinquante onglets, deux cents favoris ou deux cents nœuds. Profil isolé, pages servies en local, fenêtre réelle : 51 onglets, 200 favoris, 120 notes.",
+        "Résultat : 16,7 ms par image en médiane, zéro tâche longue, aucune interaction au-dessus de 30 ms. Activer un onglet parmi cinquante et un coûte 0,2 ms, une recherche dans cent vingt notes 5,5 ms. La mémoire de l’arbre passe de 504 Mo à vide à 623 Mo chargé, soit environ 2,3 Mo par onglet ouvert."
+      ]
+    },
+    {
+      "title": "Ce qui grossissait",
+      "body": [
+        "L’état complet envoyé à l’interface pesait 3,2 Ko à vide et 81,1 Ko chargé : favoris 29,5 Ko, notes 28,3 Ko, onglets 20,3 Ko. Il repartait en entier à chaque changement, même quand seule une densité changeait.",
+        "Désormais l’état complet part une fois, puis seulement les tranches dont le contenu a bougé. Changer un réglage coûte 2,3 Ko au lieu de 81 Ko ; enregistrer une note ou basculer des favoris, 28 Ko au lieu de 81. La vérification de contenu ajoutée côté processus principal mesure 0,1 ms en médiane.",
+        "Rien ne change à l’écran : chaque geste a été rejoué et lu dans l’interface — thème, densité, favori ajouté, note listée, onglet créé, espace créé."
+      ]
+    },
+    {
+      "title": "Ce que la mesure a évité",
+      "body": [
+        "La première version comparait les tranches par référence. Un changement de densité n’a alors envoyé que 53 octets : la tranche des réglages ne partait pas, parce que l’état est modifié en place. Corrigé par une empreinte de contenu, contrôlée à 2 253 octets — exactement la taille de la tranche.",
+        "Autre gaspillage trouvé en chemin : chaque onglet semblait neuf à chaque diffusion, à cause d’une liste d’hôtes bloqués recréée à chaque lecture. Elle est maintenant réutilisée tant que son contenu ne bouge pas."
+      ]
+    }
+  ],
+  "verify": [
+    "Changer de thème et de densité : l’interface doit suivre immédiatement, dans les deux cas.",
+    "Ajouter un favori puis une note : les deux doivent apparaître sans rechargement, et survivre à un redémarrage.",
+    "Ouvrir une trentaine d’onglets puis naviguer : la liste doit rester fluide au défilement et l’activation d’un onglet immédiate.",
+    "Après publication, vérifier que le site annonce 0.3.40 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.39...v0.3.40"
+}
