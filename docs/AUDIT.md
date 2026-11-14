@@ -62,7 +62,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | B5 | mineur | B | [capture 14 favoris](captures/audit-phase1-accueil-favoris-clair.png), `Sidebar.tsx:165,688` | Au-delà de 12 favoris, les cases affichent des titres tronqués à deux caractères (« F1 », « F2 »…) ; la tuile « +3 » renvoie bien à « Tous les favoris ». | Créer 14 favoris « Favori 1…14 ». | Tronquer le titre avec une ellipse lisible, ou agrandir la case ; garder l'infobulle. | Corrigé sur deux points. D'abord le vrai défaut, mesuré : la pastille de repli prenait la première lettre de chaque mot, donc « Favori 10 », « Favori 11 » et « Favori 12 » affichaient tous « F1 » — trois cases identiques dans la grille. `initials` garde désormais deux chiffres pour un mot final numérique : F10 et F11 se distinguent (test `format.test.ts`). Ensuite le plafond : 11 cases puis une tuile « +3 » qui déplie la grille d'un clic, un bouton de mode liste et « Tous les favoris » ; chaque case porte son nom complet en infobulle et en `aria-label`. | corrigé — lot 4 |
 | B6 | mineur | B | [réglages](captures/audit-phase1-reglages-apparence.png), `SettingsPanel.tsx:45`, `Icon.tsx:188-193` | L'icône de « Modèles » (clé) se lit comme un symbole masculin ♂. L'entrée « Raccourcis » utilise désormais un clavier, ce qui règle le premier point mais laisse l'ambiguïté sur les clés API. | Capture de la barre latérale des réglages. | Dessiner une clé franche (anneau + tige horizontale) ou réutiliser l'icône de clé des champs API. | Corrigé : la clé a un anneau percé (donut) et une tige longue à deux dents de même longueur, ce qui la distingue du symbole ♂ où la flèche part du cercle. Captures [avant](captures/lot4-avant-reglages-nav-zoom.png) / [après](captures/lot4-apres-reglages-nav-zoom.png). | corrigé — lot 4 |
 | B7 | finition | B | [notes](captures/audit-phase1-notes.png), `NotesDrawer.tsx:1087-1147` | La grille d'actions des notes alterne deux colonnes puis une action pleine largeur ; l'alignement paraît accidentel. | Capture de Notes, zéro note. | Grille régulière 2×2, ou une seule rangée secondaire. | corrigé — lot 5 |
-| C1 | majeur | C | `package.json:34-45`, sortie `npm audit` | `tinypool` critique, `vitest` critique par dépendance, `@vitest/mocker` modéré. Outils de développement ; exploitabilité dans cette CI non démontrée. La correction proposée par npm est un changement majeur de Vitest. | `npm audit --json` : 2 critiques, 1 modérée. | Analyser les conditions des avis ; monter Vitest après accord (changement majeur). | relevé — phase 2 |
+| C1 | majeur | C | `package.json:34-45`, sortie `npm audit` | `tinypool` critique, `vitest` critique par dépendance, `@vitest/mocker` modéré. Outils de développement ; exploitabilité dans cette CI non démontrée. La correction proposée par npm est un changement majeur de Vitest. | `npm audit --json` : 2 critiques, 1 modérée. | Analyser les conditions des avis ; monter Vitest après accord (changement majeur). | résolu — lot 8 (audit vide) |
 | C2 | mineur | C | `wc -l` | Concentration : `styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434, `NotesDrawer.tsx` 1 306. Coût de revue et risque de régression. | `wc -l src/main/browser.ts src/renderer/src/styles.css`. | Extraction progressive, après accord (réécriture de module > 300 lignes). | relevé — phase 2 |
 | C3 | mineur | C | `src/main/index.ts:227` | `console.log('[vela] barre de menus prête…')` reste dans le processus principal de production. | Lancer l'app empaquetée et lire la console. | Retirer ou conditionner au mode développement. | corrigé — lot 5 |
 | C4 | finition | C | `grep -rn "} catch {" src` | 152 blocs `catch` vides ou silencieux. Beaucoup sont des replis assumés, mais certains masquent des pertes (A3, A4). | Comptage ; revue des cas sensibles. | Commenter chaque repli et journaliser les échecs de données. | corrigé — lot 7 |
@@ -78,7 +78,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | F2 | finition | F | mesure instrumentée | Aucune mesure de fluidité avec 50 onglets, 200 favoris ou 200 nœuds ; aucune mesure du coût du flou et des animations. Seules les bases sont mesurées (444 ms, 232 Mo, 1,9 Mo). | Harnais de charge à écrire. | Mesurer avant/après toute optimisation ; ne rien revendiquer sans chiffre. | mesuré — lot 4 de performance (voir la section en fin de document) : 51 onglets, 200 favoris, 120 notes ; aucune tâche longue, 16,7 ms d'image médiane ; le seul coût qui grandit avec l'usage était la diffusion d'état, réduite par tranches. |
 | F3 | finition | F | `StartPage.tsx:207-230`, `styles.css` | Les animations et le verre dépoli ne sont pas profilés ; leur respect de « Réduire les animations » est présent dans le code mais non vérifié à l'écran. | Lire le code ; capture avec `prefers-reduced-motion` à faire. | Vérifier visuellement et mesurer le coût GPU. | mesuré — lot 6 (partiel) |
 | G1 | mineur | G | mesures instrumentées | Plusieurs cibles interactives sous 28 px : puces de l'accueil 26 px, actions de cartes 22 px, bouton d'info météo 15 px, boutons de dossier 20 px, niveaux du tunnel 23 px. | Mesure CDP des rectangles. | Porter les cibles à 28 px, quitte à agrandir la zone cliquable sans le visuel. | corrigé — lot 5 |
-| G2 | finition | G | `src/renderer/src` | Parcours clavier complet, ordre de focus, VoiceOver et annonces après déplacement ne sont pas testés. Les régions `aria-live` existent (18 occurrences) et aucun bouton visible sans nom accessible n'a été trouvé. | Revue statique + inventaire DOM. | Parcours VoiceOver et clavier documenté, captures à l'appui. | à vérifier |
+| G2 | finition | G | `src/renderer/src` | Parcours clavier complet, ordre de focus, VoiceOver et annonces après déplacement ne sont pas testés. Les régions `aria-live` existent (18 occurrences) et aucun bouton visible sans nom accessible n'a été trouvé. | Revue statique + inventaire DOM. | Parcours VoiceOver et clavier documenté, captures à l'appui. | mesuré — lot 8 (VoiceOver manuel) |
 | H1 | mineur | H | `README.md:233`, `README.md:360`, `src/shared/space.ts:227` | Le README annonce 200 sites épinglés à un endroit et « 24 sites au maximum » à un autre ; le code applique `MAX_SHORTCUTS = 200`. | Comparer les deux passages et la constante. | Unifier sur 200, ou corriger la constante si 24 est voulu. | corrigé — lot 5 |
 | H2 | mineur | H | `CommandBar.tsx:597` | Le filtre de la palette affiche « DL » au lieu de « Téléchargements ». | Ouvrir ⌘K et lire les filtres. | Libellé français complet ou abréviation explicite. | corrigé — lot 5 |
 | I1 | mineur | I | absence de `SECURITY.md` | Aucune politique de divulgation à la racine. | `find . -maxdepth 3 -iname 'SECURITY*'` : aucun résultat. | Ajouter un canal de signalement vérifié et les versions prises en charge. | relevé — phase 2 |
@@ -479,3 +479,29 @@ Le comptage de l'audit (152) était en dessous du réel : `grep -rn "} catch {"`
 ### Limite
 
 Les 216 autres replis (interface, onglets, favicons, météo, tunnel) restent muets : beaucoup sont des replis d'affichage où journaliser n'apprendrait rien. Le test dit où la règle s'applique ; l'étendre demande de décider fichier par fichier, ce qui n'était pas l'objet de ce lot.
+
+## 18. Phase 2 — lot 8 : clavier et dépendances (fait)
+
+### G2 — parcours clavier mesuré
+
+Mesure instrumentée dans l'application réelle : touches `Tab` et `Échap` envoyées par CDP, profil jetable.
+
+| Contrôle | Résultat |
+|---|---|
+| Ordre de tabulation, 14 arrêts | rail → barre latérale → en-tête des onglets → actions d'onglet → nouvel onglet → filtre. Aucun piège, ordre conforme au DOM |
+| Focus visible | **14 arrêts sur 14** avec un contour calculé non nul |
+| Noms accessibles | **0 contrôle sans nom** sur 31 boutons, liens, champs visibles |
+| Feuille des Réglages | `role="dialog"`, le focus entre dedans à l'ouverture |
+| `Échap` | referme la feuille |
+| Retour du focus | revient **sur le bouton « Réglages »** qui l'a ouverte, pas sur le dernier champ visité |
+| Régions `aria-live` montées | 2, toutes `polite` (`role="status"`) |
+
+**Ce qui reste manuel :** la parole réelle de VoiceOver (annonce du titre de feuille, des déplacements de tuile, des résultats de palette) et l'ordre de tabulation au-delà de 14 arrêts, dans les panneaux ouverts. Aucune sonde DOM ne peut les vérifier ; il faut un lecteur d'écran et une oreille.
+
+### C1 — dépendances : plus aucun avis
+
+`npm audit` répond **0 vulnérabilité** (0 critique, 0 modérée). Vitest est en 5.1.0 et `tinypool` n'est plus dans l'arbre : les avis critiques que l'audit signalait venaient d'une version antérieure, remplacée depuis. Aucune montée majeure n'est à décider.
+
+### Reste ouvert
+
+**C2** seul : concentration des fichiers (`styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434). C'est un découpage de modules, donc une réécriture de plus de 300 lignes : hors de ce que je fais sans accord explicite. Et le coût de peinture du flou pendant une animation, qui demande le profileur de rendu.
