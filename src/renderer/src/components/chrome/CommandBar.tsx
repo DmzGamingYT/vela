@@ -549,7 +549,18 @@ export default function CommandBar() {
         aria-modal="true"
         aria-label="Barre de commande"
       >
-        <div className="command-input-row">
+        <div
+          className="command-input-row"
+          onMouseDown={(event) => {
+            // Le champ ne mesure que 20 px de haut et son anneau de focus suit
+            // sa boîte : l'étirer agrandirait l'anneau. Toute la ligne (57 px)
+            // ramène donc le curseur dans le champ, sauf sur un bouton.
+            if (event.target !== inputRef.current && !(event.target as Element).closest('button')) {
+              event.preventDefault()
+              inputRef.current?.focus()
+            }
+          }}
+        >
           <Icon name="search" size={18} />
           <input
             ref={inputRef}

@@ -6,7 +6,8 @@
    rééchantillonnage du 1024) et écrite en PNG avec transparence.
 
    Sorties : build/icon.icns, build/icon.ico, build/Vela.iconset/*.png,
-   build/icon-1024.png, build/icon-512.png, build/iconTemplate.png et @2x.
+   build/icon-1024.png, build/icon-512.png, build/icon-32.png, build/icon-16.png,
+   build/iconTemplate.png et @2x.
 
    Usage :
      env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs
@@ -121,10 +122,14 @@ app
 
     fs.writeFileSync(path.join(BUILD, 'icon-1024.png'), png.get(1024))
     fs.writeFileSync(path.join(BUILD, 'icon-512.png'), png.get(512))
+    fs.writeFileSync(path.join(BUILD, 'icon-32.png'), png.get(32))
+    fs.writeFileSync(path.join(BUILD, 'icon-16.png'), png.get(16))
     fs.writeFileSync(path.join(BUILD, 'iconTemplate.png'), template16)
     fs.writeFileSync(path.join(BUILD, 'iconTemplate@2x.png'), template32)
 
-    console.log('OK : icon.icns · icon.ico · Vela.iconset (10 fichiers) · icon-1024.png · icon-512.png · iconTemplate.png/@2x')
+    console.log(
+      'OK : icon.icns · icon.ico · Vela.iconset (10 fichiers) · icon-1024/512/32/16.png · iconTemplate.png/@2x'
+    )
     app.exit(0)
   })
   .catch((error) => {

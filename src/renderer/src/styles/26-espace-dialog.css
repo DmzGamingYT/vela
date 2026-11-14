@@ -692,6 +692,19 @@
   color: var(--ink);
 }
 
+/* La pastille garde ses 20 px, mais sa zone de clic déborde de 3 px en haut
+   et en bas (26 px) : le débordement est transparent, donc invisible, et il
+   ne rejoint pas la rangée suivante (6 px d'écart). */
+.space-suggestion {
+  position: relative;
+}
+
+.space-suggestion::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
 /* --- Modèles ----------------------------------------------------- */
 
 .space-templates {

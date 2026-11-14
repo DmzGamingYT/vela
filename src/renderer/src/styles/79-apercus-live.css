@@ -121,6 +121,15 @@
   background: none;
   color: var(--shell-faint);
   cursor: pointer;
+  position: relative;
+}
+
+/* Le segment garde sa taille dans la pastille ; la cible gagne 4 px en
+   hauteur (25 px) et reste dans le rembourrage du conteneur. */
+.preview-mode::after {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
 }
 
 .preview-mode[aria-checked='true'] {

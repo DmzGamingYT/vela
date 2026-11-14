@@ -27,6 +27,9 @@
   font-size: 12px;
   outline: none;
   padding: 0;
+  /* Même principe que la palette : c'est la hauteur du champ qui porte la
+     cible, pas celle de son texte (28 px au lieu de 15). */
+  align-self: stretch;
 }
 
 .settings-nav-search input::placeholder {
