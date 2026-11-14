@@ -196,7 +196,7 @@ export default function HistoryList() {
                 setQuery(event.target.value)
                 setLimit(PAGE)
               }}
-                                placeholder="Filtrer par titre ou adresse"
+                                placeholder="Filtrer par titre, site ou adresse"
               aria-label="Rechercher dans l’historique"
               spellCheck={false}
             />
