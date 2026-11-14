@@ -6,7 +6,7 @@
     </clipPath>
   </defs>
   <g clip-path="url(#tile)">
-    <rect width="1024" height="1024" fill="#0F1311" />
+    <rect width="1024" height="1024" fill="#1A7A5E" />
     <!-- La tuile de l'icône occupe 832 unités avec 96 de marge : on l'étire
          jusqu'aux bords du favicon, le dessin suit. -->
     <g transform="translate(-118.15 -118.15) scale(1.23077)">

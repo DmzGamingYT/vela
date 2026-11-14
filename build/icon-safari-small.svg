@@ -4,7 +4,7 @@
      64 unités : ce creux devenait une salissure).
      Rendu : build/make-icons.cjs. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#0F1311"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#1A7A5E"/>
   <path d="M344 214 C 450 350 552 528 600 648 H344 Z" fill="#F7F6F2"/>
   <path d="M272 668 H744 L676 792 C 622 812 400 812 346 792 Z" fill="#F7F6F2"/>
 </svg>
