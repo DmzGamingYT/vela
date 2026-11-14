@@ -54,38 +54,38 @@ const api: VelaApi = {
   },
   tabs: {
     create: (input?: CreateTabInput) => ipcRenderer.invoke('tab:create', input ?? {}),
-    close: (id: string) => ipcRenderer.invoke('tab:close', id),
-    activate: (id: string) => ipcRenderer.invoke('tab:activate', id),
+    close: (id: string) => ipcRenderer.invoke('tab:close', { id }),
+    activate: (id: string) => ipcRenderer.invoke('tab:activate', { id }),
     navigate: (id: string, input: string) => ipcRenderer.invoke('tab:navigate', { id, input }),
     find: (id: string, query: string, forward?: boolean) =>
       ipcRenderer.invoke('tab:find', { id, query, forward }),
     findStop: (id: string, action?: 'clearSelection' | 'keepSelection') =>
       ipcRenderer.invoke('tab:find-stop', { id, action }),
-    home: (id: string) => ipcRenderer.invoke('tab:home', id),
-    back: (id: string) => ipcRenderer.invoke('tab:back', id),
-    forward: (id: string) => ipcRenderer.invoke('tab:forward', id),
-    entries: (id: string) => ipcRenderer.invoke('tab:entries', id),
+    home: (id: string) => ipcRenderer.invoke('tab:home', { id }),
+    back: (id: string) => ipcRenderer.invoke('tab:back', { id }),
+    forward: (id: string) => ipcRenderer.invoke('tab:forward', { id }),
+    entries: (id: string) => ipcRenderer.invoke('tab:entries', { id }),
     goto: (id: string, index: number) => ipcRenderer.invoke('tab:goto', { id, index }),
-    reload: (id: string) => ipcRenderer.invoke('tab:reload', id),
+    reload: (id: string) => ipcRenderer.invoke('tab:reload', { id }),
     zoom: (id: string, direction: 'in' | 'out' | 'reset') =>
       ipcRenderer.invoke('tab:zoom', { id, direction }),
-    stop: (id: string) => ipcRenderer.invoke('tab:stop', id),
+    stop: (id: string) => ipcRenderer.invoke('tab:stop', { id }),
     pin: (id: string, pinned: boolean) => ipcRenderer.invoke('tab:pin', { id, pinned }),
     mute: (id: string, muted: boolean) => ipcRenderer.invoke('tab:mute', { id, muted }),
     reopen: () => ipcRenderer.invoke('tab:reopen'),
     splitToggle: () => ipcRenderer.invoke('tab:split-toggle'),
-    splitSet: (id: string) => ipcRenderer.invoke('tab:split-set', id),
+    splitSet: (id: string) => ipcRenderer.invoke('tab:split-set', { id }),
     splitRatio: (ratio: number) => ipcRenderer.invoke('tab:split-ratio', ratio),
-    focus: (id: string) => ipcRenderer.invoke('tab:focus', id),
-    discard: (id: string) => ipcRenderer.invoke('tab:discard', id),
+    focus: (id: string) => ipcRenderer.invoke('tab:focus', { id }),
+    discard: (id: string) => ipcRenderer.invoke('tab:discard', { id }),
     reorder: (input: ReorderTabsInput) => ipcRenderer.invoke('tab:reorder', input),
-    print: (id: string) => ipcRenderer.invoke('tab:print', id),
-    selection: (id: string) => ipcRenderer.invoke('tab:selection', id)
+    print: (id: string) => ipcRenderer.invoke('tab:print', { id }),
+    selection: (id: string) => ipcRenderer.invoke('tab:selection', { id })
   },
   groups: {
     create: (input?: CreateGroupInput) => ipcRenderer.invoke('group:create', input ?? {}),
     update: (input: UpdateGroupInput) => ipcRenderer.invoke('group:update', input),
-    remove: (id: string) => ipcRenderer.invoke('group:remove', id)
+    remove: (id: string) => ipcRenderer.invoke('group:remove', { id })
   },
   views: {
     layout: (request: LayoutRequest) => ipcRenderer.send('views:layout', request),
