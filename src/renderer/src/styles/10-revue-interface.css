@@ -354,8 +354,10 @@
 }
 
 .library-sheet {
-  width: min(680px, 100%);
-  max-height: min(760px, 88vh);
+  /* Une feuille de listes, pas une page : 600 px suffisent aux trois onglets
+     et la feuille se cale sur son contenu en hauteur. */
+  width: min(620px, 100%);
+  max-height: min(660px, 84vh);
   display: flex;
   flex-direction: column;
 }
@@ -404,6 +406,28 @@
 .library-body > * {
   flex: 1;
   min-height: 0;
+}
+
+/* Feuille plus étroite que la pleine page : la colonne des périodes se serre
+   pour laisser de la place aux titres des pages. */
+.library-sheet .history-layout {
+  grid-template-columns: 172px minmax(0, 1fr);
+}
+
+.library-sheet .history-toolbar {
+  padding: 14px 16px 10px;
+  gap: 8px;
+}
+
+.library-sheet .history-aside,
+.library-sheet .history-main {
+  min-width: 0;
+}
+
+/* La note de confidentialité de la colonne répétait la ligne d’en-tête
+   (« … sur cet appareil »), et se cassait en deux à cette largeur. */
+.library-sheet .history-local {
+  display: none;
 }
 
 .library-head-actions {
