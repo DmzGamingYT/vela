@@ -1,0 +1,46 @@
+{
+  "version": "0.3.38",
+  "slug": "0-3-38",
+  "date": "2026-11-14",
+  "headline": "Le pont IPC et le filtre Rust",
+  "intro": "Les cent trente-sept canaux de l’application déclarent désormais la forme de ce qu’ils attendent, au lieu de la deviner. Le filtre de traqueurs gagne une implémentation Rust compilée au packaging, avec un repli TypeScript qui ne se tait plus.",
+  "tags": ["interne", "natif", "sécurité", "performance", "icône"],
+  "stats": {
+    "commits": 18,
+    "files": 96,
+    "insertions": 5674,
+    "deletions": 2215
+  },
+  "sections": [
+    {
+      "title": "Une charge, une forme, un endroit",
+      "body": [
+        "Chaque canal entre la coque et le processus principal déclarait autrefois sa charge à la main, dans le corps du gestionnaire : `payload as { id?: unknown }`, puis trois vérifications éparpillées. La forme vivait donc à l’envers — dans celui qui reçoit, jamais dans celui qui envoie.",
+        "Ces formes sont maintenant écrites une fois, dans `src/main/ipc/contract.ts`, et les cent trente-sept canaux y passent. Un gestionnaire ne peut plus recevoir une charge qu’il n’a pas décrite : soit elle correspond, soit il n’est pas appelé.",
+        "La distinction qui compte est préservée : une charge mal formée est ignorée, comme le faisaient les gardes d’origine, tandis qu’une erreur métier — un titre de tâche vide, une requête de tunnel vide — lève toujours et remonte intacte à l’interface."
+      ]
+    },
+    {
+      "title": "Le filtre de traqueurs, côté machine",
+      "body": [
+        "Les listes de traqueurs, d’authentification et de types stricts restent écrites en TypeScript, à un seul endroit. Une crate Rust les reprend pour le chemin chaud — chaque requête d’une page — et la CI régénère le fichier puis refuse la moindre divergence : les deux versions ne peuvent plus se séparer en silence.",
+        "Le binaire n’est jamais versionné. Il est compilé au moment du packaging, en universel sur macOS pour ne pas casser la fusion Apple silicon / Intel, et l’application retombe sur le filtre TypeScript quand il manque. Ce repli n’est plus muet : le journal de l’application note « filtre natif absent » avec sa raison, là où un binaire oublié passait inaperçu."
+      ]
+    },
+    {
+      "title": "Une icône plus légère, un site réécrit",
+      "body": [
+        "Les icônes sont réexportées : les fichiers 1024 et 512 pèsent vingt fois moins, et les déclinaisons 16 et 32 pixels sont produites par le script de dessin plutôt que déposées à la main.",
+        "La page d’accueil du site abandonne son décor SVG pour une grille simple : le texte tient la colonne de lecture, l’écran réel occupe la moitié droite. La feuille de style perd sept cents lignes de tracés au passage, et les favicons suivent le nouveau dessin."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir plusieurs onglets, en épingler un, passer en vue scindée : les deux volets doivent se placer sans saut, et le séparateur suivre le pointeur.",
+    "Écrire une note, la retrouver par la recherche, la mettre à la corbeille puis la restaurer : rien ne doit disparaître du disque entre deux gestes.",
+    "Créer une tâche au titre vide : l’application doit refuser avec « Titre de tâche vide. » — pas rester silencieuse.",
+    "Après quelques minutes d’usage, ouvrir le journal (vela-errors.log) : aucune ligne « filtre natif absent » ne doit apparaître quand le paquet contient le module natif.",
+    "Après publication, vérifier que le site annonce 0.3.38 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.37...v0.3.38"
+}
