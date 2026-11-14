@@ -422,7 +422,10 @@ export default function Workspace() {
       data-compact={compactViewport}
       data-split={split}
       data-collapsed={view.settings.sidebarCollapsed}
-      data-rail={active ? 'true' : undefined}
+      // La bande du rail n’est réservée que s’il y a un rail : sur l’accueil,
+      // ReadingRail ne se dessine pas, donc `active` seul laissait une colonne
+      // vide de 52 px collée au bord droit.
+      data-rail={active && !isHomeUrl(active.url) ? 'true' : undefined}
     >
       {findOpen && (
         <div className="find-bar" role="search" aria-label="Rechercher dans la page">
