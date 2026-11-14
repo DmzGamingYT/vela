@@ -522,4 +522,4 @@ Création avec rattachement d'un onglet, renommage, repli, suppression. Vérifi�
 
 ### Bilan intermédiaire
 
-`Browser` : 1 896 → **1 718 lignes**. Blocs encore dans la classe, par taille décroissante : IPC (≈ 90), `updateSettings` (≈ 250), onglets (`createTab`/`activateTab`/`reopenTab`/scission/épinglage/réordonnancement, ≈ 350), téléchargements (≈ 90), état et diffusion (≈ 350), métriques et veille (≈ 150). Chacun demande sa propre sonde ; je les prends un par un.
+`Browser` : 1 896 → **1 722 lignes**. Blocs encore dans la classe, par taille décroissante : IPC (≈ 90), `updateSettings` (≈ 250), onglets (`createTab`/`activateTab`/`reopenTab`/scission/épinglage/réordonnancement, ≈ 350), téléchargements (≈ 90), état et diffusion (≈ 350), métriques et veille (≈ 150). Chacun demande sa propre sonde ; je les prends un par un.
