@@ -6,6 +6,8 @@ import { buildChatRequest, endpointHost, isLoopbackEndpoint, providerById } from
 import { isPublicHost } from '@shared/url'
 import type { ProviderId, Settings } from '@shared/types'
 import type { ComicRunResult } from '@shared/api'
+import { Any, type ContractEvent, bindContracts, field, request, shape } from './ipc/contract'
+import type { Handle, On } from './ipc/types'
 import type { TabManager } from './tabs'
 
 /**
@@ -37,19 +39,17 @@ interface Grant {
   expiresAt: number
 }
 
-interface ComicRequest {
-  token?: string
-  url?: string
-  texts?: unknown
-  contexte?: unknown
-  dataUrl?: unknown
-  key?: unknown
-  value?: unknown
-}
-
 function message(error: unknown): string {
   return error instanceof Error ? error.message : 'échec inconnu'
 }
+
+/** Texte d'une charge : `String()` comme avant, un nombre reste donc accepté. */
+const Token = field<string>('texte', (value) =>
+  value === undefined || value === null ? '' : String(value)
+)
+
+/** Onglet visé par une traduction : identifiant absent, chaîne vide. */
+const TabRef = shape<{ tabId: string }>({ tabId: Token })
 
 export class ComicBridge {
   private grants = new Map<string, Grant>()
@@ -67,56 +67,76 @@ export class ComicBridge {
   ) {}
 
   registerIpc(): void {
-    const handle = (
-      channel: string,
-      run: (event: IpcMainInvokeEvent, payload: unknown) => unknown
-    ): void => {
+    const handle: Handle = (channel, run) => {
       ipcMain.handle(channel, (event, payload) => {
         if (!this.allow(event, channel)) throw new Error(`Canal IPC refusé : ${channel}`)
-        return run(event, payload)
+        return run(payload, event)
       })
     }
+    // Cette passerelle ne publie aucun événement : le transport `on` reste vide.
+    const on: On = () => {}
 
-    handle('comic:run', (_event, payload) =>
-      this.run(String((payload as { tabId?: unknown })?.tabId ?? ''))
-    )
-    handle('comic:clear', (_event, payload) =>
-      this.clear(String((payload as { tabId?: unknown })?.tabId ?? ''))
-    )
-    handle('comic:image', (event, payload) =>
-      this.withGrant(event, payload, (grant) =>
-        this.image(grant, String((payload as ComicRequest).url ?? ''))
-      )
-    )
-    handle('comic:translate', (event, payload) =>
-      this.withGrant(event, payload, () =>
-        this.translate((payload as ComicRequest).texts, (payload as ComicRequest).contexte)
-      )
-    )
-    handle('comic:vision', (event, payload) =>
-      this.withGrant(event, payload, () =>
-        this.vision(String((payload as ComicRequest).dataUrl ?? ''))
-      )
-    )
-    handle('comic:edits', (event, payload) =>
-      this.withGrant(event, payload, async () =>
-        this.saveEdits(String((payload as ComicRequest).key ?? ''), (payload as ComicRequest).value)
-      )
-    )
-    handle('comic:load-edits', (event, payload) =>
-      this.withGrant(event, payload, async () =>
-        this.loadEdits(String((payload as ComicRequest).key ?? ''))
-      )
+    /** Chaque canal à jeton passe par la même vérification de session. */
+    const granted = (
+      input: { token: string },
+      event: ContractEvent | undefined,
+      run: (grant: Grant) => Promise<unknown>
+    ): Promise<unknown> => {
+      if (!event) throw new Error('session de traduction expirée — relancez la commande')
+      return this.withGrant(event, input, run)
+    }
+
+    bindContracts(
+      [
+        request('comic:run', TabRef, ({ tabId }) => this.run(tabId)),
+        request('comic:clear', TabRef, ({ tabId }) => this.clear(tabId)),
+        request(
+          'comic:image',
+          shape<{ token: string; url: string }>({ token: Token, url: Token }),
+          (input, event) => granted(input, event, (grant) => this.image(grant, input.url))
+        ),
+        request(
+          'comic:translate',
+          shape<{ token: string; texts: unknown; contexte: unknown }>({
+            token: Token,
+            texts: Any,
+            contexte: Any
+          }),
+          (input, event) =>
+            granted(input, event, () => this.translate(input.texts, input.contexte))
+        ),
+        request(
+          'comic:vision',
+          shape<{ token: string; dataUrl: string }>({ token: Token, dataUrl: Token }),
+          (input, event) => granted(input, event, () => this.vision(input.dataUrl))
+        ),
+        request(
+          'comic:edits',
+          shape<{ token: string; key: string; value: unknown }>({
+            token: Token,
+            key: Token,
+            value: Any
+          }),
+          (input, event) =>
+            granted(input, event, async () => this.saveEdits(input.key, input.value))
+        ),
+        request(
+          'comic:load-edits',
+          shape<{ token: string; key: string }>({ token: Token, key: Token }),
+          (input, event) => granted(input, event, async () => this.loadEdits(input.key))
+        )
+      ],
+      handle,
+      on
     )
   }
 
   private async withGrant(
-    event: IpcMainInvokeEvent,
-    payload: unknown,
+    event: ContractEvent,
+    input: { token: string },
     run: (grant: Grant) => Promise<unknown>
   ): Promise<unknown> {
-    const token = String((payload as ComicRequest)?.token ?? '')
-    const grant = this.grants.get(token)
+    const grant = this.grants.get(input.token)
     if (!grant || grant.webContentsId !== event.sender.id || grant.expiresAt < Date.now()) {
       throw new Error('session de traduction expirée — relancez la commande')
     }

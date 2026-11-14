@@ -82,10 +82,10 @@ function registeredChannels(): Set<string> {
 
   registerAppIpc(host, handle, on)
   registerTabsIpc(host, handle, on)
-  registerSpacesIpc(host, handle)
+  registerSpacesIpc(host, handle, on)
   registerNotesIpc(host, handle, on)
-  registerLibraryIpc(host, handle)
-  registerPrivacyIpc(host, handle)
+  registerLibraryIpc(host, handle, on)
+  registerPrivacyIpc(host, handle, on)
   registerTunnelIpc(host, handle, on)
   registerAgentIpc(host, handle, on)
 

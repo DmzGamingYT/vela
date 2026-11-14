@@ -1,43 +1,60 @@
+/**
+ * Agent, et rapports enregistrés dans l'atelier.
+ *
+ * `agent:run` garde une charge libre : `host.runAgent` est le seul à connaître
+ * la forme d'une demande d'agent (modèle, outils, contexte) et la valide.
+ */
+import { Any, Text, bindContracts, field, listen, request, shape } from './contract'
 import type { IpcHost } from './host'
 import type { Handle, On } from './types'
 
-/** Agent, et rapports enregistrés dans l'atelier. */
+const Rename = shape<{ id: string; title: string }>({ id: Text, title: Text })
+
+const Archive = shape<{ id: string; archived: boolean }>({
+  id: Text,
+  archived: field<boolean>('archivé', (value) => Boolean(value))
+})
+
 export function registerAgentIpc(host: IpcHost, handle: Handle, on: On): void {
-  handle('agent:run', (payload) => host.runAgent(payload))
+  bindContracts(
+    [
+      request('agent:run', Any, (input) => host.runAgent(input)),
 
-  on('agent:cancel', (_event, runId) => {
-    host.agent.cancel(typeof runId === 'string' ? runId : undefined)
-  })
+      listen('agent:cancel', Text, (runId) => {
+        host.agent.cancel(runId || undefined)
+      }),
 
-  handle('works:get', (payload) => {
-    const id = typeof payload === 'string' ? payload : ''
-    return host.store.get().works.find((work) => work.id === id) ?? null
-  })
-  handle('work:rename', (payload) => {
-    const input = (payload ?? {}) as { id?: unknown; title?: unknown }
-    const id = typeof input.id === 'string' ? input.id : ''
-    const title = typeof input.title === 'string' ? input.title.trim().slice(0, 160) : ''
-    if (!id || !title) throw new Error('Titre de travail vide.')
-    host.store.update((state) => {
-      const work = state.works.find((item) => item.id === id)
-      if (work) {
-        work.title = title
-        work.updatedAt = Date.now()
-      }
-    })
-    host.broadcast()
-  })
-  handle('work:archive', (payload) => {
-    const input = (payload ?? {}) as { id?: unknown; archived?: unknown }
-    const id = typeof input.id === 'string' ? input.id : ''
-    if (!id) return
-    host.store.update((state) => {
-      const work = state.works.find((item) => item.id === id)
-      if (work) {
-        work.archived = Boolean(input.archived)
-        work.updatedAt = Date.now()
-      }
-    })
-    host.broadcast()
-  })
+      request('works:get', Text, (id) => {
+        if (!id) return null
+        return host.store.get().works.find((work) => work.id === id) ?? null
+      }),
+
+      request('work:rename', Rename, ({ id, title }) => {
+        const clean = title.trim().slice(0, 160)
+        if (!id || !clean) throw new Error('Titre de travail vide.')
+        host.store.update((state) => {
+          const work = state.works.find((item) => item.id === id)
+          if (work) {
+            work.title = clean
+            work.updatedAt = Date.now()
+          }
+        })
+        host.broadcast()
+      }),
+
+      request('work:archive', Archive, ({ id, archived }) => {
+        if (!id) return
+        host.store.update((state) => {
+          const work = state.works.find((item) => item.id === id)
+          if (work) {
+            work.archived = archived
+            work.updatedAt = Date.now()
+          }
+        })
+        host.broadcast()
+      })
+    ],
+    handle,
+    on
+  )
 }
