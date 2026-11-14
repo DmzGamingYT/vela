@@ -1,29 +1,27 @@
-<!-- Vela — icône de l'app : « la voile corail » (issue de la maquette, option A).
-     Le dessin de l’identité : la nuit de la tuile, la mer en bas, une grand-voile
-     crème, une voile d’artimon corail et une coque corail. À-plats uniquement —
-     c’est ce qui tient à 16 px et ce qui raccorde l’icône au favicon du site.
-     Repère : tuile macOS de 832 px (marge de 96) ; le motif occupe la tuile,
-     pas le carré entier, comme une icône du système.
-     Petites tailles : `icon-safari-small.svg` (formes élargies, sans vague).
-     Rendu et export : `env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs`
-     (icns, ico, iconset, icon-1024/512, gabarit de barre de menus). -->
+<!-- Vela — icône de l'app : « la barque, d'un seul aplat » (0.3.45).
+
+     Le signe suit la leçon de Dia : une tuile pleine, une seule forme claire,
+     aucun dégradé, aucun détail. La voile et la coque se touchent, donc le
+     dessin se lit comme une silhouette unique — un bateau — et non comme une
+     scène. L'encre de la tuile est celle du site (#0F1311), le papier aussi
+     (#F7F6F2) : l'icône et le site sont la même matière.
+
+     Repère : tuile macOS de 832 px (marge de 96), motif à l'intérieur de la
+     tuile. Petites tailles : `icon-safari-small.svg` (voile plus large, coque
+     plus épaisse). Barre de menus : `icon-template-safari.svg`.
+
+     Rendu et export :
+       env -u ELECTRON_RUN_AS_NODE node_modules/electron/dist/Electron.app/Contents/MacOS/Electron build/make-icons.cjs -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"
      role="img" aria-labelledby="vela-title vela-desc">
   <title id="vela-title">Vela</title>
-  <desc id="vela-desc">Une tuile de nuit, une mer indigo en bas, une voile crème et une voile corail sur un mât, au-dessus d’une coque corail.</desc>
+  <desc id="vela-desc">Une barque blanche d’un seul tenant — voile et coque réunies — sur une tuile d’encre presque noire.</desc>
 
-  <!-- La tuile : pleine, jusqu’aux bords du squircle, comme une icône macOS. -->
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#1B2150"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#0F1311"/>
 
-  <!-- La mer : une vague basse, symétrique, derrière la coque. -->
-  <path d="M96 762 C 250 730 390 762 512 762 C 634 762 774 730 928 762 L928 928 H96 Z"
-        fill="#26307A"/>
+  <!-- La voile : bord gauche droit (le mât est dans la forme), toile bombée. -->
+  <path d="M356 208 C 462 340 556 520 604 660 H356 Z" fill="#F7F6F2"/>
 
-  <!-- Le mât, puis les deux voiles : la crème au vent, la corail à l’arrière. -->
-  <rect x="487" y="196" width="18" height="470" fill="#F6EFE4"/>
-  <path d="M495 214 V666 H262 Z" fill="#F6EFE4"/>
-  <path d="M545 330 V666 H712 Z" fill="#E8805A"/>
-
-  <!-- La coque, posée sur la ligne d’eau. -->
-  <path d="M212 682 H812 L754 756 H270 Z" fill="#E8805A"/>
+  <!-- La coque, qui déborde de la voile et ferme la silhouette. -->
+  <path d="M296 680 H716 L660 782 C 610 800 410 800 360 782 Z" fill="#F7F6F2"/>
 </svg>

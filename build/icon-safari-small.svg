@@ -1,12 +1,10 @@
 <!-- Vela — maître pour les petites tailles (16, 24, 32, 48 px).
-     Même dessin, réglé sur la grille du pixel : à 16 px un pixel vaut 64 unités
-     de ce viewBox. D’où trois écarts tenus à 1,5 px — entre les deux voiles,
-     sous les voiles, sous la coque — la disparition du mât (un demi-pixel sale),
-     et celle de la mer (elle se confond avec la nuit à cette taille).
+     Même barque, réglée sur la grille du pixel : la voile s'élargit, la coque
+     s'épaissit et le creux sous la coque disparaît (à 16 px, un pixel vaut
+     64 unités : ce creux devenait une salissure).
      Rendu : build/make-icons.cjs. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect x="96" y="96" width="832" height="832" rx="186" fill="#1B2150"/>
-  <path d="M470 190 V700 H190 Z" fill="#F6EFE4"/>
-  <path d="M566 350 V700 H838 Z" fill="#E8805A"/>
-  <path d="M166 742 H864 L800 858 H230 Z" fill="#E8805A"/>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#0F1311"/>
+  <path d="M344 214 C 450 350 552 528 600 648 H344 Z" fill="#F7F6F2"/>
+  <path d="M272 668 H744 L676 792 C 622 812 400 812 346 792 Z" fill="#F7F6F2"/>
 </svg>

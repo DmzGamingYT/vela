@@ -1,15 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Vela">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Vela">
   <title>Vela</title>
   <defs>
     <clipPath id="tile">
-      <rect width="200" height="200" rx="46" />
+      <rect width="1024" height="1024" rx="235" />
     </clipPath>
   </defs>
   <g clip-path="url(#tile)">
-    <rect width="200" height="200" fill="#1B2150" />
-    <path d="M0 158 C 45 152 75 158 100 158 C 125 158 155 152 200 158 L200 200 L0 200 Z" fill="#26307A" />
-    <path d="M96 37 L96 136 L37 136 Z" fill="#F6EFE4" />
-    <path d="M110 68 L110 136 L164 136 Z" fill="#E8805A" />
-    <path d="M33 145 L168 145 L156 168 L44 168 Z" fill="#E8805A" />
+    <rect width="1024" height="1024" fill="#0F1311" />
+    <!-- La tuile de l'icône occupe 832 unités avec 96 de marge : on l'étire
+         jusqu'aux bords du favicon, le dessin suit. -->
+    <g transform="translate(-118.15 -118.15) scale(1.23077)">
+      <path d="M356 208 C 462 340 556 520 604 660 H356 Z" fill="#F7F6F2" />
+      <path d="M296 680 H716 L660 782 C 610 800 410 800 360 782 Z" fill="#F7F6F2" />
+    </g>
   </g>
 </svg>
