@@ -1,0 +1,35 @@
+# Vela — le site public suit-il les releases ?
+#
+# Le déploiement du site vitrine n'est pas fait par la CI : il est lancé à la
+# main depuis l'atelier Sites. Rien ne garantissait donc que la page servie
+# bouge après une release — et elle ne l'a pas fait pendant six releases : la
+# 0.3.37 restait en ligne alors que la 0.3.43 était publiée, avec six empreintes
+# qui ne correspondaient plus à aucun fichier installable.
+#
+# `site:check` ne pouvait pas le voir : il compare le fichier du dépôt à la
+# release, jamais la page réellement servie. Ce contrôle-ci interroge la page
+# publique et échoue dès qu'elle prend du retard. Il tourne tous les jours
+# plutôt qu'à chaque release, pour ne pas rendre rouge une publication dont le
+# déploiement n'a pas encore eu lieu.
+name: Site
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: La page servie correspond-elle à la dernière release ?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-site-release.cjs --served

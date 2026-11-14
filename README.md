@@ -468,6 +468,11 @@ Le site vitrine est dans [site/](site/) : HTML, CSS et JavaScript statiques, ser
 
 Aperçu local : `python3 -m http.server 4173 --directory site/public`.
 
+Deux contrôles, et ils ne voient pas la même chose :
+
+- `npm run site:check` compare `site/public/index.html` à la release GitHub de la version qu'il annonce ;
+- `npm run site:check:served` interroge la page **réellement servie** (`SITE_URL`, production par défaut) et la compare à la **dernière release publiée**. C'est le seul mode qui remarque un site oublié : le fichier du dépôt peut être juste alors que la page en ligne est restée sur une version antérieure. Le workflow `Site` le lance chaque jour et échoue dès que la page prend du retard.
+
 ### Outillage vidéo
 
 [site/trailer/](site/trailer/) produit une capture **réelle** de l’application (pages comprises,

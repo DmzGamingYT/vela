@@ -542,4 +542,9 @@ En publiant la 0.3.44, vérification de la page publique : elle annonçait **0.3
 
 Corrigé : `site:build` puis déploiement des deux environnements. Preview d'abord, puis production, chacune vérifiée en direct — version annoncée, six empreintes comparées aux empreintes SHA-256 des fichiers de la release, et feuilles/scripts minifiés servis en 200 avec leur type (`text/css`, `text/javascript`).
 
-**Ce qui manque encore** : une garde qui compare la page **servie** à la release. `site:check` lit `site/public/index.html` ; il ne sait pas si ce fichier a été déployé. C'est exactement le trou qui a laissé la page en 0.3.37 pendant six releases.
+Le trou était plus haut : `site:check` lit `site/public/index.html` et ne sait pas si ce fichier a été déployé. La garde manquante est ajoutée ici, en deux pièces :
+
+- `npm run site:check:served` (`--served`) interroge la page publique et la compare à la **dernière release publiée** — version annoncée, six empreintes, six fichiers attachés ;
+- le workflow `Site` (`.github/workflows/site-drift.yml`) l'exécute chaque jour et à la demande. Il tourne au calendrier et non à chaque release : le déploiement du site reste manuel, une publication dont la page n'est pas encore déployée ne doit pas rendre la CI rouge — c'est le retard durable que le job doit signaler.
+
+Vérifié dans les deux sens : sur le site en production, la garde passe (6/6) ; servie sur une copie locale de la page 0.3.43, elle échoue avec le bon diagnostic (« la page servie annonce 0.3.43, la dernière release est 0.3.44 — le site n'a pas été redéployé » et les six installateurs manquants).
