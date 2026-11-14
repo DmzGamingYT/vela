@@ -1,0 +1,46 @@
+{
+  "version": "0.3.41",
+  "slug": "0-3-41",
+  "date": "2026-11-14",
+  "headline": "Les onglets se referment",
+  "intro": "Depuis la 0.3.38, quatorze commandes d’onglet partaient dans un format que le processus principal n’acceptait pas, et il les ignorait sans rien dire. Fermer un onglet, en changer, revenir en arrière ne faisaient donc plus rien. C’est réparé, et un test empêche que ça revienne.",
+  "tags": ["correctif", "onglets", "fiabilité"],
+  "stats": {
+    "commits": 2,
+    "files": 3,
+    "insertions": 130,
+    "deletions": 27
+  },
+  "sections": [
+    {
+      "title": "Ce qui ne marchait plus",
+      "body": [
+        "La 0.3.38 a posé une règle utile : une commande mal formée est ignorée plutôt que d’être exécutée au hasard. Mais quatorze commandes d’onglet envoyaient une valeur simple là où le processus principal attend un objet : il les classait comme mal formées, donc il les ignorait — sans erreur, sans message, sans rien dans le journal.",
+        "Concrètement : fermer un onglet, en changer, revenir en arrière, avancer, recharger, arrêter, aller à l’accueil, lire l’historique de l’onglet, poser une vue scindée, imprimer, mettre en veille, donner le focus, lire la sélection, supprimer un groupe. Le bouton répondait, la ligne pouvait même disparaître un instant, et rien n’était fermé."
+      ]
+    },
+    {
+      "title": "Ce qui est réparé",
+      "body": [
+        "Les quatorze commandes envoient maintenant la forme que la frontière attend. Fermer un onglet au clic referme vraiment l’onglet et le fait disparaître de la liste ; activer un onglet change bien d’onglet ; précédent revient à l’adresse d’avant ; recharger recharge ; la vue scindée s’ouvre ; un groupe supprimé disparaît.",
+        "La mesure est sans ambiguïté : sur un profil neuf de trois onglets, un clic sur « Fermer » laissait la liste à trois avant le correctif, et la ramène à deux avec — deux secondes plus tard, elle reste à deux."
+      ]
+    },
+    {
+      "title": "La garde",
+      "body": [
+        "Un test compare désormais, canal par canal, ce que l’interface envoie à ce que chaque contrat attend. Il aurait signalé ce défaut le jour où il est né : « tab:close : envoie « id », attend un objet ».",
+        "C’est le genre de panne qui ne se voit ni à la compilation ni dans les journaux : elle ne se voit qu’en cliquant. Le test, lui, la voit à chaque poussée."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir trois onglets, puis fermer celui du milieu avec son bouton : la ligne doit disparaître et rester disparue après un redémarrage.",
+    "Cliquer un autre onglet : la page doit changer, pas seulement la ligne surlignée.",
+    "Naviguer deux fois puis utiliser « Précédent » : l’adresse d’avant doit revenir.",
+    "Ouvrir une vue scindée depuis le bouton d’un onglet, puis la refermer.",
+    "Vérifier ⌘W : ce raccourci passait par le menu et fonctionnait déjà, il doit continuer.",
+    "Après publication, vérifier que le site annonce 0.3.41 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.40...v0.3.41"
+}
