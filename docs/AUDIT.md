@@ -520,9 +520,15 @@ Les six mutations d'espace (création, modification, duplication, suppression, a
 
 Création avec rattachement d'un onglet, renommage, repli, suppression. Vérifié : l'onglet rejoint le dossier, le nom et le repli persistent, la suppression détache l'onglet **sans le fermer**.
 
+### Tranche 3 — onglets (`src/main/tabsOps.ts`, 287 lignes)
+
+`createTab`, `activateTab`, `closeTab` (vignette comprise), `reopenTab`, `toggleSplit`, `setSplitTab`, `pinTab`, `reorderTab` sortent à leur tour. Vérifié en exécution : création (onglet ajouté, actif, titre déduit de l'adresse), page d'accueil dédupliquée (deux ⌘T — le compte ne bouge pas : 2, 2, 2), adresse `file:` refusée, activation, fermeture de l'onglet actif (remplacé, vue détruite), réouverture (adresse, activation, une seule entrée consommée), épinglage (sortie du dossier), réordonnancement (ordre changé puis remis), scission (ouverture, second volet désigné, fermeture), fermeture du dernier onglet d'un espace (un onglet neuf le remplace).
+
+**Un défaut a été introduit puis corrigé ici** : l'hôte exposait `splitAllowed()` en renvoyant `splitBlocked()`, donc la garde refusait la scission dans les deux sens. Le code copié était juste ; c'est le nom de la couture qui mentait. La sonde l'a montré (aucun état ne changeait, sans trace d'erreur) et non la compilation. Le test unitaire ajouté (`tabsOps.test.ts`, 8 cas) fixe la sémantique : autorisé veut dire autorisé.
+
 ### Bilan intermédiaire
 
-`Browser` : 1 896 → **1 722 lignes**. Blocs encore dans la classe, par taille décroissante : IPC (≈ 90), `updateSettings` (≈ 250), onglets (`createTab`/`activateTab`/`reopenTab`/scission/épinglage/réordonnancement, ≈ 350), téléchargements (≈ 90), état et diffusion (≈ 350), métriques et veille (≈ 150). Chacun demande sa propre sonde ; je les prends un par un.
+`Browser` : 1 896 → **1 521 lignes**. Blocs encore dans la classe, par taille décroissante : état et diffusion (≈ 350), `updateSettings` (≈ 250), métriques et veille (≈ 150), IPC (≈ 90), téléchargements (≈ 90). Chacun demande sa propre sonde.
 
 ## 20. Phase 2 — lot 10 : politique de divulgation (I1)
 

@@ -1,5 +1,15 @@
-import { asId, asString } from './coerce'
+import { asString } from './coerce'
 import { createGroup, removeGroup, updateGroup } from './tabGroups'
+import {
+  activateTab,
+  closeTab,
+  createTab,
+  pinTab,
+  reopenTab,
+  reorderTab,
+  setSplitTab,
+  toggleSplit
+} from './tabsOps'
 import {
   activateSpace,
   addSpace,
@@ -27,7 +37,6 @@ import {
 import type {
   AppStatePayload,
   CreateTabInput,
-  ReorderTabsInput,
   SaveNoteInput,
   SettingsPatch,
 } from '@shared/api'
@@ -38,7 +47,6 @@ import {
   newId,
   weekKey
 } from '@shared/defaults'
-import { moveTab } from '@shared/ordering'
 import { SPLIT_MIN_WIDTH } from '@shared/layout'
 import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
 import { chatModel } from '@shared/agentModel'
@@ -56,7 +64,6 @@ import {
 import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur, sanitizeHour } from '@shared/theme'
 import { partitionFor } from '@shared/space'
 import {
-  HOME_URL,
   type AppView,
   type DownloadItem,
   type HistoryEntry,
@@ -71,7 +78,7 @@ import {
   type TabState,
   type TabView
 } from '@shared/types'
-import { isHomeUrl, isLoadableUrl, titleFromUrl } from '@shared/url'
+import { isHomeUrl, titleFromUrl } from '@shared/url'
 import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
@@ -841,218 +848,29 @@ export class Browser {
     return this.peek.open(input)
   }
 
+  // Les gestes d'onglet vivent dans `tabsOps.ts`.
   createTab(input: CreateTabInput = {}): TabState {
-    const state = this.store.get()
-    const spaceId =
-      typeof input.spaceId === 'string' && state.spaces.some((space) => space.id === input.spaceId)
-        ? input.spaceId
-        : state.activeSpaceId
-    const requested = typeof input.url === 'string' ? input.url.trim() : ''
-    // Seules les adresses web entrent dans une vue : une URL `file:` ou
-    // `data:` venue d'une page ou d'un modèle ouvrirait le disque local.
-    if (requested && !isLoadableUrl(requested)) {
-      throw new Error('adresse refusée — seules les adresses http et https sont ouvertes')
-    }
-    const url = requested || (this.store.get().settings.newTabBlank ? 'about:blank' : HOME_URL)
-    const pinned = Boolean(input.pinned)
-    // Une seule page d'accueil par espace : ⌘T ramène à celle qui existe.
-    // Le « + » d'un dossier la réclame ailleurs : elle le rejoint plutôt que
-    // d'en créer une seconde, sinon le bouton semblerait sans effet.
-    if (isHomeUrl(url) && !pinned) {
-      const home = state.tabs.find(
-        (tab) => tab.spaceId === spaceId && !tab.pinned && isHomeUrl(tab.url)
-      )
-      if (home) {
-        const target =
-          typeof input.groupId === 'string'
-            ? state.groups.find((item) => item.id === input.groupId && item.spaceId === spaceId)
-            : undefined
-        if (target && home.groupId !== target.id) {
-          home.groupId = target.id
-          if (target.collapsed) target.collapsed = false
-          this.store.schedule()
-          this.broadcast()
-        }
-        if (input.activate !== false) this.activateTab(home.id)
-        else this.broadcast()
-        return home
-      }
-    }
-    let groupId: string | null = null
-    if (!pinned && typeof input.groupId === 'string') {
-      const group = state.groups.find(
-        (item) => item.id === input.groupId && item.spaceId === spaceId
-      )
-      if (group) {
-        groupId = group.id
-        if (group.collapsed) group.collapsed = false
-      }
-    }
-    const tab = createTabState(spaceId, Date.now(), {
-      url,
-      title: isHomeUrl(url) ? 'Nouvel onglet' : titleFromUrl(url),
-      pinned,
-      groupId
-    })
-    state.tabs.push(tab)
-
-    if (input.activate !== false) {
-      const previous = state.activeTabBySpace[spaceId]
-      state.activeSpaceId = spaceId
-      state.activeTabBySpace[spaceId] = tab.id
-      if (state.split && state.secondTabBySpace[spaceId] === tab.id)
-        state.secondTabBySpace[spaceId] = previous ?? null
-      tab.lastActiveAt = Date.now()
-      this.focusActive()
-    }
-
-    this.store.schedule()
-    this.broadcast()
-    return tab
+    return createTab(this, input)
   }
 
   private activateTab(id: string): void {
-    const state = this.store.get()
-    const tab = state.tabs.find((item) => item.id === id)
-    if (!tab) return
-    const previous = state.activeTabBySpace[tab.spaceId]
-    if (state.split && state.secondTabBySpace[tab.spaceId] === tab.id) {
-      state.secondTabBySpace[tab.spaceId] = previous && previous !== tab.id ? previous : null
-    }
-    state.activeSpaceId = tab.spaceId
-    state.activeTabBySpace[tab.spaceId] = tab.id
-    tab.lastActiveAt = Date.now()
-    if (tab.groupId) {
-      const group = state.groups.find((item) => item.id === tab.groupId)
-      if (group?.collapsed) group.collapsed = false
-    }
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
+    activateTab(this, id)
   }
 
   private async closeTab(id: string): Promise<void> {
-    const state = this.store.get()
-    const tab = state.tabs.find((item) => item.id === id)
-    if (!tab) return
-    const spaceId = tab.spaceId
-    const before = state.tabs.filter((item) => item.spaceId === spaceId)
-    const index = before.findIndex((item) => item.id === id)
-
-    // L'identifiant d'un onglet fermé ne doit pas rester dans la trace de l'agent.
-    this.agentSentTabIds.delete(id)
-    state.tabs = state.tabs.filter((item) => item.id !== id)
-    state.closed = [
-      { spaceId, url: tab.url, title: tab.title, pinned: tab.pinned, groupId: tab.groupId ?? null },
-      ...state.closed
-    ].slice(0, 25)
-
-    if (state.secondTabBySpace[spaceId] === id) state.secondTabBySpace[spaceId] = null
-
-    if (state.activeTabBySpace[spaceId] === id) {
-      const remaining = state.tabs.filter((item) => item.spaceId === spaceId)
-      let next = remaining[Math.min(index, remaining.length - 1)]
-      if (!next) {
-        next = createTabState(spaceId)
-        state.tabs.push(next)
-      }
-      state.activeTabBySpace[spaceId] = next.id
-      next.lastActiveAt = Date.now()
-      if (state.secondTabBySpace[spaceId] === next.id) state.secondTabBySpace[spaceId] = null
-    }
-
-    await this.captureThumbnail(id, tab)
-    this.tabs.destroy(id)
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
-  }
-
-  /**
-   * Vignette de la page qui se ferme. Rien pour un espace privé, une page en
-   * erreur ou une adresse interne, et rien du tout si le réglage est coupé.
-   */
-  private async captureThumbnail(tabId: string, tab: TabState): Promise<void> {
-    const state = this.store.get()
-    if (!state.settings.thumbnails) return
-    const space = state.spaces.find((item) => item.id === tab.spaceId)
-    if (!space || space.private === true) return
-    if (!/^https?:/i.test(tab.url)) return
-    const contents = this.tabs.captureSource(tabId)
-    if (!contents) return
-    // La capture est attendue : la vue meurt juste après la fermeture.
-    await this.thumbs.capture(contents, tab.url)
+    await closeTab(this, id)
   }
 
   private reopenTab(): void {
-    const state = this.store.get()
-    const entry = state.closed.shift()
-    if (!entry) return
-    const spaceId = state.spaces.some((space) => space.id === entry.spaceId)
-      ? entry.spaceId
-      : state.activeSpaceId
-    const group = entry.groupId
-      ? state.groups.find((item) => item.id === entry.groupId && item.spaceId === spaceId)
-      : undefined
-    const tab = createTabState(spaceId, Date.now(), {
-      url: entry.url || HOME_URL,
-      title: entry.title || (isHomeUrl(entry.url) ? 'Nouvel onglet' : titleFromUrl(entry.url)),
-      pinned: entry.pinned,
-      groupId: group?.id ?? null
-    })
-    state.tabs.push(tab)
-    state.activeSpaceId = spaceId
-    state.activeTabBySpace[spaceId] = tab.id
-    tab.lastActiveAt = Date.now()
-    this.store.schedule()
-    this.broadcast()
-    this.focusActive()
+    reopenTab(this)
   }
 
   private toggleSplit(): void {
-    // Garde-fou : la coque prévient déjà l'utilisateur, mais un raccourci,
-    // un menu ou le coup d'œil peut aussi demander le split par IPC.
-    if (this.splitBlocked()) return
-    const state = this.store.get()
-    const spaceId = state.activeSpaceId
-    const activeId = state.activeTabBySpace[spaceId]
-    const existing = state.secondTabBySpace[spaceId]
-    if (state.split && existing) {
-      state.split = false
-    } else if (existing && existing !== activeId && state.tabs.some((tab) => tab.id === existing)) {
-      state.split = true
-    } else {
-      let second = state.tabs.find((tab) => tab.spaceId === spaceId && tab.id !== activeId)
-      if (!second) {
-        second = createTabState(spaceId)
-        state.tabs.push(second)
-      }
-      state.secondTabBySpace[spaceId] = second.id
-      state.split = true
-    }
-    this.store.schedule()
-    this.broadcast()
+    toggleSplit(this)
   }
 
   private setSplitTab(id: string): void {
-    if (this.splitBlocked()) return
-    const state = this.store.get()
-    const tab = state.tabs.find((item) => item.id === id)
-    if (!tab) return
-    const activeId = state.activeTabBySpace[tab.spaceId]
-    if (tab.id === activeId) {
-      const fallback = state.tabs.find(
-        (item) => item.spaceId === tab.spaceId && item.id !== activeId
-      )
-      state.secondTabBySpace[tab.spaceId] = fallback?.id ?? null
-      state.split = Boolean(fallback)
-    } else {
-      state.secondTabBySpace[tab.spaceId] = tab.id
-      state.activeSpaceId = tab.spaceId
-      state.split = true
-    }
-    this.store.schedule()
-    this.broadcast()
+    setSplitTab(this, id)
   }
 
   // Les mutations d'espace vivent dans `spaces.ts` (voir ce module) : `Browser`
@@ -1106,52 +924,33 @@ export class Browser {
     return this.store.referencedAvatars()
   }
 
+  // ── Hôte des gestes d'onglet ─────────────────────────────────────────
+  splitAllowed(): boolean {
+    return !this.splitBlocked()
+  }
+
+  forgetAgentTab(tabId: string): void {
+    this.agentSentTabIds.delete(tabId)
+  }
+
+  destroyView(tabId: string): void {
+    this.tabs.destroy(tabId)
+  }
+
+  captureSource(tabId: string): WebContents | null {
+    return this.tabs.captureSource(tabId)
+  }
+
+  storeThumbnail(contents: WebContents, url: string): Promise<boolean> {
+    return this.thumbs.capture(contents, url)
+  }
+
   private pinTab(input: unknown): void {
-    const payload = (input ?? {}) as { id?: unknown; pinned?: unknown }
-    const id = asId(payload.id)
-    const state = this.store.get()
-    const tab = state.tabs.find((item) => item.id === id)
-    if (!tab) return
-    tab.pinned = Boolean(payload.pinned)
-    if (tab.pinned) tab.groupId = null
-    this.store.schedule()
-    this.broadcast()
+    pinTab(this, input)
   }
 
   private reorderTab(input: unknown): void {
-    const payload = (input ?? {}) as ReorderTabsInput
-    const id = asId(payload.id)
-    const state = this.store.get()
-    const tab = state.tabs.find((item) => item.id === id)
-    if (!tab) return
-
-    let groupId: string | null | undefined
-    if (payload.groupId !== undefined) {
-      groupId = null
-      if (typeof payload.groupId === 'string') {
-        const group = state.groups.find(
-          (item) => item.id === payload.groupId && item.spaceId === tab.spaceId
-        )
-        if (group) groupId = group.id
-      }
-    }
-
-    const next = moveTab(state.tabs, {
-      id,
-      targetId: typeof payload.targetId === 'string' ? payload.targetId : null,
-      position: payload.position === 'after' ? 'after' : 'before',
-      groupId,
-      ...(typeof payload.pinned === 'boolean' ? { pinned: payload.pinned } : {})
-    })
-    if (next === state.tabs) return
-    state.tabs = next
-
-    if (tab.groupId) {
-      const group = state.groups.find((item) => item.id === tab.groupId)
-      if (group?.collapsed) group.collapsed = false
-    }
-    this.store.schedule()
-    this.broadcast()
+    reorderTab(this, input)
   }
 
   // Les dossiers d'onglets vivent dans `tabGroups.ts`.
