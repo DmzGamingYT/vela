@@ -13,14 +13,13 @@ import type {
 } from '@shared/api'
 import type {
   AgentEvent,
-  AppView,
   LayoutRequest,
   PaneSnapshot,
   PeekState,
   SelectionPayload,
   ShortcutEvent
 } from '@shared/types'
-import type { TunnelEvent } from '@shared/api'
+import type { AppStatePayload, TunnelEvent } from '@shared/api'
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
   const listener = (_event: Electron.IpcRendererEvent, payload: T): void => callback(payload)
@@ -241,7 +240,8 @@ const api: VelaApi = {
     image: () => ipcRenderer.invoke('appearance:image'),
     clearImage: () => ipcRenderer.invoke('appearance:clear-image')
   },
-  onState: (callback: (view: AppView) => void) => subscribe('state:changed', callback),
+  onState: (callback: (payload: AppStatePayload) => void) =>
+    subscribe('state:changed', callback),
   onShortcut: (callback: (event: ShortcutEvent) => void) => subscribe('shortcut', callback)
 }
 

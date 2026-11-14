@@ -15,6 +15,7 @@ import {
   type WebContents
 } from 'electron'
 import type {
+  AppStatePayload,
   CreateGroupInput,
   CreateSpaceInput,
   CreateTabInput,
@@ -147,6 +148,22 @@ export class Browser {
   private broadcastTimer: NodeJS.Timeout | null = null
   private sweepTimer: NodeJS.Timeout | null = null
   private workPreviews = new Map<string, { updatedAt: number; preview: string }>()
+  /**
+   * Dernier état diffusé. Sert à deux choses : ne pas renvoyer une tranche qui
+   * n'a pas bougé, et rendre la même liste au renderer quand son contenu est
+   * identique — il compare par identité avant de resérialiser.
+   */
+  private lastSent: AppView | null = null
+  /**
+   * Empreinte du contenu de chaque tranche au dernier envoi. Le store mute son
+   * état en place (`update(mutator)`), donc la même référence ne prouve pas le
+   * même contenu : seul `JSON.stringify` le dit.
+   */
+  private lastPrints = new Map<string, string>()
+  private lastHistorySource: HistoryEntry[] | null = null
+  private lastHistory: AppView['history'] | null = null
+  private lastWorksSource: unknown = null
+  private lastWorks: AppView['works'] | null = null
   private overlay = false
   private registered = false
   /** Split mis en veille (fenêtre trop étroite ou tiroir ouvert), à restaurer dès que la place revient. */
@@ -471,8 +488,39 @@ export class Browser {
     if (this.broadcastTimer) return
     this.broadcastTimer = setTimeout(() => {
       this.broadcastTimer = null
-      this.send('state:changed', this.view())
+      this.send('state:changed', this.statePayload())
     }, 120)
+  }
+
+  /**
+   * Compare deux listes par identité d'élément : les objets d'onglet sont
+   * stables (`stableTabView`), donc la même référence veut dire « rien n'a
+   * bougé » sans resérialiser quoi que ce soit.
+   */
+  private sameList<T>(previous: readonly T[] | undefined, next: readonly T[]): boolean {
+    if (!previous || previous.length !== next.length) return false
+    for (let i = 0; i < next.length; i += 1) if (previous[i] !== next[i]) return false
+    return true
+  }
+
+  /**
+   * Charge de `state:changed` : l'état complet au premier envoi, puis seulement
+   * les tranches dont la référence a changé. Le renderer fusionne et garde, lui
+   * aussi, les tranches inchangées.
+   */
+  private statePayload(): AppStatePayload {
+    const view = this.view()
+    const premier = !this.lastSent
+    this.lastSent = view
+    const patch: Partial<AppView> = {}
+    for (const key of Object.keys(view) as (keyof AppView)[]) {
+      const empreinte = JSON.stringify(view[key])
+      if (this.lastPrints.get(key) !== empreinte) {
+        this.lastPrints.set(key, empreinte)
+        if (!premier) (patch as Record<string, unknown>)[key] = view[key]
+      }
+    }
+    return premier ? { full: view } : { patch }
   }
 
   private keepAliveIds(): Set<string> {
@@ -680,10 +728,21 @@ export class Browser {
       if (keys.length === Object.keys(known).length) {
         let same = true
         for (const key of keys) {
-          if (known[key] !== next[key]) {
-            same = false
-            break
+          if (known[key] === next[key]) continue
+          // Les hôtes bloqués sont une liste : deux tableaux de même contenu
+          // valent la même vue, sans quoi chaque diffusion les renverrait.
+          if (key === 'blockedHosts') {
+            const a = known.blockedHosts
+            const b = next.blockedHosts
+            if (
+              a.length === b.length &&
+              a.every((entry, index) => entry.host === b[index].host && entry.count === b[index].count)
+            ) {
+              continue
+            }
           }
+          same = false
+          break
         }
         if (same) return known
       }
@@ -698,13 +757,18 @@ export class Browser {
     const candidate = state.split ? (state.secondTabBySpace[state.activeSpaceId] ?? null) : null
     const secondTabId =
       candidate && state.tabs.some((tab) => tab.id === candidate) ? candidate : null
-    const tabs: TabView[] = state.tabs.map((tab) =>
+    const construits: TabView[] = state.tabs.map((tab) =>
       this.stableTabView({
         ...tab,
         ...this.tabs.runtimeOf(tab.id),
         agentSent: this.agentSentTabIds.has(tab.id)
       })
     )
+    // Même contenu, même tableau : la coque s'en sert pour ne rien redessiner et
+    // la diffusion pour ne pas renvoyer la tranche.
+    const tabs = this.sameList(this.lastSent?.tabs, construits)
+      ? (this.lastSent as AppView).tabs
+      : construits
     // Un onglet fermé ne doit pas garder sa vue en mémoire.
     if (this.tabViews.size > tabs.length) {
       const live = new Set(tabs.map((tab) => tab.id))
@@ -722,7 +786,7 @@ export class Browser {
       split: Boolean(secondTabId),
       splitRatio: state.splitRatio,
       settings: state.settings,
-      history: state.history.slice(0, 80),
+      history: this.memoHistory(state.history),
       bookmarks: state.bookmarks,
       privacyExemptions: state.privacyExemptions,
       memoryFreed: this.tabs.memoryFreedMb(),
@@ -731,30 +795,47 @@ export class Browser {
       notes: this.noteCache,
       tasks: state.tasks.slice(0, 200),
       // Les rapports restent sur le disque : l'état ne transporte que leur résumé.
-      works: state.works.slice(0, 120).map((work) => {
-        const cached = this.workPreviews.get(work.id)
-        const preview =
-          cached && cached.updatedAt === work.updatedAt ? cached.preview : previewOf(work.markdown)
-        if (!cached || cached.updatedAt !== work.updatedAt) {
-          this.workPreviews.set(work.id, { updatedAt: work.updatedAt, preview })
-        }
-        return {
-          id: work.id,
-          title: work.title,
-          preview,
-          mode: work.mode,
-          sourceCount: work.sources.length,
-          spaceId: work.spaceId,
-          createdAt: work.createdAt,
-          updatedAt: work.updatedAt,
-          archived: work.archived
-        }
-      }),
+      works: this.memoWorks(state.works),
       downloads: this.downloads.slice(0, 30),
       blockedTotal,
       blockedToday: state.privacyStats.today,
       blockedWeek: state.privacyStats.week
     }
+  }
+
+  /** Les 80 dernières visites, reconstruites seulement quand l'historique bouge. */
+  private memoHistory(source: HistoryEntry[]): AppView['history'] {
+    if (this.lastHistorySource === source && this.lastHistory) return this.lastHistory
+    this.lastHistorySource = source
+    this.lastHistory = source.slice(0, 80)
+    return this.lastHistory
+  }
+
+  /** Résumés des rapports, recalculés seulement quand la liste des rapports change. */
+  private memoWorks(source: AppView['works'] | { id: string }[]): AppView['works'] {
+    if (this.lastWorksSource === source && this.lastWorks) return this.lastWorks
+    this.lastWorksSource = source
+    this.lastWorks = source.slice(0, 120).map((brut) => {
+      const work = brut as AppView['works'][number] & { markdown: string; sources: unknown[] }
+      const cached = this.workPreviews.get(work.id)
+      const preview =
+        cached && cached.updatedAt === work.updatedAt ? cached.preview : previewOf(work.markdown)
+      if (!cached || cached.updatedAt !== work.updatedAt) {
+        this.workPreviews.set(work.id, { updatedAt: work.updatedAt, preview })
+      }
+      return {
+        id: work.id,
+        title: work.title,
+        preview,
+        mode: work.mode,
+        sourceCount: work.sources.length,
+        spaceId: work.spaceId,
+        createdAt: work.createdAt,
+        updatedAt: work.updatedAt,
+        archived: work.archived
+      }
+    })
+    return this.lastWorks
   }
 
   private focusActive(): void {

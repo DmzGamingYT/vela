@@ -171,6 +171,13 @@ export class TabManager {
     }
   }
 
+  /**
+   * Tableaux d'hôtes bloqués rendus au renderer. Reconstruits seulement quand
+   * leur contenu change : une même référence laisse `stableTabView` rendre le
+   * même objet d'onglet, et la coque ne redessine pas la ligne.
+   */
+  private blockedViews = new Map<string, { host: string; count: number }[]>()
+
   runtimeOf(tabId: string): TabRuntime {
     const view = this.views.get(tabId)
     const runtime = this.runtimes.get(tabId)
@@ -189,12 +196,34 @@ export class TabManager {
       // Une page endormie ne joue plus rien : le signal suit la vue vivante.
       audible: alive && Boolean(runtime?.audible),
       muted: alive && Boolean(runtime?.muted),
-      blockedHosts: hosts
-        ? Array.from(hosts, ([host, count]) => ({ host, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 12)
-        : []
+      blockedHosts: this.blockedView(tabId, hosts)
     }
+  }
+
+  /** Même tableau tant que la liste des hôtes bloqués n'a pas bougé. */
+  private blockedView(
+    tabId: string,
+    hosts: Map<string, number> | undefined
+  ): { host: string; count: number }[] {
+    const known = this.blockedViews.get(tabId)
+    if (!hosts || hosts.size === 0) {
+      if (known && known.length === 0) return known
+      const vide: { host: string; count: number }[] = []
+      this.blockedViews.set(tabId, vide)
+      return vide
+    }
+    const next = Array.from(hosts, ([host, count]) => ({ host, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12)
+    if (
+      known &&
+      known.length === next.length &&
+      known.every((entry, index) => entry.host === next[index].host && entry.count === next[index].count)
+    ) {
+      return known
+    }
+    this.blockedViews.set(tabId, next)
+    return next
   }
 
   /** Mémoire approximative rendue par les onglets mis en veille (Mo). */
@@ -415,6 +444,7 @@ export class TabManager {
       if (!mainFrame) return
       this.blocked.delete(tabId)
       this.blockedHosts.delete(tabId)
+      this.blockedViews.delete(tabId)
     })
 
     wc.on('did-navigate', (_event, url) => {
@@ -1003,6 +1033,7 @@ export class TabManager {
     // Les compteurs par hôte et la position de défilement suivent l'onglet :
     // les garder après sa fermeture faisait grossir la mémoire sans fin.
     this.blockedHosts.delete(tabId)
+    this.blockedViews.delete(tabId)
     this.scrolls.delete(tabId)
     this.lastUsed.delete(tabId)
     this.visible.delete(tabId)

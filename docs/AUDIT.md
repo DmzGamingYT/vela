@@ -75,7 +75,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | E3 | majeur | E | `src/shared/network.test.ts:36-45`, `network.ts:192-244` | Le test d'audit ne contrôlait que les URL HTTP(S) littérales, ignorait les hôtes construits dynamiquement et confondait hôtes ouverts par l'utilisateur et destinations contactées. Un nouveau flux vers un hôte de `USER_OPENED_HOSTS` serait passé. | Corrigé : trois gardes ajoutées — aucune destination de lien ouvert n'est appelée par `fetch`, chaque fichier qui appelle `fetch` doit figurer dans une liste revue, et tout hôte déclaré doit exister dans le code. 6 tests verts dans `src/shared/network.test.ts`. | Un flux construit dans un fichier déjà revu reste invisible : la liste des points d'appel est la garde. | corrigé — lot 1 |
 | E4 | mineur | E | `network.ts:149-166`, `userscripts/comic-translate.user.js:218` | « Aucune donnée » pour le CDN OCR et « aucune autre donnée » pour Letterboxd étaient trop absolus : une requête révèle au minimum IP et métadonnées de transport. | Corrigé : les deux fiches nomment l'IP et les métadonnées de transport, sans dramatiser. Page Confidentialité régénérée depuis `NETWORK_FLOWS`. Captures [avant](captures/lot1-avant-confidentialite.png) / [après](captures/lot1-apres-confidentialite.png). | Le texte de la page est désormais produit par le même module que l'interface. | corrigé — lot 1 |
 | F1 | mineur | F | `src/main/tunnel.ts:357-367` | `response.text()` lit toute la réponse avant `.slice(0, 400_000)` : le plafond ne borne ni le téléchargement ni la mémoire. | Lecture ; page volumineuse non testée. | Lire le flux avec un seuil et interrompre. | relevé — phase 2 |
-| F2 | finition | F | mesure instrumentée | Aucune mesure de fluidité avec 50 onglets, 200 favoris ou 200 nœuds ; aucune mesure du coût du flou et des animations. Seules les bases sont mesurées (444 ms, 232 Mo, 1,9 Mo). | Harnais de charge à écrire. | Mesurer avant/après toute optimisation ; ne rien revendiquer sans chiffre. | à vérifier |
+| F2 | finition | F | mesure instrumentée | Aucune mesure de fluidité avec 50 onglets, 200 favoris ou 200 nœuds ; aucune mesure du coût du flou et des animations. Seules les bases sont mesurées (444 ms, 232 Mo, 1,9 Mo). | Harnais de charge à écrire. | Mesurer avant/après toute optimisation ; ne rien revendiquer sans chiffre. | mesuré — lot 4 de performance (voir la section en fin de document) : 51 onglets, 200 favoris, 120 notes ; aucune tâche longue, 16,7 ms d'image médiane ; le seul coût qui grandit avec l'usage était la diffusion d'état, réduite par tranches. |
 | F3 | finition | F | `StartPage.tsx:207-230`, `styles.css` | Les animations et le verre dépoli ne sont pas profilés ; leur respect de « Réduire les animations » est présent dans le code mais non vérifié à l'écran. | Lire le code ; capture avec `prefers-reduced-motion` à faire. | Vérifier visuellement et mesurer le coût GPU. | à vérifier |
 | G1 | mineur | G | mesures instrumentées | Plusieurs cibles interactives sous 28 px : puces de l'accueil 26 px, actions de cartes 22 px, bouton d'info météo 15 px, boutons de dossier 20 px, niveaux du tunnel 23 px. | Mesure CDP des rectangles. | Porter les cibles à 28 px, quitte à agrandir la zone cliquable sans le visuel. | relevé — phase 2 |
 | G2 | finition | G | `src/renderer/src` | Parcours clavier complet, ordre de focus, VoiceOver et annonces après déplacement ne sont pas testés. Les régions `aria-live` existent (18 occurrences) et aucun bouton visible sans nom accessible n'a été trouvé. | Revue statique + inventaire DOM. | Parcours VoiceOver et clavier documenté, captures à l'appui. | à vérifier |
@@ -309,3 +309,97 @@ Captures (clair et sombre) : [avant, accueil](captures/lot4-avant-accueil-clair.
 - L'invite de l'accueil ressemble encore à un champ : c'est un choix assumé (le point d'entrée reste évident), mais un utilisateur peut croire qu'il tape dedans. À trancher avec un test d'usage plutôt qu'au clavier.
 - Le plafond de 12 favoris demeure : la tuile « +N » déplie, elle ne supprime pas le seuil. Passer à un défilement continu demanderait de revoir la grille de la barre latérale.
 - La carte météo garde deux actions textuelles (« Changer », « Retirer ») sur une seule ligne : lisible, mais dense à 11 px (B4, lot accessibilité).
+
+## Lot 4 de performance — sous charge, et la diffusion par tranches
+
+L'audit laissait un trou nommé (F2) : aucune mesure de fluidité avec 50 onglets, 200 favoris ou
+200 nœuds. Ce lot commence par le combler, puis corrige le seul coût que la mesure désigne.
+
+### La mesure
+
+Profil isolé, pages servies en local (aucune dépendance au réseau), app réelle pilotée par CDP,
+même fenêtre et même harnais pour les deux états du même profil.
+
+| Mesure | Vide | Chargé (51 onglets, 200 favoris, 120 notes) |
+| --- | --- | --- |
+| Démarrage jusqu'à l'interface pilotable | 260 ms | — |
+| `view()`, médiane / p95 | 0,2 / 1,3 ms | **1,3 / 3,0 ms** |
+| `view()`, charge utile | 3,2 Ko | **81,1 Ko** |
+| Mémoire de l'arbre Electron | 504 Mo | 623 Mo (≈ 2,3 Mo par onglet ouvert) |
+| Défilement de la liste d'onglets, 3 s | 43 ms de fil principal | 80 ms |
+| Images par seconde | 16,7 ms médiane, p95 17,5 | identique |
+| Tâches longues | 0 | **0** |
+| Recherche dans 120 notes | — | 5,5 ms |
+| Activation d'un onglet parmi 51 | — | 0,2 ms |
+
+Conclusion de la mesure : l'application tient la charge. Aucune saccade, aucune interaction
+au-dessus de 30 ms. Le seul poste qui **grandit avec l'usage** est l'état complet envoyé au
+renderer à chaque changement. Sa composition, mesurée sur le même profil :
+
+| Tranche | Octets | Part |
+| --- | --- | --- |
+| favoris (200) | 29 471 | 36 % |
+| notes (120) | 28 341 | 35 % |
+| onglets (51) | 20 330 | 25 % |
+| réglages | 2 229 | 3 % |
+| tout le reste | 952 | 1 % |
+
+Chaque champ de ces tranches est lu par l'interface (tri des favoris par `createdAt`, icône par
+`favicon`, aperçu et étiquettes des notes, hôtes bloqués dans le bouclier) : il n'y avait rien à
+retirer dans les enregistrements. L'allègement porte donc sur **ce qui traverse le pont**.
+
+### Le changement
+
+`state:changed` transporte désormais `{ full }` au premier envoi, puis `{ patch }` avec **seulement
+les tranches dont le contenu a changé**. Le renderer fusionne dans son état et garde, comme avant,
+les tranches inchangées. Côté processus principal, l'historique (80 dernières visites) et les
+résumés de rapports sont mémorisés par référence source ; les tableaux d'hôtes bloqués sont réutilisés
+tant que leur contenu ne bouge pas.
+
+| Geste (même profil chargé) | Avant | Après | Gain |
+| --- | --- | --- | --- |
+| Changer un réglage (densité) | 81 118 o | **2 253 o** | −97,2 % |
+| Basculer 10 favoris | 81 118 o | **28 065 o** | −65,4 % |
+| Enregistrer une note | 81 118 o | **28 558 o** | −64,8 % |
+| Activer un onglet | 0 envoi | 0 envoi | — |
+
+Coût du changement : l'empreinte de contenu (`JSON.stringify` de chaque tranche, 80 Ko au total)
+mesure **0,1 ms en médiane, 0,2 ms au p95**. La coalescence de 120 ms, les images à 16,7 ms et le
+compte de tâches longues (0) sont inchangés.
+
+### Ce que la mesure a appris
+
+- **La même référence ne prouve pas le même contenu.** Première version : comparaison par identité,
+  cohérente avec `stableTabView`. Mesure d'un changement de densité : **53 octets** — la tranche
+  `settings` n'était pas partie. `store.update(mutator)` mute l'état en place, donc l'objet garde son
+  identité. Corrigé par une empreinte de contenu ; le chiffre est remonté à 2 253 octets, ce qui est
+  exactement la taille de la tranche.
+- **Chaque onglet semblait neuf à chaque diffusion.** `runtimeOf` construisait un tableau
+  `blockedHosts` vide à chaque appel, donc `stableTabView` rendait un objet neuf pour les 51 onglets :
+  20 Ko dans chaque patch. Ces tableaux sont maintenant réutilisés tant que leur contenu est
+  identique, et la comparaison des vues d'onglet tolère deux listes de même contenu.
+- **Un mélange de gestes coûte presque l'état complet, et c'est normal.** Un lot de dix favoris, un
+  réglage, un onglet et une note dans la même fenêtre de 120 ms donnent une seule diffusion de
+  77,9 Ko : presque toutes les tranches ont réellement changé. Le gain porte sur les gestes isolés,
+  qui sont la majorité.
+
+### La preuve dans l'interface
+
+Même profil, actions passées par l'API publique, lecture du DOM après fusion : thème `rouge`,
+densité `compact`, favori visible dans la barre latérale, note listée dans le tiroir, onglet créé
+dans la liste, espace créé dans le rail. Parcours complet de l'app rejoué : **zéro erreur renderer**.
+Vérifications : `npm run typecheck`, `npm run lint`, `npx vitest run` (1037 tests réussis, 2 ignorés),
+`npm run build`.
+
+**Fichiers.** `src/main/browser.ts`, `src/main/tabs.ts`, `src/shared/api.ts`, `src/preload/index.ts`,
+`src/renderer/src/store/browser.ts`.
+
+### Limites
+
+- Mesures sur macOS arm64, fenêtre 1380 × 880, pages locales : le coût réseau d'un onglet réel n'est
+  pas dans ces chiffres.
+- Seul `state:changed` est allégé ; `app:view` (l'appel explicite) rend toujours l'état complet —
+  c'est ce que la coque demande au montage.
+- L'empreinte est proportionnelle aux données : 0,1 ms à 80 Ko, non mesurée à 1 000 favoris.
+- La mémoire par onglet (≈ 2,3 Mo) n'est pas traitée ici : endormir les onglets inactifs est une
+  fonctionnalité, pas un réglage de performance, et reste à décider.

@@ -290,15 +290,25 @@ function createCoreSlice(
         get().toast(cleanError(error, 'Impossible de charger Vela.'), 'error')
       }
       track(
-        window.vela.onState((incoming) =>
-          set((state) => ({
-            view: stableView(incoming),
-            splitRatioLive:
-              state.splitRatioLive !== null &&
-              Math.abs(incoming.splitRatio - state.splitRatioLive) < 0.002
-                ? null
-                : state.splitRatioLive
-          }))
+        window.vela.onState((payload) =>
+          set((state) => {
+            // Une tranche arrivée avant le premier état complet n'a rien à
+            // fusionner : on redemande l'état au lieu de garder un trou.
+            const merged =
+              'full' in payload ? payload.full : state.view ? { ...state.view, ...payload.patch } : null
+            if (!merged) {
+              void window.vela.view().then((frais) => set({ view: stableView(frais) }))
+              return {}
+            }
+            return {
+              view: stableView(merged),
+              splitRatioLive:
+                state.splitRatioLive !== null &&
+                Math.abs(merged.splitRatio - state.splitRatioLive) < 0.002
+                  ? null
+                  : state.splitRatioLive
+            }
+          })
         )
       )
       track(window.vela.onShortcut((event) => get().handleShortcut(event)))

@@ -100,6 +100,14 @@ export interface SaveNoteInput {
  */
 
 /** Charge de `notes:patch` : seul l'identifiant est obligatoire. */
+/**
+ * Charge de `state:changed`. L'état complet part une fois — au premier envoi
+ * ou quand la coque le redemande — puis seules les tranches qui ont bougé
+ * traversent le pont : avec 200 favoris et 120 notes l'état pèse 81 Ko, alors
+ * qu'un titre d'onglet qui change n'en coûte que les onglets.
+ */
+export type AppStatePayload = { full: AppView } | { patch: Partial<AppView> }
+
 export interface NotePatchInput {
   id: string
   title?: string
@@ -623,6 +631,6 @@ export interface VelaApi {
   processes(): Promise<{ live: number; processes: import('./types').ProcessInfo[] }>
   /** Double-clic sur une zone libre de la barre : agrandit ou restaure. */
   zoomWindow(): Promise<void>
-  onState(callback: (view: AppView) => void): () => void
+  onState(callback: (payload: AppStatePayload) => void): () => void
   onShortcut(callback: (event: ShortcutEvent) => void): () => void
 }
