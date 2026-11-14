@@ -88,6 +88,7 @@ function canWriteFile(path: string | null): boolean {
     accessSync(path, constants.W_OK)
     return true
   } catch {
+    // Chemin absent ou non inscriptible : la mise à jour en place est impossible.
     return false
   }
 }
@@ -266,6 +267,7 @@ async function manifestFor(version: string): Promise<MacManifest | null> {
     manifests.set(version, manifest)
     return manifest
   } catch {
+    // Manifeste illisible ou mal signé : aucune mise à jour n'est proposée.
     manifests.set(version, null)
     return null
   } finally {
@@ -338,6 +340,8 @@ async function prepareMacInstaller(version: string | null): Promise<void> {
         })
         return
       } catch {
+        // Empreinte ou taille refusée : l'installateur est supprimé et la
+        // raison remonte à l'interface.
         rmSync(target, { force: true })
         if (downloadCancelled()) return
         rejected = 'Installateur rejeté : son empreinte ne correspond pas à celle publiée.'
@@ -423,6 +427,7 @@ async function fetchLinuxRelease(): Promise<typeof linuxRelease> {
       manifest.files.find((entry) => /\.appimage$/i.test(entry.url))
     return file ? { version: manifest.version, file } : null
   } catch {
+    // Pas de manifeste Linux exploitable : rien à proposer, rien n'est écrit.
     return null
   } finally {
     clearTimeout(timer)

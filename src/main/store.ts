@@ -1024,6 +1024,7 @@ export class Store {
       }
       return secrets
     } catch {
+      // Ligne illisible dans secrets.json : les autres clés restent utilisables.
       return {}
     }
   }
@@ -1057,6 +1058,7 @@ export class Store {
     try {
       value = (await safeStorage.decryptStringAsync(readFileSync(this.legacySecretFile))).result
     } catch {
+      // Clé héritée indéchiffrable : elle reste sur le disque, rien n'est supprimé.
       return
     }
     if (!value) return

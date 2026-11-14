@@ -65,7 +65,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | C1 | majeur | C | `package.json:34-45`, sortie `npm audit` | `tinypool` critique, `vitest` critique par dépendance, `@vitest/mocker` modéré. Outils de développement ; exploitabilité dans cette CI non démontrée. La correction proposée par npm est un changement majeur de Vitest. | `npm audit --json` : 2 critiques, 1 modérée. | Analyser les conditions des avis ; monter Vitest après accord (changement majeur). | relevé — phase 2 |
 | C2 | mineur | C | `wc -l` | Concentration : `styles.css` 15 455 lignes, `browser.ts` 1 903, `SettingsPanel.tsx` 1 434, `NotesDrawer.tsx` 1 306. Coût de revue et risque de régression. | `wc -l src/main/browser.ts src/renderer/src/styles.css`. | Extraction progressive, après accord (réécriture de module > 300 lignes). | relevé — phase 2 |
 | C3 | mineur | C | `src/main/index.ts:227` | `console.log('[vela] barre de menus prête…')` reste dans le processus principal de production. | Lancer l'app empaquetée et lire la console. | Retirer ou conditionner au mode développement. | corrigé — lot 5 |
-| C4 | finition | C | `grep -rn "} catch {" src` | 152 blocs `catch` vides ou silencieux. Beaucoup sont des replis assumés, mais certains masquent des pertes (A3, A4). | Comptage ; revue des cas sensibles. | Commenter chaque repli et journaliser les échecs de données. | relevé — phase 2 |
+| C4 | finition | C | `grep -rn "} catch {" src` | 152 blocs `catch` vides ou silencieux. Beaucoup sont des replis assumés, mais certains masquent des pertes (A3, A4). | Comptage ; revue des cas sensibles. | Commenter chaque repli et journaliser les échecs de données. | corrigé — lot 7 |
 | D1 | critique | D | `src/main/agent.ts:452-490` | Le mode « agir » exécutait directement l'action du modèle. Une confirmation native par action et une confirmation distincte pour Entrée ont été ajoutées, avec test de refus. Le scénario d'injection réelle n'a pas été joué. | `npx vitest run src/main/agent.test.ts src/shared/agentLoop.test.ts` ; dialogue non testé dans Electron. | Vérifier le dialogue réel, le changement de page entre confirmation et action, et un scénario hostile. | corrigé — lot 1 |
 | D2 | majeur | D | `src/main/browser.ts:1234-1239`, `src/main/mini.ts:26,198` | Le registre IPC ignorait `event.sender` : tous les canaux étaient accessibles à toute fenêtre chargeant le preload. La mini-fenêtre charge le **preload complet** (`preload/index.js`), donc toute l'API `window.vela`. | Corrigé : `ipcPolicy.ts` classe l'émetteur (coque / mini / page / inconnu), `Browser.allowIpc` refuse tout cadre non principal et applique la politique à chaque `handle` et à chaque `on` ; la mini-fenêtre ne garde que `mini:*` ; le preload des pages ne garde que `PAGE_CHANNELS`. 6 tests dans `src/main/ipcPolicy.test.ts`. | Reste à faire : un pont dédié à la mini-fenêtre (elle charge encore le preload complet, mais n'atteint plus que `mini:*`). | corrigé — lot 1 |
 | D3 | majeur | D | `src/renderer/index.html:5-6` | CSP : `script-src 'self' 'unsafe-inline'`, `connect-src` acceptait tout HTTP(S)/WS(S). Une injection dans l'interface disposait d'une surface large. | Corrigé : `script-src 'self'` + empreinte SHA-256 du seul script inline (thème) ; `connect-src` limité à la météo, au pont local (`ws://localhost` et `ws://127.0.0.1`) et à `'self'`. 3 tests dans `src/shared/csp.test.ts`, dont la vérification de l'empreinte. | Vérifié à l'exécution : `securitypolicyviolation` vide, interface fonctionnelle. | corrigé — lot 1 |
@@ -462,3 +462,20 @@ Le dernier point est la limite de cette mesure : le verre de Vela est posé sur 
 ### Restes ouverts
 
 C1 (`npm audit`, montée majeure de Vitest), C2 (concentration des fichiers), C4 (`catch` silencieux), G2 (parcours clavier et VoiceOver), et le coût de peinture du flou pendant une animation.
+
+## 17. Phase 2 — lot 7 : replis silencieux (fait)
+
+Le comptage de l'audit (152) était en dessous du réel : `grep -rn "} catch {"` en trouve **229** dans `src/`. Les annoter tous n'aurait produit que du bruit ; le lot vise les fichiers qui portent des **données de l'utilisateur** — `store.ts`, `notes.ts`, `updater.ts` — et y impose une règle vérifiée.
+
+### Correctifs
+
+- **13 replis annotés** là où le choix était muet : index de notes et de corbeille illisibles, corps de note non relu, surlignages illisibles, ligne de `secrets.json` invalide, clé héritée indéchiffrable, chemin non inscriptible, manifeste de mise à jour illisible ou mal signé, manifeste Linux absent, installateur rejeté à l'empreinte.
+- Chaque commentaire dit **pourquoi le repli est sans conséquence** (« l'index n'est pas réécrit par-dessus », « la clé reste sur le disque, rien n'est supprimé »), pas seulement « ignoré ».
+
+### La garde
+
+`src/main/replis.test.ts` : dans ces trois fichiers, chaque `} catch {` doit être expliqué dans le bloc ou dans les cinq lignes qui précèdent. Il a trouvé deux oublis que la revue manuelle avait laissés (`notes.ts:620`, `updater.ts:342`) avant de passer.
+
+### Limite
+
+Les 216 autres replis (interface, onglets, favicons, météo, tunnel) restent muets : beaucoup sont des replis d'affichage où journaliser n'apprendrait rien. Le test dit où la règle s'applique ; l'étendre demande de décider fichier par fichier, ce qui n'était pas l'objet de ce lot.

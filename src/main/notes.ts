@@ -149,6 +149,7 @@ export class NotesStore {
           this.indexReadable = false
         }
       } catch {
+        // Index illisible : le drapeau le dit à l'interface, aucune écriture n'est tentée.
         this.indexReadable = false
       }
       return []
@@ -174,6 +175,7 @@ export class NotesStore {
         pinned: (entry as { pinned?: unknown }).pinned === true
       }))
     } catch {
+      // Index illisible : liste vide assumée, l'index n'est pas réécrit par-dessus.
       this.indexReadable = false
       return []
     }
@@ -188,6 +190,7 @@ export class NotesStore {
         readFileSync(join(this.dir, entry.file), 'utf8')
         return true
       } catch {
+        // Fichier manquant ou illisible : la note est signalée comme non vérifiée.
         return false
       }
     })
@@ -213,6 +216,7 @@ export class NotesStore {
         if (readdirSync(this.trashDir).some((file) => file.endsWith('.md')))
           this.trashReadable = false
       } catch {
+        // Dossier de corbeille illisible : signalé, rien n'est purgé.
         this.trashReadable = false
       }
       return []
@@ -239,6 +243,7 @@ export class NotesStore {
         deletedAt: Number((entry as { deletedAt?: unknown }).deletedAt) || 0
       }))
     } catch {
+      // Index de corbeille illisible : liste vide, l'index d'origine reste en place.
       this.trashReadable = false
       return []
     }
@@ -264,6 +269,7 @@ export class NotesStore {
     try {
       return readFileSync(file, 'utf8')
     } catch {
+      // Corps illisible : l'éditeur s'ouvre vide plutôt que de créer un doublon.
       return ''
     }
   }
@@ -612,6 +618,7 @@ export class HighlightsStore {
           typeof entry.text === 'string'
       )
     } catch {
+      // Surlignages illisibles : liste vide, le fichier reste tel quel.
       return []
     }
   }
