@@ -194,3 +194,61 @@
     --edge: color-mix(in srgb, var(--ink) 26%, transparent);
   }
 }
+
+/* ------------------------------------------------------------------
+   Lot 5 — plancher de lisibilité et cibles de 28 px
+   ------------------------------------------------------------------
+   Mesuré sur l'accueil et la barre latérale, styles calculés : « Favoris »
+   et les titres de carte à 9,5 px, « Onglets » à 10 px, la date du jour et
+   « via DuckDuckGo » à 10,5 px, la touche « ⌘K » à 10 px. Ce sont des
+   informations, pas des ornements : plancher à 11 px, sans toucher aux
+   couleurs ni aux espacements de la tranche 76.
+
+   Cibles mesurées sous 28 px : pastille du nom d'espace 26 px de haut,
+   bouton de dossier 24 × 24, puce d'accueil 26 px de haut. La zone cliquable
+   déborde du dessin : rien ne bouge à l'écran, seule la cible grandit.
+   ------------------------------------------------------------------ */
+
+.home-pins-title h2,
+.home-card-head h2,
+.library-day h2,
+.home-date,
+.home-chip,
+.home-chips-meta .home-chip,
+.home-chip-key,
+.home-chips-meta .home-chip-key,
+kbd,
+.sidebar .tabs-scroll > .tabs-head,
+.settings-nav-label,
+.brief-label,
+.eyebrow,
+.field > span {
+  font-size: 11px;
+}
+
+.space-name {
+  min-height: 28px;
+  line-height: 28px;
+}
+
+.tabs-tools .icon-btn {
+  position: relative;
+}
+
+.tabs-tools .icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+}
+
+.home-chip {
+  position: relative;
+}
+
+.home-chip::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+}
