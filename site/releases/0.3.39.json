@@ -1,0 +1,38 @@
+{
+  "version": "0.3.39",
+  "slug": "0-3-39",
+  "date": "2026-11-14",
+  "headline": "Une charge, une seule définition",
+  "intro": "Les charges qui traversent le pont entre l’interface et le processus principal n’existent plus en double. Elles vivent dans un fichier partagé, et un désaccord entre les deux côtés devient une erreur de compilation plutôt qu’un bug d’exécution.",
+  "tags": ["interne", "fiabilité", "types"],
+  "stats": {
+    "commits": 2,
+    "files": 8,
+    "insertions": 164,
+    "deletions": 64
+  },
+  "sections": [
+    {
+      "title": "Le pont, décrit des deux côtés",
+      "body": [
+        "Chaque charge du pont était écrite deux fois : une forme dans la déclaration de l’interface, une autre dans la validation du processus principal. Rien ne garantissait qu’elles disaient la même chose — et quand elles divergeaient, cela se voyait à l’usage, pas à la compilation.",
+        "Douze charges ont désormais une définition unique, dans `src/shared/api.ts` : les notes (modification, renommage, enregistrement vocal, transcription), les tâches, les cartes du tunnel, les marque-pages et l’ouverture du coup d’œil. L’interface les emploie pour appeler, le processus principal pour valider.",
+        "La garde a été éprouvée en cassant volontairement un type : passer les étiquettes d’une note de `string[]` à `number[]` fait échouer la compilation du validateur et du preload en même temps. C’est exactement ce qu’on attendait d’un contrat partagé."
+      ]
+    },
+    {
+      "title": "Trois choses se resserrent",
+      "body": [
+        "Le partage a rendu visibles trois imprécisions. Les étiquettes d’une note sont filtrées aux chaînes réelles, au lieu de traverser telles quelles. Le nom d’un enregistrement à transcrire est un texte, plus une valeur inconnue. Et l’échéance d’une tâche accepte l’absence, ce que l’interface demandait déjà.",
+        "Rien de visible ne change : ces trois points concernaient des chemins que l’interface empruntait toujours correctement. Ce qui change, c’est qu’un futur écart ne pourra plus passer."
+      ]
+    }
+  ],
+  "verify": [
+    "Modifier une note (titre, épinglage, étiquettes) : la liste doit suivre sans recharger, et les étiquettes rester affichées après redémarrage.",
+    "Créer une tâche sans échéance, puis une seconde avec : les deux doivent apparaître dans l’ordre, la seconde datée.",
+    "Enregistrer un vocal, puis demander sa transcription : l’application doit répondre normalement (ou refuser proprement si aucun modèle local n’est configuré).",
+    "Après publication, vérifier que le site annonce 0.3.39 et que les six empreintes correspondent aux installateurs de la release."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.38...v0.3.39"
+}
