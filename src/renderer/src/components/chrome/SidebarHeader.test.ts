@@ -4,9 +4,8 @@ import { describe, expect, it } from 'vitest'
 import SidebarHeader from './SidebarHeader'
 
 /**
- * L'en-tête de la barre latérale a été allégé : plus de pastille, plus
- * d'icône, et un nom purement décoratif. La ligne entière reste la zone de
- * déplacement de la fenêtre.
+ * L'en-tête ne porte plus qu'un nom et la marque de l'app, tous deux
+ * décoratifs. La ligne entière reste la zone de déplacement de la fenêtre.
  */
 describe('en-tête de la barre latérale', () => {
   const html = renderToStaticMarkup(createElement(SidebarHeader))
@@ -20,9 +19,10 @@ describe('en-tête de la barre latérale', () => {
     expect(html).toContain('class="wordmark-dot"')
   })
 
-  it('ne contient ni pastille ni icône', () => {
-    expect(html).not.toContain('vela-mark')
-    expect(html).not.toContain('<svg')
+  it('porte la marque, une seule, juste avant le mot', () => {
+    expect(html.match(/class="wordmark-mark"/g) ?? []).toHaveLength(1)
+    expect(html.indexOf('wordmark-mark')).toBeLessThan(html.indexOf('class="wordmark"'))
+    // Vectorielle : jamais d'image bitmap dans l'en-tête.
     expect(html).not.toContain('<img')
   })
 
