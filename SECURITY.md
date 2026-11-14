@@ -1,8 +1,10 @@
 # Signaler une vulnérabilité
 
-Vela n'a pas de canal public de signalement : écrivez à `contact@example.com`
-avec « SECURITY » en objet, en décrivant la version concernée, la plateforme et
-les étapes de reproduction. Ne joignez pas de données personnelles.
+Vela n'a pas d'adresse e-mail de sécurité. Le canal est le **signalement privé de GitHub** : ouvrez l'onglet **Security** du dépôt, puis **Signaler une vulnérabilité** (« Report a vulnerability »). Le rapport reste privé entre vous et le mainteneur ; il ne devient public qu'après accord sur la divulgation.
+
+Décrivez la version concernée, la plateforme et les étapes de reproduction. Ne joignez pas de données personnelles.
+
+N'ouvrez pas d'issue publique détaillant une faille non corrigée : une issue publique est visible immédiatement et ne laisse aucun délai de correction.
 
 Versions prises en charge : la dernière version publiée (voir `package.json`).
 Les versions antérieures ne reçoivent pas de correctif.

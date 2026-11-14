@@ -81,7 +81,7 @@ Statuts : **relevé — phase 2** (établi, non corrigé) ; **corrigé dans l'ar
 | G2 | finition | G | `src/renderer/src` | Parcours clavier complet, ordre de focus, VoiceOver et annonces après déplacement ne sont pas testés. Les régions `aria-live` existent (18 occurrences) et aucun bouton visible sans nom accessible n'a été trouvé. | Revue statique + inventaire DOM. | Parcours VoiceOver et clavier documenté, captures à l'appui. | mesuré — lot 8 (VoiceOver manuel) |
 | H1 | mineur | H | `README.md:233`, `README.md:360`, `src/shared/space.ts:227` | Le README annonce 200 sites épinglés à un endroit et « 24 sites au maximum » à un autre ; le code applique `MAX_SHORTCUTS = 200`. | Comparer les deux passages et la constante. | Unifier sur 200, ou corriger la constante si 24 est voulu. | corrigé — lot 5 |
 | H2 | mineur | H | `CommandBar.tsx:597` | Le filtre de la palette affiche « DL » au lieu de « Téléchargements ». | Ouvrir ⌘K et lire les filtres. | Libellé français complet ou abréviation explicite. | corrigé — lot 5 |
-| I1 | mineur | I | absence de `SECURITY.md` | Aucune politique de divulgation à la racine. | `find . -maxdepth 3 -iname 'SECURITY*'` : aucun résultat. | Ajouter un canal de signalement vérifié et les versions prises en charge. | relevé — phase 2 |
+| I1 | mineur | I | absence de `SECURITY.md` | Aucune politique de divulgation à la racine. | `find . -maxdepth 3 -iname 'SECURITY*'` : aucun résultat. | Ajouter un canal de signalement vérifié et les versions prises en charge. | corrigé — lot 10 |
 | I2 | mineur | I | `README.md:25`, `.github/workflows/release.yml:59,75,188,209` | Le README demande Node 22+, la CI fixe Node 20. | Comparer les deux. | Aligner la version et tester la matrice. | corrigé — lot 5 |
 | J1 | mineur | J | `site/public/index.html:371-430` | Les six empreintes SHA-256 du site n'ont pas été recalculées sur les binaires publiés ; seuls les liens ont été testés (HEAD 200). | Télécharger chaque artefact et recalculer. | Vérifier les empreintes avant toute annonce de version. | mesuré — à chaque release |
 | J2 | mineur | J | `site/public/index.html:340,456`, `site/public/aide/index.html:160-175` | L'accueil affirme que les mises à jour « se font ensuite toutes seules » ; l'aide explique que macOS non signé impose d'ouvrir le DMG et que le `.deb` se remplace à la main. Contradiction interne au site. | Lire les deux passages. | Nuancer l'accueil par plateforme, sans dévaloriser le produit. | corrigé — lot 5 |
@@ -523,3 +523,9 @@ Création avec rattachement d'un onglet, renommage, repli, suppression. Vérifi�
 ### Bilan intermédiaire
 
 `Browser` : 1 896 → **1 722 lignes**. Blocs encore dans la classe, par taille décroissante : IPC (≈ 90), `updateSettings` (≈ 250), onglets (`createTab`/`activateTab`/`reopenTab`/scission/épinglage/réordonnancement, ≈ 350), téléchargements (≈ 90), état et diffusion (≈ 350), métriques et veille (≈ 150). Chacun demande sa propre sonde ; je les prends un par un.
+
+## 20. Phase 2 — lot 10 : politique de divulgation (I1)
+
+`SECURITY.md` existait depuis la phase 1, mais renvoyait à `contact@example.com` : une adresse de documentation, pas un canal. Le signalement privé GitHub du dépôt était désactivé — la politique annonçait donc un chemin qui n'existait pas.
+
+Corrigé : le signalement privé est activé sur le dépôt (`private-vulnerability-reporting: true`) et `SECURITY.md` le désigne comme seul canal, avec la consigne de ne pas détailler une faille dans une issue publique. Les sections versions prises en charge, délais et limites connues sont conservées telles quelles.
