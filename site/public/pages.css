@@ -6,10 +6,10 @@
 
 .page-head {
   --ink: var(--cream);
-  --ink-2: #c6cad9;
-  --ink-3: #9aa0b8;
-  --line: rgba(246, 239, 228, 0.22);
-  --line-strong: rgba(246, 239, 228, 0.42);
+  --ink-2: #b9beb6;
+  --ink-3: #8d938a;
+  --line: rgba(247, 246, 242, 0.22);
+  --line-strong: rgba(247, 246, 242, 0.42);
   padding: 128px 0 64px;
   background: var(--navy);
   color: var(--cream);
@@ -81,13 +81,13 @@
   gap: 6px;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(246, 239, 228, 0.18);
+  border-top: 1px solid rgba(247, 246, 242, 0.18);
 }
 
 .sommaire-sub-label {
   align-self: center;
   padding: 0 4px;
-  color: #cfd3e0;
+  color: #b9beb6;
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
@@ -102,9 +102,9 @@
 /* Sur la nuit, les puces du sommaire reprennent le crème de l’icône. */
 .page-head .sommaire a,
 .notfound .sommaire a {
-  border-color: rgba(246, 239, 228, 0.4);
+  border-color: rgba(247, 246, 242, 0.4);
   background: transparent;
-  color: #e7e9f0;
+  color: #f1f0ea;
 }
 
 .page-head .sommaire a:hover,
@@ -117,10 +117,10 @@
 
 .notfound {
   --ink: var(--cream);
-  --ink-2: #c6cad9;
-  --ink-3: #9aa0b8;
-  --line: rgba(246, 239, 228, 0.22);
-  --line-strong: rgba(246, 239, 228, 0.42);
+  --ink-2: #b9beb6;
+  --ink-3: #8d938a;
+  --line: rgba(247, 246, 242, 0.22);
+  --line-strong: rgba(247, 246, 242, 0.42);
   padding: 148px 0 96px;
   background: var(--navy);
   color: var(--cream);
@@ -608,7 +608,7 @@
 .cmd .copy.is-copied {
   border-color: var(--coral);
   background: var(--coral);
-  color: #12173b;
+  color: var(--bg);
 }
 
 /* --- Schémas des dialogues système -------------------------------------- */
@@ -673,8 +673,8 @@
 .schema-terminal {
   margin: 0;
   padding: 11px 12px;
-  background: #12173b;
-  color: #f6efe4;
+  background: var(--ink);
+  color: var(--bg);
   font-family: var(--mono);
   font-size: 10.5px;
   line-height: 1.7;

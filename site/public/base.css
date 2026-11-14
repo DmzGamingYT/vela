@@ -1,10 +1,10 @@
 /* ==========================================================================
-   Vela — site, refonte « Nuit en mer »
-   L’icône de l’app donne tout : nuit #1B2150, mer #26307A, voiles crème
-   #F6EFE4, coque corail #E8805A, voile d’ombre #B9BECB. Aucun dégradé, aucune
+   Vela — site, palette « Papier et encre »
+   Le site ne porte plus les couleurs de l’icône : papier chaud, encre presque
+   noire, un seul accent vert profond. Les captures de l’application restent
+   ainsi le seul endroit où la couleur de l’app apparaît. Aucun dégradé, aucune
    ombre floue, aucun verre : des à-plats, des règles franches, des angles
-   courts. La structure se voit, comme sur une carte marine. Une seule
-   exception, décrite dans home.css : l’ombre sous l’écran du héros.
+   courts.
    ========================================================================== */
 
 :root {
@@ -13,8 +13,7 @@
     Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-  /* Les titres sont la même famille système, très serrée et très grasse : le
-     dessin plat de l’icône tient mieux sans empattements. */
+  /* Les titres sont la même famille système, très serrée et très grasse. */
   --display: var(--sans);
   /* Une seule italique sur tout le site : le mot accentué du héros. */
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
@@ -24,44 +23,47 @@
   --radius: 2px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  --navy: #1b2150;
-  --night: #12173b;
-  --night-2: #0e1233;
-  --sea: #26307a;
-  --coral: #e8805a;
-  --coral-deep: #c4623f;
-  --cream: #f6efe4;
-  --shell: #b9becb;
+  /* Rôles historiques, remappés sur la nouvelle palette : les pages qui les
+     nomment encore (--coral, --navy) suivent sans être réécrites. */
+  --navy: #131512;
+  --night: #0f1311;
+  --night-2: #0b0e0d;
+  --sea: #1a7a5e;
+  --coral: #1a7a5e;
+  --coral-deep: #145c47;
+  --cream: #f7f6f2;
+  --shell: #b9beb8;
 
-  --accent: var(--coral);
-  /* Corail assez foncé pour porter du texte sur le papier. */
-  --accent-ink: #9e4425;
-  --accent-soft: rgba(232, 128, 90, 0.14);
+  --accent: #1a7a5e;
+  /* Vert assez foncé pour porter du texte sur le papier. */
+  --accent-ink: #145c47;
+  --accent-soft: rgba(26, 122, 94, 0.12);
 
-  --bg: var(--cream);
-  --bg-deep: #efe6d6;
-  --surface: #fffbf3;
-  --surface-2: #efe6d6;
-  --ink: #161b3f;
-  --ink-2: #41476a;
-  --ink-3: #5a6078;
-  --line: rgba(22, 27, 63, 0.16);
-  --line-strong: rgba(22, 27, 63, 0.34);
+  --bg: #f7f6f2;
+  --bg-deep: #efeee8;
+  --surface: #ffffff;
+  --surface-2: #f0efe9;
+  --ink: #131512;
+  --ink-2: #4d514a;
+  --ink-3: #666b62;
+  --line: rgba(19, 21, 18, 0.14);
+  --line-strong: rgba(19, 21, 18, 0.3);
   color-scheme: light;
 }
 
 html[data-theme='dark'] {
-  --bg: #12173b;
-  --bg-deep: #0e1233;
-  --surface: #1b2150;
-  --surface-2: #212a61;
-  --ink: #f6efe4;
-  --ink-2: #c3c7d6;
-  --ink-3: #9aa0b8;
-  --line: rgba(246, 239, 228, 0.16);
-  --line-strong: rgba(246, 239, 228, 0.34);
-  --accent-ink: #f0a184;
-  --accent-soft: rgba(232, 128, 90, 0.18);
+  --bg: #0f1311;
+  --bg-deep: #0a0d0c;
+  --surface: #171c1a;
+  --surface-2: #1d2422;
+  --ink: #f1f0ea;
+  --ink-2: #b9beb6;
+  --ink-3: #8d938a;
+  --line: rgba(241, 240, 234, 0.14);
+  --line-strong: rgba(241, 240, 234, 0.3);
+  --accent-ink: #6ed3b1;
+  --accent-soft: rgba(26, 122, 94, 0.22);
+  --cream: #f1f0ea;
   color-scheme: dark;
 }
 
@@ -92,8 +94,8 @@ body {
 }
 
 ::selection {
-  background: var(--coral);
-  color: #12173b;
+  background: var(--accent);
+  color: var(--bg);
 }
 
 a {
@@ -385,7 +387,7 @@ html[data-theme='dark'] .ico-moon {
 
 .btn-solid:hover {
   background: var(--accent);
-  color: #12173b;
+  color: var(--bg);
 }
 
 .btn-ghost {
@@ -400,21 +402,21 @@ html[data-theme='dark'] .ico-moon {
 
 .btn-hero {
   background: var(--coral);
-  border-color: #12173b;
-  color: #12173b;
+  border-color: var(--night);
+  color: var(--bg);
 }
 
 .btn-hero:hover {
-  background: #f19a78;
+  background: var(--coral-deep);
 }
 
 .btn-hero-ghost {
-  border-color: rgba(246, 239, 228, 0.55);
-  color: var(--cream);
+  border-color: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--bg);
 }
 
 .btn-hero-ghost:hover {
-  background: rgba(246, 239, 228, 0.1);
+  background: color-mix(in srgb, var(--bg) 10%, transparent);
 }
 
 .btn-big {
