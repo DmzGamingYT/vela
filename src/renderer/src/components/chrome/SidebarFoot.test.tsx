@@ -24,18 +24,17 @@ afterEach(() => {
 })
 
 describe('pied de la barre latérale', () => {
-  it('garde les listes et les panneaux sur une seule rangée', () => {
+  it('garde trois raccourcis sur une seule rangée', () => {
     render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
 
-    expect(screen.getByRole('button', { name: 'Historique' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Marque-pages' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Bibliothèque' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Notes' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Demander à l’agent' })).toBeTruthy()
   })
 
-  it('ouvre la liste des marque-pages, puis la referme', () => {
+  it('ouvre la bibliothèque sur les marque-pages, puis la referme', () => {
     render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
-    const list = screen.getByRole('button', { name: 'Marque-pages' })
+    const list = screen.getByRole('button', { name: 'Bibliothèque' })
 
     fireEvent.click(list)
     expect(useBrowser.getState().overlay).toBe('bookmarks')

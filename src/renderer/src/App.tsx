@@ -10,6 +10,7 @@ import Workspace from './components/chrome/Workspace'
 import { useBrowser } from './store/browser'
 import { appearanceState, applyAppearance } from './lib/appearance'
 import { differe } from './lib/differe'
+import type { LibraryTab } from './components/panels/LibraryPanel'
 
 // Les panneaux ne sont chargés qu'à leur première ouverture : le démarrage ne
 // paie plus l'analyse des réglages, des notes, de l'agent et des overlays
@@ -20,23 +21,21 @@ import { differe } from './lib/differe'
 // premier clic sur une fonctionnalité semblait ne rien faire. `differe`
 // n'attend que le module et peint à l'image suivante.
 const agent = differe(() => import('./components/agent/AgentCanvas'))
-const favoris = differe(() => import('./components/panels/BookmarksPanel'))
+const bibliotheque = differe<{ tab: LibraryTab | null }>(
+  () => import('./components/panels/LibraryPanel')
+)
 const sessions = differe(() => import('./components/panels/SessionsPanel'))
 const bouclier = differe(() => import('./components/panels/ShieldPanel'))
-const historique = differe(() => import('./components/panels/HistoryPanel'))
 const palette = differe(() => import('./components/chrome/CommandBar'))
-const telechargements = differe(() => import('./components/panels/DownloadsPanel'))
 const processus = differe(() => import('./components/panels/ProcessManager'))
 const notes = differe(() => import('./components/panels/NotesDrawer'))
 const reglages = differe(() => import('./components/settings/SettingsPanel'))
 const profil = differe(() => import('./components/space/SpaceDialog'))
 const AgentCanvas = agent.Panneau
-const BookmarksPanel = favoris.Panneau
+const LibraryPanel = bibliotheque.Panneau
 const SessionsPanel = sessions.Panneau
 const ShieldPanel = bouclier.Panneau
-const HistoryPanel = historique.Panneau
 const CommandBar = palette.Panneau
-const DownloadsPanel = telechargements.Panneau
 const ProcessManager = processus.Panneau
 const NotesDrawer = notes.Panneau
 const SettingsPanel = reglages.Panneau
@@ -60,6 +59,8 @@ export default function App() {
   // L'accueil de bienvenue couvre la fenêtre comme une feuille : le fond doit
   // être inerte pendant qu'il est ouvert, pas seulement sous un overlay.
   const backgroundInert = Boolean(overlay) || !onboarded
+  const libraryTab: LibraryTab | null =
+    overlay === 'bookmarks' || overlay === 'downloads' || overlay === 'history' ? overlay : null
 
   useEffect(() => {
     void useBrowser.getState().init()
@@ -266,14 +267,10 @@ export default function App() {
         <Presence open={overlay === 'processes'} exit={!overlay}>
           <ProcessManager />
         </Presence>
-        <Presence open={overlay === 'downloads'} exit={!overlay}>
-          <DownloadsPanel />
-        </Presence>
-        <Presence open={overlay === 'history'} exit={!overlay}>
-          <HistoryPanel />
-        </Presence>
-        <Presence open={overlay === 'bookmarks'} exit={!overlay}>
-          <BookmarksPanel />
+        {/* Une seule feuille pour les trois listes : l'onglet suit `overlay`,
+            donc le pied et les raccourcis ouvrent directement le bon onglet. */}
+        <Presence open={libraryTab !== null} exit={!overlay}>
+          <LibraryPanel tab={libraryTab} />
         </Presence>
         <Presence open={overlay === 'shield'} exit={!overlay}>
           <ShieldPanel />

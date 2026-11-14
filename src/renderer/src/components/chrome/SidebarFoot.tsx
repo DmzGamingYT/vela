@@ -31,6 +31,7 @@ export default function SidebarFoot({ query, onQuery, asleep }: SidebarFootProps
   // L'anneau de progression vit ici désormais : le rail de lecture ne porte
   // plus de bouton Téléchargements, deux entrées pour un même panneau.
   const running = downloads.find((item) => item.state === 'progress') ?? null
+  const libraryOpen = overlay === 'bookmarks' || overlay === 'downloads' || overlay === 'history'
   const percent =
     running && running.total > 0
       ? Math.min(100, Math.round((running.received / running.total) * 100))
@@ -91,17 +92,16 @@ export default function SidebarFoot({ query, onQuery, asleep }: SidebarFootProps
 
         <span className="foot-sep" aria-hidden="true" />
 
-        {/* Puis la bibliothèque : ce qu'on télécharge, ce qu'on a vu, ce qu'on
-            garde. L'ordre suit le cycle de la page. */}
+        {/* La bibliothèque tient maintenant en un seul bouton : ce qu’on garde,
+            ce qu’on télécharge et ce qu’on a vu sont trois onglets d’une même
+            feuille, jamais ouverts deux à la fois. */}
         <button
           type="button"
           className="foot-btn"
-          data-active={overlay === 'downloads' ? 'true' : undefined}
-          aria-label={
-            downloads.length > 0 ? `Téléchargements, ${downloads.length}` : 'Téléchargements'
-          }
-          title={running ? 'Téléchargement en cours' : 'Téléchargements'}
-          onClick={() => setOverlay(overlay === 'downloads' ? null : 'downloads')}
+          data-active={libraryOpen ? 'true' : undefined}
+          aria-label="Bibliothèque"
+          title="Bibliothèque — marque-pages, téléchargements, historique"
+          onClick={() => setOverlay(libraryOpen ? null : 'bookmarks')}
         >
           {running && (
             <svg className="rr-ring" viewBox="0 0 34 34" aria-hidden="true">
@@ -118,28 +118,8 @@ export default function SidebarFoot({ query, onQuery, asleep }: SidebarFootProps
               />
             </svg>
           )}
-          <Icon name="download" size={17} />
-          {downloads.length > 0 && <span className="foot-count">{downloads.length}</span>}
-        </button>
-        <button
-          type="button"
-          className="foot-btn"
-          data-active={overlay === 'history' ? 'true' : undefined}
-          aria-label="Historique"
-          title="Historique"
-          onClick={() => setOverlay(overlay === 'history' ? null : 'history')}
-        >
-          <Icon name="history" size={17} />
-        </button>
-        <button
-          type="button"
-          className="foot-btn"
-          data-active={overlay === 'bookmarks' ? 'true' : undefined}
-          aria-label="Marque-pages"
-          title="Marque-pages"
-          onClick={() => setOverlay(overlay === 'bookmarks' ? null : 'bookmarks')}
-        >
           <Icon name="list" size={17} />
+          {downloads.length > 0 && <span className="foot-count">{downloads.length}</span>}
         </button>
       </div>
 

@@ -206,19 +206,9 @@ describe('coque de l’application', () => {
         present: () => document.querySelector('.agent')
       },
       {
-        nom: 'marque-pages',
-        bouton: '.foot-btn[aria-label="Marque-pages"]',
-        present: () => document.querySelector('[role="dialog"][aria-label="Marque-pages"]')
-      },
-      {
-        nom: 'historique',
-        bouton: '.foot-btn[aria-label="Historique"]',
-        present: () => document.querySelector('[role="dialog"][aria-label="Historique"]')
-      },
-      {
-        nom: 'téléchargements',
-        bouton: '.foot-btn[aria-label^="Téléchargements"]',
-        present: () => document.querySelector('[role="dialog"][aria-label="Téléchargements"]')
+        nom: 'bibliothèque',
+        bouton: '.foot-btn[aria-label="Bibliothèque"]',
+        present: () => document.querySelector('[role="dialog"][aria-label="Bibliothèque"]')
       },
       {
         nom: 'profil',

@@ -360,6 +360,52 @@
   flex-direction: column;
 }
 
+/* Trois listes, une seule feuille : les onglets remplacent les trois boutons
+   qu'elles occupaient dans le pied de la barre latérale. */
+.library-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 24px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.library-tab {
+  border: 0;
+  background: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  transition:
+    background var(--dur-1) var(--ease-standard),
+    color var(--dur-1) var(--ease-standard);
+}
+
+.library-tab:hover {
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+.library-tab[data-active='true'] {
+  background: var(--fill-2);
+  color: var(--ink);
+}
+
+/* La liste remplit la feuille : chaque onglet garde son propre défilement. */
+.library-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.library-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
 .library-head-actions {
   display: flex;
   align-items: center;
