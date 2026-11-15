@@ -1,0 +1,88 @@
+/* ------------------------------------------------------------------
+   80 — le mouvement du rail
+   ------------------------------------------------------------------
+   Le rail n'avait que des fondus de fond : les repères d'état actif se
+   posaient d'un coup, les compteurs apparaissaient sans transition et la
+   barre de téléchargement sautait par paliers. Tout reste dans le
+   vocabulaire déjà en place (--dur-1/2/3, --ease-out, --ease-spring) et
+   se limite à des propriétés composited : transform et opacity.
+
+   Le bloc `prefers-reduced-motion` de 08 neutralise déjà ces animations
+   avec `!important` ; rien à redouter ici.
+   ------------------------------------------------------------------ */
+
+/* Le repère du mode actif : il pousse depuis son centre en arrivant. */
+.rail-mode[data-active='true']::before {
+  animation: rail-mark-centered var(--dur-2) var(--ease-spring) both;
+}
+
+@keyframes rail-mark-centered {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0.25);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+}
+
+/* Celui du profil actif : même poussée, sans la translation de centrage. */
+.rail .space-chip[data-active='true']::before {
+  animation: rail-mark var(--dur-2) var(--ease-spring) both;
+}
+
+@keyframes rail-mark {
+  from {
+    opacity: 0;
+    transform: scaleY(0.25);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Les compteurs (notes, téléchargements) se posent avec un petit ressort
+   quand ils apparaissent — c'est-à-dire quand un compte passe de zéro à un. */
+.rail-tool-count {
+  animation: rail-count var(--dur-2) var(--ease-spring) both;
+}
+
+@keyframes rail-count {
+  from {
+    opacity: 0;
+    transform: translateY(-1px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* L'anneau de téléchargement s'allume en fondu, et son arc suit la
+   progression au lieu de sauter de palier en palier. */
+.rr-ring {
+  animation: fade var(--dur-2) linear both;
+}
+
+.rr-ring .download-ring-fill {
+  transition: stroke-dasharray var(--dur-3) linear;
+}
+
+/* Les deux familles d'icônes du rail partageaient le fond, pas l'appui :
+   les modes et les outils encaissent maintenant la pression comme la
+   bascule et Réglages (--dur-1, léger recul). */
+.rail-mode,
+.rail-tool {
+  transition:
+    transform var(--dur-1) var(--ease-out),
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+
+.rail-mode:active,
+.rail-tool:active {
+  transform: scale(0.94);
+}
