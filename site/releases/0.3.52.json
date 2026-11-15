@@ -1,0 +1,44 @@
+{
+  "version": "0.3.52",
+  "slug": "0-3-52",
+  "date": "2026-11-15",
+  "headline": "Le coup d’œil sur une barre, les extensions réparables",
+  "intro": "Trois retouches d’interface qui se voient : la carte du coup d’œil réunit ses commandes sur une seule ligne, les extensions expliquent enfin pourquoi elles ne chargent pas, et les favoris de l’accueil cessent de tronquer leurs titres. Toutes les empreintes du site suivent cette version.",
+  "tags": ["interface", "extensions", "lisibilité"],
+  "stats": {
+    "commits": 3,
+    "files": 15,
+    "insertions": 540,
+    "deletions": 123
+  },
+  "sections": [
+    {
+      "title": "Une barre au lieu de deux",
+      "body": [
+        "La carte du coup d’œil portait un en-tête sombre et un pied séparé : deux bandeaux pour une seule adresse. La refonte les réunit sur une ligne — retour, avance, rechargement, titre, domaine, pastille d’espace, épinglage et fermeture — dans un seul châssis clair, avec le pied réservé à l’état de l’onglet.",
+        "La page garde toute sa hauteur : le châssis passe de 780 × 540 à une carte plus compacte dont les commandes ne recouvrent plus le contenu. Ce qui ne change pas : ⌘⌥ lit la page telle qu’elle est servie, dans la session de l’espace, et ⇧⏎ ouvre la scission."
+      ]
+    },
+    {
+      "title": "Une extension qui ne charge pas le dit",
+      "body": [
+        "Une extension dont le dossier avait disparu, ou dont le `manifest.json` ne se lisait plus, s’éteignait sans un mot et ne revenait qu’au redémarrage. Le chargement se fait maintenant au démarrage par `Browser.create`, l’erreur est conservée sur la fiche — « Dossier introuvable », « Pas de manifest.json lisible » — et l’en-tête compte les fiches à réparer.",
+        "Chaque fiche fautive propose « Réessayer » : l’action `extensions:reload` canonise le chemin (`realpath`) puis recharge l’extension dans son onglet, sans redémarrer le navigateur. Vérifié en réel : Dark Reader chargé sans aucun onglet ouvert, et un dossier supprimé affiche son erreur jusqu’à la réparation."
+      ]
+    },
+    {
+      "title": "Des favoris qu’on peut lire",
+      "body": [
+        "La rangée de favoris imposait 132 px par tuile, dont 70 px pour le titre : « Figma — R… » et « MDN — co… » sur chaque carte, domaine coupé lui aussi. Une grille de 208 px minimum, qui s’enroule au lieu de défiler, rend le titre et le domaine entiers à 1440 px.",
+        "Deux détails suivaient la même logique : les monogrammes de secours reprennent la lettre du domaine, comme les sites épinglés au-dessus, et `Favicon` lit le cache local même quand la page fournit une icône — un favori ancien gardait une URL d’icône morte et retombait sur une lettre alors que le domaine avait son icône en cache."
+      ]
+    }
+  ],
+  "verify": [
+    "Ouvrir un lien avec ⌘⌥ : la carte tient sur une barre, la page reste lisible, ⌘L revient à l’adresse et Échap ferme.",
+    "Charger une extension valide, puis supprimer son dossier et cliquer « Réessayer » : l’erreur s’efface, le compteur de fiches à réparer avec elle.",
+    "Accueil avec six favoris : les titres s’affichent sur une ligne, les tuiles s’enroulent et le « + » garde leur taille.",
+    "Thèmes clair et nuit, à 1440 px comme à 760 px : les trois écrans restent alignés."
+  ],
+  "compare": "https://github.com/DmzGamingYT/vela/compare/v0.3.51...v0.3.52"
+}
