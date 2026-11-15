@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------
    0.4 — pied de la barre latérale, compléments du rail droit
    ------------------------------------------------------------------
-   La grande carte de réglages est remplacée par quatre raccourcis compacts
-   et une recherche d'onglets. Réglages vit désormais sous le « + » du rail
-   gauche.
+   Le pied ne garde que la recherche d'onglets et le compte des mises en
+   veille : les raccourcis (notes, agent, bibliothèque) sont montés dans le
+   rail de gauche, sous les modes, et prennent ici leur matière.
    ------------------------------------------------------------------ */
 
 .sidebar-foot {
@@ -65,22 +65,27 @@
   color: var(--ink);
 }
 
-.foot-row {
+/* Trois outils empilés sous les modes : même famille que la bascule et que
+   Réglages, sans cadre. */
+.rail-tools {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  width: 100%;
+  margin-top: 4px;
 }
 
-/* Le filet sépare les outils de la bibliothèque : deux familles dans une
-   rangée de 28 px, sans ajouter de bordure autour des icônes. */
-.foot-sep {
-  width: 1px;
-  height: 16px;
-  margin: 0 3px;
+/* Le filet sépare les outils de la bibliothèque. Dans une colonne, il devient
+   une règle de 18 px, pas un trait vertical. */
+.rail-tool-sep {
+  width: 18px;
+  height: 1px;
+  margin: 3px 0;
   background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
-.foot-btn {
+.rail-tool {
   position: relative;
   display: grid;
   place-items: center;
@@ -95,26 +100,26 @@
     color var(--dur-1) var(--ease-standard);
 }
 
-.foot-btn:hover {
+.rail-tool:hover {
   background: var(--hover);
   color: var(--ink);
 }
 
-.foot-btn:active {
+.rail-tool:active {
   transform: scale(0.94);
 }
 
-.foot-btn:focus-visible {
+.rail-tool:focus-visible {
   outline: 2px solid var(--clay);
   outline-offset: 1px;
 }
 
-.foot-btn[data-active='true'] {
+.rail-tool[data-active='true'] {
   background: var(--fill-2);
   color: var(--clay);
 }
 
-.foot-count {
+.rail-tool-count {
   position: absolute;
   top: 1px;
   right: 2px;
@@ -155,7 +160,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .foot-btn {
+  .rail-tool {
     transition: none;
   }
 }

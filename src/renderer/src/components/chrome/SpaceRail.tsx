@@ -9,7 +9,7 @@ import SpaceAvatar from '../space/SpaceAvatar'
  * Rail des espaces.
  *
  * Trois étages : la bascule de la barre latérale dans la rangée du titre, les
- * deux modes juste sous elle, les espaces puis « + » en bas. Réglages ferme la
+ * deux modes puis les outils juste sous elle, les espaces et « + » en bas. Réglages ferme la
  * colonne sous le « + » : la barre latérale n’a donc plus de carte pour lui.
  *
  * La colonne est détachée de 8 px du bord de la fenêtre : l’indicateur de
@@ -28,6 +28,20 @@ export default function SpaceRail() {
   const toggleSidebar = useBrowser((state) => state.toggleSidebar)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
+  // Les trois outils ont quitté le pied de la colonne : la recherche d’onglets
+  // reste seule en bas, les raccourcis vivent ici, avec la bascule et Réglages.
+  const notesOpen = useBrowser((state) => state.notesOpen)
+  const agentOpen = useBrowser((state) => state.agentOpen)
+  const toggleNotes = useBrowser((state) => state.toggleNotes)
+  const openAgent = useBrowser((state) => state.openAgent)
+  const notes = useBrowser((state) => state.view?.notes.length ?? 0)
+  const downloads = useBrowser((state) => state.view?.downloads ?? [])
+  const running = downloads.find((item) => item.state === 'progress') ?? null
+  const libraryOpen = overlay === 'bookmarks' || overlay === 'downloads' || overlay === 'history'
+  const percent =
+    running && running.total > 0
+      ? Math.min(100, Math.round((running.received / running.total) * 100))
+      : null
 
   const settingsTitle = `Réglages (${shortcut(APP_SHORTCUTS.settings.key)})`
 
@@ -75,6 +89,64 @@ export default function SpaceRail() {
         >
           <Icon name="monitor" size={18} />
           <span className="sr-only">Atelier</span>
+        </button>
+      </div>
+
+      <div className="rail-tools" role="group" aria-label="Raccourcis">
+        {/* Les outils d’abord : ce sont eux qu’on ouvre en lisant une page. */}
+        <button
+          type="button"
+          className="rail-tool"
+          data-active={notesOpen ? 'true' : undefined}
+          aria-label="Notes"
+          aria-pressed={notesOpen}
+          title={`Notes (${shortcut(APP_SHORTCUTS.notes.key)})`}
+          onClick={() => toggleNotes()}
+        >
+          <Icon name="notes" size={17} />
+          {notes > 0 && <span className="rail-tool-count">{notes}</span>}
+        </button>
+        <button
+          type="button"
+          className="rail-tool"
+          data-active={agentOpen ? 'true' : undefined}
+          aria-label="Demander à l’agent"
+          aria-pressed={agentOpen}
+          title={`Agent (${shortcut(APP_SHORTCUTS.agent.key)})`}
+          onClick={() => openAgent()}
+        >
+          <Icon name="sparkles" size={17} />
+        </button>
+
+        <span className="rail-tool-sep" aria-hidden="true" />
+
+        {/* La bibliothèque tient en un seul bouton : ce qu’on garde, ce qu’on
+            télécharge et ce qu’on a vu sont trois onglets d’une même feuille. */}
+        <button
+          type="button"
+          className="rail-tool"
+          data-active={libraryOpen ? 'true' : undefined}
+          aria-label="Bibliothèque"
+          title="Bibliothèque — marque-pages, téléchargements, historique"
+          onClick={() => setOverlay(libraryOpen ? null : 'bookmarks')}
+        >
+          {running && (
+            <svg className="rr-ring" viewBox="0 0 34 34" aria-hidden="true">
+              <circle className="download-ring-track" cx="17" cy="17" r="15" />
+              <circle
+                className="download-ring-fill"
+                data-known={percent !== null}
+                cx="17"
+                cy="17"
+                r="15"
+                strokeDasharray={
+                  percent === null ? '23.5 94.25' : `${Math.max(percent, 1) * 0.9425} 94.25`
+                }
+              />
+            </svg>
+          )}
+          <Icon name="list" size={17} />
+          {downloads.length > 0 && <span className="rail-tool-count">{downloads.length}</span>}
         </button>
       </div>
 

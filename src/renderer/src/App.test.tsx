@@ -161,7 +161,9 @@ describe('coque de l’application', () => {
     render(<App />)
 
     await waitFor(() =>
-      expect(document.querySelector('[role="dialog"][aria-label="Bienvenue dans Vela"]')).toBeTruthy()
+      expect(
+        document.querySelector('[role="dialog"][aria-label="Bienvenue dans Vela"]')
+      ).toBeTruthy()
     )
     expect(fond()?.hasAttribute('inert')).toBe(true)
     // L'accueil reste le seul titre, même derrière la bienvenue.
@@ -202,12 +204,12 @@ describe('coque de l’application', () => {
     const surfaces = [
       {
         nom: 'agent',
-        bouton: '.foot-btn[aria-label="Demander à l’agent"]',
+        bouton: '.rail-tool[aria-label="Demander à l’agent"]',
         present: () => document.querySelector('.agent')
       },
       {
         nom: 'bibliothèque',
-        bouton: '.foot-btn[aria-label="Bibliothèque"]',
+        bouton: '.rail-tool[aria-label="Bibliothèque"]',
         present: () => document.querySelector('[role="dialog"][aria-label="Bibliothèque"]')
       },
       {

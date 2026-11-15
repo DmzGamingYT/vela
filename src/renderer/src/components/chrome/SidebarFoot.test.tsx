@@ -1,66 +1,39 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { useBrowser } from '../../store/browser'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import SidebarFoot from './SidebarFoot'
 
-// Le sélecteur des téléchargements retombe sur `[]` quand `view` est nul : un
-// tableau neuf à chaque rendu ferait boucler `useSyncExternalStore`. Le pied
-// ne lit que ces listes, donc un `view` minimal suffit.
-const footView = { downloads: [], notes: [] } as never
-
-beforeEach(() => {
-  useBrowser.setState({
-    overlay: null,
-    view: footView,
-    notesOpen: false,
-    agentOpen: false
-  })
-})
-
-afterEach(() => {
-  cleanup()
-  useBrowser.setState({ overlay: null, view: null, notesOpen: false, agentOpen: false })
-})
+afterEach(cleanup)
 
 describe('pied de la barre latérale', () => {
-  it('garde trois raccourcis sur une seule rangée', () => {
-    render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
+  it('filtre les onglets à la frappe', () => {
+    const onQuery = vi.fn()
+    render(<SidebarFoot query="" onQuery={onQuery} asleep={0} />)
 
-    expect(screen.getByRole('button', { name: 'Bibliothèque' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Notes' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Demander à l’agent' })).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Filtrer les onglets de ce profil'), {
+      target: { value: 'wikipedia' }
+    })
+
+    expect(onQuery).toHaveBeenCalledWith('wikipedia')
   })
 
-  it('ouvre la bibliothèque sur les marque-pages, puis la referme', () => {
-    render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
-    const list = screen.getByRole('button', { name: 'Bibliothèque' })
+  it('vide la recherche avec Échap et avec la croix', () => {
+    const onQuery = vi.fn()
+    render(<SidebarFoot query="wikipedia" onQuery={onQuery} asleep={0} />)
 
-    fireEvent.click(list)
-    expect(useBrowser.getState().overlay).toBe('bookmarks')
-    expect(list.getAttribute('data-active')).toBe('true')
+    fireEvent.keyDown(screen.getByLabelText('Filtrer les onglets de ce profil'), { key: 'Escape' })
+    expect(onQuery).toHaveBeenCalledWith('')
 
-    fireEvent.click(list)
-    expect(useBrowser.getState().overlay).toBeNull()
-    expect(list.getAttribute('data-active')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Effacer la recherche' }))
+    expect(onQuery).toHaveBeenCalledTimes(2)
+    expect(onQuery).toHaveBeenLastCalledWith('')
   })
 
-  it('ouvre les notes depuis le pied', () => {
-    render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
-    const notes = screen.getByRole('button', { name: 'Notes' })
+  it('compte les onglets en veille, au singulier comme au pluriel', () => {
+    const { rerender } = render(<SidebarFoot query="" onQuery={() => undefined} asleep={1} />)
+    expect(screen.getByText('1 onglet en veille')).toBeTruthy()
 
-    fireEvent.click(notes)
-    expect(useBrowser.getState().notesOpen).toBe(true)
-    expect(notes.getAttribute('data-active')).toBe('true')
-  })
-
-  it('ouvre l’agent sans laisser les notes derrière', () => {
-    useBrowser.setState({ notesOpen: true })
-    render(<SidebarFoot query="" onQuery={() => undefined} asleep={0} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Demander à l’agent' }))
-
-    expect(useBrowser.getState().agentOpen).toBe(true)
-    expect(useBrowser.getState().notesOpen).toBe(false)
+    rerender(<SidebarFoot query="" onQuery={() => undefined} asleep={3} />)
+    expect(screen.getByText('3 onglets en veille')).toBeTruthy()
   })
 })

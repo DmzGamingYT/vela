@@ -108,7 +108,7 @@
   .segment,
   .command-item,
   .settings-nav-item,
-  .foot-btn,
+  .rail-tool,
   .rail-ghost,
   .rail-mode,
   .space-chip,
@@ -124,7 +124,7 @@
   .space-chip:active,
   .pin-tile-main:active,
   .tabs-fold:active,
-  .foot-btn:active {
+  .rail-tool:active {
     transform: none;
   }
 }
