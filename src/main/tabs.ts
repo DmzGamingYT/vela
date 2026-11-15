@@ -1116,21 +1116,16 @@ export class TabManager {
     // empêchait la première page ouverte ensuite d'être capturée.
     if (!ids.length) return
     this.frozen = true
-    const hide = (): void => {
+    // Les captures partent d'abord — une vue cachée n'a plus de trame à
+    // rendre — mais la vue quitte la scène aussitôt : attendre l'image
+    // laissait la page par-dessus un menu ouvert pendant tout le délai de
+    // capture. L'épreuve arrive quand elle est prête, la coque la peint alors.
+    const pending = ids.map((id) => this.shot(id))
+    for (const id of ids) this.views.get(id)?.setVisible(false)
+    void Promise.all(pending).then((shots) => {
       if (!this.frozen) return
-      for (const id of ids) this.views.get(id)?.setVisible(false)
-    }
-    void Promise.all(ids.map((id) => this.shot(id))).then((shots) => {
       const list = shots.filter((shot): shot is PaneSnapshot => shot !== null)
-      if (!this.frozen) return
-      if (!list.length) {
-        hide()
-        return
-      }
-      this.host.freezeNotice?.(list)
-      // Le temps que la coque décode l'image : retirer la vue plus tôt laissait
-      // passer une ou deux trames de fond noir.
-      setTimeout(hide, 60)
+      if (list.length) this.host.freezeNotice?.(list)
     })
   }
 
