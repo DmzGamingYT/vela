@@ -15,7 +15,9 @@ export default function PeekOverlay() {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const surface = useRef<HTMLDivElement | null>(null)
+  const card = useRef<HTMLElement | null>(null)
   const field = useRef<HTMLInputElement | null>(null)
+  const meta = useRef<HTMLButtonElement | null>(null)
   const editingRef = useRef(false)
   const stateRef = useRef<PeekState | null>(null)
   const toast = useBrowser((store) => store.toast)
@@ -41,6 +43,9 @@ export default function PeekOverlay() {
     editingRef.current = false
     setEditing(false)
     setDraft(state?.url ?? '')
+    // Le titre redevient un bouton : le focus doit y revenir, pas tomber au
+    // document quand on quitte l'édition au clavier.
+    window.requestAnimationFrame(() => meta.current?.focus({ preventScroll: true }))
   }
 
   useEffect(() => {
@@ -60,7 +65,12 @@ export default function PeekOverlay() {
     }
     void window.vela.peek.state().then(apply)
     const offState = window.vela.peek.onState(apply)
-    const offFocus = window.vela.peek.onFocusAddress(startEdit)
+    // À l'ouverture à vide, c'est le champ du corps qui prend la main : la
+    // barre n'a pas d'adresse à éditer et deux champs côte à côte se
+    // disputeraient le focus.
+    const offFocus = window.vela.peek.onFocusAddress(() => {
+      if (stateRef.current?.url) startEdit()
+    })
     window.vela.peek.ready()
     return () => {
       alive = false
@@ -96,12 +106,35 @@ export default function PeekOverlay() {
     }
   }, [open, state?.url])
 
+  // À l'ouverture, la carte prend le focus : Tab entre ensuite dans la barre
+  // (navigation, adresse, actions) au lieu de repartir derrière la modale.
+  useEffect(() => {
+    // Sans adresse, c'est le champ du corps qui prend le focus (autoFocus) ;
+    // la carte ne le lui vole pas au montage.
+    if (!open || !state?.url) return
+    const frame = window.requestAnimationFrame(() => card.current?.focus({ preventScroll: true }))
+    return () => window.cancelAnimationFrame(frame)
+  }, [open, state?.url])
+
   const openTab = (): void => {
     void window.vela.peek.openInTab()
   }
 
   const split = (): void => {
     void window.vela.peek.openInSplit()
+  }
+
+  const reculer = (): void => {
+    void window.vela.peek.back()
+  }
+
+  const avancer = (): void => {
+    void window.vela.peek.forward()
+  }
+
+  const recharger = (): void => {
+    if (state?.loading) void window.vela.peek.stop()
+    else void window.vela.peek.reload()
   }
 
   const pin = async (): Promise<void> => {
@@ -156,8 +189,45 @@ export default function PeekOverlay() {
       aria-label="Coup d’œil"
       onMouseDown={() => void window.vela.peek.close()}
     >
-      <section className="peek-card" onMouseDown={(event) => event.stopPropagation()}>
+      <section
+        className="peek-card"
+        ref={card}
+        tabIndex={-1}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <header className="peek-head">
+          <div className="peek-nav" role="group" aria-label="Navigation de l’aperçu">
+            <button
+              type="button"
+              className="peek-icon"
+              onClick={reculer}
+              disabled={!state.canGoBack}
+              aria-label="Reculer"
+              title="Reculer"
+            >
+              <Icon name="back" size={15} />
+            </button>
+            <button
+              type="button"
+              className="peek-icon"
+              onClick={avancer}
+              disabled={!state.canGoForward}
+              aria-label="Avancer"
+              title="Avancer"
+            >
+              <Icon name="forward" size={15} />
+            </button>
+            <button
+              type="button"
+              className="peek-icon"
+              onClick={recharger}
+              disabled={!state.url}
+              aria-label={state.loading ? 'Arrêter le chargement' : 'Recharger'}
+              title={state.loading ? 'Arrêter' : 'Recharger'}
+            >
+              <Icon name={state.loading ? 'stop' : 'reload'} size={15} />
+            </button>
+          </div>
           <Favicon
             url={state.url}
             label={state.host || 'aperçu'}
@@ -188,6 +258,7 @@ export default function PeekOverlay() {
             <button
               type="button"
               className="peek-meta"
+              ref={meta}
               onClick={startEdit}
               title={`Modifier l’adresse (${shortcut('L')})`}
             >
@@ -201,12 +272,14 @@ export default function PeekOverlay() {
           </span>
           <button
             type="button"
-            className="peek-btn"
+            className={`peek-icon${pinned ? ' is-on' : ''}`}
             onClick={() => void pin()}
             disabled={!state.url}
+            aria-pressed={pinned}
+            aria-label={pinned ? 'Retirer des favoris' : 'Ajouter aux favoris'}
             title={pinned ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
-            {pinned ? 'Épinglé' : 'Épingler'}
+            <Icon name="pin" size={15} />
           </button>
           <button
             type="button"
@@ -259,6 +332,7 @@ export default function PeekOverlay() {
                 : 'Le coup d’œil ne crée aucun onglet'}
           </span>
           <button type="button" className="peek-btn" onClick={split} disabled={!state.url}>
+            <Icon name="split" size={13} />
             Scindée <kbd>⇧⏎</kbd>
           </button>
           <button
@@ -268,6 +342,7 @@ export default function PeekOverlay() {
             disabled={!state.url}
           >
             Ouvrir <kbd>⏎</kbd>
+            <Icon name="arrow-right" size={14} />
           </button>
         </footer>
       </section>
