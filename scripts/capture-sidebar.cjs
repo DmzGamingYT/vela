@@ -151,7 +151,7 @@ async function waitForTarget(url, pick, attempts = 500) {
     renderer = await connect(pageTarget.webSocketDebuggerUrl)
     main = await connect(mainTarget.webSocketDebuggerUrl)
 
-    const mainWindow = `process.mainModule.require("electron").BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Vela")`
+    const mainWindow = `process.mainModule.require("electron").BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Azimut")`
     const mainEval = (expression) => main.evaluate(expression)
     const setTheme = async (theme) => {
       await renderer.evaluate(
