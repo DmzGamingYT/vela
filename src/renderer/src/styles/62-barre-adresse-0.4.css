@@ -59,7 +59,7 @@
   background: color-mix(in srgb, var(--ink) 9%, transparent);
 }
 
-/* Sur l'accueil, le champ reste vide et annonce ce qu'il fait : « Vela —
+/* Sur l'accueil, le champ reste vide et annonce ce qu'il fait : « Azimut —
    Accueil » décrivait la page au lieu d'inviter à écrire. */
 .pane-head .address[data-home='true']:not([data-focused='true']) .address-input {
   color: var(--muted);

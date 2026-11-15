@@ -47,7 +47,7 @@ const STEPS: Step[] = [
   {
     kicker: 'Chez vous',
     title: 'Ce qui sort, et quand.',
-    lede: 'Aucun compte, aucun serveur Vela, aucune mesure d’usage. Voici les requêtes que Vela déclenche lui-même.'
+    lede: 'Aucun compte, aucun serveur Azimut, aucune mesure d’usage. Voici les requêtes que Azimut déclenche lui-même.'
   }
 ]
 
@@ -194,7 +194,7 @@ export default function Onboarding() {
       className="overlay onboarding-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Bienvenue dans Vela"
+      aria-label="Bienvenue dans Azimut"
     >
       <div ref={sheetRef} className="onboarding-sheet" onMouseDown={(e) => e.stopPropagation()}>
         <span
@@ -238,7 +238,7 @@ export default function Onboarding() {
         <div className="onboarding-main">
           <header className="onboarding-top">
             <span className="wordmark">
-              Vela<span className="wordmark-dot">.</span>
+              Azimut<span className="wordmark-dot">.</span>
             </span>
             <button type="button" className="onboarding-skip" onClick={finish}>
               Passer
@@ -284,7 +284,7 @@ export default function Onboarding() {
 
                 <p className="onboarding-note">
                   <Icon name="lock" size={13} />
-                  Une adresse s’ouvre, une question part vers ce moteur. Vela n’ajoute rien au
+                  Une adresse s’ouvre, une question part vers ce moteur. Azimut n’ajoute rien au
                   milieu.
                 </p>
               </>
@@ -344,7 +344,7 @@ export default function Onboarding() {
                   )}
                   {detected !== null && detected.length === 0 && (
                     <p className="setting-hint">
-                      Aucun profil lisible. Sur macOS, autorisez Vela dans Réglages Système →
+                      Aucun profil lisible. Sur macOS, autorisez Azimut dans Réglages Système →
                       Confidentialité → Accès complet au disque pour lire Safari, ou importez un
                       export HTML.
                     </p>
@@ -356,7 +356,7 @@ export default function Onboarding() {
                     <span className="onboarding-row-copy">
                       <strong>Importer un fichier de favoris</strong>
                       <small>
-                        Export HTML de Chrome, Firefox ou Safari — vers vos marque-pages Vela
+                        Export HTML de Chrome, Firefox ou Safari — vers vos marque-pages Azimut
                       </small>
                     </span>
                     <Icon name="arrow-right" size={16} />
@@ -478,7 +478,7 @@ export default function Onboarding() {
                       <Icon name="shield" size={18} />
                     </span>
                     <span>
-                      <strong>Pas de compte, pas de serveur Vela</strong>
+                      <strong>Pas de compte, pas de serveur Azimut</strong>
                       <small>
                         Profils, onglets, favoris et réglages vivent dans un dossier sur cet
                         appareil.
@@ -491,7 +491,7 @@ export default function Onboarding() {
                     </span>
                     <span>
                       <strong>Notes en fichiers Markdown</strong>
-                      <small>Un dossier à vous, lisible dans le Finder, sans Vela.</small>
+                      <small>Un dossier à vous, lisible dans le Finder, sans Azimut.</small>
                     </span>
                   </div>
                 </div>

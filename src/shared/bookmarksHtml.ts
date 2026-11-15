@@ -111,7 +111,7 @@ export function bookmarksToHtml(
     '<TITLE>Bookmarks</TITLE>',
     '<H1>Bookmarks</H1>',
     '<DL><p>',
-    '    <DT><H3 ADD_DATE="0" LAST_MODIFIED="0">Vela</H3>',
+    '    <DT><H3 ADD_DATE="0" LAST_MODIFIED="0">Azimut</H3>',
     '    <DL><p>',
     ...lines,
     '    </DL><p>',

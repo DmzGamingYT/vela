@@ -212,7 +212,7 @@ export default function PrivacyPage({
 
   const exportMarkdown = async (): Promise<void> => {
     const markdown = [
-      `# Flux réseau de Vela`,
+      `# Flux réseau de Azimut`,
       '',
       `${rows.length} flux · ${counts.on} actifs · ${counts.ask} sur demande · ${counts.off} inactifs`,
       '',
@@ -616,7 +616,7 @@ export default function PrivacyPage({
           className="privacy-panel"
         >
           <p className="setting-hint">
-            Aucune page n’obtient caméra, micro, position ni notifications : Vela refuse par défaut,
+            Aucune page n’obtient caméra, micro, position ni notifications : Azimut refuse par défaut,
             sans demande.
           </p>
           {[

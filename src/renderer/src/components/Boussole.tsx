@@ -1,7 +1,7 @@
 import { useId } from 'react'
 
 /**
- * La boussole de Vela.
+ * La boussole de Azimut.
  *
  * Une seule copie du dessin, deux jeux de teintes : les couleurs passent par
  * des classes (`boussole-*`) que `82-boussole.css` règle sur `data-mode`, si

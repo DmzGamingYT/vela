@@ -22,12 +22,12 @@ const fichier = (chemin: string): void => {
   writeFileSync(chemin, 'binaire')
 }
 
-const app = join(racine, 'Vela.app')
-const aide = join(app, 'Contents', 'Frameworks', 'Vela Helper.app')
+const app = join(racine, 'Azimut.app')
+const aide = join(app, 'Contents', 'Frameworks', 'Azimut Helper.app')
 const framework = join(app, 'Contents', 'Frameworks', 'Electron Framework.framework')
 
-fichier(join(app, 'Contents', 'MacOS', 'Vela'))
-fichier(join(aide, 'Contents', 'MacOS', 'Vela Helper'))
+fichier(join(app, 'Contents', 'MacOS', 'Azimut'))
+fichier(join(aide, 'Contents', 'MacOS', 'Azimut Helper'))
 fichier(join(framework, 'Versions', 'A', 'Electron Framework'))
 fichier(join(app, 'Contents', 'Resources', 'app.asar.unpacked', 'natif.node'))
 fichier(join(app, 'Contents', 'Frameworks', 'libEGL.dylib'))

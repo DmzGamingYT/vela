@@ -642,7 +642,7 @@ export default function CommandBar() {
           <span>
             <kbd>esc</kbd> fermer
           </span>
-          <span className="command-brand">Vela</span>
+          <span className="command-brand">Azimut</span>
         </footer>
       </div>
     </div>

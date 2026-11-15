@@ -280,14 +280,14 @@ function createCoreSlice(
       set({ initialized: true })
       subscriptionsDisposed = false
       if (!window.vela) {
-        get().toast('Le pont Vela est indisponible.', 'error')
+        get().toast('Le pont Azimut est indisponible.', 'error')
         return
       }
       try {
         const view = await window.vela.view()
         set({ view: stableView(view), ready: true })
       } catch (error) {
-        get().toast(cleanError(error, 'Impossible de charger Vela.'), 'error')
+        get().toast(cleanError(error, 'Impossible de charger Azimut.'), 'error')
       }
       track(
         window.vela.onState((payload) =>

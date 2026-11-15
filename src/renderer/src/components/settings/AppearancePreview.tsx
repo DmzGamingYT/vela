@@ -25,7 +25,7 @@ function hostOf(url: string): string {
 }
 
 /**
- * Mini-fenêtre Vela de l’aperçu d’apparence.
+ * Mini-fenêtre Azimut de l’aperçu d’apparence.
  *
  * Elle reprend la silhouette réelle du navigateur — rail, barre latérale,
  * reprise de session, recherche et carte Récemment — et rejoue les mêmes
@@ -159,7 +159,7 @@ export default function AppearancePreview({
               className="pv-side"
               style={{ backdropFilter: `blur(${blur}px)`, WebkitBackdropFilter: `blur(${blur}px)` }}
             >
-              <span className="pv-brand">Vela.</span>
+              <span className="pv-brand">Azimut.</span>
               <span className="pv-side-label">Favoris</span>
               <span className="pv-fav">
                 <i /> Accueil

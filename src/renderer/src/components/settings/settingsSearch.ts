@@ -168,7 +168,7 @@ const SECTIONS: SettingsSearchEntry[] = [
     tab: 'shortcuts',
     label: 'Raccourcis',
     group: 'Système',
-    hint: 'Toutes les combinaisons clavier de Vela.',
+    hint: 'Toutes les combinaisons clavier de Azimut.',
     keywords: 'raccourcis clavier touches commandes'
   },
   {
@@ -184,7 +184,7 @@ const SECTIONS: SettingsSearchEntry[] = [
     tab: 'about',
     label: 'À propos',
     group: 'Système',
-    hint: 'Identité, version et licence de Vela.',
+    hint: 'Identité, version et licence de Azimut.',
     keywords: 'à propos version licence identité'
   }
 ]
@@ -276,7 +276,7 @@ const ITEMS: SettingsSearchEntry[] = [
     tab: 'interface',
     label: 'Taille du texte',
     group: 'Apparence',
-    hint: 'Taille de l’interface Vela.',
+    hint: 'Taille de l’interface Azimut.',
     keywords: 'texte taille interface',
     anchor: 'text-size-label'
   },
@@ -562,7 +562,7 @@ const ITEMS: SettingsSearchEntry[] = [
   {
     page: 'system',
     tab: 'updates',
-    label: 'Mettre à jour Vela',
+    label: 'Mettre à jour Azimut',
     group: 'Système',
     hint: 'Vérifier, télécharger ou installer.',
     keywords: 'mise à jour installer télécharger',
@@ -571,7 +571,7 @@ const ITEMS: SettingsSearchEntry[] = [
   {
     page: 'system',
     tab: 'about',
-    label: 'Identité de Vela',
+    label: 'Identité de Azimut',
     group: 'Système',
     hint: 'Version, licence et état de l’appareil.',
     keywords: 'à propos version licence identité',

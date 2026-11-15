@@ -656,7 +656,7 @@ export default function AppearancePage({
           <section className="appearance-section" aria-labelledby="appearance-interface">
             <div className="setting-head">
               <h2 id="appearance-interface">Interface</h2>
-              <p>Densité et taille du texte de l’interface Vela, jamais ceux des pages.</p>
+              <p>Densité et taille du texte de l’interface Azimut, jamais ceux des pages.</p>
             </div>
             <div className="appearance-field">
               <span className="appearance-field-label" id="density-label">
@@ -734,7 +734,7 @@ export default function AppearancePage({
               <p className="app-help">Fige aussi les ciels animés de l’accueil.</p>
             </div>
             <p className="appearance-note">
-              Le zoom des sites se règle dans Navigation › Pages web ; l’accessibilité de Vela ne
+              Le zoom des sites se règle dans Navigation › Pages web ; l’accessibilité de Azimut ne
               modifie pas le rendu des pages.
             </p>
           </section>

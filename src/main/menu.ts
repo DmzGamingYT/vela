@@ -43,17 +43,17 @@ export function buildMenuTemplate(
           {
             label: app.name,
             submenu: [
-              { role: 'about' as const, label: 'À propos de Vela' },
+              { role: 'about' as const, label: 'À propos de Azimut' },
               { type: 'separator' as const },
               item('Réglages…', 'settings', send, APP_SHORTCUTS.settings.accelerator),
               { type: 'separator' as const },
               { role: 'services' as const },
               { type: 'separator' as const },
-              { role: 'hide' as const, label: 'Masquer Vela' },
+              { role: 'hide' as const, label: 'Masquer Azimut' },
               { role: 'hideOthers' as const, label: 'Masquer les autres' },
               { role: 'unhide' as const, label: 'Tout afficher' },
               { type: 'separator' as const },
-              { role: 'quit' as const, label: 'Quitter Vela' }
+              { role: 'quit' as const, label: 'Quitter Azimut' }
             ]
           }
         ]
@@ -152,7 +152,7 @@ export function buildMenuTemplate(
       label: 'Aide',
       submenu: [
         {
-          label: 'Site de Vela',
+          label: 'Site de Azimut',
           click: () => void shell.openExternal(SITE_URL)
         },
         {

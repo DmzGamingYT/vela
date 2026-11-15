@@ -5,7 +5,7 @@ import { Boussole } from '../Boussole'
  *
  * Le wordmark, précédé de la marque de l'app : la boussole, teintée selon le
  * mode (jour / nuit) par `82-boussole.css`. Les deux sont décoratifs — le
- * titre de la fenêtre (« Vela ») suffit aux lecteurs d'écran —, et la ligne
+ * titre de la fenêtre (« Azimut ») suffit aux lecteurs d'écran —, et la ligne
  * entière reste une zone de déplacement de la fenêtre.
  *
  * Le dessin est celui des maîtres d'icône (`build/boussole-light.svg` et
@@ -18,7 +18,7 @@ export default function SidebarHeader() {
         <Boussole size={18} />
       </span>
       <span className="wordmark" aria-hidden="true">
-        Vela<span className="wordmark-dot">.</span>
+        Azimut<span className="wordmark-dot">.</span>
       </span>
     </header>
   )

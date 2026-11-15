@@ -162,7 +162,7 @@ describe('coque de l’application', () => {
 
     await waitFor(() =>
       expect(
-        document.querySelector('[role="dialog"][aria-label="Bienvenue dans Vela"]')
+        document.querySelector('[role="dialog"][aria-label="Bienvenue dans Azimut"]')
       ).toBeTruthy()
     )
     expect(fond()?.hasAttribute('inert')).toBe(true)

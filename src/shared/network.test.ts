@@ -55,7 +55,7 @@ describe('audit des destinations réseau', () => {
     }
     expect(
       unknown,
-      `Destination inconnue. Ajoutez-la à NETWORK_FLOWS (si Vela la contacte) ou à USER_OPENED_HOSTS (si c’est un lien) dans src/shared/network.ts :\n${unknown.join('\n')}`
+      `Destination inconnue. Ajoutez-la à NETWORK_FLOWS (si Azimut la contacte) ou à USER_OPENED_HOSTS (si c’est un lien) dans src/shared/network.ts :\n${unknown.join('\n')}`
     ).toEqual([])
   })
 

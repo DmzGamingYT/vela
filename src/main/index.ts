@@ -12,7 +12,7 @@ import {
   shell,
   Tray
 } from 'electron'
-import { appendFileSync, existsSync, statSync, writeFileSync } from 'node:fs'
+import { appendFileSync, cpSync, existsSync, statSync, writeFileSync } from 'node:fs'
 import { Browser } from './browser'
 import { installMenu } from './menu'
 import { initUpdater, setUpdaterPolicy } from './updater'
@@ -23,8 +23,8 @@ import { BLOCKLIST_NATIVE } from './blocklistNative'
 // Le nom du produit est fixé avant toute autre chose : `app.name` alimente le
 // premier menu macOS, la fenêtre « À propos » et les dossiers de données. Sans
 // cela, la barre de menus affiche « Electron » en développement (le paquet,
-// lui, prend CFBundleName = Vela grâce à electron-builder).
-app.setName('Vela')
+// lui, prend CFBundleName = Azimut grâce à electron-builder).
+app.setName('Azimut')
 // Windows regroupe les fenêtres et épingle la barre des tâches par cette
 // identité. Sans elle, une version lancée hors du raccourci NSIS — après une
 // mise à jour, depuis le dossier d'installation — apparaît sous l'identité
@@ -32,14 +32,14 @@ app.setName('Vela')
 if (process.platform === 'win32') app.setAppUserModelId('app.vela.browser')
 if (process.platform === 'darwin') {
   app.setAboutPanelOptions({
-    applicationName: 'Vela',
+    applicationName: 'Azimut',
     applicationVersion: app.getVersion(),
     version: app.getVersion(),
-    copyright: 'Vela — navigateur de travail. MIT.'
+    copyright: 'Azimut — navigateur de travail. MIT.'
   })
 }
 // En développement, le Dock et le menu prennent l'icône et le nom d'Electron :
-// on remet l'identité Vela (le paquet signé utilise déjà build/icon.icns).
+// on remet l'identité Azimut (le paquet signé utilise déjà build/icon.icns).
 if (!app.isPackaged && process.platform === 'darwin') {
   const icon = join(__dirname, '../../build/icon-1024.png')
   if (existsSync(icon)) app.dock?.setIcon(icon)
@@ -48,6 +48,25 @@ if (!app.isPackaged && process.platform === 'darwin') {
 // service workers n'ont pas de page à qui emprunter un User-Agent propre.
 app.userAgentFallback = CHROME_UA
 if (process.env.VELA_USER_DATA) app.setPath('userData', process.env.VELA_USER_DATA)
+
+// L'application s'appelait Vela jusqu'à 0.3.48 : son dossier de données aussi.
+// Une seule reprise, au premier lancement sous le nouveau nom — l'ancien
+// dossier reste en place, intact, pour qui veut y revenir.
+if (!process.env.VELA_USER_DATA) {
+  const dataDir = app.getPath('userData')
+  const legacyDir = join(app.getPath('appData'), 'Vela')
+  if (
+    legacyDir !== dataDir &&
+    !existsSync(join(dataDir, 'vela.json')) &&
+    existsSync(join(legacyDir, 'vela.json'))
+  ) {
+    try {
+      cpSync(legacyDir, dataDir, { recursive: true })
+    } catch {
+      // Dossier protégé : l'app démarre vide plutôt que de refuser de démarrer.
+    }
+  }
+}
 
 /**
  * Filet de sécurité : une exception isolée ne doit plus emporter la fenêtre et
@@ -141,7 +160,7 @@ function createWindow(): void {
     minWidth: 980,
     minHeight: 620,
     show: false,
-    title: 'Vela',
+    title: 'Azimut',
     backgroundColor: dark ? '#151518' : '#faf8f5',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     trafficLightPosition: { x: 20, y: 21 },
@@ -242,10 +261,10 @@ function installStatusItem(): void {
   image.setTemplateImage(true)
 
   statusItem = new Tray(image)
-  statusItem.setToolTip('Vela')
+  statusItem.setToolTip('Azimut')
   statusItem.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Afficher Vela', click: () => showWindow() },
+      { label: 'Afficher Azimut', click: () => showWindow() },
       {
         label: 'Nouvel onglet',
         click: () => {
@@ -254,12 +273,12 @@ function installStatusItem(): void {
         }
       },
       { type: 'separator' },
-      { label: 'Quitter Vela', accelerator: 'Cmd+Q', click: () => app.quit() }
+      { label: 'Quitter Azimut', accelerator: 'Cmd+Q', click: () => app.quit() }
     ])
   )
   if (!app.isPackaged) {
     process.stdout.write(
-      '[vela] barre de menus prête : Afficher Vela · Nouvel onglet · Quitter Vela\n'
+      '[vela] barre de menus prête : Afficher Azimut · Nouvel onglet · Quitter Azimut\n'
     )
   }
 }
@@ -305,7 +324,7 @@ function main(): void {
     } catch (error) {
       journalFault('démarrage impossible', error)
       dialog.showErrorBox(
-        'Impossible d’ouvrir Vela',
+        'Impossible d’ouvrir Azimut',
         error instanceof Error ? error.message : 'Les données n’ont pas pu être chargées.'
       )
       app.quit()

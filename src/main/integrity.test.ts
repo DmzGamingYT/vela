@@ -11,13 +11,13 @@ import { manifestFile, parseMacManifest } from '@shared/update'
 
 const MANIFEST = `version: 0.3.15
 files:
-  - url: Vela-0.3.15-x64.zip
+  - url: Azimut-0.3.15-x64.zip
     sha512: Z4cXEgHRWQvcYULte4oe7v9Zg/lgDuyjtnLhuOgXotB8vq1qZgqHO+3MrakL0kiIr77uyXgDWflDGivDWp4v9Q==
     size: 125308003
-  - url: Vela-0.3.15-universal.dmg
+  - url: Azimut-0.3.15-universal.dmg
     sha512: zGlrwTWpmu4OKw0Bgnb1bfiQ1YAqKfdMxhoE8lk37S644vn64xAUMx++AQJGfX+2Ulo5pIzlk9AMLh1ydbm9FQ==
     size: 226892797
-path: Vela-0.3.15-x64.zip
+path: Azimut-0.3.15-x64.zip
 sha512: Z4cXEgHRWQvcYULte4oe7v9Zg/lgDuyjtnLhuOgXotB8vq1qZgqHO+3MrakL0kiIr77uyXgDWflDGivDWp4v9Q==
 `
 
@@ -26,7 +26,7 @@ describe('lecture du manifeste macOS', () => {
     const manifest = parseMacManifest(MANIFEST)
     expect(manifest?.version).toBe('0.3.15')
     expect(manifest?.files).toHaveLength(2)
-    expect(manifestFile(manifest, 'Vela-0.3.15-universal.dmg')?.size).toBe(226892797)
+    expect(manifestFile(manifest, 'Azimut-0.3.15-universal.dmg')?.size).toBe(226892797)
     expect(manifestFile(manifest, 'absent.dmg')).toBeNull()
   })
 

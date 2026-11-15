@@ -1218,7 +1218,7 @@ export function buildTunnelHtml(map: TunnelMap, visible?: Set<string>): string {
     map.updatedAt
   ).toLocaleDateString('fr-FR')}</p>
   ${sections}${tensions}
-  <footer>Généré par Vela. Sources numérotées : la bibliographie renvoie aux URL ci-dessus.</footer>
+  <footer>Généré par Azimut. Sources numérotées : la bibliographie renvoie aux URL ci-dessus.</footer>
   </body></html>`
 }
 

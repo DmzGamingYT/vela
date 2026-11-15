@@ -195,12 +195,12 @@ describe('site — version et téléchargements', () => {
    */
   const announced = (home.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1] || ''
   const files = [
-    `Vela-${announced}-universal.dmg`,
-    `Vela-${announced}-arm64.dmg`,
-    `Vela-${announced}-x64.dmg`,
-    `Vela-${announced}-x64.exe`,
-    `Vela-${announced}-x86_64.AppImage`,
-    `Vela-${announced}-amd64.deb`
+    `Azimut-${announced}-universal.dmg`,
+    `Azimut-${announced}-arm64.dmg`,
+    `Azimut-${announced}-x64.dmg`,
+    `Azimut-${announced}-x64.exe`,
+    `Azimut-${announced}-x86_64.AppImage`,
+    `Azimut-${announced}-amd64.deb`
   ]
 
   /**
@@ -228,7 +228,7 @@ describe('site — version et téléchargements', () => {
       `site ${announced} en avance sur l’app ${version}`
     ).toBeLessThanOrEqual(0)
     // Toutes les mentions du site disent la même version que le tableau.
-    expect(home).toContain(`Vela ${announced}, pour les trois plateformes`)
+    expect(home).toContain(`Azimut ${announced}, pour les trois plateformes`)
     expect(home).toContain(`Version ${announced}`)
   })
 
@@ -330,7 +330,7 @@ describe('site — confidentialité alignée sur l’application', () => {
     expect(privacy).toMatch(/vignettes\//)
     expect(privacy).toMatch(/icônes\//)
     expect(privacy).toMatch(/Trousseau du système/)
-    expect(privacy).toMatch(/aucun serveur Vela/i)
+    expect(privacy).toMatch(/aucun serveur Azimut/i)
   })
 })
 

@@ -85,10 +85,10 @@ export const ENGINE_BRANDS: Record<string, BrandId> = {
 }
 
 /**
- * Marque de Vela : une voile stylisée dans un carré arrondi. Elle suit l’accent
+ * Marque de Azimut : une voile stylisée dans un carré arrondi. Elle suit l’accent
  * du thème actif, donc elle change avec la couleur choisie.
  */
-export function VelaMark({ size = 20, brand = false }: { size?: number; brand?: boolean }) {
+export function AzimutMark({ size = 20, brand = false }: { size?: number; brand?: boolean }) {
   // Deux exemplaires vivent en même temps (rail et À propos) : un identifiant
   // par instance évite que le second réutilise le dégradé du premier.
   const id = useId().replace(/:/g, '')

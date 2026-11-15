@@ -1,5 +1,5 @@
 /**
- * Adresse publique de Vela, en un seul endroit.
+ * Adresse publique de Azimut, en un seul endroit.
  *
  * Le domaine de production est encore une adresse de preview Freebuff. Le jour
  * où un vrai domaine existe, changer `SITE_URL` ici suffit pour le menu, la

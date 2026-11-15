@@ -53,7 +53,7 @@ export default function SpaceRail() {
       <div className="rail-drag drag" />
 
       {/* Dans la rangée du titre : la bascule se lit à la hauteur du mot
-          « Vela », pas 56 px plus bas. */}
+          « Azimut », pas 56 px plus bas. */}
       <div className="rail-head">
         <button
           type="button"

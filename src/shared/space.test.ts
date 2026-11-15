@@ -174,12 +174,12 @@ describe('sites épinglés', () => {
     const list = sanitizeSpaceShortcuts([
       { url: 'notion.so' },
       { url: 'https://notion.so/' },
-      { url: 'https://github.com/vela', title: '  Vela  ' }
+      { url: 'https://github.com/vela', title: '  Azimut  ' }
     ])
     expect(list).toHaveLength(2)
     expect(list[0].url).toBe('https://notion.so/')
     expect(list[0].title).toBe('notion.so')
-    expect(list[1].title).toBe('Vela')
+    expect(list[1].title).toBe('Azimut')
     expect(new Set(list.map((item) => item.id)).size).toBe(2)
   })
 

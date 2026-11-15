@@ -271,7 +271,7 @@ export const SPACE_SHORTCUT_SETS: Record<string, ShortcutSeed[]> = {
     { title: 'Hacker News', url: 'https://news.ycombinator.com' }
   ],
   // Séances, critiques, journal et disponibilité : les six pages que sert
-  // vraiment un espace cinéma, sans qu’aucune ne soit contactée par Vela.
+  // vraiment un espace cinéma, sans qu’aucune ne soit contactée par Azimut.
   cinema: [
     { title: 'AlloCiné', url: 'https://www.allocine.fr' },
     { title: 'SensCritique', url: 'https://www.senscritique.com' },

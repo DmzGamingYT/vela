@@ -46,7 +46,7 @@ export default function DownloadsList() {
           </span>
           <strong>Rien pour le moment.</strong>
           <p>
-            Les fichiers téléchargés depuis Vela apparaîtront ici, avec leur progression et leur
+            Les fichiers téléchargés depuis Azimut apparaîtront ici, avec leur progression et leur
             destination.
           </p>
           <span className="downloads-empty-hint">

@@ -41,7 +41,7 @@ export const createUpdatesSlice: StateCreator<BrowserState, [], [], UpdatesSlice
     const info = await get().call(() => window.vela.updates.check(), 'Vérification impossible.')
     if (info) {
       set({ update: info })
-      if (info.state === 'not-available') get().toast('Vela est à jour.')
+      if (info.state === 'not-available') get().toast('Azimut est à jour.')
       else if (info.state === 'error' && info.message) get().toast(info.message, 'error')
     }
   },

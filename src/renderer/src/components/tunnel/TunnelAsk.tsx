@@ -72,7 +72,7 @@ export default function TunnelAsk() {
         </p>
         <h1>Quelle question voulez-vous ouvrir&nbsp;?</h1>
         <p className="tw-lede">
-          Vela cherche des sources réelles, les range par angle et laisse tomber le bruit. Vous
+          Azimut cherche des sources réelles, les range par angle et laisse tomber le bruit. Vous
           gardez ce qui compte, la synthèse garde ses citations.
         </p>
 

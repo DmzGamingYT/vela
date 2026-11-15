@@ -71,7 +71,7 @@ export default function NoteRecorder({
     if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
       setProblem({
         reason: 'unsupported',
-        message: 'Ce système ne permet pas d’enregistrer l’audio dans Vela.',
+        message: 'Ce système ne permet pas d’enregistrer l’audio dans Azimut.',
         system: false
       })
       return
@@ -97,7 +97,7 @@ export default function NoteRecorder({
       releaseStream()
       setProblem({
         reason: 'unsupported',
-        message: 'Ce micro ne peut pas être enregistré par Vela.',
+        message: 'Ce micro ne peut pas être enregistré par Azimut.',
         system: false
       })
       return

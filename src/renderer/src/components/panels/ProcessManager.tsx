@@ -13,7 +13,7 @@ function blockedLabel(count: number): string {
 
 /** Nom de la ligne : l'accueil garde son nom, jamais son titre d'onglet. */
 function rowLabel(row: ProcessInfo): string {
-  if (row.type === 'app') return 'Vela'
+  if (row.type === 'app') return 'Azimut'
   if (isHomeUrl(row.url)) return 'Accueil'
   return row.title || row.url || 'Onglet'
 }

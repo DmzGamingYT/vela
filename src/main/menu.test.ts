@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { MenuItemConstructorOptions } from 'electron'
 
 vi.mock('electron', () => ({
-  app: { name: 'Vela' },
+  app: { name: 'Azimut' },
   Menu: { buildFromTemplate: vi.fn(), setApplicationMenu: vi.fn() },
   shell: { openExternal: vi.fn() }
 }))
@@ -51,7 +51,7 @@ describe('menu — accélérateurs sur les trois plateformes', () => {
   }
 
   it('affiche le même jeu de raccourcis partout', () => {
-    // Le menu porteur diffère (Réglages vit sous « Vela » sur macOS, sous
+    // Le menu porteur diffère (Réglages vit sous « Azimut » sur macOS, sous
     // « Fichier » ailleurs) : on compare le couple action/raccourci.
     const couples = (platform: string): string[] =>
       build(platform)
@@ -76,12 +76,12 @@ describe('menu — accélérateurs sur les trois plateformes', () => {
   it('garde le menu de l’application pour macOS seulement', () => {
     const mac = build('darwin')
     const macMenus = mac.filter(({ menu }) => menu === '').map(({ entry }) => entry.label)
-    expect(macMenus[0]).toBe('Vela')
+    expect(macMenus[0]).toBe('Azimut')
     for (const platform of ['win32', 'linux']) {
       const menus = build(platform)
         .filter(({ menu }) => menu === '')
         .map(({ entry }) => entry.label)
-      expect(menus).not.toContain('Vela')
+      expect(menus).not.toContain('Azimut')
       expect(menus[0]).toBe('Fichier')
       expect(menus).toEqual([
         'Fichier',

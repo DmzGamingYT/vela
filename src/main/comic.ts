@@ -18,7 +18,7 @@ import type { TabManager } from './tabs'
  * fonctions lui sont prêtées par le preload des pages, avec un jeton propre à
  * l'onglet et à la session :
  *  - lire une image distante (mêmes cookies et même session que l'onglet) ;
- *  - traduire une liste de répliques avec le fournisseur configuré dans Vela.
+ *  - traduire une liste de répliques avec le fournisseur configuré dans Azimut.
  *
  * Le jeton vit dans la fermeture du script injecté et sur rien d'autre : posé
  * sur `window`, un script tiers pouvait appeler la vision et écrire dans les
@@ -207,12 +207,12 @@ export class ComicBridge {
       .catch(() => undefined)
   }
 
-  /** Le script + les fonctions GM fournies par Vela, dans une même fermeture. */
+  /** Le script + les fonctions GM fournies par Azimut, dans une même fermeture. */
   private wrap(script: string, token: string): string {
     const prelude = `
       (() => {
         const bridge = window.__velaComicBridge
-        if (!bridge) return { ok: false, reason: 'pont Vela indisponible' }
+        if (!bridge) return { ok: false, reason: 'pont Azimut indisponible' }
         if (window.__velaComicRunning) return { ok: true, reason: 'déjà lancé' }
         window.__velaComicRunning = true
         const token = ${JSON.stringify(token)}
@@ -499,7 +499,7 @@ export class ComicBridge {
     }
   }
 
-  /** Traduit les répliques avec le fournisseur actif de Vela, sans streaming. */
+  /** Traduit les répliques avec le fournisseur actif de Azimut, sans streaming. */
   async translate(
     texts: unknown,
     contexte?: unknown

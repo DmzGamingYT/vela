@@ -22,8 +22,8 @@ export function macInstallerNames(version: string, arch: string): string[] {
   const clean = safeVersion(version)
   if (!clean) return []
   const names: string[] = []
-  if (arch === 'arm64' || arch === 'x64') names.push(`Vela-${clean}-${arch}.dmg`)
-  names.push(`Vela-${clean}-universal.dmg`)
+  if (arch === 'arm64' || arch === 'x64') names.push(`Azimut-${clean}-${arch}.dmg`)
+  names.push(`Azimut-${clean}-universal.dmg`)
   return names
 }
 
@@ -48,7 +48,7 @@ export function linuxAppImageName(version: string, arch: string): string | null 
   const clean = safeVersion(version)
   if (!clean) return null
   const suffix = arch === 'x64' ? 'x86_64' : arch === 'arm64' ? 'arm64' : null
-  return suffix ? `Vela-${clean}-${suffix}.AppImage` : null
+  return suffix ? `Azimut-${clean}-${suffix}.AppImage` : null
 }
 
 export function linuxAppImageNames(version: string, arch: string): string[] {
@@ -192,22 +192,22 @@ export function updateDescription(info: UpdateInfo | null, platform: string): st
       return 'Vérification…'
     case 'available':
       return mac
-        ? `Vela ${info.version ?? ''} — préparation de l’installateur`.trim()
-        : `Vela ${info.version ?? ''} — téléchargement en arrière-plan`.trim()
+        ? `Azimut ${info.version ?? ''} — préparation de l’installateur`.trim()
+        : `Azimut ${info.version ?? ''} — téléchargement en arrière-plan`.trim()
     case 'downloading':
       return `Téléchargement en arrière-plan ${info.progress} %`
     case 'downloaded':
       if (mac) {
-        return `${version} est téléchargée. Installer ouvre le .dmg : glissez Vela dans Applications, puis relancez.`
+        return `${version} est téléchargée. Installer ouvre le .dmg : glissez Azimut dans Applications, puis relancez.`
       }
       // Un .deb installé dans /opt ne peut pas être remplacé sans les droits
       // d'administration : seule l'AppImage se remplace elle-même.
       if (platform === 'linux') {
-        return `${version} est téléchargée et vérifiée. Depuis l’AppImage, Vela la remplace et redémarre ; depuis un paquet .deb, réinstallez le fichier téléchargé.`
+        return `${version} est téléchargée et vérifiée. Depuis l’AppImage, Azimut la remplace et redémarre ; depuis un paquet .deb, réinstallez le fichier téléchargé.`
       }
-      return `${version} s’installe à la fermeture de Vela.`
+      return `${version} s’installe à la fermeture de Azimut.`
     case 'not-available':
-      return 'Vela est à jour'
+      return 'Azimut est à jour'
     case 'error':
       return info.message ?? 'Mise à jour impossible'
     default:
@@ -224,7 +224,7 @@ export function updateReadyMessage(info: UpdateInfo, platform: string): string {
   const version = info.version ? `${info.version} ` : ''
   if (platform === 'darwin') return `Mise à jour ${version}prête — « Installer » vous attend.`
   if (platform === 'linux') {
-    return `Mise à jour ${version}prête — depuis l’AppImage, Vela la remplace et redémarre ; depuis un .deb, réinstallez le paquet.`
+    return `Mise à jour ${version}prête — depuis l’AppImage, Azimut la remplace et redémarre ; depuis un .deb, réinstallez le paquet.`
   }
-  return `Mise à jour ${version}prête — elle s’installera quand vous quitterez Vela.`
+  return `Mise à jour ${version}prête — elle s’installera quand vous quitterez Azimut.`
 }

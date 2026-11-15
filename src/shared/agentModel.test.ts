@@ -26,7 +26,7 @@ describe('façade AgentModel', () => {
       )
     vi.stubGlobal('fetch', fetchMock)
     const session = await chatModel({ definition: local, config, key: null }).create({
-      system: 'Tu es Vela.'
+      system: 'Tu es Azimut.'
     })
     const chunks: string[] = []
     for await (const chunk of session.promptStreaming('Salut')) chunks.push(chunk)
@@ -37,7 +37,7 @@ describe('façade AgentModel', () => {
     const body = JSON.parse(String(request.body))
     expect(body.stream).toBe(true)
     expect(body.messages).toEqual([
-      { role: 'system', content: 'Tu es Vela.' },
+      { role: 'system', content: 'Tu es Azimut.' },
       { role: 'user', content: 'Salut' }
     ])
   })

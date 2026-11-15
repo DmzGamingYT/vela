@@ -110,7 +110,7 @@ describe('migration des favoris au démarrage', () => {
     const dir = tempDir()
     const original = '{ pas du json'
     writeFileSync(join(dir, 'vela.json'), original, 'utf8')
-    expect(() => new Store(dir)).toThrow(/données de Vela sont illisibles/)
+    expect(() => new Store(dir)).toThrow(/données de Azimut sont illisibles/)
     expect(readFileSync(join(dir, 'vela.json'), 'utf8')).toBe(original)
     expect(backups(dir)).toHaveLength(0)
   })

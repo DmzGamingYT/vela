@@ -129,7 +129,7 @@ export default function ComposerDictation({
   const start = async (): Promise<void> => {
     setMessage('')
     if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      fail('Ce système ne permet pas d’enregistrer l’audio dans Vela.')
+      fail('Ce système ne permet pas d’enregistrer l’audio dans Azimut.')
       return
     }
     try {
@@ -149,7 +149,7 @@ export default function ComposerDictation({
         : new MediaRecorder(stream.current)
     } catch {
       releaseStream()
-      fail('Ce micro ne peut pas être enregistré par Vela.')
+      fail('Ce micro ne peut pas être enregistré par Azimut.')
       return
     }
 

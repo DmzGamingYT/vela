@@ -1,5 +1,5 @@
 /**
- * Galerie d'avatars d'espace : vingt-quatre dessins SVG créés pour Vela,
+ * Galerie d'avatars d'espace : vingt-quatre dessins SVG créés pour Azimut,
  * libres de droits, sans police externe ni image distante. Chaque entrée se
  * rend avec ses deux teintes et son encre ; les variantes « initiales »
  * affichent la lettre de l'espace sur un motif.

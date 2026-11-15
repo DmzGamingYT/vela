@@ -357,7 +357,7 @@ export interface LetterboxdImportResult {
     'no-space' | 'no-profile' | 'not-found' | 'private' | 'offline' | 'timeout' | 'empty' | 'failed'
 }
 
-export interface VelaApi {
+export interface AzimutApi {
   platform: string
   /** Architecture du processus (arm64, x64) — utile pour le bundle universel. */
   arch: string

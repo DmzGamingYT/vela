@@ -1,5 +1,5 @@
 /**
- * Toutes les destinations que Vela contacte elle-même, hors pages que vous
+ * Toutes les destinations que Azimut contacte elle-même, hors pages que vous
  * ouvrez. La page Confidentialité lit cette liste, et `network.test.ts` échoue
  * dès qu'une adresse apparaît dans le code sans figurer ici.
  *
@@ -96,7 +96,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
     hosts: SEARCH_HOSTS,
     category: 'recherche',
     trigger: 'Quand vous validez une recherche dans le champ d’adresse ou sur l’accueil.',
-    data: 'Les mots recherchés. C’est le moteur qui les reçoit, pas Vela.',
+    data: 'Les mots recherchés. C’est le moteur qui les reçoit, pas Azimut.',
     off: 'Taper une adresse au lieu d’une recherche, ou changer de moteur.'
   },
   {
@@ -150,7 +150,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
   {
     id: 'mises-a-jour',
     label: 'Mises à jour',
-    target: 'github.com — releases de Vela',
+    target: 'github.com — releases de Azimut',
     hosts: ['github.com', 'objects.githubusercontent.com', 'release-assets.githubusercontent.com'],
     category: 'mises-a-jour',
     trigger:
@@ -202,7 +202,7 @@ export const NETWORK_FLOWS: readonly NetworkFlow[] = [
 ]
 
 /**
- * Adresses que Vela ne contacte jamais d'elle-même : elles n'apparaissent que
+ * Adresses que Azimut ne contacte jamais d'elle-même : elles n'apparaissent que
  * dans des liens que vous ouvrez (dépôt, pages de clés, raccourcis d'espaces).
  */
 export const USER_OPENED_HOSTS: readonly string[] = [

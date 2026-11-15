@@ -7,7 +7,7 @@ import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 
 /**
- * Un catalogue, pas un magasin : Vela tourne sur Chromium mais ne charge pas
+ * Un catalogue, pas un magasin : Azimut tourne sur Chromium mais ne charge pas
  * encore d’extensions. L’écran le dit d’entrée, puis ouvre la page du Chrome
  * Web Store dans un onglet — de quoi comparer sans croire à une installation.
  */
@@ -25,13 +25,13 @@ export default function ExtensionsPage() {
       <section className="appearance-section ext-intro">
         <h3 className="appearance-sub-title">Des extensions choisies, pas une boutique</h3>
         <p className="appearance-note">
-          Vela s’appuie sur Chromium : les extensions du Chrome Web Store existent, mais Vela ne les
+          Azimut s’appuie sur Chromium : les extensions du Chrome Web Store existent, mais Azimut ne les
           charge pas encore. Chaque fiche ouvre donc la page du magasin dans un onglet — pour
           comparer, ou pour équiper un autre navigateur en attendant.
         </p>
         <p className="ext-flag">
           <Icon name="shield" size={13} />
-          Aucune extension n’est installée ni téléchargée par Vela depuis cet écran.
+          Aucune extension n’est installée ni téléchargée par Azimut depuis cet écran.
         </p>
       </section>
 

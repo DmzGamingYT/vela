@@ -28,23 +28,23 @@ const info = (over: Partial<UpdateInfo>): UpdateInfo => ({
 describe('macInstallerNames', () => {
   it('propose d’abord la version de l’architecture, puis l’universelle', () => {
     expect(macInstallerNames('0.3.9', 'arm64')).toEqual([
-      'Vela-0.3.9-arm64.dmg',
-      'Vela-0.3.9-universal.dmg'
+      'Azimut-0.3.9-arm64.dmg',
+      'Azimut-0.3.9-universal.dmg'
     ])
     expect(macInstallerNames('0.3.9', 'x64')).toEqual([
-      'Vela-0.3.9-x64.dmg',
-      'Vela-0.3.9-universal.dmg'
+      'Azimut-0.3.9-x64.dmg',
+      'Azimut-0.3.9-universal.dmg'
     ])
   })
 
   it('se rabat sur l’universelle pour une architecture inconnue', () => {
-    expect(macInstallerNames('0.3.9', 'ia32')).toEqual(['Vela-0.3.9-universal.dmg'])
+    expect(macInstallerNames('0.3.9', 'ia32')).toEqual(['Azimut-0.3.9-universal.dmg'])
   })
 
   it('nettoie un préfixe v et refuse une version vide', () => {
     expect(macInstallerNames('v0.4.0', 'arm64')).toEqual([
-      'Vela-0.4.0-arm64.dmg',
-      'Vela-0.4.0-universal.dmg'
+      'Azimut-0.4.0-arm64.dmg',
+      'Azimut-0.4.0-universal.dmg'
     ])
     expect(macInstallerNames('  ', 'arm64')).toEqual([])
   })
@@ -52,15 +52,15 @@ describe('macInstallerNames', () => {
 
 describe('releaseAssetUrl', () => {
   it('pointe l’artefact de la release, jamais ailleurs', () => {
-    expect(releaseAssetUrl('0.3.9', 'Vela-0.3.9-arm64.dmg')).toBe(
-      'https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Vela-0.3.9-arm64.dmg'
+    expect(releaseAssetUrl('0.3.9', 'Azimut-0.3.9-arm64.dmg')).toBe(
+      'https://github.com/DmzGamingYT/vela/releases/download/v0.3.9/Azimut-0.3.9-arm64.dmg'
     )
   })
 
   it('empêche une version de sortir du chemin de la release', () => {
     expect(safeVersion('../../evil')).toBe('....evil')
-    expect(releaseAssetUrl('1.0.0/../..', 'Vela-x.dmg')).toBe(
-      'https://github.com/DmzGamingYT/vela/releases/download/v1.0.0..../Vela-x.dmg'
+    expect(releaseAssetUrl('1.0.0/../..', 'Azimut-x.dmg')).toBe(
+      'https://github.com/DmzGamingYT/vela/releases/download/v1.0.0..../Azimut-x.dmg'
     )
   })
 })
@@ -75,8 +75,8 @@ describe('latestAssetUrl', () => {
 
 describe('linuxAppImageNames', () => {
   it('emploie le nom d’architecture produit par electron-builder', () => {
-    expect(linuxAppImageNames('0.3.23', 'x64')).toEqual(['Vela-0.3.23-x86_64.AppImage'])
-    expect(linuxAppImageNames('v0.3.23', 'arm64')).toEqual(['Vela-0.3.23-arm64.AppImage'])
+    expect(linuxAppImageNames('0.3.23', 'x64')).toEqual(['Azimut-0.3.23-x86_64.AppImage'])
+    expect(linuxAppImageNames('v0.3.23', 'arm64')).toEqual(['Azimut-0.3.23-arm64.AppImage'])
   })
 
   it('ne propose rien pour une architecture inconnue ou une version vide', () => {
@@ -99,24 +99,24 @@ describe('parseManifest', () => {
   it('lit latest-linux.yml comme latest-mac.yml', () => {
     const manifest = parseManifest(`version: 0.3.23
 files:
-  - url: Vela-0.3.23-x86_64.AppImage
+  - url: Azimut-0.3.23-x86_64.AppImage
     sha512: 8CSOPTx267IbKww6ahaymub6N9zv46s0oztfmku4z6xcaZuath1+dpGOaC8exDa2RY14QXAW9srMw01obMs4nA==
     size: 126719285
     blockMapSize: 132425
-  - url: Vela-0.3.23-amd64.deb
+  - url: Azimut-0.3.23-amd64.deb
     sha512: pNQKSk4jqYnew14CX+KDS2yVkwB9uwdWxY4WRpBx9ORdSG9GzVlhCTXHu1vtVAGKKvWKabDHl5STMnwLuOWIcA==
     size: 101489932
-path: Vela-0.3.23-x86_64.AppImage
+path: Azimut-0.3.23-x86_64.AppImage
 sha512: 8CSOPTx267IbKww6ahaymub6N9zv46s0oztfmku4z6xcaZuath1+dpGOaC8exDa2RY14QXAW9srMw01obMs4nA==
 releaseDate: '2026-11-03T17:44:02.002Z'
 `)
     expect(manifest?.version).toBe('0.3.23')
     expect(manifest?.files).toHaveLength(2)
     expect(manifest?.files[0]).toMatchObject({
-      url: 'Vela-0.3.23-x86_64.AppImage',
+      url: 'Azimut-0.3.23-x86_64.AppImage',
       size: 126719285
     })
-    expect(manifest?.files[1].url).toBe('Vela-0.3.23-amd64.deb')
+    expect(manifest?.files[1].url).toBe('Azimut-0.3.23-amd64.deb')
   })
 })
 
@@ -148,7 +148,7 @@ describe('updateNotice', () => {
 
 describe('updateDescription', () => {
   it('dit la vérité sur macOS : le .dmg reste à installer', () => {
-    expect(updateDescription(info({}), 'darwin')).toContain('glissez Vela dans Applications')
+    expect(updateDescription(info({}), 'darwin')).toContain('glissez Azimut dans Applications')
     expect(updateDescription(info({}), 'win32')).toContain('s’installe à la fermeture')
   })
 
@@ -156,7 +156,7 @@ describe('updateDescription', () => {
     expect(updateDescription(info({}), 'linux')).toContain('réinstallez le fichier téléchargé')
     expect(updateReadyMessage(info({}), 'linux')).toContain('.deb')
     expect(updateReadyMessage(info({}), 'darwin')).toContain('Installer')
-    expect(updateReadyMessage(info({}), 'win32')).toContain('quitterez Vela')
+    expect(updateReadyMessage(info({}), 'win32')).toContain('quitterez Azimut')
   })
 
   it('nomme l’action attendue', () => {

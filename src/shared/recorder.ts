@@ -25,7 +25,7 @@ export function describeMicError(error: unknown): MicProblem {
     return {
       reason: 'denied',
       message:
-        'L’accès au micro a été refusé. Autorisez le micro pour Vela dans Réglages Système › Confidentialité et sécurité › Microphone, puis réessayez.',
+        'L’accès au micro a été refusé. Autorisez le micro pour Azimut dans Réglages Système › Confidentialité et sécurité › Microphone, puis réessayez.',
       system: true
     }
   }
@@ -46,7 +46,7 @@ export function describeMicError(error: unknown): MicProblem {
   if (name === 'OverconstrainedError') {
     return {
       reason: 'missing',
-      message: 'Ce micro ne peut pas être ouvert par Vela.',
+      message: 'Ce micro ne peut pas être ouvert par Azimut.',
       system: true
     }
   }

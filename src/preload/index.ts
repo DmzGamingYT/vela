@@ -9,7 +9,7 @@ import type {
   SetKeyInput,
   SettingsPatch,
   UpdateGroupInput,
-  VelaApi
+  AzimutApi
 } from '@shared/api'
 import type {
   AgentEvent,
@@ -27,7 +27,7 @@ function subscribe<T>(channel: string, callback: (payload: T) => void): () => vo
   return () => ipcRenderer.removeListener(channel, listener)
 }
 
-const api: VelaApi = {
+const api: AzimutApi = {
   platform: process.platform,
   // Architecture réellement exécutée (arm64, x64) : le bundle universel en a
   // deux, et « À propos » comme les diagnostics doivent pouvoir le dire.

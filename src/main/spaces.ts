@@ -111,7 +111,7 @@ export function pruneSpaceAvatars(host: SpacesHost): void {
 
 export function removeSpace(host: SpacesHost, id: string): void {
   const state = host.state()
-  if (state.spaces.length <= 1) throw new Error('Vela garde toujours au moins un profil.')
+  if (state.spaces.length <= 1) throw new Error('Azimut garde toujours au moins un profil.')
   const space = state.spaces.find((item) => item.id === id)
   if (!space) return
   host.destroySpaceViews(id)

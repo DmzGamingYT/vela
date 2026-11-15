@@ -47,7 +47,7 @@ export default function AmbienceSection({
         <h2 id="appearance-ambience">Ambiance</h2>
         <p>
           Une atmosphère animée derrière le verre. Elle ne recolore jamais le contenu des pages
-          ouvertes : l’ambiance s’arrête à l’interface Vela.
+          ouvertes : l’ambiance s’arrête à l’interface Azimut.
         </p>
       </div>
 

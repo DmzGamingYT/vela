@@ -13,7 +13,7 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 /**
- * Section Système : les raccourcis, les mises à jour et l'identité de Vela.
+ * Section Système : les raccourcis, les mises à jour et l'identité de Azimut.
  * Les trois anciennes pages sont réunies sous ces onglets ; À propos renvoie
  * vers l'onglet des mises à jour au lieu d'ouvrir une autre page.
  */

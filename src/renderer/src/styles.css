@@ -9,7 +9,7 @@
  * Pour ajouter du style, ouvrez la feuille du domaine concerné ; pour une
  * nouvelle passe de refonte, ajoutez une tranche en fin de liste.
  *
- * Toutes les tranches partent ensemble : Vela charge son interface depuis le
+ * Toutes les tranches partent ensemble : Azimut charge son interface depuis le
  * disque, où découper le CSS ne gagne rien de mesurable, alors que chaque
  * tranche déplacée ajoute une contrainte d'ordre dans le code des composants.
  */

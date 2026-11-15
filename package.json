@@ -1,13 +1,13 @@
 {
-  "name": "vela",
-  "productName": "Vela",
+  "name": "azimut",
+  "productName": "Azimut",
   "desktopName": "Vela",
-  "version": "0.3.47",
+  "version": "0.3.48",
   "description": "Vela — un navigateur de travail : espaces, vue scindée, sessions gardées, notes et agent local.",
   "homepage": "https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/",
   "license": "MIT",
   "author": {
-    "name": "Vela contributors",
+    "name": "Azimut contributors",
     "email": "contact@example.com"
   },
   "main": "./out/main/index.js",

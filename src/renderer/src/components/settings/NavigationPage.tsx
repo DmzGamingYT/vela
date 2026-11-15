@@ -552,7 +552,7 @@ export default function NavigationPage({
           )}
 
           <p className="nav-audit">
-            Vos recherches partent vers le moteur choisi, pas vers un serveur Vela.{' '}
+            Vos recherches partent vers le moteur choisi, pas vers un serveur Azimut.{' '}
             <button type="button" className="link-btn" onClick={onOpenPrivacy}>
               Ce qui reste local, ce qui sort
             </button>
@@ -570,7 +570,7 @@ export default function NavigationPage({
         <section className="setting-block" aria-labelledby="nav-startup">
           <div className="setting-head">
             <h2 id="nav-startup">Démarrage et onglets</h2>
-            <p>Ce que Vela ouvre au lancement, et ce qu’il fait d’un nouvel onglet.</p>
+            <p>Ce que Azimut ouvre au lancement, et ce qu’il fait d’un nouvel onglet.</p>
           </div>
 
           <div className="appearance-field">

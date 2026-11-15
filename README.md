@@ -1,12 +1,12 @@
-# Vela
+# Azimut
 
 **Le web, votre atelier.**
 
-Vela est un navigateur de bureau pour macOS, Windows et Linux : des espaces isolés, une vue scindée, des sessions gardées sur l’appareil, des notes Markdown et un agent qui lit vos onglets.
+Azimut est un navigateur de bureau pour macOS, Windows et Linux : des espaces isolés, une vue scindée, des sessions gardées sur l’appareil, des notes Markdown et un agent qui lit vos onglets.
 
 Le site vitrine public se trouve dans [site/](site/).
 
-Construit avec Electron, React et TypeScript. Aucun compte, aucune mesure d’usage, aucun serveur Vela.
+Construit avec Electron, React et TypeScript. Aucun compte, aucune mesure d’usage, aucun serveur Azimut.
 
 L’interface suit l’identité du site vitrine : papier chaud `#faf8f5` le jour et charbon `#151518` la nuit, un seul accent indigo (`#5b56d6` en clair, `#a8a3ff` en sombre), titres en Iowan Old Style / Georgia, contenu mat et verre réservé au chrome (rail, barre latérale, feuilles) et un lavis d’accent discret. Les réglages sont organisés en deux panneaux, et la page **Modèles** reprend la liste de fournisseurs et de clés.
 
@@ -52,9 +52,9 @@ l’universel soit validé sur une vraie machine Intel :
 
 | Fichier | Usage |
 | --- | --- |
-| `Vela-<version>-universal.dmg` / `.zip` | un seul téléchargement, Apple silicon **et** Intel |
-| `Vela-<version>-arm64.dmg` / `.zip` | Apple silicon seul, plus léger |
-| `Vela-<version>-x64.dmg` / `.zip` | Intel seul |
+| `Azimut-<version>-universal.dmg` / `.zip` | un seul téléchargement, Apple silicon **et** Intel |
+| `Azimut-<version>-arm64.dmg` / `.zip` | Apple silicon seul, plus léger |
+| `Azimut-<version>-x64.dmg` / `.zip` | Intel seul |
 
 `latest-mac.yml` liste les trois `.zip` : electron-updater préfère l’arm64 sur
 Apple silicon et écarte l’arm64 sur Intel (il prend alors l’x64 ou
@@ -530,7 +530,7 @@ développeur non identifié :
 
 1. Ouvrez le `.dmg`, glissez **Vela** dans **Applications**.
 2. **macOS 15 et plus** : lancez Vela depuis Applications, puis ouvrez **Réglages Système → Confidentialité et sécurité** et cliquez **Ouvrir quand même** à côté du message concernant Vela.
-3. **macOS 14 et moins** : dans le Finder, faites un clic droit sur Vela, choisissez **Ouvrir**, puis confirmez.
+3. **macOS 14 et moins** : dans le Finder, faites un clic droit sur Azimut, choisissez **Ouvrir**, puis confirmez.
 4. Si le message persiste :
 
    ```bash
@@ -556,7 +556,7 @@ n’est pas encore en place.
 ### Le reste
 
 - Une seule fenêtre ; les dossiers ne se réordonnent pas entre eux et ne s’imbriquent pas.
-- Caméra, position et notifications sont refusés aux pages. Le micro n’est ouvert qu’à Vela, pour
+- Caméra, position et notifications sont refusés aux pages. Le micro n’est ouvert qu’à Azimut, pour
   vos notes vocales, après une demande système explicite.
 - Le filtre est une liste embarquée : pas de mise à jour distante ni de filtrage cosmétique.
 - Aucune clé n’est fournie : le mode connecté demande la vôtre pour être essayé.

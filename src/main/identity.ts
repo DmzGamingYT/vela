@@ -2,7 +2,7 @@ import { type Session, type WebContents } from 'electron'
 import { chromeUserAgent } from '@shared/userAgent'
 
 /**
- * Identité annoncée par Vela aux sites visités.
+ * Identité annoncée par Azimut aux sites visités.
  *
  * Trois niveaux doivent être d'accord, sinon Google (entre autres) voit un
  * navigateur embarqué et refuse la connexion :

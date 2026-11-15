@@ -217,7 +217,7 @@ export default function App() {
   if (!ready) {
     return (
       <div className="boot">
-        <span className="boot-mark">Vela</span>
+        <span className="boot-mark">Azimut</span>
         <span className="boot-line" />
       </div>
     )

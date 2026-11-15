@@ -1,5 +1,5 @@
 /**
- * Thèmes de couleur de Vela.
+ * Thèmes de couleur de Azimut.
  *
  * Un thème porte deux choses indépendantes : sa lumière (papier, surface
  * profonde, encre, lavis) et sa teinte d'accent, dont on dérive tout le reste

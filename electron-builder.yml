@@ -1,5 +1,5 @@
 appId: app.vela.browser
-productName: Vela
+productName: Azimut
 directories:
   buildResources: build
   output: release

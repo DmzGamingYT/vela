@@ -389,7 +389,7 @@ export class TabManager {
               contextIsolation: true,
               nodeIntegration: false
             },
-            title: 'Vela',
+            title: 'Azimut',
             backgroundColor: this.backgroundForPages()
           }
         }

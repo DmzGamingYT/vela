@@ -260,7 +260,7 @@ export default function OverviewPage({
           <DiscoverRow
             icon="compass"
             title="Reprenez vos onglets au lancement"
-            hint="Choisissez ce que Vela ouvre au démarrage."
+            hint="Choisissez ce que Azimut ouvre au démarrage."
             onClick={() => onOpenPage('navigation')}
           />
           <DiscoverRow
@@ -275,7 +275,7 @@ export default function OverviewPage({
       <section className="setting-block">
         <div className="setting-head">
           <h2>Ce qui vit sur cet appareil</h2>
-          <p>Vos pages, vos notes et vos réglages restent dans le dossier de données de Vela.</p>
+          <p>Vos pages, vos notes et vos réglages restent dans le dossier de données de Azimut.</p>
         </div>
         <div className="overview-stats">
           {stats.map((stat) => (

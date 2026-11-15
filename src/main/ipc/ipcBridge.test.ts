@@ -29,7 +29,7 @@ vi.mock('electron', () => ({
     getPath: () => '/tmp',
     getAppPath: () => '/tmp',
     getVersion: () => '0.0.0',
-    getName: () => 'Vela',
+    getName: () => 'Azimut',
     isPackaged: false
   },
   shell: {

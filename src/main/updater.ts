@@ -72,7 +72,7 @@ function misesAJour(): ModuleMisesAJour {
 }
 
 /**
- * Sur Linux, l'AppImage est le seul format que Vela peut remplacer lui-même.
+ * Sur Linux, l'AppImage est le seul format que Azimut peut remplacer lui-même.
  * `APPIMAGE` n'existe pas quand l'app tourne depuis un .deb, un paquet natif
  * ou un binaire extrait : c'est la première chose à diagnostiquer.
  */
@@ -239,7 +239,7 @@ function clearInstallers(): void {
  *
  * macOS refuse l'installation silencieuse d'un bundle non signé (Squirrel
  * vérifie la signature et échoue), donc on prépare le `.dmg` de la release :
- * le bouton Installer l'ouvre, il ne reste qu'à glisser Vela dans Applications.
+ * le bouton Installer l'ouvre, il ne reste qu'à glisser Azimut dans Applications.
  *
  * Le manifeste et sa signature Ed25519 arrivent du même canal que la charge
  * utile : lire l'un sans contrôler l'autre laisserait un compte GitHub
@@ -442,7 +442,7 @@ async function checkLinuxUpdate(): Promise<void> {
     )
   }
   if (!isNewerVersion(release.version, app.getVersion())) {
-    set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
+    set({ state: 'not-available', version: null, message: 'Azimut est à jour.' })
     return
   }
   linuxRelease = release
@@ -456,7 +456,7 @@ async function checkLinuxUpdate(): Promise<void> {
       ? writable
         ? 'Nouvelle version trouvée — téléchargement de l’AppImage vérifiée…'
         : `Nouvelle version trouvée. L’AppImage${image ? ` (${image})` : ''} est en lecture seule : elle sera téléchargée pour un remplacement manuel.`
-      : 'Nouvelle version trouvée. Vela n’est pas lancé depuis une AppImage : téléchargez-la puis remplacez votre installation.',
+      : 'Nouvelle version trouvée. Azimut n’est pas lancé depuis une AppImage : téléchargez-la puis remplacez votre installation.',
     releaseUrl: `https://github.com/DmzGamingYT/vela/releases/tag/v${release.version}`
   })
   // Comme avant sur Linux, on télécharge sans attendre — mais uniquement si
@@ -562,7 +562,7 @@ export async function checkForUpdates(userInitiated = false): Promise<UpdateInfo
       const result = await misesAJour().autoUpdater.checkForUpdates()
       const version = result?.updateInfo ? versionOf(result.updateInfo) : null
       if (!result || !version || version === app.getVersion()) {
-        set({ state: 'not-available', version: null, message: 'Vela est à jour.' })
+        set({ state: 'not-available', version: null, message: 'Azimut est à jour.' })
       }
     }
   } catch (error) {
@@ -665,7 +665,7 @@ export function installUpdate(): void {
     shell.showItemInFolder(installerPath)
     set({
       state: 'downloaded',
-      message: `AppImage téléchargée. Remplacez ${image ?? 'votre installation'} par ce fichier, puis relancez Vela.`
+      message: `AppImage téléchargée. Remplacez ${image ?? 'votre installation'} par ce fichier, puis relancez Azimut.`
     })
     return
   }
@@ -686,7 +686,7 @@ export function installUpdate(): void {
     return
   }
   try {
-    // Silencieux : aucun assistant NSIS ne s’ouvre, Vela relance la nouvelle
+    // Silencieux : aucun assistant NSIS ne s’ouvre, Azimut relance la nouvelle
     // version. C’est le même geste que l’installation à la fermeture, mais
     // tout de suite.
     misesAJour().autoUpdater.quitAndInstall(true, true)
@@ -752,7 +752,7 @@ export function initUpdater(send: (channel: string, payload: unknown) => void): 
   })
   autoUpdater.on('update-not-available', () => {
     // Ne pas écraser un état manuel « à jour » déjà affiché ; rester cohérent sinon.
-    if (snapshot.state === 'checking') set({ state: 'not-available', message: 'Vela est à jour.' })
+    if (snapshot.state === 'checking') set({ state: 'not-available', message: 'Azimut est à jour.' })
   })
   autoUpdater.on('error', (error) => {
     if (downloadCancelled()) return

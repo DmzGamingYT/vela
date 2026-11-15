@@ -102,7 +102,7 @@ body {
   z-index: -1;
   /* Le lavis du thème passe au-dessus du verre : posé dessous, il était
      absorbé par l'opacité du fond et la colonne paraissait la même dans tous
-     les thèmes. Il reste loin du mot « Vela. », dont le contraste est calculé
+     les thèmes. Il reste loin du mot « Azimut. », dont le contraste est calculé
      sur le verre nu. */
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),

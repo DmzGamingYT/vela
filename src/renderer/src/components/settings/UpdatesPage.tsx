@@ -142,7 +142,7 @@ export default function UpdatesPage() {
 
       <div className="setting-row" data-settings-anchor="system-update-action">
         <div>
-          <label>{downloaded ? 'Mise à jour prête' : 'Mettre à jour Vela'}</label>
+          <label>{downloaded ? 'Mise à jour prête' : 'Mettre à jour Azimut'}</label>
           <p className="setting-hint">
             {downloaded
               ? updateDescription(update, platform)
@@ -181,12 +181,12 @@ export default function UpdatesPage() {
               Fichier : <code>{update?.appImagePath}</code>
               <br />
               {update?.appImageWritable
-                ? 'La nouvelle AppImage remplace ce fichier, puis Vela redémarre.'
-                : 'Le dossier est protégé : Vela télécharge l’AppImage vérifiée et l’affiche pour un remplacement manuel.'}
+                ? 'La nouvelle AppImage remplace ce fichier, puis Azimut redémarre.'
+                : 'Le dossier est protégé : Azimut télécharge l’AppImage vérifiée et l’affiche pour un remplacement manuel.'}
             </p>
           ) : (
             <p className="setting-hint">
-              La mise à jour automatique ne concerne que l’AppImage. Depuis un paquet .deb, Vela
+              La mise à jour automatique ne concerne que l’AppImage. Depuis un paquet .deb, Azimut
               télécharge l’AppImage vérifiée et l’affiche : utilisez-la à la place du paquet, ou
               réinstallez le .deb depuis la page Releases.
             </p>

@@ -38,8 +38,8 @@ describe('historyContext', () => {
       { role: 'user', content: '   ' }
     ])
     expect(context).toContain('Utilisateur : Première question')
-    expect(context).toContain('Vela : Première réponse')
-    expect(context.trim().endsWith('Vela : Première réponse')).toBe(true)
+    expect(context).toContain('Azimut : Première réponse')
+    expect(context.trim().endsWith('Azimut : Première réponse')).toBe(true)
   })
 
   it('garde les tours les plus récents et borne chaque texte', () => {

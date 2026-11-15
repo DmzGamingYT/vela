@@ -176,7 +176,7 @@
 
 /* ── 5. Contraste renforcé ─────────────────────────────────────────── */
 
-/* Le réglage « Contraste élevé » de Vela reste la commande de l'app ;
+/* Le réglage « Contraste élevé » de Azimut reste la commande de l'app ;
    ces valeurs suivent en plus la préférence du système, pour qu'un
    utilisateur qui l'a demandée une fois n'ait pas à la redemander. */
 @media (prefers-contrast: more) {

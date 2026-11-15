@@ -457,7 +457,7 @@ export default function AgentCanvas({
       data-docked={docked}
       data-wide={expanded}
       role={embedded ? 'region' : docked ? 'complementary' : 'dialog'}
-      aria-label={embedded ? 'Atelier Vela' : 'Agent Vela'}
+      aria-label={embedded ? 'Atelier Azimut' : 'Agent Azimut'}
     >
       <header className="agent-head">
         <div className="agent-identity">

@@ -21,7 +21,7 @@ import { applyBrowserIdentity } from './identity'
 const PAGE_PRELOAD = join(__dirname, '../preload/page.js')
 
 /**
- * Ce que le coup d'œil demande à Vela. Il ne connaît ni le magasin ni la liste
+ * Ce que le coup d'œil demande à Azimut. Il ne connaît ni le magasin ni la liste
  * d'onglets : la carte vit dans le renderer de la coque, la page emprunte tout
  * à l'appelant.
  */
@@ -61,7 +61,7 @@ function emptyState(space: Space): PeekState {
 }
 
 /**
- * Coup d'œil : une page regardée sans quitter Vela et sans créer d'onglet.
+ * Coup d'œil : une page regardée sans quitter Azimut et sans créer d'onglet.
  *
  * La carte, son fond et ses actions appartiennent au renderer de la coque ;
  * ici, on ne gère que la vue native de la page — sa session, sa navigation,

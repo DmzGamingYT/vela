@@ -30,7 +30,7 @@ export async function fetchLetterboxdLog(user: string | null | undefined): Promi
       headers: {
         accept: 'application/rss+xml, application/xml;q=0.9, text/xml;q=0.8',
         // Un agent honnête : Letterboxd peut refuser une requête anonyme.
-        'user-agent': 'Vela/1.0 (import du journal Letterboxd)'
+        'user-agent': 'Azimut/1.0 (import du journal Letterboxd)'
       }
     })
     if (response.status === 404) return { ok: false, reason: 'not-found' }

@@ -210,7 +210,7 @@ export class Browser {
     // Un index illisible ne permet pas de déterminer les références audio.
     if (!this.notes.canReadIndex) {
       throw new Error(
-        'Index ou fichier de note illisible : notes et enregistrements conservés. Restaurez les fichiers avant de relancer Vela.'
+        'Index ou fichier de note illisible : notes et enregistrements conservés. Restaurez les fichiers avant de relancer Azimut.'
       )
     }
     this.noteAudio.prune(this.notes.audioNames())
@@ -271,7 +271,7 @@ export class Browser {
           type: 'warning',
           title: 'Traduction vers un service distant',
           message: 'Le texte de la planche va quitter cet appareil',
-          detail: `Vela enverra à ${host} les répliques repérées sur la planche, et l’image des bulles que la lecture locale n’a pas su déchiffrer. Vela ne contrôle pas ce que cet hôte en fait.`,
+          detail: `Azimut enverra à ${host} les répliques repérées sur la planche, et l’image des bulles que la lecture locale n’a pas su déchiffrer. Azimut ne contrôle pas ce que cet hôte en fait.`,
           buttons: ['Annuler', 'Traduire via cet hôte'],
           defaultId: 0,
           cancelId: 0,
@@ -331,7 +331,7 @@ export class Browser {
         state.works = [
           {
             id: newId(),
-            title: work.title.slice(0, 160) || 'Rapport Vela',
+            title: work.title.slice(0, 160) || 'Rapport Azimut',
             prompt: work.prompt.slice(0, 2000),
             markdown: work.markdown,
             preview: previewOf(work.markdown),
@@ -687,7 +687,7 @@ export class Browser {
     if (appMb !== null) {
       processes.unshift({
         tabId: null,
-        title: 'Vela',
+        title: 'Azimut',
         url: '',
         live: true,
         blocked: this.tabs.blockedTotal(),
@@ -1456,7 +1456,7 @@ export class Browser {
       type: 'warning',
       title: 'Endpoint distant',
       message: 'Cet endpoint n’est pas sur votre machine',
-      detail: `Les textes confiés à l’agent et les notes vocales transcrites partiront vers ${endpointHost(url) ?? url}. Vela ne contrôle pas ce que cet hôte en fait.`,
+      detail: `Les textes confiés à l’agent et les notes vocales transcrites partiront vers ${endpointHost(url) ?? url}. Azimut ne contrôle pas ce que cet hôte en fait.`,
       buttons: ['Annuler', 'Utiliser cet endpoint'],
       defaultId: 0,
       cancelId: 0,

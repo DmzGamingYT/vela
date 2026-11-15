@@ -27,10 +27,10 @@ export default function AboutPage({ onOpenUpdates }: { onOpenUpdates: () => void
         <div>
           <div className="about-title">
             <strong className="about-name">
-              Vela<span aria-hidden="true">.</span>
+              Azimut<span aria-hidden="true">.</span>
             </strong>
             {update?.currentVersion && (
-              <span className="about-version" title={`Vela ${update.currentVersion}`}>
+              <span className="about-version" title={`Azimut ${update.currentVersion}`}>
                 {update.currentVersion}
               </span>
             )}

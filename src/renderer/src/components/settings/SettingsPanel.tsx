@@ -63,7 +63,7 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   },
   extensions: {
     title: 'Extensions',
-    lede: 'Ce qui pourrait compléter Vela, classé par usage. Aucune extension n’est installée depuis cet écran.'
+    lede: 'Ce qui pourrait compléter Azimut, classé par usage. Aucune extension n’est installée depuis cet écran.'
   },
   privacy: {
     title: 'Confidentialité',
@@ -321,7 +321,7 @@ export default function SettingsPanel() {
           <aside className="settings-nav">
             <div className="settings-nav-brand">
               <span className="wordmark" aria-hidden="true">
-                Vela<span className="wordmark-dot">.</span>
+                Azimut<span className="wordmark-dot">.</span>
               </span>
             </div>
             <div className="settings-nav-search">

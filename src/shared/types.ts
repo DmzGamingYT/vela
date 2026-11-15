@@ -17,7 +17,7 @@ import type {
 } from './theme'
 
 export const HOME_URL = 'vela://home'
-export const APP_NAME = 'Vela'
+export const APP_NAME = 'Azimut'
 export type Theme = 'light' | 'dark' | 'system'
 export type BuiltinSearchEngineId =
   'duckduckgo' | 'brave' | 'startpage' | 'google' | 'bing' | 'ecosia' | 'qwant' | 'searxng'
@@ -224,7 +224,7 @@ export interface Settings {
   startupBehavior: StartupBehavior
   /** Page de démarrage quand `startupBehavior` vaut « url ». */
   startupUrl: string
-  /** Nouvel onglet : accueil Vela, ou page vide. */
+  /** Nouvel onglet : accueil Azimut, ou page vide. */
   newTabBlank: boolean
   /** Durée de conservation de l'historique ; purgé au démarrage. */
   historyRetention: HistoryRetention
@@ -274,7 +274,7 @@ export interface Settings {
   skyVariant: SkyVariant
   /** Densité des rangées de l'interface. */
   density: Density
-  /** Taille du texte de l'interface Vela (pas celle des pages). */
+  /** Taille du texte de l'interface Azimut (pas celle des pages). */
   textSize: TextSize
   /** Barre latérale à gauche ou à droite du contenu. */
   sidebarSide: SidebarSide

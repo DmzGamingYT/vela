@@ -67,7 +67,7 @@ export default function AgentNotesSection() {
         </div>
         {recent.length === 0 ? (
           <p className="setting-hint">
-            Chaque note reste un fichier <code>.md</code>, lisible sans Vela.
+            Chaque note reste un fichier <code>.md</code>, lisible sans Azimut.
           </p>
         ) : (
           <ul className="settings-note-list">

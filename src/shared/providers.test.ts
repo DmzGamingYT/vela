@@ -69,7 +69,7 @@ describe('catalogue', () => {
 
 describe('requêtes de chat', () => {
   const messages = [
-    { role: 'system' as const, content: 'Tu es Vela.' },
+    { role: 'system' as const, content: 'Tu es Azimut.' },
     { role: 'user' as const, content: 'Résume cette page.' }
   ]
 
@@ -110,7 +110,7 @@ describe('requêtes de chat', () => {
     expect(request.headers['x-api-key']).toBe('sk-ant-x')
     expect(request.headers['anthropic-version']).toBe('2023-06-01')
     const body = JSON.parse(request.body)
-    expect(body.system).toBe('Tu es Vela.')
+    expect(body.system).toBe('Tu es Azimut.')
     expect(body.messages).toEqual([{ role: 'user', content: 'Résume cette page.' }])
     expect(body.max_tokens).toBeGreaterThan(0)
   })
@@ -129,7 +129,7 @@ describe('requêtes de chat', () => {
     expect(request.headers['x-goog-api-key']).toBe('AIza-key')
     const body = JSON.parse(request.body)
     expect(body.contents[0].parts[0].text).toBe('Résume cette page.')
-    expect(body.systemInstruction.parts[0].text).toBe('Tu es Vela.')
+    expect(body.systemInstruction.parts[0].text).toBe('Tu es Azimut.')
   })
 
   it('garde la clé Google hors de l’URL de test', () => {

@@ -411,7 +411,7 @@ export function synthesisMarkdown(synthesis: TunnelSynthesis): string {
   lines.push('Extraits d’origine, jamais reformulés.')
   lines.push('')
   lines.push(
-    `Synthèse du ${new Date(synthesis.generatedAt).toLocaleDateString('fr-FR')} · ${synthesis.kept} sources retenues sur ${synthesis.explored} lues · Vela`
+    `Synthèse du ${new Date(synthesis.generatedAt).toLocaleDateString('fr-FR')} · ${synthesis.kept} sources retenues sur ${synthesis.explored} lues · Azimut`
   )
   return lines.join('\n')
 }

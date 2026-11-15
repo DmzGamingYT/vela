@@ -262,7 +262,7 @@ export const createAgentSlice: StateCreator<BrowserState, [], [], AgentSlice> = 
     if (!agent.markdown || !view) return
     const source = view.tabs.find((tab) => !isHomeUrl(tab.url))
     const note = await get().saveNote({
-      title: agent.title || 'Rapport Vela',
+      title: agent.title || 'Rapport Azimut',
       body: agent.markdown,
       spaceId: view.activeSpaceId,
       url: source?.url

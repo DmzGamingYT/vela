@@ -17,7 +17,7 @@ describe('en-tête de la barre latérale', () => {
   })
 
   it('affiche le wordmark avec le point d’accent', () => {
-    expect(html).toContain('Vela')
+    expect(html).toContain('Azimut')
     expect(html).toContain('class="wordmark-dot"')
   })
 

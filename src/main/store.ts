@@ -497,7 +497,7 @@ export class Store {
           error
         )
         throw new Error(
-          'Les données de Vela sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.',
+          'Les données de Azimut sont illisibles. Le fichier original a été conservé ; restaurez une sauvegarde avant de relancer.',
           { cause: error }
         )
       }

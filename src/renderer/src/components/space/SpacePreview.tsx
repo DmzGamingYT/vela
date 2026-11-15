@@ -141,7 +141,7 @@ export default function SpacePreview({
 
               <div className="preview-side" aria-hidden="true">
                 <span className="preview-wordmark">
-                  Vela<span>.</span>
+                  Azimut<span>.</span>
                 </span>
                 <span className="preview-space">
                   <SpaceAvatar space={{ name: previewName, color, avatar }} size={17} />

@@ -152,7 +152,7 @@ export default function NoteAudio({
           <p>{message}</p>
           <p className="note-audio-warn">
             <Icon name="upload" size={12} /> L’enregistrement complet et votre demande sont envoyés
-            au modèle. Rien n’est conservé par Vela.
+            au modèle. Rien n’est conservé par Azimut.
           </p>
           <div className="note-audio-actions">
             <button type="button" className="action" onClick={() => setStage('idle')}>

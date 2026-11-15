@@ -144,7 +144,7 @@ export function registerTunnelIpc(host: IpcHost, handle: Handle, on: On): void {
           show: false,
           webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
         })
-        // La fenêtre d'impression ne montre qu'un document écrit par Vela : elle
+        // La fenêtre d'impression ne montre qu'un document écrit par Azimut : elle
         // n'ouvre rien, ne navigue nulle part, et n'expose aucune permission.
         printer.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
         printer.webContents.on('will-navigate', (event) => event.preventDefault())
