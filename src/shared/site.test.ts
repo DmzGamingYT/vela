@@ -39,11 +39,11 @@ const publishedHtml = (dir = siteDir): string[] =>
 const ANCIEN_NOM = /\bpetite\s+fen[eê]tre\b/i
 
 /**
- * Les installateurs de 0.3.44 sont publiés sous l'ancien nom du produit. Le
- * site les liste encore ainsi : leur nom de fichier est une adresse, pas une
- * marque. Le préfixe passera à « Azimut » avec la première release renommée.
+ * Nom des installateurs publiés : depuis 0.3.48, la release porte le nom du
+ * produit. C'est une adresse de fichier, pas une marque — elle suit les assets
+ * réellement attachés à la release annoncée.
  */
-const INSTALLATEUR = 'Vela'
+const INSTALLATEUR = 'Azimut'
 
 /** Décode les entités qui peuvent couper le nom dans une page HTML. */
 const normaliser = (texte: string): string =>

@@ -77,45 +77,45 @@
   })()
 
   const RELEASE = 'https://github.com/DmzGamingYT/vela/releases'
-  const download = (file) => `${RELEASE}/download/v0.3.44/${file}`
+  const download = (file) => `${RELEASE}/download/v0.3.48/${file}`
 
   const FILES = {
     // Le DMG universel reste le choix sûr tant qu’on ne connaît pas l’architecture.
     mac: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.44-universal.dmg',
-      size: '226,4 Mo',
-      href: download('Vela-0.3.44-universal.dmg')
+      file: 'Azimut-0.3.48-universal.dmg',
+      size: '224,9 Mo',
+      href: download('Azimut-0.3.48-universal.dmg')
     },
     macArm: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.44-arm64.dmg',
-      size: '122,7 Mo',
-      href: download('Vela-0.3.44-arm64.dmg')
+      file: 'Azimut-0.3.48-arm64.dmg',
+      size: '121,2 Mo',
+      href: download('Azimut-0.3.48-arm64.dmg')
     },
     macIntel: {
       label: 'Télécharger pour macOS',
-      file: 'Vela-0.3.44-x64.dmg',
-      size: '130,0 Mo',
-      href: download('Vela-0.3.44-x64.dmg')
+      file: 'Azimut-0.3.48-x64.dmg',
+      size: '128,5 Mo',
+      href: download('Azimut-0.3.48-x64.dmg')
     },
     win: {
       label: 'Télécharger pour Windows',
-      file: 'Vela-0.3.44-x64.exe',
-      size: '122,4 Mo',
-      href: download('Vela-0.3.44-x64.exe')
+      file: 'Azimut-0.3.48-x64.exe',
+      size: '122,3 Mo',
+      href: download('Azimut-0.3.48-x64.exe')
     },
     linux: {
       label: 'Télécharger pour Linux',
-      file: 'Vela-0.3.44-x86_64.AppImage',
-      size: '127,1 Mo',
-      href: download('Vela-0.3.44-x86_64.AppImage')
+      file: 'Azimut-0.3.48-x86_64.AppImage',
+      size: '127,0 Mo',
+      href: download('Azimut-0.3.48-x86_64.AppImage')
     },
     other: {
       label: 'Voir les fichiers',
-      file: 'Vela-0.3.44',
+      file: 'Azimut-0.3.48',
       size: 'macOS, Windows, Linux · un fichier par plateforme',
-      href: `${RELEASE}/tag/v0.3.44`
+      href: `${RELEASE}/tag/v0.3.48`
     }
   }
 
@@ -337,7 +337,7 @@
   if (diagnostic) {
     diagnostic.addEventListener('click', async () => {
       const texte = [
-        'Azimut 0.3.44',
+        'Azimut 0.3.48',
         `Système : ${navigator.userAgentData?.platform || navigator.platform || 'inconnu'}`,
         `Langue : ${navigator.language}`,
         `Page : ${location.href}`,

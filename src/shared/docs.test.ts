@@ -86,8 +86,8 @@ describe('limites documentées dans l’aide et sur le site', () => {
       `Azimut ${announced}, pour les trois plateformes`
     )
     // Les liens du tableau pointent vers la release annoncée…
-    // Les installateurs de 0.3.44 gardent leur nom de fichier d'origine.
-    const installateur = 'Vela'
+    // Les installateurs publiés portent le nom du produit.
+    const installateur = 'Azimut'
     expect(home).toContain(
       `releases/download/v${announced}/${installateur}-${announced}-universal.dmg`
     )
