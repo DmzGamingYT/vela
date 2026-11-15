@@ -122,6 +122,20 @@
         <path d="M12 4.2 21 19.5H3L12 4.2Z" />
         <path d="M12 10v4.2M12 17h.01" />
       </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="M8.5 5.6 18.5 12 8.5 18.4V5.6Z" />
+      </symbol>
+      <symbol id="i-books" viewBox="0 0 24 24">
+        <path d="M4.5 5.5h4v13h-4zM10.5 5.5h4v13h-4zM16.6 6l3.6.9-2.4 12.2-3.6-.9z" />
+      </symbol>
+      <symbol id="i-note" viewBox="0 0 24 24">
+        <path d="M6 3.5h8.5L19 8v12.5H6z" />
+        <path d="M14 3.8V8h4.2M9 12h7M9 16h5" />
+      </symbol>
+      <symbol id="i-command" viewBox="0 0 24 24">
+        <path d="M9 9h6v6H9z" />
+        <path d="M9 9V6.5A2.5 2.5 0 1 0 6.5 9H9Zm0 6v2.5A2.5 2.5 0 1 1 6.5 15H9Zm6-6V6.5A2.5 2.5 0 1 1 17.5 9H15Zm0 6v2.5A2.5 2.5 0 1 0 17.5 15H15Z" />
+      </symbol>
     </svg>
 
     <header class="masthead">
@@ -170,101 +184,498 @@
     </header>
 
     <main id="contenu">
-      <!-- Ouverture : une seule phrase, un seul bouton, une capture. C’est la
-           page entière qui tient dans cet écran. -->
-      <section class="opening" aria-labelledby="opening-title">
-        <div class="shell">
-          <p class="kicker">
-            <span>macOS · Windows · Linux</span>
-            <span class="kicker-sep" aria-hidden="true">/</span>
-            <a href="/nouveautes/">Journal des versions</a>
-          </p>
+      <!-- Ouverture : la phrase, le bouton, la capture. Le reste descend. -->
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Navigateur de travail · macOS, Windows, Linux</p>
 
-          <h1 class="opening-title" id="opening-title">
-            Un navigateur qui <em>range</em>, pendant que vous travaillez.
-          </h1>
+            <h1 class="hero-title" id="hero-title">
+              Le web,<br /><em>votre atelier.</em>
+            </h1>
 
-          <p class="opening-lede">
-            Onglets verticaux, espaces isolés, bibliothèque locale, notes locales. Azimut tient le décor
-            à votre place — et ne rend de comptes à personne.
-          </p>
+            <p class="hero-lede">
+              Azimut range les onglets en colonne, isole les espaces, garde vos pages et vos notes
+              sur l’appareil. Vous travaillez ; il tient le décor.
+            </p>
 
-          <div class="opening-actions">
-            <a
-              class="btn btn-solid btn-big"
-              href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.49/Azimut-0.3.49-universal.dmg"
-              data-platform-cta
-              data-platform-href
-            >
-              <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-              <span data-platform-label>Télécharger</span>
-            </a>
-            <a class="text-link" href="#gestes">
-              Voir les trois gestes
-              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
-            </a>
+            <div class="hero-actions">
+              <a
+                class="btn btn-solid btn-big"
+                href="https://github.com/DmzGamingYT/vela/releases/download/v0.3.49/Azimut-0.3.49-universal.dmg"
+                data-platform-cta
+                data-platform-href
+              >
+                <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+                <span data-platform-label>Télécharger</span>
+              </a>
+              <a class="btn btn-ghost btn-big" href="#demo">
+                <svg class="ico" aria-hidden="true"><use href="#i-play" /></svg>
+                Voir la démo — 16 s
+              </a>
+            </div>
+
+            <ul class="hero-facts">
+              <li>Gratuit, MIT</li>
+              <li>Sans compte</li>
+              <li>Sans serveur Azimut</li>
+              <li>Sans mesure d’usage</li>
+            </ul>
           </div>
 
-          <p class="opening-fine">
-            Gratuit · MIT · sans compte Azimut · sans serveur Azimut · sans mesure d’usage
-          </p>
+          <figure class="hero-stage reveal">
+            <div class="stage-frame" data-stage>
+              <div class="stage-chrome" aria-hidden="true">
+                <span class="stage-dots"><i></i><i></i><i></i></span>
+                <span class="stage-address">Accueil — Personnel</span>
+                <span class="stage-badge">0 mesure</span>
+              </div>
+              <picture class="stage-shot stage-light">
+                <img
+                  src="/captures/accueil-clair-1080.webp"
+                  srcset="
+                    /captures/accueil-clair-720.webp   720w,
+                    /captures/accueil-clair-1080.webp 1080w,
+                    /captures/accueil-clair.webp      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 720px"
+                  width="1440"
+                  height="900"
+                  fetchpriority="high"
+                  decoding="async"
+                  alt="L’accueil de Azimut, thème clair : espaces Personnel et Accueil dans le rail, un onglet ouvert, les favoris et les pages récentes."
+                />
+              </picture>
+              <picture class="stage-shot stage-dark">
+                <img
+                  src="/captures/accueil-sombre-1080.webp"
+                  srcset="
+                    /captures/accueil-sombre-720.webp   720w,
+                    /captures/accueil-sombre-1080.webp 1080w,
+                    /captures/accueil-sombre.webp      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 720px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Le même accueil en thème sombre : mêmes espaces, mêmes blocs, même place pour chaque chose."
+                />
+              </picture>
+            </div>
 
-          <figure class="stage">
-            <picture class="shot shot-light">
-              <source
-                type="image/avif"
-                srcset="
-                  /captures/accueil-clair-720.avif   720w,
-                  /captures/accueil-clair-1080.avif 1080w,
-                  /captures/accueil-clair.avif      1440w
-                "
-                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
-              />
-              <img
-                src="/captures/accueil-clair-1080.webp"
-                srcset="
-                  /captures/accueil-clair-720.webp   720w,
-                  /captures/accueil-clair-1080.webp 1080w,
-                  /captures/accueil-clair.webp      1440w
-                "
-                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
-                width="1440"
-                height="900"
-                fetchpriority="high"
-                decoding="async"
-                alt="Accueil de Azimut en thème clair : rail des espaces avec Personnel et Sessions, deux onglets (Accueil et Navigateur web — Wikipédia), champ de commande, puis les blocs Favoris et Récent."
-              />
-            </picture>
-            <picture class="shot shot-dark">
-              <source
-                type="image/avif"
-                srcset="
-                  /captures/accueil-sombre-720.avif   720w,
-                  /captures/accueil-sombre-1080.avif 1080w,
-                  /captures/accueil-sombre.avif      1440w
-                "
-                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
-              />
-              <img
-                src="/captures/accueil-sombre-1080.webp"
-                srcset="
-                  /captures/accueil-sombre-720.webp   720w,
-                  /captures/accueil-sombre-1080.webp 1080w,
-                  /captures/accueil-sombre.webp      1440w
-                "
-                sizes="(max-width: 900px) calc(100vw - 40px), 1080px"
-                width="1440"
-                height="900"
-                loading="lazy"
-                decoding="async"
-                alt="Le même accueil de Azimut en thème sombre : mêmes onglets, mêmes blocs, même mise en page."
-              />
-            </picture>
+            <figcaption class="stage-caption">
+              <span class="stage-label" data-stage-label>Accueil, thème clair</span>
+              <span class="stage-switch" role="group" aria-label="Aperçu du thème">
+                <button type="button" data-stage-theme="light" aria-pressed="true">Clair</button>
+                <button type="button" data-stage-theme="dark" aria-pressed="false">Sombre</button>
+              </span>
+            </figcaption>
           </figure>
         </div>
       </section>
 
-      <section class="ledger" aria-label="Ce que Azimut ne fait pas">
+      <div class="band" aria-hidden="true">
+        <div class="band-track">
+          <span>Onglets verticaux</span><i>·</i>
+          <span>Espaces isolés</span><i>·</i>
+          <span>Bibliothèque locale</span><i>·</i>
+          <span>Notes surlignées</span><i>·</i>
+          <span>Palette ⌘K</span><i>·</i>
+          <span>Clair et sombre</span><i>·</i>
+          <span>Gratuit, MIT</span><i>·</i>
+          <span>Sans compte</span><i>·</i>
+          <span>Onglets verticaux</span><i>·</i>
+          <span>Espaces isolés</span><i>·</i>
+          <span>Bibliothèque locale</span><i>·</i>
+          <span>Notes surlignées</span><i>·</i>
+          <span>Palette ⌘K</span><i>·</i>
+          <span>Clair et sombre</span><i>·</i>
+          <span>Gratuit, MIT</span><i>·</i>
+          <span>Sans compte</span><i>·</i>
+        </div>
+      </div>
+
+      <!-- La démonstration : un vrai enregistrement de l’application. -->
+      <section class="demo reveal" id="demo" aria-labelledby="demo-title">
+        <div class="shell">
+          <header class="sec-head">
+            <p class="sec-index">Démonstration</p>
+            <h2 class="sec-title" id="demo-title">Seize secondes, quatre gestes.</h2>
+            <p class="sec-lede">
+              Pas de maquette, pas de montage : l’application enregistrée pendant qu’on ouvre la
+              bibliothèque, les notes, puis qu’on passe en sombre depuis les réglages.
+            </p>
+          </header>
+
+          <div class="demo-grid">
+            <figure class="player" data-player data-duration="16.6">
+              <video
+                class="player-video"
+                data-demo-video
+                poster="/demo/azimut-demo.jpg"
+                preload="metadata"
+                muted
+                playsinline
+                width="1440"
+                height="900"
+              >
+                <source src="/demo/azimut-demo.webm" type="video/webm" />
+                <source src="/demo/azimut-demo.mp4" type="video/mp4" />
+                <a href="/demo/azimut-demo.webm">Télécharger la démonstration (WebM, 1 Mo)</a>
+              </video>
+              <button class="player-play" type="button" data-demo-play aria-label="Lire la démonstration">
+                <span class="player-ring" aria-hidden="true">
+                  <svg class="ico"><use href="#i-play" /></svg>
+                </span>
+                <span class="player-label" data-demo-label>Lire la démo</span>
+              </button>
+              <div class="player-hud" aria-hidden="true">
+                <span class="player-time" data-demo-time>0:00</span>
+                <span class="player-track"><i data-demo-progress></i></span>
+                <span class="player-length">0:16</span>
+              </div>
+            </figure>
+
+            <ol class="demo-steps">
+              <li>
+                <span class="step-num">01</span>
+                <div>
+                  <h3>Bibliothèque</h3>
+                  <p>
+                    Marque-pages, téléchargements et historique dans une seule feuille, triés et
+                    cherchables.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">02</span>
+                <div>
+                  <h3>Notes</h3>
+                  <p>
+                    Le panneau latéral garde la page en place : on écrit à côté, pas par-dessus.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">03</span>
+                <div>
+                  <h3>Apparence</h3>
+                  <p>
+                    Clair, sombre, ou comme le système — et trois teintes d’accent, appliquées
+                    immédiatement.
+                  </p>
+                </div>
+              </li>
+              <li class="step-note">
+                <p>Enregistrement réel, sans accélération. Le curseur est le seul ajout.</p>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chapitre 01 — la bibliothèque -->
+      <section class="chapter reveal" id="bibliotheque" aria-labelledby="chap-lib">
+        <div class="shell chapter-grid">
+          <div class="chapter-copy">
+            <p class="sec-index">01 — Garder</p>
+            <h2 class="sec-title" id="chap-lib">La bibliothèque remplace trois menus.</h2>
+            <p class="sec-lede">
+              Marque-pages, téléchargements et historique vivent dans la même feuille, ouverte par
+              <kbd data-key="mod+shift+o">⌘⇧O</kbd>. Chaque liste se trie, se cherche, et se range
+              dans l’espace où vous êtes.
+            </p>
+            <ul class="chapter-list">
+              <li><strong>Marque-pages</strong> — un dossier par sujet, une icône par site.</li>
+              <li><strong>Téléchargements</strong> — progression, destination, ce qui reste.</li>
+              <li><strong>Historique</strong> — par jour, sans compte qui le recolle ailleurs.</li>
+            </ul>
+            <a class="text-link" href="/navigateur/#bibliotheque">
+              Le chapitre complet
+              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </a>
+          </div>
+
+          <figure class="chapter-shot">
+            <picture>
+              <source
+                type="image/avif"
+                srcset="
+                  /captures/bibliotheque-zoom-720.avif   720w,
+                  /captures/bibliotheque-zoom-1080.avif 1080w,
+                  /captures/bibliotheque-zoom.avif      1440w
+                "
+                sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+              />
+              <img
+                src="/captures/bibliotheque-1080.webp"
+                srcset="
+                  /captures/bibliotheque-720.webp   720w,
+                  /captures/bibliotheque-1080.webp 1080w,
+                  /captures/bibliotheque.webp      1440w
+                "
+                sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                alt="La bibliothèque de Azimut ouverte sur les marque-pages, en gros plan : cinq pages gardées avec leur adresse, puis les onglets Téléchargements et Historique."
+              />
+            </picture>
+            <figcaption>Marque-pages, le 15 novembre — cinq pages gardées.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- Chapitre 02 — les notes -->
+      <section class="chapter chapter-flip reveal" id="notes" aria-labelledby="chap-notes">
+        <div class="shell chapter-grid">
+          <div class="chapter-copy">
+            <p class="sec-index">02 — Noter</p>
+            <h2 class="sec-title" id="chap-notes">La note s’écrit à côté de la page.</h2>
+            <p class="sec-lede">
+              Le panneau s’ouvre à droite, la page reste lisible. Une note par page, un surlignage
+              ancré au passage, et des fichiers sur votre disque : rien à synchroniser.
+            </p>
+            <ul class="chapter-list">
+              <li><strong>Ancrée</strong> — le passage surligné revient avec sa note.</li>
+              <li><strong>Locale</strong> — des fichiers dans le dossier de données, pas un compte.</li>
+              <li><strong>Recherchable</strong> — <kbd data-key="mod+shift+f">⌘⇧F</kbd> cherche dans toutes les notes.</li>
+            </ul>
+            <a class="text-link" href="/navigateur/#notes">
+              Voir le chapitre
+              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </a>
+          </div>
+
+          <figure class="chapter-shot">
+            <picture>
+              <source
+                type="image/avif"
+                srcset="
+                  /captures/notes-720.avif   720w,
+                  /captures/notes-1080.avif 1080w,
+                  /captures/notes.avif      1440w
+                "
+                sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+              />
+              <img
+                src="/captures/notes-1080.webp"
+                srcset="
+                  /captures/notes-720.webp   720w,
+                  /captures/notes-1080.webp 1080w,
+                  /captures/notes.webp      1440w
+                "
+                sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                alt="Le panneau Notes ouvert sur l’accueil : recherche, nouvelle note, filtre par page, et deux notes dont « Essai Azimut »."
+              />
+            </picture>
+            <figcaption>Deux notes, une page ouverte — le panneau ne recouvre rien.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- Chapitre 03 — palette et apparence -->
+      <section class="chapter reveal" id="apparence" aria-labelledby="chap-look">
+        <div class="shell chapter-grid">
+          <div class="chapter-copy">
+            <p class="sec-index">03 — Régler</p>
+            <h2 class="sec-title" id="chap-look">Une palette pour tout, deux thèmes pour lire.</h2>
+            <p class="sec-lede">
+              <kbd data-key="mod+k">⌘K</kbd> ouvre la palette : un onglet, un espace, un réglage,
+              tout se trouve au clavier. L’apparence suit le système, ou prend parti — clair,
+              sombre, avec la teinte d’accent que vous voulez.
+            </p>
+            <ul class="chapter-list">
+              <li><strong>Palette</strong> — une seule entrée pour naviguer, chercher, agir.</li>
+              <li><strong>Thème</strong> — clair, sombre, système, sans redémarrage.</li>
+              <li><strong>Teinte</strong> — indigo, ardoise, sable : toute la barre suit.</li>
+            </ul>
+            <a class="text-link" href="/aide/#raccourcis">
+              Tous les raccourcis
+              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </a>
+          </div>
+
+          <div class="chapter-pair">
+            <figure class="chapter-shot">
+              <picture>
+                <source
+                  type="image/avif"
+                  srcset="
+                    /captures/palette-720.avif   720w,
+                    /captures/palette-1080.avif 1080w,
+                    /captures/palette.avif      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                />
+                <img
+                  src="/captures/palette-1080.webp"
+                  srcset="
+                    /captures/palette-720.webp   720w,
+                    /captures/palette-1080.webp 1080w,
+                    /captures/palette.webp      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="La palette de commande de Azimut ouverte au-dessus de l’accueil : champs de recherche, actions récentes et suggestions."
+                />
+              </picture>
+              <figcaption>La palette, par-dessus l’accueil.</figcaption>
+            </figure>
+
+            <figure class="chapter-shot chapter-shot-small">
+              <picture>
+                <source
+                  type="image/avif"
+                  srcset="
+                    /captures/apparence-720.avif   720w,
+                    /captures/apparence-1080.avif 1080w,
+                    /captures/apparence.avif      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                />
+                <img
+                  src="/captures/apparence-1080.webp"
+                  srcset="
+                    /captures/apparence-720.webp   720w,
+                    /captures/apparence-1080.webp 1080w,
+                    /captures/apparence.webp      1440w
+                  "
+                  sizes="(max-width: 900px) calc(100vw - 32px), 700px"
+                  width="1440"
+                  height="900"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Les réglages d’apparence : aperçu de l’accueil, teinte indigo, et les trois modes clair, sombre et système."
+                />
+              </picture>
+              <figcaption>Apparence : mode et teinte, prévisualisés.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ce que le navigateur règle, en une phrase par carte. -->
+      <section class="features reveal" aria-labelledby="features-title">
+        <div class="shell">
+          <header class="sec-head">
+            <p class="sec-index">Le reste du temps</p>
+            <h2 class="sec-title" id="features-title">Réglé pour travailler, pas pour configurer.</h2>
+          </header>
+
+          <ul class="feature-grid">
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-books" /></svg></span>
+              <h3>Onglets verticaux</h3>
+              <p>
+                Les titres se lisent en entier, les dossiers se plient, l’adresse reste au-dessus.
+                La bande ne rétrécit jamais jusqu’à l’icône.
+              </p>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-globe" /></svg></span>
+              <h3>Espaces isolés</h3>
+              <p>
+                Travail, personnel, études : chacun ses cookies, sa teinte, ses sites épinglés, son
+                historique. Deux comptes sur le même site, sans fenêtre privée.
+              </p>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-note" /></svg></span>
+              <h3>Notes et surlignages</h3>
+              <p>
+                Une note par page, ancrée au passage, lue et écrite en fichiers sur le disque — pas
+                dans un compte.
+              </p>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-lock" /></svg></span>
+              <h3>Bouclier</h3>
+              <p>
+                Les requêtes arrêtées sont comptées dans la barre ; traduction, épingle et actions du
+                site vivent au même endroit.
+              </p>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-command" /></svg></span>
+              <h3>Agent en fil</h3>
+              <p>
+                L’agent suit la page dans un fil latéral, sans masquer le travail en cours. Il ne
+                part que sur demande, et avec votre clé.
+              </p>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true"><svg class="ico"><use href="#i-arrow" /></svg></span>
+              <h3>Coup d’œil</h3>
+              <p>
+                Un lien s’ouvre dans une carte posée sur la page : épingler, scinder, ouvrir. La page
+                de départ reste au premier plan.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Sous le capot : d’où vient le fichier, et ce qu’il emporte. -->
+      <section class="under reveal" id="capot" aria-labelledby="capot-title">
+        <div class="shell">
+          <header class="sec-head">
+            <p class="sec-index">Sous le capot</p>
+            <h2 class="sec-title" id="capot-title">Un navigateur, un dossier, aucun service.</h2>
+            <p class="sec-lede">
+              Azimut est une application Electron : Chromium pour rendre les pages, et du code à nous
+              autour. Tout ce qui est gardé l’est dans un dossier sur l’appareil.
+            </p>
+          </header>
+
+          <ul class="capot-grid">
+            <li class="capot-card">
+              <p class="capot-kicker">Moteur</p>
+              <p class="capot-title">Electron · Chromium</p>
+              <p>
+                Les pages sont rendues par Chromium, comme dans Chrome ou Edge. Les gestes, les
+                raccourcis et la barre sont ceux d’Azimut.
+              </p>
+            </li>
+            <li class="capot-card">
+              <p class="capot-kicker">Filtre</p>
+              <p class="capot-title">Une liste native en Rust</p>
+              <p>
+                Le blocage des traqueurs s’exécute dans un module compilé, hors du JavaScript de
+                l’interface : la liste reste sur l’appareil, les compteurs aussi.
+              </p>
+            </li>
+            <li class="capot-card">
+              <p class="capot-kicker">Données</p>
+              <p class="capot-title">Un fichier <code>vela.json</code></p>
+              <p>
+                Espaces, onglets, favoris, historique et réglages dans un seul fichier lisible. Effacer
+                le dossier efface tout ; rien n’en est copié ailleurs.
+              </p>
+            </li>
+            <li class="capot-card">
+              <p class="capot-kicker">Licence</p>
+              <p class="capot-title">MIT, sans palier</p>
+              <p>
+                Le code est public, les builds sont les mêmes pour tout le monde. Pas d’édition
+                « pro », pas de fonction réservée à un abonnement.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Les trois zéros, puis le clavier. -->
+      <section class="ledger reveal" aria-label="Ce que Azimut ne fait pas">
         <div class="shell ledger-grid">
           <div class="fact">
             <b>0</b>
@@ -289,218 +700,12 @@
         </div>
       </section>
 
-      <!-- Trois gestes, chacun montré sur l’application réelle. -->
-      <section class="story" id="gestes" aria-labelledby="gestes-title">
+      <section class="shortcuts reveal" id="raccourcis" aria-labelledby="keys-title">
         <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">01 — 03</p>
-            <h2 class="chapter-title" id="gestes-title">Trois gestes, et le reste s’efface.</h2>
-            <p class="chapter-lede">
-              Chaque capture vient de l’application, sans maquette. Les raccourcis suivent votre
-              système :
-            </p>
-            <div
-              class="keys-switch"
-              data-keys-switch
-              role="group"
-              aria-label="Afficher les raccourcis pour"
-            >
-              <button type="button" data-os="mac" aria-pressed="true">macOS</button>
-              <button type="button" data-os="win" aria-pressed="false">Windows</button>
-              <button type="button" data-os="linux" aria-pressed="false">Linux</button>
-            </div>
-          </header>
-
-          <article class="row">
-            <figure class="row-shot">
-              <picture>
-                <source
-                  type="image/avif"
-                  srcset="
-                    /captures/espaces-720.avif   720w,
-                    /captures/espaces-1080.avif 1080w,
-                    /captures/espaces.avif      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                />
-                <img
-                  src="/captures/espaces-1080.webp"
-                  srcset="
-                    /captures/espaces-720.webp   720w,
-                    /captures/espaces-1080.webp 1080w,
-                    /captures/espaces.webp      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                  width="1440"
-                  height="900"
-                  loading="lazy"
-                  decoding="async"
-                  alt="Fenêtre de création d’espace : nom « Recherche », choix d’un point de départ (Travail, Vie personnelle, Gaming, Études, Développement, Cinéma), teinte et ambiance, et l’aperçu de l’espace à droite."
-                />
-              </picture>
-            </figure>
-            <div class="row-copy">
-              <p class="row-index">01</p>
-              <h3>Un espace, une session</h3>
-              <p>
-                Chaque espace garde ses cookies, son avatar, sa teinte et sa barre de sites épinglés.
-                Ses onglets se mettent de côté sous un nom et se rouvrent intacts. Deux comptes sur le
-                même site, sans fenêtre privée.
-              </p>
-              <p class="keys">
-                <kbd data-key="mod+k">⌘K</kbd>
-                <span>puis « Nouvel espace »</span>
-              </p>
-            </div>
-          </article>
-
-          <article class="row row-flip">
-            <figure class="row-shot">
-              <picture>
-                <source
-                  type="image/avif"
-                  srcset="
-                    /captures/coup-d-oeil-720.avif   720w,
-                    /captures/coup-d-oeil-1080.avif 1080w,
-                    /captures/coup-d-oeil.avif      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                />
-                <img
-                  src="/captures/coup-d-oeil-1080.webp"
-                  srcset="
-                    /captures/coup-d-oeil-720.webp   720w,
-                    /captures/coup-d-oeil-1080.webp 1080w,
-                    /captures/coup-d-oeil.webp      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                  width="1440"
-                  height="900"
-                  loading="lazy"
-                  decoding="async"
-                  alt="Carte du coup d’œil posée au-dessus de l’accueil de Azimut : en-tête avec le domaine de la page, action Épingler, page affichée, et pied « Depuis Personnel · aucun onglet créé » avec Scindée et Ouvrir."
-                />
-              </picture>
-            </figure>
-            <div class="row-copy">
-              <p class="row-index">02</p>
-              <h3>Un coup d’œil</h3>
-              <p>
-                Un lien s’ouvre dans une carte posée sur la page en cours : sa page, son adresse, et
-                trois actions — épingler, scinder, ouvrir. La carte emprunte la session de l’espace ;
-                la page reste au premier plan.
-              </p>
-              <p class="keys">
-                <kbd data-key="mod+alt+n">⌘⌥N</kbd>
-                <span>ou <kbd data-key="mod+alt">⌘⌥</kbd> + clic</span>
-              </p>
-            </div>
-          </article>
-
-          <article class="row">
-            <figure class="row-shot">
-              <picture>
-                <source
-                  type="image/avif"
-                  srcset="
-                    /captures/atelier-720.avif   720w,
-                    /captures/atelier-1080.avif 1080w,
-                    /captures/atelier.avif      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                />
-                <img
-                  src="/captures/atelier-1080.webp"
-                  srcset="
-                    /captures/atelier-720.webp   720w,
-                    /captures/atelier-1080.webp 1080w,
-                    /captures/atelier.webp      1440w
-                  "
-                  sizes="(max-width: 820px) calc(100vw - 40px), 620px"
-                  width="1440"
-                  height="900"
-                  loading="lazy"
-                  decoding="async"
-                  alt="Tunnel de recherche de Azimut : sujet « Comparer les hébergeurs d’images libres », deux angles, cartes des pages retenues avec leur domaine, légende des types de cartes et source écartée par l’entonnoir."
-                />
-              </picture>
-            </figure>
-            <div class="row-copy">
-              <p class="row-index">03</p>
-              <h3>Un tunnel de recherche</h3>
-              <p>
-                Le mode Atelier descend d’un sujet vers ses angles, puis vers des pages réellement
-                récupérées, avec leurs contradictions — et la source écartée, nommée.
-              </p>
-              <p class="keys">
-                <kbd data-key="mod+shift+a">⌘⇧A</kbd>
-              </p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- Ce que le navigateur règle, en une phrase par carte. -->
-      <section class="cards-section" aria-labelledby="regle-title">
-        <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Le reste du temps</p>
-            <h2 class="chapter-title" id="regle-title">Réglé pour travailler, pas pour configurer.</h2>
-          </header>
-
-          <ul class="cards">
-            <li class="card">
-              <h3>Onglets verticaux</h3>
-              <p>
-                Les titres se lisent en entier, les dossiers se plient, l’adresse reste au-dessus. La
-                bande d’onglets ne rétrécit jamais jusqu’à l’icône.
-              </p>
-            </li>
-            <li class="card">
-              <h3>Espaces isolés</h3>
-              <p>
-                Travail, personnel, études : chacun son jeu de cookies, sa teinte, ses sites épinglés,
-                son historique. Un glissement d’un espace à l’autre.
-              </p>
-            </li>
-            <li class="card">
-              <h3>Bibliothèque locale</h3>
-              <p>
-                Marque-pages, téléchargements et historique dans une seule feuille, gardée dans le
-                fichier de l’espace — sans compte, sans synchronisation.
-              </p>
-            </li>
-            <li class="card">
-              <h3>Notes et surlignages locaux</h3>
-              <p>
-                Une note par page, ancrée au passage, lue et écrite en fichiers sur votre disque — pas
-                dans un compte.
-              </p>
-            </li>
-            <li class="card">
-              <h3>Bouclier</h3>
-              <p>
-                Les requêtes arrêtées sont comptées dans la barre. Traduction, épingle et actions du
-                site vivent dans la même barre.
-              </p>
-            </li>
-            <li class="card">
-              <h3>Agent en fil</h3>
-              <p>
-                L’agent suit la carte dans un fil latéral, sans masquer le tunnel ni ses sources. Il
-                ne part que sur votre demande, et avec votre clé.
-              </p>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="shortcuts-section" id="raccourcis" aria-labelledby="keys-title">
-        <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Clavier</p>
-            <h2 class="chapter-title" id="keys-title">Les gestes qu’on répète cent fois.</h2>
-            <p class="chapter-lede">
+          <header class="sec-head">
+            <p class="sec-index">Clavier</p>
+            <h2 class="sec-title" id="keys-title">Les gestes qu’on répète cent fois.</h2>
+            <p class="sec-lede">
               Mêmes combinaisons sur les trois systèmes : le sélecteur les traduit. La table
               complète, avec le zoom et l’impression, vit dans <a href="/aide/#raccourcis">l’aide</a>.
             </p>
@@ -569,14 +774,14 @@
         </div>
       </section>
 
-      <section class="privacy-section" aria-labelledby="privacy-title">
+      <section class="privacy reveal" aria-labelledby="privacy-title">
         <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Confidentialité</p>
-            <h2 class="chapter-title" id="privacy-title">Ce qui reste ici, ce qui sort.</h2>
-            <p class="chapter-lede">
-              Zéro compte, zéro serveur Azimut, zéro mesure — puis la liste honnête des sorties réseau.
-              Chaque flux est décrit dans la page Confidentialité.
+          <header class="sec-head">
+            <p class="sec-index">Confidentialité</p>
+            <h2 class="sec-title" id="privacy-title">Ce qui reste ici, ce qui sort.</h2>
+            <p class="sec-lede">
+              Zéro compte, zéro serveur Azimut, zéro mesure — puis la liste honnête des sorties
+              réseau. Chaque flux est décrit dans la page Confidentialité.
             </p>
           </header>
 
@@ -602,14 +807,12 @@
               <ul>
                 <li class="out">Météo : la ville saisie, puis ses coordonnées, si vous l’activez</li>
                 <li class="out">Moteur de recherche : la recherche validée, vers le moteur choisi</li>
-                <li class="out">
-                  Atelier : la requête et les pages citées, quand vous lancez un tunnel
-                </li>
+                <li class="out">Atelier : la requête et les pages citées, quand vous lancez un tunnel</li>
                 <li class="out">Pages et icônes : vers les sites que vous ouvrez</li>
                 <li class="out">Mises à jour : la version installée et la plateforme</li>
                 <li class="out">
-                  Modèle : onglets joints, texte d’une note, bulles d’une planche ou audio, sur
-                  votre demande et avec une clé
+                  Modèle : onglets joints, texte d’une note, bulles d’une planche ou audio, sur votre
+                  demande et avec une clé
                 </li>
               </ul>
               <p class="privacy-more">
@@ -624,25 +827,25 @@
       </section>
 
       <!-- Téléchargement : les six fichiers et leurs empreintes, sans détour. -->
-      <section class="platforms-section" id="plateformes" aria-labelledby="platforms-title">
+      <section class="platforms reveal" id="plateformes" aria-labelledby="platforms-title">
         <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Plateformes</p>
-            <h2 class="chapter-title" id="platforms-title">Trois systèmes, un fichier chacun.</h2>
-            <p class="chapter-lede">
+          <header class="sec-head">
+            <p class="sec-index">Plateformes</p>
+            <h2 class="sec-title" id="platforms-title">Trois systèmes, un fichier chacun.</h2>
+            <p class="sec-lede">
               Les mêmes fonctions partout ; seul l’emballage change. Les builds ne sont pas encore
               signés, d’où un clic de plus au premier lancement — la marche à suivre est aussi dans
               <a href="/aide/#macos">l’aide</a>.
             </p>
           </header>
 
-          <ul class="platforms">
+          <ul class="platform-list">
             <li class="platform">
               <p class="platform-name">macOS <span>Apple silicon et Intel</span></p>
               <p>
-                Un <code>.dmg</code> universel, ou les archives <code>.zip</code> arm64 et x64.
-                Sans certificat Apple : macOS 15 demande Réglages Système › Confidentialité et
-                sécurité › Ouvrir quand même ; macOS 14 et moins, un clic droit puis Ouvrir.
+                Un <code>.dmg</code> universel, ou les archives <code>.zip</code> arm64 et x64. Sans
+                certificat Apple : macOS 15 demande Réglages Système › Confidentialité et sécurité ›
+                Ouvrir quand même ; macOS 14 et moins, un clic droit puis Ouvrir.
               </p>
             </li>
             <li class="platform">
@@ -657,8 +860,8 @@
               <p class="platform-name">Linux <span>x64</span></p>
               <p>
                 Une <code>.AppImage</code> autonome, ou un paquet <code>.deb</code> pour Debian et
-                Ubuntu. L’AppImage se remplace toute seule ; le paquet <code>.deb</code> s’installe
-                à la main, avec <code>apt install ./Azimut-….deb</code>.
+                Ubuntu. L’AppImage se remplace toute seule ; le paquet <code>.deb</code> s’installe à
+                la main, avec <code>apt install ./Azimut-….deb</code>.
               </p>
             </li>
           </ul>
@@ -694,12 +897,12 @@
         </div>
       </section>
 
-      <section class="get" id="telecharger" aria-labelledby="dl-title">
+      <section class="get reveal" id="telecharger" aria-labelledby="dl-title">
         <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Télécharger</p>
-            <h2 class="chapter-title" id="dl-title">Azimut 0.3.49, pour les trois plateformes.</h2>
-            <p class="chapter-lede">
+          <header class="sec-head">
+            <p class="sec-index">Télécharger</p>
+            <h2 class="sec-title" id="dl-title">Azimut 0.3.49, pour les trois plateformes.</h2>
+            <p class="sec-lede">
               Un fichier par plateforme, une empreinte SHA-256 écrite en entier pour chacun. Vous
               pouvez la comparer à la main avant d’ouvrir le fichier.
             </p>
@@ -754,15 +957,15 @@
                 </a>
                 <p class="dl-file">
                   <code data-platform-file>Azimut-0.3.49-universal.dmg</code>
-                  <span data-platform-size> · 224,4 Mo</span>
+                  <span data-platform-size> · 224,9 Mo</span>
                 </p>
               </div>
 
               <p class="dl-warn">
                 <svg class="ico" aria-hidden="true"><use href="#i-warning" /></svg>
                 <span>
-                  <strong>Builds non signés.</strong> Le premier lancement demande un clic de plus :
-                  la consigne est sous chaque fichier, le pas-à-pas dans l’<a href="/aide/">aide</a>.
+                  <strong>Builds non signés.</strong> Le premier lancement demande un clic de plus : la
+                  consigne est sous chaque fichier, le pas-à-pas dans l’<a href="/aide/">aide</a>.
                 </span>
               </p>
             </div>
@@ -799,8 +1002,8 @@
                       </button>
                     </div>
                     <p class="dl-how">
-                      Réglages Système › Confidentialité et sécurité › « Ouvrir quand même » (macOS
-                      15 et plus) ; clic droit puis « Ouvrir » (macOS 14 et moins).
+                      Réglages Système › Confidentialité et sécurité › « Ouvrir quand même » (macOS 15
+                      et plus) ; clic droit puis « Ouvrir » (macOS 14 et moins).
                     </p>
                   </li>
                   <li class="dl-row" data-file="Azimut-0.3.49-arm64.dmg">
@@ -850,8 +1053,8 @@
                       </button>
                     </div>
                     <p class="dl-how">
-                      Aucune vraie machine Intel n’a encore été essayée : le DMG universel est le
-                      choix sûr.
+                      Aucune vraie machine Intel n’a encore été essayée : le DMG universel est le choix
+                      sûr.
                     </p>
                   </li>
                 </ul>
@@ -928,8 +1131,8 @@
                       </button>
                     </div>
                     <p class="dl-how">
-                      <code>chmod +x</code>, puis lancer ; <code>libfuse2</code> si l’AppImage
-                      refuse de démarrer.
+                      <code>chmod +x</code>, puis lancer ; <code>libfuse2</code> si l’AppImage refuse
+                      de démarrer.
                     </p>
                   </li>
                   <li class="dl-row" data-file="Azimut-0.3.49-amd64.deb">
@@ -953,8 +1156,8 @@
                       </button>
                     </div>
                     <p class="dl-how">
-                      <code>sudo apt install ./le-fichier.deb</code> ; la mise à jour du paquet se
-                      fait ensuite à la main.
+                      <code>sudo apt install ./le-fichier.deb</code> ; la mise à jour du paquet se fait
+                      ensuite à la main.
                     </p>
                   </li>
                 </ul>
@@ -974,20 +1177,20 @@
         </div>
       </section>
 
-      <section class="faq" id="questions" aria-labelledby="faq-title">
+      <section class="faq reveal" id="questions" aria-labelledby="faq-title">
         <div class="shell">
-          <header class="chapter">
-            <p class="chapter-index">Questions fréquentes</p>
-            <h2 class="chapter-title" id="faq-title">Ce qu’on demande avant d’installer.</h2>
+          <header class="sec-head">
+            <p class="sec-index">Questions fréquentes</p>
+            <h2 class="sec-title" id="faq-title">Ce qu’on demande avant d’installer.</h2>
           </header>
 
           <div class="faq-list">
             <details class="qa">
               <summary>Faut-il créer un compte ?</summary>
               <p>
-                Non. Il n’y a ni inscription, ni synchronisation, ni serveur Azimut : les espaces,
-                les onglets, les favoris et les réglages vivent dans un fichier sur votre disque, et
-                les pages gardées s’exportent en HTML depuis Réglages › Navigation.
+                Non. Il n’y a ni inscription, ni synchronisation, ni serveur Azimut : les espaces, les
+                onglets, les favoris et les réglages vivent dans un fichier sur votre disque, et les
+                pages gardées s’exportent en HTML depuis Réglages › Navigation.
               </p>
             </details>
             <details class="qa">
@@ -995,44 +1198,43 @@
               <p>
                 Dans le dossier de données de l’application : un fichier <code>vela.json</code> pour
                 les espaces, les onglets, les favoris, l’historique et les réglages, et des fichiers
-                pour les notes et les surlignages. Les clés API vont au trousseau du système.
-                Effacer ce dossier efface tout ; rien n’en est copié ailleurs.
+                pour les notes et les surlignages. Les clés API vont au trousseau du système. Effacer
+                ce dossier efface tout ; rien n’en est copié ailleurs.
               </p>
             </details>
             <details class="qa">
               <summary>Qu’est-ce qui sort de la machine ?</summary>
               <p>
-                Les pages que vous ouvrez, la recherche quand vous la lancez, la météo de l’accueil
-                si elle est activée, et la vérification des mises à jour. Aucune mesure d’usage,
-                aucun compte. Le détail requête par requête est dans
+                Les pages que vous ouvrez, la recherche quand vous la lancez, la météo de l’accueil si
+                elle est activée, et la vérification des mises à jour. Aucune mesure d’usage, aucun
+                compte. Le détail requête par requête est dans
                 <a href="/confidentialite/">la page confidentialité</a>.
               </p>
             </details>
             <details class="qa">
               <summary>L’agent lit-il tout ce qui est ouvert ?</summary>
               <p>
-                Non. Il ne lit que la page que vous joignez, au moment où vous le demandez. Sans
-                clé, il répond en démo locale, sur l’appareil ; avec une clé, le contenu de la page
-                jointe part vers le modèle choisi. Les modèles et ce qu’ils reçoivent sont détaillés
-                dans <a href="/confidentialite/#modeles">la confidentialité</a>.
+                Non. Il ne lit que la page que vous joignez, au moment où vous le demandez. Sans clé,
+                il répond en démo locale, sur l’appareil ; avec une clé, le contenu de la page jointe
+                part vers le modèle choisi. Les modèles et ce qu’ils reçoivent sont détaillés dans
+                <a href="/confidentialite/#modeles">la confidentialité</a>.
               </p>
             </details>
             <details class="qa">
               <summary>Comment se passent les mises à jour ?</summary>
               <p>
                 L’app vérifie les versions peu après le démarrage, puis toutes les trois heures, au
-                retour de veille et au retour du focus. Windows installe à la fermeture, l’AppImage
-                se remplace au redémarrage, un <code>.deb</code> s’installe à la main. Sur macOS,
-                un bundle non signé ne se remplace pas tout seul : le <code>.dmg</code> se
-                retélécharge.
+                retour de veille et au retour du focus. Windows installe à la fermeture, l’AppImage se
+                remplace au redémarrage, un <code>.deb</code> s’installe à la main. Sur macOS, un
+                bundle non signé ne se remplace pas tout seul : le <code>.dmg</code> se retélécharge.
               </p>
             </details>
             <details class="qa">
               <summary>Puis-je me connecter à Google ?</summary>
               <p>
-                Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. La connexion
-                passe par le navigateur système, et Azimut n’importe jamais de cookies ; les
-                favoris, eux, s’importent depuis Chrome ou Safari.
+                Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. La connexion passe
+                par le navigateur système, et Azimut n’importe jamais de cookies ; les favoris, eux,
+                s’importent depuis Chrome ou Safari.
                 <a href="/aide/#google">La marche à suivre</a> tient en trois lignes.
               </p>
             </details>
@@ -1040,17 +1242,24 @@
         </div>
       </section>
 
-      <section class="closing" aria-labelledby="closing-title">
+      <section class="closing reveal" aria-labelledby="closing-title">
         <div class="shell">
+          <p class="sec-index">Et maintenant</p>
           <h2 id="closing-title">Il n’y a pas de compte à créer.</h2>
           <p>
             Le fichier s’installe ou se lance selon la plateforme, et Azimut se souvient de vous sur
             cet appareil seulement.
           </p>
-          <a class="btn btn-solid btn-big" href="#telecharger" data-platform-cta>
-            <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
-            <span data-platform-label>Télécharger</span>
-          </a>
+          <div class="closing-actions">
+            <a class="btn btn-solid btn-big" href="#telecharger" data-platform-cta>
+              <svg class="ico" aria-hidden="true"><use href="#i-download" /></svg>
+              <span data-platform-label>Télécharger</span>
+            </a>
+            <a class="btn btn-ghost btn-big" href="/navigateur/">
+              Lire les chapitres
+              <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </a>
+          </div>
           <p class="closing-fine">
             Gratuit · MIT ·
             <a href="/aide/#mises-a-jour">Mises à jour : ce qui est automatique par plateforme</a>
@@ -1103,5 +1312,6 @@
     </footer>
 
     <script src="/site.js" defer></script>
+    <script src="/home.js" defer></script>
   </body>
 </html>
