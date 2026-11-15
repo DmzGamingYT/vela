@@ -44,7 +44,9 @@
 .rail-modes {
   margin-top: 0;
   width: 100%;
-  padding: 2px 0 8px;
+  /* 3 px de fond + les 2 px du filet : 5 px sous Atelier, exactement ce que
+     le filet laisse au-dessus de la note. */
+  padding: 2px 0 3px;
 }
 
 .rail-spaces {
