@@ -1,10 +1,13 @@
-import type { CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import type { SpaceBackground, SpaceShortcut } from '@shared/space'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
 import SpaceAvatar from './SpaceAvatar'
 import SpaceAvatarEditor from './SpaceAvatarEditor'
 import { greeting } from '../../lib/format'
+import { weeklyActivity, weekdayInitials } from '../../lib/activity'
+import { useBrowser } from '../../store/browser'
+import ActivityCurve from '../ActivityCurve'
 
 export type PreviewMode = 'light' | 'dark'
 
@@ -21,6 +24,8 @@ interface SpacePreviewProps {
   /** Sites proposés quand le profil n’en a encore aucun. */
   suggestedShortcuts: SpaceShortcut[]
   iconSpaceId: string | undefined
+  /** Profil modifié : sa courbe d’activité réelle s’affiche sous l’aperçu. */
+  spaceId?: string
   tintLabel: string
   ambienceLabel: string
   onAcceptPhoto(avatar: string): void
@@ -49,6 +54,7 @@ export default function SpacePreview({
   shortcuts,
   suggestedShortcuts,
   iconSpaceId,
+  spaceId,
   tintLabel,
   ambienceLabel,
   onAcceptPhoto,
@@ -57,6 +63,16 @@ export default function SpacePreview({
   const pinned = shortcuts.length > 0
   const suggested = pinned ? [] : suggestedShortcuts.slice(0, 3)
   const shown = pinned ? shortcuts.slice(0, 4) : suggested
+  // Tableau stable tant que l'historique n'est pas chargé : sinon le store
+  // rend un nouveau `[]` à chaque lecture et relance le rendu en boucle.
+  const history = useBrowser((state) => state.view?.history)
+  const [now] = useState(() => Date.now())
+  const activity = useMemo(
+    () => weeklyActivity(history ?? [], spaceId ?? null, now),
+    [history, spaceId, now]
+  )
+  const activityTotal = activity.reduce((total, value) => total + value, 0)
+  const activityDays = useMemo(() => weekdayInitials(now), [now])
   const siteFact =
     shortcuts.length === 0
       ? 'Aucun site épinglé'
@@ -221,7 +237,7 @@ export default function SpacePreview({
               <ul className="preview-facts">
                 <li className="preview-fact">
                   <i aria-hidden="true" />
-                  Cookies et sessions isolés
+                  Cookies isolés
                 </li>
                 <li className="preview-fact">
                   <i aria-hidden="true" />
@@ -232,6 +248,20 @@ export default function SpacePreview({
                   {tintLabel} <span>· {ambienceLabel}</span>
                 </li>
               </ul>
+              {spaceId && (
+                <div className="preview-activity preview-activity--foot">
+                  <span className="preview-activity-head">
+                    <span>Visites · 7 jours</span>
+                    <strong>{activityTotal}</strong>
+                  </span>
+                  <ActivityCurve values={activity} />
+                  <span className="preview-activity-days" aria-hidden="true">
+                    {activityDays.map((day, index) => (
+                      <i key={`${day}-${index}`}>{day}</i>
+                    ))}
+                  </span>
+                </div>
+              )}
               <p className="preview-note">
                 Seul cet aperçu prend la teinte et l’ambiance : le reste de la fenêtre garde le
                 papier neutre.

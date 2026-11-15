@@ -8,9 +8,10 @@ import SpaceAvatar from '../space/SpaceAvatar'
 /**
  * Rail des espaces.
  *
- * Trois étages : la bascule de la barre latérale dans la rangée du titre, les
- * deux modes puis les outils juste sous elle, les espaces et « + » en bas. Réglages ferme la
- * colonne sous le « + » : la barre latérale n’a donc plus de carte pour lui.
+ * Trois étages : la bascule de la barre latérale et les deux modes en haut,
+ * les profils au milieu, puis la rangée d’outils et Réglages en bas. Les
+ * outils vivent avec les profils, pas avec les modes : c’est là qu’on les
+ * cherche une fois la page ouverte.
  *
  * La colonne est détachée de 8 px du bord de la fenêtre : l’indicateur de
  * l’espace actif, posé sur le bord extérieur, n’est plus rogné.
@@ -28,8 +29,8 @@ export default function SpaceRail() {
   const toggleSidebar = useBrowser((state) => state.toggleSidebar)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
-  // Les trois outils ont quitté le pied de la colonne : la recherche d’onglets
-  // reste seule en bas, les raccourcis vivent ici, avec la bascule et Réglages.
+  // Les trois outils ferment la colonne, sous les profils : la recherche
+  // d’onglets reste seule dans le pied de la barre latérale.
   const notesOpen = useBrowser((state) => state.notesOpen)
   const agentOpen = useBrowser((state) => state.agentOpen)
   const toggleNotes = useBrowser((state) => state.toggleNotes)
@@ -92,6 +93,35 @@ export default function SpaceRail() {
         </button>
       </div>
 
+      <div className="rail-spaces">
+        {spaces.map((space) => {
+          const active = space.id === activeSpaceId
+          return (
+            <button
+              key={space.id}
+              type="button"
+              className="space-chip"
+              data-active={active}
+              data-avatar="true"
+              style={{ '--space': space.color } as CSSProperties}
+              onClick={() => activateSpace(space.id)}
+              title={space.name}
+              onDoubleClick={() => openSpaceDialog(space.id)}
+            >
+              <SpaceAvatar space={space} size={36} />
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          className="space-chip space-add"
+          onClick={() => openSpaceDialog()}
+          title="Nouveau profil"
+        >
+          <Icon name="plus" size={16} />
+        </button>
+      </div>
+
       <div className="rail-tools" role="group" aria-label="Raccourcis">
         <span className="rail-tool-sep" aria-hidden="true" />
         {/* Les outils d’abord : ce sont eux qu’on ouvre en lisant une page. */}
@@ -148,35 +178,6 @@ export default function SpaceRail() {
           )}
           <Icon name="list" size={17} />
           {downloads.length > 0 && <span className="rail-tool-count">{downloads.length}</span>}
-        </button>
-      </div>
-
-      <div className="rail-spaces">
-        {spaces.map((space) => {
-          const active = space.id === activeSpaceId
-          return (
-            <button
-              key={space.id}
-              type="button"
-              className="space-chip"
-              data-active={active}
-              data-avatar="true"
-              style={{ '--space': space.color } as CSSProperties}
-              onClick={() => activateSpace(space.id)}
-              title={space.name}
-              onDoubleClick={() => openSpaceDialog(space.id)}
-            >
-              <SpaceAvatar space={space} size={36} />
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          className="space-chip space-add"
-          onClick={() => openSpaceDialog()}
-          title="Nouveau profil"
-        >
-          <Icon name="plus" size={16} />
         </button>
       </div>
 

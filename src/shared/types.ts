@@ -566,7 +566,6 @@ export type ShortcutAction =
   | 'notes-search-next'
   | 'agent'
   | 'work'
-  | 'sessions'
   | 'settings'
   | 'sidebar'
   | 'reload'

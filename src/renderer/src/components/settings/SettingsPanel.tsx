@@ -5,6 +5,7 @@ import SavedIndicator from '../SavedIndicator'
 import AmbienceScene from '../AmbienceScene'
 import AppearancePage from './AppearancePage'
 import NavigationPage from './NavigationPage'
+import ExtensionsPage from './ExtensionsPage'
 import PrivacyPage from './PrivacyPage'
 import { resolveMode, resolveMotion,  resolveAccent,
   resolveThemeId, type HomeBackground } from '@shared/theme'
@@ -33,6 +34,7 @@ const NAV: { group: string; items: { id: Page; label: string; icon: IconName }[]
     items: [
       { id: 'appearance', label: 'Apparence', icon: 'palette' },
       { id: 'navigation', label: 'Navigation', icon: 'compass' },
+      { id: 'extensions', label: 'Extensions', icon: 'code' },
       { id: 'privacy', label: 'Confidentialité', icon: 'shield' }
     ]
   },
@@ -58,6 +60,10 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   navigation: {
     title: 'Navigation',
     lede: 'Le moteur de recherche, la page de démarrage, les favoris, l’historique et les téléchargements.'
+  },
+  extensions: {
+    title: 'Extensions',
+    lede: 'Ce qui pourrait compléter Vela, classé par usage. Aucune extension n’est installée depuis cet écran.'
   },
   privacy: {
     title: 'Confidentialité',
@@ -263,6 +269,9 @@ export default function SettingsPanel() {
             initialTab={tabRequest}
           />
         )
+
+      case 'extensions':
+        return <ExtensionsPage />
 
       case 'privacy':
         return (

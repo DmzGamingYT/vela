@@ -3,7 +3,6 @@ import type { AgentActionEntry } from '@shared/agentLoop'
 
 export type Overlay =
   | 'command'
-  | 'sessions'
   | 'settings'
   | 'space'
   | 'processes'

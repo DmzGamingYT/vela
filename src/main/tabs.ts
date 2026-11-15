@@ -1419,8 +1419,6 @@ export class TabManager {
       action = 'reopen-tab'
     } else if (key === 'd') {
       action = 'split'
-    } else if (key === 'b') {
-      action = 'sessions'
     } else if (key === 'a') {
       action = 'work'
     } else if (key === 'o') {

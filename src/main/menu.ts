@@ -107,7 +107,6 @@ export function buildMenuTemplate(
         item('Agent', 'agent', send, APP_SHORTCUTS.agent.accelerator),
         item('Protection de la page', 'shield', send, APP_SHORTCUTS.shield.accelerator),
         item('Atelier', 'work', send, 'CmdOrCtrl+Shift+A'),
-        item('Sessions', 'sessions', send, 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
         item('Masquer la barre latérale', 'sidebar', send, 'CmdOrCtrl+\\'),
         { type: 'separator' },

@@ -1,44 +1,6 @@
 /* Tranche 49 — barre latérale, deuxième passe.
-   Carte Sessions en une ligne, onglet actif plus sobre, ligne de chargement
-   au lieu de la roue, épinglés carrés et onglets en veille rangés en fin de
-   liste. */
-
-/* ── Sessions : une ligne de 40 px ─────────────────────────────────────── */
-.sessions-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 11px;
-}
-
-.sessions-card .sessions-kicker {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.sessions-card .sessions-date {
-  margin-left: auto;
-  overflow: hidden;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--faint);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.sessions-card .sessions-arrow {
-  grid-column: auto;
-  grid-row: auto;
-  flex: 0 0 auto;
-  color: var(--muted);
-}
-
-.sessions-card:hover {
-  transform: none;
-}
+   Onglet actif plus sobre, ligne de chargement au lieu de la roue, épinglés
+   carrés et onglets en veille rangés en fin de liste. */
 
 /* ── Onglet actif : la barre reste, le reste s'efface ──────────────────── */
 .sidebar .tab-row[data-active='true'] {

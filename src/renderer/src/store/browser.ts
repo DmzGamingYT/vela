@@ -492,9 +492,6 @@ function createCoreSlice(
         case 'work':
           state.setWorkMode(state.workMode === 'work' ? 'browse' : 'work')
           break
-        case 'sessions':
-          state.setOverlay(state.overlay === 'sessions' ? null : 'sessions')
-          break
         case 'settings':
           // L'assistant de premier lancement est la seule surface tant qu'il
           // est ouvert : le menu natif ne doit pas poser les Réglages par-dessus

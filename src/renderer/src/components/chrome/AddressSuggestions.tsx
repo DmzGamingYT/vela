@@ -96,7 +96,6 @@ export default function AddressSuggestions({
                         label={row.title}
                         size={16}
                         spaceId={row.spaceId}
-                        cacheOnly
                         letter="domain"
                       />
                     )}

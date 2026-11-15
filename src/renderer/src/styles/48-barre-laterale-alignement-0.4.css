@@ -12,10 +12,6 @@
   padding: 0 16px 6px;
 }
 
-.sidebar .sessions-card {
-  margin: 4px 16px 8px;
-}
-
 /* Le filet entre sections reste (tranche 40) : seule la respiration change. */
 .sidebar .tabs-scroll > .tabs-head {
   margin-top: 2px;
@@ -74,15 +70,6 @@
 .space-head .space-name svg {
   flex: 0 0 auto;
   color: var(--muted);
-}
-
-/* ── Une carte d'action n'est pas un titre de section ──────────────────── */
-.sessions-kicker {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 12px;
-  font-weight: 560;
-  color: var(--ink);
 }
 
 /* ── Veille : plus grise, et expliquée ─────────────────────────────────── */

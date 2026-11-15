@@ -42,7 +42,6 @@
 @import './styles/27-epingles-tuiles.css';
 @import './styles/28-barre-statut.css';
 @import './styles/29-traduction.css';
-@import './styles/30-sessions.css';
 @import './styles/31-history.css';
 @import './styles/32-repli-barre-laterale.css';
 @import './styles/33-coup-d-oeil.css';
@@ -91,3 +90,4 @@
 @import './styles/80-mouvement-rail.css';
 @import './styles/81-mouvement-icones.css';
 @import './styles/82-boussole.css';
+@import './styles/83-extensions-et-courbes.css';

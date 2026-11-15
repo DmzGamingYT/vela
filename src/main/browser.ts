@@ -100,7 +100,6 @@ const UI_SHORTCUTS: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
   'settings',
   'history',
   'bookmarks',
-  'sessions',
   'notes-search'
 ])
 

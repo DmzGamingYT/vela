@@ -192,7 +192,3 @@
   opacity: 0.3;
 }
 
-/* ── Sessions : plus de date tronquée, le nombre suffit ───────────────── */
-.sessions-card .sessions-date {
-  display: none;
-}

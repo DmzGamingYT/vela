@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import {
   ambiencePreset,
   appearanceTokens,
@@ -7,6 +7,9 @@ import {
 } from '@shared/theme'
 import type { Settings, Space } from '@shared/types'
 import { greeting, weekdayLabel } from '../../lib/format'
+import { weeklyActivity, weekdayInitials } from '../../lib/activity'
+import { useBrowser } from '../../store/browser'
+import ActivityCurve from '../ActivityCurve'
 import AmbienceScene from '../AmbienceScene'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
@@ -65,6 +68,16 @@ export default function AppearancePreview({
   // impur, et l'aperçu n'a pas à changer de jour en direct.
   const [today] = useState(() => Date.now())
   const [surface, setSurface] = useState<'home' | 'profile'>('home')
+  // Un tableau stable quand l'historique n'est pas encore là : un `[]` neuf à
+  // chaque lecture de store relancerait le rendu en boucle.
+  const history = useBrowser((state) => state.view?.history)
+  // La courbe suit le profil dont on regarde l'aperçu : ses visites à lui.
+  const activity = useMemo(
+    () => weeklyActivity(history ?? [], activeSpace?.id ?? null, today),
+    [history, activeSpace?.id, today]
+  )
+  const activityTotal = activity.reduce((total, value) => total + value, 0)
+  const activityDays = useMemo(() => weekdayInitials(today), [today])
 
   const themeLabel = presetById(themeId)?.label ?? 'Personnalisé'
   const ambienceLabel = ambiencePreset(settings.ambience)?.label ?? 'Aucune'
@@ -202,7 +215,7 @@ export default function AppearancePreview({
                   />
                   <div className="pv-profile-copy">
                     <strong>{profileName}</strong>
-                    <span>{siteFact} · sessions isolées</span>
+                    <span>{siteFact} · cookies isolés</span>
                   </div>
                 </div>
                 <div className="pv-page-label">
@@ -255,7 +268,19 @@ export default function AppearancePreview({
               Ce cadre reprend la teinte et l’ambiance choisies ; le papier du reste de la fenêtre
               reste neutre.
             </p>
-            <span className="preview-legend-foot">Sessions isolées · aucun compte</span>
+            <div className="preview-activity">
+              <span className="preview-activity-head">
+                <span>Visites · 7 jours</span>
+                <strong>{activityTotal}</strong>
+              </span>
+              <ActivityCurve values={activity} />
+              <span className="preview-activity-days" aria-hidden="true">
+                {activityDays.map((day, index) => (
+                  <i key={`${day}-${index}`}>{day}</i>
+                ))}
+              </span>
+            </div>
+            <span className="preview-legend-foot">Cookies isolés · aucun compte</span>
           </aside>
         </div>
 
@@ -263,7 +288,7 @@ export default function AppearancePreview({
           <ul className="preview-facts">
             <li className="preview-fact">
               <i aria-hidden="true" />
-              Sessions isolées
+              Cookies isolés
             </li>
             <li className="preview-fact">
               <i aria-hidden="true" />

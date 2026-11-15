@@ -6,7 +6,6 @@ import type { Bookmark, TabGroup, TabView } from '@shared/types'
 import { GROUP_COLORS, GROUP_ICONS } from '@shared/groupColors'
 import { displayTitle, hostOf, isHomeUrl } from '@shared/url'
 import { shortcut } from '../../lib/format'
-import { saveSession, useSessionCount } from '../../lib/sessions'
 import { useBrowser } from '../../store/browser'
 import Favicon from '../Favicon'
 import SidebarFoot from './SidebarFoot'
@@ -72,7 +71,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
   const setOverlay = useBrowser((state) => state.setOverlay)
-  const sessionCount = useSessionCount()
   const openSpaceDialog = useBrowser((state) => state.openSpaceDialog)
   const workMode = useBrowser((state) => state.workMode)
   const newTab = useBrowser((state) => state.newTab)
@@ -820,25 +818,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     toast(`${tabs.length} onglet${tabs.length > 1 ? 's' : ''} fermé${tabs.length > 1 ? 's' : ''}`)
   }
 
-  /** Le dossier part dans Sessions tel quel, pour le rouvrir plus tard. */
-  const keepGroup = (group: TabGroup): void => {
-    const tabs = groupTabsOf(group).filter((tab) => /^https?:/i.test(tab.url))
-    if (tabs.length === 0) {
-      toast('Aucune page à garder dans ce dossier', 'error')
-      return
-    }
-    saveSession({
-      name: group.name,
-      spaceId: space.id,
-      spaceName: space.name,
-      tabs: tabs.map((tab) => ({ url: tab.url, title: tab.title }))
-    })
-    toast(`« ${group.name} » gardé dans Sessions`, 'info', {
-      label: 'Ouvrir',
-      run: () => setOverlay('sessions')
-    })
-  }
-
   const groupMenuItems = (group: TabGroup): TileMenuItem[] => [
     {
       id: 'open',
@@ -868,12 +847,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       onSelect: () => sleepGroup(group)
     },
     { id: 'close', label: 'Fermer le groupe', icon: 'close', onSelect: () => closeGroup(group) },
-    {
-      id: 'keep',
-      label: 'Garder dans Sessions',
-      icon: 'clock',
-      onSelect: () => keepGroup(group)
-    },
     { id: 'sep', label: '', separator: true },
     {
       id: 'delete',
@@ -936,22 +909,6 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
           <Icon name="chevron-down" size={13} />
         </button>
       </div>
-
-      <button type="button" className="sessions-card" onClick={() => setOverlay('sessions')}>
-        <span className="sessions-kicker">
-          <Icon name="clock" size={13} />
-          Sessions
-          {sessionCount > 0 && (
-            <span className="sessions-count">
-              {sessionCount}
-              <span className="sr-only"> gardée{sessionCount > 1 ? 's' : ''}</span>
-            </span>
-          )}
-        </span>
-        <span className="sessions-arrow">
-          <Icon name="arrow-right" size={14} />
-        </span>
-      </button>
 
       {workMode === 'work' ? (
         <TunnelSidebar spaceId={space.id} />

@@ -54,7 +54,6 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
       ['Agent', shortcut(APP_SHORTCUTS.agent.key)],
       ['Protection de la page', shortcut(APP_SHORTCUTS.shield.key)],
       ['Atelier', shortcut('⇧A')],
-      ['Sessions', shortcut('⇧B')],
       ['Replier la barre latérale', shortcut('S')],
       ['Coup d’œil', shortcut('⌥N')],
       ['Réglages', shortcut(APP_SHORTCUTS.settings.key)]

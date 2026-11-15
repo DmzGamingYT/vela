@@ -200,14 +200,6 @@ export default function CommandBar() {
         run: run(() => openAgent())
       },
       {
-        id: 'action-sessions',
-        group: 'Actions',
-        label: 'Sessions',
-        hint: shortcut('⇧B'),
-        icon: 'clock',
-        run: run(() => setOverlay('sessions'))
-      },
-      {
         id: 'action-group-site',
         group: 'Actions',
         label: 'Ranger les onglets par site',

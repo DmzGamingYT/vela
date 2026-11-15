@@ -4,7 +4,6 @@ import { engineLabel, hostOf, isHomeUrl, isLoginUrl, readableTitle } from '@shar
 import { SKY_THEME, resolveThemeId } from '@shared/theme'
 import type { HistoryEntry } from '@shared/types'
 import { greeting, shortcut, weekdayLabel } from '../../lib/format'
-import { listSessions } from '../../lib/sessions'
 import { useBrowser } from '../../store/browser'
 import HomeFavorites from './HomeFavorites'
 import HomeSky from './HomeSky'
@@ -128,14 +127,10 @@ export default function StartPage({ tabId }: { tabId: string }) {
   const toast = useBrowser((state) => state.toast)
   const removeHistory = useBrowser((state) => state.removeHistory)
   const updateSettings = useBrowser((state) => state.updateSettings)
-  const activateSpace = useBrowser((state) => state.activateSpace)
   const [today] = useState(() => Date.now())
   // L'heure relative des cartes se rafraîchit toute seule : une page vue il y
   // a 59 s doit dire « 1 min » sans qu'on recharge l'accueil.
   const [now, setNow] = useState(() => Date.now())
-  // « Reprendre » : la session gardée la plus récente, sinon la dernière page
-  // de l'historique. Lue une fois au montage, comme dans le panneau Sessions.
-  const [lastSession] = useState(() => listSessions()[0] ?? null)
   const [modules, setModules] = useState<BentoModules>(readBentoModules)
   const [customizing, setCustomizing] = useState(false)
   const [menu, setMenu] = useState<{ card: RecentCard; x: number; y: number } | null>(null)
@@ -430,21 +425,8 @@ export default function StartPage({ tabId }: { tabId: string }) {
     }
   ]
 
-  // Reprendre : la session gardée la plus récente, sinon la dernière page vue.
-  const resume = async (): Promise<void> => {
-    if (lastSession) {
-      const target = view.spaces.some((item) => item.id === lastSession.spaceId)
-        ? lastSession.spaceId
-        : view.activeSpaceId
-      activateSpace(target)
-      for (const tab of lastSession.tabs) {
-        await window.vela.tabs
-          .create({ spaceId: target, url: tab.url, activate: false })
-          .catch(() => null)
-      }
-      toast(`« ${lastSession.name} » rouverte.`)
-      return
-    }
+  // Reprendre : la dernière page de l'historique du profil.
+  const resume = (): void => {
     const last = usefulHistory[0]
     if (!last) {
       toast('Rien à reprendre pour le moment.')
@@ -455,8 +437,7 @@ export default function StartPage({ tabId }: { tabId: string }) {
 
   // Le geste dit sur quoi il porte : « Reprendre YouTube » plutôt qu'un
   // « Reprendre » qui laisse deviner ce qu'on rouvre.
-  const resumeTarget =
-    lastSession?.name ?? (usefulHistory[0] ? hostOf(usefulHistory[0].url) : '')
+  const resumeTarget = usefulHistory[0] ? hostOf(usefulHistory[0].url) : ''
 
   return (
     <div
@@ -505,18 +486,11 @@ export default function StartPage({ tabId }: { tabId: string }) {
             <button
               type="button"
               className="home-resume"
-              onClick={() => void resume()}
-              title={
-                lastSession
-                  ? `Rouvrir « ${lastSession.name} » (${lastSession.tabs.length} onglets)`
-                  : 'Rouvrir la dernière page visitée'
-              }
+              onClick={resume}
+              title="Rouvrir la dernière page visitée"
             >
               <Icon name="history" size={12} />
               <span>{resumeTarget ? `Reprendre ${resumeTarget}` : 'Reprendre'}</span>
-              {lastSession ? (
-                <span className="home-resume-count">{lastSession.tabs.length}</span>
-              ) : null}
             </button>
           </div>
           {modules.weather && <HomeWeather onEditingChange={setCityEditing} />}

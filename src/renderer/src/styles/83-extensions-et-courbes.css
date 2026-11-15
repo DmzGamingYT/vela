@@ -1,0 +1,184 @@
+/* --- Courbe d'activité et catalogue d'extensions ----------------------
+   La courbe reprend l'accent de l'aperçu et reste une ligne fine : elle
+   accompagne la carte, elle ne prend pas la place du contenu. */
+
+.activity-curve {
+  display: block;
+  width: 100%;
+  height: 40px;
+  color: var(--clay);
+  overflow: visible;
+}
+
+.activity-stop-a {
+  stop-color: color-mix(in srgb, var(--clay) 30%, transparent);
+}
+
+.activity-stop-b {
+  stop-color: color-mix(in srgb, var(--clay) 0%, transparent);
+}
+
+.activity-line {
+  fill: none;
+  stroke: var(--clay);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.activity-dot {
+  fill: var(--clay);
+}
+
+.preview-activity {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.preview-activity-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.preview-activity-head strong {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-activity-days {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.preview-activity-days i {
+  font-style: normal;
+  min-width: 9px;
+  text-align: center;
+}
+
+.preview-activity--foot {
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+/* --- Extensions : un catalogue, pas une vitrine ----------------------- */
+
+.extensions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.ext-intro .appearance-note {
+  max-width: 62ch;
+}
+
+.ext-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: var(--fill);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ext-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ext-hint {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.ext-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ext-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  background: var(--surface);
+  transition:
+    border-color var(--dur-1) var(--ease-standard),
+    background var(--dur-1) var(--ease-standard);
+}
+
+.ext-card:hover {
+  border-color: var(--line);
+  background: var(--surface-raised, var(--surface));
+}
+
+.ext-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--clay) 12%, transparent);
+  color: var(--clay);
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.ext-copy strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ext-copy span {
+  display: block;
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.ext-copy p {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.ext-card .link-btn {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ext-card {
+    transition: none;
+  }
+}

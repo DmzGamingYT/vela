@@ -1,4 +1,11 @@
-export type SettingsPage = 'overview' | 'appearance' | 'navigation' | 'privacy' | 'agent' | 'system'
+export type SettingsPage =
+  | 'overview'
+  | 'appearance'
+  | 'navigation'
+  | 'extensions'
+  | 'privacy'
+  | 'agent'
+  | 'system'
 
 export interface SettingsTarget {
   page: SettingsPage
@@ -124,6 +131,13 @@ const SECTIONS: SettingsSearchEntry[] = [
     group: 'Confidentialité',
     hint: 'Chaque requête sortante, son déclencheur et ses données.',
     keywords: 'réseau flux requêtes dns audit'
+  },
+  {
+    page: 'extensions',
+    label: 'Extensions suggérées',
+    group: 'Navigation',
+    hint: 'Une sélection du Chrome Web Store, classée par usage.',
+    keywords: 'extension chrome web store bloqueur mots de passe lecture vimium dark reader'
   },
   {
     page: 'agent',

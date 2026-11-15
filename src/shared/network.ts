@@ -211,6 +211,7 @@ export const USER_OPENED_HOSTS: readonly string[] = [
   'app.slack.com',
   'calendar.google.com',
   'chatgpt.com',
+  'chromewebstore.google.com',
   'cloud.cerebras.ai',
   'console.anthropic.com',
   'console.groq.com',

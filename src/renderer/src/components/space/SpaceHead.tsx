@@ -16,7 +16,7 @@ export default function SpaceHead({ existingName, onClose }: SpaceHeadProps) {
         </p>
         <h2>{existingName ?? 'Un profil à vous.'}</h2>
         <p className="sheet-lede">
-          Ses cookies et ses sessions restent à lui : deux comptes sur le même site, sans conflit.
+          Ses cookies restent à lui : deux comptes sur le même site, sans conflit.
         </p>
       </div>
       <button

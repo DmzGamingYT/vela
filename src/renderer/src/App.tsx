@@ -24,7 +24,6 @@ const agent = differe(() => import('./components/agent/AgentCanvas'))
 const bibliotheque = differe<{ tab: LibraryTab | null }>(
   () => import('./components/panels/LibraryPanel')
 )
-const sessions = differe(() => import('./components/panels/SessionsPanel'))
 const bouclier = differe(() => import('./components/panels/ShieldPanel'))
 const palette = differe(() => import('./components/chrome/CommandBar'))
 const processus = differe(() => import('./components/panels/ProcessManager'))
@@ -33,7 +32,6 @@ const reglages = differe(() => import('./components/settings/SettingsPanel'))
 const profil = differe(() => import('./components/space/SpaceDialog'))
 const AgentCanvas = agent.Panneau
 const LibraryPanel = bibliotheque.Panneau
-const SessionsPanel = sessions.Panneau
 const ShieldPanel = bouclier.Panneau
 const CommandBar = palette.Panneau
 const ProcessManager = processus.Panneau
@@ -254,9 +252,6 @@ export default function App() {
       <>
         <Presence open={overlay === 'command'} exit={!overlay}>
           <CommandBar />
-        </Presence>
-        <Presence open={overlay === 'sessions'} exit={!overlay}>
-          <SessionsPanel />
         </Presence>
         <Presence open={overlay === 'settings'} exit={!overlay}>
           <SettingsPanel />

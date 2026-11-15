@@ -671,6 +671,7 @@ export default function SpaceDialog() {
             shortcuts={shortcuts}
             suggestedShortcuts={previewSuggestions}
             iconSpaceId={iconSpaceId}
+            spaceId={existing?.id}
             tintLabel={tintLabel}
             ambienceLabel={ambienceLabel}
             onAcceptPhoto={acceptPhoto}
