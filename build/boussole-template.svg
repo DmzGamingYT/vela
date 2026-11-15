@@ -1,0 +1,17 @@
+<!-- Vela — gabarit de barre de menus macOS (noir sur transparent).
+     macOS inverse ce fichier selon le thème : aucune couleur, seulement la
+     silhouette. C'est la boussole sans sa tuile, épaissie pour tenir à 16 px.
+     Rendu : build/make-icons.cjs. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <circle cx="512" cy="512" r="356" fill="none" stroke="#000000" stroke-width="76"/>
+  <g stroke="#000000" stroke-width="76" stroke-linecap="round">
+    <line x1="512" y1="72" x2="512" y2="180"/>
+    <line x1="512" y1="844" x2="512" y2="952"/>
+    <line x1="72" y1="512" x2="180" y2="512"/>
+    <line x1="844" y1="512" x2="952" y2="512"/>
+  </g>
+  <g transform="rotate(35 512 512)">
+    <polygon points="512,236 636,512 388,512" fill="#000000"/>
+    <polygon points="512,788 636,512 388,512" fill="#000000" fill-opacity="0.42"/>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-/* Génère le kit d'icônes de Vela depuis `build/icon-safari.svg`.
+/* Génère le kit d'icônes de Vela depuis `build/boussole-light.svg`.
 
    Équivalent Node de `build/make-icons.py` : ce dernier dépend de Pillow, qui
    n'est pas installé partout, alors que Chromium est déjà là. Chaque taille
@@ -18,9 +18,9 @@ const path = require('node:path')
 const { execFileSync } = require('node:child_process')
 
 const BUILD = __dirname
-const MASTER = path.join(BUILD, 'icon-safari.svg')
-const SMALL = path.join(BUILD, 'icon-safari-small.svg')
-const TEMPLATE = path.join(BUILD, 'icon-template-safari.svg')
+const MASTER = path.join(BUILD, 'boussole-light.svg')
+const SMALL = path.join(BUILD, 'boussole-small.svg')
+const TEMPLATE = path.join(BUILD, 'boussole-template.svg')
 // En dessous de 64 px, le maître détaillé se délite (anneau d'un quart de
 // pixel, graduation en salissure) : ces tailles viennent du maître simplifié.
 const SMALL_UP_TO = 48

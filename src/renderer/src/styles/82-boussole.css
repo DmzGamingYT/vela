@@ -1,0 +1,130 @@
+/* ------------------------------------------------------------------
+   82 — la boussole, jour et nuit
+   ------------------------------------------------------------------
+   La marque de l'app est une seule copie du dessin (`Boussole.tsx`), teintée
+   par ces règles. `appearance.ts` pose `data-mode` sur `<html>` à chaque
+   changement de thème : la bascule clair/sombre est donc instantanée, sans
+   rendu React et sans requête.
+
+   Les valeurs viennent des deux maîtres `build/boussole-light.svg` et
+   `build/boussole-dark.svg` : la marque dans la fenêtre et l'icône du Finder
+   restent le même dessin.
+   ------------------------------------------------------------------ */
+
+.boussole {
+  display: block;
+}
+
+/* --- Jour --------------------------------------------------------- */
+
+.boussole-bg-a {
+  stop-color: #ffffff;
+}
+
+.boussole-bg-b {
+  stop-color: #c9d3e8;
+}
+
+.boussole .boussole-face {
+  fill: #ffffff;
+  fill-opacity: 0.5;
+  stroke: #8a97b5;
+  stroke-opacity: 0.55;
+  stroke-width: 2;
+}
+
+.boussole .boussole-ticks {
+  stroke: #8a97b5;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.boussole .boussole-nord {
+  fill: #f0765a;
+}
+
+.boussole .boussole-sud {
+  fill: #2c3140;
+  fill-opacity: 0.85;
+}
+
+.boussole .boussole-hub {
+  fill: #ffffff;
+  stroke: #8a97b5;
+  stroke-width: 1.5;
+}
+
+.boussole-gloss-a {
+  stop-color: #ffffff;
+  stop-opacity: 0.55;
+}
+
+.boussole-gloss-b {
+  stop-color: #ffffff;
+  stop-opacity: 0;
+}
+
+/* Le liseré est un dégradé dans les deux modes ; en clair, il est uniforme. */
+.boussole-edge-a,
+.boussole-edge-b,
+.boussole-edge-c {
+  stop-color: #ffffff;
+  stop-opacity: 0.9;
+}
+
+.boussole .boussole-rim {
+  stroke-width: 1.5;
+}
+
+/* --- Nuit --------------------------------------------------------- */
+
+:root[data-mode='dark'] .boussole-bg-a {
+  stop-color: #3c4459;
+}
+
+:root[data-mode='dark'] .boussole-bg-b {
+  stop-color: #171a24;
+}
+
+:root[data-mode='dark'] .boussole .boussole-face {
+  fill: #ffffff;
+  fill-opacity: 0.07;
+  stroke: #ffffff;
+  stroke-opacity: 0.35;
+}
+
+:root[data-mode='dark'] .boussole .boussole-ticks {
+  stroke: #ffffff;
+  stroke-opacity: 0.5;
+}
+
+:root[data-mode='dark'] .boussole .boussole-nord {
+  fill: #ff8a6b;
+}
+
+:root[data-mode='dark'] .boussole .boussole-sud {
+  fill: #e8ecf5;
+  fill-opacity: 0.85;
+}
+
+:root[data-mode='dark'] .boussole .boussole-hub {
+  fill: #171a24;
+  stroke: #ffffff;
+  stroke-opacity: 0.7;
+}
+
+:root[data-mode='dark'] .boussole-gloss-a {
+  stop-opacity: 0.28;
+}
+
+:root[data-mode='dark'] .boussole-edge-a {
+  stop-opacity: 0.7;
+}
+
+:root[data-mode='dark'] .boussole-edge-b {
+  stop-opacity: 0.08;
+}
+
+:root[data-mode='dark'] .boussole-edge-c {
+  stop-opacity: 0.35;
+}
