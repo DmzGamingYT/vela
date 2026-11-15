@@ -13,13 +13,15 @@ import { useBrowser } from '../../store/browser'
 import { BrandMark, PROVIDER_BRANDS, readableTint } from '../BrandMark'
 import { Icon } from '../Icon'
 import AgentNotesSection from './AgentNotesSection'
+import SkillsSection from './SkillsSection'
 import { resolveTab } from './settingsSearch'
 
-type Tab = 'model' | 'providers' | 'notes'
+type Tab = 'model' | 'providers' | 'skills' | 'notes'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'model', label: 'Modèle actif' },
   { id: 'providers', label: 'Fournisseurs' },
+  { id: 'skills', label: 'Skills' },
   { id: 'notes', label: 'Notes' }
 ]
 
@@ -74,6 +76,7 @@ export default function AgentPage({
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({
     model: null,
     providers: null,
+    skills: null,
     notes: null
   })
 
@@ -467,6 +470,16 @@ export default function AgentPage({
             que pour l’agent et les notes, vers l’endpoint affiché plus haut.
           </p>
         </section>
+      </div>
+
+      <div
+        className="agent-panel"
+        id="agent-panel-skills"
+        role="tabpanel"
+        aria-labelledby="agent-tab-skills"
+        hidden={tab !== 'skills'}
+      >
+        <SkillsSection />
       </div>
 
       <div

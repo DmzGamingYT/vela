@@ -220,6 +220,16 @@ un grand vide sous l'en-tête. */
   opacity: 0.7;
 }
 
+/* Le raccourci de la tuile (⌘1…) : il fonctionnait mais ne se voyait nulle part. */
+.pin-tip-keys {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.55;
+}
+
 /* Le compteur du titre prend une teinte douce : le rouge se lit comme une
    erreur, pas comme « trois nouveautés ». */
 .pin-tile-count {

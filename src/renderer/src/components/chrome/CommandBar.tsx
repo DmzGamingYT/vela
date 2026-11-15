@@ -36,31 +36,8 @@ interface CommandItem {
   preview?: () => void
 }
 
-/** Skills en commande slash : elles préparent une demande pour l’agent. */
-const SKILLS = [
-  {
-    command: '/résumer',
-    label: 'Résumer la page de l’onglet actif',
-    prompt: 'Résume la page de l’onglet joint en trois points, puis dis ce qu’il faut retenir.'
-  },
-  {
-    command: '/comparer',
-    label: 'Comparer les onglets joints',
-    prompt:
-      'Compare les onglets joints : un tableau des différences, puis une recommandation nette.'
-  },
-  {
-    command: '/extraire',
-    label: 'Extraire le tableau ou la liste principale',
-    prompt:
-      'Extrais le tableau ou la liste principale des onglets joints, en tableau Markdown copiable.'
-  },
-  {
-    command: '/citer',
-    label: 'Citer les passages utiles, avec leurs sources',
-    prompt: 'Cite les passages utiles des onglets joints, avec le titre et l’URL de chaque source.'
-  }
-] as const
+/* Les skills ne vivent plus ici : elles appartiennent à l’utilisateur, dans les
+   réglages (Réglages › Agent › Skills). Le code ne garde que le rendu. */
 
 export default function CommandBar() {
   const view = useBrowser((state) => state.view)
@@ -104,6 +81,8 @@ export default function CommandBar() {
     const search = normalize(query.trim())
     const active = view.tabs.find((tab) => tab.id === view.activeTabId)
     const withSpace = (id: string): string => view.spaces.find((item) => item.id === id)?.name ?? ''
+    // Les commandes `/` viennent des réglages : ce sont celles de l’utilisateur.
+    const skills = view.settings.skills
 
     const run = (action: () => void): (() => void) => {
       return () => {
@@ -124,16 +103,16 @@ export default function CommandBar() {
     const typed = query.trim()
     if (typed.startsWith('/')) {
       const token = normalize(typed.slice(1))
-      return SKILLS.filter(
-        (skill) => !token || normalize(`${skill.command} ${skill.label}`).includes(token)
-      ).map((skill) => ({
-        id: `skill-${skill.command}`,
-        group: 'Skills' as const,
-        label: skill.command,
-        hint: skill.label,
-        icon: 'command' as const,
-        run: run(() => openAgent(skill.prompt))
-      }))
+      return skills
+        .filter((skill) => !token || normalize(`/${skill.command} ${skill.label}`).includes(token))
+        .map((skill) => ({
+          id: `skill-${skill.command}`,
+          group: 'Skills' as const,
+          label: `/${skill.command}`,
+          hint: skill.label,
+          icon: 'command' as const,
+          run: run(() => openAgent(skill.prompt))
+        }))
     }
 
     const all: CommandItem[] = []

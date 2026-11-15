@@ -68,7 +68,6 @@ function UndoGroupShortcut({
   return null
 }
 
-
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const view = useBrowser((state) => state.view)
   const overlay = useBrowser((state) => state.overlay)
@@ -97,9 +96,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
   const [renameValue, setRenameValue] = useState('')
   const [colorGroup, setColorGroup] = useState<string | null>(null)
   // Menu d'un dossier : clic droit sur l'en-tête ou bouton « … ».
-  const [groupMenu, setGroupMenu] = useState<{ group: TabGroup; x: number; y: number } | null>(
-    null
-  )
+  const [groupMenu, setGroupMenu] = useState<{ group: TabGroup; x: number; y: number } | null>(null)
   // Dernier dossier supprimé : ⌘Z et le bouton du toast le remettent en place.
   // État et non référence : le menu d'un dossier construit ses entrées pendant
   // le rendu, et une fonction qui lit une référence y était refusée par la
@@ -781,10 +778,15 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     }
     setLastDeletedGroup(saved)
     void removeGroup(group.id)
-    toast(`Dossier « ${group.name} » supprimé`, 'info', {
-      label: 'Annuler',
-      run: () => void undoGroupDelete()
-    }, 8000)
+    toast(
+      `Dossier « ${group.name} » supprimé`,
+      'info',
+      {
+        label: 'Annuler',
+        run: () => void undoGroupDelete()
+      },
+      8000
+    )
     window.setTimeout(() => {
       setLastDeletedGroup((current) => (current === saved ? null : current))
     }, 8000)
@@ -798,6 +800,17 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     }
     for (const tab of tabs) sleepTab(tab.id)
     toast(`${tabs.length} onglet${tabs.length > 1 ? 's' : ''} en veille`)
+  }
+
+  /** Les onglets du dossier rejoignent la rangée du haut, dans l’ordre. */
+  const pinGroup = (group: TabGroup): void => {
+    const tabs = groupTabsOf(group).filter((tab) => !tab.pinned)
+    if (tabs.length === 0) {
+      toast('Tous les onglets du dossier sont déjà épinglés')
+      return
+    }
+    for (const tab of tabs) pin(tab.id, true)
+    toast(`${tabs.length} onglet${tabs.length > 1 ? 's' : ''} épinglé${tabs.length > 1 ? 's' : ''}`)
   }
 
   const closeGroup = (group: TabGroup): void => {
@@ -841,6 +854,13 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       onSelect: () => setColorGroup(group.id)
     },
     {
+      id: 'pin-all',
+      label: 'Épingler les onglets du dossier',
+      icon: 'pin',
+      hint: 'Ils rejoignent la rangée du haut, dans leur ordre actuel.',
+      onSelect: () => pinGroup(group)
+    },
+    {
       id: 'sleep',
       label: 'Mettre tout en veille',
       icon: 'moon',
@@ -875,15 +895,15 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
 
   const renderTab = (tab: TabView) =>
     !matches(tab) ? null : (
-    <TabRow
-      key={tab.id}
-      tab={tab}
-      active={tab.id === view.activeTabId}
-      secondary={view.split && tab.id === view.secondTabId}
-      dragging={draggingId === tab.id}
-      dropEdge={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
-    />
-  )
+      <TabRow
+        key={tab.id}
+        tab={tab}
+        active={tab.id === view.activeTabId}
+        secondary={view.split && tab.id === view.secondTabId}
+        dragging={draggingId === tab.id}
+        dropEdge={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
+      />
+    )
 
   const draggingTab = sourceTab()
 
@@ -897,10 +917,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       // d'un espace ne doit pas disparaître sur le noir.
       style={{ '--space': 'var(--space-color)' } as CSSProperties}
     >
-      <UndoGroupShortcut
-        hasDeleted={() => lastDeletedGroup !== null}
-        undo={undoGroupDelete}
-      />
+      <UndoGroupShortcut hasDeleted={() => lastDeletedGroup !== null} undo={undoGroupDelete} />
       <SidebarHeader />
 
       {/* Le chevron annonce que ce nom est un contrôle ; le crayon séparé
@@ -1008,7 +1025,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                 onDragOver={overPinnedEnd}
                 onDrop={dropOnPinnedEnd}
               >
-                {pinned.map((tab) => (
+                {pinned.map((tab, index) => (
                   <PinnedTabTile
                     key={tab.id}
                     tab={tab}
@@ -1016,6 +1033,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                     secondary={Boolean(view.split && tab.id === view.secondTabId)}
                     dragging={draggingId === tab.id}
                     drop={drop?.kind === 'tab' && drop.id === tab.id ? drop.edge : null}
+                    index={index}
                   />
                 ))}
                 {/* Un emplacement vide reste un emplacement : au survol, un
@@ -1357,9 +1375,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                       {group.name}
                     </button>
                   )}
-                  {groupTabs.length > 0 && (
-                    <span className="group-count">{groupTabs.length}</span>
-                  )}
+                  {groupTabs.length > 0 && <span className="group-count">{groupTabs.length}</span>}
                   {group.collapsed && groupTabs.length > 0 && (
                     <span className="group-peek" aria-hidden="true">
                       {groupTabs.slice(0, 3).map((tab) => (
@@ -1416,9 +1432,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                       data-active={drop?.kind === 'group' && drop.id === group.id}
                       aria-hidden="true"
                     />
-                    {groupTabs.length === 0 && (
-                      <p className="group-empty">Glissez un onglet ici</p>
-                    )}
+                    {groupTabs.length === 0 && <p className="group-empty">Glissez un onglet ici</p>}
                   </div>
                 )}
               </div>

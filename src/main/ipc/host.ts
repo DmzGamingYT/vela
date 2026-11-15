@@ -47,6 +47,8 @@ export interface IpcHost {
   createTab(input: CreateTabInput): TabState
   closeTab(id: string): Promise<void>
   activateTab(id: string): void
+  /** Décharge la page sans retirer l’onglet ; change de page si besoin. */
+  discardTab(id: string): void
   pinTab(input: unknown): void
   reopenTab(): void
   toggleSplit(): void

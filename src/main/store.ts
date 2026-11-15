@@ -22,6 +22,7 @@ import {
   createTab,
   dayKey,
   defaultProviders,
+  DEFAULT_SKILLS,
   SPACE_COLORS,
   weekKey
 } from '@shared/defaults'
@@ -61,6 +62,7 @@ import {
   type TunnelMapSummary
 } from '@shared/tunnel'
 import { isThemeId, sanitizeAppearance } from '@shared/theme'
+import { sanitizeSkills } from '@shared/skills'
 import {
   avatarFile,
   normalizeLetterboxd,
@@ -227,6 +229,9 @@ function mergeSettings(raw: unknown): Settings {
       input.updateChecks === 'weekly' || input.updateChecks === 'off' ? input.updateChecks : 'auto',
     sidebarCollapsed: Boolean(input.sidebarCollapsed),
     onboarded: Boolean(input.onboarded),
+    // Un fichier d’avant les skills n’en a pas : les quatre d’origine servent
+    // de départ. Une liste vide, elle, est un choix et reste vide.
+    skills: Array.isArray(input.skills) ? sanitizeSkills(input.skills) : DEFAULT_SKILLS,
     agent: { mode, provider, providers }
   }
 }

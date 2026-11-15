@@ -156,4 +156,34 @@ describe('barre de commande', () => {
     expect(setOverlay).toHaveBeenCalledWith(null)
     await waitFor(() => expect(splitToggle).toHaveBeenCalledOnce())
   })
+
+  // Les quatre commandes d’origine étaient un `const` : une skill ajoutée aux
+  // réglages ne pouvait pas apparaître ici. C’est désormais la seule source.
+  it('lit les skills dans les réglages', () => {
+    const view = useBrowser.getState().view as AppView
+    useBrowser.setState({
+      view: {
+        ...view,
+        settings: {
+          ...view.settings,
+          skills: [
+            {
+              id: 'skill-veille',
+              command: 'veille',
+              label: 'Veille concurrentielle',
+              prompt: 'Compare.'
+            }
+          ]
+        }
+      }
+    })
+
+    render(<CommandBar />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Rechercher' }), {
+      target: { value: '/' }
+    })
+
+    expect(screen.getByRole('button', { name: /\/veille/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /\/résumer/ })).toBeNull()
+  })
 })

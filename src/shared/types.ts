@@ -193,6 +193,22 @@ export type UpdateChecks = 'auto' | 'weekly' | 'off'
 
 /** Pilule flottante du bas : toujours visible, au survol, ou jamais. */
 
+/**
+ * Une skill : une commande `/` et l’instruction qu’elle envoie à l’agent.
+ *
+ * Le nom et le libellé vivent avec l’instruction pour que la palette puisse
+ * proposer la commande sans charger autre chose.
+ */
+export interface Skill {
+  id: string
+  /** Le mot tapé après « / », sans barre ni espace. */
+  command: string
+  /** Ce qu’elle fait, en une ligne, dans la palette. */
+  label: string
+  /** L’instruction envoyée telle quelle à l’agent. */
+  prompt: string
+}
+
 export interface Settings {
   theme: Theme
   searchEngine: SearchEngineId
@@ -287,6 +303,8 @@ export interface Settings {
   sidebarCollapsed: boolean
   onboarded: boolean
   agent: AgentSettings
+  /** Les commandes `/` de l’utilisateur ; les quatre d’origine servent de départ. */
+  skills: Skill[]
 }
 
 export interface Bookmark {

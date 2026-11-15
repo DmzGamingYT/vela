@@ -82,9 +82,7 @@ const Layout = field<LayoutRequest>('mise en page', (value) => {
 
 /** Deux onglets au plus : les épreuves ne servent qu'à la vue scindée. */
 const TabIds = field<string[]>('identifiants d’onglet', (value) =>
-  Array.isArray(value)
-    ? value.filter((id): id is string => typeof id === 'string').slice(0, 2)
-    : []
+  Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string').slice(0, 2) : []
 )
 
 export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
@@ -99,7 +97,7 @@ export function registerTabsIpc(host: IpcHost, handle: Handle, on: On): void {
       request('tab:reopen', None, () => host.reopenTab()),
       request('tab:focus', Target, ({ id }) => host.tabs.focus(id)),
       request('tab:discard', Target, ({ id }) => {
-        host.tabs.suspend(id)
+        host.discardTab(id)
         host.broadcast()
       }),
       request('tab:reorder', Any, (input) => host.reorderTab(input)),

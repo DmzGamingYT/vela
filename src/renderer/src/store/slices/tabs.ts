@@ -11,7 +11,8 @@ export interface TabsSlice {
   findResult: { matches: number; activeMatchOrdinal: number }
   lastGrouping: { groupIds: string[]; tabIds: string[] } | null
   newTab(url?: string, groupId?: string): void
-  closeTab(id: string): void
+  /** `force` ferme vraiment une épingle ; sans lui, elle part en veille. */
+  closeTab(id: string, force?: boolean): void
   /** Ferme et propose de rouvrir pendant huit secondes. */
   closeWithUndo(id: string): void
   /** Décharge la page sans retirer l'onglet ; il se recharge au clic. */
@@ -59,7 +60,6 @@ export interface TabsSlice {
   zoom(direction: 'in' | 'out' | 'reset'): Promise<void>
 }
 
-
 /** Onglets, dossiers, vue scindée, historique et favoris. */
 export const createTabsSlice: StateCreator<BrowserState, [], [], TabsSlice> = (set, get) => ({
   splitRatioLive: null,
@@ -79,13 +79,41 @@ export const createTabsSlice: StateCreator<BrowserState, [], [], TabsSlice> = (s
     }
   },
 
-  closeTab(id) {
+  closeTab(id, force = false) {
+    const tab = get().view?.tabs.find((item) => item.id === id)
+    // Une épingle ne disparaît pas sur un ⌘W : la page se décharge, l’épingle
+    // reste et se rechargera au prochain clic. Le « Fermer » de l’info-bulle
+    // la retire vraiment.
+    if (tab?.pinned && !force) {
+      void (async () => {
+        // C'est main qui change de page avant de suspendre : vu d'ici, l'ordre
+        // de deux appels ne dit pas quand la vue native existe encore.
+        const result = await get().call(
+          () => window.vela.tabs.discard(id),
+          'Mise en veille impossible.'
+        )
+        if (result === null) return
+        get().toast(
+          'Épingle en veille : elle se rechargera au prochain clic.',
+          'info',
+          { label: 'Fermer', run: () => get().closeTab(id, true) },
+          8000
+        )
+      })()
+      return
+    }
     void get().call(() => window.vela.tabs.close(id), 'Impossible de fermer l’onglet.')
   },
 
   closeWithUndo(id) {
     const tab = get().view?.tabs.find((item) => item.id === id)
     if (!tab) return
+    // Une épingle part en veille : son propre message propose déjà de la
+    // fermer, un second « Annuler » par-dessus serait de trop.
+    if (tab.pinned) {
+      get().closeTab(id)
+      return
+    }
     // `reopen` restaure le dernier onglet fermé : c'est celui-ci, à l'instant.
     get().toast('Onglet fermé', 'info', { label: 'Annuler', run: () => get().reopen() }, 8000)
     get().closeTab(id)

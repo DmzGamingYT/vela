@@ -34,19 +34,9 @@ import {
   type Session,
   type WebContents
 } from 'electron'
-import type {
-  AppStatePayload,
-  CreateTabInput,
-  SaveNoteInput,
-  SettingsPatch,
-} from '@shared/api'
+import type { AppStatePayload, CreateTabInput, SaveNoteInput, SettingsPatch } from '@shared/api'
 import { TunnelService } from './tunnel'
-import {
-  createTab as createTabState,
-  dayKey,
-  newId,
-  weekKey
-} from '@shared/defaults'
+import { createTab as createTabState, dayKey, newId, weekKey } from '@shared/defaults'
 import { SPLIT_MIN_WIDTH } from '@shared/layout'
 import { endpointHost, isLoopbackEndpoint, isProviderId, providerById } from '@shared/providers'
 import { chatModel } from '@shared/agentModel'
@@ -61,6 +51,7 @@ import {
   sanitizeStartupUrl,
   startupAddress
 } from '@shared/navigation'
+import { sanitizeSkills } from '@shared/skills'
 import { isAmbienceId, isThemeId, parseHex, sanitizeGlassBlur, sanitizeHour } from '@shared/theme'
 import { partitionFor } from '@shared/space'
 import {
@@ -728,7 +719,9 @@ export class Browser {
             const b = next.blockedHosts
             if (
               a.length === b.length &&
-              a.every((entry, index) => entry.host === b[index].host && entry.count === b[index].count)
+              a.every(
+                (entry, index) => entry.host === b[index].host && entry.count === b[index].count
+              )
             ) {
               continue
             }
@@ -854,7 +847,45 @@ export class Browser {
   }
 
   private activateTab(id: string): void {
+    this.tabs.wake(id)
     activateTab(this, id)
+  }
+
+  /**
+   * Mise en veille demandée par l’interface.
+   *
+   * Si l’onglet est celui qu’on regarde, la main passe d’abord à un autre du
+   * même espace : suspendre la vue active ne tenait pas, la page se recréait à
+   * l’image suivante et restait vivante alors que l’épingle était « en veille ».
+   */
+  private discardTab(id: string): void {
+    const state = this.store.get()
+    const tab = state.tabs.find((item) => item.id === id)
+    if (!tab) {
+      this.tabs.suspend(id)
+      return
+    }
+
+    const active = state.activeTabBySpace[tab.spaceId] === id
+    const second = state.secondTabBySpace[tab.spaceId] === id
+    if (active || second) {
+      const others = state.tabs.filter((item) => item.spaceId === tab.spaceId && item.id !== id)
+      const next = others.find((item) => !item.pinned && isHomeUrl(item.url)) ?? others[0]
+      if (next) {
+        this.activateTab(next.id)
+        // Le changement d’onglet réinstalle la scission avec l’onglet quitté :
+        // on la referme après, sinon la page reste affichée — donc vivante —
+        // et la veille ne tient pas.
+        this.store.update((current) => {
+          if (current.secondTabBySpace[tab.spaceId] === id) {
+            current.secondTabBySpace[tab.spaceId] = null
+            current.split = false
+          }
+        })
+      }
+    }
+
+    this.tabs.suspend(id)
   }
 
   private async closeTab(id: string): Promise<void> {
@@ -870,6 +901,7 @@ export class Browser {
   }
 
   private setSplitTab(id: string): void {
+    this.tabs.wake(id)
     setSplitTab(this, id)
   }
 
@@ -1017,6 +1049,11 @@ export class Browser {
       }
       if (Array.isArray(input.searchKeywords)) {
         settings.searchKeywords = sanitizeKeywords(input.searchKeywords, settings.customEngines)
+      }
+      // Les skills arrivent en liste entière, déjà validée côté interface ;
+      // le store les repasse par le même filtre, comme un fichier relu.
+      if (Array.isArray(input.skills)) {
+        settings.skills = sanitizeSkills(input.skills)
       }
       if (typeof input.searxInstance === 'string')
         settings.searxInstance = input.searxInstance.trim().slice(0, 200)
@@ -1472,6 +1509,7 @@ export class Browser {
       createTab: (input) => this.createTab(input),
       closeTab: (id) => this.closeTab(id),
       activateTab: (id) => this.activateTab(id),
+      discardTab: (id) => this.discardTab(id),
       pinTab: (input) => this.pinTab(input),
       reopenTab: () => this.reopenTab(),
       toggleSplit: () => this.toggleSplit(),

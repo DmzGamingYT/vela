@@ -246,6 +246,8 @@ export interface SettingsPatch {
   onboarded?: boolean
   agent?: { mode?: AgentMode; provider?: ProviderId }
   providers?: Partial<Record<ProviderId, ProviderPatch>>
+  /** La liste entière : elle est petite, et la remplacer évite les doublons. */
+  skills?: Settings['skills']
 }
 
 export interface SetKeyInput {

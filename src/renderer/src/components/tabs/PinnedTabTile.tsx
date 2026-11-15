@@ -2,6 +2,7 @@ import { memo, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { TabView } from '@shared/types'
 import { displayTitle, hostOf, titleBadge } from '@shared/url'
+import { shortcut } from '../../lib/format'
 import { useBrowser } from '../../store/browser'
 import Favicon from '../Favicon'
 import { Icon } from '../Icon'
@@ -13,6 +14,8 @@ export interface PinnedTabTileProps {
   secondary?: boolean
   dragging?: boolean
   drop?: 'before' | 'after' | null
+  /** Rang dans la rangée : c’est le chiffre de son raccourci. */
+  index?: number
 }
 
 /**
@@ -26,7 +29,8 @@ function PinnedTabTile({
   active,
   secondary = false,
   dragging = false,
-  drop = null
+  drop = null,
+  index
 }: PinnedTabTileProps) {
   const [tipOpen, setTipOpen] = useState(false)
   const [tipAt, setTipAt] = useState({ x: 0, y: 0 })
@@ -36,6 +40,7 @@ function PinnedTabTile({
   // props, elles ne cassent plus la mémoïsation de la tuile.
   const selectTab = useBrowser((state) => state.selectTab)
   const toggleMute = useBrowser((state) => state.toggleMute)
+  const splitWith = useBrowser((state) => state.splitWith)
 
   const title = displayTitle(tab.title) || hostOf(tab.url) || 'Page'
   const host = hostOf(tab.url)
@@ -113,7 +118,15 @@ function PinnedTabTile({
         data-tab-id={tab.id}
         aria-label={ariaLabel}
         aria-describedby={tipOpen ? tipId : undefined}
-        onClick={() => selectTab(tab.id)}
+        onClick={(event) => {
+          // ⌘-clic : l’épingle s’ouvre à côté, dans la vue scindée.
+          if (event.metaKey || event.ctrlKey) {
+            setTipOpen(false)
+            splitWith(tab.id)
+            return
+          }
+          selectTab(tab.id)
+        }}
         onKeyDown={(event) => tabGestures.keyTile(event, tab)}
       >
         <Favicon
@@ -162,6 +175,10 @@ function PinnedTabTile({
           >
             <span className="pin-tip-title">{title}</span>
             {host && host !== title ? <span className="pin-tip-host">{host}</span> : null}
+            {/* Le raccourci existe (⌘1…) mais ne se voyait nulle part. */}
+            {index !== undefined && index < 9 ? (
+              <span className="pin-tip-keys">{shortcut(String(index + 1))}</span>
+            ) : null}
           </div>,
           document.body
         )}

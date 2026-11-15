@@ -218,7 +218,9 @@ export class TabManager {
     if (
       known &&
       known.length === next.length &&
-      known.every((entry, index) => entry.host === next[index].host && entry.count === next[index].count)
+      known.every(
+        (entry, index) => entry.host === next[index].host && entry.count === next[index].count
+      )
     ) {
       return known
     }
@@ -299,6 +301,10 @@ export class TabManager {
   ensure(tabId: string, autoLoad = true): WebContentsView | null {
     const tab = this.host.tab(tabId)
     if (!tab || isHomeUrl(tab.url)) return null
+    // Une épingle qu’on a mise en veille ne se rallume pas toute seule : la
+    // coque réattache parfois la dernière page visible après un menu ou une
+    // mise en page tardive, ce qui réveillait la page aussitôt endormie.
+    if (this.dormant.has(tabId)) return null
     // Un onglet enregistré avec une adresse `file:` (session ancienne, dossier
     // modifié à la main) ne doit pas ouvrir le disque dans une vue.
     if (!isLoadableUrl(tab.url)) return null
@@ -817,6 +823,13 @@ export class TabManager {
     if (view && !view.webContents.isDestroyed()) view.webContents.stop()
   }
 
+  /** Rendort une épingle : `ensure` ne la rallumera qu’après `wake`. */
+  private dormant = new Set<string>()
+
+  wake(tabId: string): void {
+    this.dormant.delete(tabId)
+  }
+
   focus(tabId: string): void {
     this.lastUsed.set(tabId, Date.now())
     const existing = this.views.get(tabId)
@@ -863,6 +876,7 @@ export class TabManager {
    * jusqu'à faire mourir le processus principal (tas à 4 Go, 0.3.10).
    */
   suspend(tabId: string): void {
+    this.dormant.add(tabId)
     if (this.evicting.has(tabId)) return
     const view = this.views.get(tabId)
     if (!view) return

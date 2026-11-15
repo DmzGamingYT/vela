@@ -5,6 +5,7 @@ import {
   type ProviderId,
   type ProviderSettings,
   type Settings,
+  type Skill,
   type Space,
   type TabGroup,
   type TabState
@@ -51,6 +52,41 @@ export function defaultProviders(): Record<ProviderId, ProviderSettings> {
     PROVIDERS.map((provider) => [provider.id, providerDefaults(provider.id)])
   ) as Record<ProviderId, ProviderSettings>
 }
+
+/**
+ * Skills livrées avec l’app : quatre gestes de lecture qui marchaient déjà.
+ *
+ * Ce sont désormais des données comme les autres — on peut les renommer, les
+ * effacer, et en ajouter.
+ */
+export const DEFAULT_SKILLS: Skill[] = [
+  {
+    id: 'skill-resumer',
+    command: 'résumer',
+    label: 'Résumer la page de l’onglet actif',
+    prompt: 'Résume la page de l’onglet joint en trois points, puis dis ce qu’il faut retenir.'
+  },
+  {
+    id: 'skill-comparer',
+    command: 'comparer',
+    label: 'Comparer les onglets joints',
+    prompt:
+      'Compare les onglets joints : un tableau des différences, puis une recommandation nette.'
+  },
+  {
+    id: 'skill-extraire',
+    command: 'extraire',
+    label: 'Extraire le tableau ou la liste principale',
+    prompt:
+      'Extrais le tableau ou la liste principale des onglets joints, en tableau Markdown copiable.'
+  },
+  {
+    id: 'skill-citer',
+    command: 'citer',
+    label: 'Citer les passages utiles, avec leurs sources',
+    prompt: 'Cite les passages utiles des onglets joints, avec le titre et l’URL de chaque source.'
+  }
+]
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
@@ -102,6 +138,7 @@ export const DEFAULT_SETTINGS: Settings = {
   thumbnails: false,
   updateChecks: 'auto',
   sidebarCollapsed: false,
+  skills: DEFAULT_SKILLS,
   onboarded: false,
   agent: {
     mode: 'demo',
