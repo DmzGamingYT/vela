@@ -260,3 +260,21 @@
   color: var(--ink-3);
   font-size: 12px;
 }
+
+/* Fenêtre étroite : les favoris s'enroulent au lieu de glisser derrière un
+   bord coupé — la rangée n'a pas d'ascenseur visible, donc un favori de trop
+   devenait inatteignable. Les tuiles gardent leur taille. */
+@media (max-width: 900px) {
+  .home-favorites .pin-grid {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 8px;
+  }
+
+  /* Trois tuiles par rangée plutôt que quatre : à 132 px, les noms de sites
+     se réduisaient à deux mots. */
+  .home-favorites .pin-card {
+    flex: 1 1 168px;
+    max-width: none;
+  }
+}
