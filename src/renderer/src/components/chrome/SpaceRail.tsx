@@ -93,6 +93,7 @@ export default function SpaceRail() {
       </div>
 
       <div className="rail-tools" role="group" aria-label="Raccourcis">
+        <span className="rail-tool-sep" aria-hidden="true" />
         {/* Les outils d’abord : ce sont eux qu’on ouvre en lisant une page. */}
         <button
           type="button"

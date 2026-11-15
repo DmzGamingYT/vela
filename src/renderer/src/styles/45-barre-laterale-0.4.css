@@ -73,7 +73,13 @@
   align-items: center;
   gap: 2px;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 0;
+}
+
+/* Le filet ouvre la rangée : les modes et les outils sont deux familles, pas
+   six icônes à la suite. Même règle que celle posée avant la bibliothèque. */
+.rail-tools > .rail-tool-sep:first-child {
+  margin-top: 2px;
 }
 
 /* Le filet sépare les outils de la bibliothèque. Dans une colonne, il devient
@@ -154,7 +160,8 @@
 }
 
 .rr-ring .download-ring-track {
-  stroke: var(--line);
+  /* Sur le fond du rail, `--line` s'effaçait : on ne voyait que l'arc. */
+  stroke: color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
 .rr-ring .download-ring-fill {
