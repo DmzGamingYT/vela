@@ -129,6 +129,7 @@ const api: AzimutApi = {
     install: () => ipcRenderer.invoke('extensions:install'),
     toggle: (path: string, enabled: boolean) =>
       ipcRenderer.invoke('extensions:toggle', { path, enabled }),
+    reload: (path: string) => ipcRenderer.invoke('extensions:reload', path),
     remove: (path: string) => ipcRenderer.invoke('extensions:remove', path)
   },
   favicons: {

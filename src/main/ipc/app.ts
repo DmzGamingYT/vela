@@ -42,6 +42,7 @@ import { readImageDataUrl } from './util'
 import {
   installExtension,
   managedExtensions,
+  reloadExtension,
   removeExtension,
   setExtensionEnabled
 } from '../extensions'
@@ -94,6 +95,7 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
       request('extensions:toggle', ExtensionToggle, ({ path, enabled }) =>
         setExtensionEnabled(path, enabled)
       ),
+      request('extensions:reload', Text, (path) => reloadExtension(path)),
       request('extensions:remove', Text, (path) => removeExtension(path)),
 
       request('favicons:get', FaviconOne, ({ host: name, spaceId }) => {

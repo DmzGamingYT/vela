@@ -1,5 +1,5 @@
 import { app, dialog, type Extension, type Session } from 'electron'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import type { InstalledExtension } from '@shared/extensions'
@@ -13,7 +13,14 @@ import type { InstalledExtension } from '@shared/extensions'
  * Chromium qui décide, et le résultat se voit dans la page.
  *
  * Chaque espace a sa session : une extension active est chargée dans toutes,
- * y compris celles créées plus tard (`attachExtensions` à la création).
+ * y compris celles créées plus tard (`attachExtensions` à la création). Le
+ * chargement a lieu au démarrage, avant la première fenêtre : attendre qu'une
+ * page s'ouvre laissait la liste annoncer « chargée » sans qu'aucune session
+ * n'ait rien chargé.
+ *
+ * Un échec est mémorisé sur la fiche (`error`) : sans cela, un dossier déplacé
+ * ou un manifeste cassé ne laissait qu'une icône-lettre, et l'interrupteur
+ * semblait n'avoir aucun effet.
  */
 
 interface StoredExtension {
@@ -25,14 +32,27 @@ interface StoredExtension {
   version: string
   description: string
   icon: string | null
+  /** Raison du dernier échec de chargement, effacée dès qu'il réussit. */
+  error: string | null
 }
 
 const FILE = 'extensions.json'
 const sessions = new Set<Session>()
+/** Dossiers déjà tentés par session : ouvrir un onglet ne recharge pas tout. */
+const attempted = new WeakMap<Session, Set<string>>()
 let store: StoredExtension[] | null = null
 
 function file(): string {
   return join(app.getPath('userData'), FILE)
+}
+
+/** Chemin réel : deux choix du même dossier (lien, barre oblique) sont une fiche. */
+function canonical(dir: string): string {
+  try {
+    return realpathSync(dir)
+  } catch {
+    return dir
+  }
 }
 
 function read(): StoredExtension[] {
@@ -52,7 +72,8 @@ function read(): StoredExtension[] {
               name: typeof item.name === 'string' ? item.name : '',
               version: typeof item.version === 'string' ? item.version : '',
               description: typeof item.description === 'string' ? item.description : '',
-              icon: typeof item.icon === 'string' ? item.icon : null
+              icon: typeof item.icon === 'string' ? item.icon : null,
+              error: typeof item.error === 'string' && item.error ? item.error : null
             }
           ]
         })
@@ -79,12 +100,28 @@ function list(): InstalledExtension[] {
     description: entry.description,
     icon: entry.icon,
     path: entry.path,
-    enabled: entry.enabled
+    enabled: entry.enabled,
+    error: entry.error
   }))
 }
 
 function folderName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? 'Extension'
+}
+
+/** Message court en français ; le texte de Chromium reste le dernier recours. */
+function loadError(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : ''
+  if (/Extension directory not found/i.test(message)) {
+    return 'Dossier introuvable : il a été déplacé ou supprimé.'
+  }
+  if (/Manifest file is missing or unreadable/i.test(message)) {
+    return 'Pas de manifest.json lisible dans ce dossier.'
+  }
+  if (/is not supported|unsupported/i.test(message)) {
+    return 'Version de manifeste non prise en charge par Chromium.'
+  }
+  return message || 'Chargement refusé par Chromium.'
 }
 
 const MIME: Record<string, string> = {
@@ -121,19 +158,21 @@ async function manifestIcon(dir: string, icons: unknown): Promise<string | null>
 
 /** Lit le manifeste d'un dossier et prépare son enregistrement. */
 async function describe(dir: string): Promise<StoredExtension | null> {
+  const path = canonical(dir)
   try {
-    const raw = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8')) as Record<string, unknown>
-    const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : folderName(dir)
+    const raw = JSON.parse(readFileSync(join(path, 'manifest.json'), 'utf8')) as Record<string, unknown>
+    const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : folderName(path)
     const manifestVersion = Number(raw.manifest_version)
     if (manifestVersion !== 2 && manifestVersion !== 3) return null
     return {
-      path: dir,
+      path,
       enabled: true,
       id: '',
       name,
       version: typeof raw.version === 'string' ? raw.version : '',
       description: typeof raw.description === 'string' ? raw.description : '',
-      icon: await manifestIcon(dir, raw.icons)
+      icon: await manifestIcon(path, raw.icons),
+      error: null
     }
   } catch {
     return null
@@ -156,33 +195,60 @@ async function fillIcon(record: StoredExtension): Promise<void> {
   }
 }
 
-/** Charge les extensions actives dans une session (espace). */
-export function attachExtensions(ses: Session): void {
+function attemptsFor(ses: Session): Set<string> {
+  let set = attempted.get(ses)
+  if (!set) {
+    set = new Set()
+    attempted.set(ses, set)
+  }
+  return set
+}
+
+/**
+ * Charge les extensions actives dans une session (espace).
+ *
+ * Renvoie quand toutes les tentatives sont terminées : le démarrage attend ce
+ * résultat avant d'ouvrir la fenêtre, pour que la première page ait déjà les
+ * extensions. Un même dossier n'est pas retenté à chaque onglet.
+ */
+export async function attachExtensions(ses: Session): Promise<void> {
   sessions.add(ses)
-  for (const record of read()) {
-    if (!record.enabled) continue
-    void ses.extensions
-      .loadExtension(record.path, { allowFileAccess: true })
-      .then(async (info) => {
-        applyInfo(record, info)
+  const tried = attemptsFor(ses)
+  await Promise.all(
+    read().map(async (record) => {
+      if (!record.enabled) return
+      const path = canonical(record.path)
+      if (tried.has(path)) return
+      tried.add(path)
+      try {
+        applyInfo(record, await ses.extensions.loadExtension(path, { allowFileAccess: true }))
+        record.error = null
         await fillIcon(record)
         save()
-      })
-      .catch(() => undefined)
-  }
+      } catch (cause) {
+        record.error = loadError(cause)
+        save()
+      }
+    })
+  )
 }
 
 async function loadEverywhere(record: StoredExtension): Promise<string | null> {
+  const path = canonical(record.path)
   let error: string | null = null
   for (const ses of sessions) {
+    attemptsFor(ses).delete(path)
     try {
-      applyInfo(record, await ses.extensions.loadExtension(record.path, { allowFileAccess: true }))
+      applyInfo(record, await ses.extensions.loadExtension(path, { allowFileAccess: true }))
+      attemptsFor(ses).add(path)
       await fillIcon(record)
-      save()
+      record.error = null
     } catch (cause) {
-      error = cause instanceof Error ? cause.message : 'chargement refusé'
+      error = loadError(cause)
+      record.error = error
     }
   }
+  save()
   return error
 }
 
@@ -194,6 +260,7 @@ function removeEverywhere(record: StoredExtension): void {
     } catch {
       /* déjà retirée de cette session */
     }
+    attemptsFor(ses).delete(canonical(record.path))
   }
 }
 
@@ -207,8 +274,9 @@ export async function installExtension(): Promise<{
     message: 'Le dossier doit contenir manifest.json.',
     properties: ['openDirectory']
   })
-  const dir = picked.filePaths[0]
-  if (picked.canceled || !dir) return { ok: false, extensions: list() }
+  const chosen = picked.filePaths[0]
+  if (picked.canceled || !chosen) return { ok: false, extensions: list() }
+  const dir = canonical(chosen)
   if (read().some((entry) => entry.path === dir)) {
     return { ok: false, error: 'Cette extension est déjà dans la liste.', extensions: list() }
   }
@@ -224,7 +292,7 @@ export async function installExtension(): Promise<{
   save()
   const error = await loadEverywhere(record)
   if (error) {
-    // Décrit mais non chargée : la fiche reste, désactivée, avec la raison.
+    // Décrite mais non chargée : la fiche reste, désactivée, avec la raison.
     record.enabled = false
     save()
   }
@@ -245,8 +313,22 @@ export async function setExtensionEnabled(
     return { ok: !error, ...(error ? { error } : {}), extensions: list() }
   }
   removeEverywhere(record)
+  record.error = null
   save()
   return { ok: true, extensions: list() }
+}
+
+/** Nouvelle tentative après un dossier réparé : la raison disparaît si ça passe. */
+export async function reloadExtension(
+  path: string
+): Promise<{ ok: boolean; error?: string; extensions: InstalledExtension[] }> {
+  const record = read().find((entry) => entry.path === path)
+  if (!record) return { ok: false, error: 'Extension inconnue.', extensions: list() }
+  record.enabled = true
+  const error = await loadEverywhere(record)
+  if (error) record.enabled = false
+  save()
+  return { ok: !error, ...(error ? { error } : {}), extensions: list() }
 }
 
 export function removeExtension(path: string): InstalledExtension[] {

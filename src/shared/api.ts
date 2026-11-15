@@ -498,6 +498,7 @@ export interface AzimutApi {
     /** Active ou retire l'extension de toutes les sessions d'espace. */
     toggle(path: string, enabled: boolean): Promise<import('./extensions').ExtensionsResult>
     /** Retire l'extension des sessions et de la liste. */
+    reload(path: string): Promise<import('./extensions').ExtensionsResult>
     remove(path: string): Promise<import('./extensions').InstalledExtension[]>
   }
   favicons: {

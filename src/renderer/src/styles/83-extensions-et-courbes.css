@@ -264,6 +264,44 @@
   white-space: nowrap;
 }
 
+/* Un chargement refusé se lit dans la ligne, pas seulement dans un toast
+   qui disparaît : la raison reste tant que le dossier n'est pas réparé. */
+.ext-row[data-error='true'] {
+  border-color: color-mix(in srgb, var(--danger, #b03a2e) 26%, var(--line));
+}
+
+.ext-row-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--danger, #b03a2e);
+}
+
+.ext-row-error b {
+  font-weight: 600;
+}
+
+.ext-row-error .link-btn {
+  font-size: 11px;
+}
+
+/* La corbeille reste discrète : elle ne prend la couleur du danger qu'au
+   survol de la ligne, pour ne pas peser à côté de l'interrupteur. */
+.ext-row .action.danger {
+  border-color: transparent;
+  color: var(--faint);
+}
+
+.ext-row:hover .action.danger,
+.ext-row .action.danger:focus-visible {
+  color: var(--danger, #b03a2e);
+  border-color: color-mix(in srgb, var(--danger, #b03a2e) 28%, var(--line));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ext-card {
     transition: none;

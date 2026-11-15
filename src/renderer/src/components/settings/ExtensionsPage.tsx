@@ -21,6 +21,7 @@ export default function ExtensionsPage() {
   const toast = useBrowser((state) => state.toast)
   const [installed, setInstalled] = useState<InstalledExtension[]>([])
   const [busy, setBusy] = useState<string | null>(null)
+  const broken = installed.filter((entry) => entry.error).length
 
   useEffect(() => {
     void window.vela.extensions
@@ -57,6 +58,20 @@ export default function ExtensionsPage() {
       else toast(entry.enabled ? `${entry.name} désactivée` : `${entry.name} activée`)
     } catch (cause) {
       toast(cause instanceof Error ? cause.message : 'Changement impossible', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const retry = async (entry: InstalledExtension): Promise<void> => {
+    setBusy(entry.id)
+    try {
+      const result = await window.vela.extensions.reload(entry.id)
+      setInstalled(result.extensions)
+      if (result.error) toast(result.error, 'error')
+      else toast(`${entry.name} chargée`)
+    } catch (cause) {
+      toast(cause instanceof Error ? cause.message : 'Chargement impossible', 'error')
     } finally {
       setBusy(null)
     }
@@ -103,7 +118,11 @@ export default function ExtensionsPage() {
         <div className="ext-head">
           <h3 className="appearance-sub-title">Installées</h3>
           <span className="ext-hint">
-            {installed.length === 0 ? 'Aucune pour l’instant' : `${installed.length}`}
+            {installed.length === 0
+              ? 'Aucune pour l’instant'
+              : `${installed.length} ${installed.length > 1 ? 'extensions' : 'extension'}${
+                  broken > 0 ? ` · ${broken} à réparer` : ''
+                }`}
           </span>
         </div>
 
@@ -115,7 +134,13 @@ export default function ExtensionsPage() {
         ) : (
           <ul className="ext-installed">
             {installed.map((entry) => (
-              <li className="ext-row" key={entry.id} data-off={!entry.enabled}>
+              <li
+                className="ext-row"
+                key={entry.id}
+                data-off={!entry.enabled}
+                data-error={entry.error ? 'true' : undefined}
+                title={entry.path}
+              >
                 <span className="ext-row-icon" aria-hidden="true">
                   {entry.icon ? <img src={entry.icon} alt="" width={28} height={28} /> : entry.name.slice(0, 1)}
                 </span>
@@ -127,6 +152,23 @@ export default function ExtensionsPage() {
                   <span className="ext-row-description">
                     {entry.description || entry.path}
                   </span>
+                  {entry.error && (
+                    <span className="ext-row-error">
+                      <Icon name="warning" size={12} />
+                      {/* L'interrupteur reste sur l'intention ; ce mot dit
+                          que Chromium, lui, n'a rien chargé. */}
+                      <b>Non chargée</b>
+                      <span>{entry.error}</span>
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={() => void retry(entry)}
+                        disabled={busy === entry.id}
+                      >
+                        Réessayer
+                      </button>
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"

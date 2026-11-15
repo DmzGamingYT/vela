@@ -9,6 +9,8 @@ export interface InstalledExtension {
   icon: string | null
   path: string
   enabled: boolean
+  /** Raison du dernier échec de chargement ; null quand Chromium l'a chargée. */
+  error: string | null
 }
 
 export interface ExtensionsResult {

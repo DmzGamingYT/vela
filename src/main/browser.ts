@@ -83,7 +83,7 @@ import { Peek } from './peek'
 import { Store } from './store'
 import { canUseChannel, senderKindOf } from './ipc/ipcPolicy'
 import { TabManager, type TabHost } from './tabs'
-import { preparedPartitions } from './privacy'
+import { preparedPartitions, prepareSession } from './privacy'
 import { registerAgentIpc } from './ipc/agent'
 import { registerAppIpc } from './ipc/app'
 import type { IpcHost } from './ipc/host'
@@ -206,6 +206,15 @@ export class Browser {
     const browser = new Browser(dir)
     await browser.store.loadSecrets()
     browser.broadcast()
+    // Les extensions actives rejoignent chaque espace maintenant, pas à
+    // l'ouverture de la première page : au démarrage, aucune session n'existait
+    // et la liste des réglages annonçait « chargée » pour rien. Attendre ici
+    // garantit que la première navigation a déjà l'extension.
+    await Promise.all(
+      browser.store
+        .get()
+        .spaces.map((space) => attachExtensions(prepareSession(partitionFor(space))))
+    )
     return browser
   }
 
