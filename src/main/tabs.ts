@@ -92,6 +92,15 @@ export interface TabRuntime {
   blockedHosts: { host: string; count: number }[]
 }
 
+/**
+ * Deux passes d'épreuve : la courte peint la page dès qu'une trame est prête
+ * (une page ordinaire répond en quelques dizaines de millisecondes), la longue
+ * remplace l'image pour les pages vidéo qui tardent. Sans la courte, le retrait
+ * immédiat de la vue laissait la zone de page vide pendant la capture.
+ */
+const QUICK_SHOT_MS = 500
+const SLOW_SHOT_MS = [900, 1600] as const
+
 const MAX_LIVE_VIEWS = 5
 const IDLE_DISCARD_MS = 5 * 60_000
 /** Budget mémoire des pages vivantes : au-delà, les plus anciennes s'endorment. */
@@ -1119,24 +1128,45 @@ export class TabManager {
     // Les captures partent d'abord — une vue cachée n'a plus de trame à
     // rendre — mais la vue quitte la scène aussitôt : attendre l'image
     // laissait la page par-dessus un menu ouvert pendant tout le délai de
-    // capture. L'épreuve arrive quand elle est prête, la coque la peint alors.
-    const pending = ids.map((id) => this.shot(id))
+    // capture. Deux passes : une courte peint tout de suite, la complète
+    // remplace ensuite l'image si elle arrive.
+    const best = new Map<string, PaneSnapshot>()
+    const publish = (): void => {
+      // Jamais de liste vide : elle effacerait l'image déjà peinte.
+      if (!this.frozen || best.size === 0) return
+      this.host.freezeNotice?.([...best.values()])
+    }
+    const quick = ids.map((id) => this.shot(id, [QUICK_SHOT_MS], true))
     for (const id of ids) this.views.get(id)?.setVisible(false)
-    void Promise.all(pending).then((shots) => {
+    void Promise.all(quick).then((shots) => {
       if (!this.frozen) return
-      const list = shots.filter((shot): shot is PaneSnapshot => shot !== null)
-      if (list.length) this.host.freezeNotice?.(list)
+      for (const shot of shots) if (shot) best.set(shot.tabId, shot)
+      publish()
+      // Une page vidéo peut dépasser la passe courte : la capture complète
+      // arrive derrière, et seule une image réelle remplace celle affichée.
+      void Promise.all(ids.map((id) => this.shot(id))).then((later) => {
+        if (!this.frozen) return
+        for (const shot of later) if (shot) best.set(shot.tabId, shot)
+        publish()
+      })
     })
   }
 
-  /** Épreuve JPEG d'une page, réduite pour rester légère à transporter. */
-  private async shot(tabId: string): Promise<PaneSnapshot | null> {
+  /**
+   * Épreuve JPEG d'une page. `draft` produit une vignette de 480 px, bien plus
+   * rapide à encoder et à transporter : c'est elle qui peint la zone de page
+   * tout de suite, avant que l'image pleine résolution ne la remplace.
+   */
+  private async shot(
+    tabId: string,
+    budgets: readonly number[] = SLOW_SHOT_MS,
+    draft = false
+  ): Promise<PaneSnapshot | null> {
     const contents = this.captureSource(tabId)
     if (!contents) return null
-    // Une page qui lit une vidéo met plus de 240 ms à livrer sa première
-    // trame : l'épreuve vide faisait retirer la vue, et la coque montrait une
-    // page blanche. On laisse le temps, puis une seconde tentative.
-    for (const budget of [900, 1600]) {
+    // Une page qui lit une vidéo peut dépasser la passe courte : on retente
+    // avec un budget plus large plutôt que de laisser la zone vide.
+    for (const budget of budgets) {
       try {
         const image = await Promise.race([
           contents.capturePage(),
@@ -1144,8 +1174,9 @@ export class TabManager {
         ])
         if (!image || image.isEmpty()) continue
         const size = image.getSize()
-        const trimmed = size.width > 1440 ? image.resize({ width: 1440, quality: 'good' }) : image
-        return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(72).toString('base64')}` }
+        const width = draft ? 480 : 1440
+        const trimmed = size.width > width ? image.resize({ width, quality: 'good' }) : image
+        return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(draft ? 45 : 72).toString('base64')}` }
       } catch {
         /* on retente une fois ; au-delà, la coque garde son fond */
       }
