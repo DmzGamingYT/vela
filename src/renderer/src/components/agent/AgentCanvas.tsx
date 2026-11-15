@@ -4,6 +4,7 @@ import { isLoopbackEndpoint, providerById, providerReady, providerState } from '
 import type { AgentSource } from '@shared/types'
 import { isHomeUrl } from '@shared/url'
 import { shortcut } from '../../lib/format'
+import { agentFloats } from '../../lib/agentFloat'
 import { useBrowser } from '../../store/browser'
 import { useTunnel } from '../../store/tunnel'
 import ChatComposer, { type ComposerTab } from './ChatComposer'
@@ -299,7 +300,7 @@ export default function AgentCanvas({
       : `≈ ${formatUsd(cost.usd)}`
   const costTitle = cost.detail
 
-  const floating = windowWidth < 900
+  const floating = agentFloats(windowWidth)
   const expanded = width > DEFAULT_WIDTH
 
   const rememberPrompt = (text: string): void => {

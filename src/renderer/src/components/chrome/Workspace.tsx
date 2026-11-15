@@ -4,6 +4,7 @@ import type { PaneSnapshot, TabView } from '@shared/types'
 import { clampSplitRatio, panesCanSplit } from '@shared/layout'
 import { hostOf, isHomeUrl } from '@shared/url'
 import { useBrowser } from '../../store/browser'
+import { agentFloats } from '../../lib/agentFloat'
 import { Icon } from '../Icon'
 import PaneHeader from './PaneHeader'
 import StartPage from '../start/StartPage'
@@ -186,7 +187,7 @@ export default function Workspace() {
     // Sous 900 px, le panneau Agent flotte au-dessus de la page (CSS). Une vue
     // native Electron passe toujours devant le DOM : sans ce retrait, YouTube
     // recouvrait entièrement l'agent ouvert. On la fige comme pour un menu.
-    const floatingDrawer = state.agentOpen && window.innerWidth < 900
+    const floatingDrawer = state.agentOpen && agentFloats(window.innerWidth)
     if (
       (state.workMode === 'work' && !workSplit) ||
       state.overlay ||
