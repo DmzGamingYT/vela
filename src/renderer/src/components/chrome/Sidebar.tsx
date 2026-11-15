@@ -1136,6 +1136,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
                         label={bookmark.title}
                         size={18}
                         spaceId={space.id}
+                        letter="domain"
                       />
                     </button>
                   ))}

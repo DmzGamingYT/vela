@@ -57,8 +57,18 @@ function flushPeeks(): void {
   peekScheduled = false
   const batches = [...peekBatches]
   peekBatches.clear()
+  // Le lot part dans une microtâche : si la fenêtre a été démontée entre-temps
+  // (test, rechargement du châssis), le pont n’existe plus. On libère les
+  // attentes au lieu de jeter une exception non capturée.
+  const api = window.vela?.favicons
+  if (!api) {
+    for (const [, batch] of batches) {
+      for (const waiters of batch.waiters.values()) for (const waiter of waiters) waiter(null)
+    }
+    return
+  }
   for (const [spaceId, batch] of batches) {
-    void window.vela.favicons
+    void api
       .peekMany([...batch.hosts], spaceId)
       .then((icons) => {
         for (const [host, waiters] of batch.waiters) {
@@ -196,8 +206,13 @@ function Favicon({
 
   // Ce que l'appareil connaît déjà : lecture locale, sans réseau, même hors
   // écran. Une ligne d'historique garde donc son icône en arrivant.
+  //
+  // Elle est lue même quand la page fournit une icône : un favori garde
+  // l'adresse de l'icône d'il y a des mois, et celle-ci meurt souvent (CDN,
+  // jeton signé). Sans cette lecture, la tuile retombait sur un monogramme
+  // alors que le domaine avait son icône en cache.
   useEffect(() => {
-    if (src || !url) return
+    if (!url) return
     let alive = true
     void iconRequest(url, spaceId, true).then((data) => {
       if (alive && data) setCached(data)
@@ -206,6 +221,19 @@ function Favicon({
       alive = false
     }
   }, [src, url, spaceId])
+
+  // L'icône de la page a échoué : on redemande celle du domaine (cache, puis
+  // le site). Une image cassée ne doit pas laisser une case vide.
+  useEffect(() => {
+    if (failed.length === 0 || !url || cacheOnly) return
+    let alive = true
+    void iconRequest(url, spaceId).then((data) => {
+      if (alive && data) setBetter(data)
+    })
+    return () => {
+      alive = false
+    }
+  }, [failed, url, spaceId, cacheOnly])
 
   // Le réseau, lui, attend l'écran : rien ne part pour une ligne jamais vue.
   useEffect(() => {

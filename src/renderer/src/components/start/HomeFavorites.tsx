@@ -56,7 +56,13 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
         <div className="home-pins-title">
           <h2>
             Favoris
-            {empty ? null : <span className="home-pins-count">{countLabel}</span>}
+            {/* Le titre dit déjà « Favoris » : le compteur n'ajoute qu'un
+                nombre, resserré pour ne pas répéter le mot. */}
+            {empty ? null : (
+              <span className="home-pins-count" title={countLabel} aria-label={countLabel}>
+                {bookmarks.length}
+              </span>
+            )}
           </h2>
           {empty ? (
             // L'aide suit son titre : à l'autre bout de la ligne, elle ne se
@@ -111,6 +117,7 @@ export default function HomeFavorites({ spaceId }: { spaceId: string }) {
                       label={title}
                       size={20}
                       spaceId={spaceId}
+                      letter="domain"
                     />
                   </span>
                   <span className="pin-copy">

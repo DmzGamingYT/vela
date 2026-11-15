@@ -1,0 +1,87 @@
+/* --- Favoris et épinglés : des tuiles lisibles -----------------------
+   La rangée de l'accueil avait des tuiles de 132 px, dont 70 px pour le
+   titre : « Figma — R… », « MDN — co… », et le domaine coupé lui aussi. Une
+   tuile de favori doit se reconnaître sans son infobulle.
+
+   Les monogrammes suivent maintenant ceux des épingles (la lettre du
+   domaine, pas deux initiales de titre) : une rangée de « FA, MQ, AN, AD »
+   ne ressemblait à rien. */
+
+.home-favorites .pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  /* Quatre colonnes à 1 000 px : le titre garde 140 px, le domaine entier.
+     Les tuiles s'enroulent au lieu de défiler derrière un bord coupé. */
+  overflow: visible;
+  scrollbar-width: auto;
+}
+
+.home-favorites .pin-card {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 56px;
+}
+
+.home-favorites .pin-open {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px 8px 10px;
+  gap: 10px;
+}
+
+.home-favorites .pin-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.home-favorites .pin-copy strong {
+  font-size: 12px;
+}
+
+.home-favorites .pin-copy small {
+  font-size: 10px;
+}
+
+/* Le « + » garde sa taille de tuile au lieu d'étirer sa colonne. */
+.home-favorites .pin-add {
+  width: 56px;
+  height: 56px;
+  justify-self: start;
+  align-self: center;
+}
+
+/* Monogramme de secours : une lettre franche sur une pastille teintée, dans
+   la même famille que les tuiles épinglées. À 9 px et 90 % d'opacité, la
+   lettre se lisait comme une case vide. */
+.home-favorites .pin-icon .favicon[data-fallback='true'],
+.sidebar .mini-tile .favicon[data-fallback='true'] {
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--favicon-tint, var(--clay)) 55%, var(--ink));
+  background: color-mix(in srgb, var(--favicon-tint, var(--clay)) 20%, transparent);
+}
+
+.sidebar .mini-tile .favicon[data-fallback='true'] {
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.sidebar .mini-tile .favicon[data-fallback='true'] span {
+  font-size: 11px;
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  /* Une seule colonne de tuiles lisibles plutôt que des lignes de moignons. */
+  .home-favorites .pin-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+}
