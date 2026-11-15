@@ -85,14 +85,16 @@
   background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
+/* Même gabarit que la bascule et Réglages (36 × 32, rayon 9) : la colonne se
+   lit d'une seule taille, du haut jusqu'aux profils. */
 .rail-tool {
   position: relative;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 28px;
+  width: 36px;
+  height: 32px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 9px;
   background: none;
   color: var(--muted);
   transition:
@@ -121,8 +123,8 @@
 
 .rail-tool-count {
   position: absolute;
-  top: 1px;
-  right: 2px;
+  top: 2px;
+  right: 3px;
   font-size: 9px;
   font-weight: 700;
   line-height: 1;
@@ -138,9 +140,10 @@
 /* L'anneau de téléchargement du rail : il tourne autour de l'icône. */
 .rr-ring {
   position: absolute;
-  inset: 2px;
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
+  /* 1 px de retrait : sur 36 × 32, l'anneau entoure l'icône sans la toucher. */
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
   transform: rotate(-90deg);
   pointer-events: none;
 }
