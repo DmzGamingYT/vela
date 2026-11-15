@@ -1192,13 +1192,46 @@ body {
 /* Barre latérale à droite : le rail reste à gauche, la colonne passe après
    le contenu. Les vues des pages suivent leur conteneur. */
 :root[data-sidebar='right'] .app-bg > .sidebar {
-  order: 3;
+  order: 4;
   border-right: none;
   border-left: 1px solid var(--line-soft);
 }
 
 :root[data-sidebar='right'] .app-bg > .workspace {
   order: 2;
+}
+
+/* Les tiroirs ancrés restent collés à la page, quel que soit le bord de la
+   barre latérale. `display: contents` sur le conteneur de présence en fait des
+   enfants flex de la coque : sans ordre explicite, leur `order: 0` les posait
+   avant le rail dès que la barre passait à droite — les notes et l'agent
+   s'ouvraient alors à gauche de la fenêtre, contre le rail, en écrasant la
+   page au passage. */
+.notes-drawer,
+.agent-dock {
+  order: 3;
+  /* Un tiroir cède de la largeur avant la page : la fenêtre peut descendre à
+     980 px avec la barre latérale ouverte, et 244 px de barre plus 340 px de
+     tiroir ne doivent pas réduire la page à une bande. */
+  flex-shrink: 1;
+}
+
+.workspace {
+  min-width: 360px;
+}
+
+/* Accueil dans une page étroite : les puces du champ (moteur, palette, agent)
+   pèsent plus lourd que le texte qu'elles accompagnent et poussaient le champ
+   hors de la page. Elles s'effacent, les raccourcis restent au clavier et
+   dans la palette. */
+@media (max-width: 1240px) {
+  .app[data-drawer='true'] .home-chips-meta {
+    display: none;
+  }
+}
+
+.start-inner.home {
+  overflow-x: clip;
 }
 
 /* --- Mouvement réduit : respecté partout, ciels compris ---------- */
