@@ -127,14 +127,17 @@
   color: var(--clay);
 }
 
+/* À 9 px, « 16 » se lisait mais demandait de près : 10 px dans le coin du
+   bouton, à 1 px du haut et 2 px du bord, sans quitter les 36 px. */
 .rail-tool-count {
   position: absolute;
-  top: 2px;
-  right: 3px;
-  font-size: 9px;
+  top: 1px;
+  right: 2px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1;
   color: var(--clay);
+  letter-spacing: -0.02em;
 }
 
 .foot-note {
