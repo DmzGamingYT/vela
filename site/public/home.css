@@ -358,6 +358,92 @@
   color: var(--bg);
 }
 
+/* --- Repères de la capture ---------------------------------------------- */
+
+/* Trois pastilles posées sur l’image. Elles restent blanches : la capture est
+   tantôt claire, tantôt sombre, et une pastille d’encre disparaîtrait sur
+   l’une des deux. */
+.stage-pins {
+  position: absolute;
+  inset: 40px 0 0;
+  pointer-events: none;
+}
+
+.pin {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  display: flex;
+  align-items: center;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.pin-dot {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(28, 32, 48, 0.14);
+  border-radius: 50%;
+  background: #fff;
+  color: #1c2030;
+  font-size: 12px;
+  font-weight: 560;
+  box-shadow:
+    0 6px 18px -8px rgba(20, 24, 40, 0.5),
+    0 0 0 4px rgba(255, 255, 255, 0.26);
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+
+.pin-label {
+  margin-left: 8px;
+  padding: 6px 11px;
+  border-radius: var(--pill);
+  background: #1c2030;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition:
+    opacity 0.18s var(--ease),
+    transform 0.18s var(--ease),
+    visibility 0.18s;
+}
+
+.pin:hover .pin-dot {
+  background: #1c2030;
+  color: #fff;
+}
+
+.pin:hover .pin-label {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.stage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+.stage-legend b {
+  margin-right: 5px;
+  color: var(--ink);
+  font-weight: 560;
+}
+
 /* --- Têtes de section ---------------------------------------------------- */
 
 .sec-head {
@@ -621,70 +707,123 @@
   font-size: 13.5px;
 }
 
-/* Le schéma : l’appareil à gauche, ce qui sort à droite, un fil entre les deux. */
+/* Le schéma : deux colonnes de même facture, une frontière pointillée entre
+   elles. Les rangées s’alignent de part et d’autre du rail, ce qui rend la
+   comparaison évidente sans flèche décorative. */
 .flow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(48px, 8vw, 120px) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(10px, 2vw, 22px);
+  grid-template-columns: minmax(0, 0.86fr) 64px minmax(0, 1.14fr);
+  align-items: stretch;
   margin-top: 40px;
-  padding: clamp(22px, 3vw, 34px);
+  padding: clamp(20px, 2.4vw, 28px) clamp(20px, 2.6vw, 30px);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--surface);
 }
 
-.flow-label {
-  margin: 0 0 14px;
-  color: var(--ink-3);
-  font-size: 12.5px;
+.flow-out-side {
+  display: flex;
+  flex-direction: column;
 }
 
-.flow-chips {
+.flow-label {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 16px;
+  color: var(--ink-3);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.flow-label .ico {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.6;
+  color: var(--ink-2);
+}
+
+.flow-keep {
+  display: grid;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.flow-chips li {
-  border: 1px solid var(--line);
-  border-radius: var(--pill);
-  background: var(--surface-2);
-  padding: 7px 12px;
+.flow-keep li {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: 14px;
 }
 
+.flow-keep li:first-child {
+  padding-top: 0;
+}
+
+.flow-keep li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Le rail : un pointillé vertical continu, interrompu par la flèche. */
 .flow-wire {
-  height: 24px;
-  color: var(--line-strong);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.flow-wire svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.flow-wire::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  border-left: 1px dashed var(--line-strong);
+}
+
+.flow-arrow {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.flow-arrow .ico {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.6;
 }
 
 .flow-out {
   display: grid;
-  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .flow-out li {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
   align-items: baseline;
-  gap: 8px;
-  padding-bottom: 9px;
+  gap: 14px;
+  padding: 11px 0;
   border-bottom: 1px solid var(--line);
   font-size: 14px;
+}
+
+.flow-out li:first-child {
+  padding-top: 0;
+}
+
+.flow-out li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .flow-out span {
@@ -699,15 +838,32 @@
 }
 
 .flow-more {
-  margin: 14px 0 0;
+  margin: 18px 0 0;
+}
+
+.flow-out-side .flow-more {
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .flow-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--ink);
-  font-size: 13.5px;
-  text-decoration: underline;
-  text-decoration-color: var(--line-strong);
-  text-underline-offset: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 2px;
+}
+
+.flow-more a::after {
+  content: '→';
+  color: var(--ink-3);
+}
+
+.flow-more a:hover {
+  border-bottom-color: var(--ink);
 }
 
 /* --- Téléchargement ------------------------------------------------------ */
@@ -739,8 +895,15 @@
 }
 
 .dl-tile.is-match {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.dl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .dl-os {
@@ -750,15 +913,47 @@
   letter-spacing: -0.03em;
 }
 
+/* Le badge n’apparaît que sur la tuile reconnue par le script. */
+.dl-badge {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--pill);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dl-badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dl-tile.is-match .dl-badge {
+  display: inline-flex;
+}
+
 .dl-os-note {
-  margin: 3px 0 16px;
+  margin: 3px 0 0;
   color: var(--ink-3);
   font-size: 13px;
 }
 
+/* Pleine largeur : la cible de clic occupe la tuile au lieu de flotter
+   à gauche d’un grand vide. */
 .dl-cta {
-  align-self: flex-start;
-  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 11px 20px;
   border: 1px solid var(--ink);
   border-radius: var(--pill);
   background: var(--ink);
@@ -768,6 +963,12 @@
   transition:
     transform 0.18s var(--ease),
     background 0.18s var(--ease);
+}
+
+.dl-cta .ico {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.7;
 }
 
 .dl-cta:hover {
@@ -798,11 +999,19 @@
 
 .dl-details summary::after {
   content: '+';
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
   color: var(--ink-3);
-  font-size: 16px;
-  font-weight: 300;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 1;
-  transition: transform 0.2s var(--ease);
+  transition:
+    transform 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 
 .dl-details[open] summary::after {
@@ -925,6 +1134,224 @@
   height: 16px;
   margin-top: 2px;
   color: var(--accent-ink);
+}
+
+/* --- Premier lancement --------------------------------------------------- */
+
+.first-run {
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.first-run-title {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+.first-run-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.first-run-steps li {
+  min-width: 0;
+}
+
+/* Trois petites scènes dessinées en CSS : pas d’image de plus à charger. */
+.scene {
+  display: grid;
+  gap: 9px;
+  place-items: center;
+  aspect-ratio: 5 / 3;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+/* 1 — le fichier et sa barre de téléchargement */
+.scene-file {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.scene-file .ico {
+  width: 17px;
+  height: 17px;
+}
+
+.scene-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-bar {
+  width: 66%;
+  height: 4px;
+  border-radius: var(--pill);
+  background: var(--line-strong);
+}
+
+.scene-bar i {
+  display: block;
+  width: 68%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+/* 2 — l’icône, un trait, le dossier */
+.first-run-steps li:nth-child(2) .scene {
+  grid-template-columns: auto minmax(20px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.scene-app img {
+  display: block;
+  border-radius: 8px;
+}
+
+/* Le trait est un SVG : une bordure en pointillés sur 0 px de haut ne
+   dessine que les coins. */
+.scene-arrow {
+  width: 100%;
+  height: 12px;
+  color: var(--ink-3);
+}
+
+.scene-arrow path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+}
+
+.scene-arrow path:last-child {
+  stroke-dasharray: none;
+}
+
+.scene-folder {
+  position: relative;
+  width: 44px;
+  height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+}
+
+.scene-folder::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -1px;
+  width: 19px;
+  height: 6px;
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: inherit;
+}
+
+.scene-folder b {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* 3 — le dialogue du système, réduit à sa carte */
+.scene-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.gate-card {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: left;
+  box-shadow: 0 12px 26px -22px rgba(20, 24, 40, 0.55);
+}
+
+.gate-title {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 10.5px;
+}
+
+.gate-line {
+  margin: 6px 0 9px;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.gate-btn {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.step-num {
+  margin: 12px 0 0;
+  color: var(--accent-ink);
+  font-size: 12px;
+}
+
+.first-run-steps h3 {
+  margin: 4px 0 0;
+  font-size: 15.5px;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.first-run-steps li > p:last-child {
+  margin: 6px 0 0;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.first-run-more {
+  margin: 18px 0 0;
+}
+
+.first-run-more a {
+  color: var(--ink-2);
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
 }
 
 /* --- Questions ----------------------------------------------------------- */
@@ -1207,6 +1634,21 @@
     border-radius: 12px;
   }
 
+  .pin-dot {
+    width: 21px;
+    height: 21px;
+    font-size: 11px;
+  }
+
+  .pin-label {
+    display: none;
+  }
+
+  .stage-legend {
+    gap: 4px 16px;
+    font-size: 12px;
+  }
+
   .feature-grid,
   .zero-row,
   .dl-tiles {
@@ -1251,11 +1693,17 @@
 
   .flow {
     grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
+    gap: 24px;
   }
 
+  /* Sans rail, la frontière devient un trait entre les deux blocs. */
   .flow-wire {
     display: none;
+  }
+
+  .flow-out-side {
+    padding-top: 22px;
+    border-top: 1px dashed var(--line-strong);
   }
 
   .flow-out li:last-child {
@@ -1272,8 +1720,337 @@
     gap: 14px;
   }
 
+  .first-run-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .first-run-steps .scene {
+    aspect-ratio: 16 / 9;
+  }
+
   .foot-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
+  }
+}
+
+/* --- Fiche d’identité ------------------------------------------------------
+   Huit faits vérifiables, alignés sous la capture : version, date, poids par
+   plateforme, plateformes, licence, nombre de notes. Le contenu est réécrit
+   par site/tools/fiche.mjs à chaque build ; ici, seulement la grille. */
+
+.facts-label {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--line);
+}
+
+.fact {
+  background: var(--bg);
+  padding: 13px 16px 15px;
+}
+
+.fact dt {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.fact dd {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Limites assumées ------------------------------------------------------
+   Trois puces barrées : ce que le navigateur ne fera pas, et le renvoi vers
+   la page qui explique pourquoi. */
+
+.limits {
+  padding: 48px 0 56px;
+}
+
+.limits-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.limits-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.limits-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 15px 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  font-size: 0.88rem;
+  color: var(--ink-3);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  transition:
+    color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    text-decoration-color 0.18s var(--ease);
+}
+
+.limits-list a:hover,
+.limits-list a:focus-visible {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  text-decoration-color: transparent;
+}
+
+.limits-ico {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fact {
+    padding: 12px 13px 14px;
+  }
+
+  .limits {
+    padding: 36px 0 40px;
+  }
+
+  .limits-list a {
+    font-size: 0.84rem;
+  }
+}
+
+/* --- Palette de navigation (⌘K) -------------------------------------------
+   Un <dialog> natif : le fond passe en inert, le focus reste dedans et
+   revient au bouton qui l’a ouvert. Ici, seulement la peau et la grille des
+   résultats, dessinés avec la même palette que le reste de la page. */
+
+.palette {
+  width: min(560px, 100vw - 28px);
+  max-height: min(72vh, 560px);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 32px 80px -34px rgba(12, 16, 30, 0.5);
+  overflow: hidden;
+}
+
+.palette::backdrop {
+  background: rgba(16, 19, 30, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.palette-in {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.palette-field {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 12px 13px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.palette-field:focus-within {
+  border-bottom-color: var(--accent);
+}
+
+.palette-ico {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--ink-3);
+}
+
+.palette-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.palette-input::placeholder {
+  color: var(--ink-3);
+}
+
+.palette-input:focus {
+  outline: none;
+}
+
+.palette-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.palette-close:hover,
+.palette-close:focus-visible {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.palette-close .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.palette-list {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.palette-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.palette-item[aria-selected='true'] {
+  background: var(--accent-soft);
+}
+
+.palette-item-nom {
+  flex: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.palette-item-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.84rem;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-item-genre {
+  flex: none;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.palette-item[aria-selected='true'] .palette-item-genre {
+  color: var(--accent-ink);
+}
+
+.palette-empty {
+  margin: 0;
+  padding: 24px 18px 28px;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.palette-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+
+.palette-foot kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+.palette-foot span {
+  opacity: 0.5;
+}
+
+/* Le <dialog> s’ouvre d’un coup : rien à animer, mais si un jour une
+   transition s’ajoute ici, celle-ci la neutralise avec le reste du site. */
+
+@media (prefers-reduced-motion: reduce) {
+  .palette,
+  .palette::backdrop {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .palette {
+    width: calc(100vw - 20px);
+    max-height: 80vh;
+    margin: 8vh auto auto;
+  }
+}
+
+@media (max-width: 460px) {
+  .palette-item-genre {
+    display: none;
   }
 }

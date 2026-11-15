@@ -222,8 +222,16 @@
       panneau.hidden = panneau.dataset.dlPanel !== systeme
     }
     // Une seule pastille : elle désigne le fichier que le bouton propose.
-    for (const ligne of document.querySelectorAll('.dl-row[data-file], .dl-tile[data-file]')) {
+    for (const ligne of document.querySelectorAll('.dl-row[data-file]')) {
       ligne.classList.toggle('is-match', ligne.dataset.file === choix.file)
+    }
+    // La tuile se reconnaît au système de l’appareil, pas au fichier exact : sur
+    // un Mac Apple silicon le fichier proposé est l’arm64, alors que la tuile
+    // porte le DMG universel — aucune tuile ne correspondait auparavant. Elle
+    // suit la détection et non `systeme`, sinon le badge « Votre appareil »
+    // suivrait le sélecteur de raccourcis et désignerait un autre poste.
+    for (const tuile of document.querySelectorAll('.dl-tile[data-os]')) {
+      tuile.classList.toggle('is-match', tuile.dataset.os === platform)
     }
   }
 
