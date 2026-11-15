@@ -63,7 +63,7 @@ const COPY: Record<Page, { title: string; lede: string }> = {
   },
   extensions: {
     title: 'Extensions',
-    lede: 'Ce qui pourrait compléter Azimut, classé par usage. Aucune extension n’est installée depuis cet écran.'
+    lede: 'Les extensions chargées par Azimut, leur icône, leur interrupteur — et celles qui pourraient compléter le navigateur.'
   },
   privacy: {
     title: 'Confidentialité',

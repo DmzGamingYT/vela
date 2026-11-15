@@ -370,7 +370,9 @@
 .library-tabs {
   display: flex;
   gap: 2px;
-  padding: 0 24px 12px;
+  /* La pastille active touche le filet de l'en-tête si elle n'a pas d'air
+     au-dessus : 10 px la détachent sans ajouter une ligne de plus. */
+  padding: 10px 24px 12px;
   border-bottom: 1px solid var(--line);
 }
 

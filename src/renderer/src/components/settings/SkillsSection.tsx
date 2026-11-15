@@ -4,6 +4,32 @@ import type { Skill } from '@shared/types'
 import { useBrowser } from '../../store/browser'
 import { Icon } from '../Icon'
 
+/**
+ * Trois commandes proposées, prêtes à ajouter : personne ne devine quelle
+ * phrase écrire pour sa première skill. Elles disparaissent dès qu'elles sont
+ * dans la liste, et ne remplacent jamais une commande existante.
+ */
+const PROPOSALS: { command: string; label: string; prompt: string }[] = [
+  {
+    command: 'traduire',
+    label: 'Traduire la page dans ma langue',
+    prompt:
+      'Traduis le contenu principal de la page de l’onglet joint dans ma langue, en gardant les titres et les liens importants.'
+  },
+  {
+    command: 'plan',
+    label: 'Tirer un plan de la page',
+    prompt:
+      'Extrais un plan hiérarchisé de la page de l’onglet joint : sections, idées clés et ce qu’il faut lire en premier.'
+  },
+  {
+    command: 'veille',
+    label: 'Comparer les offres de la page',
+    prompt:
+      'Compare les offres présentées dans la page de l’onglet joint : prix, ce qui est inclus, et celle qui convient pour un usage simple.'
+  }
+]
+
 interface Draft {
   /** `null` : une nouvelle skill ; sinon l’identifiant de celle qu’on modifie. */
   id: string | null
@@ -78,6 +104,26 @@ export default function SkillsSection() {
     toast(`/${skill.command} retirée`)
   }
 
+  /** Une proposition s'ajoute d'un clic, sans passer par le formulaire. */
+  const propose = async (proposal: (typeof PROPOSALS)[number]): Promise<void> => {
+    if (skills.length >= SKILL_LIMIT) {
+      toast(`${SKILL_LIMIT} skills au maximum`, 'error')
+      return
+    }
+    const entry: Skill = {
+      id: `skill-${proposal.command}`,
+      command: proposal.command,
+      label: proposal.label,
+      prompt: proposal.prompt
+    }
+    await updateSettings({ skills: [...skills, entry] })
+    toast(`/${proposal.command} ajoutée`)
+  }
+
+  const proposals = PROPOSALS.filter(
+    (proposal) => !skills.some((skill) => skill.command === proposal.command)
+  )
+
   return (
     <section className="setting-block" data-settings-anchor="agent-skills">
       <div className="setting-head">
@@ -93,6 +139,28 @@ export default function SkillsSection() {
           Aucune skill. Une phrase suffit : « /veille » qui compare trois offres, « /notes » qui
           range la page en trois lignes.
         </p>
+      )}
+
+      {proposals.length > 0 && (
+        <div className="skill-proposals">
+          <span className="skill-proposals-title">Proposées</span>
+          <div className="skill-proposals-list">
+            {proposals.map((proposal) => (
+              <button
+                type="button"
+                className="skill-chip"
+                key={proposal.command}
+                onClick={() => void propose(proposal)}
+                title={`Ajouter /${proposal.command} — ${proposal.label}`}
+                disabled={skills.length >= SKILL_LIMIT}
+              >
+                <span>/{proposal.command}</span>
+                {proposal.label}
+                <Icon name="plus" size={11} />
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       <ul className="skills-list">

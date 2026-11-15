@@ -183,11 +183,16 @@ export default function Workspace() {
     const workSplit = Boolean(
       state.workMode === 'work' && state.view.split && state.view.secondTabId && state.splitAllowed
     )
+    // Sous 900 px, le panneau Agent flotte au-dessus de la page (CSS). Une vue
+    // native Electron passe toujours devant le DOM : sans ce retrait, YouTube
+    // recouvrait entièrement l'agent ouvert. On la fige comme pour un menu.
+    const floatingDrawer = state.agentOpen && window.innerWidth < 900
     if (
       (state.workMode === 'work' && !workSplit) ||
       state.overlay ||
       state.peekOpen ||
       state.menuOpen > 0 ||
+      floatingDrawer ||
       resizingRef.current
     ) {
       window.vela.views.layout({ panes: [], overlay: true, splitFits })

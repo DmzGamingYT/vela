@@ -1234,6 +1234,18 @@ body {
   overflow-x: clip;
 }
 
+/* Une page native couvre l'accueil : ces animations ne se voient plus, mais
+   elles continuent de se composer. Les suspendre rend le GPU à la vidéo — les
+   transitions redevenaient saccadées pendant une lecture YouTube. */
+.app[data-page='true'] .amb-layer,
+.app[data-page='true'] .amb-clouds,
+.app[data-page='true'] .amb-particles,
+.app[data-page='true'] .amb-sheen,
+.app[data-page='true'] .aurora-blob,
+.app[data-page='true'] .home-word {
+  animation-play-state: paused;
+}
+
 /* --- Mouvement réduit : respecté partout, ciels compris ---------- */
 
 @media (prefers-reduced-motion: reduce) {

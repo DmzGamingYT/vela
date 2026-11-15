@@ -1138,19 +1138,24 @@ export class TabManager {
   private async shot(tabId: string): Promise<PaneSnapshot | null> {
     const contents = this.captureSource(tabId)
     if (!contents) return null
-    try {
-      const image = await Promise.race([
-        contents.capturePage(),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 240))
-      ])
-      if (!image || image.isEmpty()) return null
-      const size = image.getSize()
-      const trimmed = size.width > 1440 ? image.resize({ width: 1440, quality: 'good' }) : image
-      return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(72).toString('base64')}` }
-    } catch {
-      /* une capture ratée laisse la place au fond de la coque */
-      return null
+    // Une page qui lit une vidéo met plus de 240 ms à livrer sa première
+    // trame : l'épreuve vide faisait retirer la vue, et la coque montrait une
+    // page blanche. On laisse le temps, puis une seconde tentative.
+    for (const budget of [900, 1600]) {
+      try {
+        const image = await Promise.race([
+          contents.capturePage(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), budget))
+        ])
+        if (!image || image.isEmpty()) continue
+        const size = image.getSize()
+        const trimmed = size.width > 1440 ? image.resize({ width: 1440, quality: 'good' }) : image
+        return { tabId, image: `data:image/jpeg;base64,${trimmed.toJPEG(72).toString('base64')}` }
+      } catch {
+        /* on retente une fois ; au-delà, la coque garde son fond */
+      }
     }
+    return null
   }
 
   /**

@@ -177,6 +177,93 @@
   margin-top: auto;
 }
 
+/* ── Extensions réellement chargées ─────────────────────────────────── */
+
+.ext-install-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.ext-installed {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ext-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+/* Une extension désactivée reste lisible : on baisse l'icône, pas le texte. */
+.ext-row[data-off='true'] .ext-row-icon,
+.ext-row[data-off='true'] .ext-row-description {
+  opacity: 0.55;
+}
+
+.ext-row-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--clay) 12%, transparent);
+  color: color-mix(in srgb, var(--clay) 55%, var(--ink));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ext-row-icon img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.ext-row-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ext-row-copy strong {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.ext-version {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.ext-row-description {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ext-card {
     transition: none;

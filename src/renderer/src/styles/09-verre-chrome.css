@@ -1611,7 +1611,15 @@ kbd {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  border: 1px solid rgba(var(--glow), 0.38);
+  /* Le halo seul disparaissait sur le papier clair : la pastille prend la
+     teinte du thème, et l'icône l'encre, lisibles dans les deux modes. */
+  border: 1px solid color-mix(in srgb, var(--clay) 30%, transparent);
+  background: color-mix(in srgb, var(--clay) 14%, transparent);
+  color: color-mix(in srgb, var(--clay) 62%, var(--ink));
+}
+
+:root[data-mode='dark'] .models-hero-mark {
+  border-color: rgba(var(--glow), 0.38);
   background: rgba(var(--glow), 0.2);
   color: #dbe9ff;
 }

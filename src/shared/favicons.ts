@@ -40,6 +40,15 @@ export function iconDataUrl(entry: IconRecord): string | null {
   return `data:${entry.type || 'image/png'};base64,${entry.data}`
 }
 
+/**
+ * Clé d'une icône : `www.youtube.com` et `youtube.com` sont le même site, donc
+ * une seule icône. Sans cela, une page visitée sous l'un des deux noms
+ * laissait l'autre en initiales dans l'historique.
+ */
+export function iconHostKey(host: string): string {
+  return host.trim().toLowerCase().replace(/^www\./, '')
+}
+
 /** Une icône trouvée dans la page, avec sa taille déclarée quand elle existe. */
 export interface IconCandidate {
   url: string
@@ -173,6 +182,9 @@ export function createIconCache(deps: IconCacheDeps) {
   }
 
   function record(host: string, icon: FetchedIcon | null): void {
+    // Un échec ne remplace jamais une icône valide : le réseau tombe, la
+    // capture retrouvée sur le disque ne doit pas devenir une initiale.
+    if (!icon && store[host]?.ok) return
     store[host] = icon
       ? { data: icon.data, type: icon.type, at: now(), ok: true }
       : { data: '', type: '', at: now(), ok: false }
@@ -181,8 +193,8 @@ export function createIconCache(deps: IconCacheDeps) {
   }
 
   /** Data URL de l'icône, ou null. Dix montages ne font qu'une requête. */
-  async function get(host: string): Promise<string | null> {
-    const key = host.trim().toLowerCase()
+  async   function get(host: string): Promise<string | null> {
+    const key = iconHostKey(host)
     if (!key) return null
     const cached = fresh(key)
     if (cached) return iconDataUrl(cached)
@@ -210,10 +222,17 @@ export function createIconCache(deps: IconCacheDeps) {
    * aucune requête (fenêtre d'espace).
    */
   function peek(host: string): string | null {
-    const key = host.trim().toLowerCase()
+    const key = iconHostKey(host)
     if (!key) return null
     const entry = store[key]
     return entry ? iconDataUrl(entry) : null
+  }
+
+  /** Enregistre une icône déjà obtenue ailleurs (celle annoncée par la page). */
+  function remember(host: string, icon: FetchedIcon): void {
+    const key = iconHostKey(host)
+    if (!key) return
+    record(key, icon)
   }
 
   /** Vide le cache ; renvoie le nombre d'entrées supprimées. */
@@ -229,5 +248,5 @@ export function createIconCache(deps: IconCacheDeps) {
     return Object.keys(store).length
   }
 
-  return { get, peek, purge, size }
+  return { get, peek, remember, purge, size }
 }

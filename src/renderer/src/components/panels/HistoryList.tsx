@@ -271,12 +271,15 @@ export default function HistoryList() {
                                 connaît, sinon du site une fois la ligne
                                 visible : une liste de cent cinquante lignes
                                 ne demande plus un domaine par ligne. */}
+                        {/* Une icône absente laisse la lettre du domaine, jamais les
+                            initiales du titre : « (145) YouTube » donnait « (Y ». */}
                         <Favicon
                           src={entry.favicon}
                           url={entry.url}
                           label={entry.title || host}
                           size={16}
                           spaceId={entry.spaceId}
+                          letter="domain"
                         />
                         <span className="history-copy">
                           <span className="history-title">{entry.title || host}</span>

@@ -124,6 +124,13 @@ const api: AzimutApi = {
     clearRange: (range: string) => ipcRenderer.invoke('history:clear-range', range),
     undo: () => ipcRenderer.invoke('history:undo-clear')
   },
+  extensions: {
+    list: () => ipcRenderer.invoke('extensions:list'),
+    install: () => ipcRenderer.invoke('extensions:install'),
+    toggle: (path: string, enabled: boolean) =>
+      ipcRenderer.invoke('extensions:toggle', { path, enabled }),
+    remove: (path: string) => ipcRenderer.invoke('extensions:remove', path)
+  },
   favicons: {
     get: (host: string, spaceId?: string) => ipcRenderer.invoke('favicons:get', { host, spaceId }),
     peek: (host: string, spaceId?: string) =>

@@ -39,6 +39,12 @@ import {
 import type { IpcHost } from './host'
 import type { Handle, On } from './types'
 import { readImageDataUrl } from './util'
+import {
+  installExtension,
+  managedExtensions,
+  removeExtension,
+  setExtensionEnabled
+} from '../extensions'
 
 /** Icône d'un domaine : une adresse absente rend `null`, elle n'est pas refusée. */
 const FaviconOne = field<{ host: string; spaceId: string }>('icône', (value) => {
@@ -60,6 +66,15 @@ const FaviconMany = field<{ hosts: string[] | null; spaceId: string }>('icônes'
   }
 })
 
+/** Activation d'une extension : le dossier identifie la fiche. */
+const ExtensionToggle = field<{ path: string; enabled: boolean }>('extension', (value) => {
+  const source = record(value)
+  return {
+    path: typeof source.path === 'string' ? source.path : '',
+    enabled: source.enabled === true
+  }
+})
+
 /** Nom de fichier : tout ce qui n'est pas un texte vaut « aucun ». */
 const Name = field<string>('nom', (value) => (typeof value === 'string' ? value : ''))
 
@@ -72,6 +87,14 @@ export function registerAppIpc(host: IpcHost, handle: Handle, on: On): void {
   bindContracts(
     [
       request('app:view', None, () => host.view()),
+
+      // — Extensions chargées —
+      request('extensions:list', None, () => managedExtensions()),
+      request('extensions:install', None, () => installExtension()),
+      request('extensions:toggle', ExtensionToggle, ({ path, enabled }) =>
+        setExtensionEnabled(path, enabled)
+      ),
+      request('extensions:remove', Text, (path) => removeExtension(path)),
 
       request('favicons:get', FaviconOne, ({ host: name, spaceId }) => {
         if (!name) return null

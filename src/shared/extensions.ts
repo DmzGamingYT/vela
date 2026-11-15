@@ -1,3 +1,22 @@
+/** Une extension réellement chargée par Azimut (dossier décompressé). */
+export interface InstalledExtension {
+  /** Dossier source, identité stable de la fiche. */
+  id: string
+  name: string
+  version: string
+  description: string
+  /** Data URL de la plus grande icône du manifeste, quand il y en a une. */
+  icon: string | null
+  path: string
+  enabled: boolean
+}
+
+export interface ExtensionsResult {
+  ok: boolean
+  error?: string
+  extensions: InstalledExtension[]
+}
+
 export type ExtensionCategoryId = 'block' | 'passwords' | 'reading' | 'privacy' | 'work'
 
 export interface ExtensionCategory {

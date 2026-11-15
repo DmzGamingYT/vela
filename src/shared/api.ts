@@ -490,6 +490,16 @@ export interface AzimutApi {
     /** Remet en place l'effacement encore annulable (8 secondes). */
     undo(): Promise<number>
   }
+  extensions: {
+    /** Extensions chargées par Azimut (dossiers décompressés). */
+    list(): Promise<import('./extensions').InstalledExtension[]>
+    /** Choisit un dossier contenant manifest.json et le charge. */
+    install(): Promise<import('./extensions').ExtensionsResult>
+    /** Active ou retire l'extension de toutes les sessions d'espace. */
+    toggle(path: string, enabled: boolean): Promise<import('./extensions').ExtensionsResult>
+    /** Retire l'extension des sessions et de la liste. */
+    remove(path: string): Promise<import('./extensions').InstalledExtension[]>
+  }
   favicons: {
     /** Data URL de l'icône du domaine, servie par le cache local de l'espace. */
     get(host: string, spaceId?: string): Promise<string | null>

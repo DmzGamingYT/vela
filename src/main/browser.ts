@@ -74,6 +74,8 @@ import { previewOf } from '@shared/work'
 import { AgentRunner, type FinishedWork } from './agent'
 import { ComicBridge } from './comic'
 import { setSessionLanguage } from './identity'
+import { rememberFavicon } from './favicons'
+import { attachExtensions } from './extensions'
 import { Thumbnails } from './thumbnails'
 import { NoteAudioStore } from './noteAudio'
 import { HighlightsStore, NotesStore } from './notes'
@@ -155,13 +157,21 @@ export class Browser {
 
   private readonly host: TabHost = {
     tab: (id) => this.store.get().tabs.find((tab) => tab.id === id),
-    trackSession: (ses) => this.trackDownloads(ses),
+    trackSession: (ses) => {
+      this.trackDownloads(ses)
+      // Chaque espace a sa session : une extension active y est chargée aussi.
+      attachExtensions(ses)
+    },
     space: (id) => this.store.get().spaces.find((space) => space.id === id),
     patchTab: (id, patch) => {
       const tab = this.store.get().tabs.find((item) => item.id === id)
       if (!tab) return
       Object.assign(tab, patch)
       this.store.schedule()
+      // L'icône que la page annonce est mémorisée pour tout l'espace : certains
+      // sites refusent la requête directe du cache (consentement, redirection),
+      // et l'historique restait alors en initiales.
+      if (patch.favicon) void rememberFavicon(patch.favicon, tab.spaceId)
     },
     changed: () => this.broadcast(),
     noteBlocked: () => this.noteBlocked(),

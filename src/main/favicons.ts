@@ -6,6 +6,7 @@ import {
   createIconCache,
   iconCandidatesFromHtml,
   iconCandidatesFromManifest,
+  iconHostKey,
   rankIconCandidates,
   type IconStore
 } from '@shared/favicons'
@@ -34,7 +35,20 @@ function cacheFile(spaceId: string): string {
 function load(spaceId: string): IconStore {
   try {
     const raw = JSON.parse(readFileSync(cacheFile(spaceId), 'utf8')) as unknown
-    return raw && typeof raw === 'object' ? (raw as IconStore) : {}
+    if (!raw || typeof raw !== 'object') return {}
+    // Les fichiers d'avant la clé unifiée gardent `www.` : on les ramène sous
+    // la clé courte pour que l'historique retrouve ses icônes.
+    const store: IconStore = {}
+    for (const [host, entry] of Object.entries(raw as IconStore)) {
+      const key = iconHostKey(host)
+      if (!key || !entry) continue
+      // Une icône valide gagne toujours sur un échec plus récent du même site.
+      const known = store[key]
+      if (!known || (known.ok !== true && entry.ok) || (known.ok === entry.ok && known.at < entry.at)) {
+        store[key] = entry
+      }
+    }
+    return store
   } catch {
     return {}
   }
@@ -79,16 +93,25 @@ function validHost(host: string): boolean {
   return isPublicHost(host)
 }
 
+/**
+ * Même site : `youtube.com` et `www.youtube.com` (la redirection la plus
+ * fréquente). Tout autre domaine reste refusé : une page ne doit pas nous
+ * envoyer chercher son icône ailleurs.
+ */
+function sameSite(host: string, other: string): boolean {
+  return iconHostKey(host) === iconHostKey(other)
+}
+
 /** Texte du site (page ou manifeste), sur le même hôte et en HTTPS seulement. */
 async function fetchText(url: string, host: string, max: number): Promise<string | null> {
   try {
     const target = new URL(url)
-    if (target.protocol !== 'https:' || target.hostname !== host) return null
+    if (target.protocol !== 'https:' || !sameSite(target.hostname, host)) return null
     const response = await net.fetch(target.toString(), {
       headers: { accept: 'text/html,application/manifest+json,application/json;q=0.9,*/*;q=0.5' },
       signal: AbortSignal.timeout(4000)
     })
-    if (!response.ok || new URL(response.url).hostname !== host) return null
+    if (!response.ok || !sameSite(new URL(response.url).hostname, host)) return null
     const text = await response.text()
     if (!text || text.length > max) return null
     return text
@@ -103,13 +126,13 @@ async function fetchImage(
 ): Promise<{ data: string; type: string } | null> {
   try {
     const target = new URL(url)
-    if (target.protocol !== 'https:' || target.hostname !== host) return null
+    if (target.protocol !== 'https:' || !sameSite(target.hostname, host)) return null
     const response = await net.fetch(target.toString(), {
       headers: { accept: 'image/*' },
       signal: AbortSignal.timeout(4000)
     })
     // Un site ne doit pas nous envoyer vers un autre domaine pour son icône.
-    if (!response.ok || new URL(response.url).hostname !== host) return null
+    if (!response.ok || !sameSite(new URL(response.url).hostname, host)) return null
     const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
     if (!type.startsWith('image/')) return null
     const buffer = Buffer.from(await response.arrayBuffer())
@@ -170,6 +193,25 @@ function cacheFor(spaceId: string): ReturnType<typeof createIconCache> {
 
 export function faviconDataUrl(host: string, spaceId = ''): Promise<string | null> {
   return cacheFor(spaceId).get(host)
+}
+
+/**
+ * Icône annoncée par la page elle-même (`page-favicon-updated`) : c'est la
+ * seule source pour les sites dont la page d'accueil refuse nos requêtes
+ * (consentement, redirection lointaine). Le domaine doit être public.
+ */
+export async function rememberFavicon(url: string, spaceId = ''): Promise<void> {
+  try {
+    const target = new URL(url)
+    if (target.protocol !== 'https:' && target.protocol !== 'http:') return
+    if (!validHost(target.hostname)) return
+    const cache = cacheFor(spaceId)
+    if (cache.peek(target.hostname)) return
+    const image = await fetchImage(url, target.hostname)
+    if (image) cache.remember(target.hostname, image)
+  } catch {
+    /* icône facultative : une page sans icône garde ses initiales */
+  }
 }
 
 /** Lecture seule du cache : aucune requête, même si l'icône a expiré. */
