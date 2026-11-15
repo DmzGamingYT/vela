@@ -51,7 +51,9 @@ const normaliser = (texte: string): string =>
 
 /** Résout une adresse interne vers le fichier qui la sert. */
 const resolveInternal = (path: string): string | null => {
-  const clean = path.replace(/\/$/, '')
+  // Une adresse peut porter un paramètre de cache (`/favicon.svg?v=2`) ou une
+  // ancre : seul le chemin désigne un fichier.
+  const clean = path.replace(/[?#].*$/, '').replace(/\/$/, '')
   const candidates =
     clean === '' ? ['index.html'] : [`${clean.slice(1)}/index.html`, clean.slice(1)]
   for (const candidate of candidates) {
@@ -211,14 +213,17 @@ describe('site — version et téléchargements', () => {
   ]
 
   /**
-   * Une ligne de la fiche : `data-file` nomme l'installateur, `<code>` affiche
-   * l'empreinte en entier, `data-copy` la donne au bouton « copier ». Le
-   * balisage a remplacé l'ancien tableau `<td class="file">` : on s'appuie sur
-   * ces attributs de données, pas sur la mise en forme.
+   * Une entrée de la fiche : `data-file` nomme l'installateur, `<code>` affiche
+   * l'empreinte en entier, `data-copy` la donne au bouton « copier ». Depuis la
+   * refonte, les fichiers sont groupés par plateforme en tuiles (`li.dl-tile`)
+   * qui contiennent des blocs `div.dl-file` : on lit ces blocs, pas la tuile, et
+   * on s'appuie sur les attributs de données, jamais sur la mise en forme.
    */
-  const rows = [...home.matchAll(/<li class="dl-row" data-file="([^"]+)">([\s\S]*?)<\/li>/g)].map(
-    (match) => ({ file: match[1], html: match[2] })
-  )
+  const rows = [
+    ...home.matchAll(
+      /<div class="dl-file" data-file="([^"]+)">([\s\S]*?)(?=<div class="dl-file"|<li class="dl-tile"|<\/ul>)/g
+    )
+  ].map((match) => ({ file: match[1], html: match[2] }))
 
   it('annonce une seule version, et jamais celle d’une version à venir', () => {
     expect(announced, 'version annoncée').toMatch(/^\d+\.\d+\.\d+$/)
