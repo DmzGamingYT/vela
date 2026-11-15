@@ -28,7 +28,7 @@ import {
 export type TunnelLevel = 1 | 2 | 3 | 4
 
 /** Les quatre temps de la refonte : poser, explorer, voir la carte, écrire. */
-export type TunnelStep = 'question' | 'explore' | 'map' | 'synthesis'
+export type TunnelStep = 'question' | 'sources' | 'synthesis'
 
 interface TunnelState {
   active: TunnelMap | null
@@ -50,7 +50,6 @@ interface TunnelState {
   checkedIds: string[]
   hoverId: string | null
   projectsOpen: boolean
-  filtersOpen: boolean
   exportOpen: boolean
   subscribed: boolean
 
@@ -81,7 +80,6 @@ interface TunnelState {
   select(id: string | null, options?: { toggle?: boolean }): void
   setHover(id: string | null): void
   setProjectsOpen(open: boolean): void
-  setFiltersOpen(open: boolean): void
   setExportOpen(open: boolean): void
   setStatus(id: string, status: NodeStatus): Promise<void>
   renameNode(id: string, title: string): Promise<void>
@@ -169,12 +167,11 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   depth: 'standard',
   variants: [],
   step: 'question',
-  viewMode: 'map',
+  viewMode: 'list',
   selectedId: null,
   checkedIds: [],
   hoverId: null,
   projectsOpen: false,
-  filtersOpen: false,
   exportOpen: false,
   subscribed: false,
 
@@ -271,7 +268,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       error: null,
       phase: 'Préparation…',
       suggested: null,
-      step: 'explore'
+      step: 'sources'
     })
     try {
       const { runId } = await window.vela.tunnel.run({
@@ -317,8 +314,8 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       checkedIds: [],
       projectsOpen: false,
       error: null,
-      step: 'explore',
-      viewMode: 'map',
+      step: 'sources',
+      viewMode: 'list',
       running: false,
       phase: ''
     })
@@ -348,7 +345,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       notify(`Copie impossible : ${TUNNEL_MAP_LIMIT} cartes au maximum. Supprimez-en une.`, 'error')
       return
     }
-    set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null, step: 'explore' })
+    set({ active: copy, query: copy.query, projectsOpen: false, selectedId: null, step: 'sources' })
   },
 
   async renameMap(id, title) {
@@ -370,7 +367,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
       running: false,
       phase: '',
       step: 'question',
-      viewMode: 'map',
+      viewMode: 'list',
       projectsOpen: false
     })
     setTimeout(() => {
@@ -423,7 +420,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   },
 
   setStep(step) {
-    set({ step, filtersOpen: false, exportOpen: false })
+    set({ step, exportOpen: false })
   },
 
   setViewMode(viewMode) {
@@ -451,11 +448,7 @@ export const useTunnel = create<TunnelState>((set, get) => ({
   },
 
   setProjectsOpen(projectsOpen) {
-    set({ projectsOpen, filtersOpen: projectsOpen ? false : get().filtersOpen })
-  },
-
-  setFiltersOpen(filtersOpen) {
-    set({ filtersOpen, projectsOpen: filtersOpen ? false : get().projectsOpen })
+    set({ projectsOpen })
   },
 
   setExportOpen(exportOpen) {

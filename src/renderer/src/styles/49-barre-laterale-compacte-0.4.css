@@ -81,21 +81,6 @@ fond teinté et un point sous l'icône disent la même chose sans crier. */
   box-shadow: 0 1px 2px rgba(3, 5, 12, 0.1);
 }
 
-/* Ouvert en arrière-plan : un point sous l'icône. Un site fermé n'existe pas
-   ici — un épinglé est un onglet ouvert — donc l'absence de point dit déjà
-   « pas actif ». */
-.pin-tile:not([data-active='true'])::after {
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  width: 4px;
-  height: 4px;
-  margin-left: -2px;
-  border-radius: 50%;
-  background: var(--pin-accent);
-  content: '';
-}
-
 /* Les cases vides complètent la rangée de quatre : une seule icône laissait
 un grand vide sous l'en-tête. */
 .pin-slot {
@@ -161,10 +146,6 @@ un grand vide sous l'en-tête. */
 .pin-tile[data-asleep='true']:hover,
 .pin-tile[data-asleep='true']:focus-within {
   opacity: 1;
-}
-
-.pin-tile[data-asleep='true']::after {
-  background: var(--faint);
 }
 
 /* L'infobulle nomme le site puis son domaine : les tuiles n'ont pas de texte. */

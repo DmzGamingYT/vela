@@ -1,27 +1,35 @@
-import { useMemo, useRef } from 'react'
-import { filterMap } from '@shared/tunnel'
+import { useRef } from 'react'
 import { useBrowser } from '../../store/browser'
 import { useTunnel } from '../../store/tunnel'
 import { Icon } from '../Icon'
 import TunnelAsk from './TunnelAsk'
 import TunnelExplore from './TunnelExplore'
-import TunnelMap from './TunnelMap'
 import TunnelProjects from './TunnelProjects'
 import TunnelSynthesis from './TunnelSynthesis'
 
 const STEPS = [
   { id: 'question', label: 'Question' },
-  { id: 'explore', label: 'Pages trouvées' },
-  { id: 'map', label: 'Carte' },
+  { id: 'sources', label: 'Sources' },
   { id: 'synthesis', label: 'Synthèse' }
 ] as const
 
-/** Les quatre temps du tunnel : poser, explorer, voir la carte, écrire. */
+/** Deux images plus tard : la carte est montée et peinte avant la capture. */
+function afterPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  })
+}
+
+/**
+ * Les trois temps du tunnel : poser, lire les sources (liste, angles ou carte
+ * dans le même écran), écrire une synthèse citée. Changer de vue ne fait plus
+ * quitter les filtres, la sélection ni le défilement.
+ */
 export default function TunnelView() {
   const active = useTunnel((s) => s.active)
   const step = useTunnel((s) => s.step)
   const setStep = useTunnel((s) => s.setStep)
-  const filters = useTunnel((s) => s.filters)
+  const setViewMode = useTunnel((s) => s.setViewMode)
   const projectsOpen = useTunnel((s) => s.projectsOpen)
   const setProjectsOpen = useTunnel((s) => s.setProjectsOpen)
   const exportOpen = useTunnel((s) => s.exportOpen)
@@ -34,20 +42,22 @@ export default function TunnelView() {
   const exportOpml = useTunnel((s) => s.exportOpml)
   const svgRef = useRef<SVGSVGElement | null>(null)
 
-  const nodes = useMemo(() => active?.nodes ?? [], [active?.nodes])
-  const { hiddenSites } = useMemo(() => filterMap(nodes, filters), [nodes, filters])
-  const sites = useMemo(() => nodes.filter((node) => node.kind === 'site'), [nodes])
-  const angles = useMemo(
-    () => nodes.filter((node) => node.kind === 'angle' || node.kind === 'subangle').length,
-    [nodes]
-  )
-
   // Sans carte, la seule étape possible est la question : une étape vidée
   // (carte supprimée, enregistrement refusé) ne laisse pas un écran blanc.
   const viewStep = active || step === 'question' ? step : 'question'
 
   const close = (): void => {
     useBrowser.getState().setWorkMode('browse')
+  }
+
+  // L'image a besoin de la carte à l'écran : on bascule la vue, on laisse
+  // peindre, puis on capture le même SVG que celui qu'on voit.
+  const exportMap = async (kind: 'png' | 'svg'): Promise<void> => {
+    if (viewStep !== 'sources') setStep('sources')
+    setViewMode('map')
+    await afterPaint()
+    await (kind === 'png' ? exportPng(svgRef.current) : exportSvg(svgRef.current))
+    setExportOpen(false)
   }
 
   return (
@@ -115,18 +125,10 @@ export default function TunnelView() {
                 >
                   PDF
                 </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => void exportPng(svgRef.current).then(() => setExportOpen(false))}
-                >
+                <button type="button" role="menuitem" onClick={() => void exportMap('png')}>
                   Image PNG
                 </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => void exportSvg(svgRef.current).then(() => setExportOpen(false))}
-                >
+                <button type="button" role="menuitem" onClick={() => void exportMap('svg')}>
                   Image SVG
                 </button>
                 <button
@@ -159,37 +161,7 @@ export default function TunnelView() {
       </header>
 
       {viewStep === 'question' && <TunnelAsk />}
-      {viewStep === 'explore' && <TunnelExplore />}
-      {viewStep === 'map' && (
-        <div className="tw-screen">
-          <div className="tw-map-head">
-            <h2>Carte</h2>
-            <span className="tw-sub">
-              {sites.length} source{sites.length > 1 ? 's' : ''} · {angles} angle
-              {angles > 1 ? 's' : ''}
-            </span>
-            <span className="tw-grow" />
-            <button type="button" className="tw-btn" onClick={() => setStep('explore')}>
-              Explorer la liste
-            </button>
-            <button
-              type="button"
-              className="tw-btn tw-btn-primary"
-              onClick={() => setStep('synthesis')}
-            >
-              Rédiger la synthèse
-            </button>
-          </div>
-          <p className="tw-map-note">
-            {hiddenSites > 0
-              ? `${hiddenSites} source${hiddenSites > 1 ? 's' : ''} écartée${hiddenSites > 1 ? 's' : ''} par l’entonnoir ou la pertinence.`
-              : 'Toutes les sources passent l’entonnoir.'}
-          </p>
-          <div className="tunnel-map-wrap">
-            <TunnelMap svgRef={svgRef} />
-          </div>
-        </div>
-      )}
+      {viewStep === 'sources' && <TunnelExplore svgRef={svgRef} />}
       {viewStep === 'synthesis' && <TunnelSynthesis />}
 
       <TunnelProjects />

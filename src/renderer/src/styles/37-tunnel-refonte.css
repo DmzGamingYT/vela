@@ -1376,3 +1376,16 @@
     justify-content: center;
   }
 }
+
+/* La carte prend la place de la liste dans le même écran : le cadre garde sa
+   hauteur, les filtres restent à gauche, la sélection ne se referme pas. */
+.tw-scroll[data-view='map'] {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tw-scroll[data-view='map'] .tunnel-map-wrap {
+  flex: 1;
+  min-height: 0;
+}

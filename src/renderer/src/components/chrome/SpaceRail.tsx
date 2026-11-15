@@ -176,7 +176,7 @@ export default function SpaceRail() {
               />
             </svg>
           )}
-          <Icon name="list" size={17} />
+          <Icon name="stack" size={17} />
           {downloads.length > 0 && <span className="rail-tool-count">{downloads.length}</span>}
         </button>
       </div>

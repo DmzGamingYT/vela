@@ -31,15 +31,9 @@
   background: var(--fill-3);
 }
 
-/* Volet secondaire : le tiret devient un point creux, sans toucher au cadre
-   puisqu'il n'y en a plus. */
+/* Volet secondaire : le cadre s'efface, la tuile reste. */
 .sidebar .pin-tile[data-secondary='true'] .pin-tile-main {
   border: 0;
-}
-
-.sidebar .pin-tile[data-secondary='true']::after {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--pin-accent);
 }
 
 /* ── Emplacements libres : aucune boîte ───────────────────────────────── */

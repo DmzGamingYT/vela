@@ -370,3 +370,47 @@ kbd.key {
     display: none;
   }
 }
+
+/* --- Mots-clés rapides : une touche, une flèche, un moteur -------------
+   La rangée se lit maintenant de gauche à droite : la touche ressemble à une
+   touche (largeur fixe, chiffre centré), la flèche ne prend plus la place d'un
+   mot, et le moteur garde le chevron du système sans la bordure lourde. */
+
+.nav-keyword {
+  width: 40px;
+  height: 30px;
+  padding: 0;
+  text-align: center;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--paper));
+}
+
+.nav-keyword:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nav-list-row:focus-within .nav-keyword-arrow {
+  color: var(--accent);
+}
+
+.nav-select {
+  height: 30px;
+  padding: 0 26px 0 10px;
+  border-radius: 9px;
+  appearance: none;
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m3 4.5 3 3 3-3' fill='none' stroke='%23888f9e' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 11px;
+}
+
+.nav-select:hover {
+  border-color: var(--line);
+  background-color: var(--fill);
+}

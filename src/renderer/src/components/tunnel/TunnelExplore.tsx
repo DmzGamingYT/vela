@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactElement, type RefObject } from 'react'
 import {
   filterMap,
   tunnelCounts,
@@ -10,6 +10,7 @@ import { useBrowser } from '../../store/browser'
 import { useTunnel } from '../../store/tunnel'
 import { Icon } from '../Icon'
 import TunnelDetail from './TunnelDetail'
+import TunnelMap from './TunnelMap'
 
 const FIVE_YEARS = 5 * 365 * 24 * 3600 * 1000
 const PREVIEW_ROWS = 3
@@ -40,7 +41,17 @@ function yearOf(node: MapNode): string {
  * Deuxième temps : l'entonnoir devient une navigation. Un filtre ne supprime
  * rien, il replie des branches ; le compteur dit ce qu'il masque.
  */
-export default function TunnelExplore() {
+/**
+ * Deuxième temps : l'entonnoir devient une navigation. Les trois vues —
+ * liste, angles, carte — vivent dans le même écran : changer de point de vue
+ * ne fait plus quitter les filtres ni la sélection.
+ */
+export default function TunnelExplore({
+  svgRef
+}: {
+  /** La carte est le même objet que celui exporté en image. */
+  svgRef: RefObject<SVGSVGElement | null>
+}) {
   const active = useTunnel((s) => s.active)
   const filters = useTunnel((s) => s.filters)
   const setFilters = useTunnel((s) => s.setFilters)
@@ -50,6 +61,8 @@ export default function TunnelExplore() {
   const setStatus = useTunnel((s) => s.setStatus)
   const checkedIds = useTunnel((s) => s.checkedIds)
   const setStep = useTunnel((s) => s.setStep)
+  const viewMode = useTunnel((s) => s.viewMode)
+  const setViewMode = useTunnel((s) => s.setViewMode)
   const setProjectsOpen = useTunnel((s) => s.setProjectsOpen)
   const running = useTunnel((s) => s.running)
   const phase = useTunnel((s) => s.phase)
@@ -428,29 +441,46 @@ export default function TunnelExplore() {
               <button
                 type="button"
                 role="tab"
-                aria-selected={mode === 'angles'}
-                data-active={mode === 'angles'}
-                onClick={() => setMode('angles')}
+                aria-selected={viewMode === 'list' && mode === 'list'}
+                data-active={viewMode === 'list' && mode === 'list'}
+                onClick={() => {
+                  setViewMode('list')
+                  setMode('list')
+                }}
+              >
+                Liste
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'list' && mode === 'angles'}
+                data-active={viewMode === 'list' && mode === 'angles'}
+                onClick={() => {
+                  setViewMode('list')
+                  setMode('angles')
+                }}
               >
                 Angles
               </button>
               <button
                 type="button"
                 role="tab"
-                aria-selected={mode === 'list'}
-                data-active={mode === 'list'}
-                onClick={() => setMode('list')}
+                aria-selected={viewMode === 'map'}
+                data-active={viewMode === 'map'}
+                onClick={() => setViewMode('map')}
               >
-                Liste
-              </button>
-              <button type="button" role="tab" aria-selected={false} onClick={() => setStep('map')}>
                 Carte
               </button>
             </div>
           </div>
 
-          <div className="tw-scroll">
-            {kept.length > 0 && typeCounts.size < 3 && (
+          <div className="tw-scroll" data-view={viewMode}>
+            {viewMode === 'map' && (
+              <div className="tunnel-map-wrap">
+                <TunnelMap svgRef={svgRef} />
+              </div>
+            )}
+            {viewMode === 'list' && kept.length > 0 && typeCounts.size < 3 && (
               <p className="tw-same-type">
                 <b>Sources de même type</b> : {typeCounts.size} type
                 {typeCounts.size > 1 ? 's' : ''} seulement parmi les pages retenues. Cherchez un
@@ -535,7 +565,11 @@ export default function TunnelExplore() {
                   <span>
                     {matchedList.length} source{matchedList.length > 1 ? 's' : ''}
                   </span>
-                  <button type="button" className="tw-link" onClick={() => setStep('map')}>
+                  <button
+                    type="button"
+                    className="tw-link"
+                    onClick={() => setViewMode('map')}
+                  >
                     Voir la carte
                   </button>
                 </div>
@@ -580,7 +614,7 @@ export default function TunnelExplore() {
             >
               <Icon name="search" size={13} /> Trouver plus
             </button>
-            <button type="button" className="tw-btn" onClick={() => setStep('map')}>
+            <button type="button" className="tw-btn" onClick={() => setViewMode('map')}>
               Voir la carte
             </button>
             <button

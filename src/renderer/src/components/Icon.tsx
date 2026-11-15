@@ -50,6 +50,7 @@ export type IconName =
   | 'filter'
   | 'map'
   | 'list'
+  | 'stack'
   | 'image'
   | 'translate'
   | 'comic'
@@ -314,6 +315,15 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M8 6h13M8 12h13M8 18h13" />
       <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
+    </>
+  ),
+  // Trois plans empilés : ce qu'on garde, ce qu'on télécharge et ce qu'on a vu
+  // sont trois couches d'une même collection, pas une liste de plus.
+  stack: (
+    <>
+      <path d="m12 3 8 3.6-8 3.6-8-3.6Z" />
+      <path d="m4 11.6 8 3.6 8-3.6" />
+      <path d="m4 16.6 8 3.6 8-3.6" />
     </>
   ),
   image: (

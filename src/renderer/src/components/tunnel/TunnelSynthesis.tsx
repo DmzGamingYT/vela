@@ -10,6 +10,7 @@ export default function TunnelSynthesis() {
   const active = useTunnel((s) => s.active)
   const filters = useTunnel((s) => s.filters)
   const setStep = useTunnel((s) => s.setStep)
+  const setViewMode = useTunnel((s) => s.setViewMode)
   const select = useTunnel((s) => s.select)
   const addReportToNotes = useTunnel((s) => s.addReportToNotes)
   const [copied, setCopied] = useState(false)
@@ -36,7 +37,7 @@ export default function TunnelSynthesis() {
 
   const openSource = (id: string): void => {
     select(id)
-    setStep('explore')
+    setStep('sources')
   }
 
   const copy = async (): Promise<void> => {
@@ -52,7 +53,7 @@ export default function TunnelSynthesis() {
   return (
     <div className="tw-screen">
       <div className="tw-synth-head">
-        <button type="button" className="tw-back" onClick={() => setStep('explore')}>
+        <button type="button" className="tw-back" onClick={() => setStep('sources')}>
           ← Exploration
         </button>
         <span className="tw-sep" aria-hidden="true" />
@@ -299,7 +300,14 @@ export default function TunnelSynthesis() {
               {synthesis.angles > 1 ? 's' : ''}. La synthèse cite les pages ; elle ne remplace pas
               leur lecture.
             </p>
-            <button type="button" className="tw-btn" onClick={() => setStep('map')}>
+            <button
+              type="button"
+              className="tw-btn"
+              onClick={() => {
+                setViewMode('map')
+                setStep('sources')
+              }}
+            >
               <Icon name="map" size={13} /> Voir la carte
             </button>
           </div>
