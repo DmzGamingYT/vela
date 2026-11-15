@@ -1,4 +1,4 @@
-/* Vela — site. Thème, teinte d’accent, menu, plateforme, apparitions. */
+/* Azimut — site. Thème, teinte d’accent, menu, plateforme, apparitions. */
 
 ;(() => {
   const root = document.documentElement
@@ -337,7 +337,7 @@
   if (diagnostic) {
     diagnostic.addEventListener('click', async () => {
       const texte = [
-        'Vela 0.3.44',
+        'Azimut 0.3.44',
         `Système : ${navigator.userAgentData?.platform || navigator.platform || 'inconnu'}`,
         `Langue : ${navigator.language}`,
         `Page : ${location.href}`,

@@ -1,4 +1,4 @@
-/* Vela — thème posé avant le premier rendu pour éviter le FOUC.
+/* Azimut — thème posé avant le premier rendu pour éviter le FOUC.
 
    Fichier séparé et non différé : le navigateur l'exécute avant de peindre le
    corps de la page, comme le script inline qu'il remplace, mais la CSP n'a plus

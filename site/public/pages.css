@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Vela — pages intérieures
+   Azimut — pages intérieures
    Un bandeau de page teinté, des sections numérotées avec la liste collante à
    gauche, des captures réelles, des tableaux lisibles et des pas-à-pas.
    ========================================================================== */
@@ -694,7 +694,7 @@
   font-family: var(--mono);
 }
 
-/* --- Ce que Vela ne fait pas, et ce qu’il ajoute ------------------------ */
+/* --- Ce que Azimut ne fait pas, et ce qu’il ajoute ------------------------ */
 
 .limits {
   display: grid;

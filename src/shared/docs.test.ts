@@ -86,12 +86,16 @@ describe('limites documentées dans l’aide et sur le site', () => {
       `Azimut ${announced}, pour les trois plateformes`
     )
     // Les liens du tableau pointent vers la release annoncée…
-    expect(home).toContain(`releases/download/v${announced}/Azimut-${announced}-universal.dmg`)
-    expect(home).toContain(`Azimut-${announced}-amd64.deb`)
+    // Les installateurs de 0.3.44 gardent leur nom de fichier d'origine.
+    const installateur = 'Vela'
+    expect(home).toContain(
+      `releases/download/v${announced}/${installateur}-${announced}-universal.dmg`
+    )
+    expect(home).toContain(`${installateur}-${announced}-amd64.deb`)
     // …et le bouton adapté à la plateforme aussi : le script compose ses liens
     // depuis une base de release unique, à laquelle s'ajoute le numéro annoncé.
     expect(script).toContain(`/download/v${announced}/`)
-    expect(script).toContain(`Azimut-${announced}-universal.dmg`)
+    expect(script).toContain(`${installateur}-${announced}-universal.dmg`)
   })
 
   it('explique SmartScreen sous Windows', () => {

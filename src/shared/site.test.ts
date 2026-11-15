@@ -38,6 +38,13 @@ const publishedHtml = (dir = siteDir): string[] =>
 
 const ANCIEN_NOM = /\bpetite\s+fen[eê]tre\b/i
 
+/**
+ * Les installateurs de 0.3.44 sont publiés sous l'ancien nom du produit. Le
+ * site les liste encore ainsi : leur nom de fichier est une adresse, pas une
+ * marque. Le préfixe passera à « Azimut » avec la première release renommée.
+ */
+const INSTALLATEUR = 'Vela'
+
 /** Décode les entités qui peuvent couper le nom dans une page HTML. */
 const normaliser = (texte: string): string =>
   texte.replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').replace(/&ecirc;|&#234;|&#xea;/gi, 'ê')
@@ -195,12 +202,12 @@ describe('site — version et téléchargements', () => {
    */
   const announced = (home.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1] || ''
   const files = [
-    `Azimut-${announced}-universal.dmg`,
-    `Azimut-${announced}-arm64.dmg`,
-    `Azimut-${announced}-x64.dmg`,
-    `Azimut-${announced}-x64.exe`,
-    `Azimut-${announced}-x86_64.AppImage`,
-    `Azimut-${announced}-amd64.deb`
+    `${INSTALLATEUR}-${announced}-universal.dmg`,
+    `${INSTALLATEUR}-${announced}-arm64.dmg`,
+    `${INSTALLATEUR}-${announced}-x64.dmg`,
+    `${INSTALLATEUR}-${announced}-x64.exe`,
+    `${INSTALLATEUR}-${announced}-x86_64.AppImage`,
+    `${INSTALLATEUR}-${announced}-amd64.deb`
   ]
 
   /**

@@ -63,37 +63,37 @@ fonction d’electron-updater :
 
 ```bash
 node scripts/verify-mac-update.cjs release/mac/latest-mac.yml
-lipo -archs release/mac/mac-universal/Vela.app/Contents/MacOS/Vela
+lipo -archs release/mac/mac-universal/Azimut.app/Contents/MacOS/Azimut
 # arm64 x86_64
 ```
 
 macOS est signé (Developer ID) et notarisé dès que les secrets de signature sont configurés — voir
 [Signature macOS](#signature-macos). À défaut, le build reste signé ad hoc : sur macOS 15 et plus,
 ouvrir **Réglages Système → Confidentialité et sécurité → Ouvrir quand même** ; sur macOS 14 et
-moins, clic droit → **Ouvrir**. L’installation macOS n’est pas silencieuse (Vela prépare le `.dmg`,
+moins, clic droit → **Ouvrir**. L’installation macOS n’est pas silencieuse (Azimut prépare le `.dmg`,
 un geste suffit ensuite). Windows affiche SmartScreen.
 
 ## Mises à jour
 
-Vela vérifie les releases GitHub (`DmzGamingYT/vela`). Le contrôle est automatique ; l’installation
+Azimut vérifie les releases GitHub (`DmzGamingYT/vela`). Le contrôle est automatique ; l’installation
 dépend du format :
 
 - Contrôle silencieux ~12 s après le démarrage, puis toutes les 3 h, au retour de veille et quand
   la fenêtre reprend le focus (jamais plus d’une vérification toutes les 30 min). Le rythme se
   règle dans **Réglages › Mises à jour › Vérification automatique** : toutes les 3 h, une fois par
   semaine, ou jamais ; le bouton manuel reste disponible dans les trois cas.
-- **macOS sans certificat Apple** : Squirrel refuse de remplacer un bundle non signé, donc Vela
+- **macOS sans certificat Apple** : Squirrel refuse de remplacer un bundle non signé, donc Azimut
   télécharge le `.dmg` de la release et vérifie son empreinte SHA-512. La barre d’état propose
-  `Installer` ; ce bouton ouvre l’image, glissez Vela dans Applications, puis relancez.
+  `Installer` ; ce bouton ouvre l’image, glissez Azimut dans Applications, puis relancez.
 - **Windows** : `electron-updater` télécharge l’installateur et l’installe à la fermeture.
   `Redémarrer et installer` l’applique tout de suite.
-- **Linux AppImage** : l’AppImage est téléchargée et vérifiée ; Vela la remplace au redémarrage si
+- **Linux AppImage** : l’AppImage est téléchargée et vérifiée ; Azimut la remplace au redémarrage si
   le fichier est accessible en écriture, sinon il l’affiche pour un remplacement manuel.
 - **Linux `.deb`** : la version est vérifiée, mais le paquet se remplace à la main
-  (`apt install ./Vela-….deb`).
+  (`apt install ./Azimut-….deb`).
 
 > macOS exige une signature Developer ID **et** une notarisation pour que ShipIt remplace le bundle
-> tout seul. Avec les secrets ci-dessous, l’installation redevient silencieuse : Vela télécharge le
+> tout seul. Avec les secrets ci-dessous, l’installation redevient silencieuse : Azimut télécharge le
 > `.zip` de sa plateforme et le bundle est remplacé à la fermeture, sans repasser par le `.dmg`.
 > Sans certificat Apple, le téléchargement et la préparation sont automatiques, seul le dernier
 > geste reste à faire.
@@ -106,7 +106,7 @@ ne fabrique aucune signature : les deux tableaux ci-dessous disent seulement ce 
 renseigner, une fois les certificats obtenus.
 
 En attendant, la chaîne de mise à jour a un ancrage indépendant d’Apple et du compte GitHub :
-`latest-mac.yml` est signé en Ed25519 par la CI et Vela ne propose une mise à jour que si cette
+`latest-mac.yml` est signé en Ed25519 par la CI et Azimut ne propose une mise à jour que si cette
 signature correspond à la moitié publique épinglée dans `src/main/integrity.ts`. Sans cela, pas de
 mise à jour proposée, et l’utilisateur est renvoyé vers la page Releases. Pour le mettre en place :
 
@@ -226,12 +226,12 @@ en validant, le nom tapé part vers `geocoding-api.open-meteo.com` pour trouver 
 ses coordonnées vont à `api.open-meteo.com`, au plus une fois par demi-heure, et le relevé reste sur
 l’appareil. Aucune clé, aucun compte, aucune mesure d’usage. « Retirer » coupe le flux et efface la ville.
 
-La carte « À voir » peut importer le journal Letterboxd d’un espace : au clic sur « Importer », Vela
+La carte « À voir » peut importer le journal Letterboxd d’un espace : au clic sur « Importer », Azimut
 demande le flux RSS public du profil (`letterboxd.com/<profil>/rss/`) — sans cookie, sans la session de
 l’espace — puis garde les titres, notes et dates dans `vela.json`. Rien ne part au démarrage ni en
 arrière-plan ; retirer le profil de l’espace coupe le flux.
 
-Toutes les destinations que Vela contacte elle-même sont listées dans `src/shared/network.ts`,
+Toutes les destinations que Azimut contacte elle-même sont listées dans `src/shared/network.ts`,
 reprises dans Réglages › Confidentialité sous forme de tableau avec l’état réel de chaque flux
 (actif, sur demande, inactif), et sur le site. Deux tests gardent la cohérence : `network.test.ts`
 échoue si une adresse apparaît dans le code sans y être déclarée, et `docs.test.ts` si une ligne du
@@ -299,7 +299,7 @@ Sur Windows et Linux, remplacez `⌘` par `Ctrl`.
 | `⌘\` | Replier la barre latérale |
 | `⌘1…9` | Onglets 1 à 9 |
 | `⌘,` | Réglages |
-| `⌘⇧Espace` | Vela et la palette depuis n’importe quelle app (global) |
+| `⌘⇧Espace` | Azimut et la palette depuis n’importe quelle app (global) |
 | `Échap` | Fermer une surcouche |
 
 ## Architecture
@@ -345,9 +345,9 @@ src/
 Tout est local, dans le dossier de données de l’application :
 
 ```text
-~/Library/Application Support/Vela/   (macOS)
-%APPDATA%/Vela/                       (Windows)
-~/.config/Vela/                       (Linux)
+~/Library/Application Support/Azimut/   (macOS)
+%APPDATA%/Azimut/                       (Windows)
+~/.config/Azimut/                       (Linux)
 ├── vela.json      espaces, onglets, historique, réglages
 ├── secrets.json   clés API chiffrées, une par fournisseur (si configurées)
 └── notes/         fichiers .md + index.json
@@ -494,15 +494,15 @@ Les rushes (`site/trailer/take/`) ne sont pas versionnés. ffmpeg est requis (`b
 
 L’identité annoncée (User-Agent, client hints, `window.chrome`) suffit à ouvrir la plupart des sites,
 mais Google peut **refuser la connexion** : un profil peut être marqué côté serveur, et rien dans
-l’app ne peut annuler ce marquage. Vela n’ajoute **aucune imitation supplémentaire de Chrome** —
+l’app ne peut annuler ce marquage. Azimut n’ajoute **aucune imitation supplémentaire de Chrome** —
 empiler des leurres ne rend pas le compte plus sûr, et casse la compatibilité au premier changement
 de Google.
 
 - **Solution durable : importer votre session depuis Chrome ou Safari** (cookies du profil déjà
   connecté). Ce n’est **pas encore pris en charge** ; l’import existant ne concerne que les favoris.
 - **En attendant :** pour un bouton « Se connecter avec Google » sur un site tiers, ouvrez la
-  connexion dans votre navigateur système (clic droit sur le bouton, ou depuis le menu Vela), puis
-  revenez sur la page : Vela n’essaie pas de contourner le contrôle de Google.
+  connexion dans votre navigateur système (clic droit sur le bouton, ou depuis le menu Azimut), puis
+  revenez sur la page : Azimut n’essaie pas de contourner le contrôle de Google.
 - Un **nouvel espace** part d’une session Chromium vierge, ce qui suffit parfois, mais ne règle pas
   un profil déjà marqué.
 
@@ -510,7 +510,7 @@ de Google.
 
 - **Extensions Chrome : non prises en charge.** Aucun chargeur, aucun dossier d’extensions, aucune
   API `chrome.*` d’extension. Ce n’est pas un réglage caché.
-- **Synchronisation de compte : non prise en charge.** Vela n’a ni compte, ni serveur, ni
+- **Synchronisation de compte : non prise en charge.** Azimut n’a ni compte, ni serveur, ni
   synchronisation entre appareils. Les favoris, notes et espaces restent sur la machine ; les
   favoris peuvent être importés depuis Chrome, Brave, Edge, Chromium ou Safari, ou depuis un export
   HTML.
@@ -519,28 +519,28 @@ de Google.
 
 La traduction de planches ne fonctionne pas hors ligne : le moteur Tesseract.js et ses données de
 langue ne sont pas embarqués. Ils sont téléchargés depuis `cdn.jsdelivr.net` à la première
-traduction, puis mis en cache par le navigateur intégré. C’est le seul CDN tiers que Vela contacte ;
+traduction, puis mis en cache par le navigateur intégré. C’est le seul CDN tiers que Azimut contacte ;
 la requête ne contient aucune donnée de la planche, mais expose l’adresse IP et les métadonnées de
 transport à jsDelivr. Sans traduction de planche, aucune requête n’a lieu.
 
 ### macOS sans signature
 
-Le build n’est pas notarié. Au premier lancement, macOS peut dire que Vela est endommagé ou d’un
+Le build n’est pas notarié. Au premier lancement, macOS peut dire que Azimut est endommagé ou d’un
 développeur non identifié :
 
-1. Ouvrez le `.dmg`, glissez **Vela** dans **Applications**.
-2. **macOS 15 et plus** : lancez Vela depuis Applications, puis ouvrez **Réglages Système → Confidentialité et sécurité** et cliquez **Ouvrir quand même** à côté du message concernant Vela.
+1. Ouvrez le `.dmg`, glissez **Azimut** dans **Applications**.
+2. **macOS 15 et plus** : lancez Azimut depuis Applications, puis ouvrez **Réglages Système → Confidentialité et sécurité** et cliquez **Ouvrir quand même** à côté du message concernant Azimut.
 3. **macOS 14 et moins** : dans le Finder, faites un clic droit sur Azimut, choisissez **Ouvrir**, puis confirmez.
 4. Si le message persiste :
 
    ```bash
-   xattr -cr /Applications/Vela.app
-   open /Applications/Vela.app
+   xattr -cr /Applications/Azimut.app
+   open /Applications/Azimut.app
    ```
 
 **Pourquoi l’installation silencieuse n’est pas possible :** macOS ne remplace un bundle que si
 l’ancien et le nouveau portent la **même identité de signature Developer ID** et si le nouveau est
-notarié. Sans certificat, Gatekeeper refuse ce remplacement et Squirrel l’annule ; Vela ne le tente
+notarié. Sans certificat, Gatekeeper refuse ce remplacement et Squirrel l’annule ; Azimut ne le tente
 donc pas : il télécharge le `.dmg` de la nouvelle version en arrière-plan et la barre d’état
 propose `Installer`, qui ouvre l’image (glisser dans Applications, relancer). Il n’existe pas de contournement honnête :
 seule une vraie signature Apple débloque ce point (voir
