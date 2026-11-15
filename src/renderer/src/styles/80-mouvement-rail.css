@@ -11,9 +11,12 @@
    avec `!important` ; rien à redouter ici.
    ------------------------------------------------------------------ */
 
-/* Le repère du mode actif : il pousse depuis son centre en arrivant. */
+/* Le repère du mode actif : il pousse depuis son centre en arrivant.
+   Mesuré à 160 ms, le ressort était déjà aux neuf dixièmes à 45 ms : on
+   lisait un à-coup, pas une poussée. À 220 ms, la barre parcourt encore la
+   moitié de sa course au premier souffle, puis se pose. */
 .rail-mode[data-active='true']::before {
-  animation: rail-mark-centered var(--dur-2) var(--ease-spring) both;
+  animation: rail-mark-centered var(--dur-3) var(--ease-spring) both;
 }
 
 @keyframes rail-mark-centered {
@@ -29,7 +32,7 @@
 
 /* Celui du profil actif : même poussée, sans la translation de centrage. */
 .rail .space-chip[data-active='true']::before {
-  animation: rail-mark var(--dur-2) var(--ease-spring) both;
+  animation: rail-mark var(--dur-3) var(--ease-spring) both;
 }
 
 @keyframes rail-mark {
