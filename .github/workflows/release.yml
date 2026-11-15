@@ -204,7 +204,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          apps=(release/mac/mac*/Vela.app)
+          apps=(release/mac/mac*/Azimut.app)
           echo "Bundles trouvés : ${#apps[@]}"
           if [ "${#apps[@]}" -ne 3 ]; then
             echo "::error::Trois bundles attendus (mac-universal, mac-arm64, mac) ; trouvé ${#apps[@]}."
@@ -213,7 +213,7 @@ jobs:
           for APP in "${apps[@]}"; do
             echo "— $APP"
             echo "  nom : $(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$APP/Contents/Info.plist")"
-            echo "  tranches : $(lipo -archs "$APP/Contents/MacOS/Vela")"
+            echo "  tranches : $(lipo -archs "$APP/Contents/MacOS/Azimut")"
             # Le filtre Rust doit être DANS le bundle, avec ses deux tranches.
             # C'est le défaut qu'on vient de corriger : la crate compilait mais
             # `extraResources` ne la copiait pas, et l'app retombait en silence
@@ -238,7 +238,7 @@ jobs:
             fi
           done
 
-          UNIVERSAL="release/mac/mac-universal/Vela.app/Contents/MacOS/Vela"
+          UNIVERSAL="release/mac/mac-universal/Azimut.app/Contents/MacOS/Azimut"
           for ARCH in arm64 x86_64; do
             lipo -archs "$UNIVERSAL" | tr ' ' '\n' | grep -qx "$ARCH" || {
               echo "::error::Le binaire universel n’a pas de tranche $ARCH."
@@ -382,6 +382,6 @@ jobs:
           ls -lh dist
           gh release create "v$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Vela $VERSION" \
+            --title "Azimut $VERSION" \
             --generate-notes
           gh release upload "v$VERSION" dist/* --repo "$GITHUB_REPOSITORY" --clobber

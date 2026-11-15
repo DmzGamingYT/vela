@@ -14,9 +14,9 @@ const { signingPlan } = require('./mac-signing.cjs')
  *    signature avant la notarisation.
  *
  * 2. Aucun certificat. electron-builder ne signe pas du tout, et Gatekeeper
- *    affiche « Vela est endommagé ». On applique une signature ad hoc complète :
+ *    affiche « Azimut est endommagé ». On applique une signature ad hoc complète :
  *    l'app affiche le dialogue classique « développeur non vérifié »
- *    (clic droit → Ouvrir, ou `xattr -cr /Applications/Vela.app`).
+ *    (clic droit → Ouvrir, ou `xattr -cr /Applications/Azimut.app`).
  *
  * La signature ad hoc se fait du plus profond au plus haut, sans `--deep` :
  * déprécié depuis macOS 13, il réécrit les signatures imbriquées au lieu de les

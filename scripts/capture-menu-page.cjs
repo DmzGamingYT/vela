@@ -1,9 +1,9 @@
-/* Ouvre le menu contextuel d'une page chargée dans Vela et capture la fenêtre.
+/* Ouvre le menu contextuel d'une page chargée dans Azimut et capture la fenêtre.
    Usage : node scripts/capture-menu-page.cjs [tag]
 
    Le menu contextuel est une vue native macOS : `Page.captureScreenshot` ne le
    voit pas. On capture donc la région de l'écran qui contient la fenêtre, après
-   avoir amené Vela au premier plan et posé le curseur au centre de la fenêtre
+   avoir amené Azimut au premier plan et posé le curseur au centre de la fenêtre
    (le menu s'ouvre à la position du curseur). */
 const { spawn, execFileSync } = require('node:child_process')
 const fs = require('node:fs')

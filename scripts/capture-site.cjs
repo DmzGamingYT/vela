@@ -71,14 +71,14 @@ function windowTool() {
   return binary
 }
 
-/* Une fenêtre « Vela » peut déjà être ouverte à côté : seule la fenêtre du
+/* Une fenêtre « Azimut » peut déjà être ouverte à côté : seule la fenêtre du
    processus lancé ici doit être capturée, sinon on photographie une autre
    instance et le profil neuf ne sert à rien. */
 function windowId(pid) {
   const output = execFileSync(windowTool(), { encoding: 'utf8' })
   const windows = JSON.parse(output || '[]')
   const mine = windows.filter((entry) => entry.pid === pid)
-  const match = mine.find((entry) => entry.name === 'Vela') ?? mine[0]
+  const match = mine.find((entry) => entry.name === 'Azimut') ?? mine[0]
   if (!match) throw new Error(`fenêtre de la capture introuvable (pid ${pid}) : ${output.trim()}`)
   return match.id
 }

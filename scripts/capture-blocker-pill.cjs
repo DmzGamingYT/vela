@@ -159,7 +159,7 @@ h1{font-family:Georgia,serif;font-size:34px;margin:0 0 18px}p{max-width:640px;ma
       await focus()
       await sleep(320)
       const file = path.join(OUT, `${name}.png`)
-      execFileSync('screencapture', ['-x', '-o', `-l${windowId('Vela')}`, file])
+      execFileSync('screencapture', ['-x', '-o', `-l${windowId('Azimut')}`, file])
       console.log('capturé', path.relative(ROOT, file))
     }
     const click = async (selector) => {
