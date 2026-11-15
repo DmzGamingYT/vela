@@ -39,9 +39,12 @@ const SITE_URL =
 // forme exacte du HTML (le balisage peut changer, pas le fichier ni son hash).
 const lireSite = (html, origine) => {
   const version = (html.match(/"softwareVersion":\s*"([^"]+)"/) || [])[1]
-  const fichiers = [
+  const paires = [
     ...html.matchAll(/data-file="([^"]+)"[\s\S]{0,900}?data-copy="([0-9a-f]{64})"/g)
   ].map((m) => ({ nom: m[1], empreinte: m[2] }))
+  // Un fichier peut être nommé deux fois — la tuile de plateforme et sa fiche
+  // détaillée. On garde une correspondance par nom.
+  const fichiers = [...new Map(paires.map((paire) => [paire.nom, paire])).values()]
   return { version, fichiers, origine }
 }
 
@@ -115,7 +118,7 @@ const principal = async () => {
   }
   if (site.fichiers.length !== 6) {
     problemes.push(
-      `${site.fichiers.length} fichier(s) avec empreinte trouvé(s) dans le tableau, 6 attendus`
+      `${site.fichiers.length} fichier(s) avec empreinte trouvé(s) dans la fiche, 6 attendus`
     )
   }
 

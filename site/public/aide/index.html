@@ -43,9 +43,9 @@
       name="twitter:image"
       content="https://site-cd854ef5da03437a8f42ade87147e33d.freebuff.page/og-azimut.jpg"
     />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png?v=2" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css" />
     <link rel="stylesheet" href="/pages.css" />
@@ -82,7 +82,7 @@
       <header class="head">
         <a class="brand" href="/" aria-label="Azimut, accueil">
           <span class="brand-mark" aria-hidden="true">
-            <img src="/favicon.svg" width="26" height="26" alt="Azimut" />
+            <img src="/favicon.svg?v=2" width="26" height="26" alt="Azimut" />
           </span>
           <span class="brand-name">Azimut</span>
         </a>
@@ -578,6 +578,38 @@ $ ./Azimut-0.3.49-x86_64.AppImage</pre>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <section class="help-block" id="questions">
+          <h2>Questions fréquentes</h2>
+          <div class="qa-list">
+            <details class="qa">
+              <summary>L’agent lit-il tout ce qui est ouvert ?</summary>
+              <p>
+                Non. Il ne lit que la page que vous joignez, au moment où vous le demandez. Sans clé,
+                il répond en démo locale, sur l’appareil ; avec une clé, le contenu de la page jointe
+                part vers le modèle choisi. Le détail est dans
+                <a href="/confidentialite/#modeles">la confidentialité</a>.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Comment se passent les mises à jour ?</summary>
+              <p>
+                L’app vérifie les versions au démarrage, puis toutes les trois heures. Windows installe
+                à la fermeture, l’AppImage se remplace au redémarrage, un <code>.deb</code> s’installe
+                à la main ; sur macOS, le <code>.dmg</code> se retélécharge.
+                <a href="#mises-a-jour">Le pas-à-pas par plateforme</a>.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Puis-je me connecter à Google ?</summary>
+              <p>
+                Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. La connexion passe
+                par le navigateur système, et Azimut n’importe jamais de cookies.
+                <a href="#google">La marche à suivre</a> tient en trois lignes.
+              </p>
+            </details>
           </div>
         </section>
       </div>

@@ -4,16 +4,17 @@ Site public de Vela, en HTML, CSS et JavaScript statiques, servi par un Worker C
 (`worker.js`) qui pose les en-têtes et lit `public/`. Cinq pages, aucune dépendance, aucun appel
 réseau, aucune police distante : le site fonctionne hors ligne.
 
-- **Palette** : celle de l’icône, sans rien ajouter — nuit `#1b2150`, mer `#26307a`, voiles crème
-  `#f6efe4`, coque corail `#e8805a`, voile d’ombre `#b9becb`. Le thème sombre prend la nuit.
-- **Typographie** : sans-serif système, très grasse et très serrée pour les titres, monospace pour
-  les étiquettes, les fichiers et les empreintes. Une seule entorse, sur l’accueil : le mot
-  accentué du héros (« atelier ») est en italique serif, sans police distante.
-- **Matière** : à-plats — aucun dégradé, aucun verre. Des règles de 2 px et des angles de 2 à
-  6 px portent la structure, comme sur une carte marine. Une seule ombre sur tout le site : celle
-  qui décolle l’écran du héros de la nuit.
-- **Mouvement** : les blocs `.reveal` apparaissent au défilement, jamais avant, et
-  `prefers-reduced-motion` les affiche d’emblée.
+- **Palette** : lavande très clair `#f2f3fb`, surfaces blanches, encre bleu nuit `#1c2030`,
+  gris bleuté `#626c83` et un seul accent corail `#eb7059`, celui de la boussole. Le thème sombre
+  prend l’encre.
+- **Typographie** : sans-serif système, titres légers (poids 400) et très serrés, texte courant de
+  15 à 17 px. Aucune police distante ; les empreintes et les commandes restent en monospace.
+- **Matière** : filets d’un pixel, boutons en pilule, fenêtre de la capture arrondie à 18 px. Une
+  seule ombre, sous la capture du héros. Le corail ne sert qu’aux repères : boussole, règle de
+  chapitre, icônes.
+- **Mouvement** : l’aiguille de la boussole se cale en 1,5 s au chargement, puis tourne en 32 s ;
+  les blocs `.reveal` apparaissent au défilement, jamais avant. `prefers-reduced-motion` fige
+  l’aiguille et affiche tout d’emblée.
 
 Le thème clair suit le système par défaut ; le bouton soleil/lune force un thème et le retient dans
 `localStorage` (`vela-theme`). Les captures suivent le thème choisi.

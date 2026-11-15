@@ -548,6 +548,59 @@
   width: 52%;
 }
 
+/* Questions dépliables de l’aide — même geste que l’accueil, sans sa mise en page. */
+.qa-list {
+  max-width: 66ch;
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.help-block .qa {
+  border-bottom: 1px solid var(--line);
+}
+
+.help-block .qa summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  font-size: 15.5px;
+  font-weight: 540;
+  letter-spacing: -0.015em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.help-block .qa summary::-webkit-details-marker {
+  display: none;
+}
+
+.help-block .qa summary::after {
+  content: '+';
+  flex: none;
+  color: var(--ink-3);
+  font-size: 18px;
+  font-weight: 300;
+  transition: transform 0.2s var(--ease);
+}
+
+.help-block .qa[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.help-block .qa p {
+  max-width: 62ch;
+  margin: 0 0 18px;
+  font-size: 14.5px;
+}
+
+.help-block .qa a {
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
 /* --- Commandes copiables ------------------------------------------------- */
 
 .cmd {

@@ -1,10 +1,9 @@
 /* ==========================================================================
-   Azimut — site, palette « Papier et encre »
-   Le site ne porte plus les couleurs de l’icône : papier chaud, encre presque
-   noire, un seul accent vert profond. Les captures de l’application restent
-   ainsi le seul endroit où la couleur de l’app apparaît. Aucun dégradé, aucune
-   ombre floue, aucun verre : des à-plats, des règles franches, des angles
-   courts.
+   Azimut — site, palette « Lavande et corail »
+   Un fond lavande très clair, des surfaces blanches, une encre bleu nuit et un
+   seul accent corail, celui de la boussole. Les titres sont légers et larges,
+   les boutons des pilules sombres, les filets presque invisibles. Le corail
+   ne sert qu’aux repères : règle de chapitre, icône, point d’une phrase.
    ========================================================================== */
 
 :root {
@@ -18,52 +17,53 @@
   /* Une seule italique sur tout le site : le mot accentué du héros. */
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
 
-  --wrap: 1120px;
+  --wrap: 1180px;
   --narrow: 760px;
-  --radius: 2px;
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --radius: 12px;
+  --pill: 999px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  /* Rôles historiques, remappés sur la nouvelle palette : les pages qui les
-     nomment encore (--coral, --navy) suivent sans être réécrites. */
-  --navy: #131512;
-  --night: #0f1311;
-  --night-2: #0b0e0d;
-  --sea: #1a7a5e;
-  --coral: #1a7a5e;
-  --coral-deep: #145c47;
-  --cream: #f7f6f2;
-  --shell: #b9beb8;
+  --navy: #1c2030;
+  --night: #14161f;
+  --night-2: #0e1016;
+  --sea: #232a44;
+  --coral: #eb7059;
+  --coral-deep: #d45c45;
+  --cream: #f6efe4;
+  --shell: #d9deeb;
 
-  --accent: #1a7a5e;
-  /* Vert assez foncé pour porter du texte sur le papier. */
-  --accent-ink: #145c47;
-  --accent-soft: rgba(26, 122, 94, 0.12);
+  --accent: #eb7059;
+  /* Le corail pur ne tient pas le contraste pour du texte : teinte plus dense. */
+  --accent-ink: #b8533d;
+  --accent-soft: rgba(235, 112, 89, 0.12);
 
-  --bg: #f7f6f2;
-  --bg-deep: #efeee8;
+  --bg: #f2f3fb;
+  --bg-deep: #eceef8;
   --surface: #ffffff;
-  --surface-2: #f0efe9;
-  --ink: #131512;
-  --ink-2: #4d514a;
-  --ink-3: #666b62;
-  --line: rgba(19, 21, 18, 0.14);
-  --line-strong: rgba(19, 21, 18, 0.3);
+  --surface-2: #f6f7fc;
+  --ink: #1c2030;
+  --ink-2: #4c556b;
+  --ink-3: #626c83;
+  --line: rgba(28, 32, 48, 0.1);
+  --line-strong: rgba(28, 32, 48, 0.2);
+  --shadow: 0 18px 44px -28px rgba(28, 34, 60, 0.28);
   color-scheme: light;
 }
 
 html[data-theme='dark'] {
-  --bg: #0f1311;
-  --bg-deep: #0a0d0c;
-  --surface: #171c1a;
-  --surface-2: #1d2422;
-  --ink: #f1f0ea;
-  --ink-2: #b9beb6;
-  --ink-3: #8d938a;
-  --line: rgba(241, 240, 234, 0.14);
-  --line-strong: rgba(241, 240, 234, 0.3);
-  --accent-ink: #6ed3b1;
-  --accent-soft: rgba(26, 122, 94, 0.22);
-  --cream: #f1f0ea;
+  --bg: #12141c;
+  --bg-deep: #0d0f16;
+  --surface: #191d27;
+  --surface-2: #20242f;
+  --ink: #f2f4fa;
+  --ink-2: #b9c0d0;
+  --ink-3: #8f97aa;
+  --line: rgba(242, 244, 250, 0.12);
+  --line-strong: rgba(242, 244, 250, 0.24);
+  --accent-ink: #f0907c;
+  --accent-soft: rgba(235, 112, 89, 0.18);
+  --cream: #f2f4fa;
+  --shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
 
@@ -223,43 +223,41 @@ kbd {
   text-align: center;
 }
 
-/* --- En-tête : une bande franche, pas une pilule flottante ---------------- */
+/* --- En-tête : un bandeau translucide, posé sur le fond ------------------- */
 
 .head-wrap {
   position: sticky;
   top: 0;
   z-index: 60;
-  background: var(--bg);
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.2) blur(16px);
 }
 
 .head {
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: 28px;
   width: min(100% - 40px, var(--wrap));
   margin-inline: auto;
-  padding: 13px 0;
+  padding: 16px 0;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   flex: none;
 }
 
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   overflow: hidden;
-  /* La tuile de l’icône est de la même nuit que l’en-tête sombre : un liseré
-     la détache sans ajouter de matière. */
-  outline: 1.5px solid var(--line-strong);
-  outline-offset: 1px;
+  box-shadow: 0 1px 2px rgba(28, 34, 60, 0.12);
 }
 
 .brand-mark img {
@@ -270,35 +268,30 @@ kbd {
 
 .brand-name {
   font-family: var(--display);
-  font-size: 21px;
-  font-weight: 650;
-  letter-spacing: -0.035em;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: clamp(16px, 2.6vw, 34px);
   margin-left: auto;
 }
 
 .nav a {
-  padding: 4px 0 6px;
-  border-bottom: 2px solid transparent;
+  padding: 4px 0;
   color: var(--ink-2);
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition:
-    color 0.2s var(--ease),
-    border-color 0.2s var(--ease);
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  transition: color 0.2s var(--ease);
 }
 
 .nav a:hover,
 .nav a[aria-current='page'] {
   color: var(--ink);
-  border-bottom-color: var(--coral);
 }
 
 .head-actions {
@@ -308,17 +301,17 @@ kbd {
 }
 
 .head .btn {
-  padding: 9px 15px;
-  font-size: 13px;
+  padding: 10px 18px;
+  font-size: 13.5px;
 }
 
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: var(--radius);
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--pill);
   color: var(--ink-2);
   position: relative;
   transition:
@@ -362,12 +355,15 @@ html[data-theme='dark'] .ico-moon {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
-  padding: 12px 20px;
-  border: 2px solid transparent;
-  border-radius: var(--radius);
+  padding: 12px 22px;
+  border: 1px solid var(--ink);
+  border-radius: var(--pill);
+  background: var(--ink);
+  color: var(--bg);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 550;
   letter-spacing: -0.01em;
   transition:
     transform 0.2s var(--ease),
@@ -377,7 +373,8 @@ html[data-theme='dark'] .ico-moon {
 }
 
 .btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--ink) 88%, var(--accent));
 }
 
 .btn-solid {
@@ -386,42 +383,24 @@ html[data-theme='dark'] .ico-moon {
 }
 
 .btn-solid:hover {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--ink) 88%, var(--accent));
   color: var(--bg);
 }
 
 .btn-ghost {
   border-color: var(--line-strong);
+  background: transparent;
   color: var(--ink);
 }
 
 .btn-ghost:hover {
   border-color: var(--ink);
-  background: var(--accent-soft);
-}
-
-.btn-hero {
-  background: var(--coral);
-  border-color: var(--night);
-  color: var(--bg);
-}
-
-.btn-hero:hover {
-  background: var(--coral-deep);
-}
-
-.btn-hero-ghost {
-  border-color: color-mix(in srgb, var(--bg) 55%, transparent);
-  color: var(--bg);
-}
-
-.btn-hero-ghost:hover {
-  background: color-mix(in srgb, var(--bg) 10%, transparent);
+  background: transparent;
 }
 
 .btn-big {
-  padding: 16px 28px;
-  font-size: 16px;
+  padding: 15px 26px;
+  font-size: 15px;
 }
 
 /* --- Ossature ------------------------------------------------------------ */
@@ -451,25 +430,24 @@ html[data-theme='dark'] .ico-moon {
   align-items: center;
   gap: 9px;
   color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: -0.005em;
 }
 
 .eyebrow::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background: var(--coral);
 }
 
 h2.sec-title {
   font-family: var(--display);
-  font-weight: 650;
-  font-size: clamp(30px, 4.2vw, 46px);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  font-weight: 400;
+  font-size: clamp(30px, 4.2vw, 48px);
+  line-height: 1.06;
+  letter-spacing: -0.05em;
   text-wrap: balance;
 }
 
@@ -490,14 +468,14 @@ h2.sec-title {
 
 .foot {
   padding: 52px 0 44px;
-  border-top: 2px solid var(--ink);
+  border-top: 1px solid var(--line-strong);
   color: var(--ink-2);
   font-size: 13.5px;
 }
 
 .foot .brand-name {
   color: var(--ink);
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .foot-top {
@@ -518,10 +496,8 @@ h2.sec-title {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: -0.01em;
 }
 
 .foot-links a:hover {
@@ -589,19 +565,19 @@ h2.sec-title {
 
   .nav.is-open {
     position: fixed;
-    inset: 63px 0 auto;
+    inset: 65px 0 auto;
     display: grid;
     gap: 0;
     margin: 0;
-    padding: 8px 20px 16px;
-    border-bottom: 2px solid var(--ink);
+    padding: 6px 20px 12px;
+    border-bottom: 1px solid var(--line-strong);
     background: var(--bg);
   }
 
   .nav.is-open a {
-    padding: 13px 0;
+    padding: 14px 0;
     border-bottom: 1px solid var(--line);
-    font-size: 12px;
+    font-size: 15px;
   }
 
   .nav.is-open a:last-child {

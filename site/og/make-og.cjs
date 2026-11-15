@@ -28,7 +28,7 @@ app.whenReady().then(async () => {
     height: 630,
     show: false,
     frame: false,
-    backgroundColor: '#faf8f5',
+    backgroundColor: '#f2f3fb',
     webPreferences: { contextIsolation: true, sandbox: true }
   })
 
@@ -45,10 +45,10 @@ app.whenReady().then(async () => {
       .replace(
         /\{\{version\}\}/g,
         readFileSync(join(root, 'site/public/index.html'), 'utf8').match(
-          /<span class="brand-version">([^<]+)</
+          /Version (\d+\.\d+\.\d+) · logiciel libre/
         )?.[1] ?? version
       )
-      .replace(/\{\{shot\}\}/g, '../public/captures/bibliotheque-1080.webp')
+      .replace(/\{\{shot\}\}/g, '../public/captures/accueil-clair-1080.webp')
   )
   await win.loadFile(filled)
   // Laisse le temps à la capture JPEG et aux polices système de se poser.

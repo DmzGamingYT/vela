@@ -10,17 +10,13 @@
       }
 
       :root {
-        --navy: #131512;
-        --night: #0f1311;
-        --sea: #1a7a5e;
-        --coral: #1a7a5e;
-        --cream: #f7f6f2;
-        --paper: #f7f6f2;
-        --ink: #131512;
-        --ink-2: #4d514a;
-        --ink-3: #666b62;
-        --shell: #b9beb8;
-        --line: rgba(19, 21, 18, 0.14);
+        --paper: #f2f3fb;
+        --surface: #ffffff;
+        --ink: #1c2030;
+        --ink-2: #4c556b;
+        --ink-3: #626c83;
+        --line: rgba(28, 32, 48, 0.12);
+        --coral: #eb7059;
       }
 
       body {
@@ -42,113 +38,99 @@
 
       .frame {
         display: grid;
-        grid-template-columns: 660px 1fr;
+        grid-template-columns: 600px 1fr;
+        align-items: center;
+        gap: 40px;
         width: 100%;
         height: 100%;
-        background: var(--paper);
+        padding: 0 52px 0 60px;
       }
 
       .panel {
         position: relative;
-        overflow: hidden;
-        padding: 54px 52px;
-        background: var(--night);
-        color: var(--cream);
-        display: flex;
-        flex-direction: column;
+        min-width: 0;
       }
 
-      .sun {
-        position: absolute;
-        top: -190px;
-        right: -170px;
-        width: 520px;
-        height: 520px;
-        border-radius: 50%;
-        background: var(--coral);
-        opacity: 0.16;
+      .marks {
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
 
       .icon {
-        position: relative;
-        width: 82px;
-        height: 82px;
-        border-radius: 19px;
-        outline: 2px solid rgba(246, 239, 228, 0.3);
-        outline-offset: 5px;
+        width: 74px;
+        height: 74px;
+        border-radius: 18px;
+        box-shadow: 0 2px 6px rgba(28, 34, 60, 0.12);
       }
 
       .kicker {
-        position: relative;
         display: flex;
         align-items: center;
         gap: 9px;
-        margin-top: 34px;
-        color: #b9beb6;
-        font-family: ui-monospace, Menlo, monospace;
-        font-size: 12.5px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        color: var(--ink-3);
+        font-size: 15px;
       }
 
       .kicker i {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
         background: var(--coral);
       }
 
       h1 {
-        position: relative;
-        margin-top: 18px;
-        font-size: 70px;
-        font-weight: 650;
-        line-height: 0.94;
-        letter-spacing: -0.045em;
+        margin-top: 30px;
+        font-size: 64px;
+        font-weight: 400;
+        line-height: 1.02;
+        letter-spacing: -0.05em;
+      }
+
+      h1 b {
+        font-weight: 620;
       }
 
       .sub {
-        position: relative;
-        max-width: 17ch;
-        margin-top: 22px;
-        color: #b9beb6;
-        font-size: 19px;
+        max-width: 22ch;
+        margin-top: 20px;
+        color: var(--ink-2);
+        font-size: 20px;
         line-height: 1.5;
       }
 
       .foot {
-        position: relative;
-        margin-top: auto;
-        padding-top: 26px;
-        border-top: 1px solid rgba(246, 239, 228, 0.22);
-        color: #9aa0b8;
-        font-family: ui-monospace, Menlo, monospace;
-        font-size: 12.5px;
-        letter-spacing: 0.02em;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 30px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--paper);
+        font-size: 14px;
       }
 
       .stage {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 18px;
-        padding: 52px 48px;
         min-width: 0;
       }
 
       .shot {
-        border: 2px solid var(--ink);
-        border-radius: 4px;
-        background: var(--night);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 28px 60px -30px rgba(28, 34, 60, 0.35);
         overflow: hidden;
       }
 
       .bar {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         height: 34px;
-        padding: 0 12px;
-        border-bottom: 2px solid rgba(246, 239, 228, 0.22);
+        padding: 0 14px;
+        border-bottom: 1px solid var(--line);
+        color: var(--ink-3);
+        font-size: 12px;
       }
 
       .dots {
@@ -160,27 +142,11 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: var(--shell);
-      }
-
-      .dots span:first-child {
-        background: var(--coral);
-      }
-
-      .dots span:last-child {
-        background: var(--cream);
+        background: rgba(28, 32, 48, 0.16);
       }
 
       .addr {
-        flex: 1;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(246, 239, 228, 0.22);
-        color: #b9beb6;
-        font-family: ui-monospace, Menlo, monospace;
-        font-size: 10px;
+        margin-left: 8px;
       }
 
       .shot img {
@@ -190,27 +156,26 @@
       }
 
       .caption {
-        padding-top: 14px;
-        border-top: 2px solid var(--ink);
+        margin-top: 14px;
         color: var(--ink-3);
-        font-family: ui-monospace, Menlo, monospace;
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: 13px;
       }
     </style>
   </head>
   <body>
     <div class="frame">
       <section class="panel">
-        <span class="sun"></span>
-        <img class="icon" src="../public/favicon.svg" alt="" />
-        <p class="kicker"><i></i> Azimut — navigateur de travail · v{{version}}</p>
-        <h1>Le web,<br />votre atelier.</h1>
+        <div class="marks">
+          <img class="icon" src="../public/favicon.svg" alt="" width="74" height="74" />
+          <p class="kicker"><i></i> Navigateur de travail · v{{version}}</p>
+        </div>
+
+        <h1>Un navigateur<br />qui <b>range</b>.</h1>
+
         <p class="sub">
-          Onglets verticaux, espaces isolés, notes locales. L’atelier s’ouvre quand vous en avez
-          besoin.
+          Onglets verticaux, espaces isolés, sessions gardées, notes locales.
         </p>
+
         <p class="foot">macOS · Windows · Linux — gratuit, MIT, sans compte</p>
       </section>
 
@@ -218,11 +183,11 @@
         <figure class="shot">
           <div class="bar">
             <span class="dots"><span></span><span></span><span></span></span>
-            <span class="addr">azimut.local — Bibliothèque</span>
+            <span class="addr">Accueil — Personnel</span>
           </div>
           <img src="{{shot}}" alt="" />
         </figure>
-        <p class="caption">Azimut {{version}} — la bibliothèque, ses listes et ses pages gardées</p>
+        <p class="caption">Azimut {{version}} — l’accueil, ses espaces et ses pages récentes</p>
       </section>
     </div>
   </body>

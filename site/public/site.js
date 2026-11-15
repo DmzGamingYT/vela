@@ -222,7 +222,7 @@
       panneau.hidden = panneau.dataset.dlPanel !== systeme
     }
     // Une seule pastille : elle désigne le fichier que le bouton propose.
-    for (const ligne of document.querySelectorAll('.dl-row[data-file]')) {
+    for (const ligne of document.querySelectorAll('.dl-row[data-file], .dl-tile[data-file]')) {
       ligne.classList.toggle('is-match', ligne.dataset.file === choix.file)
     }
   }
