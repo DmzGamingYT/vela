@@ -59,7 +59,7 @@ site/
 │   ├── pages.css               pages intérieures et 404
 │   ├── site.js                 thème, accent, menu, CTA par plateforme, copie des empreintes
 │   ├── captures/               captures réelles + variantes 720/1080/1440 en JPEG et AVIF
-│   ├── og-vela.jpg             visuel de partage 1200×630
+│   ├── og-azimut.jpg            visuel de partage 1200×630
 │   ├── favicon.svg · favicon-32x32.png · apple-touch-icon.png
 │   ├── robots.txt · sitemap.xml
 ├── tools/
@@ -100,7 +100,8 @@ Le visuel de partage se régénère à part :
 
 ```bash
 ./node_modules/.bin/electron site/og/make-og.cjs   # écrit un PNG 1200×630
-sips -s format jpeg -s formatOptions 82 site/public/og-vela.png --out site/public/og-vela.jpg
+sips -s format jpeg -s formatOptions 88 site/public/og-azimut.png --out site/public/og-azimut.jpg
+rm site/public/og-azimut.png                        # seul le JPEG est publié
 ```
 
 ## En-têtes et cache
@@ -113,7 +114,7 @@ Le cache suit le type de fichier, faute d’empreinte dans les noms :
 
 | Chemin | Cache-Control |
 | --- | --- |
-| `/captures/*`, icônes, `og-vela.jpg` | `max-age=86400, stale-while-revalidate=604800` |
+| `/captures/*`, icônes, `og-azimut.jpg` | `max-age=86400, stale-while-revalidate=604800` |
 | `.css`, `.js` (nom haché par le build) | `max-age=31536000, immutable` |
 | HTML | `max-age=0, must-revalidate` |
 

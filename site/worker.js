@@ -13,7 +13,7 @@
 // visiteur. Le stale-while-revalidate évite la revalidation bloquante.
 const CACHE = [
   {
-    test: /^\/(captures|og-vela\.jpg|favicon|apple-touch-icon)/,
+    test: /^\/(captures|og-azimut\.jpg|favicon|apple-touch-icon)/,
     value: 'public, max-age=86400, stale-while-revalidate=604800'
   },
   // Le build publie des noms qui portent l’empreinte du contenu : un an sans

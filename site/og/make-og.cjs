@@ -1,8 +1,9 @@
 /**
- * Vela — visuel de partage.
+ * Azimut — visuel de partage.
  *
- * Rend `site/og/og.html` en 1200×630 et l’écrit dans `site/public/og-vela.png`,
- * le fichier référencé par `og:image` et `twitter:image`.
+ * Rend `site/og/og.html` en 1200×630 et l’écrit dans `site/public/og-azimut.png`,
+ * le fichier référencé par `og:image` et `twitter:image` (converti en JPEG
+ * par la recette du README).
  *
  *   ./node_modules/.bin/electron site/og/make-og.cjs
  *
@@ -19,7 +20,7 @@ const { version } = require('../../package.json')
 app.commandLine.appendSwitch('force-device-scale-factor', '1')
 
 const root = join(__dirname, '../..')
-const target = join(root, 'site/public/og-vela.png')
+const target = join(root, 'site/public/og-azimut.png')
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
@@ -39,8 +40,15 @@ app.whenReady().then(async () => {
   writeFileSync(
     filled,
     readFileSync(template, 'utf8')
-      .replace(/\{\{version\}\}/g, version)
-      .replace(/\{\{shot\}\}/g, '../public/captures/accueil-clair-1080.webp')
+      // La version affichée est celle que le site annonce, pas celle de package.json :
+      // les deux peuvent différer d'une version, et la carte ne doit pas la devancer.
+      .replace(
+        /\{\{version\}\}/g,
+        readFileSync(join(root, 'site/public/index.html'), 'utf8').match(
+          /<span class="brand-version">([^<]+)</
+        )?.[1] ?? version
+      )
+      .replace(/\{\{shot\}\}/g, '../public/captures/bibliotheque-1080.webp')
   )
   await win.loadFile(filled)
   // Laisse le temps à la capture JPEG et aux polices système de se poser.
@@ -56,7 +64,7 @@ app.whenReady().then(async () => {
   writeFileSync(target, final.toPNG())
   rmSync(filled, { force: true })
   console.log(
-    `og-vela.png ${final.getSize().width}×${final.getSize().height} → site/public/og-vela.png`
+    `og-azimut.png ${final.getSize().width}×${final.getSize().height} → site/public/og-azimut.png`
   )
   if (final.getSize().width !== 1200 || final.getSize().height !== 630) {
     console.error('attention : le visuel devrait faire 1200×630')
