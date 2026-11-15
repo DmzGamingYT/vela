@@ -197,7 +197,7 @@ const rendrePage = (version, charpente, voisines) => {
   const head = versionPied(corps)
     .replace(
       /<title>[^<]*<\/title>/,
-      `<title>Vela ${version.version} — ${echappe(version.headline)}</title>`
+      `<title>Azimut ${version.version} — ${echappe(version.headline)}</title>`
     )
     .replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${echappe(description)}$2`)
     // Les attributs sont répartis sur plusieurs lignes dans la charpente : `\s+`
@@ -212,7 +212,7 @@ const rendrePage = (version, charpente, voisines) => {
     )
     .replace(
       /(<meta property="og:title" content=")[^"]*(")/,
-      `$1Vela ${version.version} — ${echappe(version.headline)}$2`
+      `$1Azimut ${version.version} — ${echappe(version.headline)}$2`
     )
     .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${echappe(description)}$2`)
 
@@ -281,7 +281,7 @@ for (const version of versions) {
 journal = versionPied(journal)
 journal = journal.replace(
   /(<meta\s+name="description"\s+content=")[^"]*(")/,
-  `$1${versions.length} versions de Vela, de la ${plusAncienne.version} à la ${derniere.version} : sessions, historique, espaces et sécurité.$2`
+  `$1${versions.length} versions de Azimut, de la ${plusAncienne.version} à la ${derniere.version} : sessions, historique, espaces et sécurité.$2`
 )
 writeFileSync(JOURNAL, journal)
 

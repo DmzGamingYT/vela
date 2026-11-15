@@ -6,7 +6,7 @@
     <title>Le navigateur, en six gestes — Azimut</title>
     <meta
       name="description"
-      content="Onglets verticaux, sessions gardées, mode Atelier et tunnel de recherche, espaces isolés, notes locales, coup d’œil : ce que fait Azimut, capture par capture."
+      content="Onglets verticaux, bibliothèque, mode Atelier et tunnel de recherche, espaces isolés, notes locales, coup d’œil : ce que fait Azimut, capture par capture."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)" />
@@ -19,7 +19,7 @@
     <meta property="og:title" content="Le navigateur, en six gestes — Azimut" />
     <meta
       property="og:description"
-      content="Onglets verticaux, sessions, mode Atelier, espaces, notes et coup d’œil : six captures de l’application réelle."
+      content="Onglets verticaux, bibliothèque, mode Atelier, espaces, notes et coup d’œil : six captures de l’application réelle."
     />
     <meta property="og:site_name" content="Azimut" />
     <meta property="og:locale" content="fr_FR" />
@@ -36,13 +36,13 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Azimut, capture par capture : onglets verticaux, sessions, espaces, mode Atelier, notes et coup d’œil."
+      content="Azimut, capture par capture : onglets verticaux, bibliothèque, espaces, mode Atelier, notes et coup d’œil."
     />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Le navigateur, en six gestes — Azimut" />
     <meta
       name="twitter:description"
-      content="Onglets verticaux, sessions, mode Atelier, espaces, notes et coup d’œil : six captures de l’application réelle."
+      content="Onglets verticaux, bibliothèque, mode Atelier, espaces, notes et coup d’œil : six captures de l’application réelle."
     />
     <meta
       name="twitter:image"
@@ -152,7 +152,7 @@
         <div class="split">
           <nav class="split-index" aria-label="Sommaire des chapitres" data-scroll-spy>
             <a href="#navigation"><span class="num">01</span> Navigation</a>
-            <a href="#sessions"><span class="num">02</span> Sessions</a>
+            <a href="#bibliotheque"><span class="num">02</span> Bibliothèque</a>
             <a href="#atelier"><span class="num">03</span> Mode Atelier</a>
             <a href="#espaces"><span class="num">04</span> Espaces</a>
             <a href="#notes"><span class="num">05</span> Notes</a>
@@ -211,61 +211,63 @@
                   />
                 </picture>
                 <figcaption>
-                  Capture de Azimut, thème clair — onglets verticaux, Sessions et bouclier.
+                  Capture de Azimut, thème clair — onglets verticaux, bibliothèque et bouclier.
                 </figcaption>
               </figure>
             </section>
 
-            <section class="chapter" id="sessions">
-              <h2>02 · Sessions</h2>
+            <section class="chapter" id="bibliotheque">
+              <h2>02 · Bibliothèque</h2>
               <p class="lede">
-                Un ensemble d’onglets se garde sous un nom, puis se rouvre dans son espace. La
-                session retient les adresses et les titres, jamais les cookies : les connexions
-                restent celles de l’espace.
+                Ce que vous gardez, téléchargez et visitez se range dans une même feuille, avec
+                ses trois listes : marque-pages, téléchargements, historique. Aucune
+                synchronisation, aucun compte : les trois listes vivent dans le fichier de
+                l’espace, sur cet appareil.
               </p>
               <ul class="ticks">
                 <li>
-                  <kbd data-key="mod+shift+b">⌘⇧B</kbd> ouvre la feuille ; le nom se saisit juste
-                  au-dessus de la liste.
+                  <kbd data-key="mod+d">⌘D</kbd> garde la page affichée ; <kbd data-key="shift+o">⇧O</kbd>
+                  ouvre la liste. Retirer un marque-page ne ferme aucun onglet.
                 </li>
                 <li>
-                  Jusqu’à 40 pages par session ; « Ouvrir » recrée les onglets dans leur espace
-                  d’origine, sans fermer les autres.
+                  Une seule feuille, trois listes ; le rail, la palette et les raccourcis de
+                  l’accueil ouvrent directement celle qu’on demande.
                 </li>
                 <li>
-                  Vingt sessions au maximum, dans le stockage local de Azimut ; rien n’est envoyé.
+                  Réglages › Navigation reprend les favoris d’un navigateur installé, ou un
+                  fichier HTML, et exporte les pages gardées dans le même format.
                 </li>
-                <li>Supprimer une session ne ferme aucun onglet ouvert.</li>
+                <li>Rien ne part vers un service Azimut : la bibliothèque n’a pas de serveur.</li>
               </ul>
               <figure class="capture">
                 <picture>
                   <source
                     type="image/avif"
                     srcset="
-                      /captures/sessions-720.avif   720w,
-                      /captures/sessions-1080.avif 1080w,
-                      /captures/sessions.avif      1440w
+                      /captures/bibliotheque-720.avif   720w,
+                      /captures/bibliotheque-1080.avif 1080w,
+                      /captures/bibliotheque.avif      1440w
                     "
                     sizes="(max-width: 900px) calc(100vw - 40px), 1000px"
                   />
                   <img
-                    src="/captures/sessions-1080.webp"
+                    src="/captures/bibliotheque-1080.webp"
                     srcset="
-                      /captures/sessions-720.webp   720w,
-                      /captures/sessions-1080.webp 1080w,
-                      /captures/sessions.webp      1440w
+                      /captures/bibliotheque-720.webp   720w,
+                      /captures/bibliotheque-1080.webp 1080w,
+                      /captures/bibliotheque.webp      1440w
                     "
                     sizes="(max-width: 900px) calc(100vw - 40px), 1000px"
                     width="1440"
                     height="900"
                     loading="lazy"
                     decoding="async"
-                    alt="Feuille Sessions de Azimut, thème clair : dix onglets ouverts, trois sessions gardées et vingt et une pages sauvegardées, avec les noms « Veille du vendredi », « Comparatif images » et « Lectures de la semaine »."
+                    alt="Bibliothèque de Azimut, thème clair : les onglets Marque-pages, Téléchargements et Historique, et cinq pages gardées — Figma, MDN, arXiv, GitHub et Are.na — avec leur domaine."
                   />
                 </picture>
                 <figcaption>
-                  Capture de la feuille Sessions — quatre onglets ouverts, trois sessions gardées et
-                  un nom prêt à enregistrer.
+                  Capture de la Bibliothèque, onglet Marque-pages — cinq pages gardées, chacune
+                  avec son site et sa corbeille.
                 </figcaption>
               </figure>
             </section>
