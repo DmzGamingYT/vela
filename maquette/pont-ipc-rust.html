@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vela — Pont IPC normalisé (maquette)</title>
+<style>
+:root{
+  --paper:#faf8f5; --panel:#fffdfa; --panel2:#f3f0ea;
+  --ink:#1a1a1e; --ink2:#565059; --ink3:#7d7682;
+  --line:rgba(26,26,30,.13); --line2:rgba(26,26,30,.07);
+  --accent:#5b56d6; --accent-2:#4a45c4; --accent-soft:#eeeaff;
+  --ok:#1f7a4d; --bad:#a8342a;
+  --code:#141419; --code-line:rgba(255,255,255,.09); --code-ink:#e9e6f2;
+  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+  --shadow:0 1px 2px rgba(26,26,30,.04),0 12px 32px -18px rgba(26,26,30,.28);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#151518; --panel:#1c1c21; --panel2:#232329;
+    --ink:#f2f0f7; --ink2:#b9b4c2; --ink3:#8e8899;
+    --line:rgba(242,240,247,.14); --line2:rgba(242,240,247,.07);
+    --accent:#a8a3ff; --accent-2:#bdb8ff; --accent-soft:#26243a;
+    --ok:#6fd39b; --bad:#ff9c8f;
+    --code:#101014; --code-line:rgba(255,255,255,.08);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -22px rgba(0,0,0,.8);
+  }
+}
+*{box-sizing:border-box}
+/* Pas de défilement animé : les ancres sont des sauts, et une capture prise
+   pendant l’animation sortait blanche. */
+html{scroll-behavior:auto}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+code{font-family:var(--mono);font-size:.92em}
+.wrap{max-width:1080px;margin:auto;padding:0 26px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.skip{position:fixed;top:-60px;left:16px;z-index:50;padding:9px 14px;background:var(--ink);color:var(--paper)}
+.skip:focus{top:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* — barre de sommaire — */
+nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(14px) saturate(1.2);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;align-items:center;padding:9px 26px;overflow:auto}
+nav.toc b{font-family:var(--serif);font-size:17px;letter-spacing:-.01em;margin-right:8px;white-space:nowrap}
+nav.toc b i{color:var(--accent);font-style:normal}
+nav.toc a{font:11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding:6px 10px;border-radius:99px;text-decoration:none;white-space:nowrap}
+nav.toc a:hover{background:var(--panel2);color:var(--ink)}
+
+/* — en-tête — */
+header{padding:66px 0 30px;background:
+  radial-gradient(760px 340px at 88% -20%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 68%),
+  radial-gradient(540px 260px at 10% 0%,color-mix(in srgb,#f0b429 9%,transparent),transparent 70%)}
+.kick{font:11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-size:clamp(34px,5.4vw,58px);line-height:1.0;letter-spacing:-.035em;margin:0 0 18px;font-weight:650}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.02em}
+.lede{max-width:64ch;color:var(--ink2);font-size:17px;margin:0}
+.lede b{color:var(--ink);font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:8px;font:11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--line);border-radius:99px;padding:6px 12px;background:var(--panel)}
+.badge .dot{width:6px;height:6px;border-radius:99px;background:var(--accent)}
+
+section{padding:56px 0;border-top:1px solid var(--line2);scroll-margin-top:64px}
+h2{font-size:clamp(24px,3.2vw,33px);line-height:1.1;letter-spacing:-.03em;margin:6px 0 8px;font-weight:650}
+h2 em{font-family:var(--serif);font-style:italic;font-weight:400}
+h3{font-size:15px;letter-spacing:-.01em;margin:0 0 6px;font-weight:650}
+p{margin:0 0 12px}
+.small{font-size:13px;color:var(--ink2)}
+.mut{color:var(--ink3)}
+.mono{font-family:var(--mono);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:880px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* — chiffres — */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow);margin-top:26px}
+.stats div{padding:18px 20px;border-right:1px solid var(--line2)}
+.stats div:last-child{border-right:0}
+.stats b{display:block;font-size:32px;letter-spacing:-.045em;line-height:1;font-weight:650}
+.stats b .u{font-size:14px;letter-spacing:0;color:var(--ink3);font-weight:500}
+.stats small{display:block;margin-top:7px;font:11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3)}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.stats div:nth-child(2){border-right:0}.stats div:nth-child(1),.stats div:nth-child(2){border-bottom:1px solid var(--line2)}}
+
+/* — schéma de flux — */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:22px 0 6px}
+.flow .node{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 15px}
+.flow .node b{display:block;font-size:13.5px;margin-bottom:3px}
+.flow .node span{font:11.5px var(--mono);color:var(--ink3);display:block;line-height:1.5}
+.flow .arrow{display:grid;place-items:center;padding:0 10px;color:var(--ink3);font:12px var(--mono)}
+.flow .node.hot{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:var(--accent-soft)}
+.flow .node.hot b{color:var(--accent-2)}
+/* Colonne étroite : les nœuds s'empilent et la flèche regarde vers le bas,
+   sinon elle reste orpheline en fin de ligne. */
+@media(max-width:760px){
+  .flow{flex-direction:column}
+  .flow .arrow{transform:rotate(90deg);padding:3px 0}
+}
+
+/* — code — */
+.code{background:var(--code);color:var(--code-ink);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.06)}
+.code .bar{display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid var(--code-line);font:11px var(--mono);color:rgba(233,230,242,.6);letter-spacing:.04em}
+.code .bar .tag{margin-left:auto;text-transform:uppercase;letter-spacing:.1em;font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
+.code .bar .tag.bad{color:#ff9c8f}
+.code .bar .tag.good{color:#7fe0a8}
+pre{margin:0;padding:14px 15px 16px;overflow:auto;font:12.4px/1.7 var(--mono);tab-size:2}
+pre .c{color:#8b879c}
+pre .k{color:#b3a9ff}
+pre .s{color:#9ed8a8}
+pre .n{color:#f0c07a}
+pre .bad{color:#ff9c8f}
+pre .good{color:#7fe0a8}
+.code-note{font:11px var(--mono);color:var(--ink3);margin:7px 0 0;letter-spacing:.02em}
+.caption{font:11px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+
+/* — tableau — */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:660px}
+th,td{padding:11px 13px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line2)}
+th{font:11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:500;background:var(--panel2)}
+tr:last-child td{border-bottom:0}
+td.ch{font-family:var(--mono);font-size:12.4px;white-space:nowrap}
+.pill{display:inline-block;font:10.5px var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink2);background:var(--panel2);white-space:nowrap}
+.pill.shell{border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent-2);background:var(--accent-soft)}
+.pill.page{border-color:color-mix(in srgb,#b0722a 45%,transparent);color:#8a5a1f;background:color-mix(in srgb,#f0b429 12%,transparent)}
+@media(prefers-color-scheme:dark){.pill.page{color:#f0c07a}}
+
+/* — lots — */
+.lots{display:grid;gap:12px;margin-top:8px;counter-reset:lot}
+.lot{counter-increment:lot;display:grid;grid-template-columns:38px 1fr;gap:14px;border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:var(--panel)}
+.lot::before{content:counter(lot,decimal-leading-zero);font:12px var(--mono);color:var(--accent);padding-top:2px}
+.lot h3{margin-bottom:4px}
+.lot p{margin:0 0 8px;font-size:13.5px;color:var(--ink2)}
+.gate{display:flex;gap:7px;align-items:baseline;font:11.5px var(--mono);color:var(--ink2)}
+.gate::before{content:"→";color:var(--accent)}
+.gate+.gate{margin-top:3px}
+
+/* — fenêtre app : « aucun changement visible » — */
+.appframe{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
+.appframe .strip{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--panel2)}
+.appframe .strip i{width:9px;height:9px;border-radius:99px;background:var(--line);display:block}
+.appframe .strip span{font:10.5px var(--mono);color:var(--ink3);margin-left:6px}
+.appframe .body{display:grid;grid-template-columns:150px 1fr;min-height:132px}
+.appframe .rail{border-right:1px solid var(--line2);padding:12px;display:grid;gap:8px;align-content:start;background:var(--panel2)}
+.appframe .rail u{display:block;height:7px;border-radius:99px;background:var(--line);text-decoration:none}
+.appframe .rail u:nth-child(1){width:70%;background:color-mix(in srgb,var(--accent) 45%,transparent)}
+.appframe .rail u:nth-child(2){width:88%}
+.appframe .rail u:nth-child(3){width:56%}
+.appframe .rail u:nth-child(4){width:78%}
+.appframe .pane{padding:14px;display:grid;gap:8px;align-content:start}
+.appframe .pane u{display:block;height:8px;border-radius:99px;background:var(--line2);text-decoration:none}
+.appframe .pane u:nth-child(1){width:46%;background:var(--line)}
+.appframe .pane u:nth-child(2){width:92%}
+.appframe .pane u:nth-child(3){width:74%}
+.appframe .pane u:nth-child(4){width:84%}
+.appframe .pane .same{align-self:end;font:10.5px var(--mono);color:var(--ink3);border-top:1px solid var(--line2);padding-top:8px;margin-top:4px}
+@media(max-width:760px){.appframe .body{grid-template-columns:1fr}.appframe .rail{display:none}}
+
+.callout{border-left:3px solid var(--accent);padding:2px 0 2px 14px;margin:18px 0 0;font-size:13.5px;color:var(--ink2)}
+.callout b{color:var(--ink)}
+.pair{border:1px solid var(--line);border-radius:12px;padding:16px 17px;background:var(--panel)}
+.pair.before{border-top:3px solid var(--bad)}
+.pair.after{border-top:3px solid var(--ok)}
+.pair h3{display:flex;align-items:center;gap:8px}
+.pair h3 .tag{font:10px var(--mono);text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
+.pair.before h3 .tag{color:var(--bad)}
+.pair.after h3 .tag{color:var(--ok)}
+ul.tight{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink2)}
+ul.tight li{margin-bottom:5px}
+ul.tight li b{color:var(--ink)}
+footer{padding:34px 0 46px;border-top:1px solid var(--line2);color:var(--ink3);font-size:12.5px}
+footer code{color:var(--ink2)}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{nav.toc{position:static}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<nav class="toc" aria-label="Sommaire">
+  <div class="wrap">
+    <b>Vela <i>·</i> pont IPC</b>
+    <a href="#etat">01 · État</a>
+    <a href="#avant">02 · Avant</a>
+    <a href="#apres">03 · Après</a>
+    <a href="#lots">04 · Les lots</a>
+    <a href="#visible">05 · Visible</a>
+    <a href="#rust">06 · Rust</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <p class="kick">Maquette · à valider avant tout code</p>
+    <h1>Un seul contrat entre l’interface et le <em>cœur</em>.</h1>
+    <p class="lede">Aujourd’hui, 123 handlers se partagent le pont sans schéma commun : chacun caste sa charge en <code>unknown</code> et devine la forme attendue. Ce lot ne change <b>rien à l’écran</b> — il rend le pont typé, validé et déplaçable, pour qu’une coque Rust puisse un jour le remplacer sans réécrire 190 échanges à la main.</p>
+    <p style="margin-top:20px"><span class="badge"><span class="dot"></span>Aucune modification de l’interface</span></p>
+  </div>
+</header>
+
+<main id="contenu">
+
+<section id="etat">
+  <div class="wrap">
+    <p class="kick">01 · État mesuré</p>
+    <h2>Le pont existe, le contrat <em>n’existe pas</em>.</h2>
+    <p class="small" style="max-width:70ch">Compté dans l’arbre de la 0.3.37. Les charges arrivent en <code>unknown</code> côté processus principal ; la forme attendue est décrite par un cast, jamais vérifiée à l’exécution.</p>
+    <div class="stats">
+      <div><b>190</b><small>canaux échangés</small></div>
+      <div><b>123</b><small>handlers handle()</small></div>
+      <div><b>45</b><small>fichiers appellent window.vela</small></div>
+      <div><b>0</b><small>schéma partagé</small></div>
+    </div>
+    <div class="flow" role="img" aria-label="Chaîne actuelle : interface React, preload, handlers, moteur Chromium">
+      <div class="node"><b>Interface React</b><span>28 659 lignes · 77 feuilles</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>preload</b><span>190 wrappers invoke / send</span></div>
+      <div class="arrow">→</div>
+      <div class="node hot"><b>123 handlers</b><span>cast + garde manuelle</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>moteur</b><span>onglets, espaces, notes, agent</span></div>
+    </div>
+    <p class="code-note">La case indigo est la seule frontière non typée de l’application.</p>
+  </div>
+</section>
+
+<section id="avant">
+  <div class="wrap">
+    <p class="kick">02 · Avant</p>
+    <h2>Un handler sur cinq domaines différents, <em>trois grammaires</em>.</h2>
+    <div class="grid2" style="margin-top:20px">
+      <div>
+        <p class="caption">src/main/ipc/tabs.ts</p>
+        <div class="code">
+          <div class="bar">processus principal<span class="tag bad">cast</span></div>
+<pre><span class="c">// un des 123 handlers</span>
+<span class="k">handle</span>(<span class="s">'tab:navigate'</span>, (payload) =&gt; {
+  <span class="k">const</span> input = (payload ?? {}) <span class="k">as</span> {
+    id?: unknown; input?: unknown
+  }
+  host.tabs.navigate(
+    <span class="bad">asId</span>(input.id),
+    <span class="bad">asId</span>(input.input)
+  )
+})</pre>
+        </div>
+        <p class="code-note">Le commentaire de <code>asId</code> garantit que l’identifiant est une chaîne — pas qu’il désigne un onglet existant.</p>
+      </div>
+      <div>
+        <p class="caption">src/preload/index.ts</p>
+        <div class="code">
+          <div class="bar">preload<span class="tag bad">recopie</span></div>
+<pre><span class="c">// la même forme, écrite une 2ᵉ fois</span>
+navigate: (id: <span class="k">string</span>, input: <span class="k">string</span>) =&gt;
+  ipcRenderer.invoke(<span class="s">'tab:navigate'</span>, {
+    id, input
+  }),</pre>
+        </div>
+        <p class="code-note"><code>string</code> côté renderer, <code>unknown</code> côté main : deux descriptions du même échange, tenues à la main.</p>
+      </div>
+    </div>
+    <ul class="tight" style="margin-top:18px">
+      <li><b>Trois écritures par canal</b> : le type dans <code>shared/api.ts</code>, le wrapper du preload, le cast du handler.</li>
+      <li><b>Rien ne vérifie à l’exécution</b> : un renderer compromis peut envoyer n’importe quelle forme, seule la garde du handler l’arrête — quand elle existe.</li>
+      <li><b>Une coque Rust devrait réécrire 123 contrats</b> qui ne sont écrits nulle part.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="apres">
+  <div class="wrap">
+    <p class="kick">03 · Après</p>
+    <h2>Un registre, <em>une seule</em> description par canal.</h2>
+    <p class="small" style="max-width:70ch">Le registre reprend la politique d’émetteur qui existe déjà (<code>ipcPolicy.ts</code> : coque, page, inconnu) et y ajoute la forme des données. Le reste est généré.</p>
+    <div class="grid2" style="margin-top:20px">
+      <div>
+        <p class="caption">src/main/contract/tabs.ts — écrit à la main</p>
+        <div class="code">
+          <div class="bar">contrat<span class="tag good">source</span></div>
+<pre><span class="k">define</span>(<span class="s">'tab:navigate'</span>, {
+  from: <span class="s">'shell'</span>,
+  input: { id: <span class="n">Id</span>(<span class="s">'onglet'</span>), input: <span class="n">Url</span> },
+  output: <span class="n">Bool</span>
+}, ({ id, input }) =&gt;
+  tabs.navigate(id, input))</pre>
+        </div>
+        <p class="code-note">Le handler ne caste plus : il reçoit déjà la forme validée.</p>
+      </div>
+      <div>
+        <p class="caption">src/renderer/src/api.d.ts — généré</p>
+        <div class="code">
+          <div class="bar">client typé<span class="tag good">généré</span></div>
+<pre><span class="c">// jamais écrit à la main</span>
+<span class="k">interface</span> VelaApi {
+  tabs: {
+    navigate(
+      id: TabId, input: <span class="k">string</span>
+    ): <span class="n">Promise</span>&lt;<span class="k">boolean</span>&gt;
+  }
+}</pre>
+        </div>
+        <p class="code-note">Le preload devient une boucle sur le registre : 190 wrappers disparaissent.</p>
+      </div>
+    </div>
+
+    <p class="caption" style="margin-top:26px">Cinq canaux réels, tels qu’ils seraient décrits</p>
+    <div class="tablewrap">
+      <table>
+        <caption class="sr">Extrait du registre de canaux</caption>
+        <thead>
+          <tr><th scope="col">Canal</th><th scope="col">Émetteur</th><th scope="col">Entrée</th><th scope="col">Sortie</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="ch">tab:navigate</td><td><span class="pill shell">coque</span></td><td class="mut mono">{ id, input }</td><td class="mut mono">boolean</td></tr>
+          <tr><td class="ch">tab:find</td><td><span class="pill shell">coque</span></td><td class="mut mono">{ id, query, forward }</td><td class="mut mono">{ matches, active }</td></tr>
+          <tr><td class="ch">notes:save</td><td><span class="pill shell">coque</span></td><td class="mut mono">SaveNoteInput</td><td class="mut mono">NoteMeta</td></tr>
+          <tr><td class="ch">settings:set-key</td><td><span class="pill shell">coque</span></td><td class="mut mono">{ provider, key }</td><td class="mut mono">void</td></tr>
+          <tr><td class="ch">comic:image</td><td><span class="pill page">page</span></td><td class="mut mono">{ token, url }</td><td class="mut mono">string | null</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="code-note">La dernière ligne vient de <code>PAGE_CHANNELS</code> : sept canaux seulement sont ouverts aux pages, et le registre rend cette liste vérifiable au lieu de la disperser.</p>
+  </div>
+</section>
+
+<section id="lots">
+  <div class="wrap">
+    <p class="kick">04 · Les lots</p>
+    <h2>Trois lots, chacun <em>vérifiable seul</em>.</h2>
+    <div class="lots">
+      <div class="lot">
+        <div>
+          <h3>Registre + validation</h3>
+          <p>Un fichier de contrat par domaine (<code>tabs</code>, <code>notes</code>, <code>tunnel</code>…), branché sur la politique d’émetteur existante. Les handlers perdent leurs casts, un canal non déclaré est refusé.</p>
+          <div class="gate">typecheck : zéro <code>as … unknown</code> dans <code>ipc/</code></div>
+          <div class="gate">un test de refus par émetteur (coque, page, inconnu)</div>
+        </div>
+      </div>
+      <div class="lot">
+        <div>
+          <h3>Client généré</h3>
+          <p>Le preload cesse de recopier les signatures : il boucle sur le registre, et <code>window.vela</code> est typé depuis la même source.</p>
+          <div class="gate">diff : le preload perd ~200 lignes</div>
+          <div class="gate">les 45 fichiers du renderer compilent sans retouche</div>
+        </div>
+      </div>
+      <div class="lot">
+        <div>
+          <h3>Transport remplaçable</h3>
+          <p>Un seul module transporte les appels. Electron aujourd’hui ; un tuyau, un socket JSON ou un pont CEF demain, sans toucher aux contrats ni au renderer.</p>
+          <div class="gate">un test transporte le registre entier hors Electron</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="visible">
+  <div class="wrap">
+    <p class="kick">05 · Ce que l’utilisateur voit</p>
+    <h2>Rien. <em>Volontairement.</em></h2>
+    <div class="grid2" style="margin-top:20px;align-items:center">
+      <div class="appframe" role="img" aria-label="Fenêtre Vela inchangée : rail, onglets et page">
+        <div class="strip"><i></i><i></i><i></i><span>Vela — 0.3.37</span></div>
+        <div class="body">
+          <div class="rail"><u></u><u></u><u></u><u></u></div>
+          <div class="pane"><u></u><u></u><u></u><u></u><span class="same">mêmes onglets, mêmes gestes, mêmes réglages</span></div>
+        </div>
+      </div>
+      <div>
+        <p>Aucun écran, aucun raccourci, aucun libellé ne bouge. Le lot se mesure en revue de code et en tests, pas en captures avant/après.</p>
+        <ul class="tight">
+          <li><b>Même contrat public</b> : <code>window.vela</code> garde ses noms et ses arguments.</li>
+          <li><b>Même comportement</b> : un canal refusé l’est déjà aujourd’hui par la politique d’émetteur ; la validation devient seulement explicite.</li>
+          <li><b>Risque borné</b> : un lot = un domaine migré, testé, commité. Retour arrière possible domaine par domaine.</li>
+        </ul>
+        <div class="callout"><b>Ce que ça coûte :</b> trois lots de refonte sans gain visible immédiat. C’est le prix d’une coque Rust qui ne réécrive pas 123 contrats implicites.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rust">
+  <div class="wrap">
+    <p class="kick">06 · Ce que ça débloque</p>
+    <h2>Le même registre devient <em>des structures Rust</em>.</h2>
+    <div class="grid2" style="margin-top:20px">
+      <div class="pair before">
+        <h3><span class="tag">sans registre</span>123 contrats implicites</h3>
+        <p class="small" style="margin:8px 0 0">Chaque canal est une frontière de sérialisation à réécrire à la main dans la coque. Le portage coûte des mois avant la première page affichée.</p>
+      </div>
+      <div class="pair after">
+        <h3><span class="tag">avec registre</span>un fichier de contrat par domaine</h3>
+        <p class="small" style="margin:8px 0 0">Les entrées et sorties deviennent des structures sérialisables, générées depuis la même source. La coque Rust remplace le transport, pas les contrats.</p>
+      </div>
+    </div>
+    <div class="code" style="margin-top:18px">
+      <div class="bar">ce que le registre permet de générer<span class="tag good">rust</span></div>
+<pre><span class="c">// dérivé du même contrat que `define('tab:navigate', …)`</span>
+<span class="k">#[derive</span>(Serialize, Deserialize<span class="k">)]</span>
+<span class="k">pub struct</span> TabNavigate { <span class="k">pub</span> id: TabId, <span class="k">pub</span> input: String }
+
+<span class="k">fn</span> handle(call: Call) -&gt; Reply {
+    <span class="k">match</span> call {
+        Call::TabNavigate(p) =&gt; tabs.navigate(p.id, p.input).into(),
+        <span class="c">// …</span>
+    }
+}</pre>
+    </div>
+    <p class="code-note">Le registre reste la source de vérité : il produit les types TypeScript aujourd’hui et les structures Rust demain.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Maquette <code>maquette/pont-ipc-rust.html</code> — aucun code de production modifié par cette page. Chiffres mesurés dans l’arbre 0.3.37 (190 canaux, 123 handlers, 45 fichiers, 0 schéma).
+  </div>
+</footer>
+</body>
+</html>

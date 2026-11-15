@@ -1,0 +1,1471 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maquette — Vela, site style macOS (référence Dia)</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="../site/public/favicon.svg" type="image/svg+xml" />
+    <style>
+      /* =====================================================================
+         Maquette — site vitrine de Vela, direction « macOS × Dia ».
+         Rien n'est branché au vrai site : fichier autonome, captures réelles.
+
+         Trois idées :
+         1. Le chrome est macOS — barre de fenêtre, feux, contrôles segmentés,
+            listes groupées de Réglages, matériaux translucides.
+         2. La grammaire est celle de Dia — canvas papier, titre énorme en
+            graisse 300 avec un seul mot en serif italique, un unique bouton
+            noir, et des fragments de produit qui flottent autour du titre.
+         3. La couleur est rationnée : le corail n'apparaît que dans le produit
+            et dans un mot. Le reste est encre alpha sur papier.
+         ===================================================================== */
+
+      :root {
+        --canvas: #f8f7f4;
+        --surface: #ffffff;
+        --glass: rgba(255, 255, 255, 0.72);
+        --glass-strong: rgba(255, 255, 255, 0.9);
+        --hairline: rgba(0, 0, 0, 0.08);
+        --hairline-soft: rgba(0, 0, 0, 0.05);
+        --ink: rgba(0, 0, 0, 0.88);
+        --ink-2: rgba(0, 0, 0, 0.6);
+        --ink-3: rgba(0, 0, 0, 0.42);
+        --accent: #e8805a;
+        --accent-deep: #c4623f;
+        --night: #1b2150;
+        --sea: #26307a;
+        --cream: #f6efe4;
+        --shadow-window: 0 2px 6px rgba(16, 20, 40, 0.06), 0 24px 60px rgba(16, 20, 40, 0.14),
+          0 60px 120px rgba(16, 20, 40, 0.08);
+        --shadow-card: 0 1px 2px rgba(16, 20, 40, 0.06), 0 12px 30px rgba(16, 20, 40, 0.08);
+        --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui,
+          'Segoe UI', Roboto, sans-serif;
+        --serif: ui-serif, 'New York', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+        --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+        --radius-window: 22px;
+        --radius-card: 18px;
+        --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --canvas: #0c0f1c;
+          --surface: #14182a;
+          --glass: rgba(24, 29, 50, 0.66);
+          --glass-strong: rgba(28, 33, 56, 0.9);
+          --hairline: rgba(255, 255, 255, 0.12);
+          --hairline-soft: rgba(255, 255, 255, 0.07);
+          --ink: rgba(255, 255, 255, 0.92);
+          --ink-2: rgba(255, 255, 255, 0.62);
+          --ink-3: rgba(255, 255, 255, 0.42);
+          --shadow-window: 0 2px 8px rgba(0, 0, 0, 0.5), 0 40px 90px rgba(0, 0, 0, 0.55);
+          --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.4);
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+        scroll-behavior: smooth;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      ::selection {
+        background: rgba(232, 128, 90, 0.25);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* --- Barre de fenêtre (chrome macOS) ------------------------------- */
+
+      .bar {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        padding: 0 20px;
+      }
+
+      .bar-in {
+        max-width: 1180px;
+        margin: 0 auto;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 8px 0 14px;
+        border-radius: 14px;
+        background: var(--glass);
+        border: 1px solid var(--hairline);
+        box-shadow: 0 1px 1px rgba(16, 20, 40, 0.04), 0 10px 24px rgba(16, 20, 40, 0.06);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        backdrop-filter: saturate(180%) blur(20px);
+      }
+
+      .lights {
+        display: flex;
+        gap: 7px;
+        flex: none;
+      }
+
+      .lights i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        display: block;
+        box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+      }
+
+      .lights i:nth-child(1) {
+        background: #ff5f57;
+      }
+      .lights i:nth-child(2) {
+        background: #febc2e;
+      }
+      .lights i:nth-child(3) {
+        background: #28c840;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 590;
+        letter-spacing: -0.01em;
+        font-size: 15px;
+      }
+
+      .brand img {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: block;
+      }
+
+      .nav {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .nav a {
+        font-size: 13.5px;
+        color: var(--ink-2);
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: background 0.15s var(--ease), color 0.15s var(--ease);
+      }
+
+      .nav a:hover {
+        color: var(--ink);
+        background: rgba(0, 0, 0, 0.045);
+      }
+
+      .bar .pill {
+        font-size: 13.5px;
+        font-weight: 560;
+        color: #fff;
+        background: #000;
+        padding: 7px 14px;
+        border-radius: 999px;
+        transition: transform 0.15s var(--ease), background 0.15s var(--ease);
+      }
+
+      .bar .pill:hover {
+        background: #1c1c1c;
+        transform: translateY(-1px);
+      }
+
+      /* --- Héros --------------------------------------------------------- */
+
+      .hero {
+        position: relative;
+        padding: 92px 20px 0;
+        text-align: center;
+        isolation: isolate;
+      }
+
+      .aurora {
+        position: absolute;
+        inset: -140px 0 auto;
+        height: 900px;
+        z-index: -1;
+        pointer-events: none;
+        background: radial-gradient(38% 42% at 24% 22%, rgba(232, 128, 90, 0.22), transparent 70%),
+          radial-gradient(34% 38% at 76% 16%, rgba(126, 140, 220, 0.2), transparent 72%),
+          radial-gradient(52% 46% at 50% 40%, rgba(255, 234, 205, 0.6), transparent 72%);
+        filter: blur(10px);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .aurora {
+          background: radial-gradient(38% 42% at 24% 22%, rgba(232, 128, 90, 0.2), transparent 70%),
+            radial-gradient(34% 38% at 76% 16%, rgba(120, 140, 255, 0.16), transparent 72%),
+            radial-gradient(52% 46% at 50% 40%, rgba(60, 70, 140, 0.35), transparent 72%);
+        }
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 26px;
+        padding: 5px 12px 5px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--hairline);
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-2);
+      }
+
+      .eyebrow b {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .eyebrow b::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      h1 {
+        margin: 0 auto;
+        /* Deux lignes, comme une affiche : « Le web, » / « votre atelier. ».
+           La colonne est étroite exprès, pour laisser les fragments respirer
+           de chaque côté et garder un rythme de une seconde par ligne. */
+        max-width: 700px;
+        font-size: clamp(44px, 6vw, 86px);
+        line-height: 0.99;
+        font-weight: 300;
+        letter-spacing: -0.038em;
+        text-wrap: balance;
+      }
+
+      h1 em {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        color: var(--accent);
+      }
+
+      .sub {
+        margin: 26px auto 0;
+        max-width: 46ch;
+        font-size: clamp(15.5px, 1.5vw, 18px);
+        line-height: 1.6;
+        color: var(--ink-2);
+        text-wrap: pretty;
+      }
+
+      .cta {
+        margin-top: 34px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 24px;
+        border-radius: 999px;
+        background: #000;
+        color: #fff;
+        font-size: 15.5px;
+        font-weight: 560;
+        letter-spacing: -0.01em;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 10px 26px rgba(0, 0, 0, 0.16);
+        transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease);
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 14px 34px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn svg {
+        width: 15px;
+        height: 18px;
+        flex: none;
+        fill: currentColor;
+      }
+
+      .alt {
+        font-size: 13px;
+        color: var(--ink-3);
+      }
+
+      .alt button {
+        font: inherit;
+        color: var(--ink-2);
+        background: none;
+        border: 0;
+        padding: 2px 3px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .alt button:hover {
+        color: var(--ink);
+      }
+
+      .micro {
+        margin: 20px 0 0;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+        color: var(--ink-3);
+      }
+
+      /* --- Fragments de produit (verre, autour du titre) ------------------ */
+
+      .fragments {
+        position: absolute;
+        inset: 150px 0 auto;
+        max-width: 1180px;
+        margin: 0 auto;
+        height: 400px;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      /* Sous 1280 px, la colonne de texte (700 px) et les cartes (210 px de
+         chaque côté) se toucheraient : on retire les fragments plutôt que de
+         les faire chevaucher le titre. */
+      @media (max-width: 1279px) {
+        .fragments {
+          display: none;
+        }
+      }
+
+      .frag {
+        position: absolute;
+        background: var(--glass-strong);
+        border: 1px solid var(--hairline);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+        text-align: left;
+        padding: 10px 12px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+
+      .frag-1 {
+        left: 0;
+        top: 0;
+        width: 208px;
+        transform: rotate(-2.2deg);
+      }
+
+      .frag-2 {
+        right: 0;
+        top: 46px;
+        width: 208px;
+        transform: rotate(1.8deg);
+      }
+
+      .frag-3 {
+        left: 26px;
+        bottom: 40px;
+        width: 196px;
+        transform: rotate(1.2deg);
+      }
+
+      .frag-4 {
+        right: 30px;
+        bottom: 22px;
+        width: 176px;
+        transform: rotate(-1.4deg);
+      }
+
+      .frag b {
+        display: block;
+        color: var(--ink);
+        font-weight: 560;
+        font-size: 12.5px;
+        margin-bottom: 2px;
+      }
+
+      .frag .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 3px 0;
+      }
+
+      .frag .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex: none;
+      }
+
+      .frag .name {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--ink);
+        font-weight: 500;
+      }
+
+      .frag .count {
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .frag .line {
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.07);
+        margin: 6px 0;
+      }
+
+      .frag .line.short {
+        width: 62%;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .frag .line {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .frag .kbd {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-3);
+        border: 1px solid var(--hairline);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+
+      /* --- Fenêtre produit ---------------------------------------------- */
+
+      .win {
+        position: relative;
+        max-width: 1080px;
+        margin: 66px auto 0;
+        border-radius: var(--radius-window);
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        box-shadow: var(--shadow-window);
+        overflow: hidden;
+      }
+
+      /* La capture contient déjà sa barre de fenêtre (feux, adresse) : le
+         cadre n'ajoute qu'une bordure, un rayon et une ombre — pas une
+         deuxième barre qui ferait doublon. */
+      .win img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .win figcaption {
+        font-size: 11.5px;
+        color: var(--ink-3);
+        text-align: center;
+        padding: 10px;
+        border-top: 1px solid var(--hairline-soft);
+      }
+
+      /* --- Sections ------------------------------------------------------ */
+
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .band {
+        padding: 128px 0 0;
+        scroll-margin-top: 90px;
+      }
+
+      .band h2 {
+        margin: 0;
+        max-width: 20ch;
+        font-size: clamp(30px, 3.6vw, 46px);
+        line-height: 1.06;
+        font-weight: 300;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+      }
+
+      .band h2 em {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+      }
+
+      .lead {
+        margin: 16px 0 0;
+        max-width: 52ch;
+        color: var(--ink-2);
+        font-size: 16.5px;
+      }
+
+      /* --- Gestes (01 / 02 / 03) ----------------------------------------- */
+
+      .gestes {
+        margin-top: 56px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .geste {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
+        gap: 40px;
+        align-items: center;
+        padding: 30px 0;
+        border-top: 1px solid var(--hairline);
+      }
+
+      .geste:last-child {
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .geste-num {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--ink-3);
+      }
+
+      .geste h3 {
+        margin: 8px 0 10px;
+        font-size: clamp(21px, 2.2vw, 26px);
+        font-weight: 520;
+        letter-spacing: -0.02em;
+      }
+
+      .geste p {
+        margin: 0;
+        max-width: 42ch;
+        color: var(--ink-2);
+        font-size: 15.5px;
+      }
+
+      /* --- Panneaux macOS (Réglages, Spotlight, bouclier) ---------------- */
+
+      .panel {
+        border-radius: var(--radius-card);
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        font-size: 13.5px;
+      }
+
+      .panel-head {
+        padding: 11px 16px;
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        border-bottom: 1px solid var(--hairline-soft);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--hairline-soft);
+      }
+
+      .row:last-child {
+        border-bottom: 0;
+      }
+
+      .row .swatch {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      .row .label {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .row .label b {
+        display: block;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .row .label span {
+        display: block;
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+
+      .chev {
+        color: var(--ink-3);
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      .toggle {
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.12);
+        position: relative;
+        flex: none;
+      }
+
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+      }
+
+      .toggle.on {
+        background: #34c759;
+      }
+
+      .toggle.on::after {
+        left: auto;
+        right: 2px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .toggle {
+          background: rgba(255, 255, 255, 0.18);
+        }
+        .toggle.on {
+          background: #30d158;
+        }
+      }
+
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 14px;
+        padding: 10px 13px;
+        border-radius: 11px;
+        background: rgba(0, 0, 0, 0.045);
+        color: var(--ink-2);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .search {
+          background: rgba(255, 255, 255, 0.08);
+        }
+      }
+
+      .search svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        flex: none;
+      }
+
+      .search .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+
+      .result {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 16px;
+        color: var(--ink-2);
+      }
+
+      .result .ico {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.07);
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 9px;
+        color: var(--ink-3);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .result .ico {
+          background: rgba(255, 255, 255, 0.12);
+        }
+      }
+
+      .result.is-active {
+        background: rgba(232, 128, 90, 0.12);
+        color: var(--ink);
+      }
+
+      .pillar {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 14px 16px;
+      }
+
+      .pillar b {
+        font-size: 26px;
+        font-weight: 300;
+        letter-spacing: -0.03em;
+        color: var(--accent);
+      }
+
+      .pillar span {
+        color: var(--ink-2);
+      }
+
+      /* --- Téléchargement ------------------------------------------------ */
+
+      .dl {
+        margin-top: 46px;
+        border-radius: var(--radius-card);
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+      }
+
+      .dl-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 16px;
+        border-bottom: 1px solid var(--hairline-soft);
+      }
+
+      .seg {
+        display: inline-flex;
+        padding: 3px;
+        gap: 2px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.055);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .seg {
+          background: rgba(255, 255, 255, 0.09);
+        }
+      }
+
+      .seg button {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-2);
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        padding: 6px 14px;
+        cursor: pointer;
+        transition: background 0.15s var(--ease), color 0.15s var(--ease);
+      }
+
+      .seg button[aria-pressed='true'] {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+      }
+
+      .dl-version {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+
+      .file {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--hairline-soft);
+      }
+
+      .file:last-child {
+        border-bottom: 0;
+      }
+
+      .file.is-off {
+        display: none;
+      }
+
+      .file .name {
+        font-weight: 500;
+        font-size: 13.5px;
+      }
+
+      .file .meta {
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+
+      .file .hash {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+
+      .file .copy {
+        font: inherit;
+        font-size: 11.5px;
+        color: var(--ink-2);
+        background: rgba(0, 0, 0, 0.05);
+        border: 0;
+        border-radius: 7px;
+        padding: 5px 9px;
+        cursor: pointer;
+      }
+
+      .file .copy:hover {
+        color: var(--ink);
+        background: rgba(0, 0, 0, 0.085);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .file .copy {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        .file .copy:hover {
+          background: rgba(255, 255, 255, 0.16);
+        }
+      }
+
+      .note {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 14px 16px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+        background: rgba(0, 0, 0, 0.022);
+        border-top: 1px solid var(--hairline-soft);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .note {
+          background: rgba(255, 255, 255, 0.04);
+        }
+      }
+
+      .note svg {
+        width: 15px;
+        height: 15px;
+        flex: none;
+        stroke: var(--accent-deep);
+        fill: none;
+        stroke-width: 1.7;
+        margin-top: 2px;
+      }
+
+      /* --- Clôture + pied ------------------------------------------------ */
+
+      .end {
+        text-align: center;
+        padding: 118px 20px 0;
+      }
+
+      .end h2 {
+        margin: 0 auto;
+        max-width: 18ch;
+        font-size: clamp(28px, 3.4vw, 42px);
+        font-weight: 300;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+      }
+
+      .end h2 em {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 400;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+
+      .end p {
+        margin: 14px 0 26px;
+        color: var(--ink-2);
+      }
+
+      footer {
+        margin-top: 96px;
+        border-top: 1px solid var(--hairline);
+      }
+
+      .foot {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 34px 20px 46px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 26px 48px;
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+
+      .foot a:hover {
+        color: var(--ink);
+      }
+
+      .foot .col {
+        display: grid;
+        gap: 6px;
+        align-content: start;
+      }
+
+      .foot .col b {
+        font-weight: 500;
+        color: var(--ink-2);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+
+      .foot .sign {
+        margin-left: auto;
+        text-align: right;
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.8;
+      }
+
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+
+      .skip:focus {
+        left: 16px;
+        top: 16px;
+        z-index: 40;
+        background: #000;
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 999px;
+      }
+
+      /* --- Adaptations --------------------------------------------------- */
+
+      @media (max-width: 900px) {
+        .hero {
+          padding-top: 64px;
+        }
+        .geste {
+          grid-template-columns: 1fr;
+          gap: 22px;
+          padding: 26px 0;
+        }
+        .band {
+          padding-top: 92px;
+        }
+        .foot .sign {
+          margin-left: 0;
+          text-align: left;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .nav a:not(.pill) {
+          display: none;
+        }
+        .bar {
+          padding: 0 12px;
+          top: 8px;
+        }
+        .bar-in {
+          padding-left: 12px;
+        }
+        .lights {
+          display: none;
+        }
+        .win {
+          margin-top: 44px;
+          border-radius: 16px;
+        }
+        .file .hash {
+          display: none;
+        }
+        /* La ligne « 0 compte · 0 serveur… » se coupait sur un mot orphelin. */
+        .micro {
+          max-width: 30ch;
+          margin-inline: auto;
+          font-size: 10.5px;
+          line-height: 1.75;
+        }
+        h1 {
+          max-width: 12ch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#contenu">Aller au contenu</a>
+
+    <header class="bar">
+      <div class="bar-in">
+        <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+        <a class="brand" href="#top">
+          <img src="../site/public/favicon.svg" width="22" height="22" alt="" />
+          <span>Vela</span>
+        </a>
+        <nav class="nav" aria-label="Navigation principale">
+          <a href="#gestes">Le navigateur</a>
+          <a href="#zero">Confidentialité</a>
+          <a href="#top">Nouveautés</a>
+          <a class="pill" href="#telecharger">Obtenir Vela</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <!-- Héros -->
+      <section class="hero" id="top">
+        <div class="aurora" aria-hidden="true"></div>
+
+        <div class="fragments" aria-hidden="true">
+          <div class="frag frag-1">
+            <b>Espaces</b>
+            <div class="row">
+              <span class="name"><span class="dot"></span>Personnel</span>
+              <span class="count">12</span>
+            </div>
+            <div class="row">
+              <span class="name"><span class="dot" style="background: #7e8cdc"></span>Travail</span>
+              <span class="count">4</span>
+            </div>
+            <div class="row">
+              <span class="name"><span class="dot" style="background: #f6efe4; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12)"></span>Lecture</span>
+              <span class="count">2</span>
+            </div>
+          </div>
+
+          <div class="frag frag-2">
+            <b>Note du jour</b>
+            <div class="line"></div>
+            <div class="line short"></div>
+            <div style="margin-top: 8px; font-size: 11.5px; color: var(--ink-3)">
+              gardée sur cet appareil
+            </div>
+          </div>
+
+          <div class="frag frag-3">
+            <b>Bouclier</b>
+            <div class="row" style="padding: 0">
+              <span class="name">Pisteurs bloqués</span>
+              <span class="count">0</span>
+            </div>
+            <div class="row" style="padding: 0; color: var(--ink-3); font-size: 11.5px">
+              rien à signaler, rien à envoyer
+            </div>
+          </div>
+
+          <div class="frag frag-4">
+            <b>Aller à</b>
+            <div class="row" style="padding: 0">
+              <span class="name" style="color: var(--ink-3)">notes, onglets…</span>
+              <span class="kbd">⌘K</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="eyebrow"><b>0.3.37</b> · macOS, Windows, Linux</p>
+
+        <h1>Le web,<br />votre <em>atelier</em>.</h1>
+
+        <p class="sub">
+          Trois espaces isolés, des onglets verticaux, des notes posées à côté de la page. Un
+          navigateur qui range au lieu d’empiler — et qui ne vous demande aucun compte.
+        </p>
+
+        <div class="cta">
+          <a class="btn" id="dl" href="#telecharger">
+            <svg viewBox="0 0 384 512" aria-hidden="true">
+              <path
+                d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
+              />
+            </svg>
+            <span id="dl-label">Télécharger pour macOS</span>
+          </a>
+          <p class="alt">
+            ou
+            <button type="button" data-os="win">Windows</button> ·
+            <button type="button" data-os="linux">Linux</button>
+          </p>
+          <p class="micro">Gratuit · MIT · 0 compte · 0 serveur · 0 mesure d’usage</p>
+        </div>
+
+        <figure class="win">
+          <picture>
+            <source
+              type="image/avif"
+              media="(prefers-color-scheme: dark)"
+              srcset="../site/public/captures/accueil-sombre-720.avif 720w, ../site/public/captures/accueil-sombre-1080.avif 1080w"
+              sizes="(max-width: 1120px) 92vw, 1080px"
+            />
+            <source
+              type="image/webp"
+              media="(prefers-color-scheme: dark)"
+              srcset="../site/public/captures/accueil-sombre-720.webp 720w, ../site/public/captures/accueil-sombre-1080.webp 1080w"
+              sizes="(max-width: 1120px) 92vw, 1080px"
+            />
+            <source
+              type="image/avif"
+              srcset="../site/public/captures/accueil-clair-720.avif 720w, ../site/public/captures/accueil-clair-1080.avif 1080w"
+              sizes="(max-width: 1120px) 92vw, 1080px"
+            />
+            <img
+              src="../site/public/captures/accueil-clair-1080.webp"
+              width="1080"
+              height="676"
+              alt="La page d’accueil de Vela : espaces à gauche, onglets verticaux, favoris et notes à droite."
+              decoding="async"
+            />
+          </picture>
+        </figure>
+      </section>
+
+      <!-- Gestes -->
+      <section class="band wrap" id="gestes">
+        <h2>Trois gestes, <em>pas</em> un mode d’emploi.</h2>
+        <p class="lead">
+          Vela tient trois idées, et s’y tient. Rien à configurer avant de naviguer : la
+          première fenêtre s’ouvre déjà rangée.
+        </p>
+
+        <div class="gestes">
+          <article class="geste">
+            <div>
+              <p class="geste-num">01</p>
+              <h3>Un espace, un contexte.</h3>
+              <p>
+                Chaque espace a sa partition, ses cookies, son thème : le travail ne voit pas
+                vos courses, la lecture ne voit pas vos sessions ouvertes.
+              </p>
+            </div>
+            <div class="panel" role="img" aria-label="Réglages des espaces : Personnel, Travail, Lecture, avec leur nombre d’onglets.">
+              <div class="panel-head">Espaces</div>
+              <div class="row">
+                <span class="swatch" style="background: #e8805a">P</span>
+                <span class="label"><b>Personnel</b><span>Partition persist:personnel</span></span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <span class="swatch" style="background: #7e8cdc">T</span>
+                <span class="label"><b>Travail</b><span>Partition persist:travail</span></span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <span class="swatch" style="background: #26307a">L</span>
+                <span class="label"><b>Lecture</b><span>Partition persist:lecture</span></span>
+                <span class="chev">›</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="geste">
+            <div>
+              <p class="geste-num">02</p>
+              <h3>La page et vos notes, côte à côte.</h3>
+              <p>
+                Le coup d’œil ouvre un lien dans une carte posée sur la page ; les notes se
+                prennent sans quitter le sujet, et restent sur cet appareil.
+              </p>
+            </div>
+            <div class="panel" role="img" aria-label="Le champ « Aller à » avec ses résultats : un onglet, une note, un espace.">
+              <div class="search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                <span>aller à</span>
+                <span class="hint">⌘K</span>
+              </div>
+              <div class="result is-active">
+                <span class="ico">⌗</span>
+                <span>Note — chantier du site</span>
+                <span style="margin-left: auto; font-size: 11px; color: var(--ink-3)">note</span>
+              </div>
+              <div class="result">
+                <span class="ico">◫</span>
+                <span>Onglet — Voile (navire) — Wikipédia</span>
+                <span style="margin-left: auto; font-size: 11px; color: var(--ink-3)">onglet</span>
+              </div>
+              <div class="result">
+                <span class="ico">◉</span>
+                <span>Espace — Travail</span>
+                <span style="margin-left: auto; font-size: 11px; color: var(--ink-3)">espace</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="geste" id="zero">
+            <div>
+              <p class="geste-num">03</p>
+              <h3>Zéro pisteur, zéro compte.</h3>
+              <p>
+                Le bouclier filtre sans liste téléchargée, et rien ne part : pas de compte Vela,
+                pas de serveur, pas de mesure d’usage. Le seul chiffre est celui du journal.
+              </p>
+            </div>
+            <div class="panel" role="img" aria-label="Réglages de confidentialité : bouclier actif, mesure d’usage désactivée, aucun compte.">
+              <div class="panel-head">Confidentialité</div>
+              <div class="row">
+                <span class="label"><b>Bouclier de pisteurs</b><span>Filtrage local, listes intégrées</span></span>
+                <span class="toggle on" aria-hidden="true"></span>
+              </div>
+              <div class="row">
+                <span class="label"><b>Mesure d’usage</b><span>Aucune donnée ne quitte l’appareil</span></span>
+                <span class="toggle" aria-hidden="true"></span>
+              </div>
+              <div class="row">
+                <span class="label"><b>Compte Vela</b><span>Il n’existe pas</span></span>
+                <span style="font-size: 12px; color: var(--ink-3)">—</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Téléchargement -->
+      <section class="band wrap" id="telecharger">
+        <h2>Télécharger <em>Vela</em>.</h2>
+        <p class="lead">
+          De 101 à 226 Mo selon la plateforme, aucune dépendance, aucun compte. Les six fichiers portent leur empreinte
+          SHA-256 : vous pouvez vérifier ce que vous installez.
+        </p>
+
+        <div class="dl">
+          <div class="dl-top">
+            <div class="seg" role="group" aria-label="Choisir la plateforme">
+              <button type="button" data-os="mac" aria-pressed="true">macOS</button>
+              <button type="button" data-os="win" aria-pressed="false">Windows</button>
+              <button type="button" data-os="linux" aria-pressed="false">Linux</button>
+            </div>
+            <span class="dl-version">version 0.3.37 · 14 novembre 2026</span>
+          </div>
+
+          <div class="file" data-platform="mac">
+            <div>
+              <div class="name">Vela-0.3.37-universal.dmg</div>
+              <div class="meta">macOS 12+ · Apple silicon et Intel · 226,4 Mo</div>
+            </div>
+            <span class="hash">dafe512608b7…</span>
+            <button class="copy" type="button" data-hash="dafe512608b71a97fc732565a18de686a9e0fd9b36b6a2f48fd9c3779250331a">Copier</button>
+          </div>
+          <div class="file" data-platform="mac">
+            <div>
+              <div class="name">Vela-0.3.37-arm64.dmg</div>
+              <div class="meta">macOS 12+ · Apple silicon · 122,7 Mo</div>
+            </div>
+            <span class="hash">823fb0f5a397…</span>
+            <button class="copy" type="button" data-hash="823fb0f5a397028c9abe177e77e096d849fdefe00f80893d3df47de72798f13c">Copier</button>
+          </div>
+          <div class="file" data-platform="mac">
+            <div>
+              <div class="name">Vela-0.3.37-x64.dmg</div>
+              <div class="meta">macOS 12+ · Intel · 130,0 Mo</div>
+            </div>
+            <span class="hash">6c52d51b27eb…</span>
+            <button class="copy" type="button" data-hash="6c52d51b27eb8fad6be53e3732e1568161538780262037d81c5b279f07810dfc">Copier</button>
+          </div>
+          <div class="file is-off" data-platform="win">
+            <div>
+              <div class="name">Vela-0.3.37-x64.exe</div>
+              <div class="meta">Windows 10+ · installateur · 122,4 Mo</div>
+            </div>
+            <span class="hash">f4b4170d56e2…</span>
+            <button class="copy" type="button" data-hash="f4b4170d56e2e594dc88d1ee5cd6f314296d52b5ae81b04fa989748d75eb6e46">Copier</button>
+          </div>
+          <div class="file is-off" data-platform="linux">
+            <div>
+              <div class="name">Vela-0.3.37-x86_64.AppImage</div>
+              <div class="meta">Linux · portable · 127,1 Mo</div>
+            </div>
+            <span class="hash">39662dcbc15b…</span>
+            <button class="copy" type="button" data-hash="39662dcbc15beb3eda9c36cd7824118c723b64f4f5129c4847429a3e449ef4c6">Copier</button>
+          </div>
+          <div class="file is-off" data-platform="linux">
+            <div>
+              <div class="name">Vela-0.3.37-amd64.deb</div>
+              <div class="meta">Debian, Ubuntu · 101,8 Mo</div>
+            </div>
+            <span class="hash">c634de47d214…</span>
+            <button class="copy" type="button" data-hash="c634de47d214c047f17513630dbc6a7a5b5754f9f4c898d53214fec487ec45e4">Copier</button>
+          </div>
+
+          <p class="note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 2.6 20h18.8L12 3Z" /><path d="M12 9v5" /><path d="M12 17h.01" />
+            </svg>
+            <span>
+              Les binaires ne sont pas encore signés : macOS et Windows afficheront un
+              avertissement au premier lancement. Les empreintes ci-dessus permettent de
+              vérifier le fichier avant de l’ouvrir.
+            </span>
+          </p>
+        </div>
+      </section>
+
+      <!-- Clôture -->
+      <section class="end">
+        <h2>Un navigateur qui reste <em>à bord</em>.</h2>
+        <p>Gratuit, MIT, sans compte. Vos onglets, vos notes, vos sessions : sur votre machine.</p>
+        <a class="btn" href="#telecharger" style="display: inline-flex">
+          <svg viewBox="0 0 384 512" aria-hidden="true">
+            <path
+              d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
+            />
+          </svg>
+          Télécharger pour macOS
+        </a>
+      </section>
+
+      <footer>
+        <div class="foot">
+          <div class="col">
+            <b>Vela</b>
+            <a href="#gestes">Le navigateur</a>
+            <a href="#telecharger">Télécharger</a>
+          </div>
+          <div class="col">
+            <b>Le projet</b>
+            <a href="#zero">Confidentialité</a>
+            <a href="#top">Nouveautés</a>
+            <a href="#top">Aide</a>
+          </div>
+          <div class="col">
+            <b>Code</b>
+            <a href="#top">Dépôt</a>
+            <a href="#top">Licence MIT</a>
+          </div>
+          <div class="sign">
+            0.3.37 · fait à la main<br />
+            0 compte · 0 serveur · 0 mesure
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      // Deux petits comportements de maquette : le choix de plateforme pilote le
+      // bouton principal, les fichiers de la fiche et le contrôle segmenté.
+      const OS = {
+        mac: { label: 'Télécharger pour macOS', ext: 'dmg' },
+        win: { label: 'Télécharger pour Windows', ext: 'exe' },
+        linux: { label: 'Télécharger pour Linux', ext: 'AppImage' }
+      }
+      let current = 'mac'
+
+      function setOs(os) {
+        if (!OS[os]) return
+        current = os
+        document.getElementById('dl-label').textContent = OS[os].label
+        for (const button of document.querySelectorAll('[data-os]')) {
+          if (button.getAttribute('aria-pressed')) {
+            button.setAttribute('aria-pressed', String(button.dataset.os === os))
+          }
+        }
+        for (const file of document.querySelectorAll('.file')) {
+          file.classList.toggle('is-off', file.dataset.platform !== os)
+        }
+      }
+
+      for (const button of document.querySelectorAll('[data-os]')) {
+        button.addEventListener('click', () => {
+          setOs(button.dataset.os)
+          if (button.closest('.file, .dl')) return
+          document.getElementById('telecharger').scrollIntoView({ block: 'start' })
+        })
+      }
+
+      for (const copy of document.querySelectorAll('.copy')) {
+        copy.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(copy.dataset.hash)
+            copy.textContent = 'Copié'
+          } catch {
+            copy.textContent = 'Empreinte'
+          }
+          setTimeout(() => (copy.textContent = 'Copier'), 1600)
+        })
+      }
+
+      setOs(current)
+    </script>
+  </body>
+</html>

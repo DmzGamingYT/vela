@@ -1,0 +1,1421 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Azimut — une autre maquette pour le premier démarrage</title>
+    <style>
+      /* Cinq temps, 1280 × 800 chacun. Tokens repris de l'app (01-socle) :
+         papier chaud, encre douce, un seul accent indigo. */
+      :root {
+        --paper: #faf8f5;
+        --paper-deep: #f2ede5;
+        --surface: #fffdfa;
+        --ink: #1b1a18;
+        --ink-soft: #45413c;
+        --muted: rgba(27, 26, 24, 0.62);
+        --line: rgba(27, 26, 22, 0.11);
+        --line-soft: rgba(27, 26, 22, 0.06);
+        --fill: rgba(255, 255, 255, 0.6);
+        --indigo: #5b56d6;
+        --indigo-soft: rgba(91, 86, 214, 0.1);
+        --sage: #3e8e7a;
+        --clay: #c07a4e;
+        --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter,
+          system-ui, sans-serif;
+        --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scrollbar-width: none;
+      }
+
+      html::-webkit-scrollbar {
+        display: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 56px 0 72px;
+        background: #14130f;
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      .intro {
+        width: 1280px;
+        margin: 0 auto 44px;
+        color: rgba(255, 253, 250, 0.78);
+      }
+
+      .intro h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: #fffdfa;
+      }
+
+      .intro p {
+        margin: 0;
+        max-width: 780px;
+        font-size: 14.5px;
+        line-height: 1.6;
+        color: rgba(255, 253, 250, 0.66);
+      }
+
+      .board {
+        width: 1280px;
+        margin: 0 auto 46px;
+      }
+
+      .stage {
+        position: relative;
+        width: 1280px;
+        height: 800px;
+        overflow: hidden;
+        border-radius: 18px;
+        background: var(--paper);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.45);
+      }
+
+      figcaption {
+        margin-top: 14px;
+        display: flex;
+        gap: 14px;
+        font-size: 13px;
+        line-height: 1.55;
+        color: rgba(255, 253, 250, 0.62);
+      }
+
+      figcaption b {
+        flex: 0 0 34px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: rgba(255, 253, 250, 0.42);
+      }
+
+      figcaption strong {
+        color: #fffdfa;
+        font-weight: 600;
+      }
+
+      /* --- Pièces communes -------------------------------------------------- */
+
+      .wordmark {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+
+      .wordmark i {
+        font-style: normal;
+        color: var(--indigo);
+      }
+
+      .kicker {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        height: 38px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--fill);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .btn.primary {
+        border-color: transparent;
+        background: var(--indigo);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .btn.ghost {
+        border-color: transparent;
+        background: none;
+        color: var(--muted);
+      }
+
+      .btn kbd {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        opacity: 0.7;
+      }
+
+      .switch {
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: rgba(27, 26, 22, 0.16);
+        position: relative;
+        flex: 0 0 38px;
+        transition: background 0.2s;
+      }
+
+      .switch::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      }
+
+      .switch[data-on='true'] {
+        background: var(--indigo);
+      }
+
+      .switch[data-on='true']::after {
+        left: 19px;
+      }
+
+      .bar {
+        position: absolute;
+        top: 26px;
+        left: 40px;
+        right: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .step {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+      }
+
+      .footbar {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        bottom: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footbar p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .footbar .actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* --- 1 · Ouverture ---------------------------------------------------- */
+
+      .b1 {
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(120% 90% at 50% 0%, rgba(91, 86, 214, 0.13), transparent 58%),
+          var(--paper);
+      }
+
+      .b1 .centre {
+        display: grid;
+        justify-items: center;
+        gap: 22px;
+        text-align: center;
+        transform: translateY(-18px);
+      }
+
+      .compass {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.58);
+        box-shadow:
+          0 24px 60px -30px rgba(27, 26, 22, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      }
+
+      .compass svg {
+        width: 84px;
+        height: 84px;
+      }
+
+      .b1 h2 {
+        margin: 0;
+        max-width: 620px;
+        font-size: 44px;
+        line-height: 1.12;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .b1 h2 em {
+        font-family: 'Iowan Old Style', Palatino, Georgia, serif;
+        font-style: italic;
+        font-weight: 400;
+      }
+
+      .b1 .lede {
+        margin: 0;
+        max-width: 460px;
+        font-size: 14.5px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .b1 .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 6px;
+      }
+
+      .b1 .note {
+        position: absolute;
+        bottom: 34px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+
+      /* --- 2 · Reprise ------------------------------------------------------ */
+
+      .b2 {
+        display: grid;
+        grid-template-columns: 520px 1fr;
+        align-items: center;
+        gap: 0;
+        padding: 26px 72px 124px;
+      }
+
+      .b2 .copy h2,
+      .b3 .copy h2,
+      .b4 .copy h2 {
+        margin: 14px 0 12px;
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+      }
+
+      .b2 .copy p,
+      .b3 .copy p,
+      .b4 .copy p {
+        margin: 0 0 22px;
+        max-width: 420px;
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--ink-soft);
+      }
+
+      .sources {
+        display: grid;
+        gap: 8px;
+        max-width: 430px;
+      }
+
+      .source {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 13px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+
+      .source .mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--tint, #6b6b6b);
+      }
+
+      .source .who {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .source strong {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .source small {
+        display: block;
+        margin-top: 2px;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+
+      .preview {
+        position: relative;
+        width: 560px;
+        height: 360px;
+        margin-left: 56px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        box-shadow: 0 30px 70px -44px rgba(27, 26, 22, 0.5);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 52px 168px 1fr;
+      }
+
+      .preview .rail {
+        border-right: 1px solid var(--line-soft);
+        background: var(--paper-deep);
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        gap: 14px;
+        padding: 14px 0;
+      }
+
+      .preview .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        background: rgba(27, 26, 22, 0.08);
+      }
+
+      .preview .dot.on {
+        background: var(--indigo);
+      }
+
+      .preview .side {
+        border-right: 1px solid var(--line-soft);
+        padding: 14px 12px;
+        display: grid;
+        align-content: start;
+        gap: 7px;
+      }
+
+      .preview .side .space {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 7px;
+        border-radius: 7px;
+        background: rgba(27, 26, 22, 0.05);
+      }
+
+      .preview .side .space i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--indigo);
+      }
+
+      .preview .fav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 7px;
+        border-radius: 7px;
+        font-size: 11.5px;
+        color: var(--ink-soft);
+      }
+
+      .preview .fav b {
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        background: rgba(27, 26, 22, 0.09);
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: rgba(27, 26, 22, 0.5);
+      }
+
+      .preview .page {
+        padding: 18px 20px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .preview .page .h {
+        height: 10px;
+        width: 46%;
+        border-radius: 5px;
+        background: rgba(27, 26, 22, 0.16);
+      }
+
+      .preview .page .l {
+        height: 7px;
+        border-radius: 4px;
+        background: rgba(27, 26, 22, 0.07);
+      }
+
+      .preview .page .l.short {
+        width: 68%;
+      }
+
+      .badge-count {
+        position: absolute;
+        right: 16px;
+        bottom: 14px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        background: rgba(250, 248, 245, 0.9);
+        border: 1px solid var(--line-soft);
+        border-radius: 999px;
+        padding: 4px 9px;
+      }
+
+      /* --- 3 · Espaces ------------------------------------------------------ */
+
+      .b3 {
+        padding: 74px 72px 124px;
+        background:
+          radial-gradient(80% 60% at 100% 0%, rgba(62, 142, 122, 0.09), transparent 60%),
+          var(--paper);
+      }
+
+      .b3 .top {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 40px;
+      }
+
+      .b3 .stat {
+        text-align: right;
+        line-height: 1.1;
+      }
+
+      .b3 .stat b {
+        display: block;
+        font-size: 40px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .b3 .stat span {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+
+      .b3 .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 30px;
+      }
+
+      .b3 .fact {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .b3 .fact b {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .b3 .fact small {
+        display: block;
+        margin-top: 4px;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .b3 .spaces {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 30px;
+      }
+
+      .space-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .space-card[data-active='true'] {
+        border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
+        box-shadow: 0 18px 44px -34px var(--tone);
+      }
+
+      .space-card header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .space-card header i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--tone);
+      }
+
+      .space-card header b {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+
+      .space-card header small {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid var(--line-soft);
+        background: var(--paper);
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+
+      .chip.more {
+        border-style: dashed;
+        color: var(--muted);
+      }
+
+      .rows {
+        display: grid;
+        gap: 5px;
+        margin-top: 2px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .row b {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 15px;
+        border-radius: 4px;
+        background: rgba(27, 26, 22, 0.07);
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: rgba(27, 26, 22, 0.5);
+      }
+
+      .b3 .landing {
+        margin-top: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      .b3 .landing p {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      /* --- 4 · Bouclier ----------------------------------------------------- */
+
+      .b4 {
+        display: grid;
+        grid-template-columns: 470px 1fr;
+        align-items: center;
+        gap: 40px;
+        padding: 26px 76px 124px;
+      }
+
+      .counter {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin: 6px 0 4px;
+      }
+
+      .counter b {
+        font-size: 64px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .counter span {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .flows {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        overflow: hidden;
+      }
+
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 15px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .flow:last-child {
+        border-bottom: 0;
+      }
+
+      .flow .who {
+        flex: 1 1 auto;
+      }
+
+      .flow strong {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .flow small {
+        display: block;
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .tag {
+        flex: 0 0 auto;
+        font-size: 10.5px;
+        font-family: var(--mono);
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .tag.out {
+        color: var(--clay);
+        border-color: color-mix(in srgb, var(--clay) 35%, transparent);
+        background: color-mix(in srgb, var(--clay) 8%, transparent);
+      }
+
+      .tag.stay {
+        color: var(--sage);
+        border-color: color-mix(in srgb, var(--sage) 32%, transparent);
+        background: color-mix(in srgb, var(--sage) 8%, transparent);
+      }
+
+      /* --- 5 · Atterrissage ------------------------------------------------- */
+
+      .b5 {
+        display: grid;
+        grid-template-columns: 52px 250px 1fr;
+        background: var(--paper);
+      }
+
+      .b5 .rail {
+        border-right: 1px solid var(--line-soft);
+        background: var(--paper-deep);
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        gap: 13px;
+        padding: 16px 0;
+      }
+
+      .b5 .rail .dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 7px;
+        background: rgba(27, 26, 22, 0.08);
+      }
+
+      .b5 .rail .dot.on {
+        background: var(--indigo);
+      }
+
+      .b5 .side {
+        border-right: 1px solid var(--line-soft);
+        padding: 16px 14px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .b5 .side .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .b5 .side .space {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 9px;
+        font-size: 12px;
+        color: var(--ink-soft);
+      }
+
+      .b5 .side .space.on {
+        background: rgba(91, 86, 214, 0.1);
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .b5 .side .space i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--tone, rgba(27, 26, 22, 0.2));
+      }
+
+      .b5 .side .sep {
+        height: 1px;
+        background: var(--line-soft);
+        margin: 6px 0;
+      }
+
+      .b5 .side .fav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 9px;
+        border-radius: 8px;
+        font-size: 11.5px;
+        color: var(--ink-soft);
+      }
+
+      .b5 .side .fav b {
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        background: rgba(27, 26, 22, 0.09);
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: rgba(27, 26, 22, 0.5);
+      }
+
+      .b5 .main {
+        position: relative;
+        padding: 26px 30px;
+        display: grid;
+        align-content: start;
+        gap: 14px;
+      }
+
+      .b5 .chrome {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: 0 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .b5 .chrome .lock {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        background: rgba(27, 26, 22, 0.16);
+      }
+
+      .b5 .home h3 {
+        margin: 18px 0 6px;
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .b5 .home p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .b5 .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .b5 .card {
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+        padding: 13px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .b5 .card .line {
+        height: 7px;
+        border-radius: 4px;
+        background: rgba(27, 26, 22, 0.08);
+      }
+
+      .b5 .card .line.short {
+        width: 62%;
+      }
+
+      .b5 .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 26px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: #1b1a18;
+        color: #fffdfa;
+        font-size: 12.5px;
+        box-shadow: 0 22px 48px -26px rgba(0, 0, 0, 0.6);
+      }
+
+      .b5 .toast kbd {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        padding: 2px 6px;
+        border-radius: 5px;
+        background: rgba(255, 253, 250, 0.14);
+      }
+
+      .b5 .restored {
+        margin-top: 16px;
+        display: grid;
+        gap: 9px;
+      }
+
+      .b5 .restored-k {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .b5 .restored-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .b5 .rchip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+
+      .b5 .rchip b {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: rgba(27, 26, 22, 0.07);
+        display: grid;
+        place-items: center;
+        font-size: 7.5px;
+        color: rgba(27, 26, 22, 0.5);
+      }
+
+      .b5 .rchip.more {
+        border-style: dashed;
+        color: var(--muted);
+      }
+
+      .b5 .card-k {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .b5 .line-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+
+      .b5 .line-row b {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 16px;
+        border-radius: 5px;
+        background: rgba(27, 26, 22, 0.07);
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: rgba(27, 26, 22, 0.5);
+      }
+
+    </style>
+  </head>
+  <body>
+    <header class="intro">
+      <h1>Premier démarrage — une autre maquette</h1>
+      <p>
+        La version actuelle est un formulaire en cinq étapes : moteur, bruit, habitués, teinte,
+        confidentialité. Celle-ci garde les mêmes décisions, mais les fait ressembler à une mise en
+        place : on part de ce que la machine contient déjà, on voit la fenêtre se remplir derrière,
+        et la dernière étape n’est pas un écran — c’est le navigateur, déjà arrangé.
+      </p>
+    </header>
+
+    <figure class="board" id="b1">
+      <div class="stage b1">
+        <div class="centre">
+          <span class="compass">
+            <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+              <circle cx="50" cy="50" r="45" stroke="rgba(27,26,22,.14)" />
+              <circle cx="50" cy="50" r="31" stroke="rgba(27,26,22,.08)" />
+              <path d="M50 20 56 50 50 46 44 50Z" fill="#5b56d6" />
+              <path d="M50 80 44 50 50 54 56 50Z" fill="rgba(27,26,22,.28)" />
+              <circle cx="50" cy="50" r="3.4" fill="#1b1a18" />
+            </svg>
+          </span>
+          <h2>Un navigateur qui <em>range</em>, pendant que vous travaillez.</h2>
+          <p class="lede">
+            Onglets verticaux, espaces isolés, notes locales. On installe deux ou trois choses et
+            vous êtes chez vous — pas dans un questionnaire.
+          </p>
+          <div class="actions">
+            <span class="btn primary">Commencer <kbd>↵</kbd></span>
+            <span class="btn ghost">Passer</span>
+          </div>
+        </div>
+        <p class="note">Aucun compte · aucun serveur Azimut · rien à mesurer</p>
+      </div>
+      <figcaption>
+        <b>01</b>
+        <span
+          ><strong>L’ouverture ne demande rien.</strong> Un seul écran, une phrase, un bouton. Pas
+          de liste d’étapes visible d’entrée : on ne montre pas la longueur du parcours avant
+          d’avoir montré à quoi il sert.</span
+        >
+      </figcaption>
+    </figure>
+
+    <figure class="board" id="b2">
+      <div class="stage b2">
+        <div class="bar"><span class="wordmark">Azimut<i>.</i></span><span class="step">02 / 04</span></div>
+        <div class="copy">
+          <span class="kicker">Reprendre</span>
+          <h2>On ne part pas de zéro.</h2>
+          <p>
+            Azimut lit ce qui est déjà sur cet appareil et propose un plan de reprise. Chaque ligne
+            est un vrai nombre, pas une case à cocher abstraite.
+          </p>
+          <div class="sources">
+            <div class="source" style="--tint: #217346">
+              <span class="mark">C</span>
+              <span class="who">
+                <strong>Chrome</strong>
+                <small>1 284 favoris · 3 profils trouvés</small>
+              </span>
+              <span class="switch" data-on="true"></span>
+            </div>
+            <div class="source" style="--tint: #2b6cb0">
+              <span class="mark">S</span>
+              <span class="who">
+                <strong>Safari</strong>
+                <small>318 favoris · lecture autorisée</small>
+              </span>
+              <span class="switch" data-on="true"></span>
+            </div>
+            <div class="source" style="--tint: #6b6b6b">
+              <span class="mark">↺</span>
+              <span class="who">
+                <strong>Session d’hier</strong>
+                <small>12 onglets ouverts, remis dans leurs espaces</small>
+              </span>
+              <span class="switch" data-on="false"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview" aria-hidden="true">
+          <div class="rail">
+            <span class="dot on"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="side">
+            <span class="space"><i></i>Personnel</span>
+            <span class="fav"><b>G</b>GitHub</span>
+            <span class="fav"><b>N</b>Notion</span>
+            <span class="fav"><b>L</b>Linear</span>
+            <span class="fav"><b>F</b>Figma</span>
+            <span class="fav"><b>W</b>Wikipédia</span>
+          </div>
+          <div class="page">
+            <span class="h"></span>
+            <span class="l"></span>
+            <span class="l"></span>
+            <span class="l short"></span>
+            <span class="l"></span>
+            <span class="l short"></span>
+            <span class="l"></span>
+          </div>
+          <span class="badge-count">1 602 pages reprises</span>
+        </div>
+
+        <div class="footbar">
+          <p>Rien n’est copié tant que vous n’avez pas validé — tout reste sur cet appareil.</p>
+          <div class="actions">
+            <span class="btn ghost">Plus tard</span>
+            <span class="btn primary">Reprendre 1 602 pages <kbd>↵</kbd></span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <b>02</b>
+        <span
+          ><strong>La reprise se voit pendant qu’on la choisit.</strong> À droite, une miniature
+          de la fenêtre se remplit : la barre latérale prend les favoris, l’onglet s’ouvre sur la
+          première page. C’est la promesse « ça range » rendue visible avant l’installation.</span
+        >
+      </figcaption>
+    </figure>
+
+    <figure class="board" id="b3">
+      <div class="stage b3">
+        <div class="bar"><span class="wordmark">Azimut<i>.</i></span><span class="step">03 / 04</span></div>
+        <div class="top">
+          <div class="copy">
+            <span class="kicker">Espaces</span>
+            <h2>Trois espaces prêts, pas une grille d’icônes.</h2>
+            <p>
+              Plutôt que de choisir des sites un par un, on part de trois lieux de travail
+              cohérents. On renomme, on décoche, on ajoute — mais il y a déjà quelque chose à
+              regarder.
+            </p>
+          </div>
+          <div class="stat"><b>12</b><span>pages déjà réparties</span></div>
+        </div>
+
+        <div class="spaces">
+          <article class="space-card" data-active="true" style="--tone: #5b56d6">
+            <header><i></i><b>Personnel</b><small>4 pages</small></header>
+            <div class="chips">
+              <span class="chip">GitHub</span>
+              <span class="chip">Notion</span>
+              <span class="chip">YouTube</span>
+              <span class="chip more">+ 2</span>
+            </div>
+            <div class="rows">
+              <span class="row"><b>G</b>GitHub · tableaux</span>
+              <span class="row"><b>N</b>Notion · notes</span>
+              <span class="row"><b>Y</b>YouTube · plus tard</span>
+            </div>
+          </article>
+          <article class="space-card" style="--tone: #3e8e7a">
+            <header><i></i><b>Travail</b><small>5 pages</small></header>
+            <div class="chips">
+              <span class="chip">Linear</span>
+              <span class="chip">Figma</span>
+              <span class="chip">GitHub</span>
+              <span class="chip more">+ 2</span>
+            </div>
+            <div class="rows">
+              <span class="row"><b>L</b>Linear · cycles</span>
+              <span class="row"><b>F</b>Figma · fichiers</span>
+              <span class="row"><b>G</b>GitHub · revues</span>
+            </div>
+          </article>
+          <article class="space-card" style="--tone: #c07a4e">
+            <header><i></i><b>Veille</b><small>3 pages</small></header>
+            <div class="chips">
+              <span class="chip">Le Monde</span>
+              <span class="chip">Hacker News</span>
+              <span class="chip more">+ 1</span>
+            </div>
+            <div class="rows">
+              <span class="row"><b>M</b>Le Monde · matin</span>
+              <span class="row"><b>H</b>Hacker News · soir</span>
+              <span class="row"><b>W</b>Wikipédia · au fil</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="facts">
+          <div class="fact">
+            <b>Sessions séparées</b>
+            <small>Un compte professionnel ne croise jamais un compte personnel.</small>
+          </div>
+          <div class="fact">
+            <b>Onglets par espace</b>
+            <small>La barre latérale ne montre que les onglets de l’espace actif.</small>
+          </div>
+          <div class="fact">
+            <b>Favoris et notes suivent</b>
+            <small>Chaque espace garde ses pages épinglées et ses notes locales.</small>
+          </div>
+        </div>
+
+        <div class="footbar">
+          <p>
+            Les espaces gardent leurs propres cookies : un compte pro ne croise pas un compte
+            personnel.
+          </p>
+          <div class="actions">
+            <span class="btn ghost">Tout personnaliser</span>
+            <span class="btn primary">Garder ces trois espaces <kbd>↵</kbd></span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <b>03</b>
+        <span
+          ><strong>On choisit un décor, pas une configuration.</strong> Les trois espaces arrivent
+          remplis et colorés ; la personnalisation reste possible mais n’est plus le passage
+          obligé. Le texte à gauche dit ce que ça change concrètement (sessions séparées).</span
+        >
+      </figcaption>
+    </figure>
+
+    <figure class="board" id="b4">
+      <div class="stage b4">
+        <div class="bar"><span class="wordmark">Azimut<i>.</i></span><span class="step">04 / 04</span></div>
+        <div class="copy">
+          <span class="kicker">Bouclier</span>
+          <h2>Pas un mur de texte : un compteur et cinq lignes.</h2>
+          <p>
+            L’écran confidentialité montre ce qui sort, flux par flux, avec le mécanisme d’arrêt
+            en face. Le compteur démarre à zéro et ne bougera que si quelque chose sort vraiment.
+          </p>
+
+          <div class="counter"><b>0</b><span>requête publicitaire sortie depuis l’ouverture</span></div>
+
+          <div class="flows">
+            <div class="flow">
+              <span class="who">
+                <strong>Recherche</strong>
+                <small>Votre moteur, sans passer par Azimut</small>
+              </span>
+              <span class="tag out">sort · searx.be</span>
+            </div>
+            <div class="flow">
+              <span class="who">
+                <strong>Mises à jour</strong>
+                <small>Vérification de version au lancement</small>
+              </span>
+              <span class="tag out">sort · github.com</span>
+            </div>
+            <div class="flow">
+              <span class="who">
+                <strong>Traqueurs des pages</strong>
+                <small>Liste embarquée, arrêtée sur cet appareil</small>
+              </span>
+              <span class="tag stay">bloqué</span>
+            </div>
+            <div class="flow">
+              <span class="who">
+                <strong>Polices et images</strong>
+                <small>Servies depuis votre disque</small>
+              </span>
+              <span class="tag stay">local</span>
+            </div>
+            <div class="flow">
+              <span class="who">
+                <strong>Mesure d’usage</strong>
+                <small>Il n’y a rien à désactiver : ça n’existe pas</small>
+              </span>
+              <span class="tag stay">aucune</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview" style="margin-left: 0" aria-hidden="true">
+          <div class="rail">
+            <span class="dot"></span>
+            <span class="dot on"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="side">
+            <span class="space"><i style="background: #3e8e7a"></i>Travail</span>
+            <span class="fav"><b>L</b>Linear</span>
+            <span class="fav"><b>F</b>Figma</span>
+            <span class="fav"><b>G</b>GitHub</span>
+          </div>
+          <div class="page">
+            <span class="h"></span>
+            <span class="l"></span>
+            <span class="l short"></span>
+            <span class="l"></span>
+            <span class="l short"></span>
+            <span class="l"></span>
+          </div>
+          <span class="badge-count">bouclier actif · 0 sortie</span>
+        </div>
+
+        <div class="footbar">
+          <p>Vous pourrez revoir ce tableau à tout moment dans Réglages › Confidentialité.</p>
+          <div class="actions">
+            <span class="btn ghost">Retour</span>
+            <span class="btn primary">Ouvrir Azimut <kbd>↵</kbd></span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <b>04</b>
+        <span
+          ><strong>La confidentialité se lit en une phrase par flux.</strong> Ce qui sort est
+          nommé avec sa destination, ce qui reste est nommé aussi. Le compteur à zéro est plus
+          parlant qu’un paragraphe sur le respect de la vie privée.</span
+        >
+      </figcaption>
+    </figure>
+
+    <figure class="board" id="b5">
+      <div class="stage b5">
+        <div class="rail">
+          <span class="dot on"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="side">
+          <span class="brand">◈ Azimut</span>
+          <span class="space on" style="--tone: #5b56d6"><i></i>Personnel</span>
+          <span class="space" style="--tone: #3e8e7a"><i></i>Travail</span>
+          <span class="space" style="--tone: #c07a4e"><i></i>Veille</span>
+          <span class="sep"></span>
+          <span class="fav"><b>G</b>GitHub</span>
+          <span class="fav"><b>N</b>Notion</span>
+          <span class="fav"><b>L</b>Linear</span>
+          <span class="fav"><b>F</b>Figma</span>
+          <span class="fav"><b>W</b>Wikipédia</span>
+        </div>
+        <div class="main">
+          <div class="chrome"><span class="lock"></span> Rechercher ou saisir une adresse</div>
+          <div class="home">
+            <h3>Bonjour.</h3>
+            <p>Personnel · 12 onglets, remis là où ils étaient.</p>
+            <div class="restored">
+              <span class="restored-k">12 onglets remis</span>
+              <div class="restored-chips">
+                <span class="rchip"><b>G</b>GitHub</span>
+                <span class="rchip"><b>L</b>Linear</span>
+                <span class="rchip"><b>F</b>Figma</span>
+                <span class="rchip"><b>N</b>Notion</span>
+                <span class="rchip"><b>M</b>Le Monde</span>
+                <span class="rchip"><b>H</b>Hacker News</span>
+                <span class="rchip"><b>Y</b>YouTube</span>
+                <span class="rchip more">+ 5</span>
+              </div>
+            </div>
+
+            <div class="cards">
+              <div class="card">
+                <span class="card-k">Reprendre</span>
+                <span class="line-row"><b>G</b>GitHub · tableaux</span>
+                <span class="line-row"><b>L</b>Linear · cycles</span>
+                <span class="line-row"><b>F</b>Figma · fichiers</span>
+              </div>
+              <div class="card">
+                <span class="card-k">Veille</span>
+                <span class="line-row"><b>M</b>Le Monde · matin</span>
+                <span class="line-row"><b>H</b>Hacker News</span>
+                <span class="line-row"><b>W</b>Wikipédia</span>
+              </div>
+              <div class="card">
+                <span class="card-k">Notes</span>
+                <span class="line-row"><b>N</b>Réunion de lundi</span>
+                <span class="line-row"><b>N</b>Idées d’article</span>
+                <span class="line-row"><b>N</b>À relire</span>
+              </div>
+            </div>
+          </div>
+          <div class="toast">Tout est là. <kbd>⌘K</kbd> pour lancer une page.</div>
+
+        </div>
+      </div>
+      <figcaption>
+        <b>05</b>
+        <span
+          ><strong>La dernière étape n’est pas un écran.</strong> On atterrit directement sur un
+          navigateur déjà rempli : trois espaces, les favoris, les douze onglets remis. Un seul
+          message, qui disparaît au premier geste. On n’arrive pas « après » le premier démarrage :
+          on est dedans.</span
+        >
+      </figcaption>
+    </figure>
+  </body>
+</html>

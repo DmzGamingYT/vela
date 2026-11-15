@@ -52,10 +52,15 @@ screenshots/
 # eux, sont versionnés dans scripts/.
 .bt-*
 planche-*-aperçu.png
+# Captures d’audit jetables, prises à la racine pendant les revues.
+apercu-*.png
+maquette/.apercu-*.png
 
 # Sortie de `npm run site:build` : le CSS/JS minifié et haché part chez
 # l’hébergeur, il n’a rien à faire au dépôt.
 site/dist/
+# Cache de la date de release, lu par site/tools/fiche.mjs.
+site/.cache/
 # Pages de release : générées depuis site/releases/*.json à chaque build.
 site/public/nouveautes/0-3-*/
 
