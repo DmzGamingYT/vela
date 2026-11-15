@@ -1211,7 +1211,7 @@ body {
 .agent-dock {
   order: 3;
   /* Un tiroir cède de la largeur avant la page : la fenêtre peut descendre à
-     980 px avec la barre latérale ouverte, et 244 px de barre plus 340 px de
+     760 px avec la barre latérale ouverte, et 244 px de barre plus 340 px de
      tiroir ne doivent pas réduire la page à une bande. */
   flex-shrink: 1;
 }

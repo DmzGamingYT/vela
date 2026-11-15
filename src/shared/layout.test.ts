@@ -42,8 +42,8 @@ describe('panesCanSplit', () => {
   })
 
   it('refuse la place laissée par un tiroir ouvert dans une fenêtre large', () => {
-    // Fenêtre au minimum réel (980 px) + tiroir Notes (~340 px) : la largeur
-    // de la fenêtre seule dirait « oui », la mesure des volets dit « non ».
+    // Fenêtre de 980 px + tiroir Notes (~340 px) : la largeur de la fenêtre
+    // seule dirait « oui », la mesure des volets dit « non ».
     expect(980).toBeGreaterThanOrEqual(SPLIT_MIN_WIDTH)
     expect(panesCanSplit(980 - 340 - 60)).toBe(false)
   })

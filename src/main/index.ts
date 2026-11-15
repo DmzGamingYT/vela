@@ -157,7 +157,9 @@ function createWindow(): void {
     width: 1380,
     height: 880,
     center: true,
-    minWidth: 980,
+    // 760 px : sous les 900 px du mode flottant de l'agent, sinon ce mode
+    // n'était atteignable qu'en réduisant la fenêtre depuis le système.
+    minWidth: 760,
     minHeight: 620,
     show: false,
     title: 'Azimut',
