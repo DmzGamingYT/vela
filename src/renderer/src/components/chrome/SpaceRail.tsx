@@ -9,7 +9,7 @@ import SpaceAvatar from '../space/SpaceAvatar'
  * Rail des espaces.
  *
  * Trois étages : la bascule de la barre latérale dans la rangée du titre, les
- * deux modes au milieu, les espaces puis « + » en bas. Réglages ferme la
+ * deux modes juste sous elle, les espaces puis « + » en bas. Réglages ferme la
  * colonne sous le « + » : la barre latérale n’a donc plus de carte pour lui.
  *
  * La colonne est détachée de 8 px du bord de la fenêtre : l’indicateur de
@@ -20,9 +20,7 @@ export default function SpaceRail() {
   // plus quand seuls les onglets ou l'historique ont bougé.
   const spaces = useBrowser((state) => state.view?.spaces)
   const activeSpaceId = useBrowser((state) => state.view?.activeSpaceId)
-  const sidebarCollapsed = useBrowser(
-    (state) => state.view?.settings.sidebarCollapsed ?? false
-  )
+  const sidebarCollapsed = useBrowser((state) => state.view?.settings.sidebarCollapsed ?? false)
   const workMode = useBrowser((state) => state.workMode)
   const setWorkMode = useBrowser((state) => state.setWorkMode)
   const activateSpace = useBrowser((state) => state.activateSpace)

@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------
    0.4 — les deux rails
    ------------------------------------------------------------------
-   Rail gauche : trois étages (bascule dans la rangée du titre, modes au
-   milieu, espaces puis « + » en bas), Réglages en pied, colonne détachée
+   Rail gauche : trois étages (bascule dans la rangée du titre, modes juste
+   dessous, espaces puis « + » en bas), Réglages en pied, colonne détachée
    de 8 px du bord pour que l'indicateur actif ne soit plus rogné.
 
    Rail droit : le fond reprend la teinte de la barre d'outils au lieu du
@@ -39,13 +39,12 @@
   z-index: 1;
 }
 
-/* Au milieu, entre la bascule et les espaces. Deux marges automatiques se
-   partagent l'espace restant : les modes tombent au centre, les espaces au
-   pied. */
+/* Collés à la bascule : posés au centre du rail, ils flottaient loin de
+   toute icône. Seule la pile d'espaces garde son écart, au pied. */
 .rail-modes {
-  margin-top: auto;
+  margin-top: 0;
   width: 100%;
-  padding: 0 0 8px;
+  padding: 2px 0 8px;
 }
 
 .rail-spaces {
