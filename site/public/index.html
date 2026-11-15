@@ -495,6 +495,80 @@
         </div>
       </section>
 
+      <section class="shortcuts-section" id="raccourcis" aria-labelledby="keys-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Clavier</p>
+            <h2 class="chapter-title" id="keys-title">Les gestes qu’on répète cent fois.</h2>
+            <p class="chapter-lede">
+              Mêmes combinaisons sur les trois systèmes : le sélecteur les traduit. La table
+              complète, avec le zoom et l’impression, vit dans <a href="/aide/#raccourcis">l’aide</a>.
+            </p>
+            <div
+              class="keys-switch"
+              data-keys-switch
+              role="group"
+              aria-label="Afficher les raccourcis pour"
+            >
+              <button type="button" data-os="mac" aria-pressed="true">macOS</button>
+              <button type="button" data-os="win" aria-pressed="false">Windows</button>
+              <button type="button" data-os="linux" aria-pressed="false">Linux</button>
+            </div>
+          </header>
+
+          <dl class="shortcut-grid">
+            <div class="shortcut">
+              <dt>Barre de commande</dt>
+              <dd><kbd data-key="mod+k">⌘K</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Barre d’adresse</dt>
+              <dd><kbd data-key="mod+l">⌘L</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Nouvel onglet</dt>
+              <dd><kbd data-key="mod+t">⌘T</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Fermer l’onglet</dt>
+              <dd><kbd data-key="mod+w">⌘W</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Recharger</dt>
+              <dd><kbd data-key="mod+r">⌘R</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Chercher dans la page</dt>
+              <dd><kbd data-key="mod+f">⌘F</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Garder la page</dt>
+              <dd><kbd data-key="mod+d">⌘D</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Bibliothèque</dt>
+              <dd><kbd data-key="mod+shift+o">⌘⇧O</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Notes</dt>
+              <dd><kbd data-key="mod+e">⌘E</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Agent</dt>
+              <dd><kbd data-key="mod+j">⌘J</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Mode Atelier</dt>
+              <dd><kbd data-key="mod+shift+a">⌘⇧A</kbd></dd>
+            </div>
+            <div class="shortcut">
+              <dt>Vue scindée</dt>
+              <dd><kbd data-key="mod+shift+d">⌘⇧D</kbd></dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
       <section class="privacy-section" aria-labelledby="privacy-title">
         <div class="shell">
           <header class="chapter">
@@ -550,6 +624,76 @@
       </section>
 
       <!-- Téléchargement : les six fichiers et leurs empreintes, sans détour. -->
+      <section class="platforms-section" id="plateformes" aria-labelledby="platforms-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Plateformes</p>
+            <h2 class="chapter-title" id="platforms-title">Trois systèmes, un fichier chacun.</h2>
+            <p class="chapter-lede">
+              Les mêmes fonctions partout ; seul l’emballage change. Les builds ne sont pas encore
+              signés, d’où un clic de plus au premier lancement — la marche à suivre est aussi dans
+              <a href="/aide/#macos">l’aide</a>.
+            </p>
+          </header>
+
+          <ul class="platforms">
+            <li class="platform">
+              <p class="platform-name">macOS <span>Apple silicon et Intel</span></p>
+              <p>
+                Un <code>.dmg</code> universel, ou les archives <code>.zip</code> arm64 et x64.
+                Sans certificat Apple : macOS 15 demande Réglages Système › Confidentialité et
+                sécurité › Ouvrir quand même ; macOS 14 et moins, un clic droit puis Ouvrir.
+              </p>
+            </li>
+            <li class="platform">
+              <p class="platform-name">Windows <span>x64</span></p>
+              <p>
+                Un installateur <code>.exe</code>. SmartScreen affiche « Windows a protégé votre
+                PC » : Informations complémentaires, puis Exécuter quand même. La mise à jour
+                s’installe à la fermeture de l’app.
+              </p>
+            </li>
+            <li class="platform">
+              <p class="platform-name">Linux <span>x64</span></p>
+              <p>
+                Une <code>.AppImage</code> autonome, ou un paquet <code>.deb</code> pour Debian et
+                Ubuntu. L’AppImage se remplace toute seule ; le paquet <code>.deb</code> s’installe
+                à la main, avec <code>apt install ./Azimut-….deb</code>.
+              </p>
+            </li>
+          </ul>
+
+          <div class="setup">
+            <h3>Au premier lancement</h3>
+            <div>
+              <ol>
+                <li>
+                  Aucun compte, aucun formulaire : Azimut crée son dossier de données et s’ouvre sur
+                  l’accueil.
+                </li>
+                <li>
+                  Reprendre ses favoris depuis Réglages › Navigation : un navigateur installé, ou un
+                  fichier HTML.
+                </li>
+                <li>
+                  Le moteur par défaut est DuckDuckGo ; il se change dans les réglages, sans
+                  redémarrer.
+                </li>
+                <li>
+                  L’agent répond en démo locale sans clé ; une clé API se range dans le trousseau du
+                  système, jamais dans un fichier du dossier de données.
+                </li>
+              </ol>
+              <p class="setup-note">
+                Mises à jour : l’app vérifie les versions peu après le démarrage, puis périodiquement.
+                Windows et AppImage se remplacent seuls ; un <code>.deb</code> passe par apt, et un
+                build macOS non signé se retélécharge.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="get" id="telecharger" aria-labelledby="dl-title">
         <div class="shell">
           <header class="chapter">
@@ -826,6 +970,72 @@
               <a href="/nouveautes/">Notes de version</a>
             </p>
             <p class="sr-only" aria-live="polite" data-copy-status></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="faq" id="questions" aria-labelledby="faq-title">
+        <div class="shell">
+          <header class="chapter">
+            <p class="chapter-index">Questions fréquentes</p>
+            <h2 class="chapter-title" id="faq-title">Ce qu’on demande avant d’installer.</h2>
+          </header>
+
+          <div class="faq-list">
+            <details class="qa">
+              <summary>Faut-il créer un compte ?</summary>
+              <p>
+                Non. Il n’y a ni inscription, ni synchronisation, ni serveur Azimut : les espaces,
+                les onglets, les favoris et les réglages vivent dans un fichier sur votre disque, et
+                les pages gardées s’exportent en HTML depuis Réglages › Navigation.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Où sont mes données ?</summary>
+              <p>
+                Dans le dossier de données de l’application : un fichier <code>vela.json</code> pour
+                les espaces, les onglets, les favoris, l’historique et les réglages, et des fichiers
+                pour les notes et les surlignages. Les clés API vont au trousseau du système.
+                Effacer ce dossier efface tout ; rien n’en est copié ailleurs.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Qu’est-ce qui sort de la machine ?</summary>
+              <p>
+                Les pages que vous ouvrez, la recherche quand vous la lancez, la météo de l’accueil
+                si elle est activée, et la vérification des mises à jour. Aucune mesure d’usage,
+                aucun compte. Le détail requête par requête est dans
+                <a href="/confidentialite/">la page confidentialité</a>.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>L’agent lit-il tout ce qui est ouvert ?</summary>
+              <p>
+                Non. Il ne lit que la page que vous joignez, au moment où vous le demandez. Sans
+                clé, il répond en démo locale, sur l’appareil ; avec une clé, le contenu de la page
+                jointe part vers le modèle choisi. Les modèles et ce qu’ils reçoivent sont détaillés
+                dans <a href="/confidentialite/#modeles">la confidentialité</a>.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Comment se passent les mises à jour ?</summary>
+              <p>
+                L’app vérifie les versions peu après le démarrage, puis toutes les trois heures, au
+                retour de veille et au retour du focus. Windows installe à la fermeture, l’AppImage
+                se remplace au redémarrage, un <code>.deb</code> s’installe à la main. Sur macOS,
+                un bundle non signé ne se remplace pas tout seul : le <code>.dmg</code> se
+                retélécharge.
+              </p>
+            </details>
+            <details class="qa">
+              <summary>Puis-je me connecter à Google ?</summary>
+              <p>
+                Google peut refuser l’identité d’un navigateur qui n’est pas Chrome. La connexion
+                passe par le navigateur système, et Azimut n’importe jamais de cookies ; les
+                favoris, eux, s’importent depuis Chrome ou Safari.
+                <a href="/aide/#google">La marche à suivre</a> tient en trois lignes.
+              </p>
+            </details>
           </div>
         </div>
       </section>
