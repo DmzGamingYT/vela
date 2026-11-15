@@ -8,7 +8,6 @@ import SpaceRail from './components/chrome/SpaceRail'
 import Toasts from './components/Toasts'
 import Workspace from './components/chrome/Workspace'
 import { useBrowser } from './store/browser'
-import { isHomeUrl } from '@shared/url'
 import { appearanceState, applyAppearance } from './lib/appearance'
 import { differe } from './lib/differe'
 import type { LibraryTab } from './components/panels/LibraryPanel'
@@ -60,12 +59,6 @@ export default function App() {
   const backgroundInert = Boolean(overlay) || !onboarded
   const libraryTab: LibraryTab | null =
     overlay === 'bookmarks' || overlay === 'downloads' || overlay === 'history' ? overlay : null
-  // Une page native couvre l'accueil : l'ambiance qui s'anime dessous ne se
-  // voit pas. La laisser tourner ne fait que disputer le GPU à la vidéo —
-  // c'est ce qui rendait les transitions saccadées pendant une lecture YouTube.
-  const view = useBrowser((state) => state.view)
-  const activeTab = view?.tabs.find((tab) => tab.id === view.activeTabId)
-  const pageShowing = Boolean(activeTab && !isHomeUrl(activeTab.url) && !overlay)
 
   useEffect(() => {
     void useBrowser.getState().init()
@@ -237,7 +230,6 @@ export default function App() {
       // Un tiroir ancré à droite retire ~340 px à l'accueil : la grille doit
       // le savoir, sinon elle garde deux colonnes trop étroites.
       data-drawer={notesOpen || agentOpen ? 'true' : undefined}
-      data-page={pageShowing ? 'true' : undefined}
     >
       {/* L’ambiance habille le châssis : un calque fixe derrière le verre,
           jamais au-dessus du contenu des pages (WebContentsView séparées). */}
